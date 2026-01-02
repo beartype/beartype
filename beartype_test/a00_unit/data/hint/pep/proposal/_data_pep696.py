@@ -11,7 +11,7 @@ Project-wide :pep:`696`-compliant **type hint test data.**
 def hints_pep696_meta() -> 'List[HintPepMetadata]':
     '''
     List of :pep:`696`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`696`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -38,10 +38,10 @@ def hints_pep696_meta() -> 'List[HintPepMetadata]':
     )
     from beartype.door import TypeVarTypeHint
     from beartype._data.hint.sign.datahintsigns import HintSignTypeVar
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
 
     # ..................{ LOCALS                             }..................
@@ -61,10 +61,10 @@ def hints_pep696_meta() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # List of string constants.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     ["And touch'd", 'with shade of', 'bronzed obelisks,',]),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     "Glar'd a blood-red through all its thousand courts,"),
             ),
         ),

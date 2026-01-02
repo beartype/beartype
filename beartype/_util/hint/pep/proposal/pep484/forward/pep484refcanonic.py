@@ -4,19 +4,14 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`--compliant **absolute forward reference type hint
-utilities** (i.e., low-level callables introspecting :pep:`484`-compliant
-forward reference type hints whose resolution is absolute and thus requires *no*
-parent objects to resolve those hints against).
+Project-wide :pep:`484`--compliant **forward reference type hint
+canonicalizers** (i.e., low-level callables resolving :pep:`484`-compliant
+possibly relative into absolute forward reference type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Rename these submodules as follows for clarity:
-#* "pep484refabsolute" -> "pep484refcanonic".
-#* "pep484refrelative" -> "pep484refgeneral".
-
 #FIXME: The following logic at the head of the canonicalize_hint_pep484_ref()
 #implementation made considerable sense under Python < 3.13:
 #    hint_module_name, hint_type_name = get_hint_pep484_ref_names_relative(
@@ -301,7 +296,7 @@ def canonicalize_hint_pep484_ref(
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484.forward.pep484refrelative import (
+    from beartype._util.hint.pep.proposal.pep484.forward.pep484refgeneral import (
         get_hint_pep484_ref_names_relative)
 
     # ....................{ LOCALS                         }....................
@@ -400,98 +395,10 @@ def canonicalize_hint_pep484_ref(
     # Return the 2-tuple of these names.
     return hint_module_name, hint_type_name
 
-
-#FIXME: Obsolete in favour of find_ref_relative_on_cls_stack(), please. *sigh*
-def canonicalize_hint_pep484_ref_relative_to_type_name(
-    # Mandatory parameters.
-    hint: HintPep484Ref,
-    cls_stack: TypeStack,
-
-    # Optional parameters.
-    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
-    exception_prefix: str = '',
-) -> TupleStrOrNoneAndStr:
-    '''
-    Possibly undefined fully-qualified module name and possibly unqualified
-    classname referred to by the passed forward reference, canonicalized
-    relative to the module declaring the passed type stack if this reference is
-    the partially-qualified name of the currently decorated (i.e., most deeply
-    nested) class on the passed type stack *or* preserved as is otherwise.
-
-    Parameters
-    ----------
-    hint : HintPep484Ref
-        Forward reference to be canonicalized.
-    cls_stack : TypeStack
-        Either:
-
-        * If this forward reference annotates a method of a class, the
-          corresponding **type stack** (i.e., tuple of the one or more nested
-          :func:`beartype.beartype`-decorated classes lexically containing that
-          method).
-        * Else, :data:`None`.
-    exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :exc:`.BeartypeDecorHintForwardRefException`.
-    exception_prefix : str, default: ''
-        Human-readable substring prefixing raised exception messages. Defaults
-        to the empty string.
-
-    Returns
-    -------
-    tuple[Optional[str], str]
-        2-tuple ``(hint_module_name, hint)`` such that:
-
-        * If this classname is the partially-qualified name of the currently
-          decorated (i.e., most deeply nested) class on the type stack, then:
-
-          * ``hint_module_name`` is the fully-qualified name of the module
-            declaring that class.
-          * ``hint`` is the passed parameter.
-
-        * Else, ``(None, hint)`` where ``hint`` is the passed parameter.
-    '''
-    assert isinstance(hint, HintPep484RefTypes), (
-        f'{repr(hint)} neither string nor "typing.ForwardRef" object.')
-    assert isinstance(cls_stack, NoneTypeOr[Sequence]), (
-        f'{repr(cls_stack)} neither sequence nor "None".')
-
-    # If this forward reference is a "typing.ForwardRef" instance...
-    if isinstance(hint, ForwardRef):
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484.forward.pep484refrelative import (
-            get_hint_pep484_ref_names_relative)
-
-        # Possibly undefined fully-qualified module name and possibly
-        # unqualified classname referred to by this forward reference.
-        hint_module_name, hint = get_hint_pep484_ref_names_relative(
-            hint=hint,
-            exception_cls=exception_cls,
-            exception_prefix=exception_prefix,
-        )
-
-        # If this forward reference is already absolute, this forward reference
-        # *CANNOT* be definition be relative (let alone relative to a type on
-        # the passed type stack). In this case, feign ignorance by silently
-        # destroying this module name. It is what it is.
-        if hint_module_name:
-            return None, hint
-        # Else, this forward reference is relative as expected.
-    # Else, this forward reference is a simple string. This is the common
-    # case. In this case, preserve this string as is.
-
-    # Defer to this lower-level private getter.
-    return _find_ref_relative_on_cls_stack(
-        hint_type_name=hint,
-        # Default this boolean to a string test in the trivial manner.
-        is_hint_type_name_qualified='.' in hint,
-        cls_stack=cls_stack,
-    )[0:2]
-
 # ....................{ FINDERS                            }....................
 #FIXME: Additionally unit test the edge case of finding the middle-most type on
 #the passed type stack, please. *sigh*
-def find_ref_relative_on_cls_stack_or_none(
+def find_hint_pep484_ref_on_cls_stack_or_none(
     # Mandatory parameters.
     hint: HintPep484Ref,
     cls_stack: TypeStack,
@@ -548,7 +455,7 @@ def find_ref_relative_on_cls_stack_or_none(
     # If this forward reference is a "typing.ForwardRef" instance...
     if isinstance(hint, ForwardRef):
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484.forward.pep484refrelative import (
+        from beartype._util.hint.pep.proposal.pep484.forward.pep484refgeneral import (
             get_hint_pep484_ref_names_relative)
 
         # Possibly undefined fully-qualified module name and possibly

@@ -12,7 +12,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`586`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`586`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -27,10 +27,10 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
     from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
         MasterlessDecreeVenomlessWhich)
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
 
     # ..................{ LOCALS                             }..................
@@ -51,13 +51,13 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                 is_args=True,
                 piths_meta=(
                     # "None" singleton defined by the same syntax.
-                    HintPithSatisfiedMetadata(None),
+                    PithSatisfiedMetadata(None),
                     # "None" singleton defined by different syntax but
                     # semantically equal to the "None" singleton.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         {}.get('Looting Uncouth, ruddy Bȴood and')),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith='Worthily untrust-',
                         # Match that the exception message raised for this
                         # object embeds the representation of the expected
@@ -74,12 +74,12 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                 is_args=True,
                 piths_meta=(
                     # Boolean constant defined by the same syntax.
-                    HintPithSatisfiedMetadata(True),
+                    PithSatisfiedMetadata(True),
                     # Boolean constant defined by different syntax but
                     # semantically equal to the same boolean.
-                    HintPithSatisfiedMetadata(__name__ is __name__),
+                    PithSatisfiedMetadata(__name__ is __name__),
                     # Boolean constant *NOT* equal to the same boolean.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=False,
                         # Match that the exception message raised for this
                         # object embeds the representation of the expected
@@ -88,7 +88,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                     ),
                     # Integer constant semantically equal to the same boolean
                     # but of a differing type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=1,
                         # Match that the exception message raised for this
                         # object embeds the representation of the expected
@@ -105,12 +105,12 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                 is_args=True,
                 piths_meta=(
                     # Integer constant defined by the same syntax.
-                    HintPithSatisfiedMetadata(0x2a),
+                    PithSatisfiedMetadata(0x2a),
                     # Integer constant defined by different syntax but
                     # semantically equal to the same integer.
-                    HintPithSatisfiedMetadata(42),
+                    PithSatisfiedMetadata(42),
                     # Integer constant *NOT* equal to the same integer.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=41,
                         # Match that the exception message raised for this
                         # object embeds the representation of the expected
@@ -119,7 +119,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                     ),
                     # Floating-point constant semantically equal to the same
                     # integer but of a differing type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=42.0,
                         # Match that the exception message raised for this
                         # object embeds the representation of the expected
@@ -137,16 +137,16 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                 is_args=True,
                 piths_meta=(
                     # Byte string constant defined by the same syntax.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         b"Worthy, 'vain truthiness of (very invective-elected)"),
                     # Byte string constant defined by different syntax but
                     # semantically equal to the same byte string.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         b"Worthy, 'vain truthiness of "
                         b"(very invective-elected)"
                     ),
                     # Byte string constant *NOT* equal to the same byte string.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=b"Thanes within",
                         # Match that the exception message raised for this
                         # object embeds the representation of the expected
@@ -155,7 +155,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                     ),
                     # Unicode string constant semantically equal to the same
                     # byte string but of a differing type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=(
                             "Worthy, 'vain truthiness of "
                             "(very invective-elected)"
@@ -175,15 +175,15 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                 is_args=True,
                 piths_meta=(
                     # Unicode string constant defined by the same syntax.
-                    HintPithSatisfiedMetadata('Thanklessly classed, nominal'),
+                    PithSatisfiedMetadata('Thanklessly classed, nominal'),
                     # Unicode string constant defined by different syntax but
                     # semantically equal to the same Unicode string.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         'Thanklessly classed, '
                         'nominal'
                     ),
                     # Unicode string constant *NOT* equal to the same string.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith='Mass and',
                         # Match that the exception message raised for this
                         # object embeds the representation of the expected
@@ -192,7 +192,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                     ),
                     # Byte string constant semantically equal to the same
                     # Unicode string but of a differing type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=b'Thanklessly classed, nominal',
                         # Match that the exception message raised for this
                         # object embeds the representation of the expected
@@ -212,16 +212,16 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                 is_args=True,
                 piths_meta=(
                     # Enumeration member accessed by the same syntax.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         MasterlessDecreeVenomlessWhich.
                         NOMENCLATURE_WEATHER_VANES_OF
                     ),
                     # Enumeration member accessed by different syntax but
                     # semantically equal to the same enumeration member.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         MasterlessDecreeVenomlessWhich(0)),
                     # Enumeration member *NOT* equal to the same member.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=(
                             MasterlessDecreeVenomlessWhich.
                             NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A
@@ -234,7 +234,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                     ),
                     # Integer constant semantically equal to the same index of
                     # this enumeration member but of a differing type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=0,
                         # Match that the exception message raised for this
                         # object embeds the representation of the expected
@@ -255,7 +255,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                 piths_meta=(
                     # List of Unicode string constants semantically equal to
                     # the same Unicode string.
-                    HintPithSatisfiedMetadata([
+                    PithSatisfiedMetadata([
                         'ç‐omically gnomical whitebellied burden’s empathy of',
                         (
                             'ç‐omically gnomical '
@@ -265,7 +265,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                     ]),
                     # List of Unicode string constants *NOT* equal to the same
                     # Unicode string.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=[
                             'Earpiece‐piecemealed, mealy straw headpiece‐',
                             'Earned peace appeasement easements',
@@ -276,7 +276,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                         exception_str_match_regexes=(r'\bgnomical\b',),
                     ),
                     # List of byte string constants.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=[
                             b'Than',
                             b"Thankful strumpet's",
@@ -307,21 +307,21 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                 is_args=True,
                 piths_meta=(
                     # Literal objects subscripting this literal union.
-                    HintPithSatisfiedMetadata(None),
-                    HintPithSatisfiedMetadata(True),
-                    HintPithSatisfiedMetadata(0x2a),
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(None),
+                    PithSatisfiedMetadata(True),
+                    PithSatisfiedMetadata(0x2a),
+                    PithSatisfiedMetadata(
                         b"Worthy, 'vain truthiness of (very invective-elected)"
                     ),
-                    HintPithSatisfiedMetadata('Thanklessly classed, nominal'),
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata('Thanklessly classed, nominal'),
+                    PithSatisfiedMetadata(
                         MasterlessDecreeVenomlessWhich.
                         NOMENCLATURE_WEATHER_VANES_OF
                     ),
                     # Arbitrary object of the same type as one or more literal
                     # objects subscripting this literal union but unequal to
                     # any objects subscripting this literal union.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith='Empirism‐Tṙumpeted,',
                         # Match that the exception message raised for this
                         # object embeds the representation of all expected
@@ -337,7 +337,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
                     ),
                     # Arbitrary object of a differing type from all literal
                     # objects subscripting this literal union.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=42.0,
                         # Match that the exception message raised for this
                         # object embeds the representation of all expected

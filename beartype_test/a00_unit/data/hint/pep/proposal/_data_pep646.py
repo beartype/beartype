@@ -11,7 +11,7 @@ Project-wide :pep:`646`-compliant **type hint test data.**
 def hints_pep646_meta() -> 'List[HintPepMetadata]':
     '''
     List of :pep:`646`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`646`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -41,10 +41,10 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
         DType,
         Shape,
     )
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
 
     # ..................{ LOCALS                             }..................
@@ -70,9 +70,9 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # Generic instance.
-                HintPithSatisfiedMetadata(Array()),
+                PithSatisfiedMetadata(Array()),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'Or the familiar visiting of one'),
             ),
         ),

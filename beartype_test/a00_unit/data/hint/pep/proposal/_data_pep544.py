@@ -16,7 +16,7 @@ Project-wide :pep:`544`-compliant **type hint test data.**
 def hints_pep544_meta() -> 'List[HintPepMetadata]':
     '''
     List of :pep:`544`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`544`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -40,10 +40,10 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         HintSignTextIO,
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
     from pathlib import Path
 
@@ -72,22 +72,22 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         return open(SUBMODULE_FILENAME, 'rb')
 
 
-    # List of one or more "HintPithUnsatisfiedMetadata" instances validating
+    # List of one or more "PithUnsatisfiedMetadata" instances validating
     # objects *NOT* satisfied by either "typing.BinaryIO" *OR*
     # "typing.IO[bytes]". This list conditionally depends on the active Python
     # interpreter and thus *CANNOT* be defined as a standard tuple.
     binaryio_piths_meta = [
         # Open read-only binary file handle to this submodule.
-        HintPithSatisfiedMetadata(pith=open_file_binary, is_pith_factory=True),
+        PithSatisfiedMetadata(pith=open_file_binary, is_pith_factory=True),
         # Bytestring constant.
-        HintPithUnsatisfiedMetadata(b"Of a thieved imagination's reveries"),
-        # "HintPithUnsatisfiedMetadata" instance validating open
+        PithUnsatisfiedMetadata(b"Of a thieved imagination's reveries"),
+        # "PithUnsatisfiedMetadata" instance validating open
         # read-only text file handles to violate both "typing.BinaryIO" *AND*
         # "typing.IO[bytes]" type hints. This validation requires beartype
         # validators, as the only means of differentiating objects satisfying
         # the "typing.BinaryIO" protocol from those satisfying the "typing.IO"
         # protocol is with an inverted instance check. Cue beartype validators.
-        HintPithUnsatisfiedMetadata(pith=open_file_text, is_pith_factory=True),
+        PithUnsatisfiedMetadata(pith=open_file_text, is_pith_factory=True),
     ]
 
     # ..................{ PROTOCOLS ~ structural             }..................
@@ -216,9 +216,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 is_type_typing=False,
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
-                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    PithSatisfiedMetadata(protocol_custom_structural),
                     # String constant.
-                    HintPithUnsatisfiedMetadata('For durance needs.'),
+                    PithUnsatisfiedMetadata('For durance needs.'),
                 ),
             ),
 
@@ -231,9 +231,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 typeargs_packed=(T,),
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
-                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    PithSatisfiedMetadata(protocol_custom_structural),
                     # String constant.
-                    HintPithUnsatisfiedMetadata('Machist-'),
+                    PithUnsatisfiedMetadata('Machist-'),
                 ),
             ),
 
@@ -247,9 +247,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 is_typing=False,
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
-                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    PithSatisfiedMetadata(protocol_custom_structural),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'Black and white‐bit, bilinear linaements'),
                 ),
             ),
@@ -263,9 +263,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 is_typing=False,
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
-                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    PithSatisfiedMetadata(protocol_custom_structural),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'We are as clouds that veil the midnight moon;'),
                 ),
             ),
@@ -278,9 +278,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 is_type_typing=False,
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
-                    HintPithSatisfiedMetadata(ProtocolCustomSubclass()),
+                    PithSatisfiedMetadata(ProtocolCustomSubclass()),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'Conspiratorially oratory‐fawning faces'),
                 ),
             ),
@@ -314,13 +314,13 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 generic_type=TextIO,
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         pith=open_file_text, is_pith_factory=True),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'Statistician’s anthemed meme athame'),
                     # Open read-only binary file handle to this submodule.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=open_file_binary, is_pith_factory=True),
                 ),
             )
@@ -340,13 +340,13 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 typeargs_packed=(AnyStr,),
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         pith=open_file_text, is_pith_factory=True),
                     # Open read-only binary file handle to this submodule.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         pith=open_file_binary, is_pith_factory=True),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'To piously magistrate, dis‐empower, and'),
                 ),
             ),
@@ -359,13 +359,13 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 generic_type=IO,
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         pith=open_file_binary, is_pith_factory=True),
                     # Open read-only text file handle to this submodule.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         pith=open_file_text, is_pith_factory=True),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'Stoicly Anti‐heroic, synthetic'),
                 ),
             ),
@@ -381,15 +381,15 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 generic_type=IO,
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         pith=open_file_text, is_pith_factory=True),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'Thism‐predestined City’s pestilentially '
                         'celestial dark of'
                     ),
                     # Open read-only binary file handle to this submodule.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=open_file_binary, is_pith_factory=True),
                 ),
             ),
@@ -402,13 +402,13 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 typeargs_packed=(AnyStr,),
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         pith=open_file_binary, is_pith_factory=True),
                     # Open read-only text file handle to this submodule.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         pith=open_file_text, is_pith_factory=True),
                     # String constant.
-                    HintPithUnsatisfiedMetadata('Starkness'),
+                    PithUnsatisfiedMetadata('Starkness'),
                 ),
             ),
         ))
@@ -433,9 +433,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 is_typeargs=True,
                 piths_meta=(
                     # Integer constant.
-                    HintPithSatisfiedMetadata(777),  # <-- what can this mean!?!?!?
+                    PithSatisfiedMetadata(777),  # <-- what can this mean!?!?!?
                     # String constant.
-                    HintPithUnsatisfiedMetadata('Scour Our flowering'),
+                    PithUnsatisfiedMetadata('Scour Our flowering'),
                 ),
             )
         )
@@ -459,13 +459,13 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                     # defined by the "pathlib" module, which is why we
                     # instantiate such an atypical class here. See also:
                     #     https://stackoverflow.com/questions/45522536/where-can-the-bytes-method-be-found
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         pith=lambda: Path('/'),
                         is_context_manager=True,
                         is_pith_factory=True,
                     ),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'Fond suburb’s gibbet‐ribbed castrati'),
                 ),
             )
@@ -482,7 +482,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             #         # Integer constant.
             #         108,
             #         # String constant.
-            #         HintPithUnsatisfiedMetadata('Fondled ΘuroƂorus-'),
+            #         PithUnsatisfiedMetadata('Fondled ΘuroƂorus-'),
             #     ),
             # ),
         )
@@ -500,9 +500,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 generic_type=SupportsFloat,
                 piths_meta=(
                     # Integer constant.
-                    HintPithSatisfiedMetadata(92),
+                    PithSatisfiedMetadata(92),
                     # String constant.
-                    HintPithUnsatisfiedMetadata('Be’yond a'),
+                    PithUnsatisfiedMetadata('Be’yond a'),
                 ),
             )
         )
@@ -521,9 +521,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 generic_type=SupportsIndex,
                 piths_meta=(
                     # Integer constant.
-                    HintPithSatisfiedMetadata(29),
+                    PithSatisfiedMetadata(29),
                     # String constant.
-                    HintPithUnsatisfiedMetadata('Self-ishly'),
+                    PithUnsatisfiedMetadata('Self-ishly'),
                 ),
             )
         )
@@ -541,11 +541,11 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 generic_type=SupportsInt,
                 piths_meta=(
                     # Floating-point number constant.
-                    HintPithSatisfiedMetadata(25.78),
+                    PithSatisfiedMetadata(25.78),
                     # Structurally subtyped instance.
-                    HintPithSatisfiedMetadata(ProtocolSupportsInt()),
+                    PithSatisfiedMetadata(ProtocolSupportsInt()),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'Ungentlemanly self‐righteously, and'),
                 ),
             )
@@ -567,9 +567,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 is_typeargs=True,
                 piths_meta=(
                     # Floating-point number constant.
-                    HintPithSatisfiedMetadata(87.52),
+                    PithSatisfiedMetadata(87.52),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'Our Fathers vowed, indulgently,'),
                 ),
             )

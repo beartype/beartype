@@ -22,7 +22,7 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
     '''
     List of :mod:`weakref`-specific **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific sample :mod:`weakref`-specific type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -32,10 +32,10 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
     from beartype.typing import Any
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep585BuiltinSubscriptedUnknown)
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
     from gc import collect
     from weakref import ref
@@ -85,11 +85,11 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Weak reference to a living object.
-                HintPithSatisfiedMetadata(heard_in_ref),
+                PithSatisfiedMetadata(heard_in_ref),
                 # Weak reference to a dead object.
-                HintPithSatisfiedMetadata(its_music_long_ref),
+                PithSatisfiedMetadata(its_music_long_ref),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'Heard in the calm of thought; its music long,'),
             ),
         ),
@@ -102,16 +102,16 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Weak reference to a living object.
-                HintPithSatisfiedMetadata(heard_in_ref),
+                PithSatisfiedMetadata(heard_in_ref),
                 # Weak reference to a dead object.
-                HintPithSatisfiedMetadata(its_music_long_ref),
+                PithSatisfiedMetadata(its_music_long_ref),
 
                 #FIXME: Uncomment *AFTER* deeply type-checking "ref[...]".
                 # # Weak reference to an instance of a different type.
-                # HintPithUnsatisfiedMetadata(streams_and_breezes_ref),
+                # PithUnsatisfiedMetadata(streams_and_breezes_ref),
 
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'Like woven sounds of streams and breezes, held'),
             ),
         ),

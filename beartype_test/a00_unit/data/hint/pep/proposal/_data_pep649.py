@@ -13,7 +13,7 @@ cases in unit tests requiring these fixtures).
 def hints_pep649_meta() -> 'List[HintPepMetadata]':
     '''
     List of :pep:`649`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`649`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -24,10 +24,10 @@ def hints_pep649_meta() -> 'List[HintPepMetadata]':
     from beartype._data.hint.sign.datahintsigns import HintSignForwardRef
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_13
     from beartype_test.a00_unit.data.data_type import Subclass
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
 
     # ....................{ CONSTANTS ~ forwardref         }....................
@@ -57,9 +57,9 @@ def hints_pep649_meta() -> 'List[HintPepMetadata]':
             is_type_typing=False,
             piths_meta=(
                 # Instance of the class referred to by this reference.
-                HintPithSatisfiedMetadata(_FORWARDREF_CLASSNAME_TYPE()),
+                PithSatisfiedMetadata(_FORWARDREF_CLASSNAME_TYPE()),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'Empirical Ṗath after‐mathematically harvesting agro‐'),
             ),
         ),
@@ -78,9 +78,9 @@ def hints_pep649_meta() -> 'List[HintPepMetadata]':
             is_type_typing=IS_PYTHON_AT_MOST_3_13,
             piths_meta=(
                 # Instance of the class referred to by this reference.
-                HintPithSatisfiedMetadata(_FORWARDREF_CLASSNAME_TYPE()),
+                PithSatisfiedMetadata(_FORWARDREF_CLASSNAME_TYPE()),
                 # String constant.
-                HintPithUnsatisfiedMetadata('Silvicultures of'),
+                PithUnsatisfiedMetadata('Silvicultures of'),
             ),
         ),
     ]

@@ -11,7 +11,7 @@ Project-wide :pep:`695`-compliant **type hint test data.**
 def hints_pep695_meta() -> 'List[HintPepMetadata]':
     '''
     List of :pep:`695`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`695`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -67,10 +67,10 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         Pep585IterableTContainerT,
         Pep585IterableTupleSTContainerTupleST,
     )
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
 
     # ..................{ LISTS                              }..................
@@ -87,14 +87,14 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # Integer constant.
-                HintPithSatisfiedMetadata(0xFACE0FFF),
+                PithSatisfiedMetadata(0xFACE0FFF),
                 # List of string items.
-                HintPithSatisfiedMetadata([
+                PithSatisfiedMetadata([
                     'His inmost sense suspended in its web',
                     'Of many-coloured woof and shifting hues.',
                 ]),
                 # Floating-point constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=70700.00707,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -127,27 +127,27 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             piths_meta=(
                 # Dictionary mapping from arbitrary objects all of the same type
                 # to yet more arbitrary objects all of the same type.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     'When on the threshold': 'of the green recess',
                     "The wanderer's footsteps fell,": 'he knew that death',
                 }),
                 # Frozen set of arbitrary objects all of the same type.
-                HintPithSatisfiedMetadata(frozenset((
+                PithSatisfiedMetadata(frozenset((
                     b'Nor ever more offer at thy dark shrine',
                     b'The unheeded tribute of a broken heart.',
                 ))),
                 # List of arbitrary objects all of the same type.
-                HintPithSatisfiedMetadata([
+                PithSatisfiedMetadata([
                     'Knowledge and truth and virtue were her theme,',
                     'And lofty hopes of divine liberty,',
                 ]),
                 # Set of arbitrary objects all of the same type.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     b'Thoughts the most dear to him, and poesy,',
                     b'Herself a poet. Soon the solemn mood',
                 }),
                 # Integer constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=0xFACECAFE,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -175,51 +175,51 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Floating-point constant.
-                HintPithSatisfiedMetadata(70.319),
+                PithSatisfiedMetadata(70.319),
                 # Dictionary mapping from arbitrary objects all of the same
                 # valid type to yet more arbitrary objects all of that type.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     'When on the threshold': 'of the green recess',
                     "The wanderer's footsteps fell,": 'he knew that death',
                 }),
                 # Frozen set of arbitrary objects all of the same valid type.
-                HintPithSatisfiedMetadata(frozenset((
+                PithSatisfiedMetadata(frozenset((
                     'Nor ever more offer at thy dark shrine',
                     'The unheeded tribute of a broken heart.',
                 ))),
                 # List of arbitrary objects all of the same valid type.
-                HintPithSatisfiedMetadata([
+                PithSatisfiedMetadata([
                     'Knowledge and truth and virtue were her theme,',
                     'And lofty hopes of divine liberty,',
                 ]),
                 # Set of arbitrary objects all of the same valid type.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     'Thoughts the most dear to him, and poesy,',
                     'Herself a poet. Soon the solemn mood',
                 }),
                 # Dictionary mapping from arbitrary objects all of the same
                 # invalid type to yet more arbitrary objects all of that type.
-                HintPithUnsatisfiedMetadata({
+                PithUnsatisfiedMetadata({
                     b'Was on him.': b'Yet a little, ere it fled,',
                     b'id he resign': b'his high and holy soul',
                 }),
                 # Frozen set of arbitrary objects all of the same invalid type.
-                HintPithUnsatisfiedMetadata(frozenset((
+                PithUnsatisfiedMetadata(frozenset((
                     b'To images of the majestic past,',
                     b'That paused within his passive being now,',
                 ))),
                 # List of arbitrary objects all of the same invalid type.
-                HintPithUnsatisfiedMetadata([
+                PithUnsatisfiedMetadata([
                     b'Like winds that bear sweet music, when they breathe',
                     b'Through some dim latticed chamber. He did place',
                 ]),
                 # Set of arbitrary objects all of the same invalid type.
-                HintPithUnsatisfiedMetadata({
+                PithUnsatisfiedMetadata({
                     b'His pale lean hand upon the rugged trunk',
                     b'Of the old pine. Upon an ivied stone',
                 }),
                 # Integer constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=0xFACECAFE,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -251,11 +251,11 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Integer constant.
-                HintPithSatisfiedMetadata(0xBEEFCAFE),
+                PithSatisfiedMetadata(0xBEEFCAFE),
                 # Floating-point constant.
-                HintPithSatisfiedMetadata(70.319),
+                PithSatisfiedMetadata(70.319),
                 # Complex constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=27 + 4j,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object as well
@@ -283,14 +283,14 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # String constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     'Of influence benign on planets pale,'),
                 # Integer constant.
-                HintPithSatisfiedMetadata(0xDEAFCAFE),
+                PithSatisfiedMetadata(0xDEAFCAFE),
                 # Floating-point constant.
-                HintPithSatisfiedMetadata(85.94701),
+                PithSatisfiedMetadata(85.94701),
                 # Byte string constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=b'Of admonitions to the winds and seas',
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -331,14 +331,14 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # String constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     "Of peaceful sway above man's harvesting,"),
                 # Integer constant.
-                HintPithSatisfiedMetadata(0xBEEFDEAF),
+                PithSatisfiedMetadata(0xBEEFDEAF),
                 # Floating-point constant.
-                HintPithSatisfiedMetadata(1.074958),
+                PithSatisfiedMetadata(1.074958),
                 # Byte string constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=b'And all those acts which Deity supreme',
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -374,10 +374,10 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_ignorable=True,
             piths_meta=(
                 # Instance of this generic containing one or more items.
-                HintPithSatisfiedMetadata(Pep585IterableTContainerT((
+                PithSatisfiedMetadata(Pep585IterableTContainerT((
                     'So came these words and went;', 'the while in tears',))),
                 # String constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     "She touch'd her fair large forehead to the ground,"),
             ),
         ),
@@ -391,18 +391,18 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
-                HintPithSatisfiedMetadata(Pep585IterableTContainerT((
+                PithSatisfiedMetadata(Pep585IterableTContainerT((
                     'Just where her falling hair', 'might be outspread',))),
                 # String constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     'Her silver seasons four upon the night,'),
                 # "None" singleton.
-                HintPithSatisfiedMetadata(None),
+                PithSatisfiedMetadata(None),
                 # Generic container whose items violate this child hint.
-                HintPithUnsatisfiedMetadata(Pep585IterableTContainerT((
+                PithUnsatisfiedMetadata(Pep585IterableTContainerT((
                     b'A soft and silken mat', b"for Saturn's feet.",))),
                 # Byte string constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     b"One moon, with alteration slow, had shed"),
             ),
         ),
@@ -422,12 +422,12 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # Instance of this generic containing one or more items.
-                HintPithSatisfiedMetadata(Pep585IterableTupleSTContainerTupleST((
+                PithSatisfiedMetadata(Pep585IterableTupleSTContainerTupleST((
                     ('How beautiful,', b'if sorrow had not made',),
                     ('Sorrow more beautiful than', b"Beauty's self.",),
                 ))),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'There was a listening fear in her regard,'),
             ),
         ),
@@ -439,17 +439,17 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
-                HintPithSatisfiedMetadata(Pep585IterableTupleSTContainerTupleST((
+                PithSatisfiedMetadata(Pep585IterableTupleSTContainerTupleST((
                     ('As if calamity', b'had but begun;',),
                     ('As if the vanward clouds', b'of evil days;',),
                 ))),
                 # Generic container whose items violate this child hint.
-                HintPithUnsatisfiedMetadata(Pep585IterableTupleSTContainerTupleST((
+                PithUnsatisfiedMetadata(Pep585IterableTupleSTContainerTupleST((
                     (b'Had spent their malice,', 'and the sullen rear',),
                     (b'Was with its stored thunder', 'labouring up.',),
                 ))),
                 # Byte string constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     b"One hand she press'd upon that aching spot"),
             ),
         ),
@@ -468,10 +468,10 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # Dictionary of key-value pairs of arbitrary types.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     'Would come in these like accents;': b'O how frail',}),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'To that large utterance of the early Gods!'),
             ),
         ),
@@ -484,10 +484,10 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Dictionary mapping arbitrary hashables to arbitrary objects.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     '"Saturn, look up!': b'though wherefore, poor old King?',}),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'I have no comfort for thee, no not one'),
             ),
         ),
@@ -500,13 +500,13 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Dictionary mapping arbitrary hashables to strings.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     0xFADEFEED: 'I cannot say, "O wherefore sleepest thou?"',}),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'For heaven is parted from thee, and the earth'),
                 # Dictionary mapping arbitrary hashables to bytestrings.
-                HintPithUnsatisfiedMetadata({
+                PithUnsatisfiedMetadata({
                     'Knows thee not,': b'thus afflicted, for a God;',}),
             ),
         ),
@@ -519,13 +519,13 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Dictionary mapping strings to arbitrary objects.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     'And ocean too,': b'with all its solemn noise,',}),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     "Has from thy sceptre pass'd; and all the air"),
                 # Dictionary mapping bytestrings to arbitrary objects.
-                HintPithUnsatisfiedMetadata({
+                PithUnsatisfiedMetadata({
                     b'Of Parthian kings': 'scatter to every wind',}),
             ),
         ),
@@ -538,13 +538,13 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Dictionary mapping integers to strings.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     1: 'Is emptied of thine hoary majesty.',}),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'Thy thunder, conscious of the new command,'),
                 # Dictionary mapping strings to strings.
-                HintPithUnsatisfiedMetadata({
+                PithUnsatisfiedMetadata({
                     "Rumbles reluctant o'er our fallen house;": 48,}),
             ),
         ),
@@ -564,15 +564,15 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # 2-tuple of items of arbitrary types.
-                HintPithSatisfiedMetadata((
+                PithSatisfiedMetadata((
                     'Where beats the human heart,', 'as if just there,',)),
                 # Empty tuple.
-                HintPithUnsatisfiedMetadata(()),
+                PithUnsatisfiedMetadata(()),
                 # 1-tuple of items of arbitrary types.
-                HintPithUnsatisfiedMetadata((
+                PithUnsatisfiedMetadata((
                     'Though an immortal, she felt cruel pain:',)),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     "The other upon Saturn's bended neck"),
             ),
         ),
@@ -585,18 +585,18 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # 2-tuple of items whose types satisfy these child hints.
-                HintPithSatisfiedMetadata((
+                PithSatisfiedMetadata((
                     'She laid,', b'and to the level of his ear,',)),
                 # 2-tuple of items whose types violate these child hints.
-                HintPithUnsatisfiedMetadata((
+                PithUnsatisfiedMetadata((
                     'Leaning with parted lips,', 'some words she spake',)),
                 # Empty tuple.
-                HintPithUnsatisfiedMetadata(()),
+                PithUnsatisfiedMetadata(()),
                 # 3-tuple of items of arbitrary types.
-                HintPithUnsatisfiedMetadata((
+                PithUnsatisfiedMetadata((
                     'In solemn tenour', 'and deep', 'organ tone:',)),
                 # Byte string constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     b"Some mourning words, which in our feeble tongue"),
             ),
         ),
@@ -615,9 +615,9 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # Arbitrary type.
-                HintPithSatisfiedMetadata(complex),
+                PithSatisfiedMetadata(complex),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'Why should I ope thy melancholy eyes?'),
             ),
         ),
@@ -630,9 +630,9 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Arbitrary class.
-                HintPithSatisfiedMetadata(bool),
+                PithSatisfiedMetadata(bool),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'Saturn, sleep on! while at thy feet I weep."'),
             ),
         ),
@@ -644,11 +644,11 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Arbitrary metaclass.
-                HintPithSatisfiedMetadata(NonIsinstanceableMetaclass),
+                PithSatisfiedMetadata(NonIsinstanceableMetaclass),
                 # Arbitrary class.
-                HintPithUnsatisfiedMetadata(int),
+                PithUnsatisfiedMetadata(int),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'As when, upon a tranced summer-night,'),
             ),
         ),
@@ -660,12 +660,12 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Subclass of this class.
-                HintPithSatisfiedMetadata(Subclass),
+                PithSatisfiedMetadata(Subclass),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     "Those green-rob'd senators of mighty woods,"),
                 # Non-subclass of this class.
-                HintPithUnsatisfiedMetadata(bytes),
+                PithUnsatisfiedMetadata(bytes),
             ),
         ),
 
@@ -676,14 +676,14 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Arbitrary subclass of one class subscripting this hint.
-                HintPithSatisfiedMetadata(Subclass),
+                PithSatisfiedMetadata(Subclass),
                 # Arbitrary subclass of another class subscripting this hint.
-                HintPithSatisfiedMetadata(OtherSubclass),
+                PithSatisfiedMetadata(OtherSubclass),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'Tall oaks, branch-charmed by the earnest stars,'),
                 # Non-subclass of any classes subscripting this hint.
-                HintPithUnsatisfiedMetadata(frozenset),
+                PithUnsatisfiedMetadata(frozenset),
             ),
         ),
 
@@ -714,15 +714,15 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # Non-empty byte string.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     b"And thy sharp lightning in unpractis'd hands"),
                 # Non-empty string constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     'Scorches and burns our once serene domain.'),
                 # Empty byte string.
-                HintPithUnsatisfiedMetadata(b''),
+                PithUnsatisfiedMetadata(b''),
                 # Empty string.
-                HintPithUnsatisfiedMetadata(''),
+                PithUnsatisfiedMetadata(''),
             ),
         ),
 
@@ -734,15 +734,15 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Non-empty byte string.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     b'O aching time! O moments big as years!'),
                 # Non-empty string constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     'All as ye pass swell out the monstrous truth,'),
                 # Empty byte string.
-                HintPithUnsatisfiedMetadata(b''),
+                PithUnsatisfiedMetadata(b''),
                 # Empty string.
-                HintPithUnsatisfiedMetadata(''),
+                PithUnsatisfiedMetadata(''),
             ),
         ),
 
@@ -754,16 +754,16 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Non-zero integer.
-                HintPithSatisfiedMetadata(0xFADEFACE),
+                PithSatisfiedMetadata(0xFADEFACE),
                 # Non-empty byte string.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     b'And press it so upon our weary griefs'),
                 # Zero.
-                HintPithUnsatisfiedMetadata(0),
+                PithUnsatisfiedMetadata(0),
                 # Empty byte string.
-                HintPithUnsatisfiedMetadata(b''),
+                PithUnsatisfiedMetadata(b''),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'That unbelief has not a space to breathe.'),
             ),
         ),
@@ -835,10 +835,10 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # String constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     'A heaven he lost erewhile: it must—it must'),
                 # Byte string constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     b'Be of ripe progress--Saturn must be King.'),
             ),
         ),
@@ -875,16 +875,16 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # String constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     'Yes, there must be a golden victory;'),
                 # List of string constants.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     ['There must be Gods thrown down, and trumpets blown',]),
                 # Byte string constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     b'Of triumph calm, and hymns of festival'),
                 # List of byte string constants.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     [b'Upon the gold clouds metropolitan,']),
             ),
         ),
@@ -906,33 +906,33 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # Byte string constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     b'Voices of soft proclaim, and silver stir'),
                 # Integer constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     len('Of strings in hollow shells; and there shall be')),
                 # Set of byte string constants.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     {b'Beautiful things made new, for the surprise',}),
                 # Dictionary mapping integer constants to sets of booleans.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     len('Of the sky-children; I will give command:'): {True,},
                 }),
                 # List of set of byte string constants.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     [{b'Thea! Thea! Thea! where is Saturn?"',},]),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     'This passion lifted him upon his feet,'),
                 # Set of string constants.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     {'And made his hands to struggle in the air,',}),
                 # Dictionary mapping string constants to sets of booleans.
-                HintPithUnsatisfiedMetadata({
+                PithUnsatisfiedMetadata({
                     'His Druid locks to shake and ooze with sweat,': {False,},
                 }),
                 # List of set of string constants.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     [{'His eyes to fever out, his voice to cease.',},]),
             ),
         ),
@@ -947,29 +947,29 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Byte string constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     b"He stood, and heard not Thea's sobbing deep;"),
                 # Integer constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     len("A little time, and then again he snatch'd")),
                 # Set of integer constants.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     {len('Utterance thus.—"But cannot I create?'),}),
                 # Dictionary mapping integer to string constants.
-                HintPithSatisfiedMetadata({
+                PithSatisfiedMetadata({
                     42: 'Cannot I form? Cannot I fashion forth'}),
                 # List of set of integer constants.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     [{len('Another world, another universe,'),},]),
                 # Complex constant.
-                HintPithUnsatisfiedMetadata(72+90j),
+                PithUnsatisfiedMetadata(72+90j),
                 # Set of complex constants.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     {58+41j,}),
                 # Dictionary mapping complex constants to sets of booleans.
-                HintPithUnsatisfiedMetadata({66+27j: {False,},}),
+                PithUnsatisfiedMetadata({66+27j: {False,},}),
                 # List of set of complex constants.
-                HintPithUnsatisfiedMetadata([{31+78j},]),
+                PithUnsatisfiedMetadata([{31+78j},]),
             ),
         ),
     ))

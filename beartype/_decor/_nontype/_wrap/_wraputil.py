@@ -20,7 +20,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
+from beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic import (
     canonicalize_hint_pep484_ref)
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from collections.abc import Iterable

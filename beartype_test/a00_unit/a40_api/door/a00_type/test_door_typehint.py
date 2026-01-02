@@ -79,7 +79,7 @@ def test_door_typehint_mapping(iter_hints_piths_meta) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
@@ -89,7 +89,7 @@ def test_door_typehint_mapping(iter_hints_piths_meta) -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.door import TypeHint
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata)
 
     # ....................{ ASSERTS                        }....................
@@ -350,7 +350,7 @@ def test_door_typehint_len():
 #
 #     Parameters
 #     ----------
-#     hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+#     hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
 #         Tuple of type hint metadata describing sample type hints exercising edge
 #         cases in the :mod:`beartype` codebase.
 #     hints_ignorable : frozenset
@@ -385,7 +385,7 @@ def test_door_typehint_is_ignorable(hints_pep_meta, hints_ignorable) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         Tuple of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     hints_ignorable : frozenset

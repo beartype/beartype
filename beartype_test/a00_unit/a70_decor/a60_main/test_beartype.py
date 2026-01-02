@@ -45,7 +45,7 @@ def test_beartype(iter_hints_piths_meta) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
@@ -57,9 +57,9 @@ def test_beartype(iter_hints_piths_meta) -> None:
     from beartype import beartype
     from beartype.roar import BeartypeCallHintViolation
     from beartype._util.text.utiltextansi import strip_str_ansi
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         # HintPepMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
     from beartype_test._util.pytroar import raises_uncached
     # from pytest import warns
@@ -175,7 +175,7 @@ def test_beartype(iter_hints_piths_meta) -> None:
 
         # ....................{ VIOLATE                    }....................
         # If this pith violates this hint...
-        if isinstance(pith_meta, HintPithUnsatisfiedMetadata):
+        if isinstance(pith_meta, PithUnsatisfiedMetadata):
             # ....................{ EXCEPTION ~ type       }....................
             # Assert this wrapper function raises the expected exception when
             # type-checking this pith against this hint.

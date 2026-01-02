@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`--compliant **relative forward reference type hint
-utilities** (i.e., low-level callables introspecting :pep:`484`-compliant
-forward reference type hints whose resolution is relative to some parent
-objects -- typically parent callables, types, or modules).
+Project-wide :pep:`484`--compliant **forward reference type hint utilities**
+(i.e., low-level callables introspecting :pep:`484`-compliant forward reference
+type hints in a general-purpose manner without regard for whether those
+references are relative or absolute).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -291,7 +291,7 @@ def import_pep484_ref_type(
     # Avoid circular import dependencies.
     from beartype._check.forward.reference.fwdrefmake import (
         make_forwardref_subbable_subtype)
-    from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
+    from beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic import (
         canonicalize_hint_pep484_ref)
 
     # Possibly undefined fully-qualified module name and possibly unqualified

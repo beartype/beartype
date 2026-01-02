@@ -24,7 +24,7 @@ from beartype._data.hint.sign.datahintsigns import (
 )
 from beartype._util.cls.pep.clspep3119 import die_unless_object_issubclassable
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.hint.pep.proposal.pep484.forward.pep484refrelative import (
+from beartype._util.hint.pep.proposal.pep484.forward.pep484refgeneral import (
     import_pep484_ref_type)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none

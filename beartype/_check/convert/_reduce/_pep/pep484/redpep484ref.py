@@ -11,27 +11,26 @@ lower-level type hints more readily consumable by :mod:`beartype`).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                            }....................
-from beartype._data.typing.datatyping import (
-    HintPep484Ref,
-    TypeStack,
-)
-from beartype._data.typing.datatypingport import Hint
-from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
-    canonicalize_hint_pep484_ref_relative_to_type_name)
-
-# ....................{ REDUCERS ~ forwardref              }....................
-#FIXME: Add to the "_redmap" submodule, please.
-#FIXME: Unit test us up, please.
-#FIXME: Finalize implementation, please. Useful reductions for this reducer to
-#eventually perform include:
-#* Of a relative unqualified forward reference referring to a non-nested class
-#  to that class if the "cls_stack" contains *ONLY* that class.
-#* Of a relative qualified forward reference referring to a nested class to that
-#  class if the "cls_stack" contains two or more classes.
+# ....................{ TODO                               }....................
+#FIXME: As needed or desired, the reduce_hint_pep484_ref() reducer defined below
+#can be additionally generalized to perform further reductions of relative
+#forward references to the objects those references refer to. To do so in a
+#reasonably sane and algorithmic way:
+#* Generalize the existing find_hint_pep484_ref_on_cls_stack_or_none() finder
+#  into a new full-blown find_hint_pep484_ref_or_none() finder. Internally,
+#  find_hint_pep484_ref_or_none() should perform a "while" loop over lower-level
+#  finders like find_hint_pep484_ref_on_cls_stack_or_none(). The comparable
+#  canonicalize_hint_pep484_ref() canonicalizer performs a "while" loop over
+#  lower-level private canonicalizers should serve as a useful reference.
+#* Call find_hint_pep484_ref_or_none() rather than
+#  find_hint_pep484_ref_on_cls_stack_or_none() below.
+#* Externally privatize find_hint_pep484_ref_on_cls_stack_or_none().
+#FIXME: Other useful private finders to have find_hint_pep484_ref_or_none()
+#iteratively call should attempt to reduce forward references as follows:
 #* Of an absolute unqualified forward reference referring to a builtin type.
-#  Pretty sure we have similar functionality elsewhere. Our PEP 563 resolver,
-#  perhaps? *shrug*
+#  This one's super-trivial. Use the existing "from beartype._data.cls.datacls
+#  import TYPE_BUILTIN_NAME_TO_TYPE" dictionary to map strings like "int" to the
+#  corresponding builtin types.
 #* Of a relative unqualified forward reference referring to a *GLOBAL* attribute
 #  of the module defining this *METHOD* if this reduction is being performed
 #  against a *METHOD*, as is the case when the "cls_stack" parameter is
@@ -80,6 +79,18 @@ from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
 #reductions supporting edge-case type hints that *CANNOT* be readily supported
 #any other way. The remainder of the above reductions are merely optimizations
 #(albeit useful optimizations at that).
+
+# ....................{ IMPORTS                            }....................
+from beartype._data.typing.datatyping import (
+    HintPep484Ref,
+    TypeStack,
+)
+from beartype._data.typing.datatypingport import Hint
+from beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic import (
+    find_hint_pep484_ref_on_cls_stack_or_none)
+
+# ....................{ REDUCERS ~ forwardref              }....................
+#FIXME: Unit test us up, please.
 def reduce_hint_pep484_ref(
     hint: HintPep484Ref,
     cls_stack: TypeStack,
@@ -90,8 +101,9 @@ def reduce_hint_pep484_ref(
     Reduce the passed :pep:`484`-compliant **forward reference hint** (i.e.,
     object indirectly referring to a user-defined type that typically has yet to
     be defined) to the object this reference refers to if that object is
-    efficiently accessible at this early decoration time *or* preserve this
-    reference as is otherwise.
+    efficiently accessible at this early decoration time without unsafe dynamic
+    importation of third-party packages or modules *or* preserve this reference
+    as is otherwise.
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), due to requiring contextual parameters and
@@ -154,25 +166,19 @@ def reduce_hint_pep484_ref(
     # If this forward reference annotates a method of a possibly nested type
     # currently being decorated by the @beartype decorator...
     if cls_stack:
-        # "hint_module_name" is either:
+        # Either:
         # * If this is a relative forward reference referring to the possibly
         #   nested and thus partially-qualified name of that type (e.g.,
-        #   "OuterType.InnerType"), the fully-qualified module name declaring
-        #   that type.
+        #   "OuterType.InnerType"), that type.
         # * Else, "None".
-        #
-        # In either case, the second returned value (typically referred to as
-        # "hint_type_name") is guaranteed to be the passed "hint" unmodified and
-        # thus trivially ignorable as the "_" placeholder.
-        hint_module_name, _ = canonicalize_hint_pep484_ref_relative_to_type_name(
+        hint_type = find_hint_pep484_ref_on_cls_stack_or_none(
             hint=hint, cls_stack=cls_stack, exception_prefix=exception_prefix)
 
-        # If this is a relative forward reference referring to the possibly
-        # nested and thus partially-qualified name of that type (e.g.,
-        # "OuterType.InnerType"), reduce this inefficient reference to this
-        # efficient type.
-        if hint_module_name:
-            hint = cls_stack[-1]  # type: ignore[assignment]
+        # If this is such a reference, reduce this reference to this type. The
+        # type to which this reference refers is directly available, implying
+        # that a forward reference is neither needed nor desired anymore.
+        if hint_type:
+            hint = hint_type  # type: ignore[assignment]
         # Else, this is *NOT* such a reference. In this case, silently preserve
         # this reference as is.
     # Else, this forward reference does *NOT* annotate such a method. In this

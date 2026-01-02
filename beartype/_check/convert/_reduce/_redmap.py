@@ -27,6 +27,8 @@ from beartype._check.convert._reduce._pep.pep484.redpep484core import (
     reduce_hint_pep484_deprecated,
     reduce_hint_pep484_none,
 )
+from beartype._check.convert._reduce._pep.pep484.redpep484ref import (
+    reduce_hint_pep484_ref)
 from beartype._check.convert._reduce._pep.redpep484612646 import (
     reduce_hint_pep484612646_typearg)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
@@ -80,6 +82,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignDeque,
     HintSignDict,
     HintSignFinal,
+    HintSignForwardRef,
     HintSignFrozenSet,
     HintSignGenerator,
     HintSignHashable,
@@ -407,6 +410,12 @@ Note that:
 # ....................{ MAPPINGS ~ uncached                }....................
 HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # ..................{ PEP 484                            }..................
+    # Reduce PEP 484-compliant forward references to the objects these
+    # references refer to only if those objects are efficiently accessible at
+    # this early decoration time *WITHOUT* requiring unsafe dynamic importation
+    # of third-party packages or modules.
+    HintSignForwardRef: reduce_hint_pep484_ref,
+
     # Reduce PEP 484-compliant type variables that have subsequently been
     # semantically (but *NOT* syntactically) "replaced" by concrete hints to
     # those hints, usually due to higher-level hints initially parametrized by

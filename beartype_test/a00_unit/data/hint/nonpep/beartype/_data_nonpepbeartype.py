@@ -19,7 +19,7 @@ These hints include:
 def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
     '''
     List of :mod:`beartype`-specific **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata`
     instances describing test-specific :mod:`beartype`-specific PEP-noncompliant
     sample type hints with metadata generically leveraged by various
     PEP-agnostic unit tests).
@@ -30,10 +30,10 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
     from beartype.plug import BeartypeHintable
     from beartype.vale import Is
     from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintNonpepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
 
     # ..................{ LOCALS                             }..................
@@ -52,9 +52,9 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
             hint=(str,),
             piths_meta=(
                 # String constant.
-                HintPithSatisfiedMetadata('Pinioned coin tokens'),
+                PithSatisfiedMetadata('Pinioned coin tokens'),
                 # Byte-string constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=b'Murkily',
                     # Match that the exception message raised for this pith
                     # declares the types *NOT* satisfied by this object.
@@ -76,11 +76,11 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
             hint=(int, str),
             piths_meta=(
                 # Integer constant.
-                HintPithSatisfiedMetadata(12),
+                PithSatisfiedMetadata(12),
                 # String constant.
-                HintPithSatisfiedMetadata('Smirk‐opined — openly'),
+                PithSatisfiedMetadata('Smirk‐opined — openly'),
                 # Byte-string constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=b'Betokening',
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -155,11 +155,11 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
         #         hint=StringNonempty,
         #         piths_meta=(
         #             # String constant satisfying this validator.
-        #             HintPithSatisfiedMetadata(
+        #             PithSatisfiedMetadata(
         #                 "Impell no pretty‐spoked fellahs’ prudently"),
         #             # Byte-string constant *NOT* an instance of the expected
         #             # type.
-        #             HintPithUnsatisfiedMetadata(
+        #             PithUnsatisfiedMetadata(
         #                 pith=b'Impudent Roark-sparkful',
         #                 # Match that the exception message raised for this
         #                 # object embeds the code for this validator's lambda
@@ -168,7 +168,7 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
         #                     r'Is\[.*\bbool\(text\).*\]',),
         #             ),
         #             # Empty string constant violating this validator.
-        #             HintPithUnsatisfiedMetadata(''),
+        #             PithUnsatisfiedMetadata(''),
         #         ),
         #     ),
         # ))

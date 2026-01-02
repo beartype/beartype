@@ -12,7 +12,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`593`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`593`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -43,10 +43,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         Subclass,
         SubclassSubclass,
     )
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
     from functools import partial
 
@@ -192,10 +192,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # String constant.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         'Towards a timely, wines‐enticing gate'),
                     # List of string constants.
-                    HintPithUnsatisfiedMetadata([
+                    PithUnsatisfiedMetadata([
                         'Of languished anger’s sap‐spated rushings',]),
                 ),
             ),
@@ -206,12 +206,12 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # List of string constants.
-                    HintPithSatisfiedMetadata([
+                    PithSatisfiedMetadata([
                         'MINERVA‐unnerving, verve‐sapping enervations',
                         'Of a magik-stoned Shinto rivery',
                     ]),
                     # String constant.
-                    HintPithUnsatisfiedMetadata('Of a Spicily sated',),
+                    PithUnsatisfiedMetadata('Of a Spicily sated',),
                 ),
             ),
 
@@ -222,10 +222,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # String constant.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         'Papally Ľust‐besmirched Merchet laws'),
                     # List of string constants.
-                    HintPithUnsatisfiedMetadata([
+                    PithUnsatisfiedMetadata([
                         "Of our ôver‐crowdedly cowed crowd's opinion‐",]),
                 ),
             ),
@@ -239,10 +239,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # Objects defining attributes with the above name.
-                    HintPithSatisfiedMetadata(BOSS_EMBOSSED_ORDERING),
-                    HintPithSatisfiedMetadata(SORDIDLY_FLABBY_WRMCASTINGS),
+                    PithSatisfiedMetadata(BOSS_EMBOSSED_ORDERING),
+                    PithSatisfiedMetadata(SORDIDLY_FLABBY_WRMCASTINGS),
                     # String constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'Her timid steps to gaze upon a form'),
                 ),
             ),
@@ -254,11 +254,11 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # Objects evaluating to "True" when coerced into booleans.
-                    HintPithSatisfiedMetadata(True),
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(True),
+                    PithSatisfiedMetadata(
                         'Leaped in the boat, he spread his cloak aloft'),
                     # Empty string.
-                    HintPithUnsatisfiedMetadata(''),
+                    PithUnsatisfiedMetadata(''),
                 ),
             ),
 
@@ -269,11 +269,11 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # Objects evaluating to "True" when coerced into booleans.
-                    HintPithSatisfiedMetadata(True),
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(True),
+                    PithSatisfiedMetadata(
                         'Swept strongly from the shore, blackening the waves.'),
                     # Empty string.
-                    HintPithUnsatisfiedMetadata(''),
+                    PithUnsatisfiedMetadata(''),
                 ),
             ),
 
@@ -284,11 +284,11 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # String constant satisfying this validator.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         'To Ɯṙaith‐like‐upwreathed ligaments'),
                     # Byte-string constant *NOT* an instance of the expected
                     # type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=b'Down-bound',
                         # Match that the exception message raised for this
                         # object embeds the code for this validator's lambda
@@ -297,7 +297,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                             r'Is\[.*\blen\(text\)\s*>\s*30\b.*\]',),
                     ),
                     # String constant violating this validator.
-                    HintPithUnsatisfiedMetadata('To prayer'),
+                    PithUnsatisfiedMetadata('To prayer'),
                 ),
             ),
 
@@ -309,11 +309,11 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # String constant satisfying these validators.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         '"Into piezo‐electrical, dun‐dappled lights" and...'),
                     # Byte-string constant *NOT* an instance of the expected
                     # type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=b'Joy.',
                         # Match that the exception message raised...
                         exception_str_match_regexes=(
@@ -327,7 +327,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                     ),
                     # String constant violating only the first of these
                     # validators.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith='"Conduct my friar’s wheel"...',
                         # Match that the exception message raised documents the
                         # exact validator violated by this string.
@@ -344,11 +344,11 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # String constant satisfying these validators.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         'Dialectical, eclectic mind‐toys'),
                     # Byte-string constant *NOT* an instance of the expected
                     # type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=b'Of Cycladic impoverishment, cyclically unreeling',
                         # Match that the exception message raised...
                         exception_str_match_regexes=(
@@ -361,7 +361,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                         ),
                     ),
                     # String constant violating all of these validators.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith='Stay its course, and',
                         # Match that the exception message raised documents the
                         # first validator violated by this string.
@@ -380,11 +380,11 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # String constant satisfying these validators.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         '"Into piezo‐electrical, dun‐dappled lights" and...'),
                     # Byte-string constant *NOT* an instance of the expected
                     # type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=b'Joy.',
                         # Match that the exception message raised...
                         exception_str_match_regexes=(
@@ -398,7 +398,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                     ),
                     # String constant violating only the first of these
                     # validators.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith='"Conduct my friar’s wheel"...',
                         # Match that the exception message raised documents the
                         # exact validator violated by this string.
@@ -422,10 +422,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 piths_meta=(
                     # Byte-string constant *NOT* an instance of the expected
                     # type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         b'Lone ignorance concentrations a-'),
                     # String constant violating the first validator.
-                    HintPithUnsatisfiedMetadata('Long a'),
+                    PithUnsatisfiedMetadata('Long a'),
                 ),
             ),
 
@@ -443,13 +443,13 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # String constant satisfying the first validator.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         "Longhouse-ignifluous, "
                         "superfluousness-rambling academic's"
                     ),
                     # Byte-string constant *NOT* an instance of the expected
                     # type.
-                    HintPithUnsatisfiedMetadata(b'Intra-convivial loci of'),
+                    PithUnsatisfiedMetadata(b'Intra-convivial loci of'),
                 ),
             ),
 
@@ -461,16 +461,16 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # String constant satisfying these validators.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         'Antisatellite‐dendroidal, Θṙbital Cemetery orbs — '
                         'of Moab.'
                     ),
                     # Byte-string constant *NOT* an instance of the expected
                     # type.
-                    HintPithUnsatisfiedMetadata(b'Then, and'),
+                    PithUnsatisfiedMetadata(b'Then, and'),
                     # String constant violating only the first of these
                     # validators.
-                    HintPithUnsatisfiedMetadata('Though a...'),
+                    PithUnsatisfiedMetadata('Though a...'),
                 ),
             ),
 
@@ -483,12 +483,12 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 is_pep585_builtin_subbed=List is list,
                 piths_meta=(
                     # List of string constants satisfying this validator.
-                    HintPithSatisfiedMetadata([
+                    PithSatisfiedMetadata([
                         'An‐atomically Island‐stranded, adrift land)',
                         'That You randily are That worm‐tossed crabapple of',
                     ]),
                     # String constant *NOT* an instance of the expected type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith="Our Sturm‐sapped disorder's convolution of",
                         # Match that the exception message raised for this
                         # object embeds the code for this validator's lambda
@@ -497,7 +497,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                             r'Is\[.*\blen\(text\)\s*>\s*30\b.*\]',),
                     ),
                     # List of string constants violating this validator.
-                    HintPithUnsatisfiedMetadata([
+                    PithUnsatisfiedMetadata([
                         'Volubly liable,',
                         'Drang‐rang aloofment –',
                         'ruthlessly',
@@ -516,12 +516,12 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 typeargs_packed=(T_IsIntNonZero,),
                 piths_meta=(
                     # List of lists of non-zero integer constants.
-                    HintPithSatisfiedMetadata([[16, 17, 20], [21, 64, 65, 68]]),
+                    PithSatisfiedMetadata([[16, 17, 20], [21, 64, 65, 68]]),
                     # String constant *NOT* an instance of the expected type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'The waves arose. Higher and higher still'),
                     # List of lists of non-integers and zeroes.
-                    HintPithUnsatisfiedMetadata([
+                    PithUnsatisfiedMetadata([
                         [
                             'Their fierce necks writhed',
                             "beneath the tempest's scourge",
@@ -542,12 +542,12 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 typeargs_packed=(T_IsIntNonZero,),
                 piths_meta=(
                     # List of lists of non-zero integer constants.
-                    HintPithSatisfiedMetadata([[16, 17, 20], [21, 64, 65, 68]]),
+                    PithSatisfiedMetadata([[16, 17, 20], [21, 64, 65, 68]]),
                     # String constant *NOT* an instance of the expected type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'The waves arose. Higher and higher still'),
                     # List of lists of non-integers and zeroes.
-                    HintPithUnsatisfiedMetadata([
+                    PithUnsatisfiedMetadata([
                         [
                             'Their fierce necks writhed',
                             "beneath the tempest's scourge",
@@ -568,18 +568,18 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 typeargs_packed=(T_IsNumberNonNegativeOrStrNonEmpty,),
                 piths_meta=(
                     # List of lists of positive number constants.
-                    HintPithSatisfiedMetadata([
+                    PithSatisfiedMetadata([
                         [11, 0.11], [1, 110, 1101100]]),
                     # List of lists of non-empty string constants.
-                    HintPithSatisfiedMetadata([
+                    PithSatisfiedMetadata([
                         ['The straining boat.', '—A whirlwind swept it on,'],
                         ['With fierce gusts and', 'precipitating force,'],
                     ]),
                     # String constant *NOT* an instance of the expected type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         'Through the white ridges of the chafèd sea.'),
                     # List of lists of negative numbers and empty strings.
-                    HintPithUnsatisfiedMetadata([[-1, '', -0.4], ['', -5, '']]),
+                    PithUnsatisfiedMetadata([[-1, '', -0.4], ['', -5, '']]),
                 ),
             ),
 
@@ -592,9 +592,9 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # Instance of this class satisfying this validator.
-                    HintPithSatisfiedMetadata(BOSS_EMBOSSED_ORDERING),
+                    PithSatisfiedMetadata(BOSS_EMBOSSED_ORDERING),
                     # String constant *NOT* an instance of this class.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith='An atoll nuclear broilers newly cleared of',
                         # Match that the exception message raised for this
                         # object embeds the name of the expected attribute.
@@ -602,7 +602,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                             r"IsAttr\[.*'this_mobbed_triste_of',.*\]",),
                     ),
                     # Instance of this class *NOT* satisfying this validator.
-                    HintPithUnsatisfiedMetadata(SORDIDLY_FLABBY_WRMCASTINGS),
+                    PithUnsatisfiedMetadata(SORDIDLY_FLABBY_WRMCASTINGS),
                 ),
             ),
 
@@ -614,12 +614,12 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # Exact object subscripting this validator.
-                    HintPithSatisfiedMetadata(AMPLY_IMPISH),
+                    PithSatisfiedMetadata(AMPLY_IMPISH),
                     # Object *NOT* subscripting this validator but equal to
                     # this object.
-                    HintPithSatisfiedMetadata(AMPLY_IMPISH[:]),
+                    PithSatisfiedMetadata(AMPLY_IMPISH[:]),
                     # String constant *NOT* an instance of the expected type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith='May Your coarsest, Incessantly cast‐off jobs of a',
                         # Match that the exception message raised for this
                         # object embeds a string in the expected list.
@@ -627,9 +627,9 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                     ),
                     # List of integer constants *NOT* instances of the expected
                     # subtype.
-                    HintPithUnsatisfiedMetadata([1, 2, 3, 6, 7, 14, 21, 42,]),
+                    PithUnsatisfiedMetadata([1, 2, 3, 6, 7, 14, 21, 42,]),
                     # List of string constants violating this validator.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         ['Hectic,', 'receptacle‐hybernacling caste so',]),
                 ),
             ),
@@ -642,17 +642,17 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # Instance of the class subscripting this validator.
-                    HintPithSatisfiedMetadata(Class()),
+                    PithSatisfiedMetadata(Class()),
                     # Instance of the subclass subclassing the class
                     # subscripting this validator.
-                    HintPithSatisfiedMetadata(Subclass()),
+                    PithSatisfiedMetadata(Subclass()),
                     # Instance of the subsubclass subclassing the subclass
                     # subclassing the class subscripting this validator.
-                    HintPithUnsatisfiedMetadata(SubclassSubclass()),
+                    PithUnsatisfiedMetadata(SubclassSubclass()),
                     # Class subscripting this validator.
-                    HintPithUnsatisfiedMetadata(Class),
+                    PithUnsatisfiedMetadata(Class),
                     # String constant *NOT* an instance of the expected type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=(
                             'Architrave‐contravening, '
                             'indigenously chitinous tactilities) of'
@@ -673,22 +673,22 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignUnion,
                 piths_meta=(
                     # String constant.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         'Caught the impatient wandering of his gaze.'),
                     # Tuple of string constants.
-                    HintPithSatisfiedMetadata((
+                    PithSatisfiedMetadata((
                         'Swayed with the undulations of the tide.',
                         'A restless impulse urged him to embark',
                     )),
                     # Byte string constant.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=b'It had been long abandoned, for its sides',
                         # Match that the exception message raised for this
                         # object embeds a classname in the expected list.
                         exception_str_match_regexes=(r'\bbytes\b',),
                     ),
                     # Tuple of byte string constants.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=(
                             b'Gaped wide with many a rift,',
                             b'and its frail joints',
@@ -708,14 +708,14 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # Class subscripting this validator.
-                    HintPithSatisfiedMetadata(Class),
+                    PithSatisfiedMetadata(Class),
                     # Class subclassing the class subscripting this validator.
-                    HintPithSatisfiedMetadata(Subclass),
+                    PithSatisfiedMetadata(Subclass),
                     # Class *NOT* subclassing the class subscripting this
                     # validator.
-                    HintPithUnsatisfiedMetadata(str),
+                    PithUnsatisfiedMetadata(str),
                     # String constant *NOT* an instance of the expected type.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith='May Your coarsest, Incessantly cast‐off jobs of a',
                         # Match that the exception message raised for this
                         # object embeds a classname in the expected list.

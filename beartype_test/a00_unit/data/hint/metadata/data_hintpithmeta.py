@@ -4,9 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-Testing-specific **type hint metadata class hierarchy** (i.e., hierarchy of
-classes encapsulating sample type hints instantiated by the
-:mod:`beartype_test.a00_unit.data.hint` submodules).
+Testing-specific **PEP-agnostic type hint metadata class hierarchy** (i.e.,
+hierarchy of classes encapsulating sample type hints regardless of whether those
+hints comply with PEP standards or not, instances of which are typically
+contained in containers yielded by session-scoped fixtures defined by the
+:mod:`beartype_test.a00_unit.data.hint.data_hintfixture` submodule).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -14,19 +16,13 @@ classes encapsulating sample type hints instantiated by the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.typing import (
-    Iterable,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-)
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from collections.abc import Iterable as IterableABC
+from collections.abc import Iterable
+from typing import Optional
 
-# ....................{ CLASSES ~ hint : [un]satisfied     }....................
-class HintPithSatisfiedMetadata(object):
+# ....................{ CLASSES ~ pith : [un]satisfied     }....................
+class PithSatisfiedMetadata(object):
     '''
     **Type hint satisfied pith metadata** (i.e., dataclass whose instance
     variables describe an object satisfying a type hint when either passed as a
@@ -90,7 +86,7 @@ class HintPithSatisfiedMetadata(object):
         ))
 
 
-class HintPithUnsatisfiedMetadata(HintPithSatisfiedMetadata):
+class PithUnsatisfiedMetadata(PithSatisfiedMetadata):
     '''
     **Type hint unsatisfied pith metadata** (i.e., dataclass whose instance
     variables describe an object *not* satisfying a type hint when either
@@ -120,9 +116,9 @@ class HintPithUnsatisfiedMetadata(HintPithSatisfiedMetadata):
         exception_str_not_match_regexes: Iterable[str] = (),
         **kwargs
     ) -> None:
-        assert isinstance(exception_str_match_regexes, IterableABC), (
+        assert isinstance(exception_str_match_regexes, Iterable), (
             f'{repr(exception_str_match_regexes)} not iterable.')
-        assert isinstance(exception_str_not_match_regexes, IterableABC), (
+        assert isinstance(exception_str_not_match_regexes, Iterable), (
             f'{repr(exception_str_not_match_regexes)} not iterable.')
         assert all(
             isinstance(exception_str_match_regex, str)
@@ -194,10 +190,10 @@ class HintNonpepMetadata(object):
     is_supported : bool
         :data:`True` only if this hint is currently supported by
         the :func:`beartype.beartype` decorator. Defaults to :data:`False`.
-    piths_meta : Iterable[HintPithSatisfiedMetadata]
+    piths_meta : Iterable[PithSatisfiedMetadata]
         Iterable of zero or more **(un)satisfied metadata objects** (i.e.,
-        :class:`HintPithSatisfiedMetadata` and
-        :class:`HintPithUnsatisfiedMetadata` instances), each describing an
+        :class:`PithSatisfiedMetadata` and
+        :class:`PithUnsatisfiedMetadata` instances), each describing an
         arbitrary object either satisfying or violating this hint when passed as
         a parameter *or* returned as a value annotated by this hint. Defaults to
         the empty tuple.
@@ -223,8 +219,8 @@ class HintNonpepMetadata(object):
         is_ignorable: bool = False,
         is_needs_cls_stack: bool = False,
         is_supported: bool = True,
-        piths_meta: Iterable[HintPithSatisfiedMetadata] = (),
-        warning_type: Optional[Type[Warning]] = None,
+        piths_meta: Iterable[PithSatisfiedMetadata] = (),
+        warning_type: Optional[type[Warning]] = None,
     ) -> None:
 
         # Validate passed non-variadic parameters.
@@ -236,15 +232,15 @@ class HintNonpepMetadata(object):
             f'{repr(is_needs_cls_stack)} not bool.')
         assert isinstance(is_supported, bool), (
             f'{repr(is_supported)} not bool.')
-        assert isinstance(piths_meta, IterableABC), (
+        assert isinstance(piths_meta, Iterable), (
             f'{repr(piths_meta)} not iterable.')
         assert all(
-            isinstance(piths_meta, HintPithSatisfiedMetadata)
+            isinstance(piths_meta, PithSatisfiedMetadata)
             for piths_meta in piths_meta
         ), (
             f'{repr(piths_meta)} not iterable of '
-            f'"HintPithSatisfiedMetadata" and '
-            f'"HintPithUnsatisfiedMetadata" instances.')
+            f'"PithSatisfiedMetadata" and '
+            f'"PithUnsatisfiedMetadata" instances.')
         assert isinstance(warning_type, _NoneTypeOrType), (
             f'{repr(warning_type)} neither class nor "None".')
 
@@ -365,7 +361,7 @@ class HintPepMetadata(HintNonpepMetadata):
         is_typing: Optional[bool] = None,
         isinstanceable_type: Optional[type] = None,
         generic_type: Optional[type] = None,
-        typehint_cls: Optional[Type['beartype.door.TypeHint']] = None,
+        typehint_cls: Optional[type['beartype.door.TypeHint']] = None,
         typeargs_packed: 'TuplePep484612646TypeArgsPacked' = (),
         **kwargs
     ) -> None:
@@ -468,7 +464,9 @@ class HintPepMetadata(HintNonpepMetadata):
         # parameters are *NOT* both true. Note, however, that both can be false
         # (e.g., for PEP 484-compliant user-defined generics).
         assert not (
-            (is_pep585_builtin_subbed or is_pep585_generic) and is_type_typing), (
+            (is_pep585_builtin_subbed or is_pep585_generic) and
+            is_type_typing
+        ), (
             f'Mutually incompatible boolean parameters '
             f'is_type_typing={repr(is_type_typing)} and either '
             f'is_pep585_builtin_subbed={repr(is_pep585_builtin_subbed)} or '
@@ -510,6 +508,63 @@ class HintPepMetadata(HintNonpepMetadata):
             f'    piths_meta={repr(self.piths_meta)},',
             f'    typeargs_packed={repr(self.typeargs_packed)},',
             f'    warning_type={repr(self.warning_type)},',
+            f')',
+        ))
+
+# ....................{ CLASSES ~ hint-pith                }....................
+class HintPithMetadata(object):
+    '''
+    Dataclass encapsulating all relevant type hint- and pith-specific metadata
+    iteratively yielded by each iteration of the :func:`.iter_hints_piths_meta`
+    generator.
+
+    Attributes
+    ----------
+    hint_meta : HintNonpepMetadata
+        Metadata describing the currently iterated type hint.
+    pith_meta : PithSatisfiedMetadata
+        Metadata describing this ``pith``.
+    pith : object
+        Object either satisfying or violating this hint.
+    '''
+
+    # ..................{ INITIALIZERS                       }..................
+    def __init__(
+        self,
+        hint_meta: HintNonpepMetadata,
+        pith_meta: PithSatisfiedMetadata,
+        pith: object,
+    ) -> None:
+        '''
+        Initialize this dataclass.
+
+        Parameters
+        ----------
+        hint_meta : HintNonpepMetadata
+            Metadata describing the currently iterated type hint.
+        pith_meta : Union[PithSatisfiedMetadata, PithUnsatisfiedMetadata]
+            Metadata describing this ``pith``.
+        pith : object
+            Object either satisfying or violating this hint.
+        '''
+        assert isinstance(hint_meta, HintNonpepMetadata), (
+            f'{repr(hint_meta)} not "HintNonpepMetadata" object.')
+        assert isinstance(pith_meta, PithSatisfiedMetadata), (
+            f'{repr(pith_meta)} not "PithSatisfiedMetadata" object.')
+
+        # Classify all passed parameters. For simplicity, avoid validating
+        # these parameters; we simply *CANNOT* be bothered at the moment.
+        self.hint_meta = hint_meta
+        self.pith_meta = pith_meta
+        self.pith = pith
+
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    hint_meta={repr(self.hint_meta)},',
+            f'    pith_meta={repr(self.pith_meta)},',
+            f'    pith={repr(self.pith)},',
             f')',
         ))
 

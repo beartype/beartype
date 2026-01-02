@@ -523,8 +523,8 @@ def _init() -> None:
         # forward references are necessarily instances of this type.
         #
         # Under Python >= 3.14, both of these types are simply aliases of
-        # "annotationlib.ForwardRef" type -- which is now the canonical
-        # implementation of this type but which resides outside a typing module.
+        # "annotationlib.ForwardRef" type -- now the canonical implementation of
+        # this type residing outside any "typing" module.
         _TYPING_ATTR_TYPE_BASENAME_TO_SIGN['ForwardRef'] = HintSignForwardRef
     # Else, the active Python interpreter targets Python >= 3.14.
 

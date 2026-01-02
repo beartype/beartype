@@ -17,7 +17,7 @@ PEP-noncompliant type hints include:
 def hints_nonpep695_meta() -> 'List[HintNonpepMetadata]':
     '''
     List of :pep:`695`-sorta-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata`
     instances describing test-specific :pep:`695`-sorta-compliant sample type
     hints with metadata generically leveraged by various PEP-agnostic unit
     tests).
@@ -26,10 +26,10 @@ def hints_nonpep695_meta() -> 'List[HintNonpepMetadata]':
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintNonpepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
 
     # List of all PEP-noncompliant type hint metadata to be returned.
@@ -58,9 +58,9 @@ def hints_nonpep695_meta() -> 'List[HintNonpepMetadata]':
             hint=HintPep695TypeAlias,
             piths_meta=(
                 # Arbitrary PEP 695-compliant type alias.
-                HintPithSatisfiedMetadata(AliasSimple),
+                PithSatisfiedMetadata(AliasSimple),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith='And diamond-paved lustrous long arcades,',
                     # Match that the exception message raised for this pith
                     # contains...

@@ -9,7 +9,7 @@ unit
 tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -22,7 +22,7 @@ This submodule unit tests the public API of the private
 def test_canonicalize_hint_pep484_ref() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute.canonicalize_hint_pep484_ref`
+    :func:`beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic.canonicalize_hint_pep484_ref`
     canonicalizer.
     '''
 
@@ -30,7 +30,7 @@ def test_canonicalize_hint_pep484_ref() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype.typing import ForwardRef
-    from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
+    from beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic import (
         canonicalize_hint_pep484_ref)
     from beartype_test.a00_unit.data.data_type import (
         ClassModuleNameFake,
@@ -282,22 +282,21 @@ def test_canonicalize_hint_pep484_ref() -> None:
     # Assert this message contains two consecutive "*"-prefixed bullet points.
     assert re_search(REGEX_TWO_BULLETS, exception_message) is not None
 
-
-def test_canonicalize_hint_pep484_ref_relative_to_type_name() -> None:
+# ....................{ TESTS ~ finder                     }....................
+def test_find_hint_pep484_ref_on_cls_stack_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute.canonicalize_hint_pep484_ref_relative_to_type_name`
-    canonicalizer.
+    :func:`beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic.find_hint_pep484_ref_on_cls_stack_or_none`
+    finder.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    # from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype.typing import ForwardRef
-    from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
-        canonicalize_hint_pep484_ref_relative_to_type_name)
+    from beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic import (
+        find_hint_pep484_ref_on_cls_stack_or_none)
 
-    # ....................{ LOCALS ~ str                   }....................
+    # ....................{ LOCALS                         }....................
     # Fully-qualified name of the current module defining this unit test.
     THIS_MODULE_NAME = __name__
 
@@ -329,65 +328,87 @@ def test_canonicalize_hint_pep484_ref_relative_to_type_name() -> None:
                 pass
 
     # ....................{ PASS ~ ignore                  }....................
-    # Assert that this getter ignores an already absolute forward reference in
+    # Assert that this finder ignores an already absolute forward reference in
     # "typing.ForwardRef" format.
-    assert canonicalize_hint_pep484_ref_relative_to_type_name(
+    assert find_hint_pep484_ref_on_cls_stack_or_none(
         hint=ForwardRef('OverTheFieryFrontier', module=THIS_MODULE_NAME),
         cls_stack=(OverTheFieryFrontier,),
-    ) == (None, 'OverTheFieryFrontier')
+    ) is None
 
-    # Assert that this getter ignores a relative forward reference in string
+    # Assert that this finder ignores a relative forward reference in string
     # format referring to an unrecognized attribute that is *NOT* the only type
     # on a type stack.
-    assert canonicalize_hint_pep484_ref_relative_to_type_name(
+    assert find_hint_pep484_ref_on_cls_stack_or_none(
         hint='of_my_realms',
         cls_stack=(OverTheFieryFrontier,),
-    ) == (None, 'of_my_realms')
+    ) is None
 
-    # Assert that this getter ignores a relative forward reference in string
-    # format referring to an unrecognized attribute that is *NOT* the most
-    # deeply nested type on a type stack of two or more types.
-    assert canonicalize_hint_pep484_ref_relative_to_type_name(
+    # Assert that this finder ignores a relative forward reference in string
+    # format referring to an unrecognized attribute that is *NOT* the partially
+    # qualified name of a type on a type stack of two or more types.
+    assert find_hint_pep484_ref_on_cls_stack_or_none(
         hint='FallNo.ByTellusAnd.of_my_realms',
         cls_stack=(
             FallNo,
             FallNo.ByTellusAnd,
             FallNo.ByTellusAnd.HerBrinyRobes,
         ),
-    ) == (None, 'FallNo.ByTellusAnd.of_my_realms')
+    ) is None
 
     # ....................{ PASS ~ canonicalize            }....................
-    # Assert that this getter canonicalizes a relative forward reference in both
-    # string and "typing.ForwardRef" formats to the *ONLY* type on a type stack
-    # against the "__module__" dunder attribute of that type.
-    assert canonicalize_hint_pep484_ref_relative_to_type_name(
+    # Assert that this finder reduces a relative forward reference referring to
+    # to the *ONLY* type on a type stack in both string and "typing.ForwardRef"
+    # formats to that type.
+    assert find_hint_pep484_ref_on_cls_stack_or_none(
         hint='OverTheFieryFrontier',
         cls_stack=(OverTheFieryFrontier,),
-    ) == (THIS_MODULE_NAME, 'OverTheFieryFrontier')
-    assert canonicalize_hint_pep484_ref_relative_to_type_name(
+    ) is OverTheFieryFrontier
+    assert find_hint_pep484_ref_on_cls_stack_or_none(
         hint=ForwardRef('OverTheFieryFrontier'),
         cls_stack=(OverTheFieryFrontier,),
-    ) == (THIS_MODULE_NAME, 'OverTheFieryFrontier')
+    ) is OverTheFieryFrontier
 
-    # Assert that this getter canonicalizes a relative forward reference in
-    # both string and "typing.ForwardRef" formats to the most deeply nested type
-    # on a type stack containing a hierarchy of two or more types against the
-    # "__module__" dunder attribute of that type.
+    # Assert that this finder reduces a relative forward reference referring to
+    # any arbitrary nested type on a type stack of three or more types other
+    # than the first and last such types in both string and "typing.ForwardRef"
+    # formats to that type.
     #
-    # Note this constitutes a unique edge case distinct from the prior case.
-    assert canonicalize_hint_pep484_ref_relative_to_type_name(
+    # Note this constitutes a unique edge case distinct from prior cases.
+    assert find_hint_pep484_ref_on_cls_stack_or_none(
+        hint='FallNo.ByTellusAnd',
+        cls_stack=(
+            FallNo,
+            FallNo.ByTellusAnd,
+            FallNo.ByTellusAnd.HerBrinyRobes,
+        ),
+    ) is FallNo.ByTellusAnd
+    assert find_hint_pep484_ref_on_cls_stack_or_none(
+        hint=ForwardRef('FallNo.ByTellusAnd'),
+        cls_stack=(
+            FallNo,
+            FallNo.ByTellusAnd,
+            FallNo.ByTellusAnd.HerBrinyRobes,
+        ),
+    ) is FallNo.ByTellusAnd
+
+    # Assert that this finder reduces a relative forward reference referring to
+    # the most deeply nested type on a type stack of two or more types in
+    # both string and "typing.ForwardRef" formats to that type.
+    #
+    # Note this constitutes a unique edge case distinct from prior cases.
+    assert find_hint_pep484_ref_on_cls_stack_or_none(
         hint='FallNo.ByTellusAnd.HerBrinyRobes',
         cls_stack=(
             FallNo,
             FallNo.ByTellusAnd,
             FallNo.ByTellusAnd.HerBrinyRobes,
         ),
-    ) == (THIS_MODULE_NAME, 'FallNo.ByTellusAnd.HerBrinyRobes')
-    assert canonicalize_hint_pep484_ref_relative_to_type_name(
+    ) is FallNo.ByTellusAnd.HerBrinyRobes
+    assert find_hint_pep484_ref_on_cls_stack_or_none(
         hint=ForwardRef('FallNo.ByTellusAnd.HerBrinyRobes'),
         cls_stack=(
             FallNo,
             FallNo.ByTellusAnd,
             FallNo.ByTellusAnd.HerBrinyRobes,
         ),
-    ) == (THIS_MODULE_NAME, 'FallNo.ByTellusAnd.HerBrinyRobes')
+    ) is FallNo.ByTellusAnd.HerBrinyRobes

@@ -40,9 +40,8 @@ def test_reduce_hint_pep484_generic_io_to_pep544_protocol() -> None:
     # For each PEP 484-compliant "typing" IO generic base class...
     for pep484_generic_io in TYPES_PEP484_GENERIC_IO:
         # Equivalent protocol reduced from this generic.
-        pep544_protocol_io = (
-            reduce_hint_pep484_generic_io_to_pep544_protocol(
-                pep484_generic_io, ''))
+        pep544_protocol_io = reduce_hint_pep484_generic_io_to_pep544_protocol(
+            pep484_generic_io, '')
 
         # Assert this protocol is either...
         assert (

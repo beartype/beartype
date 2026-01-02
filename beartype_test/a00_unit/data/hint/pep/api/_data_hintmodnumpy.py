@@ -23,7 +23,7 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
     '''
     List of **NumPy type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific sample NumPy type hints with metadata
     generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -56,10 +56,10 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintSignPep484585TupleFixed,
     )
     from beartype._util.api.standard.utiltyping import import_typing_attr
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
 
     # Defer NumPy-specific imports.
@@ -103,13 +103,13 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
             is_typeargs=True,
             piths_meta=(
                 # NumPy array containing only 64-bit integers.
-                HintPithSatisfiedMetadata(asarray((
+                PithSatisfiedMetadata(asarray((
                     1, 0, 3, 5, 2, 6, 4, 9, 2, 3, 8, 4, 1, 3, 7, 7, 5, 0,))),
                 # NumPy array containing only 64-bit floats.
-                HintPithSatisfiedMetadata(asarray((
+                PithSatisfiedMetadata(asarray((
                     1.3, 8.23, 70.222, 726.2431, 8294.28730, 100776.357238,))),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith='Ine Gerrymander‐consigned electorate sangu‐',
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected class.
@@ -127,13 +127,13 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # NumPy array containing only 64-bit integers.
-                HintPithSatisfiedMetadata(asarray((
+                PithSatisfiedMetadata(asarray((
                     1, 7, 39, 211, 1168, 6728, 40561, 256297, 1696707,))),
                 # NumPy array containing only 64-bit floats.
-                HintPithSatisfiedMetadata(asarray((
+                PithSatisfiedMetadata(asarray((
                     1.1, 2.4, -4.4, 32.104, 400.5392, -3680.167936,))),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=(
                         'Inity my guinea‐konsealed Ğuinness’ pint '
                         'glockenspieled spells',
@@ -156,18 +156,18 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # NumPy array containing only 64-bit floats.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     asarray((1.0, 1.5, 1.8333, 2.08333, 2.28333, 2.45,)),
                 ),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith='Aggrandizing strifes with‐in',
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected class.
                     exception_str_match_regexes=(r'\bnumpy\.ndarray\b',),
                 ),
                 # NumPy array containing only 64-bit integers.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=asarray((4, 36, 624, 3744, 5108, 10200, 54912,)),
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected data type.
@@ -186,17 +186,17 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # NumPy array containing only 64-bit floats.
-                HintPithSatisfiedMetadata(asarray(
+                PithSatisfiedMetadata(asarray(
                     (2.0, 2.5, 2.6, 2.7083, 2.716, 2.71805,))),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith='Silver, ore, and almost dazedly aggro‐',
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected class.
                     exception_str_match_regexes=(r'\bnumpy\.ndarray\b',),
                 ),
                 # NumPy array containing only 64-bit integers.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=asarray((1, 1, 1, 1, 2, 3, 6, 11, 23, 47, 106, 235,)),
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected data type.
@@ -215,19 +215,19 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
             is_typing=False,
             piths_meta=(
                 # NumPy array containing only 32-bit floats.
-                HintPithSatisfiedMetadata(asarray(
+                PithSatisfiedMetadata(asarray(
                     (1.2, 2.4, 3.0, 3.6, 4.0, 4.5, 4.8, 5.6, 6.0, 6.3, 7.0,),
                     dtype=float32,
                 )),
                 # NumPy array containing only 64-bit floats.
-                HintPithSatisfiedMetadata(asarray(
+                PithSatisfiedMetadata(asarray(
                     (3.2, 5, 1, 2, 1, 8, 2, 5, 1, 3, 1, 2.8, 1, 1.5, 1, 1, 4,),
                     dtype=float64,
                 )),
                 # String constant.
-                HintPithUnsatisfiedMetadata('Then, and'),
+                PithUnsatisfiedMetadata('Then, and'),
                 # NumPy array containing only 64-bit integers.
-                HintPithUnsatisfiedMetadata(asarray(
+                PithUnsatisfiedMetadata(asarray(
                     (3, 6, 5, 12, 7, 18, 9, 12, 11, 30, 13, 16, 15, 18, 17,))),
             ),
         ),
@@ -241,12 +241,12 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=Tuple is tuple,
             piths_meta=(
                 # 2-tuple of NumPy arrays containing only 64-bit floats.
-                HintPithSatisfiedMetadata((
+                PithSatisfiedMetadata((
                     asarray((0.5, 0.75, 0.875, 0.9375, 0.96875, 0.984375)),
                     asarray((1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5)),
                 )),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=(
                         "A Spherically clerical,"
                         "cylindroid‐cindered cleft, and",
@@ -256,7 +256,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
                     exception_str_match_regexes=(r'\bnumpy\.ndarray\b',),
                 ),
                 # 2-tuple of NumPy arrays containing only integers.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=(
                         asarray((1, 1, 4, 6, 14, 23, 45, 72, 126, 195, 315,)),
                         asarray((1, 0, 1, 1, 2, 2, 5, 4, 9, 10, 16, 19, 31,)),

@@ -20,14 +20,14 @@ def hints_nonpep_meta() -> 'Tuple[HintNonpepMetadata]':
     '''
     Session-scoped fixture yielding a tuple of **PEP-noncompliant type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata`
     instances, each describing a sample PEP-noncompliant type hint exercising an
     edge case in the :mod:`beartype` codebase).
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintNonpepMetadata)
     from beartype_test._util.kind.pytkindmake import make_container_from_funcs
 

@@ -48,135 +48,31 @@ def test_reduce_hint() -> None:
     from beartype.vale import IsEqual
     from beartype._cave._cavefast import NoneType
     from beartype._check.convert._reduce.redmain import reduce_hint
-    from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
     from beartype._conf.confmain import BeartypeConf
     from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
     from beartype._data.typing.datatyping import (
         Pep484TowerComplex,
         Pep484TowerFloat,
-        TypeException,
     )
-    from beartype._data.typing.datatypingport import Hint
     from beartype._data.hint.sign.datahintsigns import HintSignAnnotated
-    from beartype._data.kind.datakindiota import SENTINEL
     from beartype._util.hint.pep.proposal.pep484604 import (
         make_hint_pep484604_union)
     from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
+    from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+        HintReductionInvalid,
+        HintReductionValid,
+    )
     from beartype_test.a00_unit.data.pep.data_pep484 import (
         T_str_or_bytes)
+    # from beartype_test._util.kind.pytkindmake import make_container_from_funcs
     from beartype_test._util.module.pytmodtest import is_package_numpy
     from dataclasses import InitVar
     from pytest import raises
 
     # Intentionally import PEP 484-specific type hint factories.
     from typing import Protocol
-
-    # ..................{ CLASSES                            }..................
-    class HintReductionValid(object):
-        '''
-        **Valid type hint reduction case** (i.e., dataclass encapsulating the
-        valid use case of reducing one type hint into another).
-
-        Attributes
-        ----------
-        conf : BeartypeConf
-            Input beartype configuration configuring this reduction.
-        hint_unreduced : Hint
-            Input hint to be reduced.
-        hint_reduced : Hint
-            Output hint expected to be returned from the :func:`.reduce_hint`
-            reducer when passed these inputs.
-        '''
-
-        # ..................{ INITIALIZERS                   }..................
-        def __init__(
-            self,
-
-            # Mandatory parameters.
-            hint_unreduced: Hint,
-
-            # Optional parameters.
-            conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-            hint_reduced: Hint = SENTINEL,
-        ) -> None:
-            '''
-            Initialize this valid type hint reduction case.
-
-            Attributes
-            ----------
-            hint_unreduced : Hint
-                Input hint to be reduced.
-            conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
-                Input beartype configuration configuring this reduction.
-                Defaults to the default beartype configuration.
-            hint_reduced : Hint, default: SENTINEL
-                Output hint expected to be returned from the
-                :func:`.reduce_hint` reducer when passed these inputs. Defaults
-                to the sentinel placeholder, in which case this output hint
-                actually defaults to this input hint. This default trivializes
-                testing for **irreducible hints** (i.e., hints *not* reduced by
-                the :func:`.reduce_hint` reducer).
-            '''
-
-            # If unpassed, default this output hint to this input hint.
-            if hint_reduced is SENTINEL:
-                hint_reduced = hint_unreduced
-
-            # Classify all passed parameters.
-            self.hint_unreduced = hint_unreduced
-            self.hint_reduced = hint_reduced
-            self.conf = conf
-
-
-    class HintReductionInvalid(object):
-        '''
-        **Invalid type hint reduction case** (i.e., dataclass encapsulating the
-        invalid use case of reducing one type hint, which then raises an
-        exception due to being invalid).
-
-        Attributes
-        ----------
-        conf : BeartypeConf
-            Input beartype configuration configuring this reduction.
-        hint_unreduced : Hint
-            Input hint to be reduced.
-        exception_type : Type[Exception]
-            Output type of exception expected to be raised by the
-            :func:`.reduce_hint` reducer when passed these inputs.
-        '''
-
-        # ..................{ INITIALIZERS                   }..................
-        def __init__(
-            self,
-
-            # Mandatory parameters.
-            hint_unreduced: Hint,
-            exception_type: TypeException,
-
-            # Optional parameters.
-            conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-        ) -> None:
-            '''
-            Initialize this invalid type hint reduction case.
-
-            Attributes
-            ----------
-            hint_unreduced : Hint
-                Input hint to be reduced.
-            exception_type : Type[Exception]
-                Output type of exception expected to be raised by the
-                :func:`.reduce_hint` reducer when passed these inputs.
-            conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
-                Input beartype configuration configuring this reduction.
-                Defaults to the default beartype configuration.
-            '''
-
-            # Classify all passed parameters.
-            self.hint_unreduced = hint_unreduced
-            self.exception_type = exception_type
-            self.conf = conf
 
     # ..................{ LOCALS                             }..................
     # List of all valid reduction cases to be tested.
@@ -359,28 +255,35 @@ def test_reduce_hint() -> None:
     # Else, the active Python interpreter targets Python < 3.11 and thus fails
     # to support PEP 646.
 
+    # List of all reduction cases to be tested, intentionally heterogeneously
+    # mixing both valid and invalid cases.
+    hint_reductions = hint_reductions_valid + hint_reductions_invalid
+
     # ....................{ PASS                           }....................
-    # For each valid hint reduction case...
-    for hint_reduction_valid in hint_reductions_valid:
-        # Sanified metadata encapsulating the reduction of this input hint.
-        hint_reduced_sane = reduce_hint(
-            hint=hint_reduction_valid.hint_unreduced,
-            conf=hint_reduction_valid.conf,
-        )
-
-        # Assert that this reduction produced the expected output hint.
-        assert hint_reduced_sane.hint == hint_reduction_valid.hint_reduced
-
-    # ....................{ FAIL                           }....................
-    # For each invalid hint reduction case...
-    for hint_reduction_invalid in hint_reductions_invalid:
-        # Assert that this reducer raises the expected type of exception when
-        # passed this input hint.
-        with raises(hint_reduction_invalid.exception_type):
-            reduce_hint(
-                hint=hint_reduction_invalid.hint_unreduced,
-                conf=hint_reduction_invalid.conf,
+    # For each reduction case...
+    for hint_reduction in hint_reductions:
+        # If this is case encapsulates a valid reduction...
+        if isinstance(hint_reduction, HintReductionValid):
+            # Sanified metadata encapsulating the reduction of this input hint.
+            hint_reduced_sane = reduce_hint(
+                hint=hint_reduction.hint_unreduced,
+                conf=hint_reduction.conf,
             )
+
+            # Assert that this reduction produced the expected output hint.
+            assert hint_reduced_sane.hint == hint_reduction.hint_reduced
+        # Else, this case encapsulates an invalid reduction by elimination.
+        else:
+            # Assert this to be the case.
+            assert isinstance(hint_reduction, HintReductionInvalid)
+
+            # Assert that this reducer raises the expected type of exception
+            # when passed this input hint.
+            with raises(hint_reduction.exception_type):
+                reduce_hint(
+                    hint=hint_reduction.hint_unreduced,
+                    conf=hint_reduction.conf,
+                )
 
     # ..................{ PEP 544                            }..................
     # For each PEP 484-compliant "typing" IO generic superclass...
@@ -423,6 +326,7 @@ def test_reduce_hint() -> None:
         # type raises the expected exception.
         with raises(BeartypeDecorHintNonpepNumpyException):
             reduce_hint(NDArray['From_my_wings_are_shaken_the_dews_that_waken'])
+    # Else, a recent version of NumPy is *NOT* importable.
 
 # ....................{ TESTS ~ raiser                     }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
@@ -436,7 +340,7 @@ def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         Tuple of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     hints_ignorable : frozenset

@@ -64,7 +64,7 @@ def test_door_is_bearable_warnings(hints_meta) -> None:
 
     Parameters
     ----------
-    hints_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata]
+    hints_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]
         List of PEP-agnostic type hint metadata describing sample PEP-agnostic
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -135,7 +135,7 @@ def test_door_die_if_unbearable(iter_hints_piths_meta) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
@@ -151,8 +151,8 @@ def test_door_die_if_unbearable(iter_hints_piths_meta) -> None:
         BeartypeDoorHintViolation,
     )
     from beartype._util.text.utiltextrepr import represent_object
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-        HintPithUnsatisfiedMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
+        PithUnsatisfiedMetadata)
     from pytest import raises
 
     # ....................{ PASS                           }....................
@@ -168,7 +168,7 @@ def test_door_die_if_unbearable(iter_hints_piths_meta) -> None:
         pith = hint_pith_meta.pith
 
         # If this pith violates this hint...
-        if isinstance(hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata):
+        if isinstance(hint_pith_meta.pith_meta, PithUnsatisfiedMetadata):
             # print(f'hint_pith_meta: {hint_pith_meta}\n')
 
             # Assert this raiser raises the expected exception when passed this
@@ -228,7 +228,7 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
@@ -242,8 +242,8 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
         BeartypeDoorHintViolation,
         BeartypeDoorNonpepException,
     )
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-        HintPithUnsatisfiedMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
+        PithUnsatisfiedMetadata)
     from contextlib import suppress
     from pytest import raises
 
@@ -268,7 +268,7 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
             # If this pith violates this hint, assert this raiser raises the
             # expected exception when passed this pith and hint.
             if isinstance(
-                hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata):
+                hint_pith_meta.pith_meta, PithUnsatisfiedMetadata):
                 with raises(BeartypeDoorHintViolation):
                     typehint.die_if_unbearable(pith, conf=conf)
             # Else, this pith satisfies this hint. In this case, assert this
@@ -285,7 +285,7 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
@@ -302,8 +302,8 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
         BeartypeDecorHintForwardRefException,
         BeartypeDecorHintNonpepException,
     )
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-        HintPithUnsatisfiedMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
+        PithUnsatisfiedMetadata)
     from pytest import raises
     # from pytest import raises, warns
     from warnings import simplefilter
@@ -344,7 +344,7 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
 
         # True only if this pith is expected to satisfy this hint.
         is_bearable_expected = not isinstance(
-            hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata)
+            hint_pith_meta.pith_meta, PithUnsatisfiedMetadata)
 
         # True only if this pith actually did satisfy this hint.
         is_bearable_returned = is_bearable(pith, hint, conf=conf)
@@ -418,7 +418,7 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
@@ -429,8 +429,8 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
     # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorNonpepException
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-        HintPithUnsatisfiedMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
+        PithUnsatisfiedMetadata)
     from contextlib import suppress
 
     # ....................{ PASS                           }....................
@@ -447,7 +447,7 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
 
         # True only if this pith satisfies this hint.
         is_bearable_expected = not isinstance(
-            hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata)
+            hint_pith_meta.pith_meta, PithUnsatisfiedMetadata)
 
         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
         #all currently unsupported type hints.

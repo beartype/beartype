@@ -21,7 +21,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`604`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`604`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -41,10 +41,10 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         HintSignUnion,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
     from beartype_test.a00_unit.data.pep.data_pep484 import (
         S,
@@ -110,15 +110,15 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             is_type_typing=_PEP604_IS_TYPING,
             piths_meta=(
                 # Integer constant.
-                HintPithSatisfiedMetadata(87),
+                PithSatisfiedMetadata(87),
                 # List of string items.
-                HintPithSatisfiedMetadata([
+                PithSatisfiedMetadata([
                     'Into, my myopic mandrake‐manhandling, '
                     'panhandling slakes of',
                     'Televisual, dis‐informative Lakes, unsaintly, of',
                 ]),
                 # Floating-point constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=10100.00101,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -135,7 +135,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
 
                 # List of integers.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=([1, 10, 271, 36995]),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
@@ -162,12 +162,12 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # List containing a mixture of integer and string constants.
-                HintPithSatisfiedMetadata([
+                PithSatisfiedMetadata([
                     'Telemarketing affirmative‐mined Ketamine’s',
                     470,
                 ]),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith='Apolitically',
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -184,7 +184,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
 
                 # List of bytestring items.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=[
                         b'Apoplectic hints of',
                         b'Stenographically',
@@ -218,14 +218,14 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             is_type_typing=_PEP604_IS_TYPING,
             piths_meta=(
                 # None singleton.
-                HintPithSatisfiedMetadata(None),
+                PithSatisfiedMetadata(None),
                 # Tuple of string items.
-                HintPithSatisfiedMetadata((
+                PithSatisfiedMetadata((
                     'Stentorian tenor of',
                     'Stunted numbness (in',
                 )),
                 # Floating-point constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=2397.7932,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -269,9 +269,9 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             piths_meta=(
                 # Integer constant.
-                HintPithSatisfiedMetadata(21),
+                PithSatisfiedMetadata(21),
                 # Sequence of string items.
-                HintPithSatisfiedMetadata((
+                PithSatisfiedMetadata((
                     'To claim all ͼarth a number, penumbraed'
                     'By blessed Pendragon’s flagon‐bedraggling constancies',
                 )),
@@ -281,7 +281,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 # here, as strings are technically sequences of strings of
                 # length one commonly referred to as Unicode code points or
                 # simply characters.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=802.11,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -298,7 +298,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
 
                 # Tuple of integers.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89,),
                     # Match that the exception message raised for this
                     # object...
@@ -327,14 +327,14 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Empty dictionary.
-                HintPithSatisfiedMetadata({}),
+                PithSatisfiedMetadata({}),
                 # Floating-point number constant.
-                HintPithSatisfiedMetadata(777.777),
+                PithSatisfiedMetadata(777.777),
                 # Integer constant.
-                HintPithSatisfiedMetadata(777),
+                PithSatisfiedMetadata(777),
                 # Sequence of dictionary, floating-point number, integer, and
                 # sequence of string constant items.
-                HintPithSatisfiedMetadata((
+                PithSatisfiedMetadata((
                     # Non-empty dictionary.
                     {
                         'Of': 'charnal memories,',
@@ -351,7 +351,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                     ],
                 )),
                 # Complex number constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=356+260j,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -370,7 +370,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
 
                 # Sequence of bytestring items.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=(b"May they rest their certainties' Solicitousness to",),
                     # Match that the exception message raised for this
                     # object...
@@ -385,7 +385,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
 
                 # Sequence of mutable sequences of bytestring items.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=([b'Untaint these ties',],),
                     # Match that the exception message raised for this
                     # object...
@@ -417,15 +417,15 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             piths_meta=(
                 # String constant.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     "O'er the wide aëry wilderness: thus driven"),
                 # Iterable of 2-tuples of arbitrary items.
-                HintPithSatisfiedMetadata([
+                PithSatisfiedMetadata([
                     ('By the bright shadow', 'of that lovely dream,',),
                     (b'Beneath the cold glare', b'of the desolate night,'),
                 ]),
                 # Integer constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=0xCAFEFEED,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -451,13 +451,13 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             piths_meta=(
                 # List of string items.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     ['Through tangled swamps', 'and deep precipitous dells,']),
                 # Tuples of bytestring items.
-                HintPithSatisfiedMetadata(
+                PithSatisfiedMetadata(
                     (b'Startling with careless step', b'the moonlight snake,')),
                 # Integer constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=0xFEEDBEEF,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -487,12 +487,12 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             isinstanceable_type=list,
             piths_meta=(
                 # List containing a mixture of integer and string constants.
-                HintPithSatisfiedMetadata([
+                PithSatisfiedMetadata([
                     'Un‐seemly preening, pliant templar curs; and',
                     272,
                 ]),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith='Un‐seemly preening, pliant templar curs; and',
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -509,7 +509,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
 
                 # List of bytestring items.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=[
                         b'Blamelessly Slur-chastened rights forthwith, affrighting',
                         b"Beauty's lurid, beleaguered knolls, eland-leagued and",
@@ -537,13 +537,13 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             isinstanceable_type=SequenceABC,
             piths_meta=(
                 # Sequence of string and bytestring constants.
-                HintPithSatisfiedMetadata((
+                PithSatisfiedMetadata((
                     b'For laconically formulaic, knavish,',
                     u'Or sordidly sellsword‐',
                     f'Horded temerities, bravely unmerited',
                 )),
                 # Integer constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=7898797,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -560,7 +560,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
 
                 # Sequence of integer items.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=((144, 233, 377, 610, 987, 1598, 2585, 4183, 6768,)),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
@@ -584,12 +584,12 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             isinstanceable_type=MutableSequenceABC,
             piths_meta=(
                 # Mutable sequence of string and bytestring constants.
-                HintPithSatisfiedMetadata([
+                PithSatisfiedMetadata([
                     b"Canonizing Afrikaans-kennelled Mine canaries,",
                     lambda: 'Of a floridly torrid, hasty love — that league',
                 ]),
                 # String constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith='Effaced.',
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -606,7 +606,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
 
                 # Mutable sequence of string constants.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=[
                         'Of genteel gentle‐folk — that that Ƹsper',
                         'At my brand‐defaced, landless side',
@@ -649,9 +649,9 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # None singleton.
-                HintPithSatisfiedMetadata(None),
+                PithSatisfiedMetadata(None),
                 # Sequence of string items.
-                HintPithSatisfiedMetadata((
+                PithSatisfiedMetadata((
                     'Of cuticular currents (...wide, wildly articulate,',
                     'And canting free, physico-stipulatingly) -',
                 )),
@@ -661,7 +661,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 # here, as strings are technically sequences of strings of
                 # length one commonly referred to as Unicode code points or
                 # simply characters.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=802.2,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -701,14 +701,14 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Floating-point constant.
-                HintPithSatisfiedMetadata(42.4242424242424242),
+                PithSatisfiedMetadata(42.4242424242424242),
                 # Sequence of string items.
-                HintPithSatisfiedMetadata((
+                PithSatisfiedMetadata((
                     'No sister-flower would be forgiven',
                     'If it disdained its brother;',
                 )),
                 # Integer constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=0xBABEBABE,  # <-- 3133061822
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -736,16 +736,16 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Floating-point constant.
-                HintPithSatisfiedMetadata(24.2424242424242424),
+                PithSatisfiedMetadata(24.2424242424242424),
                 # Integer constant.
-                HintPithSatisfiedMetadata(0xABBAABBA),  # <-- 2881137594
+                PithSatisfiedMetadata(0xABBAABBA),  # <-- 2881137594
                 # Sequence of string items.
-                HintPithSatisfiedMetadata((
+                PithSatisfiedMetadata((
                     'And the sunlight clasps the earth',
                     'And the moonbeams kiss the sea:',
                 )),
                 # Complex constant.
-                HintPithUnsatisfiedMetadata(
+                PithUnsatisfiedMetadata(
                     pith=42 + 24j,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object as well

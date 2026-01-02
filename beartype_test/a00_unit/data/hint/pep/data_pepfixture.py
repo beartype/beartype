@@ -16,11 +16,11 @@ from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
-def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
+def hints_pep_meta() -> 'tuple[HintPepMetadata]':
     '''
     Session-scoped fixture yielding a tuple of **PEP-compliant type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances, each describing a sample PEP-compliant type hint exercising an
     edge case in the :mod:`beartype` codebase).
 
@@ -35,11 +35,15 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata)
     from beartype_test._util.kind.pytkindmake import make_container_from_funcs
 
-    # ..................{ LIST                               }..................
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-compliant type hint metadata to be returned, iteratively
+    # defined by dynamically importing and calling each factory function listed
+    # below and adding the items of the container created and returned by that
+    # function to this list.
     _hints_pep_meta = make_container_from_funcs((
         # PEP-compliant type hints.
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep484.hints_pep484_meta',
@@ -93,7 +97,7 @@ def hints_pep_hashable(hints_pep_meta) -> frozenset:
 
     Parameters
     ----------
-    hints_pep_meta : Tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+    hints_pep_meta : Tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         Tuple of PEP-compliant type hint metadata describing PEP-compliant type
         hints exercising edge cases in the :mod:`beartype` codebase.
     '''

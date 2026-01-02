@@ -47,7 +47,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
 
     # ....................{ LOCALS                         }....................
     # List of all valid type parameter mapping cases to be tested, each defined
-    # as a 3-tuple "(hints_typearg, hints_child, typearg_to_hint)" such that:
+    # as a 3-tuple "(hints_typearg, hints_child, typearg_to_hint)" where:
     # * "hints_typearg" is the input tuple of one or more type parameters to be
     #   mapped to child hints.
     # * "hints_child" is the input tuple of zero or more child hints to map
@@ -78,8 +78,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
     ]
 
     # List of all invalid type parameter mapping cases to be tested, each
-    # defined as a 3-tuple "(hints_typearg, hints_child, exception_type)" such
-    # that:
+    # defined as a 3-tuple "(hints_typearg, hints_child, exception_type)" where:
     # * "hints_typearg" is the input tuple of one or more type parameters to be
     #   mapped to child hints.
     # * "hints_child" is the input tuple of zero or more child hints to map

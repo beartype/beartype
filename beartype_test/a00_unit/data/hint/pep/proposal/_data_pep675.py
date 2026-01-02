@@ -12,7 +12,7 @@ def hints_pep675_meta() -> 'List[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`675`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`675`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -22,10 +22,10 @@ def hints_pep675_meta() -> 'List[HintPepMetadata]':
     from beartype._data.hint.sign.datahintsigns import (
         HintSignLiteralString)
     from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
-        HintPithSatisfiedMetadata,
-        HintPithUnsatisfiedMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
 
     # ..................{ LOCALS                             }..................
@@ -46,12 +46,12 @@ def hints_pep675_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignLiteralString,
                 piths_meta=(
                     # Literal string statically defined from a literal string.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         'All overgrown with azure moss and flowers'),
                     # Literal string dynamically defined from the concatenation
                     # of multiple literal strings, inducing type inference in
                     # PEP 675.
-                    HintPithSatisfiedMetadata(
+                    PithSatisfiedMetadata(
                         'So sweet, ' + 'the sense faints picturing them! ' + 'Thou'
                     ),
                     # Non-literal string dynamically defined from a literal
@@ -60,10 +60,10 @@ def hints_pep675_meta() -> 'List[HintPepMetadata]':
                     # incapable of doing so in the general case. For example,
                     # str() could have been shadowed by a user-defined function
                     # of the same name returning a valid literal string.
-                    HintPithSatisfiedMetadata(str(0xFEEDFACE)),
+                    PithSatisfiedMetadata(str(0xFEEDFACE)),
 
                     # Literal byte string.
-                    HintPithUnsatisfiedMetadata(
+                    PithUnsatisfiedMetadata(
                         pith=b"For whose path the Atlantic's level powers",
                         # Match that the exception message raised for this
                         # object declares the types *NOT* satisfied by this
