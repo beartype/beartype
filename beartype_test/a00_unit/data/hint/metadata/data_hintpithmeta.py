@@ -391,8 +391,9 @@ class HintPepMetadata(HintNonpepMetadata):
         hint_repr = get_hint_repr(self.hint)
 
         # Conditionally default all unpassed parameters.
-            # Default this parameter to true only if the machine-readable
-            # representation of this hint contains "[": e.g., "List[str]".
+        #
+        # Default this parameter to true only if the machine-readable
+        # representation of this hint contains "[" (e.g., "List[str]").
         if is_args is None:
             is_args = '[' in hint_repr
         # Default this parameter to true only if...

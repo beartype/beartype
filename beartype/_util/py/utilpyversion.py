@@ -126,6 +126,16 @@ IS_PYTHON_AT_LEAST_3_13 = IS_PYTHON_AT_LEAST_3_14 or version_info >= (3, 13)
 '''
 
 
+#FIXME: After dropping Python 3.12 support:
+#* Remove all code conditionally testing this global.
+#* Remove this global.
+IS_PYTHON_AT_MOST_3_12 = not IS_PYTHON_AT_LEAST_3_13
+'''
+:data:`True` only if the active Python interpreter targets at most Python
+3.12.x.
+'''
+
+
 #FIXME: After dropping Python 3.11 support:
 #* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.

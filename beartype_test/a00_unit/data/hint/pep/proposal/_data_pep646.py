@@ -49,8 +49,9 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep646generic import (
         Array,
-        DType,
-        Shape,
+        #FIXME: Test against these when time permits. So, never. *yawn*
+        # DType,
+        # Shape,
     )
     from beartype_test.a00_unit.data.pep.data_pep646 import (
         Ts,
@@ -99,6 +100,7 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Ts_unpacked_prefix,
             pep_sign=HintSignPep646TypeVarTupleUnpacked,
+            is_args=True,
             is_ignorable=True,
             is_supported=False,
             typeargs_packed=(Ts,),
@@ -106,6 +108,7 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Ts_unpacked_subbed,
             pep_sign=HintSignPep646TypeVarTupleUnpacked,
+            is_args=True,
             is_ignorable=True,
             is_supported=False,
             typeargs_packed=(Ts,),
