@@ -23,8 +23,10 @@ from beartype._data.typing.datatypingport import (
 )
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsigns import (
+    HintSignPep646TupleUnpacked,
     HintSignPep646TypeVarTupleUnpacked,
     HintSignPep692TypedDictUnpacked,
+    HintSignTuple,
 )
 
 # ....................{ RAISERS                            }....................
@@ -55,31 +57,14 @@ def die_unless_hint_pep646_typevartuple_packed(hint: Hint) -> None:
     # Else, this hint is a PEP 646-compliant type variable tuple.
 
 # ....................{ TESTERS                            }....................
-#FIXME: *INSUFFICIENT.* Technically, it's true that *MOST* real-world unpacked
-#tuples are low-level C objects created with the "*" unary prefix and thus
-#correctly matched by this tester. That said, *SOME* real-world unpacked
-#tuples are high-level pure-Python objects created by the "typing.Unpack[...]"
-#hint factory and thus incorrectly *NOT* matched by this tester.
-#
-#Notably, PEP 696 explicitly insists that the unpacked tuple hint
-#"Unpack[tuple[str, int]]" is semantically equivalent to the unpacked tuple hint
-#"*tuple[str, int]":
-#    DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[str, int]])
-#
-#That said, it could be tricky to attempt to match both with this low-level
-#tester function. Since this tester is *ONLY* called by
-#get_hint_pep_sign_or_none(), it'd be better to go the disambiguation route.
-#Notably:
-#* Generalize the disambiguate_hint_pep646692_unpacked_sign() function defined
-#  below to additionally support unpacked tuple hints. *shrug*
-#FIXME: Unit test us up, please.
 def is_hint_pep646_tuple_unpacked_prefix(hint: Hint) -> bool:
     '''
-    :data:`True` only if the passed hint is a :pep:`646`-compliant **prefix-based
-    unpacked child tuple hint** (i.e., of the form "*tuple[{hint_child_child_1},
-    ..., {hint_child_child_M}]" subscripting a parent tuple hint of the form
-    "tuple[{hint_child_1}, ..., *tuple[{hint_child_child_1}, ...,
-    {hint_child_child_M}], ..., {hint_child_N}]").
+    :data:`True` only if the passed hint is a :pep:`646`-compliant
+    **prefix-based unpacked child tuple hint** (i.e., of the form
+    "*tuple[{hint_child_child_1}, ..., {hint_child_child_M}]" subscripting a
+    parent tuple hint of the form "tuple[{hint_child_1}, ...,
+    *tuple[{hint_child_child_1}, ..., {hint_child_child_M}], ...,
+    {hint_child_N}]").
 
     If this tester returns :data:`True`, this unpacked child tuple hint is
     guaranteed to define the ``__args__`` dunder attribute to be either:
@@ -211,14 +196,18 @@ def is_hint_pep646_tuple_unpacked_prefix(hint: Hint) -> bool:
 #FIXME: Unit test us up, including:
 #* "typing.Unpack[tuple[...]]" type hints. See discussion above. *sigh*
 #* Unsubscripted "typing.Unpack" type hints, which should be unconditionally
-#  *PROHIBITED.* They signify nothing. "typing.Unpack" should *ALWAYS* be
+#  *PROHIBITED.* They signify nothing. Why? Because *ALL* unsubscripted type
+#  hints default to being subscripted by "typing.Any". However,
+#  "typing.Unpack[typing.Any]" is a PEP-noncompliant type hint that signifies
+#  nothing. It's PEP-noncompliant. Ergo, "typing.Unpack" should *ALWAYS* be
 #  subscripted by at least something.
 def disambiguate_hint_pep646692_unpacked_sign(hint: Hint) -> HintSign:
     '''
     Disambiguate the passed **unpacked type hint** (i.e., :pep:`646`- or
     :pep:`692`-compliant ``typing.Unpack[...]`` hint) ambiguously identified by
     the :data:`.HintSignUnpack` sign into whichever of the unambiguous
-    :data:`.HintSignPep646TypeVarTupleUnpacked` or
+    :data:`.HintSignPep646TupleUnpacked`,
+    :data:`.HintSignPep646TypeVarTupleUnpacked`, or
     :data:`.HintSignPep692TypedDictUnpacked` signs uniquely identify this kind
     of unpacked type hint.
 
@@ -241,6 +230,9 @@ def disambiguate_hint_pep646692_unpacked_sign(hint: Hint) -> HintSign:
         Sign uniquely and unambiguously identifying this hint. Specifically, if
         this hint is a:
 
+        * :pep:`646`-compliant **unpacked tuple type hint** (i.e., child
+          hint of the form "*tuple[{hint_child_1}, ..., {hint_child_N}]"), this
+          getter returns :data:`.HintSignPep646TupleUnpacked`.
         * :pep:`646`-compliant **unpacked type variable tuple** (i.e., child
           hint of the form "*{typevartuple}" where "{typevartuple}" is an
           instance of the :class:`typing.TypeVarTuple` type), this getter
@@ -257,6 +249,7 @@ def disambiguate_hint_pep646692_unpacked_sign(hint: Hint) -> HintSign:
         ``typing.Unpack[...]`` hint subscripted by a child hint that is neither
         an unpacked type variable tuple nor unpacked typed dictionary).
     '''
+
     # Note that this lower-level getter is directly called by the higher-level
     # get_hint_pep_sign_or_none() getter. Ergo, the former *CANNOT* recursively
     # pass the passed hint to the latter (e.g., as a means of validating that
@@ -268,6 +261,8 @@ def disambiguate_hint_pep646692_unpacked_sign(hint: Hint) -> HintSign:
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepsign import (
+        get_hint_pep_sign_ambiguous_by_repr_or_none)
     from beartype._util.hint.utilhinttest import die_as_hint_unsupported
 
     # ....................{ LOCALS                         }....................
@@ -291,17 +286,67 @@ def disambiguate_hint_pep646692_unpacked_sign(hint: Hint) -> HintSign:
         # If this child hint is a PEP 646-compliant type variable tuple, return
         # the sign disambiguating this parent unpack hint as a PEP 646-compliant
         # unpacked type variable tuple.
+        #
+        # Note this test is fast and thus intentionally performed first.
         if isinstance(hint_child, HintPep646TypeVarTupleType):
             return HintSignPep646TypeVarTupleUnpacked
         # Else, this child hint is *NOT* a PEP 646-compliant unpacked type
         # variable tuple.
         #
-        # If this child hint is a PEP 589-compliant typed dictionary, return
-        # the sign disambiguating this parent unpack hint as a PEP 692-compliant
+        # If this child hint is a PEP 589-compliant typed dictionary, return the
+        # sign disambiguating this parent unpack hint as a PEP 692-compliant
         # unpacked typed dictionary.
+        #
+        # Note this test is slower (albeit not the slowest possible test) and
+        # thus intentionally performed next.
         elif is_hint_pep589(hint_child):
             return HintSignPep692TypedDictUnpacked
         # Else, this child hint is *NOT* a PEP 589-compliant typed dictionary.
+        # By elimination across all PEPs standardizing usage of the
+        # "typing.Unpack[...]" type hint factory, this child hint is either:
+        # * A PEP 484- or 585-compliant tuple hint, implying this parent
+        #   hint to be a PEP 646-compliant unpacked tuple hint and thus valid.
+        # * PEP-noncompliant and thus invalid.
+        #
+        # Disambiguating these two cases requires detecting the sign uniquely
+        # identifying this child hint. To naively do so, we could call the
+        # higher-level get_hint_pep_sign_or_none() getter. As discussed above,
+        # this lower-level disambiguator is itself called by that getter! The
+        # naive approach could provoke infinite recursion (e.g., a
+        # "typing.Unpack[...]" hint maliciously subscripted by itself).
+        #
+        # Thankfully, the lower-level
+        # get_hint_pep_sign_ambiguous_by_repr_or_none() getter is guaranteed to
+        # both not call this getter and detect the sign uniquely identifying
+        # this child hint if this child hint is either:
+        # * A PEP 484-compliant tuple hint (e.g.,
+        #   "typing.Unpack[typing.Tuple[bytes, float]]").
+        # * A PEP 585-compliant tuple hint (e.g.,
+        #   "typing.Unpack[tuple[int, str]]").
+        #
+        # Ergo, we safely defer to that getter to decide this decision problem.
+
+        # Sign uniquely identifying this child hint if this child hint is
+        # unambiguously identifiable by its machine-readable representation *OR*
+        # "None" otherwise.
+        #
+        # Note this unmemoized getter is the slowest possible test and thus
+        # intentionally performed last. Although memoizing this getter would (of
+        # course) be feasible, this sugar-free "typing.Unpack[tuple[...]]"
+        # flavour of PEP 646-compliant unpacked tuple hints are largely obsolete
+        # in favour of the competing sugary "*tuple[...]" flavour. Time diverted
+        # to optimizing this rare edge case is thus time misspent.
+        hint_child_sign = get_hint_pep_sign_ambiguous_by_repr_or_none(
+            hint_child)
+
+        # If this child hint is either a PEP 484- or 585-compliant tuple hint,
+        # this parent unpack hint is a PEP 646-compliant unpacked tuple hint. In
+        # this case, return the appropriate disambiguating sign.
+        if hint_child_sign is HintSignTuple:
+            return HintSignPep646TupleUnpacked
+        # Else, this child hint is neither a PEP 484- nor 585-compliant tuple
+        # hint, implying this parent unpack hint *CANNOT* be a PEP
+        # 646-compliant unpacked tuple hint. In this case, this hint is invalid.
     # Else, this parent unpack hint is subscripted by either no child hints *OR*
     # two or more child hints.
 
@@ -351,12 +396,12 @@ def make_hint_pep646_tuple_unpacked_prefix(hints_child: TupleHints) -> Hint:
     from beartype._util.hint.pep.proposal.pep484585646 import (
         make_hint_pep484585_tuple_fixed)
 
-    # PEP 585-compliant tuple hint subscripted by these child hints.
-    pep585_tuple = make_hint_pep484585_tuple_fixed(hints_child)
-
     #FIXME: Uncomment after dropping Python <= 3.10 support, which raises a
     #"SyntaxError" if we even try doing this. *SADNESS*
-    # return *hint
+    # return *hints_child
+
+    # PEP 585-compliant tuple hint subscripted by these child hints.
+    pep585_tuple = make_hint_pep484585_tuple_fixed(hints_child)
 
     # Tuple subscripted by this PEP 646-compliant type tuple hint unpacked into
     # a PEP 646-compliant unpacked tuple child hint. This is insane, because
@@ -373,6 +418,47 @@ def make_hint_pep646_tuple_unpacked_prefix(hints_child: TupleHints) -> Hint:
 
     # Return this unpacked child tuple hint.
     return tuple_unpacked
+
+
+#FIXME: Unit test us up, please. *sigh*
+def make_hint_pep646_tuple_unpacked_subbed(hints_child: TupleHints) -> Hint:
+    '''
+    Dynamically create and return a new :pep:`646`-compliant **subscription-based
+    unpacked child tuple hint** (i.e., of the form
+    "typing.Unpack[tuple[{hint_child_child_1}, ..., {hint_child_child_M}]]"
+    subscripting a parent tuple hint of the form "tuple[{hint_child_1}, ...,
+    typing.Unpack[tuple[{hint_child_child_1}, ..., {hint_child_child_M}]], ...,
+    {hint_child_N}]") subscripted by all child hints in the passed tuple.
+
+    Parameters
+    ----------
+    hints_child : TupleHints
+        Tuple of all child hints to be unpacked.
+
+    Returns
+    -------
+    Hint
+        Unpacked child tuple hint subscripted by these child hints.
+    '''
+
+    # Avoid version-specific imports.
+    #
+    # Note that the PEP 646-compliant "typing.Unpack[...]" hint factory is
+    # defined *ONLY* under Python >= 3.11. Technically, this is a problem.
+    # Pragmatically, this is *NOT* a problem. Why? Because Python 3.10 has
+    # almost hit its official End-of-Life (EOL). In other words, by the time
+    # you've read this, this is no longer a problem. \o/
+    from typing import Unpack  # type: ignore[attr-defined]
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484585646 import (
+        make_hint_pep484585_tuple_fixed)
+
+    # PEP 585-compliant tuple hint subscripted by these child hints.
+    pep585_tuple = make_hint_pep484585_tuple_fixed(hints_child)
+
+    # Return this unpacked child tuple hint.
+    return Unpack.__getitem__(pep585_tuple)  # pyright: ignore
 
 # ....................{ FACTORIES ~ typevartuple           }....................
 #FIXME: Unit test us up, please. *sigh*
@@ -451,7 +537,7 @@ def make_hint_pep646_typevartuple_unpacked_subbed(
     # "typing.TypeVarTuple" type is also defined *ONLY* under Python >= 3.11.
     # Since the caller passed an instance of that type, the active Python
     # interpreter *MUST* by definition target Python >= 3.11.
-    from beartype.typing import Unpack  # pyright: ignore
+    from typing import Unpack  # type: ignore[attr-defined]
 
     # If this hint is *NOT* a type variable tuple, raise an exception.
     die_unless_hint_pep646_typevartuple_packed(hint)  # pyright: ignore

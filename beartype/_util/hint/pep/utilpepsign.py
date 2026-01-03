@@ -206,14 +206,15 @@ def get_hint_pep_sign(
 
     # If this hint is unrecognized...
     if hint_sign is None:
+        # Avoid circular import dependencies.
+        from beartype._util.hint.nonpep.utilnonpeptest import die_if_hint_nonpep
+        from beartype._util.hint.utilhinttest import die_as_hint_unsupported
+
+        # Validate sanity.
         assert isinstance(exception_cls, type), (
             f'{exception_cls} not exception type.')
         assert isinstance(exception_prefix, str), (
             f'{exception_prefix} not string.')
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.nonpep.utilnonpeptest import die_if_hint_nonpep
-        from beartype._util.hint.utilhinttest import die_as_hint_unsupported
 
         # If this hint is PEP-noncompliant, raise an exception.
         die_if_hint_nonpep(
@@ -223,9 +224,10 @@ def get_hint_pep_sign(
         )
         # Else, this hint is *NOT* PEP-noncompliant. Since this hint was
         # unrecognized, this hint *MUST* necessarily be a PEP-compliant type
-        # hint currently unsupported by the @beartype decorator.
+        # hint currently unsupported by the @beartype decorator. This is the
+        # worst possible outcome, because now we need to do something. Oh, Gods!
 
-        # Raise an exception indicating this.
+        # Raise an exception suggesting users yell at us a lot.
         die_as_hint_unsupported(
             hint=hint,
             exception_prefix=exception_prefix,
@@ -237,10 +239,9 @@ def get_hint_pep_sign(
     return hint_sign
 
 
-#FIXME: Revise us up the docstring, most of which is now obsolete.
 # Note that this getter is intentionally passed *NO* optional parameters. While
 # feasible, doing so would obstruct memoization for no particularly good reason.
-# This call should *NEVER* raise exceptions, anyway. *sigh*
+# This call should *NEVER* raise exceptions anyway. Of course, it will. *sigh*
 @callable_cached
 def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
     '''
@@ -256,32 +257,6 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
     violation (or even removal) between major Python versions. Nonetheless,
     these attributes are sufficiently unique to enable callers to distinguish
     between numerous broad categories of :mod:`typing` behaviour and logic.
-
-    Specifically, if this hint is:
-
-    * A :pep:`585`-compliant **builtin** (e.g., C-based type
-      hint instantiated by subscripting either a concrete builtin container
-      class like :class:`list` or :class:`tuple` *or* an abstract base class
-      (ABC) declared by the :mod:`collections.abc` submodule like
-      :class:`collections.abc.Iterable` or :class:`collections.abc.Sequence`),
-      this function returns ::class:`beartype.cave.HintGenericSubscriptedType`.
-    * A **generic** (i.e., subclass of the :class:`typing.Generic` abstract
-      base class (ABC)), this function returns
-      :class:`HintSignPep484585GenericUnsubbed`. Note this includes
-      :pep:`544`-compliant **protocols** (i.e., subclasses of the
-      :class:`typing.Protocol` ABC), which implicitly subclass the
-      :class:`typing.Generic` ABC as well.
-    * A **forward reference** (i.e., string or instance of the concrete
-      :class:`typing.ForwardRef` class), this function returns
-      :class:`HintSignTypeVar`.
-    * A **type variable** (i.e., instance of the concrete
-      :class:`typing.TypeVar` class), this function returns
-      :class:`HintSignTypeVar`.
-    * Any other class, this function returns that class as is.
-    * Anything else, this function returns the unsubscripted :mod:`typing`
-      attribute dynamically retrieved by inspecting this hint's **object
-      representation** (i.e., the non-human-readable string returned by the
-      :func:`repr` builtin).
 
     This getter is memoized for efficiency.
 
@@ -354,6 +329,163 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
     # Return this sign.
     return hint_sign
 
+# ....................{ GETTERS ~ phase                    }....................
+# Publicize the subset of phases internally performed by the private
+# _get_hint_pep_sign_ambiguous_or_none() getter as needed to circumvent
+# recursion issues. Notably, lower-level private disambiguators internally
+# called by the higher-level public get_hint_pep_sign_or_none() getter routinely
+# need to decide the signs of child hints subscripting passed ambiguous parent
+# hints. However, blindly calling get_hint_pep_sign_or_none() to do so could
+# provoke infinite recursion for edge-case hints (e.g., hints maliciously
+# subscripted by themselves, which is certainly feasible). Consequently,
+# disambiguators are encouraged to instead call phase-specific getters defined
+# below. These getters have mostly trivial implementations that are guaranteed
+# *NOT* to provoke infinite recursion.
+
+#FIXME: Unit test us up, please. *sigh*
+def get_hint_pep_sign_ambiguous_by_repr_or_none(hint: Hint) -> Optional[HintSign]:
+    '''
+    **Sign** (i.e., :class:`HintSign` instance) possibly ambiguously
+    identifying the passed hint if this hint is PEP-compliant and ambiguously
+    identifiable by its machine-readable representation *or* :data:`None`
+    otherwise (i.e., if this hint is PEP-noncompliant *or* not ambiguously
+    identifiable by its machine-readable representation).
+
+    This getter identifies *most* :pep:`484`- and :pep:`585`-compliant hints.
+    This getter thus identifies most hints, since most hints are either
+    :pep:`484`- or :pep:`585`-compliant.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`.callable_cached` decorator), as the higher-level public parent
+    :func:`.get_hint_pep_sign_or_none` getter is already memoized. Other callers
+    should take care to avoid calling this getter outside a memoized context.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be inspected.
+
+    Returns
+    -------
+    Optional[HintSign]
+        Either:
+
+        * If this hint is both PEP-compliant and ambiguously identifiable by
+          its machine-readable representation, a sign uniquely identifying this
+          hint.
+        * Else, :data:`None`.
+    '''
+
+    #FIXME: [SPEED] Globalize all dict.get() bound methods called below, please.
+
+    # ..................{ IMPORTS                            }..................
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhintget import get_hint_repr
+
+    # ..................{ PHASE ~ repr : str                 }..................
+    # This phase attempts to map from the unsubscripted machine-readable
+    # representation of this hint to a sign identifying *ALL* hints of that
+    # representation.
+    #
+    # Since doing so requires both calling the repr() builtin on this hint
+    # *AND* munging the string returned by that builtin, this phase is
+    # significantly slower than the prior phase and thus *NOT* performed first.
+    # Although slow, this phase identifies the largest subset of hints.
+
+    # Machine-readable representation of this hint.
+    hint_repr = get_hint_repr(hint)
+
+    # Parse this representation into:
+    # * "hint_repr_prefix", the substring of this representation preceding the
+    #   first "[" delimiter if this representation contains that delimiter *OR*
+    #   this representation as is otherwise.
+    # * "hint_repr_subbed", the "[" delimiter if this representation contains
+    #   that delimiter *OR* the empty string otherwise.
+    #
+    # Note that the str.partition() method has been profiled to be the optimally
+    # efficient means of parsing trivial prefixes like these.
+    hint_repr_prefix, hint_repr_subbed, _ = hint_repr.partition('[')
+
+    # Sign identifying this possibly unsubscripted hint if this hint is
+    # identifiable by its possibly unsubscripted representation *OR* "None".
+    hint_sign = HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN.get(hint_repr_prefix)
+
+    # If this hint is identifiable by its possibly unsubscripted representation,
+    # return this sign.
+    if hint_sign:
+        # print(f'hint: {hint}; sign: {hint_sign}')
+        return hint_sign
+    # Else, this hint is *NOT* identifiable by its possibly unsubscripted
+    # representation.
+    #
+    # If this representation (and thus this hint) is subscripted...
+    elif hint_repr_subbed:
+        # Sign identifying this subscripted hint if this hint is identifiable by
+        # its necessarily subscripted representation *OR* "None" otherwise.
+        hint_sign = HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN.get(
+            hint_repr_prefix)
+
+        # If this hint is identifiable by this representation, return this sign.
+        if hint_sign:
+            return hint_sign
+        # Else, this hint is *NOT* identifiable by this representation.
+    # Else, this representation (and thus this hint) is unsubscripted.
+
+    # ..................{ PHASE ~ repr : trie                }..................
+    # This phase attempts to (in order):
+    #
+    # 1. Split the unsubscripted machine-readable representation of this hint on
+    #    the "." delimiter into an iterable of module names.
+    # 2. Iteratively look up each such module name in a trie mapping from these
+    #    names to a sign identifying *ALL* hints in that module.
+    #
+    # Note that:
+    # * This phase is principally intended to ignore PEP-noncompliant type hints
+    #   defined by third-party packages in an efficient and robust manner. Well,
+    #   reasonably efficient and robust anyway. *sigh*
+    # * This phase must be performed *BEFORE* the subsequent phase that detects
+    #   generics. Generics defined in modules mapped by tries should
+    #   preferentially be identified as their module-specific signs rather than
+    #   as generics. (See the prior note.)
+    #
+    # Since doing so requires splitting a string and iterating over substrings,
+    # this phase is significantly slower than prior phases and thus performed
+    # almost last. Since this phase identifies an extremely small subset of
+    # hints, efficiency is (mostly) incidental.
+
+    # Iterable of module names split from the unsubscripted machine-readable
+    # representation of this hint. For example, doing so splits
+    # 'pandera.typing.DataFrame[DataFrameSchema()]' into
+    # '("pandera", "typing", "DataFrame",)'.
+    hint_repr_module_names = hint_repr_prefix.split('.')
+
+    # Possibly nested trie describing the current module name in this iterable.
+    hint_repr_module_name_trie = HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN
+
+    # For each module name in this iterable...
+    for hint_repr_module_name in hint_repr_module_names:
+        # Possibly nested trie describing this module name in this iterable.
+        hint_repr_module_name_trie = hint_repr_module_name_trie.get(  # type: ignore
+            hint_repr_module_name)
+
+        # If this trie does *NOT* exist, this module is *NOT* mapped to a sign.
+        # In this case, immediately halt iteration.
+        if hint_repr_module_name_trie is None:
+            break
+        # Else, this trie exists. In this case, this module *MIGHT* be mapped to
+        # a sign. Further inspection is required, however.
+        #
+        # If this trie is actually a target sign, this module maps to this sign.
+        # In this case, return this sign.
+        elif hint_repr_module_name_trie.__class__ is HintSign:
+            return hint_repr_module_name_trie  # type: ignore[return-value]
+        # Else, this trie is another nested trie. In this case, continue
+        # iterating deeper into this trie.
+    # Else, this hint is *NOT* identified by a trie of module names.
+
+    # Return "None" as a last-ditch fallback.
+    return None
+
 # ....................{ PRIVATE ~ globals                  }....................
 # Note this dictionary requires callables defined by the submodules of the
 # "beartype._util.hint.pep.proposal" subpackage and thus *CANNOT* be moved into
@@ -384,7 +516,8 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     (i.e., if this hint is PEP-noncompliant).
 
     This getter is intentionally *not* memoized (e.g., by the
-    :func:`.callable_cached` decorator), as the caller is already memoized.
+    :func:`.callable_cached` decorator), as the higher-level public parent
+    :func:`.get_hint_pep_sign_or_none` getter is already memoized.
 
     Parameters
     ----------
@@ -443,7 +576,7 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     # Class of this hint.
     hint_type = hint.__class__
 
-    #FIXME: [SPEED] Global all dict.get() bound methods called below, please.
+    #FIXME: [SPEED] Globalize all dict.get() bound methods called below, please.
     #FIXME: [QA] Is this actually the case? Do non-physical classes dynamically
     #defined at runtime actually define *BOTH* of these dunder attributes:
     #* "hint_type.__module__"?
@@ -512,10 +645,6 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
         # Else, this hint is *NOT* identifiable by its basename.
     # Else, this hint is neither a type nor callable.
 
-    # ..................{ IMPORTS                            }..................
-    # Avoid circular import dependencies.
-    from beartype._util.hint.utilhintget import get_hint_repr
-
     # ..................{ PHASE ~ repr : str                 }..................
     # This phase attempts to map from the unsubscripted machine-readable
     # representation of this hint to a sign identifying *ALL* hints of that
@@ -526,99 +655,15 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     # significantly slower than the prior phase and thus *NOT* performed first.
     # Although slow, this phase identifies the largest subset of hints.
 
-    # Machine-readable representation of this hint.
-    hint_repr = get_hint_repr(hint)
+    # Sign identifying this hint if this hint is identifiable by its
+    # representation *OR* "None" otherwise.
+    hint_sign = get_hint_pep_sign_ambiguous_by_repr_or_none(hint)
 
-    # Parse this representation into:
-    # * "hint_repr_prefix", the substring of this representation preceding the
-    #   first "[" delimiter if this representation contains that delimiter *OR*
-    #   this representation as is otherwise.
-    # * "hint_repr_subbed", the "[" delimiter if this representation
-    #   contains that delimiter *OR* the empty string otherwise.
-    #
-    # Note that the str.partition() method has been profiled to be the
-    # optimally efficient means of parsing trivial prefixes like these.
-    hint_repr_prefix, hint_repr_subbed, _ = hint_repr.partition('[')
-
-    # Sign identifying this possibly unsubscripted hint if this hint is
-    # identifiable by its possibly unsubscripted representation *OR* "None".
-    hint_sign = HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN.get(hint_repr_prefix)
-
-    # If this hint is identifiable by its possibly unsubscripted
-    # representation, return this sign.
+    # If this hint is identifiable by its representation, return this sign.
     if hint_sign:
         # print(f'hint: {hint}; sign: {hint_sign}')
         return hint_sign
-    # Else, this hint is *NOT* identifiable by its possibly unsubscripted
-    # representation.
-    #
-    # If this representation (and thus this hint) is subscripted...
-    elif hint_repr_subbed:
-        # Sign identifying this necessarily subscripted hint if this hint is
-        # identifiable by its necessarily subscripted representation *OR*
-        # "None" otherwise.
-        hint_sign = HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN.get(
-            hint_repr_prefix)
-
-        # If this hint is identifiable by its necessarily subscripted
-        # representation, return this sign.
-        if hint_sign:
-            return hint_sign
-        # Else, this hint is *NOT* identifiable by its necessarily subscripted
-        # representation.
-    # Else, this representation (and thus this hint) is unsubscripted.
-
-    # ..................{ PHASE ~ repr : trie                }..................
-    # This phase attempts to (in order):
-    #
-    # 1. Split the unsubscripted machine-readable representation of this hint on
-    #    the "." delimiter into an iterable of module names.
-    # 2. Iteratively look up each such module name in a trie mapping from these
-    #    names to a sign identifying *ALL* hints in that module.
-    #
-    # Note that:
-    # * This phase is principally intended to ignore PEP-noncompliant type hints
-    #   defined by third-party packages in an efficient and robust manner. Well,
-    #   reasonably efficient and robust anyway. *sigh*
-    # * This phase must be performed *BEFORE* the subsequent phase that detects
-    #   generics. Generics defined in modules mapped by tries should
-    #   preferentially be identified as their module-specific signs rather than
-    #   as generics. (See the prior note.)
-    #
-    # Since doing so requires splitting a string and iterating over substrings,
-    # this phase is significantly slower than prior phases and thus performed
-    # almost last. Since this phase identifies an extremely small subset of
-    # hints, efficiency is (mostly) incidental.
-
-    # Iterable of module names split from the unsubscripted machine-readable
-    # representation of this hint. For example, doing so splits
-    # 'pandera.typing.DataFrame[DataFrameSchema()]' into
-    # '("pandera", "typing", "DataFrame",)'.
-    hint_repr_module_names = hint_repr_prefix.split('.')
-
-    # Possibly nested trie describing the current module name in this iterable.
-    hint_repr_module_name_trie = HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN
-
-    # For each module name in this iterable...
-    for hint_repr_module_name in hint_repr_module_names:
-        # Possibly nested trie describing this module name in this iterable.
-        hint_repr_module_name_trie = hint_repr_module_name_trie.get(  # type: ignore
-            hint_repr_module_name)
-
-        # If this trie does *NOT* exist, this module is *NOT* mapped to a sign.
-        # In this case, immediately halt iteration.
-        if hint_repr_module_name_trie is None:
-            break
-        # Else, this trie exists. In this case, this module *MIGHT* be mapped to
-        # a sign. Further inspection is required, however.
-        #
-        # If this trie is actually a target sign, this module maps to this sign.
-        # In this case, return this sign.
-        elif hint_repr_module_name_trie.__class__ is HintSign:
-            return hint_repr_module_name_trie  # type: ignore[return-value]
-        # Else, this trie is another nested trie. In this case, continue
-        # iterating deeper into this trie.
-    # Else, this hint is *NOT* identified by a trie of module names.
+    # Else, this hint is *NOT* identifiable by its representation.
 
     # ..................{ PHASE ~ manual                     }..................
     # This phase attempts to manually identify the signs of all hints *NOT*
@@ -673,7 +718,18 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     elif is_hint_pep484585_generic_subbed(hint):
         return HintSignPep484585GenericSubbed
     # Else, this hint is *NOT* a PEP 484- or 585-compliant subscripted generic.
+
+    #FIXME: Ho, ho! This can and should be refactored into a new disambiguator
+    #leveraging our new "_HINT_SIGN_AMBIGUOUS_TO_DISAMBIGUATOR" map as well.
+    #How? By adding a new mapping to that map from:
+    #    None: disambiguate_hint_nonpep_pep589()
     #
+    #By default, PEP 589-compliant typed dictionaries just look like ordinary
+    #PEP-noncompliant isinstanceable types. Their signs would thus be "None"
+    #without this logic here. The solution is to define a new
+    #disambiguate_hint_nonpep_pep589() disambiguating ordinary PEP-noncompliant
+    #isinstanceable types from PEP 589-compliant typed dictionaries. Fun! \o/
+
     # If this hint is a PEP 589-compliant typed dictionary, return that sign.
     elif is_hint_pep589(hint):
         return HintSignTypedDict
@@ -699,7 +755,28 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     die_if_hint_pep604_inconsistent(hint)
     # Else, this hint is consistent with respect to PEP 604-style new unions.
 
+    #FIXME: *HMM.* Convoluted disambiguation logic like this no longer seems as
+    #reasonable as it once did. If you consider it, what we're *REALLY* doing
+    #here is disambiguating the ambiguous type "HintGenericSubscriptedType" into
+    #various unambiguous signs. But... that's *EXACTLY* what our new
+    #"_HINT_SIGN_AMBIGUOUS_TO_DISAMBIGUATOR" map is for! In other words,
+    #consider refactoring this logic as follows:
+    #* Rename "HintGenericSubscriptedType" to "HintSignGenericAliasSubbed" for
+    #  disambiguity.
+    #* Define a new ambiguous sign "HintSignGenericAliasSubbed".
+    #* Add a new mapping to the existing
+    #  "HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN" dictionary ambiguously
+    #  mapping the ambiguous type "HintSignGenericAliasSubbed" to the ambiguous
+    #  sign "HintSignGenericAliasSubbed".
+    #* Add a new mapping to the existing
+    #  "_HINT_SIGN_AMBIGUOUS_TO_DISAMBIGUATOR" dictionary unambiguously mapping
+    #  to the ambiguous sign "HintSignGenericAliasSubbed" to a new
+    #  disambiguate_hint_pep585646695_generic_subbed() function.
+    #* Define a new disambiguate_hint_pep585646695_generic_subbed() function
+    #  whose contents are literally the body of the "if" conditional below.
+    #* Remove the "if" conditional below.
     #FIXME: Unit test us up, please.
+
     # If this hint is an unrecognized subscripted builtin type hint (i.e.,
     # C-based type hint instantiated by subscripting a pure-Python origin class
     # unrecognized by @beartype and thus PEP-noncompliant)...

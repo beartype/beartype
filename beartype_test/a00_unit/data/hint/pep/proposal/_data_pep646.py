@@ -35,16 +35,27 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
     from beartype.typing import NewType
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep484585GenericSubbed,
+        HintSignPep646TupleUnpacked,
+        HintSignPep646TypeVarTupleUnpacked,
+    )
+    from beartype._util.hint.pep.proposal.pep646692 import (
+        make_hint_pep646_tuple_unpacked_prefix,
+        make_hint_pep646_tuple_unpacked_subbed,
+    )
+    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
+        HintPepMetadata,
+        PithSatisfiedMetadata,
+        PithUnsatisfiedMetadata,
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep646generic import (
         Array,
         DType,
         Shape,
     )
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
-        PithSatisfiedMetadata,
-        PithUnsatisfiedMetadata,
+    from beartype_test.a00_unit.data.pep.data_pep646 import (
+        Ts,
+        Ts_unpacked_prefix,
+        Ts_unpacked_subbed,
     )
 
     # ..................{ LOCALS                             }..................
@@ -55,6 +66,51 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
     # ..................{ LISTS                              }..................
     # Add PEP 646-specific test type hints to this list.
     hints_pep_meta.extend((
+        # ................{ UNPACKED ~ tuple                   }................
+        # PEP 646-compliant unpacked child tuple type hints in both:
+        # * Sugar-free "*"-prefixed flavour.
+        # * Sugar-free "typing.Unpack[...]"-subscripted flavour.
+        #
+        # Since unpacked child hints are contextually valid *ONLY* when
+        # subscripting PEP 646-compliant parent tuple type hints, this metadata
+        # exists mostly just to validate that beartype correctly disambiguates
+        # the signs of these hints.
+        HintPepMetadata(
+            hint=make_hint_pep646_tuple_unpacked_prefix((int, str,)),
+            pep_sign=HintSignPep646TupleUnpacked,
+            is_pep585_builtin_subbed=True,
+            is_supported=False,
+        ),
+        HintPepMetadata(
+            hint=make_hint_pep646_tuple_unpacked_subbed((bytes, float,)),
+            pep_sign=HintSignPep646TupleUnpacked,
+            is_supported=False,
+        ),
+
+        # ................{ UNPACKED ~ typevartuple            }................
+        # PEP 646-compliant unpacked child type variable tuple hints in both:
+        # * Sugar-free "*"-prefixed flavour.
+        # * Sugar-free "typing.Unpack[...]"-subscripted flavour.
+        #
+        # Since unpacked child hints are contextually valid *ONLY* when
+        # subscripting PEP 646-compliant parent tuple type hints, this metadata
+        # exists mostly just to validate that beartype correctly disambiguates
+        # the signs of these hints.
+        HintPepMetadata(
+            hint=Ts_unpacked_prefix,
+            pep_sign=HintSignPep646TypeVarTupleUnpacked,
+            is_ignorable=True,
+            is_supported=False,
+            typeargs_packed=(Ts,),
+        ),
+        HintPepMetadata(
+            hint=Ts_unpacked_subbed,
+            pep_sign=HintSignPep646TypeVarTupleUnpacked,
+            is_ignorable=True,
+            is_supported=False,
+            typeargs_packed=(Ts,),
+        ),
+
         # ................{ GENERICS ~ multiple                }................
         # PEP 646-compliant generic subclassing the standard PEP 484-compliant
         # "typing.Generic" superclass parametrized by a PEP 484-compliant type

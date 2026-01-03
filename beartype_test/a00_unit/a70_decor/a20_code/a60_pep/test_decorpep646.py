@@ -30,32 +30,19 @@ def test_decor_pep646() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep646692Exception
-    from beartype.typing import (
-        Generic,
-        Tuple,
-        TypeVarTuple,
-        Unpack,
-    )
-    from beartype._util.hint.pep.proposal.pep646692 import (
-        make_hint_pep646_typevartuple_unpacked_prefix,
-        make_hint_pep646_typevartuple_unpacked_subbed,
+    from beartype_test.a00_unit.data.pep.data_pep646 import (
+        Ts_unpacked_prefix,
+        Ts_unpacked_subbed,
     )
     from pytest import raises
-
-    # ....................{ LOCALs                         }....................
-    # Arbitrary type variable tuple.
-    Ts = TypeVarTuple('Ts')
-
-    # Prefix-based unpacked type variable tuple of the form "*Ts".
-    Ts_prefix = make_hint_pep646_typevartuple_unpacked_prefix(Ts)
-
-    # Subscription-based unpacked type variable tuple of the form
-    # "typing.Unpack[Ts]".
-    Ts_subbed = make_hint_pep646_typevartuple_unpacked_subbed(Ts)
+    from typing import (
+        Generic,
+        Unpack,
+    )
 
     # ....................{ CLASSES                        }....................
     @beartype
-    class ItsMotions(Generic[Ts_subbed]):
+    class ItsMotions(Generic[Ts_unpacked_subbed]):
         '''
         Generic over an arbitrary number of type variables, decorated by
         :func:`beartype.beartype` and defined by subclassing the
@@ -80,8 +67,8 @@ def test_decor_pep646() -> None:
     @beartype
     def of_all_the_grace(
         and_to_the_damp_leaves: ItsMotions,
-        *and_beauty_that_endued: Ts_prefix
-    ) -> Tuple[ItsMotions, Ts_prefix]:
+        *and_beauty_that_endued: Ts_unpacked_prefix
+    ) -> tuple[ItsMotions, Ts_unpacked_prefix]:
         '''
         Arbitrary callable simply returning the tuple of all passed variadic
         positional parameters prepended by the passed generic, decorated by
@@ -89,12 +76,32 @@ def test_decor_pep646() -> None:
 
         * A variadic positional parameter typed as a :pep:`646`-compliant
           unpacked type variable tuple hint.
-        * A return typed as a :pep:`484`-compliant tuple type hint subscripted
+        * A return typed as a :pep:`585`-compliant tuple type hint subscripted
           by the same :pep:`646`-compliant unpacked type variable tuple hint.
         '''
 
         # Return this variadic positional parameter prepended by this generic.
         return (and_to_the_damp_leaves,) + and_beauty_that_endued
+
+
+    @beartype
+    def shall_scare(rebel_jove: int) -> tuple[int, Unpack[tuple[int, ...]]]:
+        '''
+        Arbitrary callable returning the tuple consisting of the passed integer
+        followed by as many integers as the passed integer, decorated by
+        :func:`beartype.beartype` and correctly annotated by a return typed as a
+        :pep:`585`-compliant tuple type hint subscripted by a
+        :pep:`646`-compliant unpacked tuple type hint subscripted by another
+        :pep:`585`-compliant tuple type hint.
+        '''
+        assert rebel_jove >= 0
+
+        # Tuple of all non-negative integers in the range [0, rebel_jove).
+        ints_nonnegative = tuple(
+            int_nonnegative for int_nonnegative in range(rebel_jove))
+
+        # Return the tuple of this integer and all items in that tuple unpacked.
+        return rebel_jove, *ints_nonnegative
 
     # ....................{ PASS                           }....................
     # Assert that this callable returns a tuple of all passed positional
@@ -103,12 +110,17 @@ def test_decor_pep646() -> None:
         render_up_its_majesty, 'Of all the grace', 'and beauty', 'that endued') == (
         render_up_its_majesty, 'Of all the grace', 'and beauty', 'that endued')
 
+    #FIXME: Uncomment once worky, please.
+    # # Assert that this callable returns a tuple of the passed integer followed
+    # # by as many integers as the passed integer.
+    # assert shall_scare(4) == (4, 0, 1, 2, 3)
+
     # ....................{ FAIL                           }....................
     # Assert that @beartype raises the expected exception when decorating a
     # callable annotated by a hint unpacking a PEP 646-noncompliant object
-    # (i.e., *ANY* object other than a PEP 646-compliant type variable tuple).
+    # (i.e., other than a PEP 646-compliant type variable tuple or tuple hint).
     with raises(BeartypeDecorHintPep646692Exception):
         @beartype
         def scatter_its_music(
-            *on_the_unfeeling_storm: Unpack[Tuple[str]]) -> str:
+            *on_the_unfeeling_storm: Unpack[list[str]]) -> str:
             return on_the_unfeeling_storm[0]

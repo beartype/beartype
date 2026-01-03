@@ -48,6 +48,16 @@ def test_decor_pep692() -> None:
         nurses_of_rainbow_flowers: str
         and_branching_moss: bytes
 
+
+    class ATerribleRightArm(dict):
+        '''
+        Non-typed dictionary *not* subclassing the :pep:`589`-compliant
+        :class:`typing.TypedDict` superclass.
+        '''
+
+        i_will_advance: str
+        that_infant_thunderer: bytes
+
     # ....................{ FACTORIES                      }....................
     # For the "Unpack" type hint factory exported by each typing module...
     for Unpack in get_typing_attrs('Unpack'):
@@ -82,10 +92,11 @@ def test_decor_pep692() -> None:
 
         # Assert that @beartype raises the expected exception when decorating a
         # callable accepting a variadic keyword parameter annotated by a hint
-        # unpacking a PEP 692-noncompliant object (i.e., *ANY* object other than
-        # a PEP 692-compliant typed dictionary subclass).
+        # unpacking a PEP 692-noncompliant object (i.e., other than a PEP
+        # 692-compliant typed dictionary subclass).
         with raises(BeartypeDecorHintPep646692Exception):
             @beartype
             def that_snowy_breast(
-                **those_dark_and_drooping_eyes: Unpack[Tuple[str]]) -> str:
+                **those_dark_and_drooping_eyes: Unpack[
+                    ATerribleRightArm[str]]) -> str:
                 return next(iter(those_dark_and_drooping_eyes.keys()))

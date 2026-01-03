@@ -127,7 +127,7 @@ def reduce_hint_pep646_tuple(
         * A :pep:`646`-compliant type variable tuple *and* an unpacked child
           tuple hint.
     '''
-    # print(f'Reducing PEP 646 tuple hint {repr(hint)}...')
+    print(f'Reducing PEP 646 tuple hint {repr(hint)}...')
 
     # ....................{ LOCALS                         }....................
     # Tuple of the one or more child hints subscripting this parent tuple hint.
@@ -243,7 +243,6 @@ def reduce_hint_pep646_tuple(
             )
     # Else, this parent tuple hint is *NOT* subscripted by one child hint,
     # implying this parent tuple hint is subscripted by two or more child hints.
-    # Since this hint is irreducible, preserve this hint as is.
 
     # ....................{ SEARCH                         }....................
     # If prior logic has *NOT* already decided this PEP 646-compliant parent
@@ -291,27 +290,34 @@ def reduce_hint_pep646_tuple(
         #   such a PEP 585-compliant hint), "None".
         #
         # PEP 646-compliant unpacked child fixed-length tuple hints are entirely
-        # superfluous and supported by PEP 646 merely for orthogonality.
-        # Although it is unlikely that *ANYONE* will everyone use PEP
-        # 646-compliant unpacked child fixed-length tuple hints, the possibility
-        # that someone might requires us to support this obscure edge case.
+        # superfluous and supported by PEP 646 merely for orthogonality. While
+        # it is unlikely that *ANYONE* will ever use PEP 646-compliant unpacked
+        # child fixed-length tuple hints, the possibility that someone might
+        # requires us to support this obscure edge case.
         hint_pep585_childs_list: Optional[ListHints] = []
 
         #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
         # For the 0-based index of each child hint subscripting this parent
         # tuple hint as well as that child hint...
         for hint_child_index, hint_child in enumerate(hint_childs):
+            print(f'Visiting PEP 646 tuple hint index {hint_child_index} item {hint_child}...')
+
             # Sign uniquely identifying this child hint if this child hint is
             # PEP-compliant *OR* "None" otherwise.
             hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+            print(f'Hint child sign: {hint_child_sign}')
 
             # If this child hint is PEP 646-compliant...
             if hint_child_sign in HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED:
+                print('PEP 646 tuple hint child discovered!')
+
                 # If this iteration has yet to discover a PEP 646-compliant
                 # child hint of this parent tuple hint, this is the first PEP
                 # 646-compliant child hint subscripting this parent tuple hint
                 # discovered by this iteration. In this case, record this fact.
                 if hint_child_pep646 is None:
+                    print('Inspecting PEP 646 tuple hint child...')
+
                     hint_child_pep646 = hint_child
                     hint_child_pep646_index = hint_child_index
 
@@ -328,6 +334,28 @@ def reduce_hint_pep646_tuple(
                         # This child hint is a PEP 646-compliant unpacked child
                         # tuple hint *AND*...
                         hint_child_sign is HintSignPep646TupleUnpacked and
+
+                        #FIXME: *PROBLEMATIC.* This fails to support
+                        #"typing.Unpack[tuple[...]]" type hints. Ideally, this
+                        #tester should be generalized to do so for sanity. It's
+                        #simply too insane to require callers to do so. One case
+                        #works. Ergo, both cases should work. To generalize:
+                        #* Define a new get_hint_pep_646692_unpack_arg() getter
+                        #  in the existing "pep646692" submodule. The
+                        #  implementation should derive from the existing
+                        #  disambiguate_hint_pep646692_unpacked_sign() function,
+                        #  which internally already does this.
+                        #* Refactor the existing
+                        #  disambiguate_hint_pep646692_unpacked_sign() function
+                        #  to internally call that getter instead.
+                        #* Refactor is_hint_pep484585646_tuple_variadic() to
+                        #  internally call that getter as well *AFTER* every
+                        #  other approach fails. Shouldn't be too hard. For
+                        #  safety, however, note that that tester *MUST* call
+                        #  the safer
+                        #  get_hint_pep_sign_ambiguous_by_repr_or_none() getter
+                        #  to decide the sign without recursion concerns.
+
                         # This child hint is *NOT* a PEP 646-compliant unpacked
                         # child variable-length tuple hint, this child hint
                         # *MUST* by elimination be a PEP 646-compliant unpacked
@@ -355,7 +383,7 @@ def reduce_hint_pep646_tuple(
                     # parent tuple hint is irreducible to a PEP 585-compliant
                     # parent tuple hint.
                     else:
-                        # print(f'Ignoring PEP 646 non-unpacked fixed-length tuple hint {hint_child}...')
+                        print(f'Ignoring PEP 646 non-unpacked fixed-length tuple hint {hint_child}...')
                         hint_pep585_childs_list = None
                 # Else, this iteration has already discovered a PEP
                 # 646-compliant child hint of this parent tuple hint. Since the

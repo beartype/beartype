@@ -47,7 +47,13 @@ def is_hint_pep484585646_tuple_variadic(hint: Hint) -> bool:
     * A :pep:`585`-compliant variable-length tuple hint of the form
       ``tuple[{hint_child}, ...]`` for any ``{hint_child}``.
     * A :pep:`646`-compliant unpacked variable-length child tuple hint of the
-      form ``*tuple[{hint_child}, ...]`` for any ``{hint_child}``.
+      form ``*tuple[{hint_child}, ...]`` for any ``{hint_child}``. Why? Because
+      the default implementation of this tester already transparently supported
+      this edge case without modification. Note, however, that this does *not*
+      extend to a :pep:`646`-compliant unpacked variable-length child tuple hint
+      of the form ``typing.Unpack[tuple[{hint_child}, ...]]``. The caller is
+      responsible for externally detecting and unpacking the child tuple hint
+      subscripting such parent hints. Why? Because coding is suffering.
 
     This tester is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as this tester trivially reduces to an
