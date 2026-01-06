@@ -36,6 +36,7 @@ class GenericTypeHint(TypeHint):
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
         # print(f'Entering GenericTypeHint._is_subhint_branch({self}, {branch})...')
 
+        # ..................{ NOOP                           }..................
         # If the unsubscripted type originating this generic is *NOT* a subclass
         # of the unsubscripted type originating that branch, this generic is
         # *NOT* a subhint of that branch. In this case, return false.
@@ -90,6 +91,7 @@ class GenericTypeHint(TypeHint):
         # * Else, that branch *MUST* be a PEP 484- or 585-compliant subscripted
         #   non-generic (e.g., "list[int]", "collections.abc.Sized[str]").
 
+        # ..................{ LOCALS                         }..................
         # Human-readable substring prefixing exception messages raised below.
         exception_prefix = f'{self} <= {branch} undecidable, as '
 
@@ -128,6 +130,7 @@ class GenericTypeHint(TypeHint):
         )
         # print(f'Found self {self} full child hints: {self_args_full}')
 
+        # ..................{ NON-GENERIC                    }..................
         #FIXME: Unit test us up, please.
         # If that branch is a subscripted non-generic (e.g., "Sequence[int]")...
         if isinstance(branch, SubscriptedTypeHint):
@@ -180,9 +183,12 @@ class GenericTypeHint(TypeHint):
             # this generic is a subhint of that non-generic branch.
         # Else, that branch is *NOT* a subscripted non-generic
         # (e.g., "Sequence[int]"). By the above validation, that branch is both
-        # subscripted and commensurable with this generic. By elimination, that
-        # branch *MUST* be a subscripted generic (e.g., "MuhGeneric[T]"). In
-        # this case...
+        # subscripted and commensurable with this generic. By process of
+        # elimination, that branch *MUST* be a subscripted generic (e.g.,
+        # "MuhGeneric[T]").
+        #
+        # ..................{ GENERIC                        }..................
+        # In this case...
         else:
             # print(f'Comparing against subscripted generic {branch}...')
 
@@ -254,6 +260,7 @@ class GenericTypeHint(TypeHint):
             # corresponding child hint of that generic branch. In this case,
             # this generic is a subhint of that generic branch.
 
+        # ..................{ RETURN                         }..................
         # Return true! We have liftoff.
         return True
 

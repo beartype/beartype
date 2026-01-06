@@ -20,7 +20,7 @@ from beartype.typing import (
 )
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
     get_hint_pep484585_args)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_subbed
 from collections.abc import ItemsView as ItemsViewABC

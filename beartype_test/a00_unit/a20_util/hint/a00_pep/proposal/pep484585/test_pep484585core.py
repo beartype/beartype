@@ -31,7 +31,7 @@ def test_get_hint_pep484585_args() -> None:
         Dict,
         List,
     )
-    from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
+    from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
         get_hint_pep484585_args)
     from pytest import raises
 

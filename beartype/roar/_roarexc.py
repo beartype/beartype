@@ -225,23 +225,21 @@ class BeartypeHintViolation(BeartypeException):
         super().__init__(message, culprits, *args, **kwargs)
 
         #FIXME: Unit test us up, please.
-        # If the culprits are *NOT* a tuple, raise an exception.
+        # If these culprits are *NOT* a tuple, raise an exception.
         if not isinstance(culprits, tuple):
             raise _BeartypeUtilExceptionException(
                 f'Culprits {repr(culprits)} not tuple.')
-        # Else, the culprits are a tuple.
+        # Else, these culprits are a tuple.
         #
-        # If the culprits are the empty tuple, raise an exception.
+        # If these culprits are the empty tuple, raise an exception.
         elif not culprits:
             raise _BeartypeUtilExceptionException('Culprits tuple empty.')
-        # Else, the culprits are a non-empty tuple.
+        # Else, these culprits are a non-empty tuple.
 
-        # Tuple of 2-tuples ("culprit_weakref", "culprit_repr") weakly referring
-        # to all of the passed culprits.
+        # Tuple of 2-tuples "(culprit_weakref, culprit_repr)" weakly referring
+        # to all of these culprits.
         self._culprits_weakref_and_repr = tuple(
-            make_obj_weakref_and_repr(culprit)
-            for culprit in culprits
-        )
+            make_obj_weakref_and_repr(culprit) for culprit in culprits)
 
     # ..................{ DUNDERS                            }..................
     #FIXME: Unit test us up, please.
@@ -537,7 +535,7 @@ class BeartypeDecorHintNonpepPanderaException(BeartypeDecorHintNonpepException):
 class BeartypeDecorHintPepException(BeartypeDecorHintException):
     '''
     Abstract base class of all **beartype decorator PEP-compliant type hint
-    value exceptions.**
+    exceptions.**
 
     Instances of subclasses of this exception are raised at decoration time
     from the :func:`beartype.beartype` decorator on receiving a callable
@@ -549,15 +547,33 @@ class BeartypeDecorHintPepException(BeartypeDecorHintException):
     pass
 
 
+
+class BeartypeDecorHintPepArgsLenException(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator PEP-compliant type hint argument length exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable or class
+    annotated by an **improperly subscripted PEP-compliant type hint** (i.e.,
+    type hint complying with PEP standards currently supported by
+    :mod:`beartype` but otherwise invalid due to having been subscripted by an
+    invalid number of child type hints).
+    '''
+
+    pass
+
+
+
 class BeartypeDecorHintPepSignException(BeartypeDecorHintPepException):
     '''
     **Beartype decorator PEP-compliant type hint sign exception.**
 
-    Instances of subclasses of this exception are raised at decoration time
-    from the :func:`beartype.beartype` decorator on receiving a callable
-    annotated with one or more PEP-compliant type hints *not* uniquely
-    identifiable by a **sign** (i.e., object uniquely identifying a category
-    of PEP-compliant type hints).
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable or class
+    annotated by a PEP-compliant type hint *not* uniquely identifiable by a
+    **sign** (i.e., :mod:`beartype`-specific object internally associated with a
+    category of PEP-compliant type hints explicitly supported by
+    :mod:`beartype`).
     '''
 
     pass
@@ -665,19 +681,6 @@ class BeartypeDecorHintPep560Exception(BeartypeDecorHintPepException):
     pass
 
 
-class BeartypeDecorHintPep585Exception(BeartypeDecorHintPepException):
-    '''
-    **Beartype decorator** :pep:`585`-compliant **type hint exception.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated with
-    one or more PEP-compliant type hints either violating :pep:`585` *or* this
-    decorator's implementation of :pep:`585`.
-    '''
-
-    pass
-
-
 class BeartypeDecorHintPep586Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`586`-compliant **type hint exception.**
@@ -751,20 +754,6 @@ class BeartypeDecorHintPep646Exception(BeartypeDecorHintPepException):
     :func:`beartype.beartype` decorator on receiving a callable annotated with
     one or more PEP-compliant type hints either violating :pep:`646` *or* this
     decorator's implementation of :pep:`646`.
-    '''
-
-    pass
-
-
-class BeartypeDecorHintPep646692Exception(BeartypeDecorHintPepException):
-    '''
-    **Beartype decorator** :pep:`646`- or :pep:`692`-compliant **type hint
-    exception.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated with
-    one or more PEP-compliant type hints either violating both :pep:`646` and
-    :pep:`692` *or* this decorator's implementation of those PEPs.
     '''
 
     pass
@@ -902,6 +891,77 @@ class BeartypeDecorHintPep484TypeVarException(BeartypeDecorHintPep484Exception):
     '''
 
     pass
+
+# ....................{ DECORATOR ~ hint : pep : numbered  }....................
+#FIXME: Slowly refactor *ALL* PEP-numbered subclasses above to inherit
+#"BeartypeDecorHintPepNumberedException" instead. Doing so will require manually
+#overriding the "pep_number" property in each such subclass. *sigh*
+class BeartypeDecorHintPepNumberedException(BeartypeDecorHintPepException):
+    '''
+    Abstract base class of all **beartype decorator numbered PEP-compliant type
+    hint exceptions.**
+
+    Instances of subclasses of this exception are raised at decoration time
+    from the :func:`beartype.beartype` decorator on receiving a callable
+    annotated with one or more PEP-compliant type hints either violating a
+    specifically numbered annotation-centric PEP (e.g., :pep:`484`) *or* this
+    decorator's implementation of such a PEP.
+    '''
+
+    # ..................{ PROPERTIES                         }..................
+    # Read-only properties intentionally providing no corresponding setters.
+
+    @property
+    def pep_number(self) -> str:
+        '''
+        Human-readable substring synopsizing this PEP's specific number (e.g.,
+        ``"PEP 484"``).
+
+        For disambiguation and readability by end users, callers are encouraged
+        to manually embed this substring towards the beginning of this
+        exception's message.
+
+        Raises
+        ------
+        NotImplementedError
+            By default unless the concrete subclass explicitly overrides this
+            property to return a valid string.
+        '''
+
+        # Raise an exception by default.
+        raise NotImplementedError(
+            f'{self.__class__.__name__}.pep_number() undefined.')
+
+
+class BeartypeDecorHintPep585Exception(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator** :pep:`585`-compliant **type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated with
+    one or more PEP-compliant type hints either violating :pep:`585` *or* this
+    decorator's implementation of :pep:`585`.
+    '''
+
+    @property
+    def pep_number(self) -> str:
+        return 'PEP 585'
+
+
+class BeartypeDecorHintPep646692Exception(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator** :pep:`646`- or :pep:`692`-compliant **type hint
+    exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated with
+    one or more PEP-compliant type hints violating either :pep:`646` and
+    :pep:`692` *or* this decorator's implementation of those PEPs.
+    '''
+
+    @property
+    def pep_number(self) -> str:
+        return 'PEP 646 or 692'
 
 # ....................{ DECORATOR ~ param                  }....................
 class BeartypeDecorParamException(BeartypeDecorException):

@@ -674,6 +674,10 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
     # lookup that "other" in that dictionary. Since dictionary lookups
     # implicitly call other.__eq__() to resolve key collisions *AND* since the
     # TypeHint.__eq__() method calls TypeHint.is_subhint(), infinite recursion!
+
+    #FIXME: *EXTREMELY UNSAFE.* Object IDs are *NOT* globally unique
+    #identifiers. Refactor this immediately into a
+    #@method_cached_arg_by_hint_repr decorator instead, please.
     @method_cached_arg_by_id
     def is_subhint(self, other: 'TypeHint') -> bool:
         '''

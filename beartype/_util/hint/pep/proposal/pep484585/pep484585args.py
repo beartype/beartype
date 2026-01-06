@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`- and :pep:`585`-compliant **dual type hint utilities**
-(i.e., low-level callables generically applicable to both :pep:`484`- and
-:pep:`585`-compliant type hints).
+Project-wide :pep:`484`- and :pep:`585`-compliant **child type hint getters**
+(i.e., low-level callables generically retrieving child type hints subscripting
+:pep:`484`- and :pep:`585`-compliant parent type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -121,39 +121,14 @@ def get_hint_pep484585_args(
     BeartypeDecorHintPep585Exception
         If this hint is subscripted by an unexpected number of child hints.
     '''
-    assert isinstance(args_len, int), f'{repr(args_len)} not integer.'
-    assert args_len >= 1, f'{args_len} < 0.'
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args_of_len
 
-    # Tuple of all arguments subscripting this hint.
-    hint_args = get_hint_pep_args(hint)
-
-    # If this hint is *NOT* subscripted by the expected number of child type
-    # hints...
-    if len(hint_args) != args_len:
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
-
-        # Human-readable noun describing the grammatically correct plurality of
-        # the number of expected child type hints. English! Why!?!?
-        exception_noun = (
-            'child type hint' if args_len == 1 else 'child type hints')
-
-        # Raise an exception.
-        raise BeartypeDecorHintPep585Exception(
-            f'{exception_prefix}PEP 585 type hint {repr(hint)} '
-            f'not subscripted (indexed) by {args_len} {exception_noun} (i.e., '
-            f'subscripted by {len(hint_args)} != {args_len} child type hints).'
-        )
-    # Else, this hint is subscripted by the expected number of child type hints.
-
-    # Return either...
-    return (
-        # If this hint is subscripted by only child hint, this child hint;
-        hint_args[0]
-        if args_len == 1 else
-        # Else, this tuple of arguments as is.
-        hint_args
+    # Defer to this lower-level getter.
+    return get_hint_pep_args_of_len(
+        hint=hint,
+        args_len=args_len,
+        exception_cls=BeartypeDecorHintPep585Exception,
+        exception_prefix=exception_prefix,
     )

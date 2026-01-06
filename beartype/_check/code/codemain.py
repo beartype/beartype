@@ -135,7 +135,7 @@ from beartype._util.cls.pep.clspep3119 import (
     is_object_issubclassable,
 )
 from beartype._util.func.utilfuncscope import add_func_scope_attr
-from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
     get_hint_pep484585_arg,
     get_hint_pep484585_args,
 )

@@ -129,10 +129,10 @@ def die_as_hint_unsupported(
     ----------
     hint : object
         Object to be validated.
-    exception_cls : type[Exception]
+    exception_cls : type[Exception], default: BeartypeDecorHintNonpepException
         Type of exception to be raised. Defaults to
         :exc:`.BeartypeDecorHintNonpepException`.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable substring prefixing the raised exception message.
         Defaults to the empty string.
 

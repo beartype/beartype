@@ -11,18 +11,19 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPepException
-from beartype.roar._roarexc import _BeartypeUtilTypeException
-from beartype.typing import (
-    Any,
-    Optional,
-    Union,
+from beartype.roar import (
+    BeartypeDecorHintPepException,
+    BeartypeDecorHintPepArgsLenException,
+    BeartypeDecorHintPepNumberedException,
 )
+from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype._cave._cavefast import HintPep646TypeVarTupleType
 from beartype._data.cls.datacls import TYPES_NONPEP_TYPEARGS_PACKED
 from beartype._data.typing.datatypingport import (
     Hint,
     HintOrNone,
+    HintOrTupleHints,
+    # TupleHints,
 )
 from beartype._data.typing.datatyping import (
     TuplePep484612646TypeArgsPacked,
@@ -37,8 +38,17 @@ from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_typeargs_packed,
     is_hint_pep585_generic_unsubbed,
 )
+from typing import (
+    Any,
+    Optional,
+    Union,
+)
 
 # ....................{ GETTERS ~ args                     }....................
+# Note that we intentionally avoid annotating this and similar getters below by
+# PEP 747-compliant "typing.TypeForm[...]" type hints, as pyright in particular
+# currently fails to support PEP 747 properly.
+
 def get_hint_pep_args(hint: object) -> tuple:
     '''
     Tuple of the zero or more **child type hints** subscripting (indexing) the
@@ -174,6 +184,114 @@ def get_hint_pep_args(hint: object) -> tuple:
 
     # In this case, return this tuple as is.
     return hint_args
+
+# ....................{ GETTERS ~ args : len               }....................
+#FIXME: Unit test us up, please. *sigh*
+def get_hint_pep_args_of_len(
+    # Mandatory parameters.
+    hint: Hint,
+    args_len: int,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPepArgsLenException,
+    exception_prefix: str = '',
+) -> HintOrTupleHints:
+    '''
+    Single child hint *or* tuple of all child hints subscripting the passed
+    PEP-compliant parent hint if this hint is subscripted by exactly the passed
+    number of child hints *or* raise an exception otherwise.
+
+    This getter returns either:
+
+    * If ``args_len == 1``, the single child hint subscripting this parent hint
+      as a convenience to the caller.
+    * Else, the tuple of all child hints subscripting this parent hint.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
+
+    Caveats
+    -------
+    **This higher-level getter should always be called in lieu of directly
+    accessing the low-level** ``__args__`` **dunder attribute,** which is
+    typically *not* validated at runtime and thus should *not* be assumed to be
+    sane. For example, although the :mod:`typing` module usually validates the
+    arguments subscripting :pep:`484`-compliant type hints and thus the
+    ``__args__`` **dunder attribute at hint instantiation time, C-based CPython
+    internals fail to similarly validate the arguments subscripting
+    :pep:`585`-compliant type hints at any time:
+
+    .. code-block:: python
+
+        >>> import typing
+        >>> typing.Type[str, bool]
+        TypeError: Too many parameters for typing.Type; actual 2, expected 1
+        >>> type[str, bool]
+        type[str, bool]   # <-- when everything is okay, nothing is okay
+
+    Parameters
+    ----------
+    hint : Hint
+        Parent hint to be inspected.
+    args_len : int
+        Number of child hints expected to subscript this parent hint.
+    exception_cls : TypeException, default: BeartypeDecorHintPep646692Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep646692Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Returns
+    -------
+    HintOrTupleHints
+        Either the sole child hint *or* tuple of all child hints subscripting
+        this parent hint.
+
+    Raises
+    ------
+    exception_cls
+        If this hint is subscripted by an unexpected number of child hints.
+    '''
+    assert isinstance(args_len, int), f'{repr(args_len)} not integer.'
+    assert args_len >= 1, f'{args_len} < 0.'
+
+    # Tuple of all arguments subscripting this hint.
+    hint_args = get_hint_pep_args(hint)
+
+    # If this hint is *NOT* subscripted by the expected number of child hints...
+    if len(hint_args) != args_len:
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # If this exception class is associated with one or more specific PEPs,
+        # prepend this exception prefix by these PEPs as a caller convenience.
+        if issubclass(exception_cls, BeartypeDecorHintPepNumberedException):
+            exception_prefix = f'{exception_prefix}{exception_cls.pep_number} '
+        # Else, this exception class is associated with *NO* specific PEPs.
+
+        # Human-readable noun describing the grammatically correct plurality of
+        # the number of expected child type hints. English! Why!?!?
+        exception_noun = (
+            'child type hint' if args_len == 1 else 'child type hints')
+
+        # Raise an exception.
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'not subscripted (indexed) by {args_len} {exception_noun} (i.e., '
+            f'subscripted by {len(hint_args)} != {args_len} child type hints).'
+        )
+    # Else, this hint is subscripted by the expected number of child hints.
+
+    # Return either...
+    return (
+        # If this hint is subscripted by only child hint, this child hint;
+        hint_args[0]
+        if args_len == 1 else
+        # Else, this tuple of arguments as is.
+        hint_args
+    )
 
 # ....................{ GETTERS ~ typeargs                 }....................
 #FIXME: Unit test us up, please. *sigh*

@@ -58,6 +58,9 @@ from itertools import count
 #
 #We currently only test this getter with respect to generics subscripted by PEP
 #484-compliant type variables. *sigh*
+#FIXME: *HMM.* The "exception_cls" and "exception_prefix" parameters are at odds
+#with memoization. Do we actually pass these parameters? If so, can we stop?
+#Memoization is quite important here. This is an *EXTREMELY* slow algorithm.
 @callable_cached
 def get_hint_pep484585_generic_args_full(
     # Mandatory parameters.
@@ -165,10 +168,10 @@ def get_hint_pep484585_generic_args_full(
            ...     MuhGeneric, hint_base_target=Generic[int, float])
            (S, T)
 
-    exception_cls : TypeException
+    exception_cls : TypeException, default: BeartypeDecorHintPep484585Exception
         Type of exception to be raised. Defaults to
         :exc:`.BeartypeDecorHintPep484585Exception`.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
