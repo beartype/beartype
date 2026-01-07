@@ -340,21 +340,9 @@ def reduce_hint_pep646_tuple(
                         #tester should be generalized to do so for sanity. It's
                         #simply too insane to require callers to do so. One case
                         #works. Ergo, both cases should work. To generalize:
-                        #* Define a new get_hint_pep_646692_unpack_arg() getter
-                        #  in the existing "pep646692" submodule. The
-                        #  implementation should derive from the existing
-                        #  disambiguate_hint_pep646692_unpacked_sign() function,
-                        #  which internally already does this.
-                        #* Refactor the existing
-                        #  disambiguate_hint_pep646692_unpacked_sign() function
-                        #  to internally call that getter instead.
                         #* Refactor is_hint_pep484585646_tuple_variadic() to
-                        #  internally call that getter as well *AFTER* every
-                        #  other approach fails. Shouldn't be too hard. For
-                        #  safety, however, note that that tester *MUST* call
-                        #  the safer
-                        #  get_hint_pep_sign_ambiguous_by_repr_or_none() getter
-                        #  to decide the sign without recursion concerns.
+                        #  internally call this new
+                        #  get_hint_pep_args_unpacked_if_pep646_tuple() getter.
 
                         # This child hint is *NOT* a PEP 646-compliant unpacked
                         # child variable-length tuple hint, this child hint

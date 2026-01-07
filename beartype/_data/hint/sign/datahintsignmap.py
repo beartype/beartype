@@ -582,7 +582,7 @@ def _init() -> None:
 
         # If the active Python interpreter targets Python 3.11, identify PEP
         # 646- and 692-compliant hints that are instances of the private
-        # "typing._UnpackGenericAlias" as "Unpack[...]" hints.
+        # "typing._UnpackGenericAlias" as "typing.Unpack[...]" hints.
         #
         # Note that this fragile violation of privacy encapsulation is *ONLY*
         # needed under Python 3.11, where the machine-readable representation of

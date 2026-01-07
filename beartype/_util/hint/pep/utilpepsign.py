@@ -343,22 +343,28 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
 # *NOT* to provoke infinite recursion.
 
 #FIXME: Unit test us up, please. *sigh*
-def get_hint_pep_sign_ambiguous_by_repr_or_none(hint: Hint) -> Optional[HintSign]:
+# Note that this getter is intentionally passed *NO* optional parameters. While
+# feasible, doing so would obstruct memoization for no particularly good reason.
+# This call should *NEVER* raise exceptions anyway. Of course, it will. *sigh*
+@callable_cached
+def get_hint_pep_sign_ambiguous_by_repr_or_none(
+    hint: Hint) -> Optional[HintSign]:
     '''
-    **Sign** (i.e., :class:`HintSign` instance) possibly ambiguously
-    identifying the passed hint if this hint is PEP-compliant and ambiguously
-    identifiable by its machine-readable representation *or* :data:`None`
-    otherwise (i.e., if this hint is PEP-noncompliant *or* not ambiguously
-    identifiable by its machine-readable representation).
+    **Sign** (i.e., :class:`HintSign` instance) possibly ambiguously identifying
+    the passed hint if this hint is PEP-compliant and ambiguously identifiable
+    by its machine-readable representation *or* :data:`None` otherwise (i.e., if
+    this hint is PEP-noncompliant *or* not ambiguously identifiable by its
+    machine-readable representation).
 
     This getter identifies *most* :pep:`484`- and :pep:`585`-compliant hints.
     This getter thus identifies most hints, since most hints are either
     :pep:`484`- or :pep:`585`-compliant.
 
-    This getter is intentionally *not* memoized (e.g., by the
-    :func:`.callable_cached` decorator), as the higher-level public parent
-    :func:`.get_hint_pep_sign_or_none` getter is already memoized. Other callers
-    should take care to avoid calling this getter outside a memoized context.
+    This getter is memoized for efficiency. Although the higher-level parent
+    :func:`.get_hint_pep_sign_or_none` getter is already memoized, this
+    lower-level child getter is now frequently called outside the context of
+    :func:`.get_hint_pep_sign_or_none`. Since this getter is computationally
+    intensive, independent memoization is now warranted.
 
     Parameters
     ----------

@@ -86,11 +86,11 @@ def get_hint_pep_args(hint: object) -> tuple:
 
     **This getter lies less than the comparable**
     :func:`.get_hint_pep_typeargs_packed` **getter.** Whereas
-    :func:`.get_hint_pep_typeargs_packed` synthetically propagates type variables from
-    child to parent type hints (rather than preserving the literal type
-    variables subscripting this type hint), this getter preserves the literal
-    arguments subscripting this type hint if any. Notable cases where the two
-    differ include:
+    :func:`.get_hint_pep_typeargs_packed` propagates type variables from child
+    to parent type hints (rather than preserving the literal type variables
+    subscripting this type hint), this getter preserves the literal arguments
+    subscripting this type hint if any. Notable cases where the two differ
+    include:
 
     * Generic classes subclassing pseudo-superclasses subscripted by one or
       more type variables (e.g., ``class MuhGeneric(Generic[S, T])``).
