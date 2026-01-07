@@ -204,5 +204,9 @@ local_settings.py
 # Ignore all "trace"-specific output files.
 *.cover
 
+# LLM development environments
 .gemini/
+.claude/
+LLM-CONTEXT/
+
 gha-creds-*.json
