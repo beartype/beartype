@@ -33,8 +33,8 @@ from sys import argv
 # greater than the size of this list. POSIX: it is what it is.
 if len(argv) != 2:
     raise ValueError(
-        f'Exactly one non-empty string argument expected. '
-        f'Received {len(argv) - 1} string arguments:\n\t{argv}'
+        f'1 argument expected, but received '
+        f'{len(argv) - 1} arguments:\n\t{argv}'
     )
 # Else, the caller passed exactly one command-line argument.
 

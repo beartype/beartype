@@ -127,7 +127,7 @@ def reduce_hint_pep646_tuple(
         * A :pep:`646`-compliant type variable tuple *and* an unpacked child
           tuple hint.
     '''
-    print(f'Reducing PEP 646 tuple hint {repr(hint)}...')
+    # print(f'Reducing PEP 646 tuple hint {repr(hint)}...')
 
     # ....................{ LOCALS                         }....................
     # Tuple of the one or more child hints subscripting this parent tuple hint.
@@ -300,24 +300,23 @@ def reduce_hint_pep646_tuple(
         # For the 0-based index of each child hint subscripting this parent
         # tuple hint as well as that child hint...
         for hint_child_index, hint_child in enumerate(hint_childs):
-            print(f'Visiting PEP 646 tuple hint index {hint_child_index} item {hint_child}...')
+            # print(f'Visiting PEP 646 tuple hint index {hint_child_index} item {hint_child}...')
 
             # Sign uniquely identifying this child hint if this child hint is
             # PEP-compliant *OR* "None" otherwise.
             hint_child_sign = get_hint_pep_sign_or_none(hint_child)
-            print(f'Hint child sign: {hint_child_sign}')
+            # print(f'Hint child sign: {hint_child_sign}')
 
             # If this child hint is PEP 646-compliant...
             if hint_child_sign in HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED:
-                print('PEP 646 tuple hint child discovered!')
+                # print('PEP 646 tuple hint child discovered!')
 
                 # If this iteration has yet to discover a PEP 646-compliant
                 # child hint of this parent tuple hint, this is the first PEP
                 # 646-compliant child hint subscripting this parent tuple hint
                 # discovered by this iteration. In this case, record this fact.
                 if hint_child_pep646 is None:
-                    print('Inspecting PEP 646 tuple hint child...')
-
+                    # print('Inspecting PEP 646 tuple hint child...')
                     hint_child_pep646 = hint_child
                     hint_child_pep646_index = hint_child_index
 
@@ -371,7 +370,7 @@ def reduce_hint_pep646_tuple(
                     # parent tuple hint is irreducible to a PEP 585-compliant
                     # parent tuple hint.
                     else:
-                        print(f'Ignoring PEP 646 non-unpacked fixed-length tuple hint {hint_child}...')
+                        # print(f'Ignoring PEP 646 non-unpacked fixed-length tuple hint {hint_child}...')
                         hint_pep585_childs_list = None
                 # Else, this iteration has already discovered a PEP
                 # 646-compliant child hint of this parent tuple hint. Since the

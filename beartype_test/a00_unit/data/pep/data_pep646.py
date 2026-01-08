@@ -24,15 +24,48 @@ Python 3.11.0.** If this is *not* the case, importing this submodule raises an
 from beartype.typing import TypeVarTuple
 from beartype._util.hint.pep.proposal.pep646692 import (
     make_hint_pep646_tuple_unpacked_prefix,
+    make_hint_pep646_tuple_unpacked_subbed,
     make_hint_pep646_typevartuple_unpacked_prefix,
     make_hint_pep646_typevartuple_unpacked_subbed,
 )
 
-# ....................{ HINTS                              }....................
-TUPLE_UNPACKED_EMPTY = make_hint_pep646_tuple_unpacked_prefix(())
+# ....................{ HINTS ~ tuple : fixed              }....................
+tuple_fixed_empty_unpacked_prefix = make_hint_pep646_tuple_unpacked_prefix(())
 '''
-:pep:`646`-compliant unpacked child tuple hint subscripted by the empty tuple
-(signifying zero child hints).
+:pep:`646`-compliant prefix-flavoured unpacked fixed-length tuple hint
+subscripted by the empty tuple (signifying zero child hints).
+'''
+
+
+tuple_fixed_str_bytes_unpacked_prefix = make_hint_pep646_tuple_unpacked_prefix(
+    (str, bytes))
+'''
+:pep:`646`-compliant prefix-flavoured unpacked fixed-length tuple hint
+subscripted by the builtin :class:`str` and :class:`bytes` types in that order.
+'''
+
+
+tuple_fixed_str_bytes_unpacked_subbed = make_hint_pep646_tuple_unpacked_subbed(
+    (str, bytes))
+'''
+:pep:`646`-compliant subscription-flavoured unpacked fixed-length tuple hint
+subscripted by the builtin :class:`str` and :class:`bytes` types in that order.
+'''
+
+# ....................{ HINTS ~ tuple : fixed              }....................
+tuple_variadic_strs_unpacked_prefix = make_hint_pep646_tuple_unpacked_prefix(
+    (str, ...))
+'''
+:pep:`646`-compliant prefix-flavoured unpacked variable-length tuple hint
+subscripted by the builtin :class:`str` type followed by an ellipsis.
+'''
+
+
+tuple_variadic_strs_unpacked_subbed = make_hint_pep646_tuple_unpacked_subbed(
+    (str, ...))
+'''
+:pep:`646`-compliant subscription-flavoured unpacked variable-length tuple hint
+subscripted by the builtin :class:`str` type followed by an ellipsis.
 '''
 
 # ....................{ TYPEARGS                           }....................

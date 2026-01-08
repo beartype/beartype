@@ -214,7 +214,6 @@ def is_hint_pep646_tuple_unpacked_prefix(hint: Hint) -> bool:
     )
 
 # ....................{ GETTERS ~ args                     }....................
-#FIXME: Unit test us up, please.
 def get_hint_pep_args_unpacked_if_pep646_tuple(hint: Hint) -> TupleHints:
     '''
     Tuple of the zero or more **child type hints** subscripting (indexing) the
@@ -328,7 +327,7 @@ def get_hint_pep_args_unpacked_if_pep646_tuple(hint: Hint) -> TupleHints:
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
     from beartype._util.hint.pep.utilpepsign import (
-        get_hint_pep_sign_ambiguous_by_repr_or_none)
+        get_hint_pep_sign_ambiguous_or_none)
 
     # Tuple of the zero or more child hints subscripting this hint if this hint
     # defines of the "__args__" dunder attribute *OR* "None" otherwise (i.e., if
@@ -339,23 +338,28 @@ def get_hint_pep_args_unpacked_if_pep646_tuple(hint: Hint) -> TupleHints:
     if hint_args:
         # Sign uniquely identifying this hint if this hint is unambiguously
         # identifiable by its machine-readable representation *OR* "None".
-        hint_sign = get_hint_pep_sign_ambiguous_by_repr_or_none(hint)
+        hint_sign = get_hint_pep_sign_ambiguous_or_none(hint)
+        # print(f'hint_sign: {hint_sign}')
 
         # If this hint is a PEP 646- or 692-compliant subscription-based
         # unpacked hint...
         if hint_sign is HintSignUnpack:
             # Single child type hint necessarily subscripting this hint.
             hint_child = get_hint_pep646692_unpack_arg(hint)
+            # print(f'hint: {hint}')
+            # print(f'hint_child: {hint_child}')
 
             # Sign uniquely identifying this child hint if this child hint is
             # unambiguously identifiable by its machine-readable representation
             # *OR* "None".
-            hint_child_sign = get_hint_pep_sign_ambiguous_by_repr_or_none(
+            hint_child_sign = get_hint_pep_sign_ambiguous_or_none(
                 hint_child)
 
             # If this child hint is a PEP 646-compliant subscription-based
             # unpacked tuple hint...
-            if hint_child_sign is HintSignUnpack:
+            if hint_child_sign is HintSignTuple:
+                # print(f'hint_args: {hint_args}')
+
                 # Tuple of the zero or more child child hints subscripting this
                 # child hint if any *OR* "None" otherwise, expanding this
                 # subscription-based unpacked tuple hint in a similar manner as
@@ -505,7 +509,7 @@ def disambiguate_hint_pep646692_unpacked_sign(
     # print(f'Disambiguating unpack hint {repr(hint)}...')
     from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
     from beartype._util.hint.pep.utilpepsign import (
-        get_hint_pep_sign_ambiguous_by_repr_or_none)
+        get_hint_pep_sign_ambiguous_or_none)
     from beartype._util.hint.utilhinttest import die_as_hint_unsupported
 
     # ....................{ LOCALS                         }....................
@@ -548,9 +552,9 @@ def disambiguate_hint_pep646692_unpacked_sign(
     # approach could provoke infinite recursion (e.g., a "typing.Unpack[...]"
     # hint maliciously subscripted by itself).
     #
-    # Thankfully, the lower-level get_hint_pep_sign_ambiguous_by_repr_or_none()
-    # getter is guaranteed to both not call this getter and detect the sign
-    # uniquely identifying this child hint if this child hint is either:
+    # Thankfully, the lower-level get_hint_pep_sign_ambiguous_or_none() getter
+    # is guaranteed to both not call this getter and detect the sign uniquely
+    # identifying this child hint if this child hint is either:
     # * A PEP 484-compliant tuple hint (e.g., "typing.Unpack[typing.Tuple[bytes,
     #   float]]").
     # * A PEP 585-compliant tuple hint (e.g., "typing.Unpack[tuple[int, str]]").
@@ -563,7 +567,7 @@ def disambiguate_hint_pep646692_unpacked_sign(
     #
     # Note that this getter, although memoized, is also the slowest possible
     # test and thus intentionally performed last.
-    hint_child_sign = get_hint_pep_sign_ambiguous_by_repr_or_none(hint_child)
+    hint_child_sign = get_hint_pep_sign_ambiguous_or_none(hint_child)
 
     # If this child hint is either a PEP 484- or 585-compliant tuple hint, this
     # parent unpack hint is a PEP 646-compliant unpacked tuple hint. In this
@@ -582,6 +586,7 @@ def disambiguate_hint_pep646692_unpacked_sign(
         hint=hint, exception_cls=BeartypeDecorHintPep646692Exception)
 
 # ....................{ FACTORIES ~ tuple                  }....................
+#FIXME: Unit test us up, please. *sigh*
 def make_hint_pep646_tuple_unpacked_prefix(hints_child: TupleHints) -> Hint:
     '''
     Dynamically create and return a new :pep:`646`-compliant **prefix-based

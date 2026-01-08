@@ -46,14 +46,9 @@ def is_hint_pep484585646_tuple_variadic(hint: Hint) -> bool:
       ``typing.Tuple[{hint_child}, ...]`` for any ``{hint_child}``.
     * A :pep:`585`-compliant variable-length tuple hint of the form
       ``tuple[{hint_child}, ...]`` for any ``{hint_child}``.
-    * A :pep:`646`-compliant unpacked variable-length child tuple hint of the
-      form ``*tuple[{hint_child}, ...]`` for any ``{hint_child}``. Why? Because
-      the default implementation of this tester already transparently supported
-      this edge case without modification. Note, however, that this does *not*
-      extend to a :pep:`646`-compliant unpacked variable-length child tuple hint
-      of the form ``typing.Unpack[tuple[{hint_child}, ...]]``. The caller is
-      responsible for externally detecting and unpacking the child tuple hint
-      subscripting such parent hints. Why? Because coding is suffering.
+    * A :pep:`646`-compliant unpacked variable-length child tuple hint of either
+      the forms ``*tuple[{hint_child}, ...]`` *or*
+      ``typing.Unpack[tuple[{hint_child}, ...]`` for any ``{hint_child}``.
 
     This tester is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as this tester trivially reduces to an
@@ -71,10 +66,18 @@ def is_hint_pep484585646_tuple_variadic(hint: Hint) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.proposal.pep646692 import (
+        get_hint_pep_args_unpacked_if_pep646_tuple)
 
-    # Child hints subscripting this tuple hint.
-    hint_childs = get_hint_pep_args(hint)
+    # Child hints subscripting this tuple hint, conditionally unpacking these
+    # child hints if this is a PEP 646-compliant prefix- or
+    # subscription-flavoured unpacked tuple hint.
+    #
+    # Note that the lower-level get_hint_pep_args() only correctly unpacks these
+    # child hints if this is a PEP 646-compliant prefix- but *NOT*
+    # subscription-flavoured unpacked tuple hint. Transparently unpacking both
+    # flavours of unpacked tuple hints requires a higher-level getter.
+    hint_childs = get_hint_pep_args_unpacked_if_pep646_tuple(hint)
 
     # Return true only if...
     return (
@@ -213,8 +216,9 @@ def disambiguate_hint_pep484585646_tuple_sign(hint: Hint) -> HintSign:
     # ....................{ PEP (484|585) ~ variadic       }....................
     # If this parent tuple hint is subscripted by *NO* child hints, this hint is
     # the unsubscripted "typing.Tuple" type hint factory semantically equivalent
-    # to the PEP 484-compliant variable-length tuple hint "typing.Tuple[object,
-    # ...]". In this case, return the sign uniquely identifying these hints.
+    # to the PEP 484-compliant variable-length tuple hint
+    # "typing.Tuple[typing.Any, ...]". In this case, return the sign uniquely
+    # identifying these hints.
     if not hint_childs_len:
         return HintSignPep484585TupleVariadic
     # Else, this parent tuple hint is subscripted by one or more child hints.

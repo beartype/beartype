@@ -144,7 +144,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         from beartype._util.hint.pep.proposal.pep646692 import (
             make_hint_pep646_tuple_unpacked_prefix)
         from beartype_test.a00_unit.data.pep.data_pep646 import (
-            TUPLE_UNPACKED_EMPTY,
+            tuple_fixed_empty_unpacked_prefix,
             Ts_unpacked,
             Us_unpacked,
         )
@@ -159,7 +159,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
             (
                 (Ts_unpacked,),
                 (),
-                {Ts_unpacked: TUPLE_UNPACKED_EMPTY,},
+                {Ts_unpacked: tuple_fixed_empty_unpacked_prefix,},
             ),
 
             # A PEP 484-compliant type variable followed by a PEP 646-compliant
@@ -169,7 +169,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
             (
                 (T, Ts_unpacked,),
                 (int,),
-                {T: int, Ts_unpacked: TUPLE_UNPACKED_EMPTY,},
+                {T: int, Ts_unpacked: tuple_fixed_empty_unpacked_prefix,},
             ),
 
             # A PEP 646-compliant unpacked type variable tuple followed by a PEP
@@ -182,7 +182,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
             (
                 (Ts_unpacked, T,),
                 (int,),
-                {T: int, Ts_unpacked: TUPLE_UNPACKED_EMPTY,},
+                {T: int, Ts_unpacked: tuple_fixed_empty_unpacked_prefix,},
             ),
 
             # A PEP 484-compliant type variable followed by a PEP 646-compliant

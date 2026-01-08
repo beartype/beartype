@@ -29,36 +29,45 @@ def test_is_hint_pep484585646_tuple_variadic() -> None:
     # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.pep484585646 import (
         is_hint_pep484585646_tuple_variadic)
-    from beartype._util.hint.pep.proposal.pep646692 import (
-        make_hint_pep646_tuple_unpacked_prefix)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from typing import Tuple  # <-- intentionally import the PEP 484 variant
 
-    # ....................{ PASS                           }....................
-    # Assert this tester returns true for PEP 484-compliant variable-length
-    # tuple type hints.
-    assert is_hint_pep484585646_tuple_variadic(Tuple[int, ...])
-
-    # Assert this tester returns true for PEP 585-compliant variable-length
-    # tuple type hints.
-    assert is_hint_pep484585646_tuple_variadic(tuple[str, ...])
-
+    # ....................{ VERSION                        }....................
     # If the active Python interpreter targets Python >= 3.11 and thus supports
     # PEP 646...
     if IS_PYTHON_AT_LEAST_3_11:
-        # PEP 646-compliant variadic unpacked child tuple hint subscripted by
-        # arbitrary child child hints.
-        hint_pep646_tuple_unpacked_variadic = (
-            make_hint_pep646_tuple_unpacked_prefix((str, ...)))
+        # Defer version-specific imports.
+        from beartype_test.a00_unit.data.pep.data_pep646 import (
+            tuple_fixed_str_bytes_unpacked_prefix,
+            tuple_fixed_str_bytes_unpacked_subbed,
+            tuple_variadic_strs_unpacked_prefix,
+            tuple_variadic_strs_unpacked_subbed,
+        )
 
-        # Assert this tester accepts this hint.
+        # Assert that this tester accepts a PEP 646-compliant unpacked
+        # variable-length tuple hint in both prefix and subscription flavours.
         assert is_hint_pep484585646_tuple_variadic(
-            hint_pep646_tuple_unpacked_variadic) is True
+            tuple_variadic_strs_unpacked_prefix) is True
+        assert is_hint_pep484585646_tuple_variadic(
+            tuple_variadic_strs_unpacked_subbed) is True
+
+        # Assert that this tester rejects a PEP 646-compliant unpacked
+        # fixed-length tuple hint in both prefix and subscription flavours.
+        assert is_hint_pep484585646_tuple_variadic(
+            tuple_fixed_str_bytes_unpacked_prefix) is False
+        assert is_hint_pep484585646_tuple_variadic(
+            tuple_fixed_str_bytes_unpacked_subbed) is False
     # Else, the active Python interpreter targets Python <= 3.10 and thus fails
     # to support PEP 646.
 
+    # ....................{ PASS                           }....................
+    # Assert that this tester accepts a variable-length tuple hint in both PEP
+    # 484 and 585 flavours.
+    assert is_hint_pep484585646_tuple_variadic(Tuple[int, ...])
+    assert is_hint_pep484585646_tuple_variadic(tuple[str, ...])
+
     # ....................{ FAIL                           }....................
-    # Assert this tester returns false for arbitrary objects.
+    # Assert this tester rejects an arbitrary object.
     assert is_hint_pep484585646_tuple_variadic(
         "And listen'd in sharp pain for Saturn's voice.") is False
 

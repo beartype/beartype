@@ -1080,7 +1080,8 @@ def is_func_wrapper_isomorphic(
 
     # If that callable is C-based...
     if not func_codeobj:  # pragma: no cover
-        print(f'Detecting C-based callable {repr(func)} isomorphism...')
+        # print(f'Detecting C-based callable {repr(func)} isomorphism...')
+
         # Return true only if that C-based callable is the __call__() dunder
         # method of a pseudo-callable parent object. Although this tester
         # *CANNOT* positively decide whether that object is isomorphic or not,
