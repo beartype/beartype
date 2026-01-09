@@ -211,11 +211,11 @@ class BeartypeSourceFileLoader(SourceFileLoader):
           #. Temporarily monkey-patches (i.e., replaces) the
              private :func:`importlib._bootstrap_external.cache_from_source`
              function with our beartype-specific
-             :func:`cache_from_source_beartype` variant.
-          #. Calls the superclass :meth:`SourceLoader.get_code` method, which:
+             :func:`.cache_from_source_beartype` variant.
+          #. Calls the superclass :meth:`.SourceLoader.get_code` method, which:
 
              #. Calls our override of the lower-level superclass
-                :meth:`SourceLoader.source_to_code` method.
+                :meth:`.SourceLoader.source_to_code` method.
 
           #. Restores the
              :func:`importlib._bootstrap_external.cache_from_source` function to
@@ -244,7 +244,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
           including the name and version of the active Python interpreter).
 
         This monkey-patch suffixes ``{optimization_markers}`` by
-        :data:`.BEARTYPE_OPTIMIZATION_MARKER`, which additionally uniquifies the
+        :data:`.OPTIMIZATION_MARKER_BEARTYPE`, which additionally uniquifies the
         filename of this bytecode file to the abstract syntax tree (AST)
         transformation applied by this version of :mod:`beartype`. Why? Because
         external callers can trivially enable and disable that transformation

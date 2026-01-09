@@ -17,7 +17,7 @@ from beartype.meta import (
 )
 
 # ....................{ STRINGS                            }....................
-BEARTYPE_OPTIMIZATION_MARKER = f'{NAME}{VERSION.replace(".", "v")}'
+OPTIMIZATION_MARKER_BEARTYPE = f'{NAME}{VERSION.replace(".", "v")}'
 '''
 **Beartype optimization marker** (i.e., placeholder substring suffixing the
 ``optimization`` parameter passed to the magical hidden
