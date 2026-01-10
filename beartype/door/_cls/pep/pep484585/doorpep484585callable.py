@@ -20,7 +20,7 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._data.hint.sign.datahintsignset import (
-    HINT_SIGNS_CALLABLE_PARAMS)
+    HINT_SIGNS_PEP612_CALLABLE_ARGLIST)
 from beartype._util.cache.utilcachecall import property_cached
 from beartype._util.hint.pep.proposal.pep484585.pep484585callable import (
     get_hint_pep484585_callable_params,
@@ -113,7 +113,7 @@ class CallableTypeHint(TypeHint):
 
             # If this hint was first subscripted by a PEP 612-compliant
             # parameter type hint, raise an exception. *sigh*
-            if hint_args_sign in HINT_SIGNS_CALLABLE_PARAMS:
+            if hint_args_sign in HINT_SIGNS_PEP612_CALLABLE_ARGLIST:
                 raise BeartypeDoorPepUnsupportedException(
                     f'PEP 484 or 585 callable type hint {repr(self._hint)} '
                     f'PEP 612 child type hint {repr(args_params)} '

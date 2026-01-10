@@ -33,7 +33,8 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 # ....................{ TESTS ~ reducers                   }....................
 #FIXME: This unit test is getting a bit long in the tooth. Consider splitting
 #into smaller PEP-specific unit tests using the same pseudo-fixture approach as
-#implemented by the "beartype_test.a00_unit.data.hint.pep.data_pepfixture" submodule.
+#implemented by the "beartype_test.a00_unit.data.hint.pep.data_pepfixture"
+#submodule.
 def test_reduce_hint() -> None:
     '''
     Test the private
@@ -42,9 +43,6 @@ def test_reduce_hint() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype.typing import (
-        Annotated,
-    )
     from beartype.vale import IsEqual
     from beartype._cave._cavefast import NoneType
     from beartype._check.convert._reduce.redmain import reduce_hint
@@ -70,8 +68,9 @@ def test_reduce_hint() -> None:
     from beartype_test._util.module.pytmodtest import is_package_numpy
     from dataclasses import InitVar
     from pytest import raises
+    from typing import Annotated
 
-    # Intentionally import PEP 484-specific type hint factories.
+    # Intentionally import PEP 544-specific unoptimized type hint factories.
     from typing import Protocol
 
     # ..................{ LOCALS                             }..................
@@ -146,7 +145,13 @@ def test_reduce_hint() -> None:
             make_hint_pep646_tuple_unpacked_prefix)
         from beartype_test.a00_unit.data.pep.data_pep646 import (
             Ts_unpacked,
+            Ts_unpacked_prefix,
+            Ts_unpacked_subbed,
             Us_unpacked,
+            tuple_fixed_str_bytes_unpacked_prefix,
+            tuple_fixed_str_bytes_unpacked_subbed,
+            tuple_variadic_strs_unpacked_prefix,
+            tuple_variadic_strs_unpacked_subbed,
         )
 
         # ....................{ CLASSES                    }....................
@@ -160,33 +165,43 @@ def test_reduce_hint() -> None:
         # ....................{ LOCALS                     }....................
         # Extend this list with PEP 646-compliant valid reduction cases.
         hint_reductions_valid.extend((
+            # ..................{ PEP 646                    }..................
             # A PEP 646-compliant tuple hint subscripted by *ONLY* a single PEP
-            # 646-compliant unpacked type variable tuple reduces to the
-            # semantically equivalent builtin "tuple" type.
+            # 646-compliant unpacked type variable tuple in both prefixed and
+            # subscripted flavours reduces to the semantically equivalent
+            # builtin "tuple" type.
             HintReductionValid(
-                hint_unreduced=tuple[Ts_unpacked], hint_reduced=tuple),
+                hint_unreduced=tuple[Ts_unpacked_prefix], hint_reduced=tuple),
+            HintReductionValid(
+                hint_unreduced=tuple[Ts_unpacked_subbed], hint_reduced=tuple),
 
             # A PEP 646-compliant tuple hint subscripted by *ONLY* a single PEP
-            # 646-compliant unpacked child variable-length tuple hint reduces to
-            # the semantically equivalent PEP 585-compliant variable-length
-            # tuple hint subscripted by the same child hints as that unpacked
-            # child hint.
+            # 646-compliant unpacked child variable-length tuple hint in both
+            # prefixed and subscripted flavours reduces to the semantically
+            # equivalent PEP 585-compliant variable-length tuple hint
+            # subscripted by the same child hints as that unpacked child hint.
             HintReductionValid(
-                hint_unreduced=(
-                    tuple[make_hint_pep646_tuple_unpacked_prefix((str, ...))]),
+                hint_unreduced=tuple[tuple_variadic_strs_unpacked_prefix],
+                hint_reduced=tuple[str, ...],
+            ),
+            HintReductionValid(
+                hint_unreduced=tuple[tuple_variadic_strs_unpacked_subbed],
                 hint_reduced=tuple[str, ...],
             ),
 
             # A PEP 646-compliant tuple hint subscripted by a PEP 646-compliant
-            # unpacked child fixed-length tuple hint reduces to the semantically
-            # equivalent PEP 585-compliant fixed-length tuple hint.
+            # unpacked child fixed-length tuple hint in both prefixed and
+            # subscripted flavours reduces to the semantically equivalent PEP
+            # 585-compliant fixed-length tuple hint.
             HintReductionValid(
                 hint_unreduced=tuple[
-                    int,
-                    make_hint_pep646_tuple_unpacked_prefix((str, bool)),
-                    float,
-                ],
-                hint_reduced=tuple[int, str, bool, float],
+                    int, tuple_fixed_str_bytes_unpacked_prefix, float],
+                hint_reduced=tuple[int, str, bytes, float],
+            ),
+            HintReductionValid(
+                hint_unreduced=tuple[
+                    int, tuple_fixed_str_bytes_unpacked_subbed, float],
+                hint_reduced=tuple[int, str, bytes, float],
             ),
         ))
 

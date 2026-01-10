@@ -83,7 +83,8 @@ from beartype._data.hint.sign.datahintsigns import (
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
 from beartype._util.hint.pep.proposal.pep484585646 import (
-    is_hint_pep484585646_tuple_variadic,
+    get_hint_pep484585646_tuple_args_unpacked_if_needed,
+    is_hint_pep484585646_tuple_variadic_unpacked_if_needed,
     make_hint_pep484585_tuple_fixed,
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
@@ -212,22 +213,29 @@ def reduce_hint_pep646_tuple(
         # PEP 585-compliant tuple hint that this PEP 646-compliant tuple hint
         # reduces to. So it goes, Pythonistas. So it goes.
         elif hint_child_sign is HintSignPep646TupleUnpacked:
-            # Reduce this PEP 646-compliant tuple hint to the semantically
-            # equivalent PEP 585-compliant tuple hint subscripted by the zero or
-            # more child child hints subscripting this unpacked child tuple
+            # Tuple of the zero or more child hints subscripting this tuple
+            # hint, conditionally unpacking these child hints if this is a PEP
+            # 646-compliant prefix- or subscription-flavoured unpacked tuple
             # hint.
             #
-            # Note that the CPython parser itself prevents unpacked child tuple
-            # hints from being trivially subscripted by *NO* child child hints.
-            # Interestingly, doing so is still non-trivially feasible by the
-            # standard empty tuple "()" trick: e.g.,
-            #     >>> tuple[*tuple[]]
-            #                ^^^^^^^
-            #     SyntaxError: invalid syntax. Perhaps you forgot a comma?
+            # Note that:
+            # * The lower-level get_hint_pep_args() only correctly unpacks these
+            #   child hints if this is a PEP 646-compliant prefix- but *NOT*
+            #   subscription-flavoured unpacked tuple hint. Transparently
+            #   unpacking both flavours of unpacked tuple hints requires a
+            #   higher-level getter.
+            # * The CPython parser itself prevents unpacked child tuple hints
+            #   from being trivially subscripted by *NO* child child hints.
+            #   Interestingly, doing so is still non-trivially feasible by the
+            #   standard empty tuple "()" trick: e.g.,
+            #       >>> tuple[*tuple[]]
+            #                  ^^^^^^^
+            #       SyntaxError: invalid syntax. Perhaps you forgot a comma?
             #
-            #     >>> tuple[*tuple[()]]
-            #     tuple[*tuple[()]]
-            hint_pep585_childs = get_hint_pep_args(hint_child)
+            #       >>> tuple[*tuple[()]]
+            #       tuple[*tuple[()]]
+            hint_pep585_childs = get_hint_pep484585646_tuple_args_unpacked_if_needed(
+                hint_child)
         # Else, this child hint is *NOT* a PEP 646-compliant unpacked child
         # tuple hint. In this case, raise a fatal exception. Why? Because the
         # previously called get_hint_pep484585646_tuple_sign_unambiguous()
@@ -333,26 +341,20 @@ def reduce_hint_pep646_tuple(
                         # This child hint is a PEP 646-compliant unpacked child
                         # tuple hint *AND*...
                         hint_child_sign is HintSignPep646TupleUnpacked and
-
-                        #FIXME: *PROBLEMATIC.* This fails to support
-                        #"typing.Unpack[tuple[...]]" type hints. Ideally, this
-                        #tester should be generalized to do so for sanity. It's
-                        #simply too insane to require callers to do so. One case
-                        #works. Ergo, both cases should work. To generalize:
-                        #* Refactor is_hint_pep484585646_tuple_variadic() to
-                        #  internally call this new
-                        #  get_hint_pep_args_unpacked_if_pep646_tuple() getter.
-
                         # This child hint is *NOT* a PEP 646-compliant unpacked
-                        # child variable-length tuple hint, this child hint
-                        # *MUST* by elimination be a PEP 646-compliant unpacked
-                        # child fixed-length tuple hint.
-                        not is_hint_pep484585646_tuple_variadic(hint_child)
+                        # child variable-length tuple hint...
+                        not is_hint_pep484585646_tuple_variadic_unpacked_if_needed(
+                            hint_child)
+                    # Then this child hint *MUST* by elimination be a PEP
+                    # 646-compliant unpacked child fixed-length tuple hint.
                     ):
+
                         # Tuple of the zero or more child child hints
                         # subscripting this PEP 646-compliant unpacked child
                         # fixed-length tuple hint.
-                        hint_child_childs = get_hint_pep_args(hint_child)
+                        hint_child_childs = (
+                            get_hint_pep484585646_tuple_args_unpacked_if_needed(
+                                hint_child))
                         # print(f'Appending PEP 646 unpacked fixed-length tuple hint children {hint_child}...')
 
                         # Append all child child hints subscripting this PEP

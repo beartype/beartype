@@ -21,7 +21,7 @@ from beartype._data.typing.datatypingport import (
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.hint.sign.datahintsigns import HintSignCallable
 from beartype._data.hint.sign.datahintsignset import (
-    HINT_SIGNS_CALLABLE_PARAMS)
+    HINT_SIGNS_PEP612_CALLABLE_ARGLIST)
 from beartype._data.kind.datakindsequence import TUPLE_EMPTY
 
 # ....................{ PRIVATE ~ hints                    }....................
@@ -302,7 +302,7 @@ def get_hint_pep484585_callable_params(
     #     >>> Callable[List[int], bool]
     #     TypeError: Callable[args, result]: args must be a list. Got
     #     typing.List[int]
-    if hint_param_sign in HINT_SIGNS_CALLABLE_PARAMS:
+    if hint_param_sign in HINT_SIGNS_PEP612_CALLABLE_ARGLIST:
         return hint_param
     # Else, this parameter type hint is *NOT* a PEP-compliant parameter type
     # hint. This hint *CANNOT* be "special" and *MUST* thus be the single

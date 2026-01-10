@@ -30,12 +30,11 @@ from beartype._util.hint.pep.proposal.pep484585646 import (
 from beartype._util.text.utiltextansi import color_type
 from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith
-from collections.abc import (
-    Collection as CollectionABC,
-)
+from collections.abc import Collection
 
 # ....................{ FINDERS                            }....................
-def find_cause_pep484585_container_args_1(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484585_container_args_1(
+    cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the **single-argument container type hint**
@@ -128,7 +127,7 @@ def find_cause_pep484585_container_args_1(cause: ViolationCause) -> ViolationCau
 
     # If this pith is a collection, this pith is at least safely reiterable here
     # and thus deeply introspectable. In this case...
-    if isinstance(cause.pith, CollectionABC):
+    if isinstance(cause.pith, Collection):
         # Arbitrary iterator over this container configured by this beartype
         # configuration satisfying the enumerate() protocol. This iterator
         # yields zero or more 2-tuples of the form "(item_index, item)", where:
@@ -169,10 +168,9 @@ def find_cause_pep484585_container_args_1(cause: ViolationCause) -> ViolationCau
 def find_cause_pep484585_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
-    satisfies or violates the **fixed-length tuple type hint** (i.e.,
-    PEP-compliant type hint accepting zero or more subscripted arguments
-    iteratively constraining each item of this fixed-length tuple) of that
-    cause.
+    satisfies or violates the **fixed-length tuple hint** (i.e., PEP-compliant
+    hint accepting zero or more subscripted arguments iteratively constraining
+    each item of this fixed-length tuple) of that cause.
 
     Parameters
     ----------
@@ -215,7 +213,7 @@ def find_cause_pep484585_tuple_fixed(cause: ViolationCause) -> ViolationCause:
         # Deep output cause to be returned, permuted from this input cause
         # with a human-readable string describing this failure.
         cause_deep = cause.permute_cause(cause_str_or_none=(
-            f'tuple {represent_pith(cause.pith)} non-empty'))
+            f'{represent_pith(cause.pith)} non-empty'))
 
         # Return this cause.
         return cause_deep
@@ -227,7 +225,7 @@ def find_cause_pep484585_tuple_fixed(cause: ViolationCause) -> ViolationCause:
         # Deep output cause to be returned, permuted from this input cause
         # with a human-readable string describing this failure.
         cause_deep = cause.permute_cause(cause_str_or_none=(
-            f'tuple {represent_pith(cause.pith)} length '
+            f'{represent_pith(cause.pith)} length '
             f'{len(cause.pith)} != {len(cause.hint_childs_sane)}'
         ))
 

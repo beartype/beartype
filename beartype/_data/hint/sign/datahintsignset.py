@@ -63,15 +63,6 @@ from beartype._data.hint.sign.datahintsigns import (
     # HintSignPanderaAny,
     HintSignParamSpec,
     HintSignPattern,
-    HintSignPep484585GenericSubbed,
-    HintSignPep484585GenericUnsubbed,
-    HintSignPep484585TupleFixed,
-    HintSignPep557DataclassInitVar,
-    HintSignPep585BuiltinSubscriptedUnknown,
-    HintSignPep646TupleUnpacked,
-    HintSignPep646TypeVarTupleUnpacked,
-    HintSignPep695TypeAliasSubscripted,
-    HintSignPep695TypeAliasUnsubscripted,
     HintSignTypeAlias,
     HintSignProtocol,
     HintSignReversible,
@@ -84,11 +75,23 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignType,
     HintSignTypedDict,
     HintSignTypeGuard,
+    HintSignTypeIs,
     HintSignTypeVar,
     HintSignTypeVarTuple,
     HintSignUnion,
     HintSignUnpack,
     HintSignValuesView,
+    HintSignPep484585GenericSubbed,
+    HintSignPep484585GenericUnsubbed,
+    HintSignPep484585TupleFixed,
+    HintSignPep484585TupleVariadic,
+    HintSignPep557DataclassInitVar,
+    HintSignPep585BuiltinSubscriptedUnknown,
+    HintSignPep646TupleFixedVariadic,
+    HintSignPep646TupleUnpacked,
+    HintSignPep646TypeVarTupleUnpacked,
+    HintSignPep695TypeAliasSubscripted,
+    HintSignPep695TypeAliasUnsubscripted,
 )
 
 # ....................{ SETS ~ args                        }....................
@@ -238,13 +241,14 @@ thus preserved (rather than modified) by reiteration such that each call of the:
   the same items in the same order.
 '''
 
-
-HINT_SIGNS_SEQUENCE: FrozenSetHintSign = frozenset((
+# ....................{ SETS ~ args : container : sequence }....................
+_HINT_SIGNS_SEQUENCE_ARGS_1: FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignList,
     HintSignMutableSequence,
     HintSignSequence,
-    HintSignTuple,
+    # HintSignTuple,
+    HintSignPep484585TupleVariadic,
 ))
 '''
 Frozen set of all **standard single-argument sequence signs** (i.e., arbitrary
@@ -277,11 +281,11 @@ This set intentionally excludes the:
     subscriptable by an arbitrary number of child type hints (but typically
     simply :class:`str`).
 
-  Since neither PEP 484 nor 585 comment on ``ByteString`` in detail (or at all,
-  really), this non-orthogonality remains inexplicable, frustrating, and utterly
-  unsurprising. We elect to merely shrug. In all likelihood, this is an
-  ignorable error that no one particularly cares about -- especially since both
-  type hint factories have now been scheduled for removal as deprecated.
+  Since neither :pep:`484` nor :pep:`585` comment on ``ByteString`` in detail
+  (or at all, really), this non-orthogonality remains inexplicable, frustrating,
+  and utterly unsurprising. We elect to merely shrug. In all likelihood, this is
+  an ignorable error that no one particularly cares about -- especially since
+  both type hint factories have now been scheduled for removal as deprecated.
 * :obj:`typing.Deque` sign, whose compliant objects (i.e.,
   :class:`collections.deque` instances) only `guarantee O(n) indexation across
   all sequence items <collections.deque_>`__:
@@ -294,19 +298,49 @@ This set intentionally excludes the:
 * :obj:`typing.Text` sign, which accepts *no* subscripted arguments.
   :obj:`typing.Text` is simply an alias for the builtin :class:`str` type and
   thus handled elsewhere as a PEP-noncompliant type hint.
-* :data:`.HintSignPep484585TupleFixed` sign, identifying fixed-length tuple type hints
-  subscripted by an arbitrary number of child type hints and thus requiring
-  special-cased handling.
+* :data:`.HintSignPep484585TupleFixed` sign, identifying fixed-length tuple type
+  hints subscripted by an arbitrary number of child type hints and thus
+  requiring special-cased handling.
 
 .. _collections.deque:
    https://docs.python.org/3/library/collections.html#collections.deque
 '''
 
 
+_HINT_SIGNS_SEQUENCE_ARGS_N: FrozenSetHintSign = frozenset((
+    # ..................{ PEP (484|585)                      }..................
+    HintSignPep484585TupleFixed,
+
+    # ..................{ PEP 646                            }..................
+    HintSignPep646TupleFixedVariadic,
+))
+'''
+Frozen set of all **standard variable-argument sequence signs** (i.e., arbitrary
+objects uniquely identifying :pep:`484`- or :pep:`585`-compliant type hints
+subscripted by zero or more child type hints constraining the corresponding
+items of compliant sequences, which necessarily satisfy the
+:class:`collections.abc.Sequence` protocol with guaranteed :math:`O(1)`
+indexation across all sequence items).
+'''
+
+
+HINT_SIGNS_SEQUENCE: FrozenSetHintSign = (
+    _HINT_SIGNS_SEQUENCE_ARGS_1 |
+    _HINT_SIGNS_SEQUENCE_ARGS_N
+)
+'''
+Frozen set of all **standard variable-argument sequence signs** (i.e., arbitrary
+objects uniquely identifying :pep:`484`- or :pep:`585`-compliant type hints
+regardless of the number of child type hints subscripting the former, which
+necessarily satisfy the :class:`collections.abc.Sequence` protocol with
+guaranteed :math:`O(1)` indexation across all sequence items).
+'''
+
+# ....................{ SETS ~ args : container : all      }....................
 HINT_SIGNS_CONTAINER_ARGS_1: FrozenSetHintSign = (
     HINT_SIGNS_QUASIITERABLE |
     HINT_SIGNS_REITERABLE |
-    HINT_SIGNS_SEQUENCE
+    _HINT_SIGNS_SEQUENCE_ARGS_1
 )
 '''
 Frozen set of all **standard single-argument container signs** (i.e., arbitrary
@@ -405,9 +439,13 @@ HINT_SIGNS_ORIGIN_ISINSTANCEABLE: FrozenSetHintSign = frozenset((
     HintSignSet,
     HintSignSized,
     HintSignTuple,
-    HintSignPep484585TupleFixed,
     HintSignType,
     HintSignValuesView,
+    HintSignPep484585TupleFixed,
+    HintSignPep484585TupleVariadic,
+
+    # ..................{ PEP 646                            }..................
+    HintSignPep646TupleFixedVariadic,
 
     # ..................{ NON-PEP                            }..................
     HintSignPep585BuiltinSubscriptedUnknown,
@@ -554,8 +592,7 @@ at class scope in dataclasses decorated by the :pep:`557`-compliant
 '''
 
 # ....................{ SETS ~ pep : 612                   }....................
-#FIXME: Rename to "HINT_SIGNS_PEP612_CALLABLE_PARAMS", please.
-HINT_SIGNS_CALLABLE_PARAMS: FrozenSetHintSign = frozenset((
+HINT_SIGNS_PEP612_CALLABLE_ARGLIST: FrozenSetHintSign = frozenset((
     # ..................{ PEP 612                            }..................
     HintSignConcatenate,
     HintSignParamSpec,
@@ -576,6 +613,9 @@ This set necessarily excludes:
 # ....................{ SETS ~ pep : 646                   }....................
 HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED: FrozenSetHintSign = frozenset((
     # ..................{ PEP 646                            }..................
+    # Sign ambiguously identifying unpacked child hints.
+    HintSignUnpack,
+
     # Sign uniquely identifying unpacked child tuple hints (e.g., the child
     # hint "*tuple[float, ...]" subscripting the parent tuple hint
     # "tuple[complex, *tuple[float, ...], str]").
@@ -613,6 +653,11 @@ _HINT_SIGNS_SUPPORTED_SHALLOW: FrozenSetHintSign = frozenset((
     # HintSignPep646TupleUnpacked,
     # HintSignPep646TypeVarTupleUnpacked,
 
+    # ..................{ PEP 646                            }..................
+    #FIXME: Shift into "HINT_SIGNS_SEQUENCE_ARGS_N" *AFTER* deeply type-checking
+    #PEP 646-compliant tuple hints.
+    HintSignPep646TupleFixedVariadic,
+
     # ..................{ PEP 647                            }..................
     HintSignTypeGuard,
 
@@ -625,6 +670,9 @@ _HINT_SIGNS_SUPPORTED_SHALLOW: FrozenSetHintSign = frozenset((
     # ..................{ PEP 695                            }..................
     HintSignPep695TypeAliasSubscripted,
     HintSignPep695TypeAliasUnsubscripted,
+
+    # ..................{ PEP 742                            }..................
+    HintSignTypeIs,
 ))
 '''
 Frozen set of all **shallowly supported non-originative signs** (i.e., arbitrary
@@ -634,56 +682,67 @@ shallow type-checking code).
 '''
 
 
+_HINT_SIGNS_SUPPORTED_DEEP_NONCONTAINER: FrozenSetHintSign = frozenset((
+    # ..................{ PEP 484                            }..................
+    # Note that the "NoReturn" type hint is invalid in almost all possible
+    # syntactic contexts and thus intentionally omitted here. See the
+    # "datahintsigns" submodule for further commentary.
+    HintSignAny,
+    HintSignBinaryIO,
+    HintSignForwardRef,
+    HintSignNewType,
+    HintSignNone,
+    HintSignTextIO,
+
+    # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
+    # under Python <= 3.9. The implementations of the "typing" module under
+    # older Python versions transparently reduced "typing.Optional" to
+    # "typing.Union" at runtime. Since this reduction is no longer the case,
+    # both *MUST* now be explicitly listed here.
+    HintSignOptional,
+    HintSignUnion,
+
+    # ..................{ PEP (484|585)                      }..................
+    HintSignPep484585GenericSubbed,
+    HintSignPep484585GenericUnsubbed,
+    HintSignType,
+
+    # ..................{ PEP 544                            }..................
+    HintSignProtocol,
+
+    # ..................{ PEP 557                            }..................
+    HintSignPep557DataclassInitVar,
+
+    # ..................{ PEP 586                            }..................
+    HintSignLiteral,
+
+    # ..................{ PEP 593                            }..................
+    HintSignAnnotated,
+
+    # ..................{ NON-PEP ~ third-party              }..................
+    HintSignNumpyArray,
+))
+'''
+Frozen set of all **deeply supported non-container signs** (i.e., arbitrary
+objects uniquely identifying PEP-compliant non-container type hints for which
+the :func:`beartype.beartype` decorator generates deeply type-checking code that
+does *not* deeply type-check the items contained in objects satisfied by these
+hints due to these objects *not* being containers).
+
+This set contains *every* sign explicitly supported by one or more conditional
+branches in the body of the
+:func:`beartype._check.code.codemain.make_func_pith_code` function generating
+code deeply type-checking the current pith against the PEP-compliant type hint
+annotated by a subscription of that attribute.
+'''
+
+
 HINT_SIGNS_SUPPORTED_DEEP: FrozenSetHintSign = (
     HINT_SIGNS_MAPPING |
     HINT_SIGNS_QUASIITERABLE |
     HINT_SIGNS_REITERABLE |
     HINT_SIGNS_SEQUENCE |
-    frozenset((
-        # ..................{ PEP 484                        }..................
-        # Note that the "NoReturn" type hint is invalid in almost all possible
-        # syntactic contexts and thus intentionally omitted here. See the
-        # "datahintsigns" submodule for further commentary.
-
-        #FIXME: These should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW",
-        #instead.
-        HintSignAny,
-        HintSignBinaryIO,
-        HintSignForwardRef,
-        HintSignNewType,
-        HintSignNone,
-        HintSignTextIO,
-
-        # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
-        # under Python <= 3.9. The implementations of the "typing" module under
-        # those older Python versions transparently reduced "typing.Optional" to
-        # "typing.Union" at runtime. Since this reduction is no longer the case,
-        # both *MUST* now be explicitly listed here.
-        HintSignOptional,
-        HintSignUnion,
-
-        # ..................{ PEP (484|585)                  }..................
-        HintSignPep484585GenericSubbed,
-        HintSignPep484585GenericUnsubbed,
-        HintSignPep484585TupleFixed,
-        HintSignType,
-
-        # ..................{ PEP 544                        }..................
-        HintSignProtocol,
-
-        # ..................{ PEP 557                        }..................
-        HintSignPep557DataclassInitVar,
-
-        # ..................{ PEP 586                        }..................
-        HintSignLiteral,
-
-        # ..................{ PEP 593                        }..................
-        HintSignAnnotated,
-
-        # ..................{ NON-PEP ~ package : numpy      }..................
-        #FIXME: This should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW", instead.
-        HintSignNumpyArray,
-    ))
+    _HINT_SIGNS_SUPPORTED_DEEP_NONCONTAINER
 )
 '''
 Frozen set of all **deeply supported signs** (i.e., arbitrary objects uniquely

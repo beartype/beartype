@@ -35,12 +35,15 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
     from beartype.typing import NewType
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep484585GenericSubbed,
+        HintSignPep646TupleFixedVariadic,
         HintSignPep646TupleUnpacked,
         HintSignPep646TypeVarTupleUnpacked,
     )
     from beartype._util.hint.pep.proposal.pep646692 import (
         make_hint_pep646_tuple_unpacked_prefix,
         make_hint_pep646_tuple_unpacked_subbed,
+        # make_hint_pep646_typevartuple_unpacked_prefix,
+        # make_hint_pep646_typevartuple_unpacked_subbed,
     )
     from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
@@ -57,6 +60,10 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
         Ts,
         Ts_unpacked_prefix,
         Ts_unpacked_subbed,
+        tuple_fixed_str_bytes_unpacked_prefix,
+        tuple_fixed_str_bytes_unpacked_subbed,
+        tuple_variadic_strs_unpacked_prefix,
+        tuple_variadic_strs_unpacked_subbed,
     )
 
     # ..................{ LOCALS                             }..................
@@ -112,6 +119,110 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
             is_ignorable=True,
             is_supported=False,
             typeargs_packed=(Ts,),
+        ),
+
+        # ................{ TUPLE ~ tuple                      }................
+        #FIXME: Test all possible combinations of:
+        #* Fixed- and variable-length child unpacked tuple hints.
+        #* Parent tuple hints either:
+        #  * Prefixed by either one or more *OR* no other child hints.
+        #  * Suffixed by either one or more *OR* no other child hints.
+        #
+        #Since there are *TONS* of different combinations, we currently only
+        #guard against regressions by testing combinations known to have
+        #previously failed. *shrug*
+
+        # PEP 585-compliant tuple hint subscripted by (in order):
+        # * One or more arbitrary PEP-noncompliant child hints.
+        # * A PEP 646-compliant child unpacked fixed-length tuple hints in both:
+        #   * Sugar-free "*"-prefixed flavour.
+        #   * Sugar-free "typing.Unpack[...]"-subscripted flavour.
+        HintPepMetadata(
+            hint=tuple[int, float, tuple_variadic_strs_unpacked_prefix],
+            pep_sign=HintSignPep646TupleFixedVariadic,
+            is_pep585_builtin_subbed=True,
+            isinstanceable_type=tuple,
+            piths_meta=(
+                # Tuple deeply satisfying this hint.
+                PithSatisfiedMetadata((
+                    91, 0.11382,
+                    'Held struggle with his throat', 'but came not forth;',
+                )),
+                #FIXME: Also test tuples *NOT* satisfying this hint *AFTER*
+                #deeply type-checking PEP 646-compliant tuple hints.
+                # String constant.
+                PithUnsatisfiedMetadata('For as in the theatres of crowded men'),
+            ),
+        ),
+        HintPepMetadata(
+            hint=tuple[int, float, tuple_variadic_strs_unpacked_subbed],
+            pep_sign=HintSignPep646TupleFixedVariadic,
+            is_pep585_builtin_subbed=True,
+            isinstanceable_type=tuple,
+            piths_meta=(
+                # Tuple deeply satisfying this hint.
+                PithSatisfiedMetadata((
+                    91, 0.11382,
+                    'Held struggle with his throat', 'but came not forth;',
+                )),
+                #FIXME: Also test tuples *NOT* satisfying this hint *AFTER*
+                #deeply type-checking PEP 646-compliant tuple hints.
+                # String constant.
+                PithUnsatisfiedMetadata('For as in the theatres of crowded men'),
+            ),
+        ),
+
+        # PEP 585-compliant tuple hint subscripted by (in order):
+        # * One or more arbitrary PEP-noncompliant child hints.
+        # * A PEP 646-compliant child unpacked fixed-length tuple hints in both:
+        #   * Sugar-free "*"-prefixed flavour.
+        #   * Sugar-free "typing.Unpack[...]"-subscripted flavour.
+        # * One or more arbitrary PEP-noncompliant child hints.
+        HintPepMetadata(
+            hint=tuple[
+                int, float,
+                tuple_fixed_str_bytes_unpacked_prefix,
+                bool, complex,
+            ],
+            pep_sign=HintSignPep646TupleFixedVariadic,
+            is_pep585_builtin_subbed=True,
+            isinstanceable_type=tuple,
+            piths_meta=(
+                # Tuple deeply satisfying this hint.
+                PithSatisfiedMetadata((
+                    4, 7.80147,
+                    "He spake, and ceas'd,", b'the while a heavier threat',
+                    False, 9 + 1j,
+                )),
+                #FIXME: Also test tuples *NOT* satisfying this hint *AFTER*
+                #deeply type-checking PEP 646-compliant tuple hints.
+                # String constant.
+                PithUnsatisfiedMetadata(
+                    'And bid old Saturn take his throne again."—'),
+            ),
+        ),
+        HintPepMetadata(
+            hint=tuple[
+                int, float,
+                tuple_fixed_str_bytes_unpacked_subbed,
+                bool, complex,
+            ],
+            pep_sign=HintSignPep646TupleFixedVariadic,
+            is_pep585_builtin_subbed=True,
+            isinstanceable_type=tuple,
+            piths_meta=(
+                # Tuple deeply satisfying this hint.
+                PithSatisfiedMetadata((
+                    4, 7.80147,
+                    "He spake, and ceas'd,", b'the while a heavier threat',
+                    False, 9 + 1j,
+                )),
+                #FIXME: Also test tuples *NOT* satisfying this hint *AFTER*
+                #deeply type-checking PEP 646-compliant tuple hints.
+                # String constant.
+                PithUnsatisfiedMetadata(
+                    'And bid old Saturn take his throne again."—'),
+            ),
         ),
 
         # ................{ GENERICS ~ multiple                }................

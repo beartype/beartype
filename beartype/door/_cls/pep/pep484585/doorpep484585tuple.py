@@ -17,7 +17,7 @@ from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
     SubscriptedTypeHint)
 from beartype._util.hint.pep.proposal.pep484585646 import (
     is_hint_pep484585646_tuple_empty,
-    is_hint_pep484585646_tuple_variadic,
+    is_hint_pep484585646_tuple_variadic_unpacked_if_needed,
 )
 
 # ....................{ SUBCLASSES                         }....................
@@ -133,7 +133,7 @@ class TupleVariableTypeHint(SubscriptedTypeHint):
         #
         # Note that the previously called get_hint_pep_sign() getter already
         # validated this to be the case.
-        assert is_hint_pep484585646_tuple_variadic(self._hint), (
+        assert is_hint_pep484585646_tuple_variadic_unpacked_if_needed(self._hint), (
             f'PEP 585 variable-length tuple type hint {repr(self._hint)} '
             f'not of the form "tuple[{{child_hint}}, ...]".'
         )

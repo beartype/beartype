@@ -110,10 +110,9 @@ def test_decor_pep646() -> None:
         render_up_its_majesty, 'Of all the grace', 'and beauty', 'that endued') == (
         render_up_its_majesty, 'Of all the grace', 'and beauty', 'that endued')
 
-    #FIXME: Uncomment once worky, please.
-    # # Assert that this callable returns a tuple of the passed integer followed
-    # # by as many integers as the passed integer.
-    # assert shall_scare(4) == (4, 0, 1, 2, 3)
+    # Assert that this callable returns a tuple of the passed integer followed
+    # by as many integers as the passed integer.
+    assert shall_scare(4) == (4, 0, 1, 2, 3)
 
     # ....................{ FAIL                           }....................
     # Assert that @beartype raises the expected exception when decorating a

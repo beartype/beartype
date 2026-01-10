@@ -20,6 +20,8 @@ from beartype._data.typing.datatypingport import (
 )
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsigns import (
+    HintSignTuple,
+    HintSignUnpack,
     HintSignPep484585TupleFixed,
     HintSignPep484585TupleVariadic,
     HintSignPep646TupleFixedVariadic,
@@ -32,7 +34,7 @@ from beartype._util.hint.pep.proposal.pep585 import (
     HINT_PEP585_TUPLE_EMPTY)
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep484585646_tuple_variadic(hint: Hint) -> bool:
+def is_hint_pep484585646_tuple_variadic_unpacked_if_needed(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is either a :pep:`484`-, :pep:`585`-,
     or :pep:`646`-compliant **variable-length tuple hint** (i.e., parent hint
@@ -47,8 +49,8 @@ def is_hint_pep484585646_tuple_variadic(hint: Hint) -> bool:
     * A :pep:`585`-compliant variable-length tuple hint of the form
       ``tuple[{hint_child}, ...]`` for any ``{hint_child}``.
     * A :pep:`646`-compliant unpacked variable-length child tuple hint of either
-      the forms ``*tuple[{hint_child}, ...]`` *or*
-      ``typing.Unpack[tuple[{hint_child}, ...]`` for any ``{hint_child}``.
+      the forms ``*tuple[{hint_child}, ...]`` or
+      ``typing.Unpack[tuple[{hint_child}, ...]]`` for any ``{hint_child}``.
 
     This tester is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as this tester trivially reduces to an
@@ -65,19 +67,15 @@ def is_hint_pep484585646_tuple_variadic(hint: Hint) -> bool:
         :data:`True` only if this object is a variable-length tuple hint.
     '''
 
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep646692 import (
-        get_hint_pep_args_unpacked_if_pep646_tuple)
-
-    # Child hints subscripting this tuple hint, conditionally unpacking these
-    # child hints if this is a PEP 646-compliant prefix- or
-    # subscription-flavoured unpacked tuple hint.
+    # Tuple of the zero or more child hints subscripting this tuple hint,
+    # conditionally unpacking these child hints if this is a PEP 646-compliant
+    # prefix- or subscription-flavoured unpacked tuple hint.
     #
     # Note that the lower-level get_hint_pep_args() only correctly unpacks these
     # child hints if this is a PEP 646-compliant prefix- but *NOT*
     # subscription-flavoured unpacked tuple hint. Transparently unpacking both
     # flavours of unpacked tuple hints requires a higher-level getter.
-    hint_childs = get_hint_pep_args_unpacked_if_pep646_tuple(hint)
+    hint_childs = get_hint_pep484585646_tuple_args_unpacked_if_needed(hint)
 
     # Return true only if...
     return (
@@ -147,6 +145,171 @@ def is_hint_pep484585646_tuple_empty(hint: Hint) -> bool:
         hint == HINT_PEP484_TUPLE_EMPTY
     )
 
+# ....................{ GETTERS                            }....................
+def get_hint_pep484585646_tuple_args_unpacked_if_needed(
+    hint: Hint) -> TupleHints:
+    '''
+    Tuple of the zero or more **child type hints** subscripting (indexing) the
+    passed PEP-compliant type hint if this hint was subscripted *or* the empty
+    tuple otherwise (i.e., if this hint is unsubscripted and is thus either an
+    unsubscriptable type hint *or* a subscriptable type hint factory that is
+    unsubscripted) such that, in the former case, if this hint is a :pep:`646`-
+    or :pep:`692`-compliant **subscription-based unpacked tuple type hint**
+    (i.e., of the form ``typing.Unpack[tuple[...]]``), this getter conditionally
+    returns the tuple of the zero or more child child type hints subscripting
+    the child tuple type hint subscripting this parent unpacked tuple type hint.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Design
+    ------
+    This getter unifies two semantically equivalent but syntactically divergent
+    edge cases:
+
+    * **Prefix-based unpacked tuple type hints** (i.e., of the form
+      ``*tuple[...]``), whose ``__args__`` dunder attribute provide the tuple of
+      all child hints subscripting that parent hint (rather than a tuple
+      consisting only of that parent hint):
+
+      .. code-block:: python
+
+         # Arbitrary parent hint containing a PEP 646-compliant prefix-based
+         # unpacked tuple type hint -- which, due to constraints imposed by the
+         # Python grammar, *CANNOT* be defined in isolation outside such a hint.
+         >>> hint_parent = tuple[int, *tuple[str, ...], bytes]
+
+         # Extract this prefix-based unpacked tuple type hint.
+         >>> hint_tuple_prefixed = hint_parent_prefixed.__args__[1]
+         >>> hint_tuple_prefixed
+         *tuple[str, ...]
+
+         # Exhibit that the "__args__" dunder attribute provides the desired
+         # tuple of child hints subscripting this unpacked tuple type hint.
+         >>> hint_tuple_prefixed.__args__
+         (<class 'str'>, Ellipsis)
+
+    * **Subscription-based unpacked tuple type hints** (i.e., of the form
+      ``typing.Unpack[tuple[...]]``), whose ``__args__`` dunder attribute
+      provide a tuple consisting only of that child tuple type hint (rather than
+      the tuple of all child child hints subscripting that child tuple type
+      hint):
+
+      .. code-block:: python
+
+         # PEP 646-compliant subscription-based unpacked tuple type hint.
+         >>> from typing import Unpack
+         >>> hint_tuple_subbed = Unpack[tuple[str, ...]]
+
+         # Exhibit that the "__args__" dunder attribute does *NOT* provide the
+         # tuple of child child hints subscripting this child tuple type hint.
+         >>> hint_tuple_subbed.__args__
+         (tuple[str, ...],)
+
+    Since prefix- and subscription-based unpacked tuple type hints are only
+    competing syntactic flavours that nonetheless share the same semantics, the
+    ``__args__`` dunder attributes of both should ideally share the same
+    semantics as well. They do not. Blindly passing :pep:`646`-compliant
+    unpacked tuple type hints to the lower-level
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_args` getter thus
+    results in semantically inconsistent behaviour, as expected from above:
+
+    .. code-block:: python
+
+       >>> from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+       >>> get_hint_pep_args(hint_tuple_prefixed)
+       (<class 'str'>, Ellipsis)  # <-- *GOOD*
+       >>> get_hint_pep_args(hint_tuple_subbed)
+       (tuple[str, ...],)  # <-- *OHNOESTHISSUCKS*
+
+    This getter eliminates this semantic inconsistency and should thus be
+    preferred where the passed type hint is likely to be a :pep:`646`-compliant
+    unpacked tuple type hint:
+
+    .. code-block:: python
+
+       >>> from beartype._util.hint.pep.proposal.pep646692 import (
+       ...     get_hint_pep484585646_tuple_args_unpacked_if_needed)
+       >>> get_hint_pep484585646_tuple_args_unpacked_if_needed(hint_tuple_prefixed)
+       (<class 'str'>, Ellipsis)  # <-- *GOOD*
+       >>> get_hint_pep484585646_tuple_args_unpacked_if_needed(hint_tuple_subbed)
+       (<class 'str'>, Ellipsis)  # <-- *OMGSOMUCHBETTER*
+
+    Parameters
+    ----------
+    hint : object
+        PEP-compliant type hint to be inspected.
+
+    Returns
+    -------
+    tuple
+        Either:
+
+        * If this hint defines an ``__args__`` dunder attribute, the value of
+          that attribute subject to the above conditional logic.
+        * Else, the empty tuple.
+
+    Raises
+    ------
+    BeartypeDecorHintPepException
+        If this hint defines an ``__args__`` dunder attribute whose value is
+        *not* a tuple.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepsign import (
+        get_hint_pep_sign_ambiguous_or_none)
+    from beartype._util.hint.pep.proposal.pep646692 import (
+        get_hint_pep646692_unpack_arg)
+
+    # Tuple of the zero or more child hints subscripting this hint if this hint
+    # defines of the "__args__" dunder attribute *OR* "None" otherwise (i.e., if
+    # this hint fails to define this attribute).
+    hint_args = get_hint_pep_args(hint)
+    # print(f'hint: {hint}')
+    # print(f'hint_args: {hint_args}')
+
+    # If this hint is subscripted...
+    if hint_args:
+        # Sign ambiguously identifying this hint if this hint is identifiable
+        # without triggering recursion *OR* "None" otherwise.
+        hint_sign = get_hint_pep_sign_ambiguous_or_none(hint)
+        # print(f'hint_sign: {hint_sign}')
+
+        # If this hint is a PEP 646- or 692-compliant subscription-based
+        # unpacked hint...
+        if hint_sign is HintSignUnpack:
+            # Single child type hint necessarily subscripting this hint.
+            hint_child = get_hint_pep646692_unpack_arg(hint)
+            # print(f'hint_child: {hint_child}')
+
+            # Sign uniquely identifying this child hint if this child hint is
+            # unambiguously identifiable by its machine-readable representation
+            # *OR* "None".
+            hint_child_sign = get_hint_pep_sign_ambiguous_or_none(hint_child)
+
+            # If this child hint is a PEP 646-compliant subscription-based
+            # unpacked tuple hint...
+            if hint_child_sign is HintSignTuple:
+                # print(f'hint_args: {hint_args}')
+
+                # Tuple of the zero or more child child hints subscripting this
+                # child hint if any *OR* "None" otherwise, expanding this
+                # subscription-based unpacked tuple hint in a similar manner as
+                # CPython itself would expand a prefix-based unpacked tuple hint.
+                # See the docstring for a deep discussion.
+                hint_args = get_hint_pep_args(hint_child)
+            # Else, this child hint is *NOT* a PEP 646-compliant
+            # subscription-based unpacked tuple hint.
+        # Else, this hint is *NOT* a PEP 646- or 692-compliant
+        # subscription-based unpacked hint.
+    # Else, this hint is unsubscripted.
+
+    # Return this tuple.
+    return hint_args
+
 # ....................{ DISAMBIGUATORS                     }....................
 #FIXME: Unit test us up, please.
 def disambiguate_hint_pep484585646_tuple_sign(hint: Hint) -> HintSign:
@@ -203,7 +366,8 @@ def disambiguate_hint_pep484585646_tuple_sign(hint: Hint) -> HintSign:
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+    from beartype._util.hint.pep.utilpepsign import (
+        get_hint_pep_sign_ambiguous_or_none)
 
     # ....................{ LOCALS                         }....................
     # Child hints subscripting this parent tuple hint.
@@ -220,23 +384,26 @@ def disambiguate_hint_pep484585646_tuple_sign(hint: Hint) -> HintSign:
     # "typing.Tuple[typing.Any, ...]". In this case, return the sign uniquely
     # identifying these hints.
     if not hint_childs_len:
+        # print('Disambiguated empty tuple hint as HintSignPep484585TupleVariadic!')
         return HintSignPep484585TupleVariadic
     # Else, this parent tuple hint is subscripted by one or more child hints.
 
     # ....................{ PEP 646                        }....................
     # For each child hint subscripting this parent tuple hint...
     for hint_child in hint_childs:
-        # Sign uniquely identifying this child hint if this child hint is
-        # PEP-compliant *OR* "None" otherwise.
-        hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+        # Sign ambiguously identifying this child hint if this child hint is
+        # identifiable without triggering recursion *OR* "None" otherwise.
+        hint_child_sign = get_hint_pep_sign_ambiguous_or_none(hint_child)
         # print(f'Detected hint child {hint_child} sign {hint_child_sign}...')
 
         # If this child hint is either:
         # * A PEP 646-compliant unpacked type variable tuple *OR*...
         # * A PEP 646-compliant unpacked child tuple hint...
-        # ...then this parent tuple hint is PEP 646-compliant. In this case,
-        # return the sign uniquely identifying these hints.
+        #
+        # Then this parent tuple hint is PEP 646-compliant. In this case, return
+        # the sign uniquely identifying this category of hint.
         if hint_child_sign in HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED:
+            # print(f'Disambiguated tuple hint {hint} as HintSignPep646TupleFixedVariadic!')
             return HintSignPep646TupleFixedVariadic
         # Else, this child hint is PEP 484- or 585-compliant.
     # Else, all child hints subscripting this parent tuple hint are *ONLY* PEP
@@ -244,14 +411,18 @@ def disambiguate_hint_pep484585646_tuple_sign(hint: Hint) -> HintSign:
     # 484- or 585-compliant.
 
     # ....................{ PEP (484|585) ~ variadic       }....................
-    # Return the sign uniquely identifying either...
-    return (
+    # Sign uniquely identifying either...
+    hint_sign = (
         # Variable-length tuple hints if this hint is variadic;
         HintSignPep484585TupleVariadic
-        if is_hint_pep484585646_tuple_variadic(hint) else
+        if is_hint_pep484585646_tuple_variadic_unpacked_if_needed(hint) else
         # Fixed-length tuple hints otherwise.
         HintSignPep484585TupleFixed
     )
+    # print(f'Disambiguated tuple hint {hint} as {hint_sign}!')
+
+    # Return this sign.
+    return hint_sign
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
