@@ -338,6 +338,7 @@ def get_func_args_flexible_len(
     '''
 
     # Avoid circular import dependencies.
+    from beartype._cave._cavefast import FunctionOrMethodCType
     from beartype._util.api.standard.utilfunctools import (
         get_func_functools_partial_args_flexible_len,
         is_func_functools_partial,
@@ -378,6 +379,16 @@ def get_func_args_flexible_len(
             exception_prefix=exception_prefix,
         )
     # Else, that callable is *NOT* a partial.
+    #
+    # If that callable is a C-based builtin function or method (e.g., iter, len),
+    # raise an exception. C-based callables have no code objects and thus cannot
+    # be introspected for parameter information.
+    elif isinstance(func, FunctionOrMethodCType):
+        raise exception_cls(
+            f'{exception_prefix}{repr(func)} not introspectable '
+            f'(i.e., C-based callable with no code object).'
+        )
+    # Else, that callable is *NOT* a C-based builtin.
     #
     # By process of elimination, that callable *MUST* be an otherwise uncallable
     # object whose class has intentionally made that object callable by defining
