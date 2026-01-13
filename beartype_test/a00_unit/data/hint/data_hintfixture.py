@@ -44,7 +44,7 @@ def hints_ignorable(
 # ....................{ FIXTURES ~ hints : meta            }....................
 @fixture(scope='session')
 def hints_meta(hints_pep_meta, hints_nonpep_meta) -> (
-    'tuple[HintNonpepMetadata]'):
+    'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]'):
     '''
     Session-scoped fixture yielding a tuple of **PEP-agnostic type hint
     metadata** (i.e.,
@@ -55,7 +55,7 @@ def hints_meta(hints_pep_meta, hints_nonpep_meta) -> (
 
     Parameters
     ----------
-    hints_pep_meta : Tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         Tuple of PEP-compliant type hint metadata describing PEP-compliant type
         hints exercising edge cases in the :mod:`beartype` codebase.
     hints_nonpep_meta : Tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]
@@ -68,15 +68,61 @@ def hints_meta(hints_pep_meta, hints_nonpep_meta) -> (
 
 
 @fixture(scope='session')
+def hints_reduction_meta() -> (
+    'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]'):
+    '''
+    Session-scoped fixture yielding a tuple of **PEP-agnostic type hint
+    reduction metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC`
+    instances, each describing a sample type hint exercising an edge case with
+    respect to the :func:`beartype._check.convert.reduce.redmain.reduce_hint`
+    function -- including both PEP-compliant and -noncompliant type hints).
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
+    from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+        HintReductionABC)
+    from beartype_test._util.kind.pytkindmake import make_container_from_funcs
+
+    # ..................{ LOCALS                             }..................
+    # List of all type hint reduction metadata to be returned, iteratively
+    # defined by dynamically importing and calling each factory function listed
+    # below and adding the items of the container created and returned by that
+    # function to this list.
+    _hints_reduction_meta = make_container_from_funcs((
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep484.hints_pep484_reduction_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep557.hints_pep557_reduction_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep593.hints_pep593_reduction_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep646.hints_pep646_reduction_meta',
+    ))
+
+    # ..................{ YIELD                              }..................
+    # Assert this list contains *ONLY* instances of the expected dataclass.
+    assert (
+        isinstance(hint_reduction_meta, HintReductionABC)
+        for hint_reduction_meta in _hints_reduction_meta
+    ), (
+        f'{repr(_hints_reduction_meta)} not '
+        f'iterable of "HintReductionABC" instances.'
+    )
+
+    # Yield a tuple coerced from this list.
+    yield tuple(_hints_reduction_meta)
+
+
+@fixture(scope='session')
 def iter_hints_piths_meta(hints_meta) -> (
-    'collections.abc.Callable[[], collections.abc.Iterable[HintPithMetadata]]'):
+    'collections.abc.Callable[[], collections.abc.Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]'):
     '''
     Session-scoped fixture yielding a **PEP-agnostic type hint-pith metadata
     generator** (i.e., factory function creating and returning a generator
-    iteratively yielding :class:`.HintPithMetadata` instances, each describing a
-    sample type hint exercising an edge case in the :mod:`beartype` codebase
-    paired with a related object either satisfying or violating this hint --
-    including both PEP-compliant and -noncompliant type hints).
+    iteratively yielding
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata`
+    instances, each describing a sample type hint exercising an edge case in the
+    :mod:`beartype` codebase paired with a related object either satisfying or
+    violating this hint -- including both PEP-compliant and -noncompliant type
+    hints).
 
     Caveats
     -------
@@ -98,7 +144,7 @@ def iter_hints_piths_meta(hints_meta) -> (
 
     Yields
     ------
-    Callable[[], Iterable[HintPithMetadata]]
+    collections.abc.Callable[[], collections.abc.Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
         PEP-agnostic type hint-pith metadata generator.
     '''
 

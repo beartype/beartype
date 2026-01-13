@@ -7,8 +7,9 @@
 Project-wide :pep:`646`-compliant **type hint test data.**
 '''
 
-# ....................{ FIXTURES                           }....................
-def hints_pep646_meta() -> 'List[HintPepMetadata]':
+# ....................{ FIXTURES ~ meta                    }....................
+def hints_pep646_meta() -> (
+    'list[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]'):
     '''
     List of :pep:`646`-compliant **type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
@@ -251,3 +252,162 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
     return hints_pep_meta
+
+
+def hints_pep646_reduction_meta() -> (
+    'list[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]'):
+    '''
+    List of :pep:`646`-compliant **type hint reduction metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC`
+    instances describing test-specific :pep:`646`-compliant sample type hints
+    with metadata generically leveraged by PEP-agnostic unit tests validating
+    the :func:`beartype._check.convert.reduce.redmain.reduce_hint` function).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer fixture-specific imports.
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
+
+    # ....................{ CLASSES                        }....................
+    # class GloomBird(TypedDict):
+    #     '''
+    #     Arbitrary :pep:`589`-compliant typed dictionary.
+    #     '''
+    #
+    #     pass
+
+    # ....................{ LOCALS                         }....................
+    # List of all PEP-specific type hint reduction metadata to be returned.
+    hints_pep_reduction_meta = []
+
+    # ....................{ VERSION                        }....................
+    # If the active Python interpreter targets Python >= 3.11 and thus supports
+    # PEP 646...
+    if IS_PYTHON_AT_LEAST_3_11:
+        # ....................{ IMPORTS                    }....................
+        # Defer version-specific imports.
+        from beartype.roar import BeartypeDecorHintPep646Exception
+        from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+            HintReductionInvalid,
+            HintReductionValid,
+        )
+        from beartype_test.a00_unit.data.pep.data_pep646 import (
+            Ts_unpacked,
+            Ts_unpacked_prefix,
+            Ts_unpacked_subbed,
+            Us_unpacked,
+            tuple_fixed_str_bytes_unpacked_prefix,
+            tuple_fixed_str_bytes_unpacked_subbed,
+            tuple_variadic_strs_unpacked_prefix,
+            tuple_variadic_strs_unpacked_subbed,
+        )
+
+        # ....................{ LOCALS                     }....................
+        # List of all PEP-specific type hint reduction metadata to be returned.
+        hints_pep_reduction_meta.extend((
+            # ..................{ VALID                      }..................
+            # A PEP 646-compliant tuple hint subscripted by *ONLY* a single PEP
+            # 646-compliant unpacked type variable tuple in both prefixed and
+            # subscripted flavours reduces to the semantically equivalent
+            # builtin "tuple" type.
+            HintReductionValid(
+                hint_unreduced=tuple[Ts_unpacked_prefix], hint_reduced=tuple),
+            HintReductionValid(
+                hint_unreduced=tuple[Ts_unpacked_subbed], hint_reduced=tuple),
+
+            # A PEP 646-compliant tuple hint subscripted by *ONLY* a single PEP
+            # 646-compliant unpacked child variable-length tuple hint in both
+            # prefixed and subscripted flavours reduces to the semantically
+            # equivalent PEP 585-compliant variable-length tuple hint
+            # subscripted by the same child hints as that unpacked child hint.
+            HintReductionValid(
+                hint_unreduced=tuple[tuple_variadic_strs_unpacked_prefix],
+                hint_reduced=tuple[str, ...],
+            ),
+            HintReductionValid(
+                hint_unreduced=tuple[tuple_variadic_strs_unpacked_subbed],
+                hint_reduced=tuple[str, ...],
+            ),
+
+            # A PEP 646-compliant tuple hint subscripted by a PEP 646-compliant
+            # unpacked child fixed-length tuple hint in both prefixed and
+            # subscripted flavours reduces to the semantically equivalent PEP
+            # 585-compliant fixed-length tuple hint.
+            HintReductionValid(
+                hint_unreduced=tuple[
+                    int, tuple_fixed_str_bytes_unpacked_prefix, float],
+                hint_reduced=tuple[int, str, bytes, float],
+            ),
+            HintReductionValid(
+                hint_unreduced=tuple[
+                    int, tuple_fixed_str_bytes_unpacked_subbed, float],
+                hint_reduced=tuple[int, str, bytes, float],
+            ),
+
+            # ..................{ INVALID                    }..................
+            #FIXME: *UNCOMMENT*, please. This is totally invalid but no longer
+            #covered by the current implementation of this reducer. Whatevahs!
+            # # A PEP 646-compliant tuple hint subscripted by a PEP 692-compliant
+            # # unpacked type dictionary is invalid.
+            # (
+            #     tuple[Unpack[GloomBird]],
+            #     BeartypeDecorHintPep646Exception,
+            # ),
+
+            # A PEP 646-compliant tuple hint subscripted by two PEP
+        # 646-compliant unpacked child fixed-length tuple hint separated by
+        # other unrelated child hints is invalid.
+            HintReductionInvalid(
+                hint_unreduced=tuple[
+                    str,
+                    tuple_fixed_str_bytes_unpacked_prefix,
+                    bool,
+                    tuple_fixed_str_bytes_unpacked_subbed,
+                    bytes,
+                ],
+                exception_type=BeartypeDecorHintPep646Exception,
+            ),
+
+            # A PEP 646-compliant tuple hint subscripted by two PEP
+            # 646-compliant unpacked type variable tuples separated by other
+            # unrelated child hints is invalid.
+            HintReductionInvalid(
+                hint_unreduced=(
+                    tuple[str, Ts_unpacked, bool, Us_unpacked, bytes]),
+                exception_type=BeartypeDecorHintPep646Exception,
+            ),
+
+            # A PEP 646-compliant tuple hint subscripted by one PEP
+            # 646-compliant unpacked child variable-length tuple hint *AND* one
+            # PEP 646-compliant unpacked child type variable tuple separated by
+            # other unrelated child hints is invalid.
+            #
+            # Order is probably insignificant -- but could be. Ergo, we test
+            # both orders for fuller coverage.
+            HintReductionInvalid(
+                hint_unreduced=tuple[
+                    str,
+                    tuple_fixed_str_bytes_unpacked_prefix,
+                    bool,
+                    Ts_unpacked,
+                    bytes,
+                ],
+                exception_type=BeartypeDecorHintPep646Exception,
+            ),
+            HintReductionInvalid(
+                hint_unreduced=tuple[
+                    str,
+                    Ts_unpacked,
+                    bool,
+                    tuple_fixed_str_bytes_unpacked_subbed,
+                    bytes,
+                ],
+                exception_type=BeartypeDecorHintPep646Exception,
+            ),
+        ))
+    # Else, the active Python interpreter targets Python < 3.11 and thus fails
+    # to support PEP 646.
+
+    # ....................{ RETURN                         }....................
+    # Return this list.
+    return hints_pep_reduction_meta

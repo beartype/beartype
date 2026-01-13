@@ -16,7 +16,10 @@ from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype.typing import NoReturn
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.typing.datatyping import TypeException
+from beartype._data.typing.datatyping import (
+    TypeException,
+    TypeStack,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep,
@@ -322,8 +325,15 @@ def is_hint_cacheworthy(hint: Hint) -> bool:
     )
 
 # ....................{ TESTERS ~ needs                    }....................
-@callable_cached
-def is_hint_needs_cls_stack(hint: Hint) -> bool:
+#FIXME: Unit test up *ALL* edge cases implicated by the new "cls_stack"
+#parameter, please. *sigh*
+def is_hint_needs_cls_stack(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    cls_stack: TypeStack = None,
+) -> bool:
     '''
     :data:`True` only if the passed type hint is **type stack-dependent** (i.e.,
     if :mod:`beartype` requires the tuple of all classes lexically declaring the
@@ -336,7 +346,10 @@ def is_hint_needs_cls_stack(hint: Hint) -> bool:
     * :pep:`673`-compliant self type hint (i.e., :obj:`typing.Self`), which is
       contextually valid *only* inside a lexical class declaration.
 
-    This tester is memoized for efficiency.
+    This factory is intentionally *not* memoized (e.g., by the
+    :func:`.callable_cached` decorator), as the ``cls_stack`` parameter is
+    **context-sensitive** (i.e., contextually depends on context unique to the
+    currently decorated callable).
 
     Motivation
     ----------
@@ -363,6 +376,11 @@ def is_hint_needs_cls_stack(hint: Hint) -> bool:
     ----------
     hint : Hint
         Type hint to be inspected.
+    cls_stack : TypeStack, default: None
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
 
     Returns
     -------
@@ -370,16 +388,20 @@ def is_hint_needs_cls_stack(hint: Hint) -> bool:
         :data:`True` only if this type hint is type stack-dependent.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhintget import get_hint_repr
 
+    # ....................{ LOCALS                         }....................
     # Machine-readable representation of this hint.
     hint_repr = get_hint_repr(hint)
 
-    # Return true only if this representation embeds the representation of:
-    # * A PEP 673-compliant self type hint (i.e., "typing.Self").
+    # ....................{ PEP ~ 673                      }....................
+    # If this hint's representation embeds the sub-representation of the PEP
+    # 673-compliant self type hint singleton (i.e., "typing.Self",
+    # "typing_extensions.Self"), immediately return true.
     #
-    # Note:
+    # Note that:
     # * The fully-qualified names of exact typing modules (e.g., "typing",
     #   "typing_extensions") are intentionally ignored. Although we certainly
     #   *COULD* explicitly test for both, doing so would only needlessly reduce
@@ -405,4 +427,58 @@ def is_hint_needs_cls_stack(hint: Hint) -> bool:
     #
     # See also the extensive timings documented at this StackOverflow question:
     #     https://stackoverflow.com/questions/4901523/whats-a-faster-operation-re-match-search-or-str-find
-    return 'Self' in hint_repr
+    if 'Self' in hint_repr:
+        return True
+    # Else, this hint's representation does *NOT* embed the sub-representation
+    # of the PEP 673-compliant self type hint singleton.
+
+    # ....................{ PEP ~ 484 : forwardref         }....................
+    # If the annotation scope for this hint resides in the lexical scope of one
+    # or more possibly nested types, this hint annotates either a method *OR*
+    # class variable defined by such a type. In either case...
+    if cls_stack:
+        # If this type is non-nested...
+        #
+        # Note that this is merely a micro-optimization for the average case.
+        # Since "for" loops implicitly raise "StopIteration" exceptions on
+        # graceful termination *AND* since exception handling is expensive in
+        # Python, this micro-optimization has merit if this average case is
+        # sufficiently common. Thankfully, it is. Python types are almost
+        # *NEVER* nested, as there exist *NO* practical benefit to doing so and
+        # modest downside (e.g., increase in lexical indentation).
+        if len(cls_stack) == 1:
+            # If this hint's representation embeds the unqualified basename of
+            # this type, immediately return true. Why? Because this hint is
+            # (probably) transitively subscripted by a PEP 484-compliant
+            # stringified relative forward self-reference referring to this type
+            # (e.g., "list['MuhClass']"). Since this type resides on this stack
+            # and has thus already been defined, *NO* actual forward reference
+            # proxy object is required. Instead, the code generator
+            # type-checking this hint can trivially type-check this
+            # self-reference by reducing this self-reference to this type as is.
+            # Clearly, doing so requires this stack.
+            if cls_stack[-1].__name__ in hint_repr:
+                return True
+            # Else, this hint's representation does *NOT* embed the unqualified
+            # basename of this type.
+        # Else, this type is nested in a hierarchy of two or more types. In this
+        # case...
+        else:
+            # For each of these types...
+            for type_nested in cls_stack:
+                # If this hint's representation embeds the unqualified basename
+                # of this type, immediately return true. See above for details.
+                if type_nested.__name__ in hint_repr:
+                    return True
+                # Else, this hint's representation does *NOT* embed the
+                # unqualified basename of this type. In this case, continue to
+                # the next type on this stack.
+    # Else, the annotation scope for this hint does *NOT* reside in the lexical
+    # scope of one or more possibly nested types. This typically implies this
+    # hint to annotate a non-method function.
+
+    # ....................{ RETURN                         }....................
+    # Return false as a fallback.
+    #
+    # Note that this is the common case. Type stacks are only rarely required.
+    return False

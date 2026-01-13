@@ -133,27 +133,9 @@ def reduce_hint_pep484_ref(
     '''
 
     #FIXME: *INSUFFICIENT,* obviously. Refactor as follows:
-    #* First, we need to generalize the is_hint_needs_cls_stack() tester. That's
-    #  currently memoized. Sadly, we'll need to stop doing that and drop the
-    #  "@callable_cached" decoration. Then we'll need to revise its signature to
-    #  something resembling:
-    #      def is_hint_needs_cls_stack(
-    #          hint: Hint, cls_stack: TypeStack = None) -> bool:
-    #
-    #  Lastly, we'll need to revise that tester's trailing test to consider the
-    #  passed "cls_stack" as well:
-    #      return (
-    #          'Self' in hint_repr or
-    #          #FIXME: Comment all of this up, obviously. The idea here is that
-    #          #a type stack is needed if this hint appears to contain a
-    #          #self-reference to the currently decorated possibly nested class.
-    #          (
-    #              cls_stack and
-    #              cls_stack[-1].__name__ in hint_repr
-    #          )
-    #      )
+    #* First, fully unit test the is_hint_needs_cls_stack() tester.
     #* Next, we need to finally attend to the dangling "FIXME: DRY violation..."
-    #  comment. The same logic appears in "_wrapargs" as well.
+    #  comment in both the "_wrapreturn" and "_wrapargs" submodules. *sigh*
     #* Once we've done that, we then need to utilize this generalized logic for
     #  detecting whether the "cls_stack" is required in that dangling comment:
     #      cls_stack = (

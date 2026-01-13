@@ -7,7 +7,7 @@
 Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
-# ....................{ ADDERS                             }....................
+# ....................{ FIXTURES ~ meta                    }....................
 def hints_pep593_meta() -> 'List[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`593`-compliant **type hint
@@ -730,6 +730,48 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
     return hints_pep_meta
 
 
+def hints_pep593_reduction_meta() -> (
+    'list[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]'):
+    '''
+    List of :pep:`593`-compliant **type hint reduction metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC`
+    instances describing test-specific :pep:`593`-compliant sample type hints
+    with metadata generically leveraged by PEP-agnostic unit tests validating
+    the :func:`beartype._check.convert.reduce.redmain.reduce_hint` function).
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
+    from beartype.vale import IsEqual
+    from beartype._util.api.standard.utiltyping import get_typing_attrs
+    from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+        HintReductionValid)
+
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-specific type hint reduction metadata to be returned.
+    hints_pep_reduction_meta = []
+
+    # ..................{ FACTORIES                          }..................
+    # For each PEP-specific type hint factory importable from each currently
+    # importable "typing" module...
+    for Annotated in get_typing_attrs('Annotated'):
+        # Extend this list with metadata validating that...
+        hints_pep_reduction_meta.extend((
+            # ..................{ ANNOTATED                  }..................
+            # A PEP 593-compliant beartype-agnostic metahint is reduced to the
+            # lower-level hint it annotates.
+            HintReductionValid(
+                hint_unreduced=Annotated[int, 42], hint_reduced=int),
+
+            # A PEP 593-compliant beartype-specific metahint is preserved as is.
+            HintReductionValid(
+                Annotated[str, IsEqual['In their noonday dreams.']]),
+        ))
+
+    # Return this list.
+    return hints_pep_reduction_meta
+
+# ....................{ FIXTURES ~ ignorable               }....................
 def hints_pep593_ignorable_deep() -> list:
     '''
     List of :pep:`593`-compliant **deeply ignorable type hints** (i.e.,

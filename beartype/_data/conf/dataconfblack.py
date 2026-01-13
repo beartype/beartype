@@ -22,9 +22,19 @@ BLACKLIST_MODULE_NAME_TO_TYPE_NAMES: DictStrToFrozenSetStrs = FrozenDict({
     # decorator antipattern throughout their codebases and are thus
     # runtime-hostile.
 
-    # The object-oriented @fastmcp.FastMCP.tool decorator method destructively
-    # transforms callable user-defined functions and methods into *UNCALLABLE*
-    # FastMCP-specific instances of this type. Why, FastMCP!? WHY!?!!?? *sigh*
+    # Older implementations of the object-oriented @fastmcp.FastMCP.tool
+    # decorator method destructively transforms callable user-defined functions
+    # and methods into *UNCALLABLE* FastMCP-specific instances of this type.
+    # Why, FastMCP!? WHY!?!!?? *sigh*
+    #
+    # Note that this only applies to FastMCP <= 2.14.3. Newer FastMCP versions
+    # guarantee decorator compatibility by preserving the type and thus
+    # callability of decorated callables. Nonetheless, we *MUST* preserve this
+    # kludge in perpetuity to preserve backward compatibility with older FastMCP
+    # versions. Thankfully, doing so incurs no tangible harms elsewhere.
+    #
+    # See also:
+    #     https://github.com/beartype/beartype/issues/540
     'fastmcp.tools.tool': frozenset(('FunctionTool',)),
 
     # The object-oriented @langchain_core.runnables.chain decorator method

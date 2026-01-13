@@ -43,8 +43,9 @@ Note that:
   single submodule reflects the centralization performed by CPython itself.
 '''
 
-# ....................{ FIXTURES                           }....................
-def hints_pep484_meta() -> 'List[HintPepMetadata]':
+# ....................{ FIXTURES ~ meta                    }....................
+def hints_pep484_meta() -> (
+    'list[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]'):
     '''
     List of :pep:`484`-compliant **type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
@@ -170,7 +171,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         AbstractSet,
         Any,
         AnyStr,
-        BinaryIO,
         Callable,
         ChainMap,
         Collection,
@@ -181,9 +181,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         Deque,
         Dict,
         FrozenSet,
-        Generic,
         Hashable,
-        IO,
         ItemsView,
         Iterable,
         KeysView,
@@ -191,19 +189,18 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         Match,
         Mapping,
         MutableMapping,
-        MutableSequence,
+        # MutableSequence,
         MutableSet,
         NewType,
+        # Optional,
         OrderedDict,
         Pattern,
-        Sequence,
+        # Sequence,
         Set,
         Sized,
-        TextIO,
         Tuple,
-        TypeVar,
+        # TypeVar,
         Type,
-        Optional,
         Union,
         ValuesView,
     )
@@ -3533,9 +3530,81 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     return hints_pep_meta
 
 
+def hints_pep484_reduction_meta() -> (
+    'list[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]'):
+    '''
+    List of :pep:`484`-compliant **type hint reduction metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC`
+    instances describing test-specific :pep:`484`-compliant sample type hints
+    with metadata generically leveraged by PEP-agnostic unit tests validating
+    the :func:`beartype._check.convert.reduce.redmain.reduce_hint` function).
+    '''
+
+    # Defer fixture-specific imports.
+    from beartype._cave._cavefast import NoneType
+    from beartype._conf.confmain import BeartypeConf
+    from beartype._data.typing.datatyping import (
+        Pep484TowerComplex,
+        Pep484TowerFloat,
+    )
+    from beartype._util.hint.pep.proposal.pep484604 import (
+        make_hint_pep484604_union)
+    from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+        HintReductionValid)
+    from beartype_test.a00_unit.data.pep.data_pep484 import T_str_or_bytes
+
+    # List of all PEP-specific type hint reduction metadata to be returned.
+    hints_pep_reduction_meta = [
+        # ..................{ NON-PEP                        }..................
+        # An isinstanceable type is preserved as is without reduction.
+        HintReductionValid(int),
+
+        # The builtin "None" singleton reduces to its type (i.e., "type(None)").
+        HintReductionValid(hint_unreduced=None, hint_reduced=NoneType),
+
+        # ..................{ TOWER                          }..................
+        # The builtin "float" and "complex" types reduce to their corresponding
+        # numeric towers when configured to do so.
+        HintReductionValid(
+            hint_unreduced=float,
+            hint_reduced=Pep484TowerFloat,
+            conf=BeartypeConf(is_pep484_tower=True),
+        ),
+        HintReductionValid(
+            hint_unreduced=complex,
+            hint_reduced=Pep484TowerComplex,
+            conf=BeartypeConf(is_pep484_tower=True),
+        ),
+
+        # The builtin "float" and "complex" types are preserved as is without
+        # being reduced when configured to do so.
+        HintReductionValid(
+            hint_unreduced=float,
+            hint_reduced=float,
+            conf=BeartypeConf(is_pep484_tower=False),
+        ),
+        HintReductionValid(
+            hint_unreduced=complex,
+            hint_reduced=complex,
+            conf=BeartypeConf(is_pep484_tower=False),
+        ),
+
+        # ..................{ TYPEVAR                        }..................
+        # A PEP 484-compliant constrained type variable reduces to the PEP 484-
+        # or 604-compliant union of those constraints.
+        HintReductionValid(
+            hint_unreduced=T_str_or_bytes,
+            hint_reduced=make_hint_pep484604_union((str, bytes,)),
+        ),
+    ]
+
+    # Return this list.
+    return hints_pep_reduction_meta
+
+# ....................{ FIXTURES ~ ignorable               }....................
 def hints_pep484_ignorable_shallow() -> list:
     '''
-    List of :pep:`544`-compliant **shallowly ignorable type hints** (i.e.,
+    List of :pep:`484`-compliant **shallowly ignorable type hints** (i.e.,
     ignorable on the trivial basis of their machine-readable representations).
     '''
 
@@ -3571,7 +3640,7 @@ def hints_pep484_ignorable_shallow() -> list:
 
 def hints_pep484_ignorable_deep() -> list:
     '''
-    List of :pep:`544`-compliant **deeply ignorable type hints** (i.e.,
+    List of :pep:`484`-compliant **deeply ignorable type hints** (i.e.,
     ignorable only on the non-trivial basis of their nested child type hints).
     '''
 

@@ -17,6 +17,13 @@ in any chain of one or more decorators).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Conditionally add the FastMCP-specific entry to the
+#"DECOR_HOSTILE_ATTR_NAME_TRIE" data structure *ONLY* if the current FastMCP
+#version is older than <= 2.14.3. Newer FastMCP versions guarantee decorator
+#compatibility by preserving the callability of decorated callables. See also:
+#    https://github.com/jlowin/fastmcp/pull/2856
+
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Dict,
@@ -106,6 +113,18 @@ DECOR_HOSTILE_ATTR_NAME_TRIE: BeartypeDecorPlaceTrie = (
         # ....................{ METHODS                    }....................
         # Third-party decorator-hostile decorator *METHODS* directly defined by
         # types directly defined by object-oriented (OO) APIs.
+        #
+        # Note that:
+        # * Older implementations of the third-party @tool decorator function of
+        #   the "fastmcp.FastMCP" type of the FastMCP API coerced decorated
+        #   callables into uncallable FastMCP-specific types. However, *ALL*
+        #   newer implementations of FastMCP >= 2.15.0 no longer do so.
+        #   Technically, we *COULD* preserve perfect backward compatibility with
+        #   older FastMCP versions by preserving the obsolete FastMCP-specific
+        #   entry below. Pragmatically, there no longer exists any demonstrable
+        #   to do so. Indeed, doing so only *COULD* introduce spurious harm by
+        #   applying unnecessary transformations to the abstract syntax tree
+        #   (AST) of all third-party code importing FastMCP. Let us not do that.
 
         # The third-party @task decorator method of the "celery.Celery" type of
         # the Celery API. See also:

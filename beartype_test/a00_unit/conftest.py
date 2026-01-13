@@ -17,6 +17,7 @@ from beartype_test.a00_unit.data.api.external.data_apinumpy import (
 )
 from beartype_test.a00_unit.data.hint.data_hintfixture import (
     hints_meta,
+    hints_reduction_meta,
     hints_ignorable,
     iter_hints_piths_meta,
     not_hints_nonpep,

@@ -16,7 +16,8 @@ from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
-def hints_pep_meta() -> 'tuple[HintPepMetadata]':
+def hints_pep_meta() -> (
+    'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]'):
     '''
     Session-scoped fixture yielding a tuple of **PEP-compliant type hint
     metadata** (i.e.,

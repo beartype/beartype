@@ -29,6 +29,7 @@ def test_reduce_hint_pep484_generic_io_to_pep544_protocol() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep544Exception
     from beartype.typing import Union
+    from beartype._check.convert._reduce.redmain import reduce_hint
     from beartype._check.convert._reduce._pep.redpep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol)
     from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
@@ -39,9 +40,12 @@ def test_reduce_hint_pep484_generic_io_to_pep544_protocol() -> None:
     # ....................{ PASS                           }....................
     # For each PEP 484-compliant "typing" IO generic base class...
     for pep484_generic_io in TYPES_PEP484_GENERIC_IO:
-        # Equivalent protocol reduced from this generic.
-        pep544_protocol_io = reduce_hint_pep484_generic_io_to_pep544_protocol(
-            pep484_generic_io, '')
+        # Metadata encapsulating the equivalent PEP 544-compliant protocol
+        # reduced from this generic.
+        pep544_protocol_io_sane = reduce_hint(pep484_generic_io)
+
+        # This protocol.
+        pep544_protocol_io = pep544_protocol_io_sane.hint
 
         # Assert this protocol is either...
         assert (

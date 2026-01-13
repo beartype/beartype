@@ -23,11 +23,13 @@ from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
 
-# ....................{ CLASSES                            }....................
-class HintReductionValid(object):
+# ....................{ SUPERCLASSES                       }....................
+class HintReductionABC(object):
     '''
-    **Valid type hint reduction case** (i.e., dataclass encapsulating the valid
-    use case of reducing one type hint into another).
+    Abstract base class of all **type hint reduction cases** (i.e., dataclasses
+    encapsulating the either valid or invalid use cases of the private low-level
+    :func:`beartype._check.convert.reduce.redmain.reduce_hint` function reducing
+    one type hint into another).
 
     Attributes
     ----------
@@ -35,13 +37,43 @@ class HintReductionValid(object):
         Input beartype configuration configuring this reduction.
     hint_unreduced : Hint
         Input hint to be reduced.
+    '''
+
+    # ..................{ INITIALIZERS                       }..................
+    def __init__(self, hint_unreduced: Hint, conf: BeartypeConf) -> None:
+        '''
+        Initialize this type hint reduction case.
+
+        Attributes
+        ----------
+        hint_unreduced : Hint
+            Input hint to be reduced.
+        conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
+            Input beartype configuration configuring this reduction. Defaults to
+            the default beartype configuration.
+        '''
+        assert isinstance(conf, BeartypeConf), (
+            f'{repr(conf)} not beartype configuration.')
+
+        # Classify all passed parameters.
+        self.hint_unreduced = hint_unreduced
+        self.conf = conf
+
+# ....................{ SUBCLASSES                         }....................
+class HintReductionValid(HintReductionABC):
+    '''
+    **Valid type hint reduction case** (i.e., dataclass encapsulating the valid
+    use case of reducing one type hint into another).
+
+    Attributes
+    ----------
     hint_reduced : Hint
         Output hint expected to be returned from the
         :func:`beartype._check.convert.reduce.redmain.reduce_hint` reducer when
         passed these inputs.
     '''
 
-    # ..................{ INITIALIZERS                   }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
 
@@ -71,17 +103,18 @@ class HintReductionValid(object):
             hints *not* reduced by ``reduce_hint()``).
         '''
 
+        # Initialize our superclass.
+        super().__init__(hint_unreduced=hint_unreduced, conf=conf)
+
         # If unpassed, default this output hint to this input hint.
         if hint_reduced is SENTINEL:
             hint_reduced = hint_unreduced
 
-        # Classify all passed parameters.
-        self.hint_unreduced = hint_unreduced
+        # Classify all remaining passed parameters.
         self.hint_reduced = hint_reduced
-        self.conf = conf
 
 
-class HintReductionInvalid(object):
+class HintReductionInvalid(HintReductionABC):
     '''
     **Invalid type hint reduction case** (i.e., dataclass encapsulating the
     invalid use case of reducing one type hint, which then raises an exception
@@ -89,17 +122,13 @@ class HintReductionInvalid(object):
 
     Attributes
     ----------
-    conf : BeartypeConf
-        Input beartype configuration configuring this reduction.
-    hint_unreduced : Hint
-        Input hint to be reduced.
     exception_type : Type[Exception]
         Output type of exception expected to be raised by the
         :func:`beartype._check.convert.reduce.redmain.reduce_hint` reducer when
         passed these inputs.
     '''
 
-    # ..................{ INITIALIZERS                   }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
 
@@ -126,7 +155,8 @@ class HintReductionInvalid(object):
             Defaults to the default beartype configuration.
         '''
 
-        # Classify all passed parameters.
-        self.hint_unreduced = hint_unreduced
+        # Initialize our superclass.
+        super().__init__(hint_unreduced=hint_unreduced, conf=conf)
+
+        # Classify all remaining passed parameters.
         self.exception_type = exception_type
-        self.conf = conf
