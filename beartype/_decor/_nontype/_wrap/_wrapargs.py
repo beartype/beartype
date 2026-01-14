@@ -37,30 +37,21 @@ from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import LexicalScope
-from beartype._data.code.datacodefunc import (
+from beartype._data.code.func.datacodefuncwrap import (
     CODE_INIT_ARGS_LEN,
-    # EXCEPTION_PREFIX_DEFAULT,
     ARG_KIND_TO_CODE_LOCALIZE,
 )
 from beartype._decor._nontype._wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
-from beartype._util.error.utilerrwarn import (
-    # issue_warning,
-    reissue_warnings_placeholder,
-)
+from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
     # ArgMandatory,
     iter_func_args,
 )
 from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
-from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
 from beartype._util.kind.maplike.utilmapset import update_mapping
-# from beartype._util.text.utiltextmunge import lowercase_str_char_first
-from beartype._util.text.utiltextprefix import (
-    prefix_callable_arg_name,
-    # prefix_pith_value,
-)
+from beartype._util.text.utiltextprefix import prefix_callable_arg_name
 from beartype._data.kind.datakindiota import SENTINEL
 from warnings import catch_warnings
 
@@ -314,7 +305,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                     is_args_positional = True
                 # Else, this parameter *CANNOT* be passed positionally.
 
-                #FIXME: [SPEED] Negligibly optimized the ".get" access away:
+                #FIXME: [SPEED] Negligibly optimize the ".get" access away:
                 #    ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE_get(  # type: ignore
                 #        arg_kind, None)
                 # Python code template localizing this parameter if this kind of
@@ -334,50 +325,16 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # Else, this kind of parameter is supported. Ergo, this code is
                 # non-"None".
 
-                #FIXME: DRY violation. The same logic appears in "_wrapreturn"
-                #as well. It looks like what we *PROBABLY* want to do here is:
-                #* Rename the existing make_code_raiser_func_pith_check()
-                #  factory to _make_code_raiser_func_pith_check_cached().
-                #* Define a new make_code_raiser_func_pith_check() factory that
-                #  is unmemoized and has a simpler public API. Notably, this new
-                #  factory should:
-                #  * Accept a new "decor_meta" parameter.
-                #  * Drop the existing "conf" and "cls_stack" parameters.
-                #  * Pass parameters by keyword rather than positionally. This
-                #    would be especially useful for the "is_param" parameter,
-                #    which would suddenly become readable below.
-                #  * Internally compute the "cls_stack" as given below.
-
-                # Type stack if required by this hint *OR* "None" otherwise. See
-                # the is_hint_needs_cls_stack() tester for further discussion.
-                #
-                # Note that the original unsanitized "hint_insane" (e.g.,
-                # "typing.Self") rather than the new sanitized "hint" (e.g., the
-                # class currently being decorated by @beartype) is passed to
-                # that tester. Why? Because the latter may already have been
-                # reduced above to a different (and seemingly innocuous) type
-                # hint that does *NOT* appear to require a type stack at late
-                # *EXCEPTION RAISING TIME* (i.e., the
-                # beartype._check.error.errmain.get_func_pith_violation()
-                # function) but actually does. Only the original unsanitized
-                # "hint_insane" is truth.
-                cls_stack = (
-                    decor_meta.cls_stack
-                    if is_hint_needs_cls_stack(hint_insane) else
-                    None
-                )
-                # print(f'arg "{arg_name}" hint {repr(hint)} cls_stack: {repr(cls_stack)}')
-
                 # Code snippet type-checking any parameter with arbitrary name.
                 (
                     code_arg_check_pith,
                     func_scope,
                     hint_refs_type_basename,
                 ) = make_code_raiser_func_pith_check(
-                    hint_sane,
-                    decor_meta.conf,
-                    cls_stack,
-                    True,  # <-- True only for parameters
+                    decor_meta=decor_meta,
+                    hint_insane=hint_insane,
+                    hint_sane=hint_sane,
+                    is_param=True,
                 )
 
                 # Merge the local scope required to check this parameter into

@@ -132,19 +132,6 @@ def reduce_hint_pep484_ref(
         * Else, this hint unmodified.
     '''
 
-    #FIXME: *INSUFFICIENT,* obviously. Refactor as follows:
-    #* First, fully unit test the is_hint_needs_cls_stack() tester.
-    #* Next, we need to finally attend to the dangling "FIXME: DRY violation..."
-    #  comment in both the "_wrapreturn" and "_wrapargs" submodules. *sigh*
-    #* Once we've done that, we then need to utilize this generalized logic for
-    #  detecting whether the "cls_stack" is required in that dangling comment:
-    #      cls_stack = (
-    #          decor_meta.cls_stack
-    #          if is_hint_needs_cls_stack(
-    #              hint=hint_insane, cls_stack=decor_meta.cls_stack) else
-    #          None
-    #      )
-
     # If this forward reference annotates a method of a possibly nested type
     # currently being decorated by the @beartype decorator...
     if cls_stack:

@@ -7,7 +7,8 @@
 Project-wide **wrapper function code snippets** (i.e., triple-quoted pure-Python
 string constants formatted and concatenated together to dynamically generate the
 implementations of wrapper functions type-checking
-:func:`beartype.beartype`-decorated callables).
+:func:`beartype.beartype`-decorated callables by the private
+:mod:`beartype._decor._nontype._wrap` subpackage).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -25,7 +26,7 @@ from beartype._data.typing.datatyping import CallableStrFormat
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 
 # ....................{ CODE                               }....................
-CODE_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(
+CODE_WRAPPER_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(
     *args,
 {{code_signature_scope_args}}{CODE_INDENT_1}**kwargs
 ):'''

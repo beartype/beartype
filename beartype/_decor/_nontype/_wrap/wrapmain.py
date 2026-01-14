@@ -24,7 +24,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
-from beartype._data.code.datacodefunc import CODE_SIGNATURE
+from beartype._data.code.func.datacodefuncwrap import CODE_WRAPPER_SIGNATURE
 from beartype._data.code.datacodename import (
     ARG_NAME_CHECK_META,
     ARG_NAME_FUNC,
@@ -175,7 +175,7 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
     code_signature = make_func_signature(
         func_name=decor_meta.func_wrapper_name,
         func_scope=func_scope,
-        code_signature_format=CODE_SIGNATURE,
+        code_signature_format=CODE_WRAPPER_SIGNATURE,
         code_signature_prefix=decor_meta.func_wrapper_code_signature_prefix,
         conf=decor_meta.conf,
     )

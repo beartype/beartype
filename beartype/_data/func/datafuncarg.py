@@ -10,8 +10,6 @@ describing arguments accepted by various functions and methods).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                            }....................
-
 # ....................{ NAMES ~ return                     }....................
 ARG_NAME_RETURN = 'return'
 '''

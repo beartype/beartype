@@ -7,7 +7,8 @@
 Project-wide **type-checking function code snippets** (i.e., triple-quoted
 pure-Python string constants formatted and concatenated together to dynamically
 generate the implementations of functions type-checking arbitrary objects
-against arbitrary PEP-compliant type hints).
+against arbitrary PEP-compliant type hints by the private
+:mod:`beartype._check.checkmake` submodule).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -143,8 +144,10 @@ CODE_GET_VIOLATION_RANDOM_INT = f'''
                 random_int={VAR_NAME_RANDOM_INT},'''
 '''
 Code snippet passing the value of the random integer previously
-generated for the current call to the exception-handling function call embedded
-in the :data:`.CODE_HINT_ROOT_SUFFIX` snippet.
+generated for the current call to the exception-handling function call via the
+``arg_random_int`` format variable of either the parent
+:data:`.CODE_GET_HINT_OBJECT_VIOLATION` or
+:data:`.CODE_GET_FUNC_PITH_VIOLATION` code snippets.
 '''
 
 # ....................{ CODE ~ violation                   }....................

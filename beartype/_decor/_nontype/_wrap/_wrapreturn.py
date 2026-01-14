@@ -28,11 +28,10 @@ from beartype._data.func.datafuncarg import (
 )
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.code.datacodefunc import CODE_CALL_CHECKED_format
+from beartype._data.code.func.datacodefuncwrap import CODE_CALL_CHECKED_format
 from beartype._decor._nontype._wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
-from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.text.utiltextprefix import prefix_callable_return
 from beartype._data.kind.datakindiota import SENTINEL
@@ -158,44 +157,16 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             #
             # If this hint is unignorable...
             elif hint_sane is not HINT_SANE_IGNORABLE:
-                #FIXME: DRY violation. The same logic appears in "_wrapargs" as
-                #well. It looks like what we *PROBABLY* want to do here is:
-                #* Rename the existing make_code_raiser_func_pith_check()
-                #  factory to _make_code_raiser_func_pith_check_cached().
-                #* Define a new make_code_raiser_func_pith_check() factory that
-                #  is unmemoized and has a simpler public API. Notably, this new
-                #  factory should:
-                #  * Accept a new "decor_meta" parameter.
-                #  * Drop the existing "conf" and "cls_stack" parameters.
-                #  * Pass parameters by keyword rather than positionally. This
-                #    would be especially useful for the "is_param" parameter,
-                #    which would suddenly become readable below.
-                #  * Internally compute the "cls_stack" as given below.
-
-                # Type stack if required by this hint *OR* "None" otherwise.
-                # See is_hint_needs_cls_stack() for details.
-                #
-                # Note that the original unsanitized "hint_insane" (e.g.,
-                # "typing.Self") rather than the new sanitized "hint" (e.g.,
-                # the class currently being decorated by @beartype) is
-                # passed to that tester. See _code_check_args() for details.
-                cls_stack = (
-                    decor_meta.cls_stack
-                    if is_hint_needs_cls_stack(hint_insane) else
-                    None
-                )
-                # print(f'return hint {repr(hint_insane)} -> {repr(hint)} cls_stack: {repr(cls_stack)}')
-
                 # Code snippet type-checking any arbitrary return.
                 (
                     code_return_check_pith,
                     func_scope,
                     hint_refs_type_basename,
-                ) = make_code_raiser_func_pith_check(  # type: ignore[assignment]
-                    hint_sane,
-                    decor_meta.conf,
-                    cls_stack,
-                    False,  # <-- True only for parameters
+                ) = make_code_raiser_func_pith_check(
+                    decor_meta=decor_meta,
+                    hint_insane=hint_insane,
+                    hint_sane=hint_sane,
+                    is_param=False,
                 )
 
                 # Unmemoize this snippet against this return.

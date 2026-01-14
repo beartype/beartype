@@ -325,8 +325,6 @@ def is_hint_cacheworthy(hint: Hint) -> bool:
     )
 
 # ....................{ TESTERS ~ needs                    }....................
-#FIXME: Unit test up *ALL* edge cases implicated by the new "cls_stack"
-#parameter, please. *sigh*
 def is_hint_needs_cls_stack(
     # Mandatory parameters.
     hint: Hint,

@@ -23,7 +23,7 @@ from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.code.datacodefunc import (
+from beartype._data.code.func.datacodefuncwrap import (
     CODE_NORMAL_RETURN_CHECKED,
     CODE_NORMAL_RETURN_UNCHECKED_SYNC,
     CODE_NORMAL_RETURN_UNCHECKED_ASYNC,

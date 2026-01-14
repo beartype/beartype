@@ -18,16 +18,6 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.code.datacodename import (
-    ARG_NAME_CONF,
-    ARG_NAME_EXCEPTION_PREFIX,
-    ARG_NAME_GETRANDBITS,
-    ARG_NAME_GET_VIOLATION,
-    ARG_NAME_HINT,
-    ARG_NAME_WARN,
-    CODE_PITH_ROOT_NAME_PLACEHOLDER,
-    FUNC_CHECKER_NAME_PREFIX,
-)
 from beartype._check.convert.convmain import sanify_hint_root_statement
 from beartype._check.code.codemain import make_check_expr
 from beartype._check.error.errmain import (
@@ -38,8 +28,22 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
-from beartype._check._checksnip import (
+from beartype._conf.confmain import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._conf.conftest import die_unless_conf
+from beartype._data.code.datacodename import (
+    ARG_NAME_CONF,
+    ARG_NAME_EXCEPTION_PREFIX,
+    ARG_NAME_GETRANDBITS,
+    ARG_NAME_GET_VIOLATION,
+    ARG_NAME_HINT,
+    ARG_NAME_WARN,
+    CODE_PITH_ROOT_NAME_PLACEHOLDER,
+    FUNC_CHECKER_NAME_PREFIX,
+)
+from beartype._data.code.func.datacodefunccheck import (
     CODE_CHECKER_SIGNATURE,
     CODE_RAISER_FUNC_PITH_CHECK_PREFIX,
     CODE_RAISER_HINT_OBJECT_CHECK_PREFIX,
@@ -50,9 +54,6 @@ from beartype._check._checksnip import (
     CODE_RAISE_VIOLATION,
     CODE_WARN_VIOLATION,
 )
-from beartype._conf.confmain import BeartypeConf
-from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._conf.conftest import die_unless_conf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN_REPR
 from beartype._data.typing.datatypingport import Hint
@@ -70,6 +71,7 @@ from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic import (
     canonicalize_hint_pep484_ref)
+from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
 from itertools import count
 from warnings import (
     catch_warnings,
@@ -248,15 +250,6 @@ def make_code_raiser_hint_object_check(
         hint_refs_type_basename,
     ) = make_check_expr(hint_sane, conf)
 
-    # Code snippet passing the value of the random integer previously generated
-    # for the current call to the exception-handling function call embedded in
-    # the "CODE_HINT_ROOT_SUFFIX" snippet, defaulting to *NOT* passing this.
-    arg_random_int = (
-        CODE_GET_VIOLATION_RANDOM_INT
-        if ARG_NAME_GETRANDBITS in func_scope else
-        ''
-    )
-
     # Pass hidden parameters to this raiser function exposing:
     # * The passed exception prefix accessed by this snippet.
     # * The get_hint_object_violation() getter called by the
@@ -274,13 +267,13 @@ def make_code_raiser_hint_object_check(
     # Code snippet generating a human-readable violation exception or warning
     # when the root pith violates the root type hint.
     code_get_violation = CODE_GET_HINT_OBJECT_VIOLATION.format(
-        arg_random_int=arg_random_int)
+        arg_random_int=_get_func_scope_arg_random_int(func_scope))
 
     # Code snippet handling the previously generated violation by either raising
     # that violation as a fatal exception or emitting that violation as a
     # non-fatal warning.
     code_handle_violation = _make_code_raiser_violation(
-        conf=conf, func_scope=func_scope, is_param=None)
+        conf=conf, func_scope=func_scope)
 
     # Code snippet type-checking the root pith against the root hint.
     func_code = (
@@ -361,123 +354,6 @@ def make_code_tester_check(
     )
 
 # ....................{ FACTORIES ~ code : raiser          }....................
-#FIXME: Unit test us up, please.
-@callable_cached
-def make_code_raiser_func_pith_check(
-    hint_sane: HintSane,
-    conf: BeartypeConf,
-    cls_stack: Optional[TypeStack],
-    is_param: Optional[bool],
-) -> CodeGenerated:
-    '''
-    Pure-Python code snippet of a type-checking raiser function type-checking a
-    parameter or return of a decorated callable against the passed type hint
-    under the passed beartype configuration by either raising a fatal exception
-    *or* emitting a non-fatal warning when that parameter or return violates
-    this hint.
-
-    This factory is memoized for efficiency.
-
-    Parameters
-    ----------
-    hint_sane : HintSane
-        Metadata encapsulating the type hint to be type-checked.
-    hint_insane : Hint
-        **Insane** (i.e., pre-sanified) type hint to be type-checked.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
-    cls_stack : Optional[TypeStack]
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
-    is_param : Optional[bool]
-        **Tri-state pith boolean.** Although it would be simpler for this
-        factory to accept a pith name, doing so would also effectively unmemoize
-        this factory as well as all higher-level factories calling this factory.
-        If the code snippet generated and returned by this factory is
-        type-checking a previously localized:
-
-        * Parameter of a decorated callable, this parameter should be
-          :data:`True`.
-        * Return of a decorated callable, this parameter should be
-          :data:`False`.
-        * Arbitrary object passed to the :func:`beartype.door.die_if_unbearable`
-          type-checker,  this parameter should be :data:`None`.
-
-        Defaults to :data:`None`.
-
-    Returns
-    -------
-    CodeGenerated
-        Tuple containing the Python code snippet dynamically generated by this
-        code factory and metadata describing that code. See the
-        :attr:`beartype._data.typing.datatyping.CodeGenerated` type hint.
-
-    See Also
-    --------
-    :func:`.make_check_expr`
-        Further details.
-    '''
-
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the make_code_hint_object_check() factory.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # Python code snippet comprising a single boolean expression type-checking
-    # an arbitrary object against this hint.
-    (
-        code_expr,
-        func_scope,
-        hint_refs_type_basename,
-    ) = make_check_expr(hint_sane, conf, cls_stack)
-
-    # Code snippet passing the value of the random integer previously generated
-    # for the current call to the exception-handling function call embedded in
-    # the "CODE_HINT_ROOT_SUFFIX" snippet, defaulting to *NOT* passing this.
-    arg_random_int = (
-        CODE_GET_VIOLATION_RANDOM_INT
-        if ARG_NAME_GETRANDBITS in func_scope else
-        ''
-    )
-
-    # Expose the get_func_pith_violation() getter called by the
-    # "CODE_GET_FUNC_PITH_VIOLATION" snippet as a "beartype"-specific hidden
-    # parameter passed to this wrapper function.
-    func_scope[ARG_NAME_GET_VIOLATION] = get_func_pith_violation
-
-    #FIXME: [SPEED] Globalize CODE_GET_FUNC_PITH_VIOLATION.format() as
-    #"CODE_GET_FUNC_PITH_VIOLATION_format". *sigh*
-    # Code snippet generating a human-readable violation exception or warning
-    # when the root pith violates the root type hint.
-    code_get_violation = CODE_GET_FUNC_PITH_VIOLATION.format(
-        arg_random_int=arg_random_int,
-        pith_name=CODE_PITH_ROOT_NAME_PLACEHOLDER,
-    )
-
-    # Code snippet handling the previously generated violation by either raising
-    # that violation as a fatal exception or emitting that violation as a
-    # non-fatal warning.
-    code_handle_violation = _make_code_raiser_violation(
-        conf=conf, func_scope=func_scope, is_param=is_param)
-
-    # Code snippet type-checking the root pith against the root hint.
-    func_code = (
-        f'{CODE_RAISER_FUNC_PITH_CHECK_PREFIX}'
-        f'{code_expr}'
-        f'{code_get_violation}'
-        f'{code_handle_violation}'
-    )
-
-    # Return all metadata required by higher-level callers.
-    return (
-        func_code,
-        func_scope,
-        hint_refs_type_basename,
-    )
-
-
 @callable_cached
 def make_code_raiser_func_pep484_noreturn_check(
     conf: BeartypeConf) -> CodeGenerated:
@@ -515,9 +391,7 @@ def make_code_raiser_func_pep484_noreturn_check(
     # Code snippet generating a human-readable violation exception or warning
     # when the root pith violates the root type hint.
     code_get_violation = CODE_GET_FUNC_PITH_VIOLATION.format(
-        arg_random_int='',
-        pith_name=ARG_NAME_RETURN_REPR,
-    )
+        arg_random_int='', pith_name=ARG_NAME_RETURN_REPR)
 
     # Code snippet handling the previously generated violation by either raising
     # that violation as a fatal exception or emitting that violation as a
@@ -534,6 +408,196 @@ def make_code_raiser_func_pep484_noreturn_check(
         func_scope,
         (),  # Irrelevant "hint_refs_type_basename" tuple item. Chug it!
     )
+
+# ....................{ FACTORIES ~ code : raiser : pith   }....................
+#FIXME: Unit test us up, please. *sigh*
+def make_code_raiser_func_pith_check(
+    decor_meta: BeartypeDecorMeta,
+    hint_insane: Hint,
+    hint_sane: HintSane,
+    is_param: bool,
+) -> CodeGenerated:
+    '''
+    Pure-Python code snippet of a type-checking raiser function type-checking a
+    parameter or return of a decorated callable against the passed type hint
+    under the passed beartype configuration by either raising a fatal exception
+    *or* emitting a non-fatal warning when that parameter or return violates
+    this hint.
+
+    This factory is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), due to accepting the context-sensitive
+    ``decor_meta`` parameter obstructing memoization. Nonetheless, the
+    lower-level private :func:`._make_code_raiser_func_pith_check` factory
+    wrapped by this higher-level factory *is* memoized.
+
+    Parameters
+    ----------
+    decor_meta : BeartypeDecorMeta
+        Decorated callable to be type-checked.
+    hint_insane : Hint
+        **Insane** (i.e., pre-sanified) type hint to be type-checked.
+    hint_sane : HintSane
+        Metadata encapsulating the type hint to be type-checked.
+    is_param : bool
+        If the **pith** (i.e., object being type-checked by the code snippet
+        generated and returned by this factory) type-checks a previously
+        localized:
+
+        * **Parameter** accepted by a decorated callable, :data:`True`.
+        * **Return** returned from a decorated callable, :data:`False`.
+
+        Note that, while it would be simpler for this factory to instead accept
+        a pith name, doing so would also unmemoize this factory as well as all
+        higher-level factories calling this factory.
+
+    Returns
+    -------
+    CodeGenerated
+        Tuple containing the Python code snippet dynamically generated by this
+        code factory and metadata describing that code. See the
+        :attr:`beartype._data.typing.datatyping.CodeGenerated` type hint.
+
+    See Also
+    --------
+    :func:`.make_check_expr`
+        Further details.
+    '''
+    assert isinstance(decor_meta, BeartypeDecorMeta), (
+        f'{repr(decor_meta)} not beartype call.')
+    assert isinstance(is_param, bool), f'{repr(is_param)} not boolean.'
+
+    # Type stack if required by this hint *OR* "None" otherwise. See the
+    # is_hint_needs_cls_stack() tester for further discussion.
+    #
+    # Note that the original unsanitized "hint_insane" (e.g., "typing.Self")
+    # rather than the new sanitized "hint" (e.g., the class currently being
+    # decorated by @beartype) is passed to that tester. Why? Because the latter
+    # may already have been reduced above to a different (and seemingly
+    # innocuous) type hint that does *NOT* appear to require a type stack at
+    # late *EXCEPTION RAISING TIME* (i.e., the
+    # beartype._check.error.errmain.get_func_pith_violation() function) but
+    # actually does. Only the original unsanitized "hint_insane" is truth.
+    cls_stack = (
+        decor_meta.cls_stack
+        if is_hint_needs_cls_stack(
+            hint=hint_insane, cls_stack=decor_meta.cls_stack) else
+        None
+    )
+    # print(f'arg "{arg_name}" hint {repr(hint)} cls_stack: {repr(cls_stack)}')
+
+    # Defer to this lower-level memoized factory accepting *ONLY* positional
+    # parameters for efficiency.
+    return _make_code_raiser_func_pith_check(
+        hint_sane,
+        decor_meta.conf,
+        cls_stack,
+        is_param,
+    )
+
+
+#FIXME: Unit test us up, please.
+@callable_cached
+def _make_code_raiser_func_pith_check(
+    hint_sane: HintSane,
+    conf: BeartypeConf,
+    cls_stack: Optional[TypeStack],
+    is_param: bool,
+) -> CodeGenerated:
+    '''
+    Pure-Python code snippet of a type-checking raiser function type-checking a
+    parameter or return of a decorated callable against the passed type hint
+    under the passed beartype configuration by either raising a fatal exception
+    *or* emitting a non-fatal warning when that parameter or return violates
+    this hint.
+
+    This factory is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint_sane : HintSane
+        Metadata encapsulating the type hint to be type-checked.
+    hint_insane : Hint
+        **Insane** (i.e., pre-sanified) type hint to be type-checked.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
+    cls_stack : Optional[TypeStack]
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
+    is_param : bool
+        If the **pith** (i.e., object being type-checked by the code snippet
+        generated and returned by this factory) type-checks a previously
+        localized:
+
+        * **Parameter** accepted by a decorated callable, :data:`True`.
+        * **Return** returned from a decorated callable, :data:`False`.
+
+        Note that, while it would be simpler for this factory to instead accept
+        a pith name, doing so would also unmemoize this factory as well as all
+        higher-level factories calling this factory.
+
+    Returns
+    -------
+    CodeGenerated
+        Tuple containing the Python code snippet dynamically generated by this
+        code factory and metadata describing that code. See the
+        :attr:`beartype._data.typing.datatyping.CodeGenerated` type hint.
+
+    See Also
+    --------
+    :func:`.make_check_expr`
+        Further details.
+    '''
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with the make_code_hint_object_check() factory.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Python code snippet comprising a single boolean expression type-checking
+    # an arbitrary object against this hint.
+    (
+        code_expr,
+        func_scope,
+        hint_refs_type_basename,
+    ) = make_check_expr(hint_sane, conf, cls_stack)
+
+    # Expose the get_func_pith_violation() getter called by the
+    # "CODE_GET_FUNC_PITH_VIOLATION" snippet as a "beartype"-specific hidden
+    # parameter passed to this wrapper function.
+    func_scope[ARG_NAME_GET_VIOLATION] = get_func_pith_violation
+
+    #FIXME: [SPEED] Globalize CODE_GET_FUNC_PITH_VIOLATION.format() as
+    #"CODE_GET_FUNC_PITH_VIOLATION_format". *sigh*
+    # Code snippet generating a human-readable violation exception or warning
+    # when the root pith violates the root type hint.
+    code_get_violation = CODE_GET_FUNC_PITH_VIOLATION.format(
+        arg_random_int=_get_func_scope_arg_random_int(func_scope),
+        pith_name=CODE_PITH_ROOT_NAME_PLACEHOLDER,
+    )
+
+    # Code snippet handling the previously generated violation by either raising
+    # that violation as a fatal exception or emitting that violation as a
+    # non-fatal warning.
+    code_handle_violation = _make_code_raiser_violation(
+        conf=conf, func_scope=func_scope, is_param=is_param)
+
+    # Code snippet type-checking the root pith against the root hint.
+    func_code = (
+        f'{CODE_RAISER_FUNC_PITH_CHECK_PREFIX}'
+        f'{code_expr}'
+        f'{code_get_violation}'
+        f'{code_handle_violation}'
+    )
+
+    # Return all metadata required by higher-level callers.
+    return (
+        func_code,
+        func_scope,
+        hint_refs_type_basename,
+    )
+
 
 # ....................{ PRIVATE ~ globals                  }....................
 _func_checker_name_counter = count(start=0, step=1)
@@ -558,6 +622,45 @@ def _func_checker_ignorable(obj: object) -> bool:
     '''
 
     return True
+
+# ....................{ PRIVATE ~ getters                  }....................
+#FIXME: Unit test us up, please.
+def _get_func_scope_arg_random_int(func_scope: LexicalScope) -> str:
+    '''
+    Code snippet intended to be embedded as the ``arg_random_int`` format
+    variable of either the parent :data:`.CODE_GET_HINT_OBJECT_VIOLATION` or
+    :data:`.CODE_GET_FUNC_PITH_VIOLATION` code snippets.
+
+    Parameters
+    ----------
+    func_scope : LexicalScope
+        **Lexical scope** (i.e., dictionary mapping from the relative
+        unqualified name to value of each locally or globally scoped attribute
+        accessible to a callable or class).
+
+    Returns
+    -------
+    str
+        Either:
+
+        * If the passed lexical scope accepts a random integer generator, a code
+          snippet passing the value of the random integer previously generated
+          by that generator for the current call of a high-level type-checking
+          function to a call as a keyword parameter to a lower-level
+          type-checking exception raiser function call.
+        * Else, the empty string.
+    '''
+    assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
+
+    # Return either...
+    return (
+        # If this lexical scope accepts a random integer generator, the code
+        # snippet described above;
+        CODE_GET_VIOLATION_RANDOM_INT
+        if ARG_NAME_GETRANDBITS in func_scope else
+        # Else, the empty string.
+        ''
+    )
 
 # ....................{ PRIVATE ~ factories : func         }....................
 #FIXME: Unit test us up, please.
@@ -664,6 +767,16 @@ def _make_func_checker(
             # ....................{ CODE                   }....................
             # Python code snippet comprising a single boolean expression
             # type-checking an arbitrary object against this hint.
+            #
+            # Note that this call (and *ONLY* this call) is intentionally passed
+            # the "exception_prefix" parameter rather than the
+            # "EXCEPTION_PLACEHOLDER" placeholder. Why? Because this call
+            # dynamically generates code raising type-checking violations
+            # prefixed by this prefix at a later time rather than *NOW*. Passing
+            # "EXCEPTION_PLACEHOLDER" would, in particular, erroneously cause
+            # the public beartype.door.die_if_unbearable() type-checker to raise
+            # unreadable type-checking violations prefixed by
+            # "EXCEPTION_PLACEHOLDER" (which is an unreadable placeholder).
             (
                 code_check,
                 func_scope,
@@ -686,7 +799,7 @@ def _make_func_checker(
             #  introspect up the call stack for the first stack frame residing
             #  in a non-"beartype" module, which these objects then resolve each
             #  relative forward reference against.
-            #* Consider refactoring our "codemain" algorthm to unconditionally
+            #* Consider refactoring our "codemain" algorithm to unconditionally
             #  do this for *ALL* relative forward references. Doing so would
             #  (probably) be a lot faster than the current global string
             #  replacement approach... maybe. Okay, maybe not. But maybe.
@@ -828,19 +941,19 @@ def _make_code_raiser_violation(
         **Lexical scope** (i.e., dictionary mapping from the relative
         unqualified name to value of each locally or globally scoped attribute
         accessible to a callable or class).
-    is_param : Optional[bool]
+    is_param : Optional[bool], default: None
         **Tri-state pith boolean.** Although it would be simpler for this
-        factory to accept a pith name, doing so would also effectively unmemoize
-        this factory as well as all higher-level factories calling this factory.
-        If the code snippet generated and returned by this factory is
-        type-checking a previously localized:
+        factory to accept a pith name, doing so would effectively unmemoize all
+        higher-level memoized factories calling this factory. If the code
+        snippet generated and returned by this factory type-checks a previously
+        localized:
 
         * Parameter of a decorated callable, :data:`True`.
         * Return of a decorated callable, :data:`False`.
-        * Arbitrary object passed to the :func:`beartype.door.die_if_uncallable`
-          type-checker, :data:`None`.
+        * Arbitrary object passed to the parent
+          :func:`beartype.door.die_if_uncallable` type-checker, :data:`None`.
 
-        Defaults to :data:`None`.
+        Defaults to :data:`None` for simplicity and readability.
 
     Returns
     -------
@@ -864,8 +977,7 @@ def _make_code_raiser_violation(
         Further details.
     '''
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert isinstance(func_scope, dict), (
-        f'{repr(func_scope)} not dictionary.')
+    assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
     assert isinstance(is_param, NoneTypeOr[bool]), (
         f'{repr(is_param)} neither boolean nor "None".')
 
