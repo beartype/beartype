@@ -46,11 +46,6 @@ from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
 from beartype.typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
-    Iterable,
-    List,
-    Set,
-    Tuple,
     Union,
 )
 from beartype._data.typing.datatypingport import (
@@ -60,9 +55,10 @@ from beartype._data.typing.datatypingport import (
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.utilobjmake import permute_object
+from collections.abc import Iterable
 
 # ....................{ HINTS                              }....................
-FrozenDictHintToInt = Dict[Hint, int]
+FrozenDictHintToInt = dict[Hint, int]
 '''
 PEP-compliant type hint matching any dictionary itself mapping from
 PEP-compliant type hints to integers.
@@ -402,7 +398,7 @@ metadata** (i.e., :class:`.HintSane` object).
 '''
 
 # ....................{ HINTS ~ container                  }....................
-DictHintSaneToAny = Dict[HintSane, Any]
+DictHintSaneToAny = dict[HintSane, Any]
 '''
 PEP-compliant type hint matching a dictionary mapping from keys that are
 **sanified type hint metadata** (i.e., :class:`.HintSane` objects) to arbitrary
@@ -417,7 +413,7 @@ hint metadata** (i.e., :class:`.HintSane` objects).
 '''
 
 
-ListHintOrSane = List[HintOrSane]
+ListHintOrSane = list[HintOrSane]
 '''
 PEP-compliant type hint matching a list of zero or more items, each of which is
 either a type hint *or* **sanified type hint metadata** (i.e.,
@@ -425,21 +421,21 @@ either a type hint *or* **sanified type hint metadata** (i.e.,
 '''
 
 
-ListHintSane = List[HintSane]
+ListHintSane = list[HintSane]
 '''
 PEP-compliant type hint matching a list of zero or more **sanified type hint
 metadata** (i.e., :class:`.HintSane` objects).
 '''
 
 
-SetHintSane = Set[HintSane]
+SetHintSane = set[HintSane]
 '''
 PEP-compliant type hint matching a set of zero or more **sanified type hint
 metadata** (i.e., :class:`.HintSane` objects).
 '''
 
 
-TupleHintSane = Tuple[HintSane, ...]
+TupleHintSane = tuple[HintSane, ...]
 '''
 PEP-compliant type hint matching a tuple of zero or more **sanified type hint
 metadata** (i.e., :class:`.HintSane` objects).

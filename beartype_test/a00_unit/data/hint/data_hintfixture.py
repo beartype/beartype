@@ -187,15 +187,18 @@ def iter_hints_piths_meta(hints_meta) -> (
             for _ in RANGE_2:
                 # For each pith either satisfying or violating this hint...
                 for pith_meta in hint_meta.piths_meta:
-                    # Assert this metadata is an instance of the desired dataclass.
+                    # If this metadata is *NOT* an instance of this superclass,
+                    # raise an exception.
                     assert isinstance(pith_meta, PithSatisfiedMetadata)
+                    # Else, this metadata is an instance of this superclass.
 
                     # Pith to be type-checked against this hint, defined as...
                     pith = (
-                        # If this pith is actually a pith factory (i.e., callable
-                        # accepting *NO* parameters and dynamically creating and
-                        # returning the value to be used as the desired pith), call
-                        # this factory and localize its return value.
+                        # If this pith is actually a pith factory (i.e.,
+                        # callable accepting *NO* parameters and dynamically
+                        # creating and returning the value to be used as the
+                        # desired pith), call this factory and localize its
+                        # return value.
                         pith_meta.pith()
                         if pith_meta.is_pith_factory else
                         # Else, localize this pith as is.
@@ -212,7 +215,8 @@ def iter_hints_piths_meta(hints_meta) -> (
                             # This pith is a context manager *AND*...
                             is_object_context_manager(pith) and
                             # This pith should be safely opened and closed as a
-                            # context rather than preserved as a context manager...
+                            # context rather than preserved as a context
+                            # manager...
                             not pith_meta.is_context_manager
                         ) else
                         # Else, the noop context manager yielding this pith.

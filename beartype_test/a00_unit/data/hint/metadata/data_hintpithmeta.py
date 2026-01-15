@@ -77,12 +77,17 @@ class PithSatisfiedMetadata(object):
 
     # ..................{ STRINGIFIERS                       }..................
     def __repr__(self) -> str:
+        # Note that the additional indentation below is intentional. Since
+        # instances of this dataclass are *ONLY* ever embedded inside
+        # "HintNonpepMetadata.piths_meta" parent containers, this additional
+        # indentation substantially improves the readability of the
+        # HintNonpepMetadata.__repr__() dunder method.
         return '\n'.join((
             f'{self.__class__.__name__}(',
-            f'    pith={repr(self.pith)},',
-            f'    is_context_manager={repr(self.is_context_manager)},',
-            f'    is_pith_factory={repr(self.is_pith_factory)},',
-            f')',
+            f'        pith={repr(self.pith)},',
+            f'        is_context_manager={repr(self.is_context_manager)},',
+            f'        is_pith_factory={repr(self.is_pith_factory)},',
+            '    )',
         ))
 
 
@@ -145,14 +150,19 @@ class PithUnsatisfiedMetadata(PithSatisfiedMetadata):
 
     # ..................{ STRINGIFIERS                       }..................
     def __repr__(self) -> str:
+        # Note that the additional indentation below is intentional. Since
+        # instances of this dataclass are *ONLY* ever embedded inside
+        # "HintNonpepMetadata.piths_meta" parent containers, this additional
+        # indentation substantially improves the readability of the
+        # HintNonpepMetadata.__repr__() dunder method.
         return '\n'.join((
             f'{self.__class__.__name__}(',
-            f'    pith={repr(self.pith)},',
-            f'    is_context_manager={repr(self.is_context_manager)},',
-            f'    is_pith_factory={repr(self.is_pith_factory)},',
-            f'    exception_str_match_regexes={repr(self.exception_str_match_regexes)},',
-            f'    exception_str_not_match_regexes={repr(self.exception_str_not_match_regexes)},',
-            f')',
+            f'        pith={repr(self.pith)},',
+            f'        is_context_manager={repr(self.is_context_manager)},',
+            f'        is_pith_factory={repr(self.is_pith_factory)},',
+            f'        exception_str_match_regexes={repr(self.exception_str_match_regexes)},',
+            f'        exception_str_not_match_regexes={repr(self.exception_str_not_match_regexes)},',
+            '    )',
         ))
 
 # ....................{ CLASSES ~ hint : superclass        }....................

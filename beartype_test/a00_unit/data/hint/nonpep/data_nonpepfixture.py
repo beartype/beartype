@@ -16,7 +16,8 @@ from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
-def hints_nonpep_meta() -> 'Tuple[HintNonpepMetadata]':
+def hints_nonpep_meta() -> (
+    'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]'):
     '''
     Session-scoped fixture yielding a tuple of **PEP-noncompliant type hint
     metadata** (i.e.,
@@ -34,6 +35,7 @@ def hints_nonpep_meta() -> 'Tuple[HintNonpepMetadata]':
     # ..................{ LIST                               }..................
     _hints_nonpep_meta = make_container_from_funcs((
         # PEP-compliant type hints.
+        'beartype_test.a00_unit.data.hint.nonpep.api._data_nonpepapithreading.hints_nonpep_api_threading_meta',
         'beartype_test.a00_unit.data.hint.nonpep.beartype._data_nonpepbeartype.hints_nonpepbeartype_meta',
         'beartype_test.a00_unit.data.hint.nonpep.proposal._data_nonpep484.hints_nonpep484_meta',
         'beartype_test.a00_unit.data.hint.nonpep.proposal._data_nonpep695.hints_nonpep695_meta',

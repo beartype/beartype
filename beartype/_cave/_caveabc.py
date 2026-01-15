@@ -8,6 +8,18 @@
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: *WOAH.* What is this ancient crufty madness!? None of this ad-hoc custom
+#logic has any relevance in the modern PEP-standardized "typing" ecosystem
+#*WHATSOEVER*. However clever, the non-standard "BoolType" pseudo-protocol is
+#only leveraged *ONCE* in the entire codebase: by the equally non-standard
+#"beartype.cave.BoolOrNumberTypes" tuple. This is obsolete insanity.
+#
+#Publicly deprecate *ALL* of this ridiculousness whenever time permits by:
+#* Defining a new __getattr__() dunder method in the "beartype.cave.__init__"
+#  submodule which then deprecates the following non-standard attributes:
+#  * "BoolOrNumberTypes".
+#  * "ScalarTypes".
+
 #FIXME: Refactor this private submodule into a new public "beartype.caver"
 #submodule, so-named as it enables users to externally create new ad-hoc
 #protocols implementing structural subtyping resembling those predefined by
@@ -101,7 +113,7 @@ class BoolType(object, metaclass=ABCMeta):
       implemented in low-level C and Fortran) if :mod:`numpy` is importable.
 
     Usage
-    ----------
+    -----
     Non-standard boolean types like NumPy booleans are typically *not*
     interoperable with the standard standard :class:`bool` type. In particular,
     it is typically *not* the case, for any variable ``my_bool`` of
@@ -114,7 +126,7 @@ class BoolType(object, metaclass=ABCMeta):
     * Explicitly (e.g., ``if bool(my_bool): pass``).
 
     Caveats
-    ----------
+    -------
     **There exists no abstract base class governing booleans in Python.**
     Although various Python Enhancement Proposals (PEPs) were authored on the
     subject, all were rejected as of this writing. Instead, this type trivially
@@ -124,7 +136,7 @@ class BoolType(object, metaclass=ABCMeta):
     detection implemented by this ABC suffices to match *all* boolean types.
 
     See Also
-    ----------
+    --------
     :class:`beartype.cave.ContainerType`
         Further details on structural subtyping.
     '''

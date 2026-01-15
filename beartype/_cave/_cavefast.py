@@ -41,12 +41,14 @@ requiring those imports. Until resolved, that subpackage is considered tainted.
 import functools as _functools
 import numbers as _numbers
 import re as _re
+import threading as _threading
 import types as _types
 import typing as _typing
 from beartype.roar import BeartypeCallUnavailableTypeException
 from beartype._cave._caveabc import BoolType
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_14,
+    IS_PYTHON_AT_LEAST_3_13,
     IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_11,
 )
@@ -217,6 +219,85 @@ else:
     '''
     Type of the :data:`NotImplemented` singleton.
     '''
+
+# ....................{ TYPES ~ api : functools            }....................
+CallableFunctoolsPartialType = _functools.partial
+'''
+Pure-Python type of all **partial callables** (i.e., possibly C-based callable
+wrapped by the pure-Python callable :class:`functools.partial` type).
+
+Caveats
+-------
+This type does *not* distinguish between whether the original callable wrapped
+by :class:`functools.partial` is C-based or pure Python -- only that some
+callable of indeterminate origin is in fact wrapped.
+'''
+
+
+@_functools.lru_cache
+def _lru_cache_func(n: int) -> int:
+    '''
+    Arbitrary :func:`functools.lru_cache`-memoized function defined solely to
+    inspect various dunder attributes common to all such functions.
+    '''
+
+    return n + 1
+
+
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, ignore false positives complaining that this type is not a type.
+if TYPE_CHECKING:
+    class CallableFunctoolsLruCacheType(object): pass
+# Else, this submodule is *NOT* currently being statically type-checked by a
+# pure static type-checker. In this case, define this type properly. *sigh*
+else:
+    CallableFunctoolsLruCacheType = type(_lru_cache_func)
+    '''
+    C-based type of all low-level private objects created and returned by the
+    :func:`functools.lru_cache` decorator (e.g.,
+    :class:`functools._lru_cache_wrapper`).
+
+    This type enables functionality elsewhere to reliably detect when a callable
+    has been decorated by that decorator.
+    '''
+# print(f'LRU_CACHE_TYPE: {LRU_CACHE_TYPE}')
+
+
+# Delete temporary private callables defined above as a negligible safety (and
+# possible space complexity) measure.
+del _lru_cache_func
+
+# ....................{ TYPES ~ api : threading            }....................
+# C-based type of all non-reentrant thread locks, defined as either...
+ThreadLockNonreentrantType = (
+    # If the active Python interpreter targets Python >= 3.13, this type as is;
+    _threading.Lock
+    if IS_PYTHON_AT_LEAST_3_13 else
+    # Else, the active Python interpreter targets Python <= 3.12. In this case,
+    # this type is publicly inaccessible and thus is only indirectly accessible
+    # by introspecting the type of such a lock.
+    type(_threading.Lock())
+)
+'''
+C-based type of all **non-reentrant thread locks** (i.e.,
+:class:`threading.Lock` object implementing Python's lowest-level
+synchronization primitive such that subsequent attempts by the same thread to
+re-acquire such a previously acquired lock indefinitely block).
+'''
+
+
+# C-based type of all reentrant thread locks.
+#
+# Note that, unlike the C-based type of all *NON-REENTRANT* thread locks, this
+# type is currently *NOT* publicly inaccessible under *ANY* Python interpreter.
+# Unfortunately, "threading.RLock" is *ALWAYS* a pure-Python factory function.
+ThreadLockReentrantType = type(_threading.RLock())
+'''
+C-based type of all **reentrant thread locks** (i.e., :class:`threading.Lock`
+object implementing Python's lowest-level synchronization primitive such that
+subsequent attempts by the same thread to re-acquire such a previously acquired
+lock silently succeed).
+'''
 
 # ....................{ TYPES ~ call                       }....................
 CallableCodeObjectType = _types.CodeType
@@ -550,53 +631,6 @@ implementing the :class:`collections.abc.Iterator` protocol, the former only
 applies to generators implicitly created by Python itself.
 '''
 
-# ....................{ TYPES ~ call : module : functools  }....................
-CallableFunctoolsPartialType = _functools.partial
-'''
-Pure-Python type of all **partial callables** (i.e., possibly C-based callable
-wrapped by the pure-Python callable :class:`functools.partial` type).
-
-Caveats
--------
-This type does *not* distinguish between whether the original callable wrapped
-by :class:`functools.partial` is C-based or pure Python -- only that some
-callable of indeterminate origin is in fact wrapped.
-'''
-
-
-@_functools.lru_cache
-def _lru_cache_func(n: int) -> int:
-    '''
-    Arbitrary :func:`functools.lru_cache`-memoized function defined solely to
-    inspect various dunder attributes common to all such functions.
-    '''
-
-    return n + 1
-
-
-# If this submodule is currently being statically type-checked by a pure static
-# type-checker, ignore false positives complaining that this type is not a type.
-if TYPE_CHECKING:
-    class CallableFunctoolsLruCacheType(object): pass
-# Else, this submodule is *NOT* currently being statically type-checked by a
-# pure static type-checker. In this case, define this type properly. *sigh*
-else:
-    CallableFunctoolsLruCacheType = type(_lru_cache_func)
-    '''
-    C-based type of all low-level private objects created and returned by the
-    :func:`functools.lru_cache` decorator (e.g.,
-    :class:`functools._lru_cache_wrapper`).
-
-    This type enables functionality elsewhere to reliably detect when a callable
-    has been decorated by that decorator.
-    '''
-# print(f'LRU_CACHE_TYPE: {LRU_CACHE_TYPE}')
-
-
-# Delete temporary private callables defined above as a negligible safety (and
-# possible space complexity) measure.
-del _lru_cache_func
-
 # ....................{ TYPES ~ class                      }....................
 # If this submodule is currently being statically type-checked by a pure static
 # type-checker, ignore false positives complaining that this type is not a type.
@@ -824,7 +858,7 @@ See Also
     Type of all mutable and immutable mappings.
 '''
 
-# ....................{ TYPES ~ data : sequence            }....................
+# ....................{ TYPES ~ container : abc : sequence }....................
 SequenceType = _Sequence
 '''
 Type of all **mutable** and **immutable sequences** (i.e., both concrete and

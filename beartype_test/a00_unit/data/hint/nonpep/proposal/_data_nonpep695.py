@@ -14,7 +14,8 @@ PEP-noncompliant type hints include:
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_nonpep695_meta() -> 'List[HintNonpepMetadata]':
+def hints_nonpep695_meta() -> (
+    'list[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]'):
     '''
     List of :pep:`695`-sorta-compliant **type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata`

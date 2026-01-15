@@ -17,7 +17,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._check.convert._reduce._nonpep.rednonpeptype import (
-    reduce_hint_nonpep_type)
+    reduce_hint_nonpep)
 from beartype._check.convert._reduce._nonpep.api.redapinumpy import (
     reduce_hint_numpy_ndarray)
 from beartype._check.convert._reduce._nonpep.api.redapipandera import (
@@ -180,7 +180,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #   this reducer raises an exception.
     # * An invalid and thus PEP-noncompliant hint, in which case this reducer
     #   raises an exception.
-    None: reduce_hint_nonpep_type,
+    None: reduce_hint_nonpep,
 
     # ..................{ PEP 484                            }..................
     # Reduce the PEP 484-compliant "Any" singleton to the ignorable
