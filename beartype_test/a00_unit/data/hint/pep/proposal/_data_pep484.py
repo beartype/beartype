@@ -120,16 +120,6 @@ def hints_pep484_meta() -> (
         default_dict_str_to_str,
         sync_generator,
     )
-    from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
-        Pep484ContextManagerTSequenceT,
-        Pep484GenericST,
-        Pep484GenericSubTToS,
-        Pep484IterableTContainerT,
-        Pep484IterableTupleSTContainerTupleST,
-        Pep484ListStr,
-        Pep484ListListStr,
-        Pep484ListUnsubscripted,
-    )
     from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         HintPepMetadata,
         PithSatisfiedMetadata,
@@ -141,6 +131,16 @@ def hints_pep484_meta() -> (
         T_any,
         T_int,
         T_str_or_bytes,
+    )
+    from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
+        Pep484ContextManagerTSequenceT,
+        Pep484GenericST,
+        Pep484GenericSubTToS,
+        Pep484IterableTContainerT,
+        Pep484IterableTupleSTContainerTupleST,
+        Pep484ListStr,
+        Pep484ListListStr,
+        Pep484ListUnsubscripted,
     )
     from collections import (
         ChainMap as ChainMapType,
@@ -3549,6 +3549,7 @@ def hints_pep484_reduction_meta() -> (
     )
     from beartype._util.hint.pep.proposal.pep484604 import (
         make_hint_pep484604_union)
+    from beartype_test.a00_unit.data.data_type import Class
     from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
         HintReductionValid)
     from beartype_test.a00_unit.data.pep.data_pep484 import T_str_or_bytes
@@ -3561,6 +3562,20 @@ def hints_pep484_reduction_meta() -> (
 
         # The builtin "None" singleton reduces to its type (i.e., "type(None)").
         HintReductionValid(hint_unreduced=None, hint_reduced=NoneType),
+
+        # ..................{ FORWARDREF                     }..................
+        # A PEP 484-compliant stringified relative forward reference to the
+        # currently decorated non-nested class reduces to that class.
+        HintReductionValid(
+            hint_unreduced='Class', hint_reduced=Class, cls_stack=(Class,)),
+
+        # A PEP 484-compliant stringified relative forward reference to the
+        # currently decorated nested class reduces to that class.
+        HintReductionValid(
+            hint_unreduced='Class.NestedClass',
+            hint_reduced=Class.NestedClass,
+            cls_stack=(Class, Class.NestedClass,),
+        ),
 
         # ..................{ TOWER                          }..................
         # The builtin "float" and "complex" types reduce to their corresponding

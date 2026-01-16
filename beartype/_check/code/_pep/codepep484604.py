@@ -86,8 +86,6 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
         Stack of metadata describing all visitable hints currently discovered by
         this breadth-first search (BFS).
     '''
-    assert isinstance(hints_meta, HintsMeta), (
-        f'{repr(hints_meta)} not "HintsMeta" object.')
 
     # ....................{ LOCALS                         }....................
     # Flattened tuple of two or more child hints subscripting this parent union
@@ -393,6 +391,8 @@ def _get_hint_pep484604_union_args_flattened(
     BeartypeDecorHintPep604Exception
         If this tuple is empty.
     '''
+    assert isinstance(hints_meta, HintsMeta), (
+        f'{repr(hints_meta)} not "HintsMeta" object.')
     # print(f'[484/604] hint_curr_meta: {repr(hints_meta.hint_curr_meta)}')
 
     # ....................{ LOCALS                         }....................

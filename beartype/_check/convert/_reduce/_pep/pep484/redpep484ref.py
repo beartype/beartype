@@ -140,14 +140,15 @@ def reduce_hint_pep484_ref(
         #   nested and thus partially-qualified name of that type (e.g.,
         #   "OuterType.InnerType"), that type.
         # * Else, "None".
-        hint_type = find_hint_pep484_ref_on_cls_stack_or_none(
+        type_nested = find_hint_pep484_ref_on_cls_stack_or_none(
             hint=hint, cls_stack=cls_stack, exception_prefix=exception_prefix)
+        # print(f'type_nested: {repr(type_nested)}')
 
         # If this is such a reference, reduce this reference to this type. The
         # type to which this reference refers is directly available, implying
         # that a forward reference is neither needed nor desired anymore.
-        if hint_type:
-            hint = hint_type  # type: ignore[assignment]
+        if type_nested is not None:
+            hint = type_nested  # type: ignore[assignment]
         # Else, this is *NOT* such a reference. In this case, silently preserve
         # this reference as is.
     # Else, this forward reference does *NOT* annotate such a method. In this

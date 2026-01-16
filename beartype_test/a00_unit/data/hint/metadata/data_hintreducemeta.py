@@ -17,10 +17,14 @@ the :mod:`beartype_test.a00_unit.data.hint.data_hintfixture` submodule).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.kind.datakindiota import SENTINEL
-from beartype._data.typing.datatyping import TypeException
+from beartype._data.typing.datatyping import (
+    TypeException,
+    TypeStack,
+)
 from beartype._data.typing.datatypingport import Hint
 
 # ....................{ SUPERCLASSES                       }....................
@@ -40,7 +44,16 @@ class HintReductionABC(object):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self, hint_unreduced: Hint, conf: BeartypeConf) -> None:
+    def __init__(
+        self,
+
+        # Mandatory parameters.
+        hint_unreduced: Hint,
+
+        # Optional parameters.
+        cls_stack: TypeStack = None,
+        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+    ) -> None:
         '''
         Initialize this type hint reduction case.
 
@@ -48,16 +61,24 @@ class HintReductionABC(object):
         ----------
         hint_unreduced : Hint
             Input hint to be reduced.
+        cls_stack : TypeStack, default: None
+            **Type stack** (i.e., either a tuple of the one or more
+            :func:`beartype.beartype`-decorated classes lexically containing the
+            class variable or method annotated by this hint *or* :data:`None`).
+            Defaults to :data:`None`.
         conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
             Input beartype configuration configuring this reduction. Defaults to
             the default beartype configuration.
         '''
+        assert isinstance(cls_stack, NoneTypeOr[tuple]), (
+            f'{repr(cls_stack)} neither tuple nor "None".')
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not beartype configuration.')
 
         # Classify all passed parameters.
-        self.hint_unreduced = hint_unreduced
+        self.cls_stack = cls_stack
         self.conf = conf
+        self.hint_unreduced = hint_unreduced
 
 # ....................{ SUBCLASSES                         }....................
 class HintReductionValid(HintReductionABC):
@@ -81,8 +102,8 @@ class HintReductionValid(HintReductionABC):
         hint_unreduced: Hint,
 
         # Optional parameters.
-        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
         hint_reduced: Hint = SENTINEL,
+        **kwargs
     ) -> None:
         '''
         Initialize this valid type hint reduction case.
@@ -91,24 +112,25 @@ class HintReductionValid(HintReductionABC):
         ----------
         hint_unreduced : Hint
             Input hint to be reduced.
-        conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
-            Input beartype configuration configuring this reduction. Defaults to
-            the default beartype configuration.
         hint_reduced : Hint, default: SENTINEL
             Output hint expected to be returned from the
             :func:`beartype._check.convert.reduce.redmain.reduce_hint` reducer
             when passed these inputs. Defaults to the sentinel placeholder, in
             which case this output hint actually defaults to this input hint.
             This default trivializes testing for **irreducible hints** (i.e.,
-            hints *not* reduced by ``reduce_hint()``).
+            hints preserved as is rather than reduced by ``reduce_hint()``).
+
+        All remaining keyword parameters are passed as is to the superclass
+        :meth:`HintReductionABC.__init__` method.
         '''
 
         # Initialize our superclass.
-        super().__init__(hint_unreduced=hint_unreduced, conf=conf)
+        super().__init__(hint_unreduced=hint_unreduced, **kwargs)
 
         # If unpassed, default this output hint to this input hint.
         if hint_reduced is SENTINEL:
             hint_reduced = hint_unreduced
+        # Else, preserve this output hint as is.
 
         # Classify all remaining passed parameters.
         self.hint_reduced = hint_reduced
@@ -129,34 +151,23 @@ class HintReductionInvalid(HintReductionABC):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(
-        self,
-
-        # Mandatory parameters.
-        hint_unreduced: Hint,
-        exception_type: TypeException,
-
-        # Optional parameters.
-        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-    ) -> None:
+    def __init__(self, exception_type: TypeException, **kwargs) -> None:
         '''
         Initialize this invalid type hint reduction case.
 
         Attributes
         ----------
-        hint_unreduced : Hint
-            Input hint to be reduced.
         exception_type : Type[Exception]
             Output type of exception expected to be raised by the
             :func:`beartype._check.convert.reduce.redmain.reduce_hint` reducer
             when passed these inputs.
-        conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
-            Input beartype configuration configuring this reduction.
-            Defaults to the default beartype configuration.
+
+        All remaining keyword parameters are passed as is to the superclass
+        :meth:`HintReductionABC.__init__` method.
         '''
 
         # Initialize our superclass.
-        super().__init__(hint_unreduced=hint_unreduced, conf=conf)
+        super().__init__(**kwargs)
 
         # Classify all remaining passed parameters.
         self.exception_type = exception_type

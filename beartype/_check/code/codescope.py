@@ -580,6 +580,8 @@ def add_func_scope_types(
         attr=types, func_scope=func_scope, exception_prefix=exception_prefix)
 
 # ....................{ EXPRESSERS ~ type                  }....................
+#FIXME: *EXCISE US UP,* please. This function no longer has any usefulness. It's
+#been obsoleted in favour of the new "codepep484ref" submodule elsewhere. *sigh*
 def express_hints_meta_scope_type_ref(
     hints_meta: HintsMeta, hint: HintPep484Ref) -> str:
     '''

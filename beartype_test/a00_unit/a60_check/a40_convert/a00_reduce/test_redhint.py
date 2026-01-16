@@ -52,6 +52,7 @@ def test_reduce_hint(
             # Sanified metadata encapsulating the reduction of this input hint.
             hint_reduced_sane = reduce_hint(
                 hint=hint_reduction_meta.hint_unreduced,
+                cls_stack=hint_reduction_meta.cls_stack,
                 conf=hint_reduction_meta.conf,
             )
 
@@ -67,6 +68,7 @@ def test_reduce_hint(
             with raises(hint_reduction_meta.exception_type):
                 reduce_hint(
                     hint=hint_reduction_meta.hint_unreduced,
+                    cls_stack=hint_reduction_meta.cls_stack,
                     conf=hint_reduction_meta.conf,
                 )
 
