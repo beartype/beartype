@@ -70,6 +70,7 @@ def when_in_the_springtime_of_the_year():
     # Arbitrary PEP-compliant type hint localized to this parent callable.
     type_hint = Union[int, str]
 
+    # Ignore the call to this @attach_func_locals() decorator.
     @attach_func_locals(func_stack_frames_ignore=1)
     def when_the_trees_are_crowned_with_leaves() -> type_hint:
         '''
@@ -104,6 +105,7 @@ def long_past_their_woodland_days():
                 # parent "TheShadowsOfTheTreesAppear" class when searching for
                 # the closure lexical scope declaring the "type_hint" local.
                 func_scope_names_ignore=2,
+                # Ignore the call to this @attach_func_locals() decorator.
                 func_stack_frames_ignore=1,
             )
             def weve_been_rambling_all_the_night(self) -> type_hint:

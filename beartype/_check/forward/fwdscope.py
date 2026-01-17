@@ -26,26 +26,29 @@ This private submodule is *not* intended for importation by downstream callers.
 #modified by an external caller, however, that "BeartypeForwardScope" will then
 #be desynchronized from those locals and globals.
 #
-#A "ChainMap" trivially resolves this. How? Internally, a "ChainMap" only
-#holds *REFERENCES* to external locals and globals dictionaries. External
-#updates to those external dictionaries are thus *IMMEDIATELY* reflected inside
-#the "ChainMap" itself, resolving any desynchronization woes. *facepalm*
+#A "ChainMap" trivially resolves this. How? Internally, a "ChainMap" only holds
+#*REFERENCES* to external locals and globals dictionaries. External updates to
+#those external dictionaries are thus *IMMEDIATELY* reflected inside the
+#"ChainMap" itself, resolving any desynchronization woes. *facepalm*
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype.typing import Type
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._check.forward.reference.fwdrefabc import (
     BeartypeForwardRefSubbableABC)
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_subbable_subtype)
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.func.utilfuncframe import (
     get_frame_caller_module_name_or_none,
     is_frame_caller_beartype,
 )
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 
-# ....................{ SUBCLASSES                         }....................
+#FIXME: Obvious circular import dependency here. Ugh! *sigh*
+# from beartype._check.metadata.metadecor import BeartypeDecorMeta
+
+# ....................{ SUPERCLASSES                       }....................
 #FIXME: Unit test us up, please.
 class BeartypeForwardScope(LexicalScope):
     '''
@@ -85,17 +88,25 @@ class BeartypeForwardScope(LexicalScope):
     )
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self, scope_dict: LexicalScope, scope_name: str) -> None:
+    def __init__(
+        self,
+
+        # Mandatory parameters.
+        scope_name: str,
+
+        # Optional parameters.
+        scope_dict: LexicalScope = FROZENDICT_EMPTY,
+    ) -> None:
         '''
         Initialize this forward scope.
 
         Attributes
         ----------
-        scope_dict : LexicalScope
+        scope_dict : LexicalScope, default: FROZENDICT_EMPTY
             **Composite local and global scope** (i.e., dictionary mapping from
             the name to value of each locally and globally accessible attribute
             in the local and global scope of some class or callable) underlying
-            this forward scope.
+            this forward scope. Defaults to the empty frozen dictionary.
 
             Crucially, **this dictionary must composite both the local and
             global scopes for that class or callable.** This dictionary must
@@ -103,8 +114,8 @@ class BeartypeForwardScope(LexicalScope):
             provide both. Why? Because this forward scope is principally
             intended to be passed as the second and last parameter to the
             :func:`eval` builtin, called by the
-            :func:`beartype._check.forward.fwdresolve.resolve_hint` function. For
-            unknown reasons, :func:`eval` only calls the :meth:`__missing__`
+            :func:`beartype._check.forward.fwdresolve.resolve_hint` function.
+            For unknown reasons, :func:`eval` only calls the :meth:`__missing__`
             dunder method of this forward scope when passed only two parameters
             (i.e., when passed only a global scope); :func:`eval` does *not*
             call the :meth:`__missing__` dunder method of this forward scope
@@ -155,8 +166,8 @@ class BeartypeForwardScope(LexicalScope):
         self._scope_name = scope_name
 
     # ..................{ DUNDERS                            }..................
-    def __missing__(
-        self, hint_name: str) -> Type[BeartypeForwardRefSubbableABC]:
+    def __missing__(self, hint_name: str) -> (
+        type[BeartypeForwardRefSubbableABC]):
         '''
         Dunder method explicitly called by the superclass
         :meth:`dict.__getitem__` method implicitly called on each ``[``- and
@@ -172,23 +183,23 @@ class BeartypeForwardScope(LexicalScope):
 
         This dunder method assumes that:
 
-        * This scope is only partially initialized.
-        * This type hint has yet to be declared in this scope.
-        * This type hint will be declared in this scope by the later time that
-          this dunder method is called.
+        * This scope has only been partially initialized.
+        * The passed type hint has yet to be declared in this scope.
+        * The passed type hint will be declared in this scope by the later time
+          that this dunder method is called.
 
         Caveats
         -------
         **This dunder method is susceptible to misuse by third-party frameworks
         that perform call stack inspection.** The higher-level
-        :func:`beartype._check.forward.fwdresolve.resolve_hint` internally invokes
-        this dunder method by calling the :func:`eval` builtin, which then adds
-        a new stack frame to the call stack whose ``f_locals`` and ``f_globals``
-        attributes are this dictionary. If a third-party framework introspects
-        the call stack containing this new stack frame, this dictionary's
-        failure to conform to the behavior of a lexical scope could induce
-        failure in that third-party framework. Does this edge case arise in
-        real-world usage, though? It does.
+        :func:`beartype._check.forward.fwdresolve.resolve_hint` function
+        internally invokes this dunder method by calling the :func:`eval`
+        builtin, which then adds a new frame to the call stack whose
+        ``f_locals`` and ``f_globals`` attributes are *BOTH* this dictionary. If
+        some third-party framework introspects the call stack containing this
+        new frame, this dictionary's failure to conform to the behavior of a
+        lexical scope could induce failure in that third-party framework. Does
+        this edge case arise in real-world usage, though? It does.
 
         Consider ``pytest``, which detects whether each frame on the call stack
         defines the ``pytest``-specific ``__tracebackhide__`` dunder attribute:
@@ -240,18 +251,17 @@ class BeartypeForwardScope(LexicalScope):
         reference proxies are callable. However, they're not. The
         :class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
         superclass prohibits instantiation by defining a ``__new__()`` dunder
-        method that unconditionally raises exceptions, which then induces the
-        ``pytest`` to raise the same exceptions on attempting to
-        ``return tbh(excinfo)``.
+        method that unconditionally raises exceptions, causing :mod:`pytest` to
+        raise the same exceptions on attempting to ``return tbh(excinfo)``.
 
         This dunder method avoids that and all similar issues by:
 
         * Detecting whether this dunder method is called by a caller defined
           inside or outside the :mod:`beartype` codebase.
-        * If this dunder method is called by a caller defined inside the
+        * If this dunder method is called by a caller defined *inside* the
           :mod:`beartype` codebase, creating and returning a forward reference
           proxy.
-        * If this dunder method is called by a caller defined outside the
+        * If this dunder method is called by a caller defined *outside* the
           :mod:`beartype` codebase, raising a standard :class:`AttributeError`.
 
         Parameters
@@ -287,9 +297,9 @@ class BeartypeForwardScope(LexicalScope):
             is_frame_caller_beartype(ignore_frames=1) or
             # The caller indirectly resides inside the "beartype" package. This
             # common edge cases arises when the parent
-            # beartype._check.forward.fwdresolve.resolve_hint() function calls the
-            # eval() builtin to dynamically evaluate the passed stringified type
-            # hint: e.g.,
+            # beartype._check.forward.fwdresolve.resolve_hint() function calls
+            # the eval() builtin to dynamically evaluate the passed stringified
+            # type hint: e.g.,
             #     # This is the eval() call triggering this call.
             #     hint_resolved = eval(hint, decor_meta.func_wrappee_scope_forward)
             #
@@ -300,18 +310,18 @@ class BeartypeForwardScope(LexicalScope):
             # Naturally, that module is external and thus *NOT* inside the
             # "beartype" package. Ignore this stack frame in the hopes that the
             # parent stack frame of that eval() call will be the
-            # "beartype._check.forward.fwdresolve" submodule performing that call.
-            # Look. We don't like this fragility any more than you do, but
+            # "beartype._check.forward.fwdresolve" submodule performing that
+            # call. Look. We don't like this fragility any more than you do, but
             # Python shenanigans leave us little choice. Our paws are tied!
             is_frame_caller_beartype(ignore_frames=2)
         ):
             # Then the caller is a third-party. In this case, assume this
-            # erroneous attempt to access a non-existent attribute of this
-            # forward scope to *ACTUALLY* be an Easier to Ask for Permission
-            # than Forgiveness (EAFP)-driven to detect whether this forward
-            # scope defines this attribute ala the hasattr() builtin. In this
-            # case, raise the expected "AttributeError." See the "Caveats"
-            # subsection of this dunder method's docstring for commentary.
+            # erroneous attempt to access a non-existent attribute of this scope
+            # to *ACTUALLY* be an Easier to Ask for Permission than Forgiveness
+            # (EAFP)-driven attempt to detect whether this forward scope defines
+            # this attribute ala the hasattr() builtin. In this case, raise the
+            # expected "AttributeError." See the "Caveats" subsection of this
+            # dunder method's docstring for commentary.
 
             # print(f'caller+1: {get_frame_caller_module_name_or_none(ignore_frames=1)}')
             # print(f'caller+2: {get_frame_caller_module_name_or_none(ignore_frames=2)}')
@@ -358,8 +368,147 @@ class BeartypeForwardScope(LexicalScope):
         forwardref_subtype = make_forwardref_subbable_subtype(
             self._scope_name, hint_name)
 
-        # Cache this proxy.
+        # Cache this proxy, preventing the "dict" superclass from re-calling
+        # this __missing__() dunder method on the next attempt to access this.
         self[hint_name] = forwardref_subtype
 
         # Return this proxy.
         return forwardref_subtype
+
+# ....................{ SUBCLASSES                         }....................
+#FIXME: *PICK UP HERE ON MONDAY*! Yay:
+#* Define this new factory function in the existing "fwdresolve" submodule
+#  resembling:
+#    def make_decor_meta_scope_forward(decor_meta: BeartypeDecorMeta) -> (
+#         BeartypeForwardScope):
+#        assert isinstance(decor_meta, BeartypeDecorMeta), (
+#            f'{repr(decor_meta)} not @beartype call.')
+#    
+#        # If the forward scope of the decorated callable has yet to be decided...
+#        if decor_meta.func_wrappee_scope_forward is None:
+#            # Fully-qualified name of the module declaring the decorated callable if
+#            # that callable defines the "__module__" dunder attribute *OR* "None"
+#            # (i.e., if that callable fails to define that attribute).
+#            func_module_name = get_object_module_name_or_none(func)  # type: ignore[operator]
+#    
+#            # If the decorated callable fails to define the "__module__" dunder
+#            # attribute, there exists *NO* known module against which to resolve
+#            # this stringified type hint. Since this implies that this hint *CANNOT*
+#            # be reliably resolved, raise an exception.
+#            #
+#            # Note that this is an uncommon edge case that nonetheless occurs
+#            # frequently enough to warrant explicit handling by raising a more
+#            # human-readable exception than would otherwise be raised (e.g., if the
+#            # lower-level get_object_module_name() getter were called instead
+#            # above). Notably, the third-party "markdown-exec" package behaved like
+#            # this -- and possibly still does. See also:
+#            #     https://github.com/beartype/beartype/issues/381
+#            if not func_module_name:
+#                raise exception_cls(
+#                    f'{exception_prefix}forward reference type hint "{hint}" '
+#                    f'unresolvable, as '
+#                    f'"{get_object_name(func)}.__module__" dunder attribute '
+#                    f'undefined (e.g., due to {repr(func)} being defined only '
+#                    f'dynamically in-memory). '
+#                    f'So much bad stuff is happening here all at once that '
+#                    f'@beartype can no longer cope with the explosion in badness.'
+#                )
+#            # Else, the decorated callable defines that attribute.
+#    
+#            # Resolve the forward scope of the decorated callable, which requires
+#            # the decorated callable to define that attribute.
+#            _resolve_func_scope_forward(
+#                decor_meta=decor_meta,
+#                exception_cls=exception_cls,
+#                exception_prefix=exception_prefix,
+#            )
+#        # Else, this forward scope has already been decided.
+#        #
+#        # In either case, this forward scope should now all have been decided.
+#    
+#        return decor_meta.func_wrappee_scope_forward
+#* Refactor resolve_hint() to call make_decor_meta_scope_forward() rather than
+#  duplicate that logic.
+#* Do *TONS* of other stuff here. Namely:
+#  * Define a new temporary "codemainnew" submodule defining a new
+#    make_check_expr() function. This super-refactored make_check_expr() should
+#    receive a new optional "hint_scope: Optional[BeartypeForwardScope] = None"
+#    parameter. Do nothing with that "hint_scope" for now. Just get this to
+#    work.
+#  * Implement the changes listed in "_wraputil", please.
+#  * Define a new temporary "_wrapreturnnew" submodule as well, which should
+#    pass the current return hint to is_hint_contextual() and, if that tester
+#    returns True:
+#    * Call make_decor_meta_scope_forward() to instantiate a new forward scope.
+#    * Pass that forward scope to our new make_check_expr().
+#* Try substituting "_wrapreturn" for "_wrapreturnnew". If thinks actually work,
+#  we can incrementally proceed from there. \o/
+#* *AFTER EVERYTHING ELSE WORKS,* refactor our reduce_hint_pep484_ref() reducer
+#  to call _resolve_func_scope_forward_hint() rather than
+#  find_hint_pep484_ref_on_cls_stack_or_none(). When doing so, however, note
+#  that we'll need to guard against the leading edge case detailed in
+#  resolve_hint():
+#      if hint in decor_meta.func_wrappee_scope_nested_names:
+#          return hint
+#  Remember, however, that trivial test is *BUGGED.* It *DOES* efficiently
+#  detect unqualified basenames of non-nested types (e.g., "Outer", "Inner") but
+#  fails to detect partially-qualified basenames of nested types (e.g.,
+#  "Outer.Inner"). Ugh!
+
+# class BeartypeDecorMetaForwardScope(BeartypeForwardScope):
+#     '''
+#     **Beartype decorator call forward scope** (i.e., dictionary mapping from the
+#     name to value of each locally and globally accessible attribute in the local
+#     and global scope of the callable currently being decorated by the
+#     :func:`beartype.beartype` decorator as well as deferring the resolution of
+#     each currently undeclared attribute in that scope by replacing that
+#     attribute with a forward reference proxy resolved only when that attribute
+#     is passed as the second parameter to an :func:`isinstance`-based runtime
+#     type-check).
+#
+#     Attributes
+#     ----------
+#     _decor_meta : BeartypeDecorMeta
+#         **Beartype decorator call metadata** (i.e., object encapsulating *all*
+#         metadata for the callable currently being decorated by the
+#         :func:`beartype.beartype` decorator).
+#     '''
+#
+#     # ..................{ CLASS VARIABLES                    }..................
+#     # Slot all instance variables defined on this object. See the superclass!
+#     __slots__ = (
+#         '_decor_meta',
+#     )
+#
+#     # ..................{ INITIALIZERS                       }..................
+#     # def __init__(self, decor_meta: BeartypeDecorMeta, scope_name: str) -> None:
+#     def __init__(self, scope_name: str) -> None:
+#         '''
+#         Initialize this beartype decorator call forward scope.
+#
+#         Attributes
+#         ----------
+#         _decor_meta : BeartypeDecorMeta
+#             **Beartype decorator call metadata** (i.e., object encapsulating
+#             *all* metadata for the callable currently being decorated by the
+#             :func:`beartype.beartype` decorator).
+#         scope_name : str
+#             Fully-qualified name of this forward scope. For example:
+#
+#             * ``"some_package.some_module"`` for a module scope (e.g., to
+#               resolve a global class or callable against this scope).
+#             * ``"some_package.some_module.SomeClass"`` for a class scope (e.g.,
+#               to resolve a nested class or callable against this scope).
+#
+#         Raises
+#         ------
+#         BeartypeDecorHintForwardRefException
+#             If this scope name is *not* a valid Python attribute name.
+#         '''
+#         # assert isinstance(decor_meta, BeartypeDecorMeta), (
+#         #     f'{repr(decor_meta)} not @beartype call.')
+#
+#         # Initialize our superclass.
+#         super().__init__(scope_name=scope_name)
+#
+#         # Classify all passed parameters.

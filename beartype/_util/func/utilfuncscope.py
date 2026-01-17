@@ -222,16 +222,17 @@ def get_func_locals(
     from beartype._util.module.utilmodget import get_object_module_name_or_none
 
     # ..................{ NOOP                               }..................
-    # Note that we intentionally return the local scope for this wrapper rather
-    # than wrappee callable, as a local scope can *ONLY* be obtained by
-    # dynamically inspecting local attributes bound to call frames on the
-    # current call stack. However, this wrapper was called at a higher call
-    # frame than this wrappee. All local attributes declared within the body of
-    # this wrapper callable are irrelevant to this wrappee callable, as Python
+    # Note that, if the passed callable is a higher-level wrapper encapsulating
+    # a lower-level wrappee, we intentionally return the local scope for this
+    # wrapper rather than that wrappee. Why? Because the local scope can *ONLY*
+    # be obtained by dynamically inspecting local attributes bound to frames on
+    # the current call stack. However, this wrapper was necessarily called by a
+    # higher frame than that wrappee! All local attributes declared within the
+    # body of this wrapper are irrelevant to that wrappee, as Python
     # syntactically parsed the latter at a later time than the former. If we
-    # returned the local scope for this wrappee rather than wrapper callable,
-    # we would erroneously return local attributes that this wrappee callable
-    # originally had no lexical access to. That's bad. So, we don't do that.
+    # returned the local scope for that wrappee rather than this wrapper, we
+    # would erroneously return local attributes that that wrappee originally had
+    # no lexical access to. That's bad. So, we don't do that.
 
     # Fully-qualified name of the module declaring the passed callable if that
     # callable was physically declared by an on-disk module *OR* "None"
@@ -257,18 +258,23 @@ def get_func_locals(
     func_scope: LexicalScope = {}
 
     # ..................{ LOCALS ~ scope : name              }..................
-    # Unqualified name of this nested callable.
+    # Unqualified basename of that nested callable.
     func_name_unqualified = func.__name__
 
-    # Fully-qualified name of this nested callable. If this nested callable is
-    # a non-method, this name contains one or more meaningless placeholders
-    # "<locals>" -- each identifying one parent callable lexically containing
-    # this nested callable: e.g.,
+    # Lexically scoped name of that nested callable, defined as the
+    # "."-delimited concatenation of the unqualified basename of (in order):
+    # * Each lexical scope encapsulating that nested callable.
+    # * This nested callable itself.
+    #
+    # Note that this name intentionally omits the fully-qualified name of the
+    # module transitively defining that nested callable: e.g.,
     #     >>> def muh_func():
     #     ...     def muh_closure(): pass
     #     ...     return muh_closure()
-    #     >>> muh_func().__qualname__
-    #     'muh_func.<locals>.muh_closure'
+    #     >>> get_object_basename_scoped(muh_func)
+    #     'muh_func'
+    #     >>> get_object_basename_scoped(muh_func())
+    #     'muh_func.muh_closure'
     func_name_qualified = get_object_basename_scoped(func)
 
     # Non-empty list of the unqualified names of all parent callables lexically
@@ -300,7 +306,7 @@ def get_func_locals(
     # *ALWAYS* the case? The above `not is_func_nested()` check already ignored
     # non-nested callables."
     #
-    # Allow me to now explicate. By the check above, that callable is nested...
+    # Allow me to now explicate. By the check above, that callable *IS* nested.
     # By the check below, however, only one lexical scope encapsulates that
     # callable. This is not a contradiction. This is just a malicious caller.
     # The get_object_basename_scoped() getter called above silently removed all
@@ -313,16 +319,16 @@ def get_func_locals(
     # Python permits such manhandling: e.g.,
     #     # Python thinks this is fine.
     #     >>> def muh_func(): pass
-    #     >>> muh_func.__qualname__ = '<locals>.muh_func'  # <-- curse you!
+    #     >>> muh_func.__qualname__ = '<locals>.muh_func'  # <-- curse ye!
     if func_scope_names_len < 2:
         raise exception_cls(
             f'{func_name_unqualified}() fully-qualified name '
             f'{func.__qualname__}() invalid (e.g., placeholder substring '
             f'"<locals>" not preceded by parent callable name).'
         )
-    # Else, that nested callable is encapsulated by at least two lexical
-    # scopes identifying at least that nested callable and the parent callable
-    # or class declaring that nested callable.
+    # Else, that nested callable is encapsulated by at least two lexical scopes
+    # identifying at least that nested callable and the parent callable or class
+    # declaring that nested callable.
     #
     # If the unqualified basename of the last parent callable lexically
     # containing the passed callable is *NOT* that callable itself, the caller
@@ -332,7 +338,7 @@ def get_func_locals(
         raise exception_cls(
             f'{func_name_unqualified}() fully-qualified name '
             f'{func.__qualname__}() invalid (i.e., last lexical scope '
-            f'"{func_scope_names[-1]}" != unqualified name '
+            f'"{func_scope_names[-1]}" != unqualified basename '
             f'"{func_name_unqualified}").'
         )
     # Else, the unqualified basename of the last parent callable lexically
@@ -516,7 +522,7 @@ def get_func_locals(
             #   currently just a readable alias for "DictStrToAny", which is
             #   itself an efficiency alias for "Dict[Str, object]". Ergo, static
             #   type-checkers expect this getter to return "dict" instances.
-            # * Under Python < 3.12, the "func_frame.f_locals" instance
+            # * Under Python <= 3.11, the "func_frame.f_locals" instance
             #   variable actually is a "dict" instance.
             # * Under Python >= 3.12, the "func_frame.f_locals" instance
             #   variable actually is instead a "mappingproxy" instance. Although

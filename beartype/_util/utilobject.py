@@ -239,7 +239,7 @@ def get_object_basename_scoped_or_none(obj: Any) -> Optional[str]:
           >>> muh_func().__qualname__
           'muh_func.<locals>.muh_closure'  # <-- bad Python
           >>> get_object_basename_scoped(muh_func)
-          'muh_func.muh_closure'  # <-- good @beartype
+          'muh_func.muh_closure'  # <----------- good @beartype
 
     #. Unqualified basename of this object.
 

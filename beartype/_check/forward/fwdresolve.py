@@ -40,7 +40,10 @@ from beartype._util.hint.pep.proposal.pep695 import (
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_11
 from beartype._util.text.utiltextansi import color_hint
-from beartype._util.utilobject import get_object_name
+from beartype._util.utilobject import (
+    get_object_basename_scoped,
+    get_object_name,
+)
 from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
 from traceback import format_exc
 
@@ -63,7 +66,7 @@ def resolve_hint(
     hint to which this stringified type hint refers.
 
     This resolver is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator). Resolving both absolute *and* relative
+    ``@callable_cached`` decorator). Resolving both absolute *and* relative
     forward references assumes contextual context (e.g., the fully-qualified
     name of the object to which relative forward references are relative to)
     that *cannot* be safely and context-freely memoized away.
@@ -74,10 +77,10 @@ def resolve_hint(
         Stringified type hint to be resolved.
     decor_meta : BeartypeDecorMeta
         Decorated callable annotated by this hint.
-    exception_cls : Type[Exception], optional
+    exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
@@ -117,7 +120,7 @@ def resolve_hint(
             # the unqualified names of all parent callables lexically containing
             # this nested decorated callable (including this nested decorated
             # callable itself);
-            frozenset(func.__qualname__.rsplit(sep='.'))
+            frozenset(get_object_basename_scoped(func).rsplit(sep='.'))
             if decor_meta.func_wrappee_is_nested else
             # Else, the decorated callable is a global function. In this case,
             # the empty frozen set.
@@ -174,16 +177,16 @@ def resolve_hint(
     #         def muh_method(self) -> (
     #             "Just kidding! Had you going there, didn't I?"): ...
     #
-    # This isn't just an edge-case disambiguity, however. This situation
-    # commonly arises when reloading modules containing @beartype-decorated
-    # callables annotated with self-references (e.g., by passing those modules
-    # to the standard importlib.reload() function). Why? Because module
-    # reloading is ill-defined and mostly broken under Python. Since the
-    # importlib.reload() function fails to delete any of the attributes of the
-    # module to be reloaded before reloading that module, the parent callable or
-    # class referred to by this hint will be briefly defined for the duration of
+    # This isn't just an edge-case disambiguity, though. This situation commonly
+    # arises when reloading modules containing @beartype-decorated callables
+    # annotated with self-references (e.g., by passing those modules to the
+    # standard importlib.reload() function). Why? Because module reloading is
+    # ill-defined and mostly broken in Python. Since the importlib.reload()
+    # function fails to delete any of the attributes of the module to be
+    # reloaded before reloading that module, the parent callable or type
+    # referred to by this hint will be briefly defined for the duration of
     # @beartype's decoration of the decorated callable as the prior version of
-    # that parent callable or class!
+    # that parent callable or type!
     #
     # Resolving this hint would thus superficially succeed, while actually
     # erroneously replacing this hint with the prior rather than current version
@@ -317,7 +320,7 @@ def _resolve_func_scope_forward(
     local lexical scopes enclosing that callable) for that callable.
 
     This resolver is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator). Resolving both absolute *and* relative
+    ``@callable_cached`` decorator). Resolving both absolute *and* relative
     forward references assumes contextual context (e.g., the fully-qualified
     name of the object to which relative forward references are relative to)
     that *cannot* be safely and context-freely memoized away.
@@ -396,7 +399,8 @@ def _resolve_func_scope_forward(
                 # Note that, for safety, we currently avoid ignoring additional
                 # frames that we could technically ignore. These include:
                 # * The call to the parent
-                #   beartype._check.metadata.metadecor.BeartypeDecorMeta.reinit() method.
+                #   beartype._check.metadata.metadecor.BeartypeDecorMeta.reinit()
+                #   method.
                 # * The call to the parent @beartype.beartype() decorator.
                 #
                 # Why? Because the @beartype codebase has been sufficiently
@@ -424,7 +428,6 @@ def _resolve_func_scope_forward(
 
         # If the decorated callable is a method transitively defined by a root
         # decorated class, add a pair of local attributes exposing:
-        #
         # * The unqualified basename of the root decorated class. Why? Because
         #   this class may be recursively referenced in postponed type hints and
         #   *MUST* thus be exposed to *ALL* postponed type hints. However, this
@@ -494,24 +497,27 @@ def _resolve_func_scope_forward(
             func_locals[cls_root.__name__] = cls_root
             func_locals[cls_curr.__name__] = cls_curr
 
-            # Local scope for the class directly defining this method.
+            # Type scope (i.e., lexical scope for the type directly defining
+            # this method, providing all class variables directly defined in the
+            # body of this type).
             #
             # Note that callables *ONLY* have direct access to attributes
-            # declared by the classes directly defining those callables. Ergo,
-            # the local scopes for parent classes of this class (including the
-            # root decorated class) are irrelevant.
-            cls_curr_locals = get_type_locals(
+            # declared by the types directly defining those callables. Ergo, the
+            # lexical scopes for parent types of this type (including the root
+            # decorated type) are *ALL* irrelevant.
+            type_locals = get_type_locals(
                 cls=cls_curr, exception_cls=exception_cls)
 
-            # Forcefully merge this local scope into the current local
-            # scope, implicitly overwriting any locals of the same name.
-            # Class locals necessarily assume lexical precedence over:
-            # * These classes themselves.
-            # * Locals defined by higher-level parent classes.
-            # * Locals defined by closures defining these classes.
-            func_locals.update(cls_curr_locals)
-        # Else, the decorated callable is *NOT* a method transitively
-        # declared by a root decorated class.
+            # Forcefully merge this type scope into the current local scope,
+            # implicitly overwriting any locals of the same name. Class
+            # variables necessarily assume lexical precedence over:
+            # * These types themselves.
+            # * Class variables defined by higher-level parent types.
+            # * Local variables defined by higher-level parent closures defining
+            #   these types.
+            func_locals.update(type_locals)
+        # Else, the decorated callable is *NOT* a method transitively declared
+        # by a root decorated type.
     # Else, the decorated callable is global and thus guaranteed to have an
     # empty local scope. In this case, default to the empty frozen dictionary.
     else:
@@ -528,9 +534,9 @@ def _resolve_func_scope_forward(
 
     # Forward scope compositing this global and local scope of the decorated
     # callable as well as dynamically replacing each unresolved attribute of
-    # this stringified type hint with a forward reference proxy resolving
-    # this attribute on the first attempt to pass this attribute as the
-    # second parameter to an isinstance()-based runtime type-check: e.g.,
+    # this stringified type hint with a forward reference proxy resolving this
+    # attribute on the first attempt to pass this attribute as the second
+    # parameter to an isinstance()-based runtime type-check: e.g.,
     #     from beartype import beartype
     #     from beartype.typing import Dict, Generic, TypeVar
     #
@@ -548,19 +554,14 @@ def _resolve_func_scope_forward(
     #
     #     class MuhGeneric(Generic[T]): ...
     #
-    # Initialize this forward scope to the set of all builtin attributes
-    # (e.g., "str", "Exception"). Although the eval() builtin does, of
-    # course, implicitly evaluate this stringified type hint against all
-    # builtin attributes, it does so only *AFTER* invoking the
-    # BeartypeForwardScope.__missing__() dunder method with each such
-    # builtin attribute referenced in this hint. Since handling that
-    # eccentricity would be less efficient and trivial than simply
-    # initializing this forward scope with all builtin attributes, we prefer
-    # the current (admittedly sus af) approach. Do not squint at this.
-
-    #FIXME: [SPEED] Optimize away the repeated access to the
-    #"decor_meta.func_wrappee_scope_forward" instance variable above, here,
-    #and below with a local variable, please. *sigh*
+    # Initialize this forward scope to the set of all builtin attributes (e.g.,
+    # "str", "Exception"). The eval() builtin *DOES* implicitly evaluate this
+    # stringified type hint against all builtin attributes, but only *AFTER*
+    # invoking the BeartypeForwardScope.__missing__() dunder method with each
+    # such builtin attribute referenced in this hint. Since handling that
+    # eccentricity would be less efficient and trivial than simply initializing
+    # this forward scope with all builtin attributes, we prefer the current
+    # (admittedly sus af) approach. Do not squint at this.
     decor_meta.func_wrappee_scope_forward = BeartypeForwardScope(
         scope_dict=func_builtins, scope_name=func_module_name)  # type: ignore[arg-type]
 
@@ -569,7 +570,7 @@ def _resolve_func_scope_forward(
     # each global attribute previously copied into this forward scope with
     # each global and then local attribute of the same name. Since locals
     # *ALWAYS* assume precedence over globals *ALWAYS* assume precedence
-    # over builtins, order of operations is *EXTREMELY* significant here.
+    # over builtins, order of operation is *EXTREMELY* significant here.
     decor_meta.func_wrappee_scope_forward.update(func_globals)
     decor_meta.func_wrappee_scope_forward.update(func_locals)
     # print(f'Forward scope: {decor_meta.func_wrappee_scope_forward}')
@@ -585,99 +586,6 @@ def _resolve_func_scope_forward(
         decor_meta=decor_meta, exception_prefix=exception_prefix)
 
 
-#FIXME: Unit test us up, please.
-def _resolve_func_scope_pep695(
-    decor_meta: BeartypeDecorMeta, exception_prefix) -> None:
-    '''
-    Composite all **type parameter scopes** (i.e., lexical scopes induced by
-    parametrizing the decorated callable *and* all lexical parent classes of
-    that callable with :pep:`695`-compliant implicitly instantiated **type
-    parameters** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
-    parameter specifications, and :pep:`646`-compliant type variable tuples)
-    of the decorated callable into the **forward scope** (i.e., dictionary
-    mapping from the names to values of all attributes accessible to the lexical
-    scope of the passed decorated callable where this scope comprises both the
-    global scope and all local lexical scopes enclosing that callable) of the
-    passed decorator metadata.
-
-    Note that this resolver implicitly overwrites each global and local
-    attribute previously composited into this forward scope with each type
-    parameter of the same name, vaguely replicating the scoping rules dictated
-    by :pep:`695`.
-
-    Parameters
-    ----------
-    decor_meta : BeartypeDecorMeta
-        Decorated callable to resolve the forward scope of.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
-    '''
-
-    # If the active Python interpreter targets Python <= 3.11, this interpreter
-    # fails to support PEP 695. In this case, silently reduce to a noop.
-    if IS_PYTHON_AT_MOST_3_11:
-        return
-    # Else, this interpreter targets Python >= 3.12. In this case, this
-    # interpreter supports PEP 695.
-
-    # PEP 695-specific lexical scope. Ideally, we'd simply reuse the existing
-    # "decor_meta.func_wrappee_scope_forward" scope rather than instantiate a
-    # PEP 695-specific lexical scope. Although both trivial and efficient, such
-    # reuse would violate PEP 695. PEP 695 mandates that type-checkers:
-    # * Raise errors when PEP 695-compliant type parameters parametrizing parent
-    #   classes share the same names as those parametrizing either nested
-    #   classes or the decorated callable.
-    # * Silently allow PEP 695-compliant type parameters parametrizing either
-    #   nested classes or the decorated callable to shadow (i.e., override)
-    #   *ALL* other attributes in parent lexical scopes.
-    #
-    # Ergo, this resolver *MUST* differentiate between type parameters and
-    # non-type parameters. The only means of doing so sanely is to isolate type
-    # parameters resolved by this function to this unique dictionary. See also:
-    #     https://peps.python.org/pep-0695/#type-parameter-scopes
-    scope_pep695: LexicalScope = acquire_instance(dict)
-
-    # If one or more parent classes lexically enclose the decorated callable...
-    if decor_meta.cls_stack:
-        # For each parent class lexically enclosing the decorated callable (in
-        # descending order from outermost to innermost class)...
-        for cls_parent in decor_meta.cls_stack:
-            # Composite all PEP 695-compliant type parameters parametrizing this
-            # class into this forward scope. Since this class lexically encloses
-            # that callable, this class is guaranteed to be pure-Python and thus
-            # support PEP 695-compliant type parametrization.
-            add_func_scope_hint_pep695_parameterizable_typeparams(
-                func_scope=scope_pep695,
-                parameterizable=cls_parent,
-                exception_prefix=exception_prefix,
-            )
-    # Else, *NO* parent classes lexically enclose the decorated callable.
-
-    # Decorated callable, localized for negligible efficiency and readability.
-    func = decor_meta.func_wrappee_wrappee
-
-    # If the decorated callable is a pure-Python function, this function
-    # supports PEP 695-compliant type parametrization. In this case...
-    if isinstance(func, FunctionType):
-        # Composite all PEP 695-compliant type parameters parametrizing the
-        # decorated callable into this forward scope.
-        add_func_scope_hint_pep695_parameterizable_typeparams(
-            func_scope=scope_pep695,
-            parameterizable=func,
-            exception_prefix=exception_prefix,
-        )
-    # Else, the decorated callable is *NOT* a pure-Python function. In this
-    # case, that callable does *NOT* support PEP 695-compliant type
-    # parametrization. Silently ignore that callable, whatever it is.
-
-    # Composite all type parameters parametrizing the decorated callable and all
-    # lexical parent classes of that callable into this forward scope.
-    decor_meta.func_wrappee_scope_forward.update(scope_pep695)  # type: ignore[union-attr]
-
-    # Release this PEP 695-specific lexical scope.
-    release_instance(scope_pep695)
-
-
 def _resolve_func_scope_forward_hint(
     hint: str,
     decor_meta: BeartypeDecorMeta,
@@ -685,14 +593,14 @@ def _resolve_func_scope_forward_hint(
     exception_prefix: str,
 ) -> Hint:
     '''
-    Resolve the passed stringified type hint into a non-string type hint
-    against the **forward scope** (i.e., dictionary mapping from the names to
-    values of all attributes accessible to the lexical scope of the passed
-    decorated callable where this scope comprises both the global scope and all
-    local lexical scopes enclosing that callable) of that callable.
+    Resolve the passed stringified type hint into a non-string type hint against
+    the **forward scope** (i.e., dictionary mapping from the names to values of
+    all attributes accessible to the lexical scope of the passed decorated
+    callable where this scope comprises both the global scope and all local
+    lexical scopes enclosing that callable) of that callable.
 
     This resolver is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator). Resolving both absolute *and* relative
+    ``@callable_cached`` decorator). Resolving both absolute *and* relative
     forward references assumes contextual context (e.g., the fully-qualified
     name of the object to which relative forward references are relative to)
     that *cannot* be safely and context-freely memoized away.
@@ -767,3 +675,99 @@ def _resolve_func_scope_forward_hint(
 
     # Return this resolved hint.
     return hint_resolved
+
+# ....................{ PRIVATE ~ resolvers : pep          }....................
+#FIXME: Unit test us up, please.
+#FIXME: Shift into the more appropriate
+#"beartype._util.hint.pep.proposal.pep695` submodule as a public
+#resolve_func_scope_pep695() function, please.
+def _resolve_func_scope_pep695(
+    decor_meta: BeartypeDecorMeta, exception_prefix) -> None:
+    '''
+    Composite all **type parameter scopes** (i.e., lexical scopes induced by
+    parametrizing the decorated callable *and* all lexical parent classes of
+    that callable with :pep:`695`-compliant implicitly instantiated **type
+    parameters** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
+    parameter specifications, and :pep:`646`-compliant type variable tuples)
+    of the decorated callable into the **forward scope** (i.e., dictionary
+    mapping from the names to values of all attributes accessible to the lexical
+    scope of the passed decorated callable where this scope comprises both the
+    global scope and all local lexical scopes enclosing that callable) of the
+    passed decorator metadata.
+
+    Note that this resolver implicitly overwrites each global and local
+    attribute previously composited into this forward scope with each type
+    parameter of the same name, vaguely replicating the scoping rules dictated
+    by :pep:`695`.
+
+    Parameters
+    ----------
+    decor_meta : BeartypeDecorMeta
+        Decorated callable to resolve the forward scope of.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
+    '''
+
+    # If the active Python interpreter targets Python <= 3.11, this interpreter
+    # fails to support PEP 695. In this case, silently reduce to a noop.
+    if IS_PYTHON_AT_MOST_3_11:
+        return
+    # Else, this interpreter targets Python >= 3.12. In this case, this
+    # interpreter supports PEP 695.
+
+    # PEP 695-specific lexical scope. Ideally, we'd simply reuse the existing
+    # "decor_meta.func_wrappee_scope_forward" scope rather than instantiate a
+    # PEP 695-specific lexical scope. Although both trivial and efficient, such
+    # reuse would violate PEP 695. PEP 695 mandates that type-checkers:
+    # * Raise errors when PEP 695-compliant type parameters parametrizing parent
+    #   classes share the same names as those parametrizing either nested
+    #   classes or the decorated callable.
+    # * Silently allow PEP 695-compliant type parameters parametrizing either
+    #   nested classes or the decorated callable to shadow (i.e., override)
+    #   *ALL* other attributes in parent lexical scopes.
+    #
+    # Ergo, this resolver *MUST* differentiate between type parameters and
+    # non-type parameters. The only means of doing so sanely is to isolate type
+    # parameters resolved by this function to this unique dictionary. See also:
+    #     https://peps.python.org/pep-0695/#type-parameter-scopes
+    scope_pep695: LexicalScope = acquire_instance(dict)
+
+    # If one or more parent classes lexically enclose the decorated callable...
+    if decor_meta.cls_stack:
+        # For each parent class lexically enclosing the decorated callable (in
+        # descending order from outermost to innermost class)...
+        for type_nested in decor_meta.cls_stack:
+            # Composite all PEP 695-compliant type parameters parametrizing this
+            # class into this forward scope. Since this class lexically encloses
+            # that callable, this class is guaranteed to be pure-Python and thus
+            # support PEP 695-compliant type parametrization.
+            add_func_scope_hint_pep695_parameterizable_typeparams(
+                func_scope=scope_pep695,
+                parameterizable=type_nested,
+                exception_prefix=exception_prefix,
+            )
+    # Else, *NO* parent classes lexically enclose the decorated callable.
+
+    # Decorated callable, localized for negligible efficiency and readability.
+    func = decor_meta.func_wrappee_wrappee
+
+    # If the decorated callable is a pure-Python function, this function
+    # supports PEP 695-compliant type parametrization. In this case...
+    if isinstance(func, FunctionType):
+        # Composite all PEP 695-compliant type parameters parametrizing the
+        # decorated callable into this forward scope.
+        add_func_scope_hint_pep695_parameterizable_typeparams(
+            func_scope=scope_pep695,
+            parameterizable=func,
+            exception_prefix=exception_prefix,
+        )
+    # Else, the decorated callable is *NOT* a pure-Python function. In this
+    # case, that callable does *NOT* support PEP 695-compliant type
+    # parametrization. Silently ignore that callable, whatever it is.
+
+    # Composite all type parameters parametrizing the decorated callable and all
+    # lexical parent classes of that callable into this forward scope.
+    decor_meta.func_wrappee_scope_forward.update(scope_pep695)  # type: ignore[union-attr]
+
+    # Release this PEP 695-specific lexical scope.
+    release_instance(scope_pep695)

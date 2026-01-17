@@ -135,14 +135,20 @@ This private submodule is *not* intended for importation by downstream callers.
 #  is_hint_needs_cls_stack() tester? Right. Stop calling that from within the
 #  "beartype._decor._nontype._wrap" subpackage. Instead:
 #  * Shift that tester into a new private "_codetest" submodule.
-#  * Rename that tester to is_hint_check_expr_memoizable().
-#  * Simply that tester to simply:
-#        def is_hint_check_expr_memoizable(hint: Hint) -> bool:
+#  * Rename that tester to either:
+#    * is_hint_check_expr_memoizable().
+#    * is_hint_contextual(). *YES.* This one, please. Why? It avoids the "return
+#      not" inversion below and just reads much simpler.
+#  * Simply refactor that tester to simply:
+#        def is_hint_contextual(hint: Hint) -> bool:
 #            hint_repr = get_hint_repr(hint)
 #
 #            #FIXME: Make this a compiled regular expression, please. *sigh*
-#            return not (
+#            #FIXME: Basically, something like this:
+#            # return re_search(hint_repr, r'''(?:['"]|Self|ForwardRef)''')
+#            return (
 #                'Self' in hint_repr or
+#                'ForwardRef' in hint_repr or
 #                "'" in hint_repr or
 #                '"' in hint_repr
 #            )
