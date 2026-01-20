@@ -15,10 +15,7 @@ from beartype.roar._roarexc import (
     _BeartypeUtilCallableScopeException,
     _BeartypeUtilCallableScopeNotFoundException,
 )
-from beartype.typing import (
-    Any,
-    Optional,
-)
+from beartype.typing import Any
 from beartype._util.utilobject import get_object_basename_scoped
 from beartype._data.func.datafunccodeobj import FUNC_CODEOBJ_NAME_MODULE
 from beartype._data.typing.datatyping import (
@@ -27,9 +24,8 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from collections.abc import Callable
-from types import CodeType
 
-# ....................{ GETTERS                            }....................
+# ....................{ GETTERS ~ globals                  }....................
 #FIXME: Unit test us up, please.
 def get_func_globals(
     # Mandatory parameters.
@@ -56,12 +52,12 @@ def get_func_globals(
     ----------
     func : Callable
         Callable to be inspected.
-    func_stack_frames_ignore : int, optional
+    ignore_frames : int, default: 0
         Number of frames on the call stack to be ignored (i.e., silently
         incremented past), such that the next non-ignored frame following the
         last ignored frame is the parent callable or module directly declaring
         the passed callable. Defaults to 0.
-    exception_cls : Type[Exception], optional
+    exception_cls : Type[Exception], default: _BeartypeUtilCallableScopeException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableScopeException`.
 
@@ -98,15 +94,16 @@ def get_func_globals(
     # (and thus different global scopes) by different module authors.
     return func_wrappee.__globals__  # type: ignore[attr-defined]
 
-
+# ....................{ GETTERS ~ locals                   }....................
 def get_func_locals(
     # Mandatory parameters.
     func: Callable,
 
     # Optional parameters.
-    func_scope_names_ignore: int = 0,
-    func_stack_frames_ignore: int = 0,
+    ignore_frames: int = 0,
+    ignore_func_scope_names: int = 0,
     exception_cls: TypeException = _BeartypeUtilCallableScopeException,
+    **kwargs
 ) -> LexicalScope:
     '''
     **Local scope** for the passed callable.
@@ -121,8 +118,8 @@ def get_func_locals(
     * Else, the empty dictionary otherwise (i.e., if that callable is a
       function directly declared by a module).
 
-    This getter transparently supports methods, which in Python are lexically
-    nested in the scope encapsulating all previously declared **class
+    **This getter transparently supports methods.** In Python, methods are
+    lexically nested in the scope encapsulating all previously declared **class
     variables** (i.e., variables declared from class scope and thus accessible
     as type hints when annotating the methods of that class). When declaring a
     class, Python creates a stack frame for the declaration of that class whose
@@ -146,6 +143,30 @@ def get_func_locals(
     extend to methods of the currently decorated class. Why? Because that class
     has yet to be declared and thus added to the call stack.
 
+    **This getter implicitly skips past all other decorators applied** *after*
+    the :func:`beartype.beartype` decorator (and thus residing lexically above
+    the :func:`beartype.beartype` decorator) in caller code to this callable if
+    nested: e.g.,
+
+    .. code-python::
+
+       @the_way_of_kings   <--- skipped past
+       @words_of_radiance  <--- skipped past
+       @oathbringer        <--- skipped past
+       @rhythm_of_war      <--- skipped past
+       @beartype
+       def the_stormlight_archive(bruh: str) -> str: return bruh
+
+    By default, **this getter also implicitly skips past all lexical scopes**
+    that either:
+
+    * Do *not* derive from a **pure-Python object** (e.g., module, type,
+      callable). Ergo, C-based objects are thus ignored rather than yielded.
+    * Originate inside the :mod:`beartype` package. Ergo, :mod:`beartype`
+      objects are thus ignored rather than yielded.
+    * Originate outside a module. Ergo, objects only dynamically defined
+      in-memory with *no* parent module are thus ignored rather than yielded.
+
     Caveats
     -------
     **This high-level getter requires the private low-level**
@@ -167,7 +188,12 @@ def get_func_locals(
     ----------
     func : Callable
         Callable to be inspected.
-    func_scope_names_ignore : int, default: 0
+    ignore_frames : int, default: 0
+        Number of frames on the call stack to be ignored (i.e., silently
+        incremented past), such that the next non-ignored frame following the
+        last ignored frame is the parent callable or module directly declaring
+        the passed callable. Defaults to 0.
+    ignore_func_scope_names : int, default: 0
         Number of parent lexical scopes in the fully-qualified name of that
         callable to be ignored (i.e., silently incremented past), such that the
         next non-ignored lexical scope preceding the first ignored lexical scope
@@ -178,14 +204,12 @@ def get_func_locals(
         stack (e.g., due to being currently decorated by
         :func:`beartype.beartype`). See the :mod:`beartype._decor._pep.pep563`
         submodule for the standard use case. Defaults to 0.
-    func_stack_frames_ignore : int, default: 0
-        Number of frames on the call stack to be ignored (i.e., silently
-        incremented past), such that the next non-ignored frame following the
-        last ignored frame is the parent callable or module directly declaring
-        the passed callable. Defaults to 0.
     exception_cls : Type[Exception], default: _BeartypeUtilCallableScopeException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableScopeException`.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfuncframe.iter_frames` generator.
 
     Returns
     -------
@@ -195,29 +219,32 @@ def get_func_locals(
     Raises
     ------
     exception_cls
-        If the next non-ignored frame following the last ignored frame is *not*
-        the parent callable or module directly declaring the passed callable.
-    _BeartypeUtilCallableScopeNotFoundException
-        If this lexical scope cannot be found (i.e., if this getter found the
-        lexical scope of the module declaring the passed callable *before* that
-        of the parent callable or class declaring that callable), enabling
-        callers to identify this common edge case.
+        If either:
+
+        * The next non-ignored frame following the last ignored frame is *not*
+          the parent callable or module directly declaring the passed callable.
+        * This lexical scope cannot be found (i.e., if this getter found the
+          lexical scope of the module declaring the passed callable *before*
+          that of the parent callable or class declaring that callable),
+          enabling callers to identify this common edge case.
     '''
     assert callable(func), f'{repr(func)} not callable.'
-    assert isinstance(func_scope_names_ignore, int), (
-        f'{func_scope_names_ignore} not integer.')
-    assert func_scope_names_ignore >= 0, (
-        f'{func_scope_names_ignore} negative.')
-    assert isinstance(func_stack_frames_ignore, int), (
-        f'{func_stack_frames_ignore} not integer.')
-    assert func_stack_frames_ignore >= 0, (
-        f'{func_stack_frames_ignore} negative.')
+    assert isinstance(ignore_frames, int), f'{ignore_frames} not integer.'
+    assert ignore_frames >= 0, f'{ignore_frames} negative.'
+    assert isinstance(ignore_func_scope_names, int), (
+        f'{ignore_func_scope_names} not integer.')
+    assert ignore_func_scope_names >= 0, (
+        f'{ignore_func_scope_names} negative.')
     # print(f'\n--------- Capturing nested {func.__qualname__}() local scope...')
 
     # ..................{ IMPORTS                            }..................
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
-    from beartype._util.func.utilfuncframe import iter_frames
+    from beartype._util.func.utilfunccodeobj import get_func_codeobj
+    from beartype._util.func.utilfuncframe import (
+        get_frame_locals,
+        get_frame_module_name_or_none,
+        iter_frames,
+    )
     from beartype._util.func.utilfunctest import is_func_nested
     from beartype._util.module.utilmodget import get_object_module_name_or_none
 
@@ -253,11 +280,10 @@ def get_func_locals(
     # * The passed callable is physically declared on-disk.
     # * The passed callable is nested.
 
-    # ..................{ LOCALS ~ scope                     }..................
+    # ..................{ LOCALS                             }..................
     # Local scope of the passed callable to be returned.
     func_scope: LexicalScope = {}
 
-    # ..................{ LOCALS ~ scope : name              }..................
     # Unqualified basename of that nested callable.
     func_name_unqualified = func.__name__
 
@@ -349,7 +375,7 @@ def get_func_locals(
     # all unqualified basenames encapsulating that callable. By the above
     # validation, this index is guaranteed to begin at the second-to-last
     # basename in this list.
-    func_scope_names_index = -2 - func_scope_names_ignore
+    func_scope_names_index = -2 - ignore_func_scope_names
 
     # Number of unignorable lexical scopes encapsulating that callable,
     # magically adding 1 to account for the fact that "func_scope_names_index"
@@ -378,8 +404,8 @@ def get_func_locals(
         raise exception_cls(
             f'Callable name "{func_name_qualified}" contains only '
             f'{func_scope_parents_len} parent lexical scope(s) but '
-            f'"func_scope_names_ignore" parameter ignores '
-            f'{func_scope_names_ignore} parent lexical scope(s), leaving '
+            f'"ignore_func_scope_names" parameter ignores '
+            f'{ignore_func_scope_names} parent lexical scope(s), leaving '
             f'{func_scope_names_search_len} parent lexical scope(s) to be '
             f'searched for {func_name_qualified}() locals.'
         )
@@ -399,69 +425,35 @@ def get_func_locals(
     func_scope_name = func_scope_names[func_scope_names_index]
     # print(f'Searching for parent {func_scope_name}() local scope...')
 
-    # ..................{ LOCALS ~ frame                     }..................
-    # Code object underlying the parent callable associated with the current
-    # stack frame if that callable is pure-Python *OR* "None".
-    func_frame_codeobj: Optional[CodeType] = None
-
-    # Fully-qualified name of the module defining that callable if any *OR*
-    # "None" (i.e., if that callable is defined outside a module).
-    func_frame_module_name: Optional[str] = ''
-
-    # Unqualified name of that callable.
-    func_frame_name = ''
-
     # ..................{ SEARCH                             }..................
     # While at least one frame remains on the call stack, iteratively search up
     # the call stack for a stack frame embodying the parent callable directly
     # declaring this nested callable, whereupon that parent callable's local
     # runtime scope is returned as is.
     #
-    # Note this also implicitly skips past all other decorators applied *AFTER*
-    # @beartype (and thus residing lexically above @beartype) in caller code to
-    # this nested callable: e.g.,
-    #     @the_way_of_kings   <--- skipped past
-    #     @words_of_radiance  <--- skipped past
-    #     @oathbringer        <--- skipped past
-    #     @rhythm_of_war      <--- skipped past
-    #     @beartype
-    #     def the_stormlight_archive(bruh: str) -> str:
-    #         return bruh
+    # Note that, by default, this getter ignores *ALL* scopes that either:
+    # * Do *NOT* derive from a pure-Python object.
+    # * Originate inside the "beartype" package.
+    # * Originate outside a module.
     for func_frame in iter_frames(
         # 0-based index of the first non-ignored frame following the last
         # ignored frame, ignoring an additional frame embodying the current call
         # to this getter.
-        func_stack_frames_ignore=func_stack_frames_ignore + 1,
+        ignore_frames=ignore_frames + 1,
+        **kwargs
     ):
-        # Code object underlying this frame's scope if that scope is pure-Python
-        # *OR* "None" otherwise.
-        func_frame_codeobj = get_func_codeobj_or_none(func_frame)
-
-        # If this code object does *NOT* exist, this scope is C-based. In this
-        # case, silently ignore this scope and proceed to the next frame.
-        if func_frame_codeobj is None:
-            continue
-        # Else, this code object exists, implying this scope to be pure-Python.
-
-        # Fully-qualified name of the module defining this scope if any *OR*
-        # "None" otherwise (i.e., if this scope is defined outside a module).
-        func_frame_module_name = func_frame.f_globals.get('__name__')
-
-        # If either...
-        if (
-            # This scope is defined outside a module *OR*...
-            func_frame_module_name is None or
-            # This scope is defined inside the root "beartype" package *OR*...
-            func_frame_module_name == 'beartype' or
-            # This scope is defined inside a "beartype" subpackage...
-            func_frame_module_name.startswith('beartype.')
-        ):
-            # Then silently ignore this scope and proceed to the next frame.
-            continue
-        # Else, this scope is defined inside a module that is *NOT* "beartype".
+        # Code object underlying this frame's scope.
+        func_frame_codeobj = get_func_codeobj(func_frame)
 
         # Unqualified name of this scope.
         func_frame_name = func_frame_codeobj.co_name
+
+        # Fully-qualified name of the module defining this scope if any *OR*
+        # "None" otherwise (i.e., if this scope is defined outside a module).
+        func_frame_module_name = get_frame_module_name_or_none(func_frame)
+        # print(f'{func_frame_name}() detected on call stack...')
+        # print(f'func_frame_name == func_scope_name? {func_frame_name == func_scope_name}')
+        # print(f'func_frame_module_name == func_module_name? {func_frame_module_name == func_module_name}')
         # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
 
         # If this scope is the placeholder string assigned by Python to *ALL*
@@ -508,42 +500,13 @@ def get_func_locals(
         # Ergo, we have *NO* alternative but to blindly assume the above
         # algorithm correctly collected this scope, which we only do because we
         # have exhaustively tested this with *ALL* edge cases.
-            # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
 
             # Local scope of the passed callable. Since this nested callable is
             # directly declared in the body of this parent callable, the local
             # scope of this nested callable is *EXACTLY* the local scope of the
             # body of this parent callable. Well, isn't that special?
-            func_scope = func_frame.f_locals
-
-            # If this local scope is *NOT* a "dict" instance, coerce this local
-            # scope into a "dict" instance. Why? Several justifiable reasons:
-            # * This getter is annotated as returning a "LexicalScope", which is
-            #   currently just a readable alias for "DictStrToAny", which is
-            #   itself an efficiency alias for "Dict[Str, object]". Ergo, static
-            #   type-checkers expect this getter to return "dict" instances.
-            # * Under Python <= 3.11, the "func_frame.f_locals" instance
-            #   variable actually is a "dict" instance.
-            # * Under Python >= 3.12, the "func_frame.f_locals" instance
-            #   variable actually is instead a "mappingproxy" instance. Although
-            #   interchangeable for most purposes, "dict" and "mappingproxy"
-            #   instances are *NOT* perfectly interchangeable. In particular,
-            #   callers of this function frequently pass this local scope to
-            #   the dict.update() method -- which expects the passed mapping to
-            #   also be a "dict" instance: e.g.,
-            #       cls_curr_locals = get_type_locals(
-            #           cls=cls_curr, exception_cls=exception_cls)
-            #   >   func_locals.update(cls_curr_locals)
-            #   E   TypeError: update() argument must be dict or another FrameLocalsProxy
-            #
-            #   Why? No idea. Ideally, the dict.update() method would accept
-            #   arbitrary mappings -- but it doesn't. Since it doesn't, we have
-            #   *NO* recourse but to preserve forward compatibility with future
-            #   Python versions by coercing non-"dict" to "dict" instances here
-            #   on behalf of the caller. It is what it is. We sigh! *sigh*
-            if not isinstance(func_scope, dict):
-                func_scope = dict(func_scope)
-            # Else, this local scope is already a "dict" instance.
+            func_scope = get_frame_locals(func_frame)
+            # print(f'{func_frame_name}() locals: {repr(func_scope)}')
 
             # Halt iteration.
             break
@@ -552,6 +515,116 @@ def get_func_locals(
         # next frame in the call stack.
 
     # Return the local scope of the passed callable.
+    return func_scope
+
+
+def get_caller_external_locals(
+    # Optional parameters.
+    ignore_frames: int = 0,
+    exception_cls: TypeException = _BeartypeUtilCallableScopeException,
+    **kwargs
+) -> LexicalScope:
+    '''
+    **Local scope** for the first **external lexical scope** on the call stack
+    (i.e., originating from any module or package *except* those residing in
+    the :mod:`beartype` package itself). Since CPython itself is unlikely to
+    ever directly invoke :mod:`beartype`, this scope is (almost certainly) that
+    of the third-party package or module that *did* directly invoke
+    :mod:`beartype` by calling a public :mod:`beartype` function (e.g.,
+    :func:`beartype.door.die_if_unbearable`, :func:`beartype.door.is_bearable`).
+
+    Parameters
+    ----------
+    ignore_frames : int, default: 0
+        Number of frames on the call stack to be ignored (i.e., silently
+        incremented past), such that the next non-ignored frame following the
+        last ignored frame is the parent callable or module directly declaring
+        the passed callable. Defaults to 0.
+    exception_cls : Type[Exception], default: _BeartypeUtilCallableScopeException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableScopeException`.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfuncframe.iter_frames` generator.
+
+    Returns
+    -------
+    LexicalScope
+        Local scope for this callable.
+
+    Raises
+    ------
+    exception_cls
+        If the call stack contains either:
+
+        * *Only* the stack frame encapsulating the current call to this getter.
+          Although an extreme edge case, this could technically occur if the
+          caller called this getter from a REPL.
+        * *Only* two or more ignorable stack frames.
+
+    See Also
+    --------
+    :func:`.get_func_caller_external_locals`
+        Further details.
+    '''
+    assert isinstance(ignore_frames, int), f'{ignore_frames} not integer.'
+    assert ignore_frames >= 0, f'{ignore_frames} negative.'
+
+    # ..................{ IMPORTS                            }..................
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfuncframe import (
+        get_frame_locals,
+        iter_frames,
+    )
+
+    # ..................{ LOCALS                             }..................
+    # Local scope of the passed callable to be returned.
+    func_scope: LexicalScope = {}
+
+    # ..................{ SEARCH                             }..................
+    # While at least one frame remains on the call stack, iteratively search up
+    # the call stack for the first unignorable frame, whereupon that frame's
+    # local runtime scope is returned as is.
+    #
+    # Note that exactly what "unignorable" means depends on whether the caller
+    # passed additional keyword arguments. By default, this getter ignores *ALL*
+    # scopes that either:
+    # * Do *NOT* derive from a pure-Python object.
+    # * Originate inside the "beartype" package.
+    # * Originate outside a module.
+    for func_frame in iter_frames(
+        # 0-based index of the first non-ignored frame following the last
+        # ignored frame, ignoring an additional frame embodying the current call
+        # to this getter.
+        ignore_frames=ignore_frames + 1,
+        **kwargs
+    ):
+    # Then this frame is the first unignorable frame to yield the local runtime
+    # scope of to the caller. Why? Because the iter_frames() generator yielded
+    # (rather than ignored) this frame. Assuming the caller passed *NO*
+    # additional keyword parameters, this *MUST* be a frame encapsulating a
+    # scope that:
+    # * Derives from a pure-Python object.
+    # * Originate outside the "beartype" package.
+    # * Originate inside a module.
+        # Local scope of this external caller.
+        func_scope = get_frame_locals(func_frame)
+
+        # Halt iteration.
+        break
+    # If the above "break" statement was *NOT* performed, the above call to the
+    # iter_frames() generator failed to yield even a single unignorable frame.
+    # Ergo, that generator either:
+    # * Yielded one or more ignorable frames. This is the common case.
+    # * Yielded *NO* frames. Although an extreme edge case, this could
+    #   technically occur if the caller called this getter from a REPL.
+    #
+    # In either case, raise an exception.
+    else:  # pragma: no cover
+        raise exception_cls(
+            'Call stack either empty or comprises only ignorable stack frames.')
+
+    # Return the local scope of this external caller.
     return func_scope
 
 # ....................{ ADDERS                             }....................
@@ -579,7 +652,7 @@ def add_func_scope_attr(
         Local or global scope to add this object to.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message. Defaults to a reasonable human-readable string.
 
     Returns
     -------

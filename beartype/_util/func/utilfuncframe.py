@@ -20,7 +20,10 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import CallableFrameType
-from beartype._data.typing.datatyping import TypeException
+from beartype._data.typing.datatyping import (
+    LexicalScope,
+    TypeException,
+)
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -127,7 +130,7 @@ def get_frame_or_none(
         the stack frame encapsulating the call to this getter). Defaults to 1,
         signifying the stack frame of the **parent caller** calling the caller
         directly calling this getter.
-    exception_cls : TypeException, optional
+    exception_cls : TypeException, default: _BeartypeUtilCallFrameException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallFrameException`.
 
@@ -253,6 +256,61 @@ ValueError
     If this index exceeds the **height** (i.e., total number of stack frames)
     of the current call stack.
 '''
+
+# ....................{ GETTERS ~ attr                     }....................
+#FIXME: Unit test up, please. *sigh*
+def get_frame_locals(frame: CallableFrameType) -> LexicalScope:
+    '''
+    **Local scope** encapsulated by the passed **stack frame** (i.e.,
+    :class:`.CallableFrameType` instance encapsulating all metadata describing a
+    single call on the current call stack).
+
+    Parameters
+    ----------
+    frame : CallableFrameType
+        Stack frame to be inspected.
+
+    Returns
+    -------
+    LexicalScope
+        **Local scope** encapsulated by this frame.
+    '''
+    assert isinstance(frame, CallableFrameType), (
+        f'{repr(frame)} not stack frame.')
+
+    # Local scope of this frame to be yielded to the caller.
+    func_scope = frame.f_locals
+
+    # If this local scope is *NOT* a "dict" instance, coerce this local scope
+    # into a "dict" instance. Why? Several justifiable reasons:
+    # * This getter is annotated as returning a "LexicalScope", which is
+    #   currently just a readable alias for "DictStrToAny", which is itself an
+    #   efficiency alias for "Dict[Str, object]". Ergo, static type-checkers
+    #   expect this getter to return "dict" instances.
+    # * Under Python <= 3.11, the "func_frame.f_locals" instance variable
+    #   actually is a "dict" instance.
+    # * Under Python >= 3.12, the "func_frame.f_locals" instance variable
+    #   actually is instead a "mappingproxy" instance. Although interchangeable
+    #   for most purposes, "dict" and "mappingproxy" instances are *NOT*
+    #   perfectly interchangeable. In particular, callers of this function
+    #   frequently pass this local scope to the dict.update() method -- which
+    #   expects the passed mapping to also be a "dict" instance: e.g.,
+    #       cls_curr_locals = get_type_locals(
+    #           cls=cls_curr, exception_cls=exception_cls)
+    #   >   func_locals.update(cls_curr_locals)
+    #   E   TypeError: update() argument must be dict or another FrameLocalsProxy
+    #
+    #   Why? No idea. Ideally, the dict.update() method would accept arbitrary
+    #   mappings -- but it doesn't. Since it doesn't, we have *NO* recourse but
+    #   to preserve forward compatibility with future Python versions by
+    #   coercing non-"dict" to "dict" instances here on behalf of the caller. It
+    #   is what it is. We sigh! *sigh*
+    if not isinstance(func_scope, dict):
+        func_scope = dict(func_scope)
+    # Else, this local scope is already a "dict" instance.
+
+    # Return this local scope.
+    return func_scope
 
 # ....................{ GETTERS ~ name : package           }....................
 #FIXME: Unit test us up, please.
@@ -464,11 +522,12 @@ def get_frame_module_name_or_none(frame: CallableFrameType) -> Optional[str]:
 # ....................{ ITERATORS                          }....................
 #FIXME: Generalize with a new "is_module_boundary_stop: bool = True" optional
 #parameter. If true, this generator implicitly halts at a "<module>" boundary.
-#FIXME: For orthogonality with every other function defined above, rename the
-#overly verbose "func_stack_frames_ignore" parameter to simply "ignore_frames".
 def iter_frames(
     # Optional parameters.
-    func_stack_frames_ignore: int = 0,
+    ignore_frames: int = 0,
+    is_ignore_beartype_frames: bool = True,
+    is_ignore_nonpython_frames: bool = True,
+    is_ignore_unmoduled_frames: bool = True,
 ) -> Iterable[CallableFrameType]:
     '''
     Generator yielding one **frame** (i.e., :class:`types.CallableFrameType`
@@ -513,9 +572,33 @@ def iter_frames(
 
     Parameters
     ----------
-    func_stack_frames_ignore : int, default: 0
+    ignore_frames : int, default: 0
         Number of frames on the call stack to be ignored (i.e., silently
         incremented past). Defaults to 0.
+    is_ignore_beartype_frames : bool, default: True
+        :data:`True` only if yielding *only* frames encapsulating lexical scopes
+        originating from objects (e.g., modules, types, callables) defined
+        outside the :mod:`beartype` package. Equivalently, :data:`True` only if
+        ignoring (i.e., silently incrementing past) all frames *other* than
+        those encapsulating such scopes. Defaults to :data:`True` for both
+        safety and usability. This is almost certainly what both everyone wants.
+    is_ignore_nonpython_frames : bool, default: True
+        :data:`True` only if yielding *only* frames encapsulating lexical scopes
+        originating from pure-Python objects (e.g., modules, types, callables).
+        Equivalently, :data:`True` only if ignoring (i.e., silently incrementing
+        past) all frames *other* than those encapsulating such scopes. Defaults
+        to :data:`True` for both safety and usability. This is almost certainly
+        what everyone wants.
+    is_ignore_unmoduled_frames : bool, default: True
+        :data:`True` only if yielding *only* frames encapsulating lexical scopes
+        originating from either modules *or* objects residing inside modules
+        (e.g., types, callables). Equivalently, :data:`True` only if ignoring
+        (i.e., silently incrementing past) all frames *other* than those
+        encapsulating such scopes. Note that most real-world objects of interest
+        are either themselves modules *or* reside inside modules; exceptions
+        include objects that are both dynamically defined in-memory *and*
+        assigned no parent module. Defaults to :data:`True` for both safety and
+        usability. This is almost certainly what both everyone wants.
 
     Returns
     -------
@@ -525,7 +608,7 @@ def iter_frames(
     See Also
     --------
     :func:`.get_frame_or_none`
-        Further details on the ``func_stack_frames_ignore`` parameter.
+        Further details on the ``ignore_frames`` parameter.
     :func:`.get_frame`
         Further details on stack frame objects.
 
@@ -537,34 +620,31 @@ def iter_frames(
            get_func_codeobj_or_none)
        from beartype._util.func.utilfuncframe import iter_frames
 
-       # For each stack frame on the call stack...
+       # For each pure-Python stack frame on the call stack...
        for func_frame in iter_frames():
-           # Code object underlying this frame's scope if this scope is
-           # pure-Python *OR* "None" otherwise.
-           func_frame_codeobj = get_func_codeobj_or_none(func_frame)
-       
-           # If this code object does *NOT* exist, this scope is C-based. In
-           # this case, silently ignore this scope and proceed to the next frame
-           # in the call stack.
-           if func_frame_codeobj is None:
-               continue
-           # Else, this code object exists, implying this scope to be
-           # pure-Python.
-       
            # Fully-qualified name of this scope's module.
            func_frame_module_name = func_frame.f_globals['__name__']
-       
+
            # Unqualified name of this scope.
            func_frame_name = func_frame_codeobj.co_name
-       
+
            # Print the fully-qualified name of this scope.
            print(f'On {func_frame_module_name}.{func_frame_name}()!')
     '''
-    assert isinstance(func_stack_frames_ignore, int), (
-        f'{func_stack_frames_ignore} not integer.')
-    assert func_stack_frames_ignore >= 0, (
-        f'{func_stack_frames_ignore} negative.')
+    assert isinstance(ignore_frames, int), f'{repr(ignore_frames)} not integer.'
+    assert ignore_frames >= 0, f'{ignore_frames} negative.'
+    assert isinstance(is_ignore_beartype_frames, bool), (
+        f'{repr(is_ignore_beartype_frames)} not boolean.')
+    assert isinstance(is_ignore_nonpython_frames, bool), (
+        f'{repr(is_ignore_nonpython_frames)} not boolean.')
+    assert isinstance(is_ignore_unmoduled_frames, bool), (
+        f'{repr(is_ignore_unmoduled_frames)} not boolean.')
 
+    # ..................{ IMPORTS                            }..................
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
+
+    # ....................{ PREAMBLE                       }....................
     # If the active Python interpreter fails to declare the private
     # sys._getframe() getter, reduce to the empty generator (i.e., noop).
     if get_frame is None:  # pragma: no cover
@@ -574,7 +654,7 @@ def iter_frames(
     # Attempt to obtain the next non-ignored frame after the last ignored frame,
     # ignoring an additional frame embodying the current call to this iterator.
     try:
-        func_frame = get_frame(func_stack_frames_ignore + 1)  # type: ignore[misc]
+        func_frame = get_frame(ignore_frames + 1)  # type: ignore[misc]
     # If doing so raises a "ValueError" exception...
     except ValueError as value_error:
         # Whose message matches this standard boilerplate, the caller requested
@@ -593,12 +673,57 @@ def iter_frames(
     # Else, doing so raised *NO* "ValueError" exception.
     # print(f'start frame: {repr(func_frame)}')
 
+    # ....................{ ITERATE                        }....................
     # While at least one frame remains on the call stack...
     while func_frame:
         # print(f'current frame: {repr(func_frame)}')
 
-        # Yield this frame to the caller.
-        yield func_frame
+        # Code object underlying this frame's scope if this scope is pure-Python
+        # *OR* "None" otherwise.
+        func_frame_codeobj = get_func_codeobj_or_none(func_frame)
+
+        # Fully-qualified name of the module defining this scope if any *OR*
+        # "None" otherwise (i.e., if this scope is defined outside a module).
+        func_frame_module_name = get_frame_module_name_or_none(func_frame)
+
+        # If neither...
+        if not (
+            (
+                # Ignoring frames encapsulating lexical scopes *NOT* originating
+                # from pure-Python objects (e.g., modules, types, callables)
+                # *AND*...
+                is_ignore_nonpython_frames and
+                # This code object does *NOT* exist (implying this scope to
+                # *NOT* be pure-Python)...
+                func_frame_codeobj is None
+            # *NOR*...
+            ) or (
+                # Ignoring frames encapsulating lexical scopes originating
+                # outside modules *AND*...
+                is_ignore_unmoduled_frames and
+                # This scope is defined outside a module...
+                func_frame_module_name is None
+            # *NOR*...
+            ) or (
+                # Ignoring frames encapsulating lexical scopes originating
+                # outside the "beartype" package *AND*...
+                is_ignore_beartype_frames and
+                # This scope is defined inside a module *AND either...
+                func_frame_module_name and (
+                    # This scope is directly defined by the root "beartype"
+                    # package *OR*...
+                    func_frame_module_name == 'beartype' or
+                    # This scope is transitively defined by a "beartype"
+                    # subpackage...
+                    func_frame_module_name.startswith('beartype.')
+                )
+            )
+        ):
+        # Then this frame is of interest to the caller. Yield this frame! \o/
+            yield func_frame
+        # Else, silently ignore this scope.
+        # else:
+        #     print(f'Ignoring {func_frame} in module "{func_frame_module_name}"...')
 
         # Iterate to the next frame on the call stack.
         func_frame = func_frame.f_back

@@ -151,4 +151,4 @@ def test_iter_frames() -> None:
     # chosen to avoid conflicts with "pytest" itself, which is implemented in
     # pure-Python and thus runs tests with Python functions that themselves add
     # an arbitrary number of stack frames to the call stack.
-    assert tuple(iter_frames(func_stack_frames_ignore=999999)) == ()
+    assert tuple(iter_frames(ignore_frames=999999)) == ()

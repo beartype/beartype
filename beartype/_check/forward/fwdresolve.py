@@ -381,7 +381,7 @@ def _resolve_func_scope_forward(
                 # enclosing that method that exists on the call stack. The
                 # non-existent "Outer", "Middle", and "Inner" lexical scopes
                 # must *ALL* be silently ignored.
-                func_scope_names_ignore=(
+                ignore_func_scope_names=(
                     0 if cls_stack is None else len(cls_stack)),
 
                 #FIXME: Consider dynamically calculating exactly how many
@@ -406,7 +406,7 @@ def _resolve_func_scope_forward(
                 # Why? Because the @beartype codebase has been sufficiently
                 # refactored so as to render any such attempts non-trivial,
                 # fragile, and frankly dangerous.
-                func_stack_frames_ignore=1,
+                ignore_frames=1,
                 exception_cls=exception_cls,
             )
         # If this local scope cannot be found (i.e., if this getter found the

@@ -71,7 +71,7 @@ def when_in_the_springtime_of_the_year():
     type_hint = Union[int, str]
 
     # Ignore the call to this @attach_func_locals() decorator.
-    @attach_func_locals(func_stack_frames_ignore=1)
+    @attach_func_locals(ignore_frames=1)
     def when_the_trees_are_crowned_with_leaves() -> type_hint:
         '''
         Arbitrary nested callable annotated by a type hint localized to the
@@ -104,9 +104,9 @@ def long_past_their_woodland_days():
                 # Ignore both this nested "AmidstTheLanternLight" class and its
                 # parent "TheShadowsOfTheTreesAppear" class when searching for
                 # the closure lexical scope declaring the "type_hint" local.
-                func_scope_names_ignore=2,
+                ignore_func_scope_names=2,
                 # Ignore the call to this @attach_func_locals() decorator.
-                func_stack_frames_ignore=1,
+                ignore_frames=1,
             )
             def weve_been_rambling_all_the_night(self) -> type_hint:
                 '''
@@ -186,7 +186,7 @@ def test_is_func_nested() -> None:
 #     assert get_func_wrappee(on_the_stones_that_we_walk) is (
 #         the_journey_begins_with_curiosity)
 
-# ....................{ TESTS ~ getter                     }....................
+# ....................{ TESTS ~ getter : local             }....................
 def test_get_func_locals() -> None:
     '''
     Test the
@@ -235,7 +235,7 @@ def test_get_func_locals() -> None:
     # Assert this getter returns the empty dictionary for nested callables
     # ignoring *ALL* of their parent lexical scopes.
     assert get_func_locals(
-        func=and_summon_the_shadows_there, func_scope_names_ignore=1) == {}
+        func=and_summon_the_shadows_there, ignore_func_scope_names=1) == {}
 
     # ..................{ PASS ~ callable                    }..................
     # Arbitrary nested callable declared by a module-scoped callable.
@@ -284,8 +284,32 @@ def test_get_func_locals() -> None:
     with raises(_BeartypeUtilCallableException):
         get_func_locals(
             func=and_summon_the_shadows_there,
-            func_scope_names_ignore=2,
+            ignore_func_scope_names=2,
         )
+
+
+def test_get_caller_external_locals() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfuncscope.get_caller_external_locals` getter.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype._util.func.utilfuncscope import get_caller_external_locals
+
+    # ..................{ LOCALS                             }..................
+    # Arbitrary local variable to be detected below.
+    THE_PHANTOMS_PALE = "Bestirr'd themselves, thrice horrible and cold;"
+
+    # ..................{ PASS ~ noop                        }..................
+    # Lexical scope encapsulating the local body of this unit test.
+    test_locals = get_caller_external_locals()
+
+    # Assert that this scope contains the local variable defined above.
+    assert 'THE_PHANTOMS_PALE' in test_locals
+    assert test_locals['THE_PHANTOMS_PALE'] == (
+        "Bestirr'd themselves, thrice horrible and cold;")
 
 # ....................{ TESTS ~ adder                      }....................
 def test_add_func_scope_attr() -> None:
