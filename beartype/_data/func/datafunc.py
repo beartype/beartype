@@ -10,7 +10,29 @@ well-known functions and methods).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ SETS                               }....................
+# ....................{ STRINGS                            }....................
+FUNC_NAME_LAMBDA = '<lambda>'
+'''
+Default name of all **pure-Python lambda functions** (i.e., function declared
+as a ``lambda`` expression embedded in a larger statement rather than as a
+full-blown ``def`` statement).
+
+Python initializes the names of *all* lambda functions to this lambda-specific
+placeholder string on lambda definition.
+
+Caveats
+-------
+**Usage of this placeholder to differentiate lambda from non-lambda callables
+invites false positives in unlikely edge cases.** Technically, malicious third
+parties may externally change the name of any lambda function *after* defining
+that function. Pragmatically, no one sane should ever do such a horrible thing.
+While predictably absurd, this is also the only efficient (and thus sane) means
+of differentiating lambda from non-lambda callables. Alternatives require
+AST-based parsing, which comes with its own substantial caveats, concerns,
+edge cases, and false positives. If you must pick your poison, pick this one.
+'''
+
+# ....................{ FROZENSETS                         }....................
 OBJECT_SLOT_WRAPPERS = frozenset(
     # This slow wrapper.
     object_attr_value

@@ -113,6 +113,7 @@ from beartype._cave._cavefast import (
     HintPep695TypeAlias,
     Pep695ParameterizableTypes,
 )
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_subbable_subtype)
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
@@ -121,11 +122,22 @@ from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep695Parameterizable,
     TuplePep484612646TypeArgsPacked,
+    TypeException,
+    TypeStack,
+)
+from beartype._util.cache.pool.utilcachepoolinstance import (
+    acquire_instance,
+    release_instance,
 )
 from beartype._util.error.utilerrget import get_name_error_attr_name
+from beartype._util.func.utilfunctest import is_func_python
 from beartype._util.module.utilmodget import get_module_imported_or_none
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_12,
+    IS_PYTHON_AT_MOST_3_11,
+)
 from beartype._data.kind.datakindiota import SENTINEL
+from collections.abc import Callable
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep695_subbed(hint: Hint) -> bool:
@@ -280,6 +292,7 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
     parameterizable: Pep695Parameterizable,
 
     # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep695Exception,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -303,13 +316,16 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
         Local or global scope to map these type parameters to.
     parameterizable : Pep695Parameterizable
         :pep:`695`-compliant parameterizable to be inspected.
-    exception_prefix : str, optional
+    exception_cls : Type[Exception], default: BeartypeDecorHintPep695Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep695Exception`.
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
     Raises
     ------
-    BeartypeDecorHintPep695Exception
+    exception_cls
         If either:
 
         * This object is *not* a :pep:`695`-compliant parameterizable.
@@ -336,7 +352,10 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
     # ....................{ LOCALS                         }....................
     # Tuple of all type parameters parametrizing this parameterizable.
     typeparams = _get_hint_pep695_parameterizable_typeparams(
-        parameterizable=parameterizable, exception_prefix=exception_prefix)
+        parameterizable=parameterizable,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
     # print(f'Adding PEP 695 parameterizable {repr(parameterizable)} type parameters {repr(typeparams)}...')
 
     # ....................{ LOOP                           }....................
@@ -395,6 +414,7 @@ def _get_hint_pep695_parameterizable_typeparams(
     parameterizable: Pep695Parameterizable,
 
     # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep695Exception,
     exception_prefix: str = '',
 ) -> TuplePep484612646TypeArgsPacked:
     '''
@@ -409,7 +429,10 @@ def _get_hint_pep695_parameterizable_typeparams(
     ----------
     parameterizable : Pep695Parameterizable
         :pep:`695`-compliant parameterizable to be inspected.
-    exception_prefix : str, optional
+    exception_cls : Type[Exception], default: BeartypeDecorHintPep695Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep695Exception`.
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
@@ -420,13 +443,13 @@ def _get_hint_pep695_parameterizable_typeparams(
 
     Raises
     ------
-    BeartypeDecorHintPep695Exception
+    exception_cls
         If this object is *not* a :pep:`695`-compliant parameterizable.
     '''
 
     # If this object is *NOT* parameterizable under PEP 695, raise an exception.
     if not isinstance(parameterizable, Pep695ParameterizableTypes):
-        raise BeartypeDecorHintPep695Exception(
+        raise exception_cls(
             f'{exception_prefix}'
             f'{repr(parameterizable)} not PEP 695-parameterizable '
             f'(i.e., neither pure-Python type, pure-Python function, nor '
@@ -445,6 +468,124 @@ def _get_hint_pep695_parameterizable_typeparams(
         # fails to support PEP 695. In this case, the empty tuple.
         ()
     )
+
+# ....................{ RESOLVERS                          }....................
+#FIXME: Unit test us up, please.
+def resolve_func_scope_pep695(
+    func: Callable,
+    func_scope: LexicalScope,
+    cls_stack: TypeStack,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep695Exception,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Composite all **type parameter scopes** (i.e., lexical scopes induced by
+    parametrizing the decorated callable *and* all lexical parent classes of
+    that callable with :pep:`695`-compliant implicitly instantiated **type
+    parameters** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
+    parameter specifications, and :pep:`646`-compliant type variable tuples)
+    of the decorated callable into the **forward scope** (i.e., dictionary
+    mapping from the names to values of all attributes accessible to the lexical
+    scope of the passed decorated callable where this scope comprises both the
+    global scope and all local lexical scopes enclosing that callable) of the
+    passed decorator metadata.
+
+    Note that this resolver implicitly overwrites each global and local
+    attribute previously composited into this forward scope with each type
+    parameter of the same name, vaguely replicating the scoping rules dictated
+    by :pep:`695`.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable currently being decorated by the :func:`beartype.beartype`
+        decorator.
+    func_scope : LexicalScope
+        **Lexical scope** (i.e., dictionary mapping from the name to value of
+        each locally and globally accessible attribute in the local and global
+        scope) of that callable.
+    cls_stack : TypeStack
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing that
+        callable if any *or* :data:`None` otherwise).
+    exception_cls : Type[Exception], default: BeartypeDecorHintPep695Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep695Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+    '''
+    assert callable(func), f'{repr(func)} uncallable.'
+    assert isinstance(func_scope, dict), (
+        f'{repr(func_scope)} not lexical scope.')
+    assert isinstance(cls_stack, NoneTypeOr[tuple]), (
+        f'{repr(cls_stack)} not type stack.')
+
+    # If the active Python interpreter targets Python <= 3.11, this interpreter
+    # fails to support PEP 695. In this case, silently reduce to a noop.
+    if IS_PYTHON_AT_MOST_3_11:
+        return
+    # Else, this interpreter targets Python >= 3.12. In this case, this
+    # interpreter supports PEP 695.
+
+    # PEP 695-specific lexical scope. Ideally, we'd simply reuse the existing
+    # "decor_meta.func_wrappee_scope_forward" scope rather than instantiate a
+    # PEP 695-specific lexical scope. Although both trivial and efficient, such
+    # reuse would violate PEP 695. PEP 695 mandates that type-checkers:
+    # * Raise errors when PEP 695-compliant type parameters parametrizing parent
+    #   classes share the same names as those parametrizing either nested
+    #   classes or the decorated callable.
+    # * Silently allow PEP 695-compliant type parameters parametrizing either
+    #   nested classes or the decorated callable to shadow (i.e., override)
+    #   *ALL* other attributes in parent lexical scopes.
+    #
+    # Ergo, this resolver *MUST* differentiate between type parameters and
+    # non-type parameters. The only means of doing so sanely is to isolate type
+    # parameters resolved by this function to this unique dictionary. See also:
+    #     https://peps.python.org/pep-0695/#type-parameter-scopes
+    scope_pep695: LexicalScope = acquire_instance(dict)
+
+    # If one or more parent classes lexically enclose the decorated callable...
+    if cls_stack:
+        # For each parent class lexically enclosing the decorated callable (in
+        # descending order from outermost to innermost class)...
+        for type_nested in cls_stack:
+            # Composite all PEP 695-compliant type parameters parametrizing this
+            # class into this forward scope. Since this class lexically encloses
+            # that callable, this class is guaranteed to be pure-Python and thus
+            # support PEP 695-compliant type parametrization.
+            add_func_scope_hint_pep695_parameterizable_typeparams(
+                func_scope=scope_pep695,
+                parameterizable=type_nested,
+                exception_cls=exception_cls,
+                exception_prefix=exception_prefix,
+            )
+    # Else, *NO* parent classes lexically enclose the decorated callable.
+
+    # If the decorated callable is a pure-Python function, this function
+    # unconditionally supports PEP 695-compliant type parametrization under
+    # Python >= 3.12. In this case...
+    if is_func_python(func):
+        # Composite all PEP 695-compliant type parameters parametrizing the
+        # decorated callable into this forward scope.
+        add_func_scope_hint_pep695_parameterizable_typeparams(
+            func_scope=scope_pep695,
+            parameterizable=func,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
+    # Else, the decorated callable is *NOT* a pure-Python function. In this
+    # case, that callable does *NOT* support PEP 695-compliant type
+    # parametrization. Silently ignore that callable, whatever it is.
+
+    # Composite all type parameters parametrizing the decorated callable and all
+    # lexical parent classes of that callable into this forward scope.
+    func_scope.update(scope_pep695)  # type: ignore[union-attr]
+
+    # Release this PEP 695-specific lexical scope.
+    release_instance(scope_pep695)
 
 # ....................{ ITERATORS                          }....................
 def iter_hint_pep695_unsubbed_forwardrefs(

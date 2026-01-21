@@ -18,12 +18,14 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import (
     CallableCodeObjectType,
+    FunctionType,
     MethodBoundInstanceOrClassType,
     MethodDecoratorClassOrStaticTypes,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
+from beartype._data.func.datafunc import FUNC_NAME_LAMBDA
 from beartype._data.typing.datatypingport import TypeIs
 from beartype._data.typing.datatyping import (
     Codeobjable,
@@ -44,31 +46,8 @@ from inspect import (
     CO_GENERATOR,
 )
 
-# ....................{ CONSTANTS                          }....................
-#FIXME: Shift into the "beartype._data.func.datafunc" submodule, please.
-FUNC_NAME_LAMBDA = '<lambda>'
-'''
-Default name of all **pure-Python lambda functions** (i.e., function declared
-as a ``lambda`` expression embedded in a larger statement rather than as a
-full-blown ``def`` statement).
-
-Python initializes the names of *all* lambda functions to this lambda-specific
-placeholder string on lambda definition.
-
-Caveats
--------
-**Usage of this placeholder to differentiate lambda from non-lambda callables
-invites false positives in unlikely edge cases.** Technically, malicious third
-parties may externally change the name of any lambda function *after* defining
-that function. Pragmatically, no one sane should ever do such a horrible thing.
-While predictably absurd, this is also the only efficient (and thus sane) means
-of differentiating lambda from non-lambda callables. Alternatives require
-AST-based parsing, which comes with its own substantial caveats, concerns,
-edge cases, and false positives. If you must pick your poison, pick this one.
-'''
-
 # ....................{ RAISERS                            }....................
-def die_unless_func_python(
+def die_unless_func_codeobjable(
     # Mandatory parameters.
     func: Codeobjable,
 
@@ -77,29 +56,25 @@ def die_unless_func_python(
     exception_prefix: str = '',
 ) -> None:
     '''
-    Raise an exception if the passed callable is **C-based** (i.e., implemented
-    in C as either a builtin bundled with the active Python interpreter *or*
-    third-party C extension function).
-
-    Equivalently, this validator raises an exception unless the passed function
-    is **pure-Python** (i.e., implemented in Python as either a function or
-    method).
+    Raise an exception unless the passed object is **code-objectable** (i.e.,
+    either a pure-Python callable, low-level code object underlying a
+    pure-Python callable, or related object encapsulating such a code object).
 
     Parameters
     ----------
     func : Codeobjable
-        Callable to be inspected.
-    exception_cls : TypeException, optional
-        Type of exception to be raised. Defaults to
-        :class:`._BeartypeUtilCallableException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Code-objectable to be validated.
+    exception_cls : TypeException, default: _BeartypeUtilCallableException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
     exception_cls
-         If the passed callable is C-based.
+         Unless the passed callable is code-objectable.
 
     See Also
     --------
@@ -107,8 +82,59 @@ def die_unless_func_python(
         Further details.
     '''
 
-    # If that callable is *NOT* pure-Python, raise an exception.
+    # If that callable is *NOT* code-objectable, raise an exception.
     if not is_func_codeobjable(func):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception subclass.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise a human-readable exception.
+        raise exception_cls(
+            f'{exception_prefix}{repr(func)} code object not found, '
+            f'as neither:\n'
+            f'* Pure-Python callable.\n'
+            f'* C-based code object underlying a pure-Python callable.\n'
+            f'* Related C-based object encapsulating such a code object '
+            f'(e.g., call stack frame, generator object).'
+        )
+    # Else, that callable is code-objectable.
+
+
+#FIXME: Unit test us up, please.
+def die_unless_func_python(
+    # Mandatory parameters.
+    func: FunctionType,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed object is a **pure-Python callable**
+    directly defined in Python as either a function or method.
+
+    Parameters
+    ----------
+    func : FunctionType
+        Pure-Python callable to be validated.
+    exception_cls : TypeException, default: _BeartypeUtilCallableException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    exception_cls
+         Unless the passed callable is pure-Python.
+    '''
+
+    # If that callable is *NOT* pure-Python, raise an exception.
+    if not is_func_python(func):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not class.')
         assert issubclass(exception_cls, Exception), (
@@ -123,7 +149,9 @@ def die_unless_func_python(
 
         # Raise a human-readable exception.
         raise exception_cls(
-            f'{exception_prefix}{repr(func)} not pure-Python function.')
+            f'{exception_prefix}{repr(func)} not '
+            f'pure-Python function or method.'
+        )
     # Else, that callable is pure-Python.
 
 # ....................{ RAISERS ~ descriptors              }....................
@@ -433,7 +461,7 @@ def is_func_codeobjable(func: object) -> TypeIs[Callable]:
     return get_func_codeobj_or_none(func) is not None
 
 
-def is_func_lambda(func: Any) -> TypeIs[Callable]:
+def is_func_lambda(func: object) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is a **pure-Python lambda function**
     (i.e., function declared as a ``lambda`` expression embedded in a larger
@@ -467,9 +495,30 @@ def is_func_lambda(func: Any) -> TypeIs[Callable]:
         func.__name__ == FUNC_NAME_LAMBDA
     )
 
+
+#FIXME: Unit test us up, please.
+def is_func_python(func: object) -> TypeIs[FunctionType]:
+    '''
+    :data:`True` only if the passed object is a **pure-Python callable**
+    directly defined in Python as either a function or method.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a pure-Python callable.
+    '''
+
+    # Singular decomposition across this Singularity: "Engage!"
+    return isinstance(func, FunctionType)
+
 # ....................{ TESTERS ~ descriptor               }....................
 #FIXME: Unit test us up, please.
-def is_func_boundmethod(func: Any) -> TypeIs[MethodBoundInstanceOrClassType]:
+def is_func_boundmethod(func: object) -> TypeIs[MethodBoundInstanceOrClassType]:
     '''
     :data:`True` only if the passed object is a **C-based bound instance method
     descriptor** (i.e., callable implicitly instantiated and assigned on the

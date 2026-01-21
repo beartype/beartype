@@ -110,7 +110,7 @@ class BeartypeForwardRefMeta(type):
         :mod:`beartype` simply needs to transform those references into some
         format readily digestible by Python's builtin Python parser. Our
         solution? The :func:`eval` builtin coupled with our non-standard
-        :class:`beartype._check.forward.fwdscope.BeartypeForwardScope`
+        :class:`beartype._check.forward.scope.fwdscopecls.BeartypeForwardScope`
         dictionary subclass, which overrides the ``__missing__`` dunder method
         explicitly called by the superclass :meth:`dict.__getitem__` method
         implicitly called on each ``[``- and ``]``-delimited attempt to access a

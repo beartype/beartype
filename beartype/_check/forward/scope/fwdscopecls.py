@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **forward scope classes** (i.e., dictionary subclasses deferring the
-resolutions of local and global scopes of classes and callables decorated by the
-:func:`beartype.beartype` decorator when dynamically evaluating stringified type
-hints for those classes and callables).
+Beartype **forward scope type hierarchy** (i.e., dictionary subclasses deferring
+the resolutions of local and global scopes of types and callables decorated by
+the :func:`beartype.beartype` decorator when dynamically evaluating
+:pep:`484`-compliant forward references for those types and callables).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -45,19 +45,17 @@ from beartype._util.func.utilfuncframe import (
 )
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 
-#FIXME: Obvious circular import dependency here. Ugh! *sigh*
-# from beartype._check.metadata.metadecor import BeartypeDecorMeta
-
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Unit test us up, please.
 class BeartypeForwardScope(LexicalScope):
     '''
     **Forward scope** (i.e., dictionary mapping from the name to value of each
     locally and globally accessible attribute in the local and global scope of a
-    class or callable as well as deferring the resolution of each currently
+    type or callable as well as deferring the resolution of each currently
     undeclared attribute in that scope by replacing that attribute with a
     forward reference proxy resolved only when that attribute is passed as the
-    second parameter to an :func:`isinstance`-based runtime type-check).
+    second parameter to an :func:`isinstance`- or :func:`issubclass`-based
+    runtime type-check).
 
     This dictionary is principally employed to dynamically evaluate stringified
     type hints, including:
@@ -114,7 +112,7 @@ class BeartypeForwardScope(LexicalScope):
             provide both. Why? Because this forward scope is principally
             intended to be passed as the second and last parameter to the
             :func:`eval` builtin, called by the
-            :func:`beartype._check.forward.fwdresolve.resolve_hint` function.
+            :func:`beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str` function.
             For unknown reasons, :func:`eval` only calls the :meth:`__missing__`
             dunder method of this forward scope when passed only two parameters
             (i.e., when passed only a global scope); :func:`eval` does *not*
@@ -192,7 +190,7 @@ class BeartypeForwardScope(LexicalScope):
         -------
         **This dunder method is susceptible to misuse by third-party frameworks
         that perform call stack inspection.** The higher-level
-        :func:`beartype._check.forward.fwdresolve.resolve_hint` function
+        :func:`beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str` function
         internally invokes this dunder method by calling the :func:`eval`
         builtin, which then adds a new frame to the call stack whose
         ``f_locals`` and ``f_globals`` attributes are *BOTH* this dictionary. If
@@ -233,7 +231,7 @@ class BeartypeForwardScope(LexicalScope):
         In obscure edge cases involving :mod:`beartype`, ``pytest``, and
         :pep:`563`, one or both of the ``self.frame.f_locals`` and/or
         ``self.frame.f_globals`` dictionaries are instances of the
-        :class:`beartype._check.forward.fwdscope.BeartypeForwardScope`
+        :class:`beartype._check.forward.scope.fwdscopecls.BeartypeForwardScope`
         dictionary subclass. The ``tbh = maybe_ns_dct["__tracebackhide__"]``
         statement then implicitly invokes this dunder method, which then creates
         and returns a new forward reference proxy encapsulating the missing
@@ -297,7 +295,7 @@ class BeartypeForwardScope(LexicalScope):
             is_frame_caller_beartype(ignore_frames=1) or
             # The caller indirectly resides inside the "beartype" package. This
             # common edge cases arises when the parent
-            # beartype._check.forward.fwdresolve.resolve_hint() function calls
+            # beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str() function calls
             # the eval() builtin to dynamically evaluate the passed stringified
             # type hint: e.g.,
             #     # This is the eval() call triggering this call.
@@ -374,141 +372,3 @@ class BeartypeForwardScope(LexicalScope):
 
         # Return this proxy.
         return forwardref_subtype
-
-# ....................{ SUBCLASSES                         }....................
-#FIXME: *PICK UP HERE ON MONDAY*! Yay:
-#* Define this new factory function in the existing "fwdresolve" submodule
-#  resembling:
-#    def make_decor_meta_scope_forward(decor_meta: BeartypeDecorMeta) -> (
-#         BeartypeForwardScope):
-#        assert isinstance(decor_meta, BeartypeDecorMeta), (
-#            f'{repr(decor_meta)} not @beartype call.')
-#    
-#        # If the forward scope of the decorated callable has yet to be decided...
-#        if decor_meta.func_wrappee_scope_forward is None:
-#            # Fully-qualified name of the module declaring the decorated callable if
-#            # that callable defines the "__module__" dunder attribute *OR* "None"
-#            # (i.e., if that callable fails to define that attribute).
-#            func_module_name = get_object_module_name_or_none(func)  # type: ignore[operator]
-#    
-#            # If the decorated callable fails to define the "__module__" dunder
-#            # attribute, there exists *NO* known module against which to resolve
-#            # this stringified type hint. Since this implies that this hint *CANNOT*
-#            # be reliably resolved, raise an exception.
-#            #
-#            # Note that this is an uncommon edge case that nonetheless occurs
-#            # frequently enough to warrant explicit handling by raising a more
-#            # human-readable exception than would otherwise be raised (e.g., if the
-#            # lower-level get_object_module_name() getter were called instead
-#            # above). Notably, the third-party "markdown-exec" package behaved like
-#            # this -- and possibly still does. See also:
-#            #     https://github.com/beartype/beartype/issues/381
-#            if not func_module_name:
-#                raise exception_cls(
-#                    f'{exception_prefix}forward reference type hint "{hint}" '
-#                    f'unresolvable, as '
-#                    f'"{get_object_name(func)}.__module__" dunder attribute '
-#                    f'undefined (e.g., due to {repr(func)} being defined only '
-#                    f'dynamically in-memory). '
-#                    f'So much bad stuff is happening here all at once that '
-#                    f'@beartype can no longer cope with the explosion in badness.'
-#                )
-#            # Else, the decorated callable defines that attribute.
-#    
-#            # Resolve the forward scope of the decorated callable, which requires
-#            # the decorated callable to define that attribute.
-#            _resolve_func_scope_forward(
-#                decor_meta=decor_meta,
-#                exception_cls=exception_cls,
-#                exception_prefix=exception_prefix,
-#            )
-#        # Else, this forward scope has already been decided.
-#        #
-#        # In either case, this forward scope should now all have been decided.
-#    
-#        return decor_meta.func_wrappee_scope_forward
-#* Refactor resolve_hint() to call make_decor_meta_scope_forward() rather than
-#  duplicate that logic.
-#* Do *TONS* of other stuff here. Namely:
-#  * Define a new temporary "codemainnew" submodule defining a new
-#    make_check_expr() function. This super-refactored make_check_expr() should
-#    receive a new optional "hint_scope: Optional[BeartypeForwardScope] = None"
-#    parameter. Do nothing with that "hint_scope" for now. Just get this to
-#    work.
-#  * Implement the changes listed in "_wraputil", please.
-#  * Define a new temporary "_wrapreturnnew" submodule as well, which should
-#    pass the current return hint to is_hint_contextual() and, if that tester
-#    returns True:
-#    * Call make_decor_meta_scope_forward() to instantiate a new forward scope.
-#    * Pass that forward scope to our new make_check_expr().
-#* Try substituting "_wrapreturn" for "_wrapreturnnew". If thinks actually work,
-#  we can incrementally proceed from there. \o/
-#* *AFTER EVERYTHING ELSE WORKS,* refactor our reduce_hint_pep484_ref() reducer
-#  to call _resolve_func_scope_forward_hint() rather than
-#  find_hint_pep484_ref_on_cls_stack_or_none(). When doing so, however, note
-#  that we'll need to guard against the leading edge case detailed in
-#  resolve_hint():
-#      if hint in decor_meta.func_wrappee_scope_nested_names:
-#          return hint
-#  Remember, however, that trivial test is *BUGGED.* It *DOES* efficiently
-#  detect unqualified basenames of non-nested types (e.g., "Outer", "Inner") but
-#  fails to detect partially-qualified basenames of nested types (e.g.,
-#  "Outer.Inner"). Ugh!
-
-# class BeartypeDecorMetaForwardScope(BeartypeForwardScope):
-#     '''
-#     **Beartype decorator call forward scope** (i.e., dictionary mapping from the
-#     name to value of each locally and globally accessible attribute in the local
-#     and global scope of the callable currently being decorated by the
-#     :func:`beartype.beartype` decorator as well as deferring the resolution of
-#     each currently undeclared attribute in that scope by replacing that
-#     attribute with a forward reference proxy resolved only when that attribute
-#     is passed as the second parameter to an :func:`isinstance`-based runtime
-#     type-check).
-#
-#     Attributes
-#     ----------
-#     _decor_meta : BeartypeDecorMeta
-#         **Beartype decorator call metadata** (i.e., object encapsulating *all*
-#         metadata for the callable currently being decorated by the
-#         :func:`beartype.beartype` decorator).
-#     '''
-#
-#     # ..................{ CLASS VARIABLES                    }..................
-#     # Slot all instance variables defined on this object. See the superclass!
-#     __slots__ = (
-#         '_decor_meta',
-#     )
-#
-#     # ..................{ INITIALIZERS                       }..................
-#     # def __init__(self, decor_meta: BeartypeDecorMeta, scope_name: str) -> None:
-#     def __init__(self, scope_name: str) -> None:
-#         '''
-#         Initialize this beartype decorator call forward scope.
-#
-#         Attributes
-#         ----------
-#         _decor_meta : BeartypeDecorMeta
-#             **Beartype decorator call metadata** (i.e., object encapsulating
-#             *all* metadata for the callable currently being decorated by the
-#             :func:`beartype.beartype` decorator).
-#         scope_name : str
-#             Fully-qualified name of this forward scope. For example:
-#
-#             * ``"some_package.some_module"`` for a module scope (e.g., to
-#               resolve a global class or callable against this scope).
-#             * ``"some_package.some_module.SomeClass"`` for a class scope (e.g.,
-#               to resolve a nested class or callable against this scope).
-#
-#         Raises
-#         ------
-#         BeartypeDecorHintForwardRefException
-#             If this scope name is *not* a valid Python attribute name.
-#         '''
-#         # assert isinstance(decor_meta, BeartypeDecorMeta), (
-#         #     f'{repr(decor_meta)} not @beartype call.')
-#
-#         # Initialize our superclass.
-#         super().__init__(scope_name=scope_name)
-#
-#         # Classify all passed parameters.

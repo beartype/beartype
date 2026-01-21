@@ -15,7 +15,6 @@ from beartype.roar._roarexc import (
     _BeartypeUtilCallableScopeException,
     _BeartypeUtilCallableScopeNotFoundException,
 )
-from beartype.typing import Any
 from beartype._util.utilobject import get_object_basename_scoped
 from beartype._data.func.datafunccodeobj import FUNC_CODEOBJ_NAME_MODULE
 from beartype._data.typing.datatyping import (
@@ -33,6 +32,7 @@ def get_func_globals(
 
     # Optional parameters.
     exception_cls: TypeException = _BeartypeUtilCallableScopeException,
+    exception_prefix: str = '',
 ) -> LexicalScope:
     '''
     **Global scope** (i.e., a dictionary mapping from the name to value of each
@@ -60,6 +60,9 @@ def get_func_globals(
     exception_cls : Type[Exception], default: _BeartypeUtilCallableScopeException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableScopeException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -75,24 +78,48 @@ def get_func_globals(
     assert callable(func), f'{repr(func)} not callable.'
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunctest import die_unless_func_python
     from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
-
-    # If this callable is *NOT* pure-Python, raise an exception. C-based
-    # callables do *NOT* define the "__globals__" dunder attribute.
-    die_unless_func_python(func=func, exception_cls=exception_cls)
-    # Else, this callable is pure-Python.
 
     # Lowest-level wrappee callable wrapped by this wrapper callable.
     func_wrappee = unwrap_func_all_isomorphic(func)
 
-    # Dictionary mapping from the name to value of each locally scoped
-    # attribute accessible to this wrappee callable to be returned.
+    # Dictionary mapping from the name to value of each locally scoped attribute
+    # accessible to this wrappee callable to be returned if any *OR* "None"
+    # otherwise (i.e., if this wrappee callable fails to define the
+    # "__globals__" dunder attribute).
+    func_globals = getattr(func_wrappee, '__globals__', None)
+
+    # If this wrappee callable fails to define the "__globals__" dunder
+    # attribute, raise an exception.
+    #
+    # Note that this validation is intentionally implemented manually rather
+    # than deferring to related validators such as:
+    # * die_unless_func_codeobj(), as only a subset of code-objectables define
+    #   the "__globals__" dunder attribute.
+    # * die_unless_func_python(), as some callables that are *NOT* pure-Python
+    #   actually *DO* define the "__globals__" dunder attribute. C-based bound
+    #   method objects are the canonical example.
+    if func_globals is None:
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise a human-readable exception.
+        raise exception_cls(
+            f'{exception_prefix}{repr(func)} '
+            f'"__globals__" dunder attribute not found, as neither:\n'
+            f'* Pure-Python callable.\n'
+            f'* C-based bound method object encapsulating a pure-Python method.'
+        )
+    # Else, this wrappee callable defines the "__globals__" dunder attribute.
+
+    # Return this dictionary.
     #
     # Note that we intentionally do *NOT* return the global scope for this
     # wrapper callable, as wrappers are typically defined in different modules
     # (and thus different global scopes) by different module authors.
-    return func_wrappee.__globals__  # type: ignore[attr-defined]
+    return func_globals
 
 # ....................{ GETTERS ~ locals                   }....................
 def get_func_locals(
@@ -630,7 +657,7 @@ def get_caller_external_locals(
 # ....................{ ADDERS                             }....................
 def add_func_scope_attr(
     # Mandatory parameters.
-    attr: Any,
+    attr: object,
     func_scope: LexicalScope,
 
     # Optional parameters.
@@ -646,7 +673,7 @@ def add_func_scope_attr(
 
     Parameters
     ----------
-    attr : Any
+    attr : object
         Arbitrary object to be added to this scope.
     func_scope : LexicalScope
         Local or global scope to add this object to.

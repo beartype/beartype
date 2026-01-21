@@ -116,10 +116,10 @@ def get_func_codeobj(
     # If this callable is *NOT* pure-Python...
     if func_codeobj is None:
         # Avoid circular import dependencies.
-        from beartype._util.func.utilfunctest import die_unless_func_python
+        from beartype._util.func.utilfunctest import die_unless_func_codeobjable
 
         # Raise an exception.
-        die_unless_func_python(
+        die_unless_func_codeobjable(
             func=func,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
