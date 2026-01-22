@@ -52,6 +52,7 @@ from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import HintOrSentinel
 from beartype._util.cls.utilclsget import get_type_locals
 from beartype._util.func.utilfuncscope import (
+    get_caller_external_locals,
     get_func_globals,
     get_func_locals,
 )
@@ -59,12 +60,101 @@ from beartype._util.hint.pep.proposal.pep695 import resolve_func_scope_pep695
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.text.utiltextlabel import label_callable
 from beartype._util.utilobject import get_object_name
-from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
 
 # ....................{ FACTORIES ~ caller                 }....................
-#FIXME: Define make_caller_external_scope_forward() here, please! \o/
+#FIXME: Unit test us up, please.
+def make_caller_external_scope_forward(
+    # Optional parameters.
+    hint: HintOrSentinel = SENTINEL,
+    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
+    exception_prefix: str = '',
+) -> BeartypeForwardScope:
+    '''
+    Create and return a new **forward scope** (i.e., dictionary mapping from the
+    name to value of each locally and globally accessible attribute in the local
+    and global scope of the currently decorated callable as well as deferring
+    the resolution of each currently undeclared attribute in that scope by
+    replacing that attribute with a forward reference proxy resolved only when
+    that attribute is passed as the second parameter to an :func:`isinstance`-
+    or :func:`issubclass`-based runtime type-check) relative to the first
+    **external lexical scope** on the call stack (i.e., originating from any
+    module or package *except* those residing in the :mod:`beartype` package).
+
+    This factory is internally memoized into the
+    :attr:`decor_meta.func_wrappee_scope_forward` instance variable of the
+    passed metadata.
+
+    Parameters
+    ----------
+    hint : HintOrSentinel, default: SENTINEL
+        :pep:`484`-compliant forward reference type hint requiring this forward
+        scope if any *or* the sentinel placeholder. This factory embeds this
+        hint in exception messages for readability. Defaults to the sentinel
+        placeholder.
+    exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintForwardRefException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Returns
+    -------
+    BeartypeForwardScope
+        Forward scope relative to the currently decorated callable.
+    '''
+
+    #FIXME: *INSUFFICIENT.* Clearly, what we *REALLY* want here is:
+    #    caller_external_frame = get_caller_external_frame(
+    #        # Additionally ignore the current frame on the call stack
+    #        # encapsulating the current call to this factory function.
+    #        ignore_frames=1,
+    #        exception_cls=exception_cls,
+    #    )
+    #
+    #    caller_globals = get_frame_globals(caller_external_frame)
+    #    caller_locals = get_frame_locals(caller_external_frame)
+    #    caller_module_name = get_frame_module_name_or_none(__name__, '')
+    #
+    #Thus, trivially shift get_caller_external_frame() into "utilfuncframe" and
+    #refactor accordingly. Let's do this! W00t. Ugh...
+
+    # Local scope of the external caller, localized to improve readability
+    # and negligible efficiency when accessed below.
+    caller_locals = get_caller_external_locals(
+        # Additionally ignore the current frame on the call stack
+        # encapsulating the current call to this factory function.
+        ignore_frames=1,
+        exception_cls=exception_cls,
+    )
+
+    # Forward scope compositing this global and local scope of the external
+    # caller as well as dynamically replacing each unresolved attribute of
+    # each stringified type hint with a forward reference proxy resolving that
+    # attribute on the first attempt to pass that attribute as the second
+    # parameter to an isinstance()- or issubclass()based runtime type-check.
+    caller_scope = BeartypeForwardScope(
+        scope_name='')  # <-- *LOL AWFUL*
+        # scope_name=caller_module_name)  # type: ignore[arg-type]
+
+    # Composite this global and local scope into this forward scope (in that
+    # order), implicitly overwriting first each builtin attribute and then
+    # each global attribute previously copied into this forward scope with
+    # each global and then local attribute of the same name. Since locals
+    # *ALWAYS* assume precedence over globals *ALWAYS* assume precedence
+    # over builtins, order of operation is *EXTREMELY* significant here.
+    #FIXME: *UNCOMMENT AFTER THIS ACTUALLY EXISTS.* \o/
+    # caller_scope.update(caller_globals)
+    caller_scope.update(caller_locals)
+    # print(f'Forward scope: {decor_meta.func_wrappee_scope_forward}')
+
+    # ....................{ RETURN                         }....................
+    # Return this forward scope for orthogonality with the sibling
+    # make_caller_external_scope_forward() factory.
+    return caller_scope
 
 # ....................{ FACTORIES ~ decorated              }....................
+#FIXME: Unit test us up, please.
 def make_decor_meta_scope_forward(
     # Mandatory parameters.
     decor_meta: BeartypeDecorMeta,
@@ -222,16 +312,15 @@ def make_decor_meta_scope_forward(
                     0 if cls_stack is None else len(cls_stack)),
 
                 #FIXME: Consider dynamically calculating exactly how many
-                #additional @beartype-specific frames are ignorable on the
-                #first call to this function, caching that number, and then
-                #reusing that cached number on all subsequent calls to this
-                #function. The current approach employed below of naively
-                #hard-coding a number of frames to ignore was incredibly
-                #fragile and had to be effectively disabled, which hampers
-                #runtime efficiency.
+                #additional @beartype-specific frames are ignorable on the first
+                #call to this function, caching that number, and then reusing
+                #that cached number on all subsequent calls to this function.
+                #The current approach employed below of naively hard-coding a
+                #number of frames to ignore was incredibly fragile and had to be
+                #effectively disabled, which hampers runtime efficiency.
 
-                # Ignore additional frames on the call stack embodying:
-                # * The current call to this function.
+                # Additionally ignore the current frame on the call stack
+                # encapsulating the current call to this factory function.
                 #
                 # Note that, for safety, we currently avoid ignoring additional
                 # frames that we could technically ignore. These include:
@@ -249,13 +338,13 @@ def make_decor_meta_scope_forward(
         # If this local scope cannot be found (i.e., if this getter found the
         # lexical scope of the module declaring the decorated callable *BEFORE*
         # that of the parent callable or class declaring that callable), then
-        # this resolve_hint_pep484_ref_str() function was called *AFTER* rather than *DURING*
-        # the declaration of the decorated callable. This implies that that
-        # callable is not, in fact, currently being decorated. Instead, that
-        # callable was *NEVER* decorated by @beartype but has instead
-        # subsequently been passed to this resolve_hint_pep484_ref_str() function after its
-        # initial declaration -- typically due to an external caller passing
-        # that callable to our public beartype.peps.resolve_pep563() function.
+        # this factory function was called *AFTER* rather than *DURING* the
+        # declaration of the decorated callable. This implies that that callable
+        # is not, in fact, currently being decorated. Instead, that callable was
+        # *NEVER* decorated by @beartype but has instead subsequently been
+        # passed to this function after its initial declaration -- typically due
+        # to an external caller passing that callable to our public
+        # beartype.peps.resolve_pep563() function.
         #
         # In this case, the call stack frame providing this local scope has
         # (almost certainly) already been deleted and is no longer accessible.
@@ -363,9 +452,9 @@ def make_decor_meta_scope_forward(
     # ..................{ SCOPE                              }..................
     # Forward scope compositing this global and local scope of the decorated
     # callable as well as dynamically replacing each unresolved attribute of
-    # this stringified type hint with a forward reference proxy resolving this
-    # attribute on the first attempt to pass this attribute as the second
-    # parameter to an isinstance()-based runtime type-check: e.g.,
+    # each stringified type hint with a forward reference proxy resolving that
+    # attribute on the first attempt to pass that attribute as the second
+    # parameter to an isinstance()- or issubclass()based runtime type-check:
     #     from beartype import beartype
     #     from beartype.typing import Dict, Generic, TypeVar
     #
@@ -382,17 +471,8 @@ def make_decor_meta_scope_forward(
     #     def muh_func(muh_arg: 'Dict[str, MuhGeneric[int]]') -> None: ...
     #
     #     class MuhGeneric(Generic[T]): ...
-    #
-    # Initialize this forward scope to the set of all builtin attributes (e.g.,
-    # "str", "Exception"). The eval() builtin *DOES* implicitly evaluate this
-    # stringified type hint against all builtin attributes, but only *AFTER*
-    # invoking the BeartypeForwardScope.__missing__() dunder method with each
-    # such builtin attribute referenced in this hint. Since handling that
-    # eccentricity would be less efficient and trivial than simply initializing
-    # this forward scope with all builtin attributes, we prefer the current
-    # (admittedly sus af) approach. Do not squint at this.
     func_scope = decor_meta.func_wrappee_scope_forward = BeartypeForwardScope(
-        scope_dict=func_builtins, scope_name=func_module_name)  # type: ignore[arg-type]
+        scope_name=func_module_name)  # type: ignore[arg-type]
 
     # Composite this global and local scope into this forward scope (in that
     # order), implicitly overwriting first each builtin attribute and then
@@ -421,4 +501,4 @@ def make_decor_meta_scope_forward(
     # ....................{ RETURN                         }....................
     # Return this forward scope for orthogonality with the sibling
     # make_caller_external_scope_forward() factory.
-    return decor_meta.func_wrappee_scope_forward
+    return func_scope

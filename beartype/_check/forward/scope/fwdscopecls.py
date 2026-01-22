@@ -38,12 +38,12 @@ from beartype._check.forward.reference.fwdrefabc import (
     BeartypeForwardRefSubbableABC)
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_subbable_subtype)
-from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.func.utilfuncframe import (
     get_frame_caller_module_name_or_none,
     is_frame_caller_beartype,
 )
 from beartype._util.text.utiltextidentifier import die_unless_identifier
+from builtins import __dict__ as scope_builtins  # type: ignore[attr-defined]
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Unit test us up, please.
@@ -63,13 +63,34 @@ class BeartypeForwardScope(LexicalScope):
     * :pep:`484`-compliant forward references.
     * :pep:`563`-postponed type hints.
 
+    This dictionary should composite both the local and global scopes (i.e.,
+    dictionaries mapping from the name to value of each locally and globally
+    accessible attribute in the local and global scope of some class or
+    callable) underlying the desired lexical scope. This dictionary should *not*
+    provide only the local or global scope; this dictionary should provide both.
+    Why? Because this forward scope is principally intended to be passed as the
+    second and last parameter to the :func:`eval` builtin, called by the
+    :func:`beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str`
+    function. For unknown reasons, :func:`eval` only calls the
+    :meth:`__missing__` dunder method of this forward scope when passed only two
+    parameters (i.e., when passed only a global scope); :func:`eval` does *not*
+    call the :meth:`__missing__` dunder method of this forward scope when passed
+    three parameters (i.e., when passed both a global and local scope).
+    Presumably, this edge case pertains to the official :func:`eval` docstring
+    -- which reads:
+
+        The globals must be a dictionary and locals can be any mapping,
+        defaulting to the current globals and locals.
+        If only globals is given, locals defaults to it.
+
+    Clearly, :func:`eval` treats globals and locals fundamentally differently
+    (probably for efficiency or obscure C implementation details). Since
+    :func:`eval` only supports a single unified globals dictionary for our use
+    case, the caller *must* composite together the global and local scopes into
+    this dictionary. Praise to Guido.
+
     Attributes
     ----------
-    _scope_dict : LexicalScope
-        **Composite local and global scope** (i.e., dictionary mapping from
-        the name to value of each locally and globally accessible attribute
-        in the local and global scope of some class or callable) underlying
-        this forward scope. See the :meth:`__init__` method for details.
     _scope_name : str
         Fully-qualified name of this forward scope. See the :meth:`__init__`
         method for details.
@@ -81,7 +102,6 @@ class BeartypeForwardScope(LexicalScope):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        '_scope_dict',
         '_scope_name',
     )
 
@@ -93,43 +113,29 @@ class BeartypeForwardScope(LexicalScope):
         scope_name: str,
 
         # Optional parameters.
-        scope_dict: LexicalScope = FROZENDICT_EMPTY,
+        scope_dict: LexicalScope = scope_builtins,
     ) -> None:
         '''
-        Initialize this forward scope.
+        Initialize this forward scope to the immutable dictionary of all
+        **builtin attributes** (e.g., :class:`str`, :class:`Exception`) by
+        default.
+
+        As detailed in the class docstring, callers typically use this forward
+        scope to resolve a :pep:`484`-compliant stringified type hint by passing
+        that hint and this scope as a single unified globals dictionary to the
+        :func:`eval` builtin. In that context, :func:`eval` *does* implicitly
+        evaluate that hint against all builtin attributes, but only *after*
+        invoking the :meth:`__missing__` dunder method with each such builtin
+        attribute referenced in this hint. Since handling that eccentricity
+        would be less efficient and trivial than simply initializing this
+        forward scope with all builtin attributes, we prefer the current
+        (admittedly sus af) approach. Do not squint at this.
 
         Attributes
         ----------
-        scope_dict : LexicalScope, default: FROZENDICT_EMPTY
-            **Composite local and global scope** (i.e., dictionary mapping from
-            the name to value of each locally and globally accessible attribute
-            in the local and global scope of some class or callable) underlying
-            this forward scope. Defaults to the empty frozen dictionary.
-
-            Crucially, **this dictionary must composite both the local and
-            global scopes for that class or callable.** This dictionary must
-            *not* provide only the local or global scope; this dictionary must
-            provide both. Why? Because this forward scope is principally
-            intended to be passed as the second and last parameter to the
-            :func:`eval` builtin, called by the
-            :func:`beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str` function.
-            For unknown reasons, :func:`eval` only calls the :meth:`__missing__`
-            dunder method of this forward scope when passed only two parameters
-            (i.e., when passed only a global scope); :func:`eval` does *not*
-            call the :meth:`__missing__` dunder method of this forward scope
-            when passed three parameters (i.e., when passed both a global and
-            local scope). Presumably, this edge case pertains to the official
-            :func:`eval` docstring -- which reads:
-
-                The globals must be a dictionary and locals can be any mapping,
-                defaulting to the current globals and locals.
-                If only globals is given, locals defaults to it.
-
-            Clearly, :func:`eval` treats globals and locals fundamentally
-            differently (probably for efficiency or obscure C implementation
-            details). Since :func:`eval` only supports a single unified globals
-            dictionary for our use case, the caller *must* composite together
-            the global and local scopes into this dictionary. Praise to Guido.
+        scope_dict : LexicalScope, default: scope_builtins
+            Initial dictionary from which to populate this forward scope.
+            Defaults to the immutable dictionary of all **builtin attributes.**
         scope_name : str
             Fully-qualified name of this forward scope. For example:
 
@@ -160,7 +166,6 @@ class BeartypeForwardScope(LexicalScope):
         # Else, this scope name is syntactically valid.
 
         # Classify all passed parameters.
-        self._scope_dict = scope_dict
         self._scope_name = scope_name
 
     # ..................{ DUNDERS                            }..................
