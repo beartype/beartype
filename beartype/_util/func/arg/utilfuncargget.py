@@ -13,12 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Optional,
-    Tuple,
-)
+from beartype.typing import Optional
 from beartype._data.typing.datatyping import (
     Codeobjable,
+    TupleStrs,
     TypeException,
 )
 from beartype._util.func.arg.utilfuncargiter import (
@@ -228,7 +226,7 @@ def get_func_arg_names(
     is_unwrap: bool = True,
     exception_cls: TypeException = _BeartypeUtilCallableException,
     exception_prefix: str = '',
-) -> Tuple[str, ...]:
+) -> TupleStrs:
     '''
     Tuple of the names of all parameters accepted by the passed pure-Python
     callable.
@@ -302,16 +300,16 @@ def get_func_arg_names(
         :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
         Defaults to :data:`True` for safety. See :func:`.get_func_codeobj` for
         further commentary.
-    exception_cls : type, optional
+    exception_cls : type, default: _BeartypeUtilCallableException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable label prefixing the message of any exception raised in
         the event of a fatal error. Defaults to the empty string.
 
     Returns
     -------
-    Tuple[str, ...]
+    tuple[str, ...]
         Tuple of the names of all parameters accepted by that callable.
 
     Raises

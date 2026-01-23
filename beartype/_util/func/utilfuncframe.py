@@ -14,16 +14,18 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 import sys
 from beartype.roar._roarexc import _BeartypeUtilCallFrameException
-from beartype.typing import (
-    Callable,
-    Iterable,
-    Optional,
-)
 from beartype._cave._cavefast import CallableFrameType
 from beartype._data.typing.datatyping import (
     LexicalScope,
+    MappingStrToAny,
     TypeException,
 )
+from collections.abc import (
+    Callable,
+    Iterable,
+    Mapping,
+)
+from typing import Optional
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -259,6 +261,34 @@ ValueError
 
 # ....................{ GETTERS ~ attr                     }....................
 #FIXME: Unit test up, please. *sigh*
+def get_frame_globals(frame: CallableFrameType) -> LexicalScope:
+    '''
+    **Global scope** encapsulated by the passed **stack frame** (i.e.,
+    :class:`.CallableFrameType` instance encapsulating all metadata describing a
+    single call on the current call stack).
+
+    Parameters
+    ----------
+    frame : CallableFrameType
+        Stack frame to be inspected.
+
+    Returns
+    -------
+    LexicalScope
+        **Global scope** encapsulated by this frame.
+    '''
+    assert isinstance(frame, CallableFrameType), (
+        f'{repr(frame)} not stack frame.')
+
+    # Local scope of this frame to be yielded to the caller, possibly coerced
+    # from a non-dictionary into a dictionary.
+    frame_globals = _coerce_mapping_to_scope(frame.f_globals)
+
+    # Return this global scope.
+    return frame_globals
+
+
+#FIXME: Unit test up, please. *sigh*
 def get_frame_locals(frame: CallableFrameType) -> LexicalScope:
     '''
     **Local scope** encapsulated by the passed **stack frame** (i.e.,
@@ -278,39 +308,12 @@ def get_frame_locals(frame: CallableFrameType) -> LexicalScope:
     assert isinstance(frame, CallableFrameType), (
         f'{repr(frame)} not stack frame.')
 
-    # Local scope of this frame to be yielded to the caller.
-    func_scope = frame.f_locals
-
-    # If this local scope is *NOT* a "dict" instance, coerce this local scope
-    # into a "dict" instance. Why? Several justifiable reasons:
-    # * This getter is annotated as returning a "LexicalScope", which is
-    #   currently just a readable alias for "DictStrToAny", which is itself an
-    #   efficiency alias for "Dict[Str, object]". Ergo, static type-checkers
-    #   expect this getter to return "dict" instances.
-    # * Under Python <= 3.11, the "func_frame.f_locals" instance variable
-    #   actually is a "dict" instance.
-    # * Under Python >= 3.12, the "func_frame.f_locals" instance variable
-    #   actually is instead a "mappingproxy" instance. Although interchangeable
-    #   for most purposes, "dict" and "mappingproxy" instances are *NOT*
-    #   perfectly interchangeable. In particular, callers of this function
-    #   frequently pass this local scope to the dict.update() method -- which
-    #   expects the passed mapping to also be a "dict" instance: e.g.,
-    #       cls_curr_locals = get_type_locals(
-    #           cls=cls_curr, exception_cls=exception_cls)
-    #   >   func_locals.update(cls_curr_locals)
-    #   E   TypeError: update() argument must be dict or another FrameLocalsProxy
-    #
-    #   Why? No idea. Ideally, the dict.update() method would accept arbitrary
-    #   mappings -- but it doesn't. Since it doesn't, we have *NO* recourse but
-    #   to preserve forward compatibility with future Python versions by
-    #   coercing non-"dict" to "dict" instances here on behalf of the caller. It
-    #   is what it is. We sigh! *sigh*
-    if not isinstance(func_scope, dict):
-        func_scope = dict(func_scope)
-    # Else, this local scope is already a "dict" instance.
+    # Local scope of this frame to be yielded to the caller, possibly coerced
+    # from a non-dictionary into a dictionary.
+    frame_locals = _coerce_mapping_to_scope(frame.f_locals)
 
     # Return this local scope.
-    return func_scope
+    return frame_locals
 
 # ....................{ GETTERS ~ name : package           }....................
 #FIXME: Unit test us up, please.
@@ -518,6 +521,125 @@ def get_frame_module_name_or_none(frame: CallableFrameType) -> Optional[str]:
 #
 #     # Return this name.
 #     return frame_name
+
+# ....................{ FINDERS                            }....................
+def find_frame_caller_external(
+    # Optional parameters.
+    ignore_frames: int = 0,
+    exception_cls: TypeException = _BeartypeUtilCallFrameException,
+    exception_prefix: str = '',
+    **kwargs
+) -> CallableFrameType:
+    '''
+    First **external caller stack frame** (i.e., :class:`.CallableFrameType`
+    object originating from any module or package *except* those residing in the
+    :mod:`beartype` package itself) on the current call stack *after* ignoring
+    the passed number of stack frames.
+
+    This finder returns the stack frame originating from the third-party package
+    or module that most recently directly called some public :mod:`beartype`
+    function. Typically, that function is either of the statement-level
+    :func:`beartype.door.die_if_unbearable` or :func:`beartype.door.is_bearable`
+    type-checkers, which conditionally defer to this finder to resolve
+    :pep:`484`-compliant relative forward references against the local and
+    global lexical scopes of that external caller.
+
+    Parameters
+    ----------
+    ignore_frames : int, default: 0
+        Number of frames on the call stack to be ignored (i.e., silently
+        incremented past), such that the next non-ignored frame following the
+        last ignored frame is the parent callable or module directly declaring
+        the passed callable. Defaults to 0.
+    exception_cls : Type[Exception], default: _BeartypeUtilCallFrameException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallFrameException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.iter_frames` generator.
+
+    Returns
+    -------
+    CallableFrameType
+        Stack frame originating from the first external caller on the current
+        call stack.
+
+    Raises
+    ------
+    exception_cls
+        If the call stack contains either:
+
+        * *Only* the stack frame encapsulating the current call to this getter.
+          Although an extreme edge case, this could technically occur if the
+          caller called this getter from a REPL.
+        * *Only* two or more ignorable stack frames.
+
+    See Also
+    --------
+    :func:`.iter_frames`
+        Further details.
+    '''
+    assert isinstance(ignore_frames, int), f'{ignore_frames} not integer.'
+    assert ignore_frames >= 0, f'{ignore_frames} negative.'
+
+    # ..................{ LOCALS                             }..................
+    # Stack frame originating from the first external caller on the current
+    # call stack.
+    frame_caller_external: CallableFrameType = None  # type: ignore[assignment]
+
+    # ..................{ SEARCH                             }..................
+    # While at least one frame remains on the call stack, iteratively search up
+    # the call stack for the first unignorable frame, whereupon that frame's
+    # local runtime scope is returned as is.
+    #
+    # Note that exactly what "unignorable" means depends on whether the caller
+    # passed additional keyword arguments. By default, this getter ignores *ALL*
+    # scopes that either:
+    # * Do *NOT* derive from a pure-Python object.
+    # * Originate inside the "beartype" package.
+    # * Originate outside a module.
+    for frame_caller_external in iter_frames(
+        # 0-based index of the first non-ignored frame following the last
+        # ignored frame, ignoring an additional frame embodying the current call
+        # to this getter.
+        ignore_frames=ignore_frames + 1,
+        **kwargs
+    ):
+    # Then this frame is the first unignorable frame to yield the local runtime
+    # scope of to the caller. Why? Because the iter_frames() generator yielded
+    # (rather than ignored) this frame. Assuming the caller passed *NO*
+    # additional keyword parameters, this *MUST* be a frame encapsulating a
+    # scope that:
+    # * Derives from a pure-Python object.
+    # * Originate outside the "beartype" package.
+    # * Originate inside a module.
+        # Halt iteration.
+        break
+    # If the above "break" statement was *NOT* performed, the above call to the
+    # iter_frames() generator failed to yield even a single unignorable frame.
+    # Ergo, that generator either:
+    # * Yielded one or more ignorable frames. This is the common case.
+    # * Yielded *NO* frames. Although an extreme edge case, this could
+    #   technically occur if the caller called this getter from a REPL.
+    #
+    # In either case...
+    else:  # pragma: no cover
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise an exception.
+        raise exception_cls(
+            f'{exception_prefix}call stack either '
+            f'empty or contains only ignorable stack frames.'
+        )
+
+    # Return this frame. By the above logic, this frame is guaranteed to exist.
+    return frame_caller_external
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Generalize with a new "is_module_boundary_stop: bool = True" optional
@@ -727,3 +849,52 @@ def iter_frames(
 
         # Iterate to the next frame on the call stack.
         func_frame = func_frame.f_back
+
+# ....................{ PRIVATE ~ coercers                 }....................
+#FIXME: Unit test us up, please. *sigh*
+def _coerce_mapping_to_scope(scopelike: MappingStrToAny) -> LexicalScope:
+    '''
+    **Lexical scope** (i.e., dictionary mapping from strings to arbitrary
+    objects) converted if necessary from the passed **lexical scope-like
+    mapping** (i.e., possibly immutable mapping from strings to arbitrary
+    objects).
+
+    Parameters
+    ----------
+    scopelike : Mapping[str, object]
+        Lexical scope-like mapping to be converted into a lexical scope.
+
+    Returns
+    ----------
+    dict[str, object]
+        Lexical scope converted from this lexical scope-like mapping.
+    '''
+    assert isinstance(scopelike, Mapping), f'{repr(scopelike)} not mapping.'
+
+    # If this scope-like is *NOT* a "dict" instance, coerce this scope-like
+    # into a "dict" instance. Why? Several justifiable reasons:
+    # * Higher-level callers calling this lower-level coercer are typically
+    #   annotated as returning a "LexicalScope", which is currently just a
+    #   readable alias for "DictStrToAny", which is itself an efficiency alias
+    #   for "Dict[Str, object]". Ergo, static type-checkers expect this getter
+    #   to return "dict" instances.
+    # * Under Python <= 3.11, the "CallerFrameType.f_locals" instance variable
+    #   actually is a "dict" instance.
+    # * Under Python >= 3.12, the "CallerFrameType.f_locals" instance variable
+    #   actually is instead a "mappingproxy" instance. Although interchangeable
+    #   for most purposes, "dict" and "mappingproxy" instances are *NOT*
+    #   perfectly interchangeable. In particular, callers of this function
+    #   frequently pass this local scope to the dict.update() method -- which
+    #   expects the passed mapping to also be a "dict" instance: e.g.,
+    #       cls_curr_locals = get_type_locals(
+    #           cls=cls_curr, exception_cls=exception_cls)
+    #   >   func_locals.update(cls_curr_locals)
+    #   E   TypeError: update() argument must be dict or another FrameLocalsProxy
+    #
+    #   Why? No idea. Ideally, the dict.update() method would accept arbitrary
+    #   mappings -- but it doesn't. Since it doesn't, we have *NO* recourse but
+    #   to preserve forward compatibility with future Python versions by
+    #   coercing non-"dict" to "dict" instances here on behalf of the caller. It
+    #   is what it is. We sigh! *sigh*
+    return scopelike if isinstance(scopelike, dict) else dict(scopelike)
+    # Else, this local scope is already a "dict" instance.

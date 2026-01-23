@@ -549,13 +549,13 @@ StrOrNone = str | None
 '''
 
 # ....................{ TUPLE                              }....................
-TupleStrs = Tuple[str, ...]
+TupleStrs = tuple[str, ...]
 '''
 :pep:`585`-compliant type hint matching a tuple of strings.
 '''
 
 
-TupleStrAndStr = Tuple[str, str]
+TupleStrAndStr = tuple[str, str]
 '''
 :pep:`585`-compliant type hint matching a 2-tuple whose first and second items
 are both strings. While ad-hoc, this data structure has proven useful throughout
@@ -563,7 +563,7 @@ the codebase.
 '''
 
 
-TupleStrOrNoneAndStr = Tuple[StrOrNone, str]
+TupleStrOrNoneAndStr = tuple[StrOrNone, str]
 '''
 :pep:`585`-compliant type hint matching a 2-tuple whose:
 

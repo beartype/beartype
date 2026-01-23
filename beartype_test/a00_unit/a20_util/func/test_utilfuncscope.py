@@ -287,30 +287,6 @@ def test_get_func_locals() -> None:
             ignore_func_scope_names=2,
         )
 
-
-def test_get_caller_external_locals() -> None:
-    '''
-    Test the
-    :func:`beartype._util.func.utilfuncscope.get_caller_external_locals` getter.
-    '''
-
-    # ..................{ IMPORTS                            }..................
-    # Defer test-specific imports.
-    from beartype._util.func.utilfuncscope import get_caller_external_locals
-
-    # ..................{ LOCALS                             }..................
-    # Arbitrary local variable to be detected below.
-    THE_PHANTOMS_PALE = "Bestirr'd themselves, thrice horrible and cold;"
-
-    # ..................{ PASS ~ noop                        }..................
-    # Lexical scope encapsulating the local body of this unit test.
-    test_locals = get_caller_external_locals()
-
-    # Assert that this scope contains the local variable defined above.
-    assert 'THE_PHANTOMS_PALE' in test_locals
-    assert test_locals['THE_PHANTOMS_PALE'] == (
-        "Bestirr'd themselves, thrice horrible and cold;")
-
 # ....................{ TESTS ~ adder                      }....................
 def test_add_func_scope_attr() -> None:
     '''

@@ -112,6 +112,42 @@ def test_get_frame() -> None:
     # Assert this attribute is a callable under both CPython and PyPy.
     assert callable(get_frame) is True
 
+# ....................{ TESTS ~ finders                    }....................
+def test_find_frame_caller_external() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfuncframe.find_frame_caller_external` getter.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype._util.func.utilfuncframe import (
+        find_frame_caller_external,
+        get_frame_globals,
+        get_frame_locals,
+    )
+
+    # ..................{ LOCALS                             }..................
+    # Arbitrary local variable to be detected below.
+    THE_PHANTOMS_PALE = "Bestirr'd themselves, thrice horrible and cold;"
+
+    # ..................{ PASS ~ noop                        }..................
+    # Stack frame encapsulating the call to (and thus the body of) this unit
+    # test function.
+    test_frame = find_frame_caller_external()
+
+    # Global and local scopes of the body of this unit test function.
+    test_globals = get_frame_globals(test_frame)
+    test_locals = get_frame_locals(test_frame)
+
+    # Assert that this global scope contains this unit test function itself.
+    test_func = test_globals.get('test_find_frame_caller_external')
+    assert test_func is test_find_frame_caller_external
+
+    # Assert that this local scope contains the local variable defined above.
+    test_local = test_locals.get('THE_PHANTOMS_PALE')
+    assert test_local == "Bestirr'd themselves, thrice horrible and cold;"
+
 # ....................{ TESTS ~ iterators                  }....................
 def test_iter_frames() -> None:
     '''

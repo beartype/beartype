@@ -51,8 +51,13 @@ from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import HintOrSentinel
 from beartype._util.cls.utilclsget import get_type_locals
+from beartype._util.func.utilfuncframe import (
+    find_frame_caller_external,
+    get_frame_globals,
+    get_frame_locals,
+    get_frame_module_name_or_none,
+)
 from beartype._util.func.utilfuncscope import (
-    get_caller_external_locals,
     get_func_globals,
     get_func_locals,
 )
@@ -104,38 +109,32 @@ def make_caller_external_scope_forward(
         Forward scope relative to the currently decorated callable.
     '''
 
-    #FIXME: *INSUFFICIENT.* Clearly, what we *REALLY* want here is:
-    #    caller_external_frame = get_caller_external_frame(
-    #        # Additionally ignore the current frame on the call stack
-    #        # encapsulating the current call to this factory function.
-    #        ignore_frames=1,
-    #        exception_cls=exception_cls,
-    #    )
-    #
-    #    caller_globals = get_frame_globals(caller_external_frame)
-    #    caller_locals = get_frame_locals(caller_external_frame)
-    #    caller_module_name = get_frame_module_name_or_none(__name__, '')
-    #
-    #Thus, trivially shift get_caller_external_frame() into "utilfuncframe" and
-    #refactor accordingly. Let's do this! W00t. Ugh...
-
-    # Local scope of the external caller, localized to improve readability
-    # and negligible efficiency when accessed below.
-    caller_locals = get_caller_external_locals(
+    # ....................{ CALLER                         }....................
+    # Stack frame encapsulating the external caller.
+    caller_frame = find_frame_caller_external(
         # Additionally ignore the current frame on the call stack
         # encapsulating the current call to this factory function.
         ignore_frames=1,
         exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
     )
 
+    # Fully-qualified name of the module declaring this external caller if that
+    # caller defines the "__module__" dunder attribute *OR* "None" (i.e., if
+    # that caller fails to define that attribute).
+    caller_module_name = get_frame_module_name_or_none(caller_frame)
+
+    # Global and local scopes directly accessible to this external caller.
+    caller_globals = get_frame_globals(caller_frame)
+    caller_locals = get_frame_locals(caller_frame)
+
+    # ....................{ SCOPE                          }....................
     # Forward scope compositing this global and local scope of the external
     # caller as well as dynamically replacing each unresolved attribute of
     # each stringified type hint with a forward reference proxy resolving that
     # attribute on the first attempt to pass that attribute as the second
     # parameter to an isinstance()- or issubclass()based runtime type-check.
-    caller_scope = BeartypeForwardScope(
-        scope_name='')  # <-- *LOL AWFUL*
-        # scope_name=caller_module_name)  # type: ignore[arg-type]
+    caller_scope = BeartypeForwardScope(scope_name=caller_module_name)  # type: ignore[arg-type]
 
     # Composite this global and local scope into this forward scope (in that
     # order), implicitly overwriting first each builtin attribute and then
@@ -143,8 +142,7 @@ def make_caller_external_scope_forward(
     # each global and then local attribute of the same name. Since locals
     # *ALWAYS* assume precedence over globals *ALWAYS* assume precedence
     # over builtins, order of operation is *EXTREMELY* significant here.
-    #FIXME: *UNCOMMENT AFTER THIS ACTUALLY EXISTS.* \o/
-    # caller_scope.update(caller_globals)
+    caller_scope.update(caller_globals)
     caller_scope.update(caller_locals)
     # print(f'Forward scope: {decor_meta.func_wrappee_scope_forward}')
 
