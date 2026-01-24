@@ -12,7 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorWrappeeException
+from beartype.roar import (
+    BeartypeDecorHintForwardRefException,
+    BeartypeDecorWrappeeException,
+)
 from beartype.typing import (
     TYPE_CHECKING,
     Callable,
@@ -22,6 +25,7 @@ from beartype.typing import (
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
+from beartype._check.metadata.call.metacallabc import BeartypeCallMetaABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.func.datacodefuncwrap import (
     CODE_NORMAL_RETURN_CHECKED,
@@ -39,6 +43,7 @@ from beartype._data.code.pep.datacodepep525 import (
 from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep649HintableAnnotations,
+    TypeException,
     TypeStack,
 )
 from beartype._data.typing.datatypingport import Hint
@@ -63,8 +68,8 @@ from beartype._util.hint.pep.proposal.pep649 import (
 )
 from beartype._util.text.utiltextprefix import prefix_callable_pith
 
-# ....................{ CLASSES                            }....................
-class BeartypeDecorMeta(object):
+# ....................{ SUBCLASSES                         }....................
+class BeartypeDecorMeta(BeartypeCallMetaABC):
     '''
     **Beartype decorator call metadata** (i.e., object encapsulating *all*
     metadata for the callable currently being decorated by the
@@ -104,8 +109,10 @@ class BeartypeDecorMeta(object):
     Attributes
     ----------
     cls_stack : TypeStack
-        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        :data:`None`). See also the parameter of the same name accepted by the
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`). See
+        also the parameter of the same name accepted by the
         :func:`beartype._decor.decorcore.beartype_object` function for details.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -163,7 +170,7 @@ class BeartypeDecorMeta(object):
           the resolution of each currently undeclared attribute in that scope by
           replacing that attribute with a forward reference proxy resolved only
           when that attribute is passed as the second parameter to an
-          :func:`isinstance`-based runtime type-check).
+          :func:`isinstance`- and :func:`issubclass`-based runtime type-check).
         * Else, :data:`None`.
 
         Note that:
@@ -894,6 +901,30 @@ class BeartypeDecorMeta(object):
 
         # One-liner of Ultimate Beauty: we invoke thee in this line!
         return f'@beartyped {self.func_wrapper_name}() wrapper'
+
+    # ..................{ RESOLVERS                          }..................
+    def resolve_hint_pep484_ref_str(
+        self,
+
+        # Mandatory parameters.
+        hint: str,
+
+        # Optional parameters.
+        exception_cls: TypeException = BeartypeDecorHintForwardRefException,
+        exception_prefix: str = '',
+    ) -> Hint:
+
+        # Avoid circular import dependencies.
+        from beartype._check.forward.fwdresolve import (
+            resolve_decor_meta_hint_pep484_ref_str)
+
+        # Defer to this low-level resolver.
+        return resolve_decor_meta_hint_pep484_ref_str(
+            decor_meta=self,
+            hint=hint,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.

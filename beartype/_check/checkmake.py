@@ -28,7 +28,7 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT

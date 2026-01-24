@@ -21,7 +21,7 @@ from beartype.typing import (
     Optional,
     no_type_check,
 )
-from beartype._check.metadata.metadecor import (
+from beartype._check.metadata.call.metacalldecor import (
     cull_beartype_call,
     make_beartype_call,
 )
@@ -349,7 +349,7 @@ def beartype_func(
         defaults to ``func``.
 
     All remaining keyword parameters are passed as is to the
-    :meth:`beartype._check.metadata.metadecor.BeartypeDecorMeta.reinit` method.
+    :meth:`beartype._check.metadata.call.metacalldecor.BeartypeDecorMeta.reinit` method.
 
     Returns
     -------

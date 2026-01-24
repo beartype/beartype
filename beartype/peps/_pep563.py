@@ -29,8 +29,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypePep563Exception
-from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str
-from beartype._check.metadata.metadecor import (
+from beartype._check.forward.fwdresolve import resolve_decor_meta_hint_pep484_ref_str
+from beartype._check.metadata.call.metacalldecor import (
     cull_beartype_call,
     make_beartype_call,
 )
@@ -262,7 +262,7 @@ def resolve_pep563(
     #   sizes, as "func.__annotations__" usually is).
     for pith_name, hint in func_annotations.items():
         # Non-string hint to which this stringified hint refers
-        hint = resolve_hint_pep484_ref_str(
+        hint = resolve_decor_meta_hint_pep484_ref_str(
             hint=hint,
             decor_meta=decor_meta,
             exception_cls=BeartypePep563Exception,

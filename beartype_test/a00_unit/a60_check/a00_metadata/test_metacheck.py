@@ -27,7 +27,7 @@ def test_metadata_check() -> None:
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype._check.metadata.metacheck import BeartypeCheckMeta
-    from beartype._check.metadata.metadecor import BeartypeDecorMeta
+    from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
     from beartype_test.a00_unit.data.data_type import (
         Class,
         function_wrappee,

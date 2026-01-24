@@ -32,7 +32,7 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint

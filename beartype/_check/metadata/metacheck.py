@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import TYPE_CHECKING
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import TypeStack
 from beartype._data.typing.datatypingport import DictStrToHint
@@ -34,7 +34,7 @@ class BeartypeCheckMeta(object):
     This type-checking-time dataclass is effectively the proper subset of the
     comparable -- but *much* more complex in both space, time, and code
     complexity -- **decoration call metadata dataclass** (i.e.,
-    :class:`beartype._check.metadata.metadecor.BeartypeDecorMeta`).
+    :class:`beartype._check.metadata.call.metacalldecor.BeartypeDecorMeta`).
     Theoretically, this type-checking-time dataclass is thus redundant; the
     existing decoration call metadata dataclass could simply be used in lieu of
     this type-checking-time dataclass. Pragmatically, this type-checking-time

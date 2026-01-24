@@ -28,7 +28,7 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
 from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
     HINT_SANE_IGNORABLE,

@@ -33,7 +33,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  to call _resolve_func_scope_forward_hint() rather than
 #  find_hint_pep484_ref_on_cls_stack_or_none(). When doing so, however, note
 #  that we'll need to guard against the leading edge case detailed in
-#  resolve_hint_pep484_ref_str():
+#  resolve_decor_meta_hint_pep484_ref_str():
 #      if hint in decor_meta.func_wrappee_scope_nested_names:
 #          return hint
 #  Remember, however, that trivial test is *BUGGED.* It *DOES* efficiently
@@ -44,7 +44,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
@@ -323,7 +323,7 @@ def make_decor_meta_scope_forward(
                 # Note that, for safety, we currently avoid ignoring additional
                 # frames that we could technically ignore. These include:
                 # * The call to the parent
-                #   beartype._check.metadata.metadecor.BeartypeDecorMeta.reinit()
+                #   beartype._check.metadata.call.metacalldecor.BeartypeDecorMeta.reinit()
                 #   method.
                 # * The call to the parent @beartype.beartype() decorator.
                 #
@@ -398,7 +398,7 @@ def make_decor_meta_scope_forward(
         #             def muh_method(self) -> str:
         #                 return 'Look away and cringe, everyone!'
         if cls_stack:
-            # Root and current decorated classes.
+            # Root and current decorated types.
             cls_root = cls_stack[0]
             cls_curr = cls_stack[-1]
 
@@ -410,14 +410,14 @@ def make_decor_meta_scope_forward(
             # Else, this local scope is *NOT* the empty frozen dictionary.
             # Presumably, this implies this scope to be a mutable dictionary.
 
-            # Add new locals exposing these classes to type hints, overwriting
-            # any locals of the same names in the higher-level local scope for
-            # any closure declaring this class if any. These classes are
-            # currently being decorated and thus guaranteed to be the most
-            # recent declarations of these attributes.
+            # Add new locals exposing these types to type hints, overwriting any
+            # locals of the same names in the higher-level local scope for any
+            # closure declaring this type if any. These types are currently
+            # being decorated and thus guaranteed to be the most recent
+            # declarations of these attributes.
             #
-            # Note that the current class assumes lexical precedence over the
-            # root class and is thus added *AFTER* the latter.
+            # Note that the current type assumes lexical precedence over the
+            # root type and is thus intentionally added *AFTER* the latter.
             func_locals[cls_root.__name__] = cls_root
             func_locals[cls_curr.__name__] = cls_curr
 
