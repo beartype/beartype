@@ -27,7 +27,7 @@ def test_coerce_func_hint_root() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import BeartypeConf
-    from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+    from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
     from beartype._check.convert._convcoerce import coerce_func_hint_root
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 
@@ -40,7 +40,7 @@ def test_coerce_func_hint_root() -> None:
         return 'whose wandering wings'
 
     # Beartype dataclass describing this callable.
-    decor_meta = BeartypeDecorMeta()
+    decor_meta = BeartypeCallDecorMeta()
     decor_meta.reinit(func=one_legion_of_wild_thoughts, conf=BeartypeConf())
 
     # ..................{ CORE                               }..................

@@ -22,7 +22,7 @@ submodule implementing a fine-grained object cache unique to those objects. For
 example:
 
 * This submodule unconditionally pools all instances of the
-  :class:`beartype._check.metadata.call.metacalldecor.BeartypeDecorMeta` class under that
+  :class:`beartype._check.metadata.call.metacalldecor.BeartypeCallDecorMeta` class under that
   type.
 * The parallel :mod:`beartype._util.cache.pool.utilcachepoollistfixed`
   submodule conditionally pools every instance of the

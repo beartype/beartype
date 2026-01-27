@@ -20,7 +20,7 @@ from beartype._check.convert._convcoerce import (
 )
 from beartype._check.convert._reduce.redmain import reduce_hint
 from beartype._check.metadata.hint.hintsane import HintSane
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
@@ -40,7 +40,7 @@ from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
 #FIXME: Unit test us up, please.
 def sanify_hint_root_func(
     # Mandatory parameters.
-    decor_meta: BeartypeDecorMeta,
+    decor_meta: BeartypeCallDecorMeta,
     hint: Hint,
     pith_name: str,
 
@@ -87,7 +87,7 @@ def sanify_hint_root_func(
 
     Parameters
     ----------
-    decor_meta : BeartypeDecorMeta
+    decor_meta : BeartypeCallDecorMeta
         Decorated callable directly annotated by this hint.
     hint : Hint
         Possibly PEP-noncompliant root type hint to be sanified.

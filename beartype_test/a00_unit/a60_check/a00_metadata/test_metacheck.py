@@ -27,7 +27,7 @@ def test_metadata_check() -> None:
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype._check.metadata.metacheck import BeartypeCheckMeta
-    from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+    from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
     from beartype_test.a00_unit.data.data_type import (
         Class,
         function_wrappee,
@@ -41,7 +41,7 @@ def test_metadata_check() -> None:
     cls_stack = (Class,)
 
     # Arbitrary beartype decorator call metadata.
-    decor_meta = BeartypeDecorMeta()
+    decor_meta = BeartypeCallDecorMeta()
     decor_meta.reinit(
         func=function_wrappee, conf=conf, cls_stack=cls_stack)
 

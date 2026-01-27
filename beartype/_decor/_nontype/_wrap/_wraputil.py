@@ -185,7 +185,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #intense refactoring. Preserve the existing approach for sanity.
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._data.code.datacodename import CODE_PITH_ROOT_NAME_PLACEHOLDER
 from beartype._data.typing.datatyping import TupleStrs
 from beartype._check.code.codescope import add_func_scope_ref
@@ -201,7 +201,7 @@ from collections.abc import Iterable
 
 # ....................{ CACHERS                            }....................
 def unmemoize_func_wrapper_code(
-    decor_meta: BeartypeDecorMeta,
+    decor_meta: BeartypeCallDecorMeta,
     func_wrapper_code: str,
     pith_repr: str,
     hint_refs_type_basename: TupleStrs,
@@ -224,7 +224,7 @@ def unmemoize_func_wrapper_code(
 
     Parameters
     ----------
-    decor_meta : BeartypeDecorMeta
+    decor_meta : BeartypeCallDecorMeta
         Decorated callable to be type-checked.
     func_wrapper_code : str
         Memoized callable-agnostic code snippet type-checking any parameter or
@@ -243,7 +243,7 @@ def unmemoize_func_wrapper_code(
         forward reference placeholder substrings cached into this code relative
         to the currently decorated callable.
     '''
-    assert decor_meta.__class__ is BeartypeDecorMeta, (
+    assert decor_meta.__class__ is BeartypeCallDecorMeta, (
         f'{repr(decor_meta)} not @beartype call.')
     assert isinstance(func_wrapper_code, str), (
         f'{repr(func_wrapper_code)} not string.')

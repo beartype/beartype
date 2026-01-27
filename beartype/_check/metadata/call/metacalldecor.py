@@ -26,6 +26,7 @@ from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.metadata.call.metacallabc import BeartypeCallMetaABC
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.func.datacodefuncwrap import (
     CODE_NORMAL_RETURN_CHECKED,
@@ -69,23 +70,25 @@ from beartype._util.hint.pep.proposal.pep649 import (
 from beartype._util.text.utiltextprefix import prefix_callable_pith
 
 # ....................{ SUBCLASSES                         }....................
-class BeartypeDecorMeta(BeartypeCallMetaABC):
+class BeartypeCallDecorMeta(BeartypeCallMetaABC):
     '''
-    **Beartype decorator call metadata** (i.e., object encapsulating *all*
+    **Beartype decorator call metadata** (i.e., dataclass encapsulating *all*
     metadata for the callable currently being decorated by the
     :func:`beartype.beartype` decorator).
 
-    Design
-    ------
-    This the *only* object instantiated by that decorator for that callable,
-    substantially reducing both space and time costs. That decorator then
-    passes this object to most lower-level functions, which then:
+    This dataclass aggregates specific metadata unique to the high-level public
+    :mod:`beartype.beartype` decorator` API.
 
-    #. Access read-only instance variables of this object as input.
-    #. Modify writable instance variables of this object as output. In
+    This dataclass is the *only* object instantiated by that decorator for the
+    currently decorated callable, reducing both space and time costs. That
+    decorator then passes this dataclass to lower-level functions, which then:
+
+    #. Access read-only instance variables of this dataclass as input.
+    #. Modify writable instance variables of this dataclass as output. In
        particular, these lower-level functions typically accumulate pure-Python
        code comprising the generated wrapper function type-checking the
-       decorated callable by setting various instance variables of this object.
+       decorated callable by setting various instance variables of this
+       dataclass.
 
     Caveats
     -------
@@ -475,7 +478,7 @@ class BeartypeDecorMeta(BeartypeCallMetaABC):
         # If this configuration is *NOT* a configuration, raise an exception.
         elif not isinstance(conf, BeartypeConf):
             raise BeartypeDecorWrappeeException(
-                f'BeartypeDecorMeta.reinit() method "conf" parameter '
+                f'BeartypeCallDecorMeta.reinit() method "conf" parameter '
                 f'{repr(conf)} not beartype configuration.'
             )
         # Else, this configuration is a configuration.
@@ -484,7 +487,7 @@ class BeartypeDecorMeta(BeartypeCallMetaABC):
         # exception.
         elif not isinstance(cls_stack, NoneTypeOr[tuple]):
             raise BeartypeDecorWrappeeException(
-                f'BeartypeDecorMeta.reinit() method "cls_stack" parameter '
+                f'BeartypeCallDecorMeta.reinit() method "cls_stack" parameter '
                 f'{repr(cls_stack)} neither tuple nor "None".'
             )
         # Else, this class stack is either a tuple *OR* "None".
@@ -496,7 +499,7 @@ class BeartypeDecorMeta(BeartypeCallMetaABC):
                 # If this item is *NOT* a type, raise an exception.
                 if not isinstance(cls_stack_item, type):
                     raise BeartypeDecorWrappeeException(
-                        f'BeartypeDecorMeta.reinit() method "cls_stack" item '
+                        f'BeartypeCallDecorMeta.reinit() method "cls_stack" item '
                         f'{repr(cls_stack_item)} not type.'
                     )
                 # Else, this item is a type.
@@ -910,6 +913,7 @@ class BeartypeDecorMeta(BeartypeCallMetaABC):
         hint: str,
 
         # Optional parameters.
+        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
         exception_cls: TypeException = BeartypeDecorHintForwardRefException,
         exception_prefix: str = '',
     ) -> Hint:
@@ -917,6 +921,12 @@ class BeartypeDecorMeta(BeartypeCallMetaABC):
         # Avoid circular import dependencies.
         from beartype._check.forward.fwdresolve import (
             resolve_decor_meta_hint_pep484_ref_str)
+
+        # Validate sanity. Since this dataclass already internally persists the
+        # relevant configuration, this subclass method *ONLY* accepts a
+        # configuration to comply with the superclass API. Ideally, these two
+        # configurations should be the same. Validate that this is the case.
+        assert conf is self.conf, f'{repr(conf)} != {repr(self.conf)}.'
 
         # Defer to this low-level resolver.
         return resolve_decor_meta_hint_pep484_ref_str(
@@ -928,7 +938,7 @@ class BeartypeDecorMeta(BeartypeCallMetaABC):
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
-def make_beartype_call(**kwargs) -> BeartypeDecorMeta:
+def make_beartype_call(**kwargs) -> BeartypeCallDecorMeta:
     '''
     **Beartype call metadata** (i.e., object encapsulating *all* metadata for
     the passed user-defined callable, typically currently being decorated by the
@@ -937,10 +947,10 @@ def make_beartype_call(**kwargs) -> BeartypeDecorMeta:
     Caveats
     -------
     **This higher-level factory function should always be called in lieu of
-    instantiating the** :class:`.BeartypeDecorMeta` **class directly.** Why?
+    instantiating the** :class:`.BeartypeCallDecorMeta` **class directly.** Why?
     Brute-force efficiency. This factory efficiently reuses previously
-    instantiated :class:`.BeartypeDecorMeta` objects rather than inefficiently
-    instantiating new :class:`.BeartypeDecorMeta` objects.
+    instantiated :class:`.BeartypeCallDecorMeta` objects rather than inefficiently
+    instantiating new :class:`.BeartypeCallDecorMeta` objects.
 
     **The caller must pass the metadata returned by this factory back to the**
     :func:`beartype._util.cache.pool.utilcachepoolinstance.release_instance`
@@ -951,17 +961,17 @@ def make_beartype_call(**kwargs) -> BeartypeDecorMeta:
 
     Parameters
     ----------
-    All keyword parameters are passed as is to the :meth:`.BeartypeDecorMeta.reinit`
+    All keyword parameters are passed as is to the :meth:`.BeartypeCallDecorMeta.reinit`
     method.
 
     Returns
     -------
-    BeartypeDecorMeta
+    BeartypeCallDecorMeta
         Beartype call metadata describing this callable.
     '''
 
     # Acquire previously cached beartype call metadata from its object pool.
-    decor_meta = acquire_instance(BeartypeDecorMeta)
+    decor_meta = acquire_instance(BeartypeCallDecorMeta)
 
     # Reinitialize this metadata with the passed keyword parameters.
     decor_meta.reinit(**kwargs)
@@ -971,7 +981,7 @@ def make_beartype_call(**kwargs) -> BeartypeDecorMeta:
 
 
 #FIXME: Unit test us up, please.
-def cull_beartype_call(decor_meta: BeartypeDecorMeta) -> None:
+def cull_beartype_call(decor_meta: BeartypeCallDecorMeta) -> None:
     '''
     Deinitialize the passed **beartype call metadata** (i.e., object
     encapsulating *all* metadata for the passed user-defined callable, typically
@@ -979,7 +989,7 @@ def cull_beartype_call(decor_meta: BeartypeDecorMeta) -> None:
 
     Parameters
     ----------
-    decor_meta : BeartypeDecorMeta
+    decor_meta : BeartypeCallDecorMeta
         Beartype call metadata to be deinitialized.
     '''
 

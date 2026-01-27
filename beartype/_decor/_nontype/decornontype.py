@@ -349,7 +349,7 @@ def beartype_func(
         defaults to ``func``.
 
     All remaining keyword parameters are passed as is to the
-    :meth:`beartype._check.metadata.call.metacalldecor.BeartypeDecorMeta.reinit` method.
+    :meth:`beartype._check.metadata.call.metacalldecor.BeartypeCallDecorMeta.reinit` method.
 
     Returns
     -------
@@ -600,7 +600,7 @@ def _beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
         # print(f'Pseudo-callable wrapper {repr(pseudofunc)} identified!')
 
         # Transitively pass the optional "wrapper" parameter to the
-        # BeartypeDecorMeta.reinit() method, ensuring that this pseudo-callable
+        # BeartypeCallDecorMeta.reinit() method, ensuring that this pseudo-callable
         # wrapper object is correctly unwrapped.
         #
         # This edge case handles edge-case pseudo-callable wrapper objects

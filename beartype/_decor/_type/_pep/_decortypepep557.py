@@ -254,11 +254,11 @@ def beartype_pep557_dataclass(
         #        class BeartypeDecorMetaABC(metaclass=ABCMeta): ...
         #        class BeartypeDecorMetaFunc(BeartypeDecorMetaABC): ...
         #        class BeartypeDecorMetaType(BeartypeDecorMetaABC): ...
-        #  * Refactor references to "BeartypeDecorMeta" to either
+        #  * Refactor references to "BeartypeCallDecorMeta" to either
         #    "BeartypeDecorMetaABC" *OR* ""BeartypeDecorMetaFunc" depending on
         #    context. Most probably require the latter. Any that don't should
         #    simply reference "BeartypeDecorMetaABC" for generality.
-        #  * Remove all references to "BeartypeDecorMeta".
+        #  * Remove all references to "BeartypeCallDecorMeta".
         #FIXME: Consider:
         #* If sanifying this hint so reduced this hint to "Any", remove this
         #  hint from this dictionary entirely. Doing so speeds up closure logic

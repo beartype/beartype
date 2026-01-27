@@ -24,7 +24,7 @@ from beartype._cave._cavefast import (
     HintPep612ParamSpecArgType,
     HintPep612ParamSpecKwargType,
 )
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._data.typing.datatypingport import (
     Hint,
     ListHints,
@@ -310,7 +310,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     # beartype._check.convert._reduce.redmain.reduce_hint() reducer to this
     # lower-level reducer.
     hint: object,
-    decor_meta: Optional[BeartypeDecorMeta],
+    decor_meta: Optional[BeartypeCallDecorMeta],
     pith_name: Optional[str],
     arg_kind: Optional[ArgKind],
     exception_prefix: str,
@@ -356,7 +356,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     hint : object
         :pep:`612`-compliant parameter specification variadic positional or
         keyword parameter type hint to be reduced.
-    decor_meta : Optional[BeartypeDecorMeta]
+    decor_meta : Optional[BeartypeCallDecorMeta]
         Either:
 
         * If this hint annotates a parameter or return of some callable, the

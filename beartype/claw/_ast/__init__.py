@@ -58,7 +58,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #reuse the same "BeartypeNodeTransformer" instance for every hooked module.
 #Score @beartype! See the BeartypeConf.__new__() method for relevant logic. \o/
 #FIXME: Oh, wait. We probably do *NOT* want to cache -- at least, not without
-#defining a comparable reinit() method as we do for "BeartypeDecorMeta". After
+#defining a comparable reinit() method as we do for "BeartypeCallDecorMeta". After
 #retrieving a cached "BeartypeNodeTransformer" instance, we'll need to
 #immediately call BeartypeNodeTransformer.reinit() to reinitialize that
 #instance.

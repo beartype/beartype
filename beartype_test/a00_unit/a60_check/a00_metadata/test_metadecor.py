@@ -19,7 +19,7 @@ submodule.
 # ....................{ TESTS                              }....................
 def test_metadata_decor() -> None:
     '''
-    Test the :func:`beartype._check.metadata.call.metacalldecor.BeartypeDecorMeta`
+    Test the :func:`beartype._check.metadata.call.metacalldecor.BeartypeCallDecorMeta`
     dataclass.
     '''
 
@@ -27,13 +27,13 @@ def test_metadata_decor() -> None:
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype.roar import BeartypeDecorWrappeeException
-    from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+    from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
     from beartype_test.a00_unit.data.data_type import function_lambda
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
     # Arbitrary beartype decorator call metadata.
-    bear_data = BeartypeDecorMeta()
+    bear_data = BeartypeCallDecorMeta()
 
     # ....................{ FAIL                           }....................
     # Assert this metadata to be unhashable.

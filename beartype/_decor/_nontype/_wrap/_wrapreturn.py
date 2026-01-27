@@ -19,7 +19,7 @@ from beartype._check.checkmake import (
 )
 from beartype._check.convert.convmain import sanify_hint_root_func
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._data.code.pep.datacodepep484 import PEP484_CODE_CHECK_NORETURN
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import (
@@ -39,7 +39,7 @@ from typing import NoReturn
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
-def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
+def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
     '''
     Generate a Python code snippet type-checking the annotated return declared
     by the decorated callable if any *or* the empty string otherwise (i.e., if
@@ -47,7 +47,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
 
     Parameters
     ----------
-    decor_meta : BeartypeDecorMeta
+    decor_meta : BeartypeCallDecorMeta
         Decorated callable to be type-checked.
 
     Returns
@@ -73,7 +73,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
         * **PEP-noncompliant** (i.e., :mod:`beartype`-specific type hint *not*
           compliant with annotation-centric PEPs)).
     '''
-    assert isinstance(decor_meta, BeartypeDecorMeta), (
+    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
         f'{repr(decor_meta)} not beartype call.')
 
     # ..................{ LOCALS                             }..................

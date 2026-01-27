@@ -22,7 +22,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
 from beartype._data.code.func.datacodefuncwrap import CODE_WRAPPER_SIGNATURE
 from beartype._data.code.datacodename import (
@@ -35,7 +35,7 @@ from beartype._decor._nontype._wrap._wrapreturn import (
     code_check_return as _code_check_return)
 
 # ....................{ GENERATORS                         }....................
-def generate_code(decor_meta: BeartypeDecorMeta) -> str:
+def generate_code(decor_meta: BeartypeCallDecorMeta) -> str:
     '''
     Generate a Python code snippet dynamically defining the wrapper function
     type-checking the passed decorated callable.
@@ -47,7 +47,7 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
 
     Parameters
     ----------
-    decor_meta : BeartypeDecorMeta
+    decor_meta : BeartypeCallDecorMeta
         Decorated callable to be type-checked.
 
     Returns

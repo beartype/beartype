@@ -21,6 +21,8 @@ from abc import (
     abstractmethod,
 )
 from beartype.roar import BeartypeDecorHintForwardRefException
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
 
@@ -57,6 +59,8 @@ class BeartypeCallMetaABC(object, metaclass=ABCMeta):
         hint: str,
 
         # Optional parameters.
+        #FIXME: This should *PROBABLY* be a mandatory parameter, instead. *sigh*
+        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
         exception_cls: TypeException = BeartypeDecorHintForwardRefException,
         exception_prefix: str = '',
     ) -> Hint:
@@ -76,6 +80,11 @@ class BeartypeCallMetaABC(object, metaclass=ABCMeta):
         ----------
         hint : str
             Stringified forward reference type hint to be resolved.
+        conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
+            **Beartype configuration** (i.e., self-caching dataclass
+            encapsulating all flags, options, settings, and other metadata
+            configuring this resolution). Defaults to the default beartype
+            configuration.
         exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
             Type of exception to be raised in the event of a fatal error.
             Defaults to :exc:`.BeartypeDecorHintForwardRefException`.

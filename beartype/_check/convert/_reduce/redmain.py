@@ -28,7 +28,7 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
     HINT_SANE_IGNORABLE,
@@ -59,7 +59,7 @@ def reduce_hint(
     arg_kind: Optional[ArgKind] = None,
     cls_stack: TypeStack = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-    decor_meta: Optional[BeartypeDecorMeta] = None,
+    decor_meta: Optional[BeartypeCallDecorMeta] = None,
     hint_parent_sane: Optional[HintSane] = None,
     hint_sign_seed: HintSignOrNoneOrSentinel = SENTINEL,
     is_hint_ignorable_preserved: bool = False,
@@ -114,7 +114,7 @@ def reduce_hint(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
         to the default beartype configuration.
-    decor_meta : Optional[BeartypeDecorMeta], default: None
+    decor_meta : Optional[BeartypeCallDecorMeta], default: None
         Either:
 
         * If this hint annotates a parameter or return of some callable, the
@@ -218,7 +218,7 @@ def reduce_hint(
     assert isinstance(cls_stack, NoneTypeOr[tuple]), (
         f'{repr(cls_stack)} neither tuple nor "None".')
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert isinstance(decor_meta, NoneTypeOr[BeartypeDecorMeta]), (
+    assert isinstance(decor_meta, NoneTypeOr[BeartypeCallDecorMeta]), (
         f'{repr(hint_parent_sane)} neither decoration metadata nor "None".')
     assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
         f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')

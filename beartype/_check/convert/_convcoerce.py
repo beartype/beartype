@@ -56,7 +56,7 @@ from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
 from beartype._check.forward.fwdresolve import resolve_decor_meta_hint_pep484_ref_str
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.pep.proposal.pep484.pep484union import (
     make_hint_pep484_union)
@@ -66,7 +66,7 @@ from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
 def coerce_func_hint_root(
     hint: Hint,
-    decor_meta: BeartypeDecorMeta,
+    decor_meta: BeartypeCallDecorMeta,
     pith_name: str,
     exception_prefix: str,
 ) -> Hint:
@@ -96,7 +96,7 @@ def coerce_func_hint_root(
     ----------
     hint : Hint
         Possibly PEP-noncompliant type hint to be possibly coerced.
-    decor_meta : BeartypeDecorMeta
+    decor_meta : BeartypeCallDecorMeta
         Decorated callable directly annotated by this hint.
     pith_name : str
         Either:
@@ -118,7 +118,7 @@ def coerce_func_hint_root(
     '''
     assert isinstance(pith_name, str), (
         f'{repr(pith_name)} not string.')
-    assert isinstance(decor_meta, BeartypeDecorMeta), (
+    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
         f'{repr(decor_meta)} not @beartype metadata.')
     # print(f'Coercing pith "{pith_name}" annotated by type hint {repr(hint)}...')
 

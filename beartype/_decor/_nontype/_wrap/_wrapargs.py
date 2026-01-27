@@ -32,7 +32,7 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
@@ -56,7 +56,7 @@ from beartype._data.kind.datakindiota import SENTINEL
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
-def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
+def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
     '''
     Generate a Python code snippet type-checking all annotated parameters of the
     decorated callable if any *or* the empty string otherwise (i.e., if these
@@ -64,7 +64,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
 
     Parameters
     ----------
-    decor_meta : BeartypeDecorMeta
+    decor_meta : BeartypeCallDecorMeta
         Decorated callable to be type-checked.
 
     Returns
@@ -83,7 +83,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
     '''
-    assert isinstance(decor_meta, BeartypeDecorMeta), (
+    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
         f'{repr(decor_meta)} not beartype call.')
 
     # ..................{ LOCALS ~ func                      }..................
@@ -193,7 +193,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         func=decor_meta.func_wrappee_wrappee,
         func_codeobj=decor_meta.func_wrappee_wrappee_codeobj,
         # Avoid inefficiently attempting to re-unwrap this wrappee. The
-        # previously called BeartypeDecorMeta.reinit() method has already
+        # previously called BeartypeCallDecorMeta.reinit() method has already
         # guaranteed this wrappee to be isomorphically unwrapped.
         is_unwrap=False,
     )):
@@ -437,7 +437,7 @@ passed positionally).
 #FIXME: Preserved for posterity. We'll almost certainly want to restore this at
 #some future date. Until then, we sigh. *sigh*
 # def _die_if_arg_default_unbearable(
-#     decor_meta: BeartypeDecorMeta, arg_default: object, hint: Hint) -> None:
+#     decor_meta: BeartypeCallDecorMeta, arg_default: object, hint: Hint) -> None:
 #     '''
 #     Raise a violation exception if the annotated optional parameter of the
 #     decorated callable with the passed default value violates the type hint
@@ -445,7 +445,7 @@ passed positionally).
 #
 #     Parameters
 #     ----------
-#     decor_meta : BeartypeDecorMeta
+#     decor_meta : BeartypeCallDecorMeta
 #         Decorated callable to be type-checked.
 #     arg_default : object
 #         Either:
@@ -469,7 +469,7 @@ passed positionally).
 #     BeartypeDecorHintParamDefaultViolation
 #         If this default value violates this type hint.
 #     '''
-#     assert isinstance(decor_meta, BeartypeDecorMeta), (
+#     assert isinstance(decor_meta, BeartypeCallDecorMeta), (
 #         f'{repr(decor_meta)} not beartype call.')
 #
 #     # ..................{ PREAMBLE                           }..................

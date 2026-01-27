@@ -28,7 +28,7 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
@@ -412,7 +412,7 @@ def make_code_raiser_func_pep484_noreturn_check(
 # ....................{ FACTORIES ~ code : raiser : pith   }....................
 #FIXME: Unit test us up, please. *sigh*
 def make_code_raiser_func_pith_check(
-    decor_meta: BeartypeDecorMeta,
+    decor_meta: BeartypeCallDecorMeta,
     hint_insane: Hint,
     hint_sane: HintSane,
     is_param: bool,
@@ -432,7 +432,7 @@ def make_code_raiser_func_pith_check(
 
     Parameters
     ----------
-    decor_meta : BeartypeDecorMeta
+    decor_meta : BeartypeCallDecorMeta
         Decorated callable to be type-checked.
     hint_insane : Hint
         **Insane** (i.e., pre-sanified) type hint to be type-checked.
@@ -462,7 +462,7 @@ def make_code_raiser_func_pith_check(
     :func:`.make_check_expr`
         Further details.
     '''
-    assert isinstance(decor_meta, BeartypeDecorMeta), (
+    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
         f'{repr(decor_meta)} not beartype call.')
     assert isinstance(is_param, bool), f'{repr(is_param)} not boolean.'
 

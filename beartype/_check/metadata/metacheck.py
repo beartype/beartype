@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import TYPE_CHECKING
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import TypeStack
 from beartype._data.typing.datatypingport import DictStrToHint
@@ -34,7 +34,7 @@ class BeartypeCheckMeta(object):
     This type-checking-time dataclass is effectively the proper subset of the
     comparable -- but *much* more complex in both space, time, and code
     complexity -- **decoration call metadata dataclass** (i.e.,
-    :class:`beartype._check.metadata.call.metacalldecor.BeartypeDecorMeta`).
+    :class:`beartype._check.metadata.call.metacalldecor.BeartypeCallDecorMeta`).
     Theoretically, this type-checking-time dataclass is thus redundant; the
     existing decoration call metadata dataclass could simply be used in lieu of
     this type-checking-time dataclass. Pragmatically, this type-checking-time
@@ -109,7 +109,7 @@ class BeartypeCheckMeta(object):
         **Avoid calling this low-level initializer directly.** Instead,
         instantiate instances of this dataclass by calling the
         :meth:`make_from_decor_meta` class method -- reducing existing
-        instances of the parent :class:`.BeartypeDecorMeta` dataclass to
+        instances of the parent :class:`.BeartypeCallDecorMeta` dataclass to
         instances of this child dataclass.
 
         Parameters
@@ -148,7 +148,7 @@ class BeartypeCheckMeta(object):
     # ..................{ CLASS METHODS                      }..................
     @classmethod
     def make_from_decor_meta(
-        cls, decor_meta: BeartypeDecorMeta) -> 'BeartypeCheckMeta':
+        cls, decor_meta: BeartypeCallDecorMeta) -> 'BeartypeCheckMeta':
         '''
         **Beartype type-check call metadata** (i.e., object encapsulating *all*
         metadata required by the current call to the wrapper function
@@ -159,10 +159,10 @@ class BeartypeCheckMeta(object):
 
         Parameters
         ----------
-        decor_meta : BeartypeDecorMeta
+        decor_meta : BeartypeCallDecorMeta
             Beartype decorator call metadata to be reduced.
         '''
-        assert isinstance(decor_meta, BeartypeDecorMeta)
+        assert isinstance(decor_meta, BeartypeCallDecorMeta)
 
         # Create and return a new instance of this child dataclass reduced from
         # the passed parent dataclass.
@@ -182,7 +182,7 @@ class BeartypeCheckMeta(object):
         type-checking the callable currently being decorated by the
         :func:`beartype.beartype` decorator) reduced from the passed **beartype
         decorator call metadata keyword parameters** (i.e., keyword parameters
-        to be passed to the :meth:`BeartypeDecorMeta.reinit` method).
+        to be passed to the :meth:`BeartypeCallDecorMeta.reinit` method).
 
         This factory method is a high-level convenience principally intended to
         be called from unit tests.
@@ -190,12 +190,12 @@ class BeartypeCheckMeta(object):
         Parameters
         ----------
         All passed keyword parameters are passed as is to the
-        :meth:`BeartypeDecorMeta.reinit` method.
+        :meth:`BeartypeCallDecorMeta.reinit` method.
         '''
 
         # Beartype decorator call metadata with which to instantiate a new
         # instance of this dataclass.
-        decor_meta = BeartypeDecorMeta()
+        decor_meta = BeartypeCallDecorMeta()
         decor_meta.reinit(**kwargs)
 
         # Beartype type-checking call metadata reduced from this metadata.

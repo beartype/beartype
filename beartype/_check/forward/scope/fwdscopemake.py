@@ -44,7 +44,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
-from beartype._check.metadata.call.metacalldecor import BeartypeDecorMeta
+from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
@@ -155,7 +155,7 @@ def make_caller_external_scope_forward(
 #FIXME: Unit test us up, please.
 def make_decor_meta_scope_forward(
     # Mandatory parameters.
-    decor_meta: BeartypeDecorMeta,
+    decor_meta: BeartypeCallDecorMeta,
 
     # Optional parameters.
     hint: HintOrSentinel = SENTINEL,
@@ -178,7 +178,7 @@ def make_decor_meta_scope_forward(
 
     Parameters
     ----------
-    decor_meta : BeartypeDecorMeta
+    decor_meta : BeartypeCallDecorMeta
         Decorated callable to create a forward scope for.
     hint : HintOrSentinel, default: SENTINEL
         :pep:`484`-compliant forward reference type hint requiring this forward
@@ -197,7 +197,7 @@ def make_decor_meta_scope_forward(
     BeartypeForwardScope
         Forward scope relative to the currently decorated callable.
     '''
-    assert isinstance(decor_meta, BeartypeDecorMeta), (
+    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
         f'{repr(decor_meta)} not @beartype call.')
 
     # ....................{ PREAMBLE                       }....................
@@ -323,7 +323,7 @@ def make_decor_meta_scope_forward(
                 # Note that, for safety, we currently avoid ignoring additional
                 # frames that we could technically ignore. These include:
                 # * The call to the parent
-                #   beartype._check.metadata.call.metacalldecor.BeartypeDecorMeta.reinit()
+                #   beartype._check.metadata.call.metacalldecor.BeartypeCallDecorMeta.reinit()
                 #   method.
                 # * The call to the parent @beartype.beartype() decorator.
                 #
