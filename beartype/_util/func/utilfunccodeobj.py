@@ -28,6 +28,14 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
+from types import (
+    BuiltinFunctionType,
+    CodeType,
+    FrameType,
+    FunctionType,
+    GeneratorType,
+    # MethodType,
+)
 
 # ....................{ GETTERS                            }....................
 def get_func_codeobj(
@@ -227,6 +235,20 @@ def get_func_codeobj_or_none(
     # Code object to be returned, defaulting to "None".
     func_codeobj = None
 
+    # If this object is a C-based builtin function (e.g., iter, len), return None
+    # immediately. On PyPy, builtin functions can have __code__ attributes that
+    # make them appear to be pure-Python functions, but they should still be
+    # treated as C-based callables without code objects.
+    #
+    # Check both:
+    # 1. If it's a BuiltinFunctionType (C-based builtin on CPython)
+    # 2. If it's a FunctionType from builtins module (C-based on PyPy)
+    if isinstance(func, BuiltinFunctionType):
+        return None
+    elif isinstance(func, FunctionType) and getattr(func, '__module__', None) == 'builtins':
+        return None
+    # Else, this object is *NOT* a C-based builtin function.
+    #
     # If this object is a pure-Python function...
     #
     # Note that:
@@ -236,12 +258,25 @@ def get_func_codeobj_or_none(
     # * This test intentionally leverages the standard "FunctionType"
     #   class rather than our equivalent "beartype.cave.FunctionType" class to
     #   avoid circular import issues.
-    if isinstance(func, FunctionType):
+    elif isinstance(func, FunctionType):
         # Return the code object of either:
         # * If unwrapping this function, the lowest-level wrappee wrapped by
         #   this function.
         # * Else, this function as is.
         func_codeobj = (unwrap_func_all(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
+
+        # On PyPy, C-based functions (like tuple.count after unwrapping) can have
+        # code objects indicating they're builtin. Check for this and return None
+        # if detected. Note that:
+        # * Some PyPy code objects are 'builtin-code' type without co_filename
+        # * Some PyPy code objects have co_filename set to '<builtin>' or '<built-in>'
+        if func_codeobj:
+            # Check if it's a builtin-code object (no co_filename attribute)
+            if type(func_codeobj).__name__ == 'builtin-code':
+                return None
+            # Check if co_filename indicates a builtin (has co_filename attribute)
+            elif getattr(func_codeobj, 'co_filename', None) in ('<builtin>', '<built-in>'):
+                return None
     # Else, this object is *NOT* a pure-Python function.
     #
     # If this object is a pure-Python generator, return this generator's code
@@ -260,8 +295,21 @@ def get_func_codeobj_or_none(
         #parameter and calling that callback. Are there even C-based callables
         #like that in the wild?
         func_codeobj = func.f_code
-    # Else, this object is *NOT* a call stack frame. Since none of the above
-    # tests matched, this object *MUST* be a C-based callable. Return "None"!
+    # Else, this object is *NOT* a call stack frame.
+    #
+    # If this object is a method-wrapper (e.g., func.__call__ which wraps the
+    # __call__ method of a function object), check if it wraps a pure-Python
+    # function by examining its __self__ attribute.
+    else:
+        # Get the object this method-wrapper is bound to, if any.
+        func_self = getattr(func, '__self__', None)
+
+        # If this method-wrapper is bound to a FunctionType object, return that
+        # function's code object. This handles cases like func.__call__ in
+        # Python 3.14 where accessing __call__ returns a method-wrapper.
+        if isinstance(func_self, FunctionType):
+            func_codeobj = func_self.__code__
+    # Else, this object is a C-based callable. Return "None"!
 
     # Return this code object.
     return func_codeobj
