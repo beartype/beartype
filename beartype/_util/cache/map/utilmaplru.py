@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #       lru_dict[key] = value
 #
 #For thread-safety, the entire "CacheLruStrong" class *MUST* be rethought along
-#the manner of the comparable "utilmapbig.CacheUnboundedStrong" class. Notably:
+#the manner of the comparable "utilmapunbounded.CacheUnboundedStrong" class. Notably:
 #* "CacheLruStrong" class should *NOT* directly subclass "dict" but instead
 #  simply contain a "_dict" instance.
 #* Thread-unsafe dunder methods (particularly the "__setitem__" method) should

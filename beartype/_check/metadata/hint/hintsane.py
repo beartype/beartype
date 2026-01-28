@@ -10,37 +10,6 @@
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: [SPACE] Memoize the HintSane.__new__() or __init__() constructors. In
-#theory, we dimly recall already defining a caching metaclass somewhere in the
-#codebase. Perhaps we can simply leverage that to get this trivially done?
-#
-#Note, however, that keyword arguments will be an issue. We currently
-#instantiate "HintSane" objects throughout the codebase by passing keyword
-#arguments -- which clearly conflict with memoization. That said, preserving
-#keyword argument passing would be *EXTREMELY* beneficial here. Without keyword
-#arguments, we lose the flexibility that keyword arguments enable -- especially
-#with respect to adding new keyword arguments at some future date.
-#
-#Perhaps that aforementioned caching metaclass could be augmented to support
-#keyword arguments? That would still be better than nothing.
-#FIXME: When memoizing, only memoize *CONDITIONALLY.* Notably, there exist two
-#common cases here:
-#* Context-free "HintSane" instances are initialized with *ONLY* a "hint". They
-#  lack contextual metadata and are thus context-free. Unsurprisingly,
-#  context-free "HintSane" instances are readily memoizable.
-#* Contextual "HintSane" instances are initialized with both a "hint" and one or
-#  more supplemental parameters supplying contextual metadata (e.g.,
-#  "hint_recursable_to_depth", "typearg_to_hint"). They are *NOT* context-free.
-#  Ergo, contextual "HintSane" instances are *NOT* readily memoizable. Don't
-#  even bother wasting space or time attempting to do so.
-#FIXME: Indeed, the above suggests the following:
-#* Trivially conditionally memoize the HintSane.__new__() or __init__()
-#  constructors *ONLY* when passed no optional keyword-only parameters (i.e.,
-#  *ONLY* when passed the single "hint" parameter positionally).
-#
-#That's it. Shouldn't be that arduous and should speed things along. *shrug*
-
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
 from beartype.typing import (
@@ -52,6 +21,7 @@ from beartype._data.typing.datatypingport import (
     Hint,
     Pep484612646TypeArgUnpackedToHint,
 )
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.utilobjmake import permute_object
@@ -70,19 +40,133 @@ dictionaries. While the latter would be preferable, Python lacks a builtin
 immutable dictionary type and thus support for typing such types. So it goes.
 '''
 
+# ....................{ METACLASSES                        }....................
+#FIXME: Unit test us up, please.
+class _HintSaneMetaclass(type):
+    '''
+    Metaclass of all **sanified type hint metadata** (i.e., immutable and thus
+    hashable object encapsulating *all* metadata returned by some
+    :mod:`beartype._check.convert.convmain` sanifier after sanitizing a possibly
+    PEP-noncompliant hint into a fully PEP-compliant hint).
+
+    This metaclass augments the standard root metaclass :class:`type` with
+    sanified type hint metadata-aware caching. When an external caller attempts
+    to instantiate the :class:`.HintSane` type against an arbitrary type hint
+    (e.g., ``HintSane(list[str])``), this metaclass efficiently (in order):
+
+    #. Decides whether that hint is memoizable or not. If that caller passed:
+
+       * *No* optional keyword parameters on instantiating that type against
+         that hint (e.g., ``HintSane(list[int])``), that hint is memoizable.
+       * *Any* optional keyword parameters on instantiating that type against
+         that hint (e.g., ``HintSane(hint=list[T], typearg_to_hint={T: int})``),
+         that hint is unmemoizable.
+
+    #. If that hint is unmemoizable, inefficiently returns a new unmemoized
+       instance of that type against those parameters.
+    #. If an instance of that type has already been cached for that hint,
+       returns that instance directly.
+    #. Instantiates a new instance of that type passed that hint.
+    #. Caches that instance against that hint for subsequent reuse.
+    #. Returns that instance.
+
+    This metaclass is superior to the usual approach of implementing the caching
+    design pattern: overriding the :meth:`__new__` method of a cached type to
+    conditionally create a new instance of that type only if an instance has
+    *not* already been created. Why? Because that approach unavoidably re-calls
+    the :meth:`__init__` method of a previously initialized singleton instance
+    on each instantiation of that type. Doing so is usually considered harmful.
+
+    This metaclass instead guarantees that the :meth:`__init__` method of a
+    cached instance is only called exactly once on the first instantiation of
+    that type.
+
+    See Also
+    --------
+    https://stackoverflow.com/a/8665179/2809027
+        StackOverflow answer strongly inspiring this implementation.
+    '''
+
+    # ..................{ INSTANTIATORS                      }..................
+    def __call__(
+        cls: '_HintSaneMetaclass',
+
+        # Mandatory parameters.
+        hint: Hint,
+
+        # Optional keyword-only parameters.
+        **kwargs,
+    ) -> 'HintSane':
+        '''
+        Factory constructor magically instantiating and returning a possibly
+        cached instance of the :class:`HintSane` type appropriate for
+        encapsulating the passed low-level type hint and optional keyword
+        parameters passed to the :meth:`HintSane.__init__` method.
+
+        Parameters
+        ----------
+        cls : _HintSaneMetaclass
+            The :class:`HintSane` type, whose type is this metaclass.
+        hint : Hint
+            Low-level type hint to be wrapped by an :class:`HintSane` instance.
+
+        All remaining optional keyword parameters are passed as is to the
+        :meth:`HintSane.__init__` method.
+
+        Returns
+        -------
+        HintSane
+            :class:`HintSane` object wrapping this hint.
+        '''
+        # print(f'[ _TypeHintMetaclass.__call__(hint={repr(hint)}, **kwargs={kwargs}) ]')
+
+        # ................{ UNCACHED                           }................
+        # If the caller passed one or more optional keyword parameters, this
+        # sanified type hint metadata *CANNOT* be memoized. Create and return an
+        # unmemoized instance of that metadata in the standard way.
+        if kwargs:
+            # print('[ _HintSaneMetaclass.__call__ ] instantiating unmemoized...')
+            return super().__call__(hint, **kwargs)
+        # Else, this sanified type hint metadata can be memoized. Do so.
+
+        # ................{ CACHED                             }................
+        # Attempt to...
+        #
+        # Note that we intentionally avoid bothering with thread-safety here.
+        # Since sanified hint metadata is *NEVER* exposed to end users,
+        # thread-locking this caching would only uselessly inhibit efficiency
+        # for no tangible benefit.
+        try:
+            # Sanified hint metadata previously cached under this hint if any
+            # *OR* the sentinel placeholder otherwise.
+            hint_sane = _HINT_TO_HINTSANE_get(hint, SENTINEL)
+
+            # If this metadata has already been cached, return this metadata.
+            if hint_sane is not SENTINEL:
+                return hint_sane  # type: ignore[return-value]
+            # Else, this metadata has yet to be cached.
+
+            # New sanified hint metadata cached against this hint.
+            hint_sane = _HINT_TO_HINTSANE[hint] = (
+                super().__call__(hint, **kwargs))
+
+            # Return this metadata.
+            return hint_sane
+        # If this hint is unhashable...
+        except TypeError:
+            pass
+
+        # Create and return an unmemoized instance of this metadata as above.
+        return super().__call__(hint, **kwargs)
+
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.
-class HintSane(object):
+class HintSane(object, metaclass=_HintSaneMetaclass):
     '''
     **Sanified type hint metadata** (i.e., immutable and thus hashable object
-    encapsulating *all* metadata returned by
-    :mod:`beartype._check.convert.convmain` sanifiers after sanitizing a
-    possibly PEP-noncompliant hint into a fully PEP-compliant hint).
-
-    For efficiency, sanifiers only conditionally return this metadata for the
-    proper subset of hints associated with this metadata; since most hints are
-    *not* associated with this metadata, sanifiers typically only return a
-    sanified type hint (rather than both that hint *and* this metadata).
+    encapsulating *all* metadata returned by some
+    :mod:`beartype._check.convert.convmain` sanifier after sanitizing a possibly
+    PEP-noncompliant hint into a fully PEP-compliant hint).
 
     Caveats
     -------
@@ -118,9 +202,9 @@ class HintSane(object):
         :pep:`646`-compliant unpacked type variable tuple) originally
         parametrizing the origins of all transitive parent hints of this hint if
         any to the corresponding child hints subscripting those parent hints).
-        This lookup table enables the :func:`beartype.beartype` decorator to
-        efficiently reduce a proper subset of type parameters to non-type
-        parameters at decoration time, including:
+        This table enables a proper subset of type parameters to be efficiently
+        reduced to non-type parameters during dynamic generation of
+        type-checking code, including:
 
         * :pep:`484`- or :pep:`585`-compliant **subscripted generics.** For
           example, this table enables runtime type-checkers to reduce the
@@ -197,6 +281,7 @@ class HintSane(object):
         *,
         hint_recursable_to_depth: FrozenDictHintToInt = FROZENDICT_EMPTY,
         typearg_to_hint: Pep484612646TypeArgUnpackedToHint = FROZENDICT_EMPTY,
+        is_unmemoized: bool = False,
     ) -> None:
         '''
         Initialize this sanified type hint metadata with the passed parameters.
@@ -205,8 +290,8 @@ class HintSane(object):
         ----------
         hint : Hint
             Type hint sanified (i.e., sanitized) from a possibly insane type
-            hint into a hopefully sane type hint by a
-            :mod:`beartype._check.convert.convmain` function.
+            hint into a hopefully sane type hint by a **sanifier** (i.e.,
+            :mod:`beartype._check.convert.convmain` function).
         hint_recursable_to_depth : FrozenDictHintToInt, default: FROZENDICT_EMPTY
             Recursion guard implemented as a frozen dictionary mapping from each
             **transitive recursable parent hint** (i.e., direct or indirect
@@ -222,6 +307,13 @@ class HintSane(object):
             origins of all transitive parent hints of this hint if any to the
             corresponding child hints subscripting those parent hints). Defaults
             to the empty frozen dictionary.
+        is_unmemoized : bool, default: False
+            Mostly ignorable placeholder keyword-only parameter whose only
+            reason for existence is to enable callers to explicitly unmemoize
+            instantiations of this type. This works despite doing nothing. Why?
+            The :class:`._HintSaneMetaclass` metaclass avoids unmemoizing
+            instantiations of this type when one or more keyword parameters are
+            passed! Technically, this is a keyword parameter. It is so dumb.
 
         See the class docstring for further details.
         '''
@@ -280,8 +372,17 @@ class HintSane(object):
             # If this other object is also sanified hint metadata, true only
             # if these metadatum share the same instance variables;
             (
+                # Optional micro-optimization. If these two dataclasses:
+                # * Share the same hash, they *COULD* be equal. In this case,
+                #   further comparison testing is warranted.
+                # * Have differing hashes, they *CANNOT* be equal. In this case,
+                #   *NO* further comparison testing is warranted.
+                self._hash == other._hash and
+
+                # Mandatory instance variable comparisons.
                 self.hint == other.hint and
-                self.hint_recursable_to_depth == other.hint_recursable_to_depth and
+                self.hint_recursable_to_depth == (
+                    other.hint_recursable_to_depth) and
                 self.typearg_to_hint == other.typearg_to_hint
             )
             if isinstance(other, HintSane) else
@@ -297,12 +398,16 @@ class HintSane(object):
         Machine-readable representation of this metadata.
         '''
 
-        # If this metadata is the ignorable "HINT_SANE_IGNORABLE" singleton,
-        # trivially return the unqualified basename of this singleton for
-        # debuggability, disambiguity, and readability.
+        # Note that this implementation is *NOT* worth optimizing or memoizing.
+        # This dunder method is typically *ONLY* called during debugging.
+
+        # If this metadata is an ignorable singleton, return the unqualified
+        # basename of this singleton for disambiguity and debuggability.
         if self is HINT_SANE_IGNORABLE:
             return 'HINT_SANE_IGNORABLE'
-        # Else, this metadata is *NOT* the ignorable "HINT_SANE_IGNORABLE" singleton.
+        elif self is HINT_SANE_RECURSIVE:
+            return 'HINT_SANE_RECURSIVE'
+        # Else, this metadata is *NOT* an ignorable singleton.
 
         # Represent this metadata with just the minimal subset of metadata
         # needed to reasonably describe this metadata.
@@ -346,49 +451,6 @@ class HintSane(object):
             init_arg_names=self._INIT_ARG_NAMES,
             exception_cls=_BeartypeDecorHintSanifyException,
         )
-
-# ....................{ GLOBALS                            }....................
-HINT_IGNORABLE = Any
-'''
-**Ignorable sanified type hint** (i.e., singleton :class:`.Any` type hint
-encapsulated by the metadata to which *all* deeply or shallowly ignorable type
-hints are reduced by :mod:`beartype._check.convert.convmain` sanifiers).
-'''
-
-
-HINT_SANE_IGNORABLE = HintSane(hint=HINT_IGNORABLE)
-'''
-**Ignorable sanified type hint metadata** (i.e., singleton :class:`.HintSane`
-instance to which *all* deeply or shallowly ignorable type hints are reduced by
-:mod:`beartype._check.convert.convmain` sanifiers).
-
-This singleton enables callers to trivially differentiate ignorable from
-unignorable hints. After sanification, if a hint is sanified to:
-
-* Literally this singleton, then that hint is ignorable.
-* Any other object, then that hint is unignorable.
-'''
-
-
-HINT_SANE_RECURSIVE = HintSane(hint=HINT_IGNORABLE)
-'''
-**Recursive sanified type hint metadata** (i.e., singleton :class:`.HintSane`
-instance to which **deeply recursive type hints** (i.e., recursive type hints
-whose reducers recursively expand to at least two levels of recursion) are
-reduced by :mod:`beartype._check.convert.convmain` sanifiers).
-
-This singleton enables callers to trivially differentiate deeply recursive from
-ignorable hints. While deeply recursive hints are ignorable in *most* contexts,
-deeply recursive hints are unignorable in *some* contexts (e.g., child hints
-subscripting parent unions). Differentiating between these two cases thus
-requires a distinct singleton from the comparable and significantly more common
-:data:`.HINT_SANE_IGNORABLE` singleton.
-
-After sanification, if a hint is sanified to:
-
-* Literally this singleton, then that hint is deeply recursive.
-* Any other object, then that hint is *not* deeply recursive.
-'''
 
 # ....................{ HINTS                              }....................
 HintOrSane = Union[Hint, HintSane]
@@ -439,4 +501,63 @@ TupleHintSane = tuple[HintSane, ...]
 '''
 PEP-compliant type hint matching a tuple of zero or more **sanified type hint
 metadata** (i.e., :class:`.HintSane` objects).
+'''
+
+# ....................{ PRIVATE ~ globals                  }....................
+#FIXME: Docstring us up, please.
+_HINT_TO_HINTSANE: dict[Hint, HintSane] = {}
+'''
+'''
+
+
+#FIXME: Docstring us up, please.
+_HINT_TO_HINTSANE_get = _HINT_TO_HINTSANE.get
+'''
+'''
+
+# ....................{ SINGLETONS                         }....................
+# Note that the "HintSane" singletons instantiated below are intentionally
+# defined *ONLY* after defining all private globals required to do so above.
+# Due to metaclass-implemented memoization, order is significant here.
+
+HINT_IGNORABLE = Any
+'''
+**Ignorable sanified type hint** (i.e., arbitrary singleton type hint
+encapsulated by the metadata to which *all* deeply or shallowly ignorable type
+hints are reduced by :mod:`beartype._check.convert.convmain` sanifiers).
+'''
+
+
+HINT_SANE_IGNORABLE = HintSane(hint=HINT_IGNORABLE, is_unmemoized=True)
+'''
+**Ignorable sanified type hint metadata** (i.e., singleton :class:`.HintSane`
+instance to which *all* deeply or shallowly ignorable type hints are reduced by
+:mod:`beartype._check.convert.convmain` sanifiers).
+
+This singleton enables callers to trivially differentiate ignorable from
+unignorable hints. After sanification, if a hint is sanified to:
+
+* Literally this singleton, then that hint is ignorable.
+* Any other object, then that hint is unignorable.
+'''
+
+
+HINT_SANE_RECURSIVE = HintSane(hint=HINT_IGNORABLE, is_unmemoized=True)
+'''
+**Recursive sanified type hint metadata** (i.e., singleton :class:`.HintSane`
+instance to which **deeply recursive type hints** (i.e., recursive type hints
+whose reducers recursively expand to at least two levels of recursion) are
+reduced by :mod:`beartype._check.convert.convmain` sanifiers).
+
+This singleton enables callers to trivially differentiate deeply recursive from
+ignorable hints. While deeply recursive hints are ignorable in *most* contexts,
+deeply recursive hints are unignorable in *some* contexts (e.g., child hints
+subscripting parent unions). Differentiating between these two cases thus
+requires a distinct singleton from the comparable and significantly more common
+:data:`.HINT_SANE_IGNORABLE` singleton.
+
+After sanification, if a hint is sanified to:
+
+* Literally this singleton, then that hint is deeply recursive.
+* Any other object, then that hint is *not* deeply recursive.
 '''

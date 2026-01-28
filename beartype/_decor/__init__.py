@@ -169,7 +169,7 @@
 #  thus never be the default.
 #
 #To differentiate between these three strategies, consider:
-#* Declare an enumeration in "beartype._check.metadata.call.metacalldecor" resembling:
+#* Declare an enumeration in "beartype._check.metadata.call.bearcalldecor" resembling:
 #    from enum import Enum
 #    BeartypeStrategyKind = Enum('BeartypeStrategyKind ('O1', 'Ologn', 'On',))
 #* Define a new "BeartypeCallDecorMeta.strategy_kind" instance variable.

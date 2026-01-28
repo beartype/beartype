@@ -56,10 +56,11 @@ from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
 from beartype._check.forward.fwdresolve import resolve_decor_meta_hint_pep484_ref_str
-from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
-from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
+from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
+from beartype._util.cache.map.utilmapunbounded import CacheUnboundedStrong
 from beartype._util.hint.pep.proposal.pep484.pep484union import (
     make_hint_pep484_union)
+from beartype._util.hint.utilhintget import get_hint_repr
 from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 
 # ....................{ COERCERS ~ root                    }....................
@@ -414,14 +415,8 @@ def coerce_hint_any(hint: Hint) -> Hint:
         #FIXME: [SPEED] Globalize the
         #_hint_repr_to_hint.cache_or_get_cached_value() bound method and call
         #that globalized bound method here instead as a negligible speedup.
-
-        # Note that we intentionally call the unmemoized low-level repr()
-        # builtin here rather than our memoized higher-level get_hint_repr()
-        # getter. Why? Because the latter would significantly increase the space
-        # consumption of that memoization, as the passed hint has *NOT* yet been
-        # deduplicated by the logic performed here.
         return _hint_repr_to_hint.cache_or_get_cached_value(  # type: ignore[return-value]
-            key=repr(hint), value=hint)
+            key=get_hint_repr(hint), value=hint)
     # Else, this hint is (hopefully) self-caching.
 
     # Return this uncoerced hint as is.

@@ -38,7 +38,7 @@ def get_hint_repr(hint: object) -> str:
         Type hint to be represented.
 
     Returns
-    ----------
+    -------
     str
         Representation of this hint.
     '''

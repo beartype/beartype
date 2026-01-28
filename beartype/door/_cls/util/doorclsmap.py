@@ -34,10 +34,6 @@ from beartype.roar import (
     BeartypeDoorNonpepException,
     # BeartypeDoorPepUnsupportedException,
 )
-from beartype.typing import (
-    Dict,
-    Type,
-)
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsigns import (
@@ -59,7 +55,7 @@ from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 
 # ....................{ GETTERS                            }....................
-def get_typehint_subclass(hint: Hint) -> Type[TypeHint]:
+def get_typehint_subclass(hint: Hint) -> type[TypeHint]:
     '''
     Concrete :class:`TypeHint` subclass handling the passed low-level unwrapped
     PEP-compliant type hint if any *or* raise an exception otherwise.
@@ -159,7 +155,7 @@ def get_typehint_subclass(hint: Hint) -> Type[TypeHint]:
 
 # ....................{ PRIVATE ~ globals                  }....................
 # Further initialized below by the _init() function.
-_HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
+_HINT_SIGN_TO_TYPEHINT_CLS: dict[HintSign, type[TypeHint]] = {
     HintSignAnnotated:  AnnotatedTypeHint,
     HintSignAny:        AnyTypeHint,
     HintSignCallable:   CallableTypeHint,

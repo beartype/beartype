@@ -25,7 +25,7 @@ from beartype.typing import (
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
-from beartype._check.metadata.call.metacallabc import BeartypeCallMetaABC
+from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.func.datacodefuncwrap import (

@@ -44,7 +44,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
-from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
@@ -323,7 +323,7 @@ def make_decor_meta_scope_forward(
                 # Note that, for safety, we currently avoid ignoring additional
                 # frames that we could technically ignore. These include:
                 # * The call to the parent
-                #   beartype._check.metadata.call.metacalldecor.BeartypeCallDecorMeta.reinit()
+                #   beartype._check.metadata.call.bearcalldecor.BeartypeCallDecorMeta.reinit()
                 #   method.
                 # * The call to the parent @beartype.beartype() decorator.
                 #

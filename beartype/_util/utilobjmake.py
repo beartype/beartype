@@ -187,7 +187,7 @@ def permute_object(
         # case, preserve this parameter as is.
 
     # ....................{ RETURN                         }....................
-    # New instance of this class initialized with these parameter.
+    # New instance of this class initialized with these parameters.
     object_permuted = cls(**init_arg_name_to_value)
 
     # Return this instance.

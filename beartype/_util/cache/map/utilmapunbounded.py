@@ -12,15 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Callable,
-    Dict,
-    Union,
-)
 from beartype._data.kind.datakindiota import SENTINEL
-from collections.abc import Hashable
+from collections.abc import (
+    Callable,
+    Hashable,
+)
 from contextlib import AbstractContextManager
 from threading import Lock
+from typing import Union
 
 # ....................{ CLASSES                            }....................
 #FIXME: Submit back to StackOverflow, preferably under this question:
@@ -110,7 +109,7 @@ class CacheUnboundedStrong(object):
         '''
 
         # Initialize all instance variables.
-        self._key_to_value: Dict[Hashable, object] = {}
+        self._key_to_value: dict[Hashable, object] = {}
         self._key_to_value_get = self._key_to_value.get
         self._key_to_value_set = self._key_to_value.__setitem__
         self._lock: AbstractContextManager = lock_type()  # type: ignore[assignment]
@@ -133,6 +132,11 @@ class CacheUnboundedStrong(object):
         this method has yet to be passed this key) and, in any case, return the
         value associated with this key.
 
+        This method is intentionally implemented as a distinct method from the
+        sibling :meth:`cache_or_get_cached_func_return_passed_arg` method. Why?
+        Efficiency, which is the whole point of caching. If caching isn't
+        efficient, there is *no* reason to even cache.
+
         Parameters
         ----------
         key : Hashable
@@ -148,6 +152,11 @@ class CacheUnboundedStrong(object):
             **Value** (i.e., arbitrary object) associated with this key.
         '''
         # assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
+
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize with the
+        # cache_or_get_cached_func_return_passed_arg() method.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # Thread-safely...
         with self._lock:
@@ -168,8 +177,6 @@ class CacheUnboundedStrong(object):
 
 
     #FIXME: Unit test us up.
-    #FIXME: Generalize to accept a new mandatory "arg: object" parameter and
-    #then pass rather than forcefully passing the passed key. \o/
     def cache_or_get_cached_func_return_passed_arg(
         self,
 
@@ -188,6 +195,11 @@ class CacheUnboundedStrong(object):
         cache has yet to cache this key (i.e., if this method has yet to be
         passed this key) and, in any case, return the value associated with this
         key.
+
+        This method is intentionally implemented as a distinct method from the
+        sibling :meth:`cache_or_get_cached_value` method. Why?
+        Efficiency, which is the whole point of caching. If caching isn't
+        efficient, there is *no* reason to even cache.
 
         Caveats
         ----------
@@ -217,26 +229,39 @@ class CacheUnboundedStrong(object):
         # assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
         # assert callable(value_factory), f'{repr(value_factory)} uncallable.'
 
-        # Thread-safely...
-        with self._lock:
-            # Value previously cached under this key if any *OR* the sentinel
-            # placeholder otherwise.
-            value_old = self._key_to_value_get(key, _SENTINEL)
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize with the cache_or_get_cached_value() method.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-            # If this key has already been cached, return this value as is.
-            if value_old is not _SENTINEL:
-                return value_old
-            # Else, this key has yet to be cached.
+        # Attempt to...
+        try:
+            # Thread-safely...
+            with self._lock:
+                # Value previously cached under this key if any *OR* the
+                # sentinel placeholder otherwise.
+                value_old = self._key_to_value_get(key, _SENTINEL)
 
-            # Value created by this factory function, localized for negligible
-            # efficiency to avoid the unnecessary subsequent dictionary lookup.
-            value = value_factory(arg)
+                # If this key has already been cached, return this value as is.
+                if value_old is not _SENTINEL:
+                    return value_old
+                # Else, this key has yet to be cached.
 
-            # Cache this key with this value.
-            self._key_to_value_set(key, value)
+                # New value created by this factory function, localized for
+                # negligible efficiency to avoid the unnecessary subsequent
+                # dictionary lookup.
+                value = value_factory(arg)
 
-            # Return this value.
-            return value
+                # Cache this key with this value.
+                self._key_to_value_set(key, value)
+
+                # Return this value.
+                return value
+        # If this key is unhashable...
+        except TypeError:
+            # Create and return a new value via this factory function *WITHOUT*
+            # attempting to memoize. While non-ideal, generality and stability
+            # is more ideal than raising a fatal exception.
+            return value_factory(arg)
 
     # ..................{ CLEARERS                           }..................
     #FIXME: Unit test us up, please.

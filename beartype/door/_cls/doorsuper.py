@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Privatize most (...or perhaps all) public instance variables, please.
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doormeta import _TypeHintMeta
+from beartype.door._cls.doormeta import _TypeHintMetaclass
 from beartype.door._cls.util.doorclstest import die_unless_typehint
 from beartype.door._func.doorcheck import (
     die_if_unbearable,
@@ -50,7 +50,7 @@ from beartype._util.utilobject import get_object_type_basename
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.
 #FIXME: Document all public and private attributes of this class, please.
-class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
+class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     '''
     Abstract base class (ABC) of all **type hint wrapper** (i.e., high-level
     object encapsulating a low-level type hint augmented with a magically

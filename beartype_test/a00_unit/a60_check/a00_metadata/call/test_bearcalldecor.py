@@ -6,7 +6,7 @@
 '''
 **Beartype decorator call metadata dataclass** unit tests.
 
-This submodule unit tests the :func:`beartype._check.metadata.call.metacalldecor`
+This submodule unit tests the :func:`beartype._check.metadata.call.bearcalldecor`
 submodule.
 '''
 
@@ -17,9 +17,10 @@ submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_metadata_decor() -> None:
+def test_bearcalldecor() -> None:
     '''
-    Test the :func:`beartype._check.metadata.call.metacalldecor.BeartypeCallDecorMeta`
+    Test the
+    :func:`beartype._check.metadata.call.bearcalldecor.BeartypeCallDecorMeta`
     dataclass.
     '''
 
@@ -27,7 +28,8 @@ def test_metadata_decor() -> None:
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype.roar import BeartypeDecorWrappeeException
-    from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
+    from beartype._check.metadata.call.bearcalldecor import (
+        BeartypeCallDecorMeta)
     from beartype_test.a00_unit.data.data_type import function_lambda
     from pytest import raises
 

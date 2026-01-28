@@ -185,7 +185,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #intense refactoring. Preserve the existing approach for sanity.
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
 from beartype._data.code.datacodename import CODE_PITH_ROOT_NAME_PLACEHOLDER
 from beartype._data.typing.datatyping import TupleStrs
 from beartype._check.code.codescope import add_func_scope_ref

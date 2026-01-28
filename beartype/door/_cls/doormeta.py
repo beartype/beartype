@@ -14,16 +14,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABCMeta
-from beartype.typing import (
-    TYPE_CHECKING,
-    # MutableMapping,
-    # Union,
-)
 from beartype._cave._cavefast import NoneType
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
-from beartype._util.hint.utilhinttest import is_hint_cacheworthy
+from beartype._util.cache.map.utilmapunbounded import CacheUnboundedStrong
 from threading import RLock
+from typing import TYPE_CHECKING
 
 # If @beartype is currently being statically type-checking (e.g., by mypy),
 # import the top-level "beartype" package to assist static type-checkers in
@@ -33,63 +28,58 @@ if TYPE_CHECKING:
 
 # ....................{ METACLASSES                        }....................
 #FIXME: Unit test us up, please.
-class _TypeHintMeta(ABCMeta):
+class _TypeHintMetaclass(ABCMeta):
     '''
-    **Singleton abstract base class (ABC) metaclass** (i.e., the standard
-    :class:`abc.ABCMeta` metaclass augmented with caching to implement the
-    singleton design pattern).
+    Metaclass of all **type hint wrapper** (i.e., high-level object
+    encapsulating a low-level type hint augmented with a magically
+    object-oriented Pythonic API, including equality and rich comparison
+    testing) subclasses.
 
-    This metaclass is superior to the usual approach of implementing the
-    singleton design pattern: overriding the :meth:`__new__` method of a
-    singleton class to conditionally create a new instance of that class only if
-    an instance has *not* already been created. Why? Because that approach
-    unavoidably re-calls the :meth:`__init__` method of a previously initialized
-    singleton instance on each instantiation of that class. Doing so is
-    generally considered harmful.
+    This metaclass augments the standard :class:`abc.ABCMeta` metaclass with
+    type hint wrapper-aware caching. When an external caller attempts to
+    instantiate the :class:`beartype.door.TypeHint` abstract base class (ABC)
+    against an arbitrary type hint (e.g., ``TypeHint(list[str])``), this
+    metaclass efficiently (in order):
+
+    #. If an instance of that ABC has already been cached for that hint, returns
+       that instance directly.
+    #. Maps that hint to the corresponding concrete subclass of that ABC (e.g.,
+       :class:`beartype.door.SubscriptedTypeHint`).
+    #. Instantiates a new instance of that subclass passed that hint.
+    #. Caches that instance against that hint for subsequent reuse.
+    #. Returns that instance.
+
+    This metaclass is superior to the usual approach of implementing the caching
+    design pattern: overriding the :meth:`__new__` method of a cached type to
+    conditionally create a new instance of that type only if an instance has
+    *not* already been created. Why? Because that approach unavoidably re-calls
+    the :meth:`__init__` method of a previously initialized singleton instance
+    on each instantiation of that type. Doing so is usually considered harmful.
 
     This metaclass instead guarantees that the :meth:`__init__` method of a
-    singleton instance is only called exactly once on the first instantiation of
-    that class.
-
-    Attributes
-    ----------
-    __singleton : Optional[type]
-        Either:
-
-        * If the current singleton abstract base class (ABC) has been
-          initialized (i.e., if the :meth:`__init__` method of this metaclass
-          initializing that class with metaclass-specific logic) but a singleton
-          instance of that class has *not* yet been instantiated (i.e., if the
-          :meth:`__call__` method of this metaclass calling the :meth:`__new__`
-          and :meth:`__init__` methods of that class (in that order) has been
-          called), :data:`None`.
-        * Else, the current singleton ABC has been initialized and a singleton
-          instance of that class has been instantiated. In this case, that
-          instance.
-
-        For forward compatibility with future :class:`ABCMeta` changes, the name
-        of this instance variable is prefixed by ``"__"`` and thus implicitly
-        obfuscated by Python to be externally inaccessible.
+    cached instance is only called exactly once on the first instantiation of
+    that type.
 
     See Also
     --------
     https://stackoverflow.com/a/8665179/2809027
-        StackOverflow answers strongly inspiring this implementation.
+        StackOverflow answer strongly inspiring this implementation.
     '''
 
     # ..................{ INSTANTIATORS                      }..................
-    def __call__(cls: '_TypeHintMeta', hint: Hint) -> (
+    def __call__(cls: '_TypeHintMetaclass', hint: Hint) -> (
         'beartype.door.TypeHint'):  # pyright: ignore
         '''
-        Factory constructor magically instantiating and returning a singleton
+        Factory constructor magically instantiating and returning a cached
         instance of the concrete subclass of the :class:`beartype.door.TypeHint`
         abstract base class (ABC) appropriate for handling the passed low-level
         type hint.
 
         Parameters
         ----------
-        cls : _TypeHintMeta
-            The :class:`beartype.door.TypeHint` ABC.
+        cls : _TypeHintMetaclass
+            The :class:`beartype.door.TypeHint` ABC, whose type is (confusingly)
+            this metaclass.
         hint : Hint
             Low-level type hint to be wrapped by a singleton
             :class:`beartype.door.TypeHint` instance.
@@ -106,20 +96,23 @@ class _TypeHintMeta(ABCMeta):
         BeartypeDecorHintPepSignException
             If the passed hint is *not* actually a PEP-compliant type hint.
         '''
-        # print(f'!!!!!!!!!!!!! [ in _TypeHintMeta.__call__(cls={repr(cls)}, hint={repr(hint)}) ] !!!!!!!!!!!!!!!')
+        # print(f'!!!!!!!!!!!!! [ in _TypeHintMetaclass.__call__(cls={repr(cls)}, hint={repr(hint)}) ] !!!!!!!!!!!!!!!')
 
         # ................{ IMPORTS                            }................
         # Avoid circular import dependencies.
         from beartype.door._cls.doorsuper import TypeHint
 
-        # ................{ TRIVIALITIES                       }................
-        # If this class is a concrete subclass of the "TypeHint" abstract base
-        # class (ABC) rather than ABC itself, instantiate that subclass in the
-        # standard way.
+        # ................{ UNCACHED                           }................
+        # If the type to be instantiated is *NOT* the "TypeHint" abstract base
+        # class (ABC), that type is a concrete subclass of that ABC. In this
+        # case, instantiate that subclass in the standard way. Why? To avoid
+        # infinite recursion when the _make_wrapper() method called below
+        # instantiates a concrete subclass of that ABC; doing so reenters into
+        # this __call__() dunder method, triggering this "if" conditional.
         if cls is not TypeHint:
-            # print('!!!!!!!!!!!!! [ _TypeHintMeta.__call__ ] instantiating subclass... !!!!!!!!!!!!!!!')
+            # print('!!!!!!!!!!!!! [ _TypeHintMetaclass.__call__ ] instantiating subclass... !!!!!!!!!!!!!!!')
             return super().__call__(hint)
-        # Else, this class is that ABC. In this case, instantiate that ABC in a
+        # Else, this type is that ABC. In this case, instantiate that ABC in a
         # non-standard way.
         #
         # If this low-level type hint is already a high-level type hint wrapper,
@@ -127,43 +120,19 @@ class _TypeHintMeta(ABCMeta):
         #     >>> TypeHint(TypeHint(hint)) is TypeHint(hint)
         #     True
         elif isinstance(hint, TypeHint):
-            # print('!!!!!!!!!!!!! [ _TypeHintMeta.__call__ ] reducing to noop... !!!!!!!!!!!!!!!')
+            # print('!!!!!!!!!!!!! [ _TypeHintMetaclass.__call__ ] reducing to noop... !!!!!!!!!!!!!!!')
             return hint
         # Else, this hint is *NOT* already a wrapper.
 
-        # ................{ CACHING                            }................
-        # Key uniquely identifying this hint, defined as either...
-        hint_key = (
-            # If this hint is *NOT* self-caching (i.e., *NOT* already internally
-            # cached by its parent class or module), the machine-readable
-            # representation of this hint. Computing this string consumes more
-            # time and space and is thus performed *ONLY* where required, which
-            # is for hints that are *NOT* already reduced to singleton objects.
-            #
-            # Note that this is *NOT* merely an optimization concern. Some
-            # PEP-compliant type hints have arbitrary caller-defined and thus
-            # possibly ambiguous representations. Ergo, the machine-readable
-            # representation of an arbitrary hint does *NOT* uniquely identify
-            # that hint in general and thus *CANNOT* be used to cache that hint.
-            # Class factories producing hints with such names include:
-            # * "typing.ParamSpec".
-            # * "typing.TypeVar".
-            repr(hint)
-            if is_hint_cacheworthy(hint) else
-            # Else, this hint is self-caching and thus already reduced to a
-            # singleton object. In this case, the identifier identifying this
-            # singleton object.
-            id(hint)
-        )
-
+        # ................{ CACHED                             }................
         #FIXME: [SPEED] Globalize this bound method as a negligible speedup.
         # Type hint wrapper wrapping this hint, efficiently cached such that
-        # each hint that evaluates to the same key is wrapped by the same
-        # instance of the "TypeHint" class under this Python interpreter.
+        # each duplicate hint subsequently passed to this factory is wrapped by
+        # the same instance under this Python interpreter.
         wrapper: 'beartype.door.TypeHint' = (
-            _HINT_KEY_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(  # type: ignore[assignment]
-                # Cache this wrapper singleton under this key.
-                key=hint_key,
+            _HINT_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(  # type: ignore[assignment]
+                # Cache this wrapper singleton under this hint.
+                key=hint,
                 # If a wrapper singleton has yet to be instantiated for this
                 # hint, do so by calling this private factory method...
                 value_factory=cls._make_wrapper,  # type: ignore[arg-type]
@@ -175,7 +144,7 @@ class _TypeHintMeta(ABCMeta):
         return wrapper
 
     # ..................{ PRIVATE                            }..................
-    def _make_wrapper(cls: '_TypeHintMeta', hint: Hint) -> (
+    def _make_wrapper(cls: '_TypeHintMetaclass', hint: Hint) -> (
         'beartype.door.TypeHint'):  # pyright: ignore
         '''
         **Type hint wrapper factory** (i.e., low-level private method creating
@@ -186,7 +155,7 @@ class _TypeHintMeta(ABCMeta):
 
         Parameters
         ----------
-        cls : _TypeHintMeta
+        cls : _TypeHintMetaclass
             The :class:`beartype.door.TypeHint` ABC.
         hint : Hint
             Low-level type hint to be wrapped by a singleton
@@ -245,23 +214,23 @@ class _TypeHintMeta(ABCMeta):
         # Type hint wrapper wrapping this hint as a new singleton instance of
         # this subclass.
         wrapper = wrapper_subclass(hint)
-        # wrapper = super(_TypeHintMeta, wrapper_subclass).__call__(hint)
-        # print('!!!!!!!!!!!!! [ _TypeHintMeta.__call__ ] caching and returning singleton... !!!!!!!!!!!!!!!')
+        # wrapper = super(_TypeHintMetaclass, wrapper_subclass).__call__(hint)
+        # print('!!!!!!!!!!!!! [ _TypeHintMetaclass.__call__ ] caching and returning singleton... !!!!!!!!!!!!!!!')
 
         # Return this wrapper.
         return wrapper
 
 # ....................{ PRIVATE ~ mappings                 }....................
 #FIXME: Would've been nice if this had worked, but "pyright" gonna be "pyright".
-# _HINT_KEY_TO_WRAPPER_HINT = MutableMapping[
+# _HINT_TO_WRAPPER_HINT = MutableMapping[
 #     Union[int, str], 'beartype.door.TypeHint']
 # '''
 # PEP-compliant type hint matching the type hint wrapper cache defined below.
 # '''
-# _HINT_KEY_TO_WRAPPER: _HINT_KEY_TO_WRAPPER_HINT = CacheUnboundedStrong(  # type: ignore[assignment]
+# _HINT_TO_WRAPPER: _HINT_TO_WRAPPER_HINT = CacheUnboundedStrong(  # type: ignore[assignment]
 
 
-_HINT_KEY_TO_WRAPPER = CacheUnboundedStrong(
+_HINT_TO_WRAPPER = CacheUnboundedStrong(
     # Prefer the slower reentrant lock type for safety. As the subpackage name
     # implies, the DOOR API is recursive and thus requires reentrancy.
     lock_type=RLock,

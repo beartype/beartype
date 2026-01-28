@@ -26,7 +26,7 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.forward.scope.fwdscopemake import (
     make_decor_meta_scope_forward)
-from beartype._check.metadata.call.metacalldecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     # BoolTristate,

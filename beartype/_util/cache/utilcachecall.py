@@ -20,7 +20,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
-from beartype.typing import Dict
 from beartype._data.typing.datatyping import CallableT
 from beartype._util.func.arg.utilfuncargtest import (
     die_unless_func_args_len_flexible_equal,
@@ -160,7 +159,7 @@ def callable_cached(func: CallableT) -> CallableT:
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that call
     # if any (i.e., if that call did *NOT* raise an exception).
-    args_flat_to_return_value: Dict[tuple, object] = {}
+    args_flat_to_return_value: dict[tuple, object] = {}
 
     # get() method of this dictionary, localized for efficiency.
     args_flat_to_return_value_get = args_flat_to_return_value.get
@@ -168,7 +167,7 @@ def callable_cached(func: CallableT) -> CallableT:
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the exception raised by that
     # call if any (i.e., if that call raised an exception).
-    args_flat_to_exception: Dict[tuple, Exception] = {}
+    args_flat_to_exception: dict[tuple, Exception] = {}
 
     # get() method of this dictionary, localized for efficiency.
     args_flat_to_exception_get = args_flat_to_exception.get
@@ -397,7 +396,7 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that call
     # if any (i.e., if that call did *NOT* raise an exception).
-    args_flat_to_return_value: Dict[tuple, object] = {}
+    args_flat_to_return_value: dict[tuple, object] = {}
 
     # get() method of this dictionary, localized for efficiency.
     args_flat_to_return_value_get = args_flat_to_return_value.get
@@ -405,7 +404,7 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the exception raised by that
     # call if any (i.e., if that call raised an exception).
-    args_flat_to_exception: Dict[tuple, Exception] = {}
+    args_flat_to_exception: dict[tuple, Exception] = {}
 
     # get() method of this dictionary, localized for efficiency.
     args_flat_to_exception_get = args_flat_to_exception.get
