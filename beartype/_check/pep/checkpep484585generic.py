@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype._check.convert.convmain import sanify_hint_child
+from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
@@ -23,7 +24,6 @@ from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.typing.datatyping import (
     HintSignOrNoneOrSentinel,
     TypeException,
-    TypeStack,
 )
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.hint.sign.datahintsigncls import HintSign
@@ -36,6 +36,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic_user)
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+from typing import Optional
 
 # ....................{ PRIVATE ~ hints                    }....................
 HintPep484585GenericUnsubbedBaseUnerased = tuple[HintSane, HintSign]
@@ -58,7 +59,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
     hint_sane: HintSane,
 
     # Optional parameters.
-    cls_stack: TypeStack = None,
+    call_meta: Optional[BeartypeCallMetaABC] = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
@@ -77,7 +78,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
     # Defer to this lower-level memoized getter.
     return get_hint_pep484585_generic_unsubbed_bases_unerased(
         hint_sane,
-        cls_stack,
+        call_meta,
         conf,
         exception_prefix,
         exception_cls,
@@ -102,7 +103,8 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
     # Note that these parameters are intentionally ordered so as to trivialize
     # the calling convention. Since this getter is memoized, callers *MUST* pass
     # these parameters positionally rather than by keyword.
-    cls_stack: TypeStack = None,
+    #FIXME: Render this mandatory rather than optional, please. *sigh*
+    call_meta: Optional[BeartypeCallMetaABC] = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_prefix: str = '',
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
@@ -270,16 +272,15 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
         **Sanified type hint metadata** (i.e., :data:`.HintSane` object)
         encapsulating the :pep:`484`- or :pep:`585`-compliant unsubscripted
         generic to be inspected.
+    call_meta : Optional[BeartypeCallMetaABC], default: None
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user). Defaults to :data:`None`.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
         to :data:`.BEARTYPE_CONF_DEFAULT`, the default :math:`O(1)`
         type-checking configuration.
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
     exception_cls : TypeException, default: BeartypeDecorHintPep484585Exception
         Type of exception to be raised in the event of fatal error. Defaults to
         :exc:`.BeartypeDecorHintPep484585Exception`.
@@ -461,7 +462,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
             hint=hint_sanify,
             hint_parent_sane=hint_base_subclass_sane,
             hint_sign_seed=hint_sign_seed,
-            cls_stack=cls_stack,
+            call_meta=call_meta,
             conf=conf,
             exception_prefix=exception_prefix,
         )

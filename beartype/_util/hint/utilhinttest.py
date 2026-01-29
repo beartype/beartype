@@ -325,6 +325,8 @@ def is_hint_cacheworthy(hint: Hint) -> bool:
     )
 
 # ....................{ TESTERS ~ needs                    }....................
+#FIXME: Excise both this and the corresponding test away, please. This has since
+#been obsoleted by the new "HintSane.is_cacheable_check_expr" instance variable.
 def is_hint_needs_cls_stack(
     # Mandatory parameters.
     hint: Hint,

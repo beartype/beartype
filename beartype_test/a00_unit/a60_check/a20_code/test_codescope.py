@@ -258,161 +258,164 @@ def test_add_func_scope_types() -> None:
             types=(bool, NonIsinstanceableClass, float), func_scope=func_scope)
 
 # ....................{ TESTS ~ expresser                  }....................
-def test_express_hints_meta_scope_type_ref() -> None:
-    '''
-    Test the
-    :func:`beartype._check.code.codescope.express_hints_meta_scope_type_ref`
-    function.
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype.roar import BeartypeDecorHintForwardRefException
-    from beartype._check.code.codescope import (
-        express_hints_meta_scope_type_ref)
-    from beartype._check.metadata.hint.hintsmeta import HintsMeta
-    from beartype._data.typing.datatyping import LexicalScope
-    from pytest import raises
-    from typing import (
-        ForwardRef,
-        Optional,
-    )
-
-    # ....................{ LOCALS                         }....................
-    # Lexical scope to be added to below.
-    func_wrapper_scope = {}
-
-    # Set of the unqualified classnames referred to by all relative forward
-    # references relative to this scope if any *OR* "None" otherwise (i.e., if
-    # no such references have been expressed relative to this scope yet).
-    hint_refs_type_basename = None
-
-    # Fully-qualified classname of a non-existing class.
-    CLASSNAME_QUALIFIED = 'Thy.giant.brood.of.pines.around.thee.clinging'
-
-    # Unqualified classname of a non-existing class.
-    CLASSNAME_UNQUALIFIED = 'Children_of_elder_time_in_whose_devotion'
-
-    # Tuple of all PEP-compliant forward references to this fully-qualified
-    # class, including...
-    FORWARDREFS_QUALIFIED = (
-        # PEP 484-compliant forward reference to this class.
-        ForwardRef(CLASSNAME_QUALIFIED),
-        # PEP 585-compliant forward reference to this class.
-        CLASSNAME_QUALIFIED,
-    )
-
-    # Tuple of all PEP-compliant forward references to this unqualified class,
-    # including...
-    FORWARDREFS_UNQUALIFIED = (
-        # PEP 484-compliant forward reference to this class.
-        ForwardRef(CLASSNAME_UNQUALIFIED),
-        # PEP 585-compliant forward reference to this class.
-        CLASSNAME_UNQUALIFIED,
-    )
-
-    # ....................{ CALLABLES                      }....................
-    def _make_hints_meta(
-        func_wrapper_scope: LexicalScope,
-        hint_refs_type_basename: Optional[set],
-    ) -> HintsMeta:
-        '''
-        Type-checking metadata queue fabricated from all passed parameters.
-
-        This factory function simplifies calls to the
-        :func:`.express_hints_meta_scope_type_ref` function tested by this test,
-        which requires such a queue rather than these parameters.
-
-        Parameters
-        ----------
-        func_wrapper_scope : LexicalScope
-            Local or global scope to add this forward reference to.
-        hint_refs_type_basename : Optional[set]
-            Set of all existing **relative forward references** (i.e.,
-            unqualified basenames of all types referred to by all relative
-            forward references relative to this scope) if any *or* :data:`None`
-            otherwise (i.e., if no relative forward references have been
-            expressed relative to this scope).
-        '''
-
-        # Type-checking metadata queue to be returned.
-        hints_meta = HintsMeta()
-
-        # Initialize this queue by the passed parameters.
-        hints_meta.func_wrapper_scope = func_wrapper_scope
-        hints_meta.hint_refs_type_basename = hint_refs_type_basename
-
-        # Return this queue.
-        return hints_meta
-
-    # ....................{ PASS                           }....................
-    # For each absolute forward reference...
-    for forwardref_qualified in FORWARDREFS_QUALIFIED:
-        # Type-checking metadata queue storing this reference.
-        hints_meta = _make_hints_meta(
-            func_wrapper_scope=func_wrapper_scope,
-            hint_refs_type_basename=hint_refs_type_basename,
-        )
-
-        # Express a fully-qualified forward reference to a non-existing class.
-        forwardref_expr = express_hints_meta_scope_type_ref(
-            hints_meta=hints_meta, hint=forwardref_qualified)
-
-        # Assert this set remains empty.
-        assert hints_meta.hint_refs_type_basename is None
-
-        # Forward reference proxy added to this scope by the above call.
-        forwardref = func_wrapper_scope[forwardref_expr]
-
-        # Assert this proxy encapsulates this forward reference.
-        assert CLASSNAME_QUALIFIED in repr(forwardref)
-
-        # Assert this function rexpresses the same forward reference.
-        forwardref_expr_again = express_hints_meta_scope_type_ref(
-            hints_meta=_make_hints_meta(
-                func_wrapper_scope=func_wrapper_scope,
-                hint_refs_type_basename=hint_refs_type_basename,
-            ),
-            hint=forwardref_qualified,
-        )
-        assert forwardref_expr_again == forwardref_expr
-
-    # For each relative forward reference...
-    for forwardref_unqualified in FORWARDREFS_UNQUALIFIED:
-        # Type-checking metadata queue storing this reference.
-        hints_meta = _make_hints_meta(
-            func_wrapper_scope=func_wrapper_scope,
-            hint_refs_type_basename=hint_refs_type_basename,
-        )
-
-        # Express an unqualified forward reference to a non-existing class.
-        forwardref_expr = express_hints_meta_scope_type_ref(
-            hints_meta=hints_meta, hint=forwardref_unqualified)
-
-        # Assert this expression references this class.
-        assert CLASSNAME_UNQUALIFIED in forwardref_expr
-
-        # Assert this set now contains only this classname.
-        assert hints_meta.hint_refs_type_basename == {CLASSNAME_UNQUALIFIED,}
-
-        # Assert this function rexpresses the same forward reference.
-        forwardref_expr_again = express_hints_meta_scope_type_ref(
-            hints_meta=_make_hints_meta(
-                func_wrapper_scope=func_wrapper_scope,
-                hint_refs_type_basename=hint_refs_type_basename,
-            ),
-            hint=forwardref_unqualified,
-        )
-        assert forwardref_expr_again == forwardref_expr
-
-    # ....................{ FAIL                           }....................
-    # Assert this function raises the expected exception for arbitrary objects
-    # that are *NOT* forward references.
-    with raises(BeartypeDecorHintForwardRefException):
-        express_hints_meta_scope_type_ref(
-            hints_meta=_make_hints_meta(
-                hint_refs_type_basename=hint_refs_type_basename,
-                func_wrapper_scope=func_wrapper_scope,
-            ),
-            hint=b'The chainless winds still come and ever came',
-        )
+#FIXME: Refactor into an equivalent unit test validating that beartype correctly
+#reduces forward references to non-string type hints. The
+#express_hints_meta_scope_type_ref() function no longer exists.
+# def test_express_hints_meta_scope_type_ref() -> None:
+#     '''
+#     Test the
+#     :func:`beartype._check.code.codescope.express_hints_meta_scope_type_ref`
+#     function.
+#     '''
+#
+#     # ....................{ IMPORTS                        }....................
+#     # Defer test-specific imports.
+#     from beartype.roar import BeartypeDecorHintForwardRefException
+#     from beartype._check.code.codescope import (
+#         express_hints_meta_scope_type_ref)
+#     from beartype._check.metadata.hint.hintsmeta import HintsMeta
+#     from beartype._data.typing.datatyping import LexicalScope
+#     from pytest import raises
+#     from typing import (
+#         ForwardRef,
+#         Optional,
+#     )
+#
+#     # ....................{ LOCALS                         }....................
+#     # Lexical scope to be added to below.
+#     func_wrapper_scope = {}
+#
+#     # Set of the unqualified classnames referred to by all relative forward
+#     # references relative to this scope if any *OR* "None" otherwise (i.e., if
+#     # no such references have been expressed relative to this scope yet).
+#     hint_refs_type_basename = None
+#
+#     # Fully-qualified classname of a non-existing class.
+#     CLASSNAME_QUALIFIED = 'Thy.giant.brood.of.pines.around.thee.clinging'
+#
+#     # Unqualified classname of a non-existing class.
+#     CLASSNAME_UNQUALIFIED = 'Children_of_elder_time_in_whose_devotion'
+#
+#     # Tuple of all PEP-compliant forward references to this fully-qualified
+#     # class, including...
+#     FORWARDREFS_QUALIFIED = (
+#         # PEP 484-compliant forward reference to this class.
+#         ForwardRef(CLASSNAME_QUALIFIED),
+#         # PEP 585-compliant forward reference to this class.
+#         CLASSNAME_QUALIFIED,
+#     )
+#
+#     # Tuple of all PEP-compliant forward references to this unqualified class,
+#     # including...
+#     FORWARDREFS_UNQUALIFIED = (
+#         # PEP 484-compliant forward reference to this class.
+#         ForwardRef(CLASSNAME_UNQUALIFIED),
+#         # PEP 585-compliant forward reference to this class.
+#         CLASSNAME_UNQUALIFIED,
+#     )
+#
+#     # ....................{ CALLABLES                      }....................
+#     def _make_hints_meta(
+#         func_wrapper_scope: LexicalScope,
+#         hint_refs_type_basename: Optional[set],
+#     ) -> HintsMeta:
+#         '''
+#         Type-checking metadata queue fabricated from all passed parameters.
+#
+#         This factory function simplifies calls to the
+#         :func:`.express_hints_meta_scope_type_ref` function tested by this test,
+#         which requires such a queue rather than these parameters.
+#
+#         Parameters
+#         ----------
+#         func_wrapper_scope : LexicalScope
+#             Local or global scope to add this forward reference to.
+#         hint_refs_type_basename : Optional[set]
+#             Set of all existing **relative forward references** (i.e.,
+#             unqualified basenames of all types referred to by all relative
+#             forward references relative to this scope) if any *or* :data:`None`
+#             otherwise (i.e., if no relative forward references have been
+#             expressed relative to this scope).
+#         '''
+#
+#         # Type-checking metadata queue to be returned.
+#         hints_meta = HintsMeta()
+#
+#         # Initialize this queue by the passed parameters.
+#         hints_meta.func_wrapper_scope = func_wrapper_scope
+#         hints_meta.hint_refs_type_basename = hint_refs_type_basename
+#
+#         # Return this queue.
+#         return hints_meta
+#
+#     # ....................{ PASS                           }....................
+#     # For each absolute forward reference...
+#     for forwardref_qualified in FORWARDREFS_QUALIFIED:
+#         # Type-checking metadata queue storing this reference.
+#         hints_meta = _make_hints_meta(
+#             func_wrapper_scope=func_wrapper_scope,
+#             hint_refs_type_basename=hint_refs_type_basename,
+#         )
+#
+#         # Express a fully-qualified forward reference to a non-existing class.
+#         forwardref_expr = express_hints_meta_scope_type_ref(
+#             hints_meta=hints_meta, hint=forwardref_qualified)
+#
+#         # Assert this set remains empty.
+#         assert hints_meta.hint_refs_type_basename is None
+#
+#         # Forward reference proxy added to this scope by the above call.
+#         forwardref = func_wrapper_scope[forwardref_expr]
+#
+#         # Assert this proxy encapsulates this forward reference.
+#         assert CLASSNAME_QUALIFIED in repr(forwardref)
+#
+#         # Assert this function rexpresses the same forward reference.
+#         forwardref_expr_again = express_hints_meta_scope_type_ref(
+#             hints_meta=_make_hints_meta(
+#                 func_wrapper_scope=func_wrapper_scope,
+#                 hint_refs_type_basename=hint_refs_type_basename,
+#             ),
+#             hint=forwardref_qualified,
+#         )
+#         assert forwardref_expr_again == forwardref_expr
+#
+#     # For each relative forward reference...
+#     for forwardref_unqualified in FORWARDREFS_UNQUALIFIED:
+#         # Type-checking metadata queue storing this reference.
+#         hints_meta = _make_hints_meta(
+#             func_wrapper_scope=func_wrapper_scope,
+#             hint_refs_type_basename=hint_refs_type_basename,
+#         )
+#
+#         # Express an unqualified forward reference to a non-existing class.
+#         forwardref_expr = express_hints_meta_scope_type_ref(
+#             hints_meta=hints_meta, hint=forwardref_unqualified)
+#
+#         # Assert this expression references this class.
+#         assert CLASSNAME_UNQUALIFIED in forwardref_expr
+#
+#         # Assert this set now contains only this classname.
+#         assert hints_meta.hint_refs_type_basename == {CLASSNAME_UNQUALIFIED,}
+#
+#         # Assert this function rexpresses the same forward reference.
+#         forwardref_expr_again = express_hints_meta_scope_type_ref(
+#             hints_meta=_make_hints_meta(
+#                 func_wrapper_scope=func_wrapper_scope,
+#                 hint_refs_type_basename=hint_refs_type_basename,
+#             ),
+#             hint=forwardref_unqualified,
+#         )
+#         assert forwardref_expr_again == forwardref_expr
+#
+#     # ....................{ FAIL                           }....................
+#     # Assert this function raises the expected exception for arbitrary objects
+#     # that are *NOT* forward references.
+#     with raises(BeartypeDecorHintForwardRefException):
+#         express_hints_meta_scope_type_ref(
+#             hints_meta=_make_hints_meta(
+#                 hint_refs_type_basename=hint_refs_type_basename,
+#                 func_wrapper_scope=func_wrapper_scope,
+#             ),
+#             hint=b'The chainless winds still come and ever came',
+#         )

@@ -40,32 +40,31 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
 )
-from beartype.typing import Optional
 from beartype._data.code.datacodename import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
 )
-from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT,
 )
-from beartype._check.code.codescope import (
-    add_hints_meta_scope_type_or_types,
-    express_hints_meta_scope_type_ref,
-)
+from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.code._pep.codepep484604 import (
     make_hint_pep484604_check_expr)
 from beartype._check.code._pep.pep484585.codepep484585container import (
     make_hint_pep484585_container_check_expr)
 from beartype._check.code._pep.pep484585.codepep484585generic import (
     make_hint_pep484585_generic_unsubbed_check_expr)
+from beartype._check.code._pep.pep484585.codepep484585subclass import (
+    make_hint_pep484585_subclass_check_expr)
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
+from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.datacodelen import (
@@ -80,7 +79,6 @@ from beartype._data.code.pep.datacodepep484585 import (
     CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format,
     CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format,
     CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format,
-    CODE_PEP484585_SUBCLASS_format,
     CODE_PEP484585_TUPLE_FIXED_EMPTY_format,
     CODE_PEP484585_TUPLE_FIXED_LEN_format,
     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format,
@@ -102,21 +100,15 @@ from beartype._data.code.pep.datacodepep593 import (
 from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.typing.datatyping import (
-    CodeGenerated,
-    TypeStack,
-)
+from beartype._data.typing.datatyping import CodeGeneratedNew
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsigns import (
     HintSignAnnotated,
     HintSignCounter,
-    HintSignForwardRef,
     HintSignPep484585GenericUnsubbed,
     HintSignLiteral,
     HintSignPep484585TupleFixed,
     HintSignType,
-    # HintSignTypedDict,
-    HintSignUnion,
 )
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_CONTAINER_ARGS_1,
@@ -125,14 +117,9 @@ from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_UNION,
 )
-from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
     release_instance,
-)
-from beartype._util.cls.pep.clspep3119 import (
-    die_unless_object_issubclassable,
-    is_object_issubclassable,
 )
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
@@ -150,7 +137,6 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin_type_isinstanceable,
 )
-from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
@@ -162,15 +148,12 @@ from beartype._util.text.utiltextrepr import represent_object
 from random import getrandbits
 
 # ....................{ MAKERS                             }....................
-@callable_cached
 def make_check_expr(
     # ..................{ ARGS ~ mandatory                   }..................
+    call_meta: BeartypeCallMetaABC,
     hint_sane: HintSane,
     conf: BeartypeConf,
-
-    # ..................{ ARGS ~ optional                    }..................
-    cls_stack: TypeStack = None,
-) -> CodeGenerated:
+) -> CodeGeneratedNew:
     '''
     **Type-checking expression factory** (i.e., low-level callable dynamically
     generating a pure-Python boolean expression type-checking an arbitrary
@@ -185,7 +168,10 @@ def make_check_expr(
     the beating heart of :mod:`beartype`. We applaud you for your perseverance.
     You finally found the essence of the Great Bear. You did it!! Now, we clap.
 
-    This code factory is memoized for efficiency.
+    This code factory is effectively memoized by the
+    :data:`._HINT_CONF_TO_CHECK_EXPR` dictionary for the proper subset of type
+    hints whose type-checking code is safely memoizable. See also that
+    dictionary's docstring for further details.
 
     Caveats
     -------
@@ -210,24 +196,23 @@ def make_check_expr(
 
     Parameters
     ----------
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     hint_sane : HintSane
         **Sanified type hint metadata** (i.e., :data:`.HintSane` object)
         encapsulating the hint to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
 
     Returns
     -------
-    CodeGenerated
-        Tuple containing the Python code snippet dynamically generated by this
-        code generator and metadata describing that code. See also the
-        :attr:`beartype._data.typing.datatyping.CodeGenerated` type hint.
+    CodeGeneratedNew
+        Tuple of metadata encapsulating the Python code snippet dynamically
+        generated by this code factory. See also the
+        :attr:`beartype._data.typing.datatyping.CodeGeneratedNew` type hint.
 
     Raises
     ------
@@ -256,6 +241,42 @@ def make_check_expr(
         If one or more :pep:`484`-compliant type hints visitable from this
         object have been deprecated by :pep:`585`.
     '''
+    assert isinstance(call_meta, BeartypeCallMetaABC), (
+        f'{repr(call_meta)} not beartype call metadata.')
+    assert isinstance(hint_sane, HintSane), (
+        f'{repr(hint_sane)} not sanified hint metadata.')
+    assert isinstance(conf, BeartypeConf), (
+        f'{repr(conf)} not beartype configuration.')
+
+    # ..................{ CACHE                              }..................
+    # Arbitrary hashable object with which to cache the type-checking expression
+    # dynamically generated by this code factory. Since this expression
+    # conditionally depends on both this sanified hint metadata encapsulating
+    # this root type hint *AND* beartype configuration, this is the 2-tuple
+    # aggregating these hashable objects.
+    CACHE_KEY = (hint_sane, conf)
+
+    # Either:
+    # * If this hint is safely memoizable *AND* this code factory has already
+    #   been passed both this sanified hint metadata encapsulating this root
+    #   type hint *AND* beartype configuration at least once, the type-checking
+    #   expression previously generated by that call.
+    # * Else, "None".
+    check_expr = _HINT_CONF_TO_CHECK_EXPR_get(CACHE_KEY)
+
+    # If a prior call to this code factory has already generated an expression
+    # type-checking this hint under this configuration, return this expression.
+    if check_expr is not None:
+        return check_expr
+    # Else, either this hint is unmemoizable *OR* this is the first call to this
+    # code factory passed this hint and configuration. In either case, continue
+    # generating an expression type-checking this hint under this configuration.
+
+    # ..................{ LOCALS                             }..................
+    # True only if the type-checking expression generated by this code factory
+    # below is safely memoizable back into the above cache, defaulting to the
+    # superficial uncacheability of the passed root type hint.
+    is_cacheable_check_expr = hint_sane.is_cacheable_check_expr
 
     # ..................{ LOCALS ~ hint : current            }..................
     # Currently visited hint.
@@ -271,10 +292,6 @@ def make_check_expr(
     # ..................{ LOCALS ~ hint : child              }..................
     # Currently iterated child hint subscripting the currently visited hint.
     hint_child: object = None
-
-    # Current unsubscripted typing attribute associated with this child hint
-    # (e.g., "Union" if "hint_child == Union[int, str]").
-    hint_child_sign: Optional[HintSign] = None
 
     # Currently iterated child hint subscripting the currently visited hint *OR*
     # sanified child hint metadata** (i.e., "HintSane" object describing
@@ -308,7 +325,7 @@ def make_check_expr(
     hints_meta = acquire_instance(HintsMeta)
 
     # Initialize this fixed list.
-    hints_meta.reinit(cls_stack=cls_stack, conf=conf)
+    hints_meta.reinit(call_meta=call_meta, conf=conf)
 
     # 0-based index of metadata describing the currently visited hint in this
     # fixed list.
@@ -352,6 +369,14 @@ def make_check_expr(
         hint_curr_sane = hints_meta.hint_curr_meta.hint_sane
         hint_curr = hint_curr_sane.hint
         # print(f'Visiting type hint {repr(hint_curr_sane)}...')
+
+        # The type-checking expression being generated by this code factory is
+        # safely memoizable if and only if this root hint *AND* all previously
+        # visited transitive child hints of this root hint are safely
+        # memoizable. Semantically, this ensures that the uncacheability of even
+        # a single child hint renders the entire tree uncacheable by propagating
+        # uncacheability up the tree of hints visitable from this root hint.
+        is_cacheable_check_expr &= hint_curr_sane.is_cacheable_check_expr
 
         # ................{ PEP                                }................
         # If this hint is PEP-compliant...
@@ -512,27 +537,9 @@ def make_check_expr(
                     ),
                 )
             # Else, this hint is either subscripted, not shallowly
-            # type-checkable, *OR* deeply type-checkable.
-            #
-            # ..............{ FORWARDREF                         }..............
-            # If this hint is a forward reference...
-            elif hint_curr_sign is HintSignForwardRef:
-                # Python expression evaluating to a new forward reference proxy
-                # encapsulating the type referred to by this forward reference.
-                hints_meta.hint_curr_expr = express_hints_meta_scope_type_ref(
-                    hints_meta=hints_meta, hint=hint_curr)  # type: ignore[arg-type]
-
-                #FIXME: *REDUNDANT.* Shallow type-checking code defined below
-                #already performs this exact same logic. Excise us up, please.
-                # # Code type-checking the current pith against this class.
-                # hints_meta.func_curr_code = CODE_PEP484_INSTANCE_format(
-                #     pith_curr_expr=hints_meta.pith_curr_expr,
-                #     hint_curr_expr=hints_meta.hint_curr_expr,
-                # )
-            # Else, this hint is *NOT* a forward reference.
-            #
-            # Since this hint is *NOT* shallowly type-checkable, this hint
-            # *MUST* be deeply type-checkable. So, we do so now.
+            # type-checkable, *OR* deeply type-checkable. For sanity, we assume
+            # this hint to *NOT* be shallowly type-checkable. It follows that
+            # this hint *MUST* be deeply type-checkable. So, we do so now.
             #
             # ..............{ DEEP                               }..............
             # Perform deep type-checking logic (i.e., logic that is guaranteed
@@ -748,6 +755,9 @@ def make_check_expr(
                                 # Deeply type-check this child pith.
                                 hints_meta.func_curr_code += (
                                     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format(
+                                        # Placeholder string to be subsequently
+                                        # replaced by code type-checking this
+                                        # child pith against this hint.
                                         hint_child_placeholder=(
                                             hints_meta.enqueue_hint_child_sane(
                                                 hint_sane=hint_child_sane,
@@ -1147,88 +1157,10 @@ def make_check_expr(
                 #
                 # ............{ SUBCLASS                           }............
                 # If this hint is either a PEP 484- or 585-compliant subclass
-                # type hint...
+                # type hint, generate a Python code snippet type-checking the
+                # current pith against this hint.
                 elif hint_curr_sign is HintSignType:
-                    # Metadata encapsulating the sanification of this possibly
-                    # insane child hint.
-                    hint_child_sane = hints_meta.sanify_hint_child(
-                        # Possibly ignorable insane child hint subscripting
-                        # this parent hint, validated to be the *ONLY* child
-                        # hint subscripting this parent hint.
-                        get_hint_pep484585_arg(
-                            hint=hint_curr,
-                            exception_prefix=hints_meta.exception_prefix,
-                        )
-                    )
-
-                    # If this child hint is unignorable...
-                    if hint_child_sane is not HINT_SANE_IGNORABLE:
-                        # Child hint encapsulated by this metadata.
-                        hint_child = hint_child_sane.hint
-
-                        # Sign identifying this child hint.
-                        hint_child_sign = get_hint_pep_sign_or_none(hint_child)
-
-                        # If this child hint is a forward reference to a
-                        # superclass, expose this forward reference to the body
-                        # of this wrapper function. See above for commentary.
-                        if hint_child_sign is HintSignForwardRef:
-                            hint_curr_expr = express_hints_meta_scope_type_ref(
-                                hints_meta=hints_meta, hint=hint_child)  # type: ignore[arg-type]
-                        # Else, this child hint is *NOT* a forward reference. In
-                        # this case...
-                        else:
-                            # If this child hint is a union of superclasses,
-                            # reduce this union to a tuple of superclasses. Only
-                            # the latter is safely passable as the second
-                            # parameter to the issubclass() builtin under all
-                            # supported Python versions.
-                            if hint_child_sign is HintSignUnion:
-                                hint_child = get_hint_pep_args(hint_child)
-                            # Else, this child hint is *NOT* a union.
-
-                            # If this child hint is *NOT* an issubclassable
-                            # object, raise an exception.
-                            #
-                            # Note that the is_object_issubclassable() tester is
-                            # considerably faster and thus called before the
-                            # considerably slower
-                            # die_unless_object_issubclassable() raiser.
-                            if not is_object_issubclassable(hint_child):  # type: ignore[arg-type]
-                                die_unless_object_issubclassable(
-                                    obj=hint_child,  # type: ignore[arg-type]
-                                    exception_prefix=(
-                                        f'{EXCEPTION_PREFIX}PEP 484 or 585 '
-                                        f'subclass type hint {repr(hint_curr)} '
-                                        f'child type hint '
-                                    ),
-                                )
-                            # Else, this child hint is an issubclassable object.
-
-                            # Python expression evaluating to this child hint.
-                            hint_curr_expr = add_hints_meta_scope_type_or_types(
-                                hints_meta=hints_meta, type_or_types=hint_child)  # type: ignore[arg-type]
-
-                        # Code type-checking this pith against this superclass.
-                        hints_meta.func_curr_code = CODE_PEP484585_SUBCLASS_format(
-                            pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
-                            pith_curr_var_name=hints_meta.pith_curr_var_name,
-                            hint_curr_expr=hint_curr_expr,
-                            indent_curr=hints_meta.indent_curr,
-                        )
-                    # Else, this child hint is ignorable. In this case...
-                    else:
-                        # Python expression evaluating to the origin type of
-                        # this hint -- which, by definition, is the "type"
-                        # superclass. Since this superclass is a builtin (i.e.,
-                        # universally accessible object), we efficiently
-                        # hardcode the access of this superclass rather than
-                        # inject a hidden beartype-specific parameter into the
-                        # signature of this wrapper function as we usually do.
-                        hints_meta.hint_curr_expr = 'type'
-
-                        # Fallback to trivial code shallowly type-checking this
-                        # pith as an instance of this origin type.
+                    make_hint_pep484585_subclass_check_expr(hints_meta)
                 # Else, this hint is *NOT* a subclass type hint.
                 #
                 # ............{ GENERIC or PROTOCOL                }............
@@ -1463,7 +1395,7 @@ def make_check_expr(
         # all other logic for the currently visited hint).
         hints_meta_index_curr += 1
 
-    # ..................{ CLEANUP                            }..................
+    # ..................{ RETURN                             }..................
     # Release the fixed list of all such metadata.
     release_instance(hints_meta)
 
@@ -1482,31 +1414,56 @@ def make_check_expr(
             f'{EXCEPTION_PREFIX_HINT}{repr(hint_sane)} unchecked.')
     # Else, the breadth-first search above successfully generated code.
 
-    # ..................{ CODE ~ scope                       }..................
-    # If type-checking for the root pith requires a pseudo-random integer, pass
-    # a hidden parameter to this wrapper function exposing the
-    # random.getrandbits() function required to generate this integer.
+    # If type-checking this hint requires a pseudo-random integer, pass a hidden
+    # parameter to this wrapper function exposing the random.getrandbits()
+    # function required to generate this integer.
     if hints_meta.is_var_random_int_needed:
         hints_meta.func_wrapper_scope[ARG_NAME_GETRANDBITS] = getrandbits
-    # Else, type-checking for the root pith requires *NO* pseudo-random integer.
+    # Else, type-checking this hint requires *NO* pseudo-random integer.
 
-    # ..................{ CODE ~ suffix                      }..................
-    # Tuple of the unqualified classnames referred to by all relative forward
-    # references visitable from this hint converted from that set to reduce
-    # space consumption after memoization by @callable_cached, defined as...
-    hint_refs_type_basename_tuple = (
-        # If *NO* relative forward references are visitable from this root
-        # hint, the empty tuple;
-        ()
-        if hints_meta.hint_refs_type_basename is None else
-        # Else, that set converted into a tuple.
-        tuple(hints_meta.hint_refs_type_basename)
-    )
+    # Type-checking expression dynamically generated above to be returned.
+    check_expr = (func_wrapper_code, hints_meta.func_wrapper_scope)
+
+    # If this expression is safely memoizable into this cache, do so.
+    if is_cacheable_check_expr:
+        _HINT_CONF_TO_CHECK_EXPR[CACHE_KEY] = check_expr
+    # Else, this expression is *NOT* safely memoizable.
+
+    # Return this expression and associated metadata.
     # print(f'func_wrapper_scope: {hints_meta.func_wrapper_scope}')
+    return check_expr
 
-    # Return all metadata required by higher-level callers.
-    return (
-        func_wrapper_code,
-        hints_meta.func_wrapper_scope,
-        hint_refs_type_basename_tuple,
-    )
+# ....................{ PRIVATE ~ globals                  }....................
+_HINT_CONF_TO_CHECK_EXPR: dict[tuple[Hint, BeartypeConf], CodeGeneratedNew] = {}
+'''
+**Type-checking expression factory cache** (i.e., dictionary mapping from each
+2-tuple ``(hint, conf)`` of the same pair of parameters passed in each call of
+the :func:`.make_check_expr` code factory to the tuple of metadata encapsulating
+the Python code snippet dynamically generated by that code factory).
+
+This dictionary effectively memoizes that code factory for the proper subset of
+type hints whose type-checking code is safely memoizable. Thankfully, most type
+hints are safely memoizable. Exceptions include the so-called "uncachable" type
+hints, defined as:
+
+* Type hints whose sanification by the :meth:`.HintsMeta.sanify_hint_child`
+  method returns **sanified hint metadata** (i.e., :class:`.HintSane` instance)
+  whose :attr:`.HintSane.is_cacheable_check_expr` instance variable is
+  :data:`False`.
+* Parent type hints transitively subscripted by one or more child type hints
+  having such a sanification.
+
+Caveats
+-------
+**This cache is currently non-thread-safe.** Why? Efficiency. Guaranteeing
+thread-safety would require securing the critical slice with thread-locking
+primitives, harming efficiency and thus the whole point of caching. Thankfully,
+cached values are *never* directly exposed to end users. Thread-locking this
+cache would only uselessly inhibit efficiency for no tangible benefit.
+'''
+
+
+_HINT_CONF_TO_CHECK_EXPR_get = _HINT_CONF_TO_CHECK_EXPR.get
+'''
+:meth:`dict.get` method bound to this dictionary.
+'''

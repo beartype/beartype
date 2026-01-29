@@ -21,6 +21,7 @@ from beartype.typing import (
 )
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convmain import sanify_hint_child
+from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintmeta import HintMeta
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
@@ -32,7 +33,6 @@ from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (
     HintSignOrNoneOrSentinel,
     LexicalScope,
-    TypeStack,
 )
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._util.cache.pool.utilcachepoollistfixed import (
@@ -117,10 +117,10 @@ class HintsMeta(FixedList):
 
     Attributes
     ----------
-    cls_stack : TypeStack
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
@@ -148,14 +148,6 @@ class HintsMeta(FixedList):
     hint_curr_meta: HintMeta
         Metadata describing the currently visited hint, appended by the
         previously visited parent hint to this queue.
-    hint_refs_type_basename : Optional[set]
-        Either:
-
-        * If one or more **relative forward references** (i.e., unqualified
-          basenames of all types referred to by all relative forward references
-          relative to this scope) have been visited, the non-empty set of these
-          relative forward references
-        * Else, :data:`None`.
     indent_curr : str
         Python code snippet expanding to the current level of indentation
         appropriate for the currently visited hint.
@@ -211,7 +203,7 @@ class HintsMeta(FixedList):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'cls_stack',
+        'call_meta',
         'conf',
         'exception_prefix',
         'func_curr_code',
@@ -227,13 +219,12 @@ class HintsMeta(FixedList):
         'pith_curr_assign_expr',
         'pith_curr_var_name',
         'pith_curr_var_name_index',
-        'hint_refs_type_basename',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        cls_stack: TypeStack
+        call_meta: BeartypeCallMetaABC
         conf: BeartypeConf
         exception_prefix: str
         func_curr_code: str
@@ -249,7 +240,6 @@ class HintsMeta(FixedList):
         pith_curr_assign_expr: str
         pith_curr_var_name: str
         pith_curr_var_name_index: int
-        hint_refs_type_basename: Optional[set]
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self) -> None:
@@ -274,7 +264,7 @@ class HintsMeta(FixedList):
         # Optional parameters. Note that these parameters are optional *ONLY* to
         # allow the __init__() method to be trivially defined. In all *OTHER*
         # calls to this method, these parameters should always be passed. Ugh!
-        cls_stack: TypeStack = None,
+        call_meta: Optional[BeartypeCallMetaABC] = None,
         conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     ) -> None:
         '''
@@ -286,7 +276,7 @@ class HintsMeta(FixedList):
         '''
 
         # Classify all passed parameters.
-        self.cls_stack = cls_stack
+        self.call_meta = call_meta
         self.conf = conf
 
         # 1-based indentation level describing the initial level of indentation
@@ -300,18 +290,17 @@ class HintsMeta(FixedList):
         self.index_last = -1
 
         # Nullify all remaining passed parameters.
-        self.func_curr_code = None  # type: ignore[assignment]
         self.func_wrapper_scope = {}
-        self.hint_curr_expr = None
-        self.hint_curr_meta = None  # type: ignore[assignment]
-        self.indent_curr = None  # type: ignore[assignment]
-        self.indent_child = None  # type: ignore[assignment]
         self.is_var_random_int_needed = False
-        self.pith_curr_expr = None  # type: ignore[assignment]
-        self.pith_curr_assign_expr = None  # type: ignore[assignment]
-        self.pith_curr_var_name = None  # type: ignore[assignment]
         self.pith_curr_var_name_index = 0
-        self.hint_refs_type_basename = None
+        self.func_curr_code = (  # type: ignore[assignment]
+        self.hint_curr_expr) = (  # type: ignore[assignment]
+        self.hint_curr_meta) = (  # type: ignore[assignment]
+        self.indent_curr) = (  # type: ignore[assignment]
+        self.indent_child) = (  # type: ignore[assignment]
+        self.pith_curr_expr) = (  # type: ignore[assignment]
+        self.pith_curr_assign_expr) = (  # type: ignore[assignment]
+        self.pith_curr_var_name) = None  # type: ignore[assignment]
 
     # ..................{ DUNDERS                            }..................
     def __getitem__(self, hint_index: int) -> HintMeta:  # type: ignore[override]
@@ -666,7 +655,7 @@ class HintsMeta(FixedList):
         hint_child_sane = sanify_hint_child(
             hint=hint_child_insane,
             hint_parent_sane=hint_parent_sane,
-            cls_stack=self.cls_stack,
+            call_meta=self.call_meta,
             conf=self.conf,
             exception_prefix=self.exception_prefix,
         )

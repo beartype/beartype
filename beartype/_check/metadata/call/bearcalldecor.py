@@ -16,17 +16,10 @@ from beartype.roar import (
     BeartypeDecorHintForwardRefException,
     BeartypeDecorWrappeeException,
 )
-from beartype.typing import (
-    TYPE_CHECKING,
-    Callable,
-    FrozenSet,
-    Optional,
-)
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
-from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.func.datacodefuncwrap import (
     CODE_NORMAL_RETURN_CHECKED,
@@ -68,6 +61,14 @@ from beartype._util.hint.pep.proposal.pep649 import (
     set_pep649_hintable_annotations,
 )
 from beartype._util.text.utiltextprefix import prefix_callable_pith
+from collections.abc import (
+    Callable,
+    FrozenSet,
+)
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+)
 
 # ....................{ SUBCLASSES                         }....................
 class BeartypeCallDecorMeta(BeartypeCallMetaABC):
@@ -111,12 +112,6 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
 
     Attributes
     ----------
-    cls_stack : TypeStack
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`). See
-        also the parameter of the same name accepted by the
-        :func:`beartype._decor.decorcore.beartype_object` function for details.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
@@ -270,7 +265,6 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'cls_stack',
         'conf',
         'func_annotations',
         'func_annotations_get',
@@ -293,7 +287,6 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        cls_stack: TypeStack
         conf: BeartypeConf
         func_annotations: Pep649HintableAnnotations
         func_annotations_get: Callable[[str, object], object]
@@ -342,6 +335,9 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
            initialize these instances.
         '''
 
+        # Initialize our superclass.
+        super().__init__()
+
         # Nullify instance variables for safety.
         self.deinit()
 
@@ -366,8 +362,7 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
         self._is_func_annotations_dirty = False
 
         # Nullify all remaining instance variables for safety.
-        self.cls_stack = (  # type: ignore[assignment]
-        self.conf) = (  # type: ignore[assignment]
+        self.conf = (  # type: ignore[assignment]
         self.func_annotations) = (  # type: ignore[assignment]
         self.func_annotations_get) = (  # type: ignore[assignment]
         self.func_wrappee) = (  # type: ignore[assignment]
@@ -911,9 +906,9 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
 
         # Mandatory parameters.
         hint: str,
+        conf: BeartypeConf,
 
         # Optional parameters.
-        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
         exception_cls: TypeException = BeartypeDecorHintForwardRefException,
         exception_prefix: str = '',
     ) -> Hint:

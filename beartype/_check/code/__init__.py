@@ -2595,3 +2595,48 @@
 #    part isn't terribly interesting, as it's PEP-noncompliant. The "packed
 #    memory layout" part, however, *IS* interesting. Reducing space consumption
 #    by presumably compiling to C is intriguing, if tangential to our concerns.
+
+#FIXME: Hah-hah! Finally figured out how to do PEP-noncompliant recursive type
+#hints... mostly. That said, since @beartype already supports PEP 695-compliant
+#recursive type aliases, it's unclear whether any of this is desirable.
+#Still, we specced it out. So, here it is. It's a two-parter consisting of:
+#* *PART I.* In the first part:
+#  * Refactor our code generation algorithm to additionally maintain a stack of
+#    all parent type hints of the currently visited type hint. Note that we need
+#    to do this anyway to support the __beartype_hint__() protocol. See "FIXME:"
+#    comments in the "beartype.plug._plughintable" submodule pertaining to that
+#    protocol for further details on properly building out this stack.
+#  * When that algorithm visits a forward reference:
+#    * That algorithm calls the _express_hints_meta_scope_type_ref() function
+#      generating type-checking code for that reference. Refactor that call to
+#      additionally pass that stack of parent hints to that function.
+#    * Refactor the _express_hints_meta_scope_type_ref() function to:
+#      * If the passed forward reference is relative, additionally return that
+#        stack in the returned 3-tuple
+#        "(forwardref_expr, refs_type_basename, forwardref_parent_hints)",
+#        where "forwardref_parent_hints" is that stack.
+#* *PART II.* In the second part:
+#  * Refactor the beartype._decor._nontype._wrap.wrapmain._unmemoize_func_wrapper_code()
+#    function to additionally:
+#    * If the passed forward reference is relative *AND* the unqualified
+#      basename of an existing attribute in a local or global scope of the
+#      currently decorated callable *AND* the value of that attribute is a
+#      parent type hint on the stack of parent type hints returned by the
+#      previously called _express_hints_meta_scope_type_ref() function, then
+#      *THIS REFERENCE INDICATES A RECURSIVE TYPE HINT.* In this case:
+#      * Replace this forward reference with a new recursive type-checking
+#        "beartype._check.forward.reference.fwdrefabc.BeartypeForwardRef_{forwardref}"
+#        subclass whose is_instance() tester method recursively calls itself
+#        indefinitely. If doing so generates a "RecursionError", @beartype
+#        considers that the user's problem. *wink*
+#      * Note that this is_instance() tester method should guard itself against
+#        recursion by accepting an optional "obj_ids: FrozenSetInts =
+#        FROZEN_SET_EMPTY" parameter recording the IDs of all previously tested
+#        objects. Consider infinite containers: e.g.,
+#            infinite_list = []
+#            infinite_list.append(infinite_list)
+#
+#Done and done. Phew!
+#FIXME: Probably just excise the above commentary. We don't even have anything
+#resembling an _express_hints_meta_scope_type_ref() function anymore. </weep>
+

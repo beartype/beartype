@@ -17,26 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._data.typing.datatyping import CallableStrFormat
 
-# ....................{ HINT ~ placeholder : forwardref    }....................
-CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX = '${FORWARDREF:'
-'''
-Prefix of each **placeholder unqualified forward reference classname
-substring** (i.e., placeholder to be globally replaced by a Python code snippet
-evaluating to the currently visited unqualified forward reference hint
-canonicalized into a fully-qualified classname relative to the external
-caller-defined module declaring the currently decorated callable).
-'''
-
-
-CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX = ']?'
-'''
-Suffix of each **placeholder unqualified forward reference classname
-substring** (i.e., placeholder to be globally replaced by a Python code snippet
-evaluating to the currently visited unqualified forward reference hint
-canonicalized into a fully-qualified classname relative to the external
-caller-defined module declaring the currently decorated callable).
-'''
-
 # ....................{ HINT ~ pep : 572                   }....................
 CODE_PEP572_PITH_ASSIGN_EXPR = '''{pith_curr_var_name} := {pith_curr_expr}'''
 '''
@@ -100,7 +80,5 @@ failed hard after breaking everything. **Avoid the mistakes of the past.**
 # This is an absurd micro-optimization. *fight me, github developer community*
 CODE_PEP484_INSTANCE_format: CallableStrFormat = (
     CODE_PEP484_INSTANCE.format)
-# CODE_PEP572_PITH_ASSIGN_AND_format: CallableStrFormat = (
-#     CODE_PEP572_PITH_ASSIGN_AND.format)
 CODE_PEP572_PITH_ASSIGN_EXPR_format: CallableStrFormat = (
     CODE_PEP572_PITH_ASSIGN_EXPR.format)

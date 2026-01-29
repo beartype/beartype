@@ -20,18 +20,15 @@ from beartype._check.convert._convcoerce import (
 )
 from beartype._check.convert._reduce.redmain import reduce_hint
 from beartype._check.metadata.hint.hintsane import HintSane
+from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
 from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-# from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.typing.datatyping import (
-    HintSignOrNoneOrSentinel,
-    TypeStack,
-)
+from beartype._data.typing.datatyping import HintSignOrNoneOrSentinel
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
     reduce_hint_pep484585_func_return)
@@ -204,9 +201,8 @@ def sanify_hint_root_func(
     hint_sane = reduce_hint(
         hint=hint,
         conf=decor_meta.conf,
-        decor_meta=decor_meta,
+        call_meta=decor_meta,
         arg_kind=arg_kind,
-        cls_stack=decor_meta.cls_stack,
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )
@@ -308,7 +304,8 @@ def sanify_hint_child(
     hint_parent_sane: Optional[HintSane],
 
     # Optional parameters.
-    cls_stack: TypeStack = None,
+    #FIXME: Render this mandatory rather than optional, please. *sigh*
+    call_meta: Optional[BeartypeCallMetaABC] = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     hint_sign_seed: HintSignOrNoneOrSentinel = SENTINEL,
     pith_name: Optional[str] = None,
@@ -331,16 +328,15 @@ def sanify_hint_child(
         Either:
 
         * If this hint is actually a **root type hint,** :data:`None`.
-        * Else, **Sanified parent type hint metadata** (i.e., immutable and thus
+        * Else, **sanified parent type hint metadata** (i.e., immutable and thus
           hashable object encapsulating *all* metadata previously returned by
           :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
           the possibly PEP-noncompliant parent hint of this child hint into a
           fully PEP-compliant parent hint).
-    cls_stack : TypeStack, default: None
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
+    call_meta : Optional[BeartypeCallMetaABC], default: None
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user). Defaults to :data:`None`.
     conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
@@ -424,7 +420,7 @@ def sanify_hint_child(
         hint_parent_sane=hint_parent_sane,
         hint_sign_seed=hint_sign_seed,
         conf=conf,
-        cls_stack=cls_stack,
+        call_meta=call_meta,
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )

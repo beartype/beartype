@@ -14,18 +14,18 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep673Exception
-from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
+from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.typing.datatyping import TypeStack
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
 def reduce_hint_pep673(
     hint: Hint,
-    cls_stack: TypeStack,
+    call_meta: BeartypeCallMetaABC,
     exception_prefix: str,
     **kwargs
-) -> type:
+) -> HintSane:
     '''
     Reduce the passed :pep:`673`-compliant **self type hint** (i.e.,
     the :obj:`typing.Self` type hint singleton) to the **currently decorated
@@ -41,10 +41,10 @@ def reduce_hint_pep673(
     ----------
     hint : object
         Self type hint to be reduced.
-    cls_stack : TypeStack
-        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        :data:`None`). Defaults to :data:`None`. See also the
-        :func:`beartype._decor.decormain.beartype_object` decorator.
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
@@ -52,8 +52,9 @@ def reduce_hint_pep673(
 
     Returns
     -------
-    type
-        Most deeply nested class on this type stack.
+    HintSane
+        Sanified hint metadata encapsulating most deeply nested class on this
+        type stack.
 
     Raises
     ------
@@ -63,8 +64,9 @@ def reduce_hint_pep673(
         * ``cls_stack`` is :data:`None`.
         * ``cls_stack`` is non-:data:`None` but empty.
     '''
-    assert isinstance(cls_stack, NoneTypeOr[tuple]), (
-        f'{repr(cls_stack)} neither tuple nor "None".')
+
+    # Currently decorated type stack, localized for negligible efficiency.
+    cls_stack = call_meta.cls_stack
 
     # If either no type stack *OR* an empty type stack was passed, *NO* class is
     # currently being decorated by @beartype. It follows that either:
@@ -105,7 +107,16 @@ def reduce_hint_pep673(
         )
     # Else, a non-empty type stack was passed.
 
-    # Reduce this hint to the currently decorated class (i.e., the most deeply
-    # nested class on this type stack, signifying the class currently being
-    # decorated by @beartype.beartype).
-    return cls_stack[-1]
+    # Sanified hint metadata encapsulating the currently decorated class (i.e.,
+    # the most deeply nested class on this type stack, signifying the class
+    # currently being decorated by @beartype.beartype).
+    hint_sane = HintSane(
+        hint=cls_stack[-1],
+        # Type-checking code dynamically generated for each "typing.Self" type
+        # hint is contextually relative to the currently decorated class and
+        # thus *CANNOT* be cached across all "typing.Self" type hints.
+        is_cacheable_check_expr=False,
+    )
+
+    # Reduce this hint to this metadata.
+    return hint_sane

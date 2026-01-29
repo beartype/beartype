@@ -29,9 +29,9 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
 def make_hint_pep484585_generic_unsubbed_check_expr(
     hints_meta: HintsMeta) -> None:
     '''
-    Either a Python code snippet type-checking the current pith against the
-    passed :pep:`484`- or :pep:`585`-compliant **unsubscripted generic,**
-    defined as either:
+    Python code snippet type-checking the current pith against the passed
+    :pep:`484`- or :pep:`585`-compliant **unsubscripted generic,** defined as
+    either:
 
     * :pep:`484`-compliant **unsubscripted generic** (i.e., user-defined class
       subclassing a combination of one or more of the :class:`typing.Generic`
@@ -84,7 +84,7 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
     for hint_child_sane, hint_child_sign in (
         get_hint_pep484585_generic_unsubbed_bases_unerased(
             hint_sane,
-            hints_meta.cls_stack,
+            hints_meta.call_meta,
             hints_meta.conf,
             hints_meta.exception_prefix,
         )

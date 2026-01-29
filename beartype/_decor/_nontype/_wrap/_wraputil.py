@@ -78,7 +78,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #              f'{scope_attr_name}'
 #              f'{CODE_HINT_PEP484_REF_SCOPE_ATTR_NAME_PLACEHOLDER_SUFFIX}'
 #          )
-#      
+#
 #          # Return this expression.
 #          return ref_expr
 #* Generalize the make_check_expr() function elsewhere accordingly. Notably,
@@ -95,41 +95,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * "HintsMeta.hint_refs_type_basename" instance variable.
 #FIXME: *HMM.* The above is great, but not quite great *ENOUGH*. The big idea
 #now is that we could generalize our make_check_expr() factory to:
-#* STOP BEING MEMOIZED* via the @callable_cached decorator. I know. I know. Bear
-#  with us, though. Instead, that factory should internally, conditionally, and
-#  *THREAD-SAFELY* memoize against a private global dictionary:
-#  _HINT_CONF_TO_CHECK_EXPR: dict[tuple[Hint, BeartypeConf], CodeGenerated] = {}
-#
-#  If the caller passes one or more context-sensitive parameters (e.g.,
-#  "cls_stack") to make_check_expr(), that factory shouldn't even *BOTHER*
-#  trying to memoize against "_HINT_TO_CHECK_EXPR". There's *NO* point. Doing so
-#  would only needlessly consume space and time for no tangible gain.
-#* Accept the following new optional parameters:
-#      def make_check_expr(
-#          ...,
-#          func_globals: LexicalScope = FROZENDICT_EMPTY,
-#          func_locals: LexicalScope = FROZENDICT_EMPTY,
-#      ) -> CodeGenerated:
-#* Those new "func_globals" and "func_locals" parameters? *YEAH.* Guess what.
-#  Those are how the die_if_unbearable() and is_bearable() functions are going
-#  to resolve forward references. Why? Because, at die_if_unbearable() and
-#  is_bearable() time, *ALL* forward references need to already be accessible as
-#  attributes of either "func_globals" or "func_locals". Oh... wait. Yeah. We
-#  could do that, but it would be *REALLY* slow, which defeats the point.
-#  Anyway. Ignore this bullet point. *lol*
-#  * Actually... *HMM.* It really all depends on how slow the sys._getframe()
-#    function is. Let's profile this. It's probably *SUPER-SLOW,* though, under
-#    newer Python versions, because it now needs to synthesize fake frames.
-#    Right. Probably don't even bother. *sigh*
-#  * *OKAY.* Trivially profiled this. Calling sys._getframe() incurs 0.013s
-#    overhead on average on my local dev box. That's 13ms (milliseconds) added
-#    overhead *PER* die_if_unbearable() and is_bearable() call. That's too much,
-#    honestly. Think of a different way, please.
-#* Those new "func_globals" and "func_locals" parameters? *YEAH.* Guess what.
-#  Our existing "beartype._decor._nontype._wrap" subpackage is going to start
-#  *UNCONDITIONALLY* passing those parameters. Might as well, right? After all,
-#  those parameters are always trivially accessible from that subpackage. So...
-#  might as well pass them.
 #* The make_check_expr() function should probably now also be unconditionally
 #  passed the "cls_stack" parameter. Remember that whole
 #  is_hint_needs_cls_stack() tester? Right. Stop calling that from within the
@@ -183,6 +148,25 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #This is intense. So... define a new "codemainnew" submodule containing this
 #intense refactoring. Preserve the existing approach for sanity.
+#FIXME: Grep the codebase for any last lingering references to the now mostly
+#useless "HintSignForwardRef" sign. All such code paths are now mostly
+#guaranteed to *NOT* be called anymore. Excise up that code, please. *sigh*
+#FIXME: Disambiguate "HintSignForwardRef". This is trivial, because we're
+#currently ambiguously treating both "typing.ForwardRef" objects *AND* strings
+#as "HintSignForwardRef" for no particularly good reason. There's *NO* reason to
+#continue doing that and many reasons to stop doing that. Thus:
+#* Continue identifying "typing.ForwardRef" objects as "HintSignForwardRef".
+#* Define a new "HintSignPep484ForwardRefStr" sign.
+#* Continue strings as "HintSignPep484ForwardRefStr" instead.
+#* Split the existing reduce_hint_pep484_ref() reducer into two disparate
+#  reducers with two distinct code paths:
+#  * reduce_hint_pep484_ref_annotationlib().
+#  * reduce_hint_pep484_ref_str().
+#FIXME: Excise all of the following, which no longer has any reason to exist:
+#* add_func_scope_ref().
+#* find_hint_pep484_ref_on_cls_stack_or_none() function, possibly. *shrug*
+#* canonicalize_hint_pep484_ref(). Sadly, the entire "pep484refcanonic"
+#  submodule is an ill-defined thought experiment that no longer applies. *weep*
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta

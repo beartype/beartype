@@ -28,7 +28,7 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
     HINT_SANE_IGNORABLE,
@@ -43,7 +43,6 @@ from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (
     DictStrToAny,
     HintSignOrNoneOrSentinel,
-    TypeStack,
 )
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
@@ -57,9 +56,9 @@ def reduce_hint(
     # Optional keyword-only parameters.
     *,
     arg_kind: Optional[ArgKind] = None,
-    cls_stack: TypeStack = None,
+    #FIXME: Render this mandatory rather than optional, please. *sigh*
+    call_meta: Optional[BeartypeCallMetaABC] = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-    decor_meta: Optional[BeartypeCallDecorMeta] = None,
     hint_parent_sane: Optional[HintSane] = None,
     hint_sign_seed: HintSignOrNoneOrSentinel = SENTINEL,
     is_hint_ignorable_preserved: bool = False,
@@ -105,23 +104,14 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    cls_stack : TypeStack, default: None
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
+    call_meta : Optional[BeartypeCallMetaABC], default: None
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user). Defaults to :data:`None`.
     conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
         to the default beartype configuration.
-    decor_meta : Optional[BeartypeCallDecorMeta], default: None
-        Either:
-
-        * If this hint annotates a parameter or return of some callable, the
-          :mod:`beartype`-specific decorator metadata describing that callable.
-        * Else, :data:`None`.
-
-        Defaults to :data:`None`.
     hint_parent_sane : Optional[HintSane], default: None
         Either:
 
@@ -215,11 +205,9 @@ def reduce_hint(
     # ....................{ PREAMBLE                       }....................
     assert isinstance(arg_kind, NoneTypeOr[ArgKind]), (
         f'{repr(arg_kind)} neither argument kind nor "None".')
-    assert isinstance(cls_stack, NoneTypeOr[tuple]), (
-        f'{repr(cls_stack)} neither tuple nor "None".')
+    assert isinstance(call_meta, NoneTypeOr[BeartypeCallMetaABC]), (
+        f'{repr(call_meta)} neither beartype call metadata nor "None".')
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert isinstance(decor_meta, NoneTypeOr[BeartypeCallDecorMeta]), (
-        f'{repr(hint_parent_sane)} neither decoration metadata nor "None".')
     assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
         f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
     assert isinstance(is_hint_ignorable_preserved, bool), (
@@ -234,7 +222,7 @@ def reduce_hint(
     # ....................{ LOCALS                         }....................
     # Original unreduced hint passed to this reducer, preserved so as to be
     # embedded in human-readable exception messages.
-    hint_old = hint
+    hint_insane = hint
 
     # Currently reduced instance of this hint.
     hint_curr: Hint = hint
@@ -274,9 +262,8 @@ def reduce_hint(
                 hint=hint_curr,
                 hint_parent_sane=hint_parent_sane,
                 arg_kind=arg_kind,
-                cls_stack=cls_stack,
+                call_meta=call_meta,
                 conf=conf,
-                decor_meta=decor_meta,
                 hint_sign_seed=hint_sign_seed,
                 pith_name=pith_name,
                 reductions_count=reductions_count,
@@ -324,13 +311,13 @@ def reduce_hint(
             hint_curr = hint_or_sane_curr.hint
 
             #FIXME: Should probably be performed down below outside this loop.
-            # If this hint reduces to the ignorable "HINT_IGNORABLE"
-            # singleton, then halt reducing immediately.
+            # If this hint reduces to the ignorable "HINT_IGNORABLE" singleton,
+            # then halt reducing immediately.
             #
             # Note that this is *NOT* merely an optimization avoiding
             # unnecessary iteration as above. While similar, this logic is
             # distinct from that above. This edge case arises when a reducer
-            # avoids reducing to an ignorable hint to the higher-level ignorable
+            # avoids reducing an ignorable hint to the higher-level ignorable
             # "HINT_SANE_IGNORABLE" metadata singleton but instead encapsulates
             # the lower-level "HINT_IGNORABLE" type hint singleton with a new
             # "HintSane" object providing unique metadata describing the ignored
@@ -398,7 +385,7 @@ def reduce_hint(
         # Note that this should *NEVER* happen, but probably nonetheless will.
         if reductions_count >= _REDUCTIONS_COUNT_MAX:  # pragma: no cover
             raise BeartypeDecorHintRecursionException(
-                f'{exception_prefix}type hint {repr(hint_old)} irreducible. '
+                f'{exception_prefix}type hint {repr(hint_insane)} irreducible. '
                 f'Recursion detected when reducing between reduced type hints '
                 f'{repr(hint_or_sane_curr)} and {repr(hint_or_sane_prev)}. '
                 f'Please submit this exception traceback as a new issue '
@@ -481,6 +468,8 @@ def reduce_hint_child(hint: Hint, kwargs: DictStrToAny) -> HintSane:
           encapsulating this hint unmodified.
     '''
 
+    #FIXME: This is stupidly slow. There has *GOT* to be a saner (and, more
+    #importantly, more efficient) means of accomplishing the same ends.
     # Remove all unsafe keyword parameters (i.e., parameters that are
     # inapplicable to child hints and thus *NOT* safely passable to the
     # subsequently called reduce_hint() function) from this dictionary.
