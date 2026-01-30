@@ -70,7 +70,7 @@ class BeartypeForwardScope(LexicalScope):
     provide only the local or global scope; this dictionary should provide both.
     Why? Because this forward scope is principally intended to be passed as the
     second and last parameter to the :func:`eval` builtin, called by the
-    :func:`beartype._check.forward.fwdresolve.resolve_decor_meta_hint_pep484_ref_str`
+    :func:`beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str_decor_meta`
     function. For unknown reasons, :func:`eval` only calls the
     :meth:`__missing__` dunder method of this forward scope when passed only two
     parameters (i.e., when passed only a global scope); :func:`eval` does *not*
@@ -195,7 +195,7 @@ class BeartypeForwardScope(LexicalScope):
         -------
         **This dunder method is susceptible to misuse by third-party frameworks
         that perform call stack inspection.** The higher-level
-        :func:`beartype._check.forward.fwdresolve.resolve_decor_meta_hint_pep484_ref_str` function
+        :func:`beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str_decor_meta` function
         internally invokes this dunder method by calling the :func:`eval`
         builtin, which then adds a new frame to the call stack whose
         ``f_locals`` and ``f_globals`` attributes are *BOTH* this dictionary. If
@@ -300,7 +300,7 @@ class BeartypeForwardScope(LexicalScope):
             is_frame_caller_beartype(ignore_frames=1) or
             # The caller indirectly resides inside the "beartype" package. This
             # common edge cases arises when the parent
-            # beartype._check.forward.fwdresolve.resolve_decor_meta_hint_pep484_ref_str() function calls
+            # beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str_decor_meta() function calls
             # the eval() builtin to dynamically evaluate the passed stringified
             # type hint: e.g.,
             #     # This is the eval() call triggering this call.

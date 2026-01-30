@@ -33,7 +33,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  to call _resolve_func_scope_forward_hint() rather than
 #  find_hint_pep484_ref_on_cls_stack_or_none(). When doing so, however, note
 #  that we'll need to guard against the leading edge case detailed in
-#  resolve_decor_meta_hint_pep484_ref_str():
+#  resolve_hint_pep484_ref_str_decor_meta():
 #      if hint in decor_meta.func_wrappee_scope_nested_names:
 #          return hint
 #  Remember, however, that trivial test is *BUGGED.* It *DOES* efficiently

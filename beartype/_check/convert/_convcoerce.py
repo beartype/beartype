@@ -55,7 +55,7 @@ from beartype._cave._cavefast import NotImplementedType
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
-from beartype._check.forward.fwdresolve import resolve_decor_meta_hint_pep484_ref_str
+from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str_decor_meta
 from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
 from beartype._util.cache.map.utilmapunbounded import CacheUnboundedStrong
 from beartype._util.hint.pep.proposal.pep484.pep484union import (
@@ -128,7 +128,7 @@ def coerce_func_hint_root(
     #reduce_hint_pep484_ref()) already efficiently reduce forward references to
     #more useful objects across a variety of common use cases. We *REALLY* don't
     #want to duplicate that logic across both those reducers *AND* the
-    #resolve_decor_meta_hint_pep484_ref_str() function called below.
+    #resolve_hint_pep484_ref_str_decor_meta() function called below.
     #
     #Ideally, this code path should *ONLY* be performed to resolve PEP
     #563-compliant forward references. Even in that case, though, shouldn't we
@@ -145,7 +145,7 @@ def coerce_func_hint_root(
     # which assumes this hint to be a non-string hint.
     if isinstance(hint, str):
         # print(f'Resolving {repr(decor_meta)} string hint {repr(hint)}...')
-        hint = resolve_decor_meta_hint_pep484_ref_str(
+        hint = resolve_hint_pep484_ref_str_decor_meta(
             hint=hint, decor_meta=decor_meta, exception_prefix=exception_prefix)  # pyright: ignore
     # Else, this hint is *NOT* stringified.
     #

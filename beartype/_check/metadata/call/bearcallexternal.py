@@ -19,14 +19,12 @@ from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Docstring us up, please. *sigh*
-#FIXME: Implement us up, please. *sigh*
 class BeartypeCallExternalMeta(BeartypeCallMetaABC):
     '''
     **Beartype external call metadata** (i.e., dataclass encapsulating *all*
-    metadata for the first external callable on the call stack originating from
-    any module or package *except* those residing in the :mod:`beartype`
-    package).
+    metadata for the first external lexical scope on the call stack originating
+    from any third-party module or package *except* those residing in the
+    :mod:`beartype` package).
 
     This dataclass aggregates specific metadata unique to the high-level public
     :mod:`beartype.door` API, including:
@@ -98,3 +96,17 @@ class BeartypeCallExternalMeta(BeartypeCallMetaABC):
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )
+
+# ....................{ GLOBALS                            }....................
+BEARTYPE_CALL_EXTERNAL_META = BeartypeCallExternalMeta
+'''
+**Beartype external call metadata singleton** (i.e., public global constant
+:class:`.BeartypeCallExternalMeta` instance intended to be the *only*
+:class:`.BeartypeCallExternalMeta` instance instantiated for the life of the
+active Python interpreter).
+
+See Also
+--------
+:class:`.BeartypeCallExternalMeta`
+    Further details.
+'''

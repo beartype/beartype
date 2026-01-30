@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.checkmake import (
+    PITH_KIND_FUNC_RETURN,
     make_code_raiser_func_pith_check,
     make_code_raiser_func_pep484_noreturn_check,
 )
@@ -29,7 +30,8 @@ from beartype._data.func.datafuncarg import (
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.code.func.datacodefuncwrap import CODE_CALL_CHECKED_format
-from beartype._decor._nontype._wrap._wraputil import unmemoize_func_wrapper_code
+from beartype._decor._nontype._wrap._wraputil import (
+    unmemoize_func_pith_check_expr)
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.kind.maplike.utilmapset import update_mapping
@@ -74,7 +76,7 @@ def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
           compliant with annotation-centric PEPs)).
     '''
     assert isinstance(decor_meta, BeartypeCallDecorMeta), (
-        f'{repr(decor_meta)} not beartype call.')
+        f'{repr(decor_meta)} not beartype decorator call metadata.')
 
     # ..................{ LOCALS                             }..................
     # Possibly insane hint annotating this callable's return if any *OR* the
@@ -147,7 +149,6 @@ def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
                 (
                     code_noreturn_violation,
                     func_scope,
-                    _
                 ) = make_code_raiser_func_pep484_noreturn_check(decor_meta.conf)
 
                 # Full code snippet to be returned.
@@ -158,23 +159,16 @@ def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
             # If this hint is unignorable...
             elif hint_sane is not HINT_SANE_IGNORABLE:
                 # Code snippet type-checking any arbitrary return.
-                (
-                    code_return_check_pith,
-                    func_scope,
-                    hint_refs_type_basename,
-                ) = make_code_raiser_func_pith_check(
-                    decor_meta=decor_meta,
-                    hint_insane=hint_insane,
-                    hint_sane=hint_sane,
-                    is_param=False,
-                )
+                #
+                # Note that this memoized code factory requires parameters to be
+                # passed positionally for efficiency.
+                pith_check_expr, func_scope = make_code_raiser_func_pith_check(
+                    decor_meta, hint_sane, PITH_KIND_FUNC_RETURN)
 
                 # Unmemoize this snippet against this return.
-                code_return_check = unmemoize_func_wrapper_code(
-                    decor_meta=decor_meta,
-                    func_wrapper_code=code_return_check_pith,
+                code_return_check = unmemoize_func_pith_check_expr(
+                    pith_check_expr=pith_check_expr,
                     pith_repr=ARG_NAME_RETURN_REPR,
-                    hint_refs_type_basename=hint_refs_type_basename,
                 )
 
                 # Code snippets prefixing and suffixing the type-checking of

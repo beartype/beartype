@@ -915,7 +915,7 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
 
         # Avoid circular import dependencies.
         from beartype._check.forward.fwdresolve import (
-            resolve_decor_meta_hint_pep484_ref_str)
+            resolve_hint_pep484_ref_str_decor_meta)
 
         # Validate sanity. Since this dataclass already internally persists the
         # relevant configuration, this subclass method *ONLY* accepts a
@@ -924,7 +924,7 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
         assert conf is self.conf, f'{repr(conf)} != {repr(self.conf)}.'
 
         # Defer to this low-level resolver.
-        return resolve_decor_meta_hint_pep484_ref_str(
+        return resolve_hint_pep484_ref_str_decor_meta(
             decor_meta=self,
             hint=hint,
             exception_cls=exception_cls,

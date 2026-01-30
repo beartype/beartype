@@ -41,7 +41,7 @@ def make_forwardref_subbable_subtype(
     concrete subclass of the :class:`.BeartypeForwardRefSubbableABC` abstract
     base class (ABC) deferring the resolution of the unresolved type hint with
     the passed name, transparently permitting this type hint to be subscripted
-    by any arbitrary positional or keyword parameters).
+    by any arbitrary child type hints).
 
     This factory is effectively memoized despite not being explicitly memoized
     (e.g., by the :func:`callable_cached` decorator), as the lower-level private
@@ -98,11 +98,11 @@ def make_forwardref_subbed_subtype(
     hint_name: str,
 ) -> type[BeartypeForwardRefSubbedABC]:
     '''
-    Create and return a new **subscriptable forward reference subclass** (i.e.,
+    Create and return a new **subscripted forward reference subclass** (i.e.,
     concrete subclass of the :class:`.BeartypeForwardRefSubbedABC` abstract
     base class (ABC) deferring the resolution of the unresolved type hint with
-    the passed name, transparently permitting this type hint to be subscripted
-    by any arbitrary positional or keyword parameters).
+    the passed name, transparently prohibiting this type hint from being
+    re-subscripted by any further child type hints).
 
     This factory is effectively memoized despite not being explicitly memoized
     (e.g., by the :func:`callable_cached` decorator), as the lower-level private

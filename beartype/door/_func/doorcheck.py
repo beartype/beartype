@@ -78,14 +78,13 @@ def die_if_unbearable(
         Arbitrary object to be type-checked against this hint.
     hint : Hint
         Type hint to type-check this object against.
-    conf : BeartypeConf, optional
+    conf : BeartypeConf, default: BeartypeConf()
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
-        to ``BeartypeConf()``, the default :math:`O(1)` constant-time
-        configuration.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to a reasonably sensible string.
+        to ``BeartypeConf()``, the default constant-time configuration.
+    exception_prefix : str, default: 'die_if_unbearable() '
+        Human-readable substring prefixing raised exception messages. Defaults
+        to a reasonably sensible string.
 
     Raises
     ------
@@ -133,6 +132,7 @@ def is_bearable(
     # Optional keyword-only parameters.
     *,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+    exception_prefix: str = 'is_bearable() ',
 ) -> TypeIs[T]:  # pyright: ignore
     '''
     :data:`True` only if the passed arbitrary object satisfies the passed
@@ -181,10 +181,13 @@ def is_bearable(
         Arbitrary object to be tested against this hint.
     hint : Hint
         Type hint to test this object against.
-    conf : BeartypeConf, optional
+    conf : BeartypeConf, default: BeartypeConf()
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
         to ``BeartypeConf()``, the default constant-time configuration.
+    exception_prefix : str, default: 'is_bearable() '
+        Human-readable substring prefixing raised exception messages. Defaults
+        to a reasonably sensible string.
 
     Returns
     -------
@@ -224,7 +227,7 @@ def is_bearable(
     # Since make_func_tester() is memoized, passing parameters by keyword would
     # raise a non-fatal
     # "_BeartypeUtilCallableCachedKwargsWarning" warning.
-    func_tester = make_func_tester(hint, conf)  # pyright: ignore
+    func_tester = make_func_tester(hint, conf, exception_prefix)  # pyright: ignore
 
     # Return true only if the passed object satisfies this hint.
     return func_tester(obj)  # pyright: ignore

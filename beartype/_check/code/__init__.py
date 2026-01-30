@@ -2638,5 +2638,5 @@
 #
 #Done and done. Phew!
 #FIXME: Probably just excise the above commentary. We don't even have anything
-#resembling an _express_hints_meta_scope_type_ref() function anymore. </weep>
-
+#resembling the _express_hints_meta_scope_type_ref() or
+#_unmemoize_func_wrapper_code() functions anymore. </weep>

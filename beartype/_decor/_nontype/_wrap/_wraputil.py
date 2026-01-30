@@ -11,143 +11,126 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: *HOO, BOY.* So, we need to disambiguate between stringified forward
-#references of the form "Outer.Inner", which can be either:
-#* A relative reference to a nested type "Outer.Inner" accessible from the
-#  current local or global scope.
-#* An absolute reference to a non-nested type "Inner" importable from the
-#  external "Outer" package.
+#FIXME: Next up is the "beartype._check.error" submodule. The critical issue
+#here is passing a new "call_meta" parameter to sanify_*() callables called
+#during exception raising. Action items here probably include:
+#* Refactoring the "BeartypeCheckMeta" dataclass to provide something
+#  resembling "call_meta". Obviously, the whole point of "BeartypeCheckMeta" is
+#  to avoid storing and passing the *FULL-FAT* "BeartypeCallDecorMeta" object.
+#  Doing so would blow up @beartype space complexity. That's not happening.
+#  So... uhh. What now? No idea. sanify_*() callables need a "call_meta:
+#  BeartypeCallMetaABC" dataclass to properly resolve forward references. Woops.
+#  We didn't quite think that one through. Hmm... *lol*
 #
-#Clearly... these are completely different use cases that nonetheless
-#ambiguously share the same syntax. Disambiguating these use cases requires a
-#fundamental re-think of our existing forward reference infrastructure,
-#unfortunately. Notably:
-#* Globally rename:
-#  * "CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX" ->
-#    "CODE_HINT_PEP484_REF_SCOPE_ATTR_NAME_PLACEHOLDER_PREFIX".
-#  * "CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX" ->
-#    "CODE_HINT_PEP484_REF_SCOPE_ATTR_NAME_PLACEHOLDER_SUFFIX".
-#* Define a new "HintsMeta.hint_ref_scope_attr_names" instance variable as:
-#      hint_ref_scope_attr_names: set[tuple[str, str]]
-#  This is thus a set of 2-tuples "(scope_name, attr_name)", where:
-#  * "attr_name" is the possibly unqualified attribute name referred to by some
-#    PEP 484-compliant forward reference hint visitable from the root hint.
-#  * "scope_name" is the possibly undefined fully-qualified name of the lexical
-#    scope (e.g., module, class) directly containing this attribute.
-#* To avoid destroying working code, temporarily preserve:
-#  * The existing "HintsMeta.hint_refs_type_basename" instance variable as is.
-#  * The existing express_hints_meta_scope_type_ref() function of the
-#    "beartype._check.code.codescope" submodule, which is also problematic.
-#* Define a new "beartype._check.code._pep.pep484.codepep484ref" submodule.
-#* In that submodule, define a new code factory function resembling:
-#      def make_hint_pep484_ref_check_expr(hints_meta: HintsMeta) -> None:
-#          assert isinstance(hints_meta, HintsMeta), (
-#              f'{repr(hints_meta)} not "HintsMeta" object.')
+#  At the very least, we'll want to:
+#  * Rename the "beartype._check.metadata.metacheck" submodule to a new
+#    "beartype._check.metadata.hint.call.bearcallraiser" submodule.
+#  * Rename the "BeartypeCheckMeta" type to "BeartypeCallRaiserMeta".
+#  * Shift *ALL* of the existing "BeartypeCallRaiserMeta" slotted instance
+#    variables up onto the "BeartypeCallMetaABC" superclass. They're all
+#    sufficiently general to warrant general-purpose access.
+#  * Shift up the existing BeartypeCallRaiserMeta.__init__() implementation to
+#    BeartypeCallMetaABC.__init__() as well.
+#  * Refactor BeartypeCallDecorMeta.__init__() to call the superclass
+#    implementation appropriately.
+#  * Refactor "BeartypeCallDecorMeta" to alias "self.func = self.func_wrappee".
+#    I think, anyway? Double-check this by grepping where we instantiate
+#    "BeartypeCallRaiserMeta" objects, please.
+#  * Refactor sanify_*() and reduce_*() functions to access the newly redundant
+#    optional "func" parameter as "call_meta.func" instead.
+#  * *OKAY.* This is the big one. We somehow need to propagate the logic for the
+#    current call_meta.resolve_hint_pep484_ref_str() implementation onto the
+#    BeartypeCallRaiserMeta.resolve_hint_pep484_ref_str() implementation. If:
+#    * "isinstance(call_meta, BeartypeCallExternalMeta)", this is mostly
+#      trivial. Just:
+#      * Define a new resolve_hint_pep484_ref_str_caller_external() function
+#        whose implementation is the body of the existing
+#        BeartypeCallExternalMeta.resolve_hint_pep484_ref_str_caller_external()
+#        method.
+#      * Refactor
+#        BeartypeCallExternalMeta.resolve_hint_pep484_ref_str_caller_external()
+#        to just defer to this new resolve_hint_pep484_ref_str_caller_external()
+#        function.
+#      * *DONE*.
+#    * "isinstance(call_meta, BeartypeCallDecorMeta)", things look considerably
+#      dicier now. We're pretty sure we can still do this by:
+#      * Defining a new resolve_hint_pep484_ref_str_decor_func() function.
+#        Maybe call it resolve_hint_pep484_ref_str_call_meta_func() instead and
+#        have it accept a "call_meta: BeartypeCallMetaABC" parameter? Anyway,
+#        the implementation should resemble that of the existing
+#        resolve_hint_pep484_ref_str_decor_meta() function -- *ONLY WITHOUT ALL
+#        OF THE CACHING.* At exception-raising time, efficiency and thus caching
+#        no longer matters. Ergo, we'll just inefficiently reconstruct the
+#        desired forward scope for each stringified forward reference we hit.
+#        *WHO CARES.* It'll work, which is all that matters.
+#      * Refactoring the resolve_hint_pep484_ref_str_decor_meta() function to
+#        internally defer to resolve_hint_pep484_ref_str_decor_func()...
+#        *SOMEHOW.*
+#      * Indeed, resolve_hint_pep484_ref_str_call_meta_func() could do lotsa fun
+#        (albeit dumb) stuff like testing whether:
+#        * "isinstance(call_meta, BeartypeCallDecorMeta)" and, if so, caching.
+#        * Else, not caching.
 #
-#          # If this set of unqualified classnames referred to by all relative
-#          # forward references has yet to be instantiated, do so.
-#          if hints_meta.hint_ref_scope_attr_names is None:
-#              hints_meta.hint_ref_scope_attr_names = set()
-#          # In either case, this set now exists.
+#        Yeah... it's dumb. *BUT IT'LL WORK.* All that matters at this point.
+#        The only alternative would be to go full-bore on an inheritance-style
+#        API with abstract methods and properties that do nothing by default in
+#        "BeartypeCallMetaABC". Seems like a ton of work for no gain. Who cares
+#        about pretty and object-oriented at this point? Just make this *WORK*.
+#      * *OH. WAIT.* We know. This... is totally clever! Just:
+#        * Define a new "BeartypeCallFuncMeta(BeartypeCallMetaABC):" subclass.
+#        * Newly subclass:
+#          * "BeartypeCallDecorMeta(BeartypeCallFuncMeta):".
+#          * "BeartypeCallRaiserMeta(BeartypeCallFuncMeta):".
+#          You see where we're going, right? Right.
+#        * Add *ALL* instance variables uniquely required by
+#          resolve_hint_pep484_ref_str_decor_meta() to
+#          "BeartypeCallDecorResolvableMeta". We think there are just two? The
+#          forward scope and something else. *WHATEVAH.*
+#        * Rename resolve_hint_pep484_ref_str_call_meta_func() to
+#          resolve_hint_pep484_ref_str_func() for brevity.
+#        * Have resolve_hint_pep484_ref_str_func() accept a
+#          "call_meta: BeartypeCallFuncMeta" parameter -- intentionally named
+#          "call_meta" for API parity with
+#          resolve_hint_pep484_ref_str_caller_external().
+#        * *DONE.* Preserve all existing caching-oriented logic in
+#          resolve_hint_pep484_ref_str_func(). It should just work as is now.
+#    * Our new BeartypeCallRaiserMeta.resolve_hint_pep484_ref_str()
+#      implementation then just needs some sane means of conditionally calling
+#      either resolve_hint_pep484_ref_str_caller_external() or
+#      resolve_hint_pep484_ref_str_decor_func() as needed. If those two
+#      resolvers end up sharing the same API, that'd be the easiest way; just:
+#      * Add a new private "BeartypeCallRaiserMeta._resolve_hint_pep484_ref_str"
+#        slotted instance variable to that dataclass.
+#      * Add a new public *MANDATORY* "resolve_hint_pep484_ref_str" parameter to
+#        BeartypeCallRaiserMeta.__init__().
+#      * Defer to self._resolve_hint_pep484_ref_str() as the body of
+#        BeartypeCallRaiserMeta.resolve_hint_pep484_ref_str().
+#      * *DONE*.
 #
-#          # Currently visited PEP 484-compliant forward reference hint.
-#          hint = hints_meta.hint_curr_meta.hint_sane.hint
+#      In other words, make those two resolvers share the same API. \o/
 #
-#          # 2-tuple "(scope_name, attr_name)" providing the possibly undefined
-#          # fully-qualified scope name and possibly unqualified attribute name
-#          # referred to by this reference.
-#          scope_attr_name = canonicalize_hint_pep484_ref(
-#              hint=hint,
-#              cls_stack=hints_meta.cls_stack,
-#              exception_prefix=hints_meta.exception_prefix,
-#          )
+# Almost there. Then, we'll need to:
+# * Refactor the "ViolationCause" type. Notably:
+#   * Define a new "call_meta: BeartypeCallRaiserMeta" slot in that type.
+#   * Replace the existing "cls_stack" and "func" instance variables of that
+#     type with indirect access of "self.call_meta.cls_stack" and
+#     "self.call_meta.func" instead.
+# * Initialize that type appropriately in "errmain".
+# * Pass "call_meta=self.call_meta" in ViolationCause.sanify_hint_child().
+#FIXME: Hack reduce_hint_pep484_ref() to detect and handle "typing.ForwardRef"
+#instances through kludgy calls to:
+#* The existing get_hint_pep484_ref_names_relative() factory.
+#* The existing make_forwardref_subbed_subtype() factory.
+#* Directly return the type returned by make_forwardref_subbed_subtype() rather
+#  than performing any further logic. *sigh*
 #
-#          # Add this 2-tuple to this set.
-#          hints_meta.hint_ref_scope_attr_names.add(scope_attr_name)
-#
-#          #FIXME: Revise docstring.
-#          #FIXME: Kinda weird. "scope_attr_name" is a 2-tuple. That said, this
-#          #should still be fine. After all, tuples are trivially coercible into
-#          #strings. Contemplate alternatives if issues ever arise. *shrug*
-#          # Placeholder substring to be replaced by the caller with a Python
-#          # expression evaluating to this unqualified classname canonicalized
-#          # relative to the module declaring the currently decorated callable
-#          # when accessed via the private "__beartypistry" parameter.
-#          ref_expr = (
-#              f'{CODE_HINT_PEP484_REF_SCOPE_ATTR_NAME_PLACEHOLDER_PREFIX}'
-#              f'{scope_attr_name}'
-#              f'{CODE_HINT_PEP484_REF_SCOPE_ATTR_NAME_PLACEHOLDER_SUFFIX}'
-#          )
-#
-#          # Return this expression.
-#          return ref_expr
-#* Generalize the make_check_expr() function elsewhere accordingly. Notably,
-#  this function will now need to call this new
-#  make_hint_pep484_ref_check_expr() function when the current hint is a
-#  "HintSignForwardRef" (rather than the obsolete
-#  express_hints_meta_scope_type_ref() function).
-#* Generalize the unmemoize_func_wrapper_code() function below accordingly.
-#  Notably:
-#  * Define a new private _unmemoize_hint_pep484_ref_scope_attr_names() function
-#    internally called by this public unmemoize_func_wrapper_code() function.
-#* Excise the obsolete:
-#  * express_hints_meta_scope_type_ref() function.
-#  * "HintsMeta.hint_refs_type_basename" instance variable.
-#FIXME: *HMM.* The above is great, but not quite great *ENOUGH*. The big idea
-#now is that we could generalize our make_check_expr() factory to:
-#* The make_check_expr() function should probably now also be unconditionally
-#  passed the "cls_stack" parameter. Remember that whole
-#  is_hint_needs_cls_stack() tester? Right. Stop calling that from within the
-#  "beartype._decor._nontype._wrap" subpackage. Instead:
-#  * Shift that tester into a new private "_codetest" submodule.
-#  * Rename that tester to either:
-#    * is_hint_check_expr_memoizable().
-#    * is_hint_contextual(). *YES.* This one, please. Why? It avoids the "return
-#      not" inversion below and just reads much simpler.
-#  * Simply refactor that tester to simply:
-#        def is_hint_contextual(hint: Hint) -> bool:
-#            hint_repr = get_hint_repr(hint)
-#
-#            #FIXME: Make this a compiled regular expression, please. *sigh*
-#            #FIXME: Basically, something like this:
-#            # return re_search(hint_repr, r'''(?:['"]|Self|ForwardRef)''')
-#            return (
-#                'Self' in hint_repr or
-#                'ForwardRef' in hint_repr or
-#                "'" in hint_repr or
-#                '"' in hint_repr
-#            )
-#
-#  The idea here is that the make_check_expr() is internally memoizable if and
-#  only if the passed hint contains *NO*:
-#  * "typing.Self" subhints *NOR*...
-#  * Stringified forward reference subhints. Generating efficient code for
-#    stringified forward references requires substantial context now.
-#* Generalize the "hints_meta" data structure to define these new
-#  "func_globals" and "func_locals" instance variables.
-#* Set those at the beginning of make_check_expr().
-#* Generalize canonicalize_hint_pep484_ref() to accept these new
-#  "func_globals" and "func_locals" parameters.
-#* Define a new private canonicalizer internally called by
-#  canonicalize_hint_pep484_ref() that tries to resolve references against these
-#  global and local scopes.
-#* Lastly, pass these new parameters in the above
-#  make_hint_pep484_ref_check_expr() function to this new
-#  canonicalize_hint_pep484_ref().
-#  * Oh, *WAIT!* We can do one even better. Our new reduce_hint_pep484_ref()
-#    reducer should be performing that reduction, obviously. Generalize that
-#    reducer to call... uhh. What, exactly? Oh, right! A new
-#    find_hint_pep484_ref_or_none() finder. Just:
-#    * Rename find_hint_pep484_ref_on_cls_stack_or_none() to
-#      find_hint_pep484_ref_or_none().
-#    * Generalize that finder to accept these new "func_globals" and
-#      "func_locals" parameters.
-#  * To make that work, calls to sanify_hint_child() *OR WHATEVER* in
-#    make_check_expr() will also need to be passed "func_globals" and
-#    "func_locals" now. *shrug*
-#
-#This is intense. So... define a new "codemainnew" submodule containing this
-#intense refactoring. Preserve the existing approach for sanity.
+#Non-ideal under Python >= 3.14, but who cares. Good enough for now. We just
+#need to merge this back into "main" already. Speed is the priority. Urgh!
+#FIXME: In theory, the above *MIGHT* be enough to get us back on our feet.
+#Repeatedly bang on tests at this point until most tests pass. If
+#"typing.ForwardRef" is a thorn in our side, we'll have to keep soldiering on
+#before merging this back into "main". *sigh*
+#FIXME: See "pep484refcanonic" for where to go next. *sigh*
 #FIXME: Grep the codebase for any last lingering references to the now mostly
 #useless "HintSignForwardRef" sign. All such code paths are now mostly
 #guaranteed to *NOT* be called anymore. Excise up that code, please. *sigh*
@@ -163,33 +146,72 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * reduce_hint_pep484_ref_annotationlib().
 #  * reduce_hint_pep484_ref_str().
 #FIXME: Excise all of the following, which no longer has any reason to exist:
-#* add_func_scope_ref().
 #* find_hint_pep484_ref_on_cls_stack_or_none() function, possibly. *shrug*
 #* canonicalize_hint_pep484_ref(). Sadly, the entire "pep484refcanonic"
 #  submodule is an ill-defined thought experiment that no longer applies. *weep*
+#FIXME: Resurrect these older unit test assertions. Specifically:
+#* Assert that the reduce_hint() function returns "HintSane" objects whose
+#  "is_cacheable_check_expr" instance variables are true for these hints:
+#       # Defer version-specific imports.
+#       from beartype.typing import Self
+#
+#       # ....................{ PEP 484                    }....................
+#       # Assert this tester returns true for:
+#       # * A PEP 484-compliant relative forward self-reference referring to the
+#       #   unqualified basename of the sole class on the current type stack.
+#       # * An unrelated parent type hint subscripted by such a self-reference.
+#       #
+#       # Note that this validates a distinct edge case.
+#       assert is_hint_needs_cls_stack(
+#           hint='Class', cls_stack=(Class,)) is True
+#       assert is_hint_needs_cls_stack(
+#           hint=set['Class'], cls_stack=(Class,)) is True
+#
+#       # Assert this tester returns true for:
+#       # * A PEP 484-compliant relative forward self-reference referring to the
+#       #   unqualified basename of the *FIRST* class on the current type stack
+#       #   comprising two or more nested types.
+#       # * An unrelated parent type hint subscripted by such a self-reference.
+#       #
+#       # Note that this validates a distinct edge case.
+#       assert is_hint_needs_cls_stack(
+#           hint='Class', cls_stack=(Class, Class.NestedClass)) is True
+#       assert is_hint_needs_cls_stack(
+#           hint=tuple['Class', ...],
+#           cls_stack=(Class, Class.NestedClass),
+#       ) is True
+#
+#       # Assert this tester returns true for:
+#       # * A PEP 484-compliant relative forward self-reference referring to the
+#       #   unqualified basename of the *LAST* class on the current type stack
+#       #   comprising two or more nested types.
+#       # * An unrelated parent type hint subscripted by such a self-reference.
+#       #
+#       # Note that this validates a distinct edge case.
+#       assert is_hint_needs_cls_stack(
+#           hint='NestedClass', cls_stack=(Class, Class.NestedClass)) is True
+#       assert is_hint_needs_cls_stack(
+#           hint=frozenset['NestedClass'],
+#           cls_stack=(Class, Class.NestedClass),
+#       ) is True
+#
+#       # ....................{ PEP 673                    }....................
+#       # Assert this tester returns true for:
+#       # * The PEP 673-compliant self type hint singleton (i.e., "Self").
+#       # * An unrelated parent type hint subscripted by the PEP 673-compliant
+#       #   self type hint singleton (e.g., "List[Self]").
+#       assert is_hint_needs_cls_stack(Self) is True
+#       assert is_hint_needs_cls_stack(list[Self]) is True
+#
+#* Assert that the reduce_hint() function returns "HintSane" objects whose
+#  "is_cacheable_check_expr" instance variables are false for *ALL* other hints.
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
 from beartype._data.code.datacodename import CODE_PITH_ROOT_NAME_PLACEHOLDER
-from beartype._data.typing.datatyping import TupleStrs
-from beartype._check.code.codescope import add_func_scope_ref
-from beartype._check.code.snip.codesnipstr import (
-    CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
-    CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
-)
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic import (
-    canonicalize_hint_pep484_ref)
 from beartype._util.text.utiltextmunge import replace_str_substrs
-from collections.abc import Iterable
 
 # ....................{ CACHERS                            }....................
-def unmemoize_func_wrapper_code(
-    decor_meta: BeartypeCallDecorMeta,
-    func_wrapper_code: str,
-    pith_repr: str,
-    hint_refs_type_basename: TupleStrs,
-) -> str:
+def unmemoize_func_pith_check_expr(pith_check_expr: str, pith_repr: str) -> str:
     '''
     Convert the passed memoized code snippet type-checking any parameter or
     return of the decorated callable into an "unmemoized" code snippet
@@ -208,17 +230,11 @@ def unmemoize_func_wrapper_code(
 
     Parameters
     ----------
-    decor_meta : BeartypeCallDecorMeta
-        Decorated callable to be type-checked.
-    func_wrapper_code : str
-        Memoized callable-agnostic code snippet type-checking any parameter or
-        return of the decorated callable.
+    pith_check_expr : str
+        Memoized callable-agnostic code snippet type-checking either a parameter
+        or the return of the decorated callable.
     pith_repr : str
-        Machine-readable representation of the name of this parameter or
-        return.
-    hint_refs_type_basename : tuple[str]
-        Tuple of the unqualified classnames referred to by all relative forward
-        reference type hints visitable from the current root type hint.
+        Machine-readable representation of the name of this parameter or return.
 
     Returns
     -------
@@ -227,64 +243,19 @@ def unmemoize_func_wrapper_code(
         forward reference placeholder substrings cached into this code relative
         to the currently decorated callable.
     '''
-    assert decor_meta.__class__ is BeartypeCallDecorMeta, (
-        f'{repr(decor_meta)} not @beartype call.')
-    assert isinstance(func_wrapper_code, str), (
-        f'{repr(func_wrapper_code)} not string.')
+    assert isinstance(pith_check_expr, str), (
+        f'{repr(pith_check_expr)} not string.')
     assert isinstance(pith_repr, str), f'{repr(pith_repr)} not string.'
-    assert isinstance(hint_refs_type_basename, Iterable), (
-        f'{repr(hint_refs_type_basename)} not iterable.')
 
     # Generate an unmemoized parameter-specific code snippet type-checking this
     # parameter by replacing in this parameter-agnostic code snippet...
-    func_wrapper_code = replace_str_substrs(
-        text=func_wrapper_code,
+    pith_check_expr = replace_str_substrs(
+        text=pith_check_expr,
         # This placeholder substring cached into this code with...
         old=CODE_PITH_ROOT_NAME_PLACEHOLDER,
         # This object representation of the name of this parameter or return.
         new=pith_repr,
     )
 
-    # If this code contains one or more relative forward reference placeholder
-    # substrings memoized into this code, unmemoize this code by globally
-    # resolving these placeholders relative to the decorated callable.
-    if hint_refs_type_basename:
-        # For each unqualified classname referred to by a relative forward
-        # reference type hints visitable from the current root type hint...
-        for ref_basename in hint_refs_type_basename:
-            # Possibly undefined fully-qualified module name and possibly
-            # unqualified classname referred to by this relative forward
-            # reference, relative to the decorated type stack and callable.
-            ref_module_name, ref_type_name = canonicalize_hint_pep484_ref(
-                hint=ref_basename,
-                cls_stack=decor_meta.cls_stack,
-                func=decor_meta.func_wrappee,
-                exception_prefix=EXCEPTION_PLACEHOLDER,
-            )
-
-            # Name of the hidden parameter providing this forward reference
-            # proxy to be passed to this wrapper function.
-            ref_expr = add_func_scope_ref(
-                func_scope=decor_meta.func_wrapper_scope,
-                ref_module_name=ref_module_name,
-                ref_name=ref_type_name,
-                exception_prefix=EXCEPTION_PLACEHOLDER,
-            )
-
-            # Generate an unmemoized callable-specific code snippet checking
-            # this class by globally replacing in this callable-agnostic code...
-            func_wrapper_code = replace_str_substrs(
-                text=func_wrapper_code,
-                # This placeholder substring cached into this code with...
-                old=(
-                    f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX}'
-                    f'{ref_type_name}'
-                    f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX}'
-                ),
-                # This Python expression evaluating to this class when accessed
-                # with this hidden parameter.
-                new=ref_expr,
-            )
-
     # Return this unmemoized callable-specific code snippet.
-    return func_wrapper_code
+    return pith_check_expr

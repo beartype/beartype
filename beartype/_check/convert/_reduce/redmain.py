@@ -29,6 +29,8 @@ from beartype._check.convert._reduce._redrecurse import (
     make_hint_sane_recursable,
 )
 from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
+from beartype._check.metadata.call.bearcallexternal import (
+    BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
     HINT_SANE_IGNORABLE,
@@ -56,8 +58,7 @@ def reduce_hint(
     # Optional keyword-only parameters.
     *,
     arg_kind: Optional[ArgKind] = None,
-    #FIXME: Render this mandatory rather than optional, please. *sigh*
-    call_meta: Optional[BeartypeCallMetaABC] = None,
+    call_meta: BeartypeCallMetaABC = BEARTYPE_CALL_EXTERNAL_META,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     hint_parent_sane: Optional[HintSane] = None,
     hint_sign_seed: HintSignOrNoneOrSentinel = SENTINEL,
@@ -104,10 +105,14 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    call_meta : Optional[BeartypeCallMetaABC], default: None
+    call_meta : BeartypeCallMetaABC, default: BEARTYPE_CALL_EXTERNAL_META
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
-        currently being type-checked by the end user). Defaults to :data:`None`.
+        currently being type-checked by the end user). Defaults to the beartype
+        external call metadata singleton for convenience, enabling child
+        reductions to dynamically resolve :pep:`484-compliant forward reference
+        type hints visitable from this hint against the first external lexical
+        scope on the call stack originating from a third-party package.
     conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
@@ -205,8 +210,8 @@ def reduce_hint(
     # ....................{ PREAMBLE                       }....................
     assert isinstance(arg_kind, NoneTypeOr[ArgKind]), (
         f'{repr(arg_kind)} neither argument kind nor "None".')
-    assert isinstance(call_meta, NoneTypeOr[BeartypeCallMetaABC]), (
-        f'{repr(call_meta)} neither beartype call metadata nor "None".')
+    assert isinstance(call_meta, BeartypeCallMetaABC), (
+        f'{repr(call_meta)} not beartype call metadata.')
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
         f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
@@ -259,11 +264,11 @@ def reduce_hint(
             #   * Else, the reduced hint reduced by this reducer.
             # * Else, this unreduced hint as is.
             hint_or_sane_curr = hint_reducer(
-                hint=hint_curr,
-                hint_parent_sane=hint_parent_sane,
                 arg_kind=arg_kind,
                 call_meta=call_meta,
                 conf=conf,
+                hint=hint_curr,
+                hint_parent_sane=hint_parent_sane,
                 hint_sign_seed=hint_sign_seed,
                 pith_name=pith_name,
                 reductions_count=reductions_count,

@@ -14,10 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Refactor resolve_decor_meta_hint_pep484_ref_str() as follows:
+#FIXME: Refactor resolve_hint_pep484_ref_str_decor_meta() as follows:
 #* First, entirely defer to the new
 #  BeartypeCallDecoratorMeta.resolve_hint_pep484_ref() method.
-#* Once that's working, refactor all calls to resolve_decor_meta_hint_pep484_ref_str() to
+#* Once that's working, refactor all calls to resolve_hint_pep484_ref_str_decor_meta() to
 #  just call BeartypeCallDecoratorMeta.resolve_hint_pep484_ref() instead.
 #* Last, excise this entire submodule away.
 
@@ -145,7 +145,7 @@ def resolve_hint_pep484_ref_str(
 
 # ....................{ RESOLVERS ~ decorator              }....................
 #FIXME: Unit test us up, please.
-def resolve_decor_meta_hint_pep484_ref_str(
+def resolve_hint_pep484_ref_str_decor_meta(
     # Mandatory parameters.
     decor_meta: BeartypeCallDecorMeta,
     hint: str,

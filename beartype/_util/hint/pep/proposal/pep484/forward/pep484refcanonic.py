@@ -83,6 +83,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #      from beartype._data.typing.datatyping import Pep484RefCanonicalized
 #      from typing import ForwardRef
 #
+#      #FIXME: Actually, just call this make_forwardref_subtype().
 #      def make_forwardref_canonicalized_subtype(
 #          hint: Pep484RefCanonicalized) -> type[BeartypeForwardRefABC]:
 #          if isinstance(hint, tuple):

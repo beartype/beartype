@@ -21,38 +21,40 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorParamNameException,
 )
-from beartype.typing import (
-    Optional,
-    Set,
+from beartype._check.checkmake import (
+    PITH_KIND_FUNC_ARG,
+    make_code_raiser_func_pith_check,
 )
-from beartype._data.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
-from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convmain import sanify_hint_root_func
+from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
-from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.typing.datatypingport import Hint
-from beartype._data.typing.datatyping import LexicalScope
+from beartype._data.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._data.code.func.datacodefuncwrap import (
     CODE_INIT_ARGS_LEN,
     ARG_KIND_TO_CODE_LOCALIZE,
 )
-from beartype._decor._nontype._wrap._wraputil import unmemoize_func_wrapper_code
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+from beartype._data.typing.datatyping import LexicalScope
+from beartype._data.typing.datatypingport import Hint
+from beartype._decor._nontype._wrap._wraputil import (
+    unmemoize_func_pith_check_expr)
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
-    # ArgMandatory,
     iter_func_args,
 )
 from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
+from beartype._util.hint.utilhintget import get_hint_repr
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.text.utiltextprefix import prefix_callable_arg_name
 from beartype._data.kind.datakindiota import SENTINEL
+from collections.abc import Set
+from typing import Optional
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
@@ -84,7 +86,7 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
         * A supported PEP-compliant type hint.
     '''
     assert isinstance(decor_meta, BeartypeCallDecorMeta), (
-        f'{repr(decor_meta)} not beartype call.')
+        f'{repr(decor_meta)} not beartype decorator call metadata.')
 
     # ..................{ LOCALS ~ func                      }..................
     # If *NO* callable parameters are annotated, silently reduce to a noop.
@@ -326,36 +328,28 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 # non-"None".
 
                 # Code snippet type-checking any parameter with arbitrary name.
-                (
-                    code_arg_check_pith,
-                    func_scope,
-                    hint_refs_type_basename,
-                ) = make_code_raiser_func_pith_check(
-                    decor_meta=decor_meta,
-                    hint_insane=hint_insane,
-                    hint_sane=hint_sane,
-                    is_param=True,
-                )
+                #
+                # Note that this memoized code factory requires parameters to be
+                # passed positionally for efficiency.
+                pith_check_expr, func_scope = make_code_raiser_func_pith_check(
+                    decor_meta, hint_sane, PITH_KIND_FUNC_ARG)
 
-                # Merge the local scope required to check this parameter into
-                # the local scope currently required by the current wrapper
-                # function.
-                update_mapping(decor_meta.func_wrapper_scope, func_scope)
+                # Unmemoize this snippet against the current parameter.
+                code_arg_check = unmemoize_func_pith_check_expr(
+                    pith_check_expr=pith_check_expr,
+                    pith_repr=get_hint_repr(arg_name),
+                )
 
                 # Python code snippet localizing this parameter.
                 code_arg_localize = ARG_LOCALIZE_TEMPLATE.format(
                     arg_name=arg_name, arg_index=arg_index)
 
-                # Unmemoize this snippet against the current parameter.
-                code_arg_check = unmemoize_func_wrapper_code(
-                    decor_meta=decor_meta,
-                    func_wrapper_code=code_arg_check_pith,
-                    pith_repr=repr(arg_name),
-                    hint_refs_type_basename=hint_refs_type_basename,
-                )
-
                 # Append code type-checking this parameter against this hint.
                 func_wrapper_code += f'{code_arg_localize}{code_arg_check}'
+
+                # Merge the local scope required to check this parameter into
+                # the local scope required by the current wrapper function.
+                update_mapping(decor_meta.func_wrapper_scope, func_scope)
 
             # If one or more warnings were issued, reissue these warnings with
             # each placeholder substring (i.e., "EXCEPTION_PLACEHOLDER"

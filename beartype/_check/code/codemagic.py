@@ -11,9 +11,14 @@ arbitrary objects against arbitrary PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Refactor as follows, please:
+#* Shift *ALL* of the globals defined below into the existing
+#  "beartype._data.error.dataerrmagic" submodule.
+#* Excise this submodule up. *sigh*
+
 # ....................{ IMPORTS                            }....................
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-# from itertools import count
 
 # ....................{ EXCEPTION                          }....................
 EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL = (

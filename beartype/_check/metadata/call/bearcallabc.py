@@ -21,7 +21,6 @@ from abc import (
     abstractmethod,
 )
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     TypeException,

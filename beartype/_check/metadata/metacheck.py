@@ -29,8 +29,6 @@ class BeartypeCheckMeta(object):
     callable currently being decorated by the :func:`beartype.beartype`
     decorator).
 
-    Design
-    ------
     This type-checking-time dataclass is effectively the proper subset of the
     comparable -- but *much* more complex in both space, time, and code
     complexity -- **decoration call metadata dataclass** (i.e.,
