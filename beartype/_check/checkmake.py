@@ -20,9 +20,9 @@ from beartype._check.error.errmain import (
     get_func_pith_violation,
     get_hint_object_violation,
 )
-from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
-from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
-from beartype._check.metadata.call.bearcallexternal import (
+from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.callmetaexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,

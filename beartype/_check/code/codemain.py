@@ -64,7 +64,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
-from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
+from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.datacodelen import (

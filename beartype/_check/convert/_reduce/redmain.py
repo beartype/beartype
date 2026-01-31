@@ -28,8 +28,8 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
-from beartype._check.metadata.call.bearcallexternal import (
+from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.metadata.call.callmetaexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,

@@ -19,7 +19,7 @@ from beartype.roar import (
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
-from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
+from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.func.datacodefuncwrap import (
     CODE_NORMAL_RETURN_CHECKED,
@@ -137,7 +137,7 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
         :meth:`dict.get` method bound to the :attr:`func_annotations`
         dictionary, localized as a negligible microoptimization. Blame Guido.
     _is_func_annotations_dirty : bool
-        :data:`True` only if the type hint dictionary is **dirty** (i.e.,
+        :data:`True` only if this type hint dictionary is **dirty** (i.e.,
         modified from the original type hint dictionary annotating the decorated
         callable by a prior call to the :meth:`set_func_pith_hint` setter).
     func_wrappee : Callable
@@ -266,9 +266,7 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'conf',
-        'func_annotations',
         'func_annotations_get',
-        '_is_func_annotations_dirty',
         'func_wrappee',
         'func_wrappee_is_nested',
         'func_wrappee_scope_forward',
@@ -282,15 +280,16 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
         'func_wrapper_code_signature_prefix',
         'func_wrapper_name',
         'func_wrapper_scope',
+        '_is_func_annotations_dirty',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         conf: BeartypeConf
+        func: Callable
         func_annotations: Pep649HintableAnnotations
         func_annotations_get: Callable[[str, object], object]
-        _is_func_annotations_dirty: bool
         func_wrappee: Callable
         func_wrappee_is_nested: bool
         func_wrappee_scope_forward: Optional[BeartypeForwardScope]
@@ -304,6 +303,7 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
         func_wrapper_code_signature_prefix: str
         func_wrapper_name: str
         func_wrapper_scope: LexicalScope
+        _is_func_annotations_dirty: bool
 
     # Coerce instances of this class to be unhashable, preventing spurious
     # issues when accidentally passing these instances to memoized callables by
@@ -362,7 +362,9 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
         self._is_func_annotations_dirty = False
 
         # Nullify all remaining instance variables for safety.
-        self.conf = (  # type: ignore[assignment]
+        self.cls_stack = (
+        self.conf) = (  # type: ignore[assignment]
+        self.func) = (
         self.func_annotations) = (  # type: ignore[assignment]
         self.func_annotations_get) = (  # type: ignore[assignment]
         self.func_wrappee) = (  # type: ignore[assignment]
@@ -508,7 +510,7 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
 
         # ..................{ VARS ~ func : wrappee          }..................
         # Wrappee callable currently being decorated.
-        self.func_wrappee = func
+        self.func = self.func_wrappee = func
 
         # True only if this wrappee callable is nested. As a minor efficiency
         # gain, we can avoid the slightly expensive call to is_func_nested() by
@@ -807,7 +809,7 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
         # needed to reasonably describe this metadata.
         return (
             f'{self.__class__.__name__}('
-            f'func={repr(self.func_wrappee)}, '
+            f'func={repr(self.func)}, '
             f'conf={repr(self.conf)}'
             f')'
         )

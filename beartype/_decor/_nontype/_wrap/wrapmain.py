@@ -21,8 +21,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.metadata.metacheck import BeartypeCheckMeta
-from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.callmetaraiser import BeartypeCallRaiserMeta
+from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
 from beartype._data.code.func.datacodefuncwrap import CODE_WRAPPER_SIGNATURE
 from beartype._data.code.datacodename import (
@@ -151,13 +151,13 @@ def generate_code(decor_meta: BeartypeCallDecorMeta) -> str:
 
     # Expose private beartype type-checking call metadata (i.e.,
     # "beartype"-specific hidden parameter whose default value is the
-    # "BeartypeCheckMeta" dataclass instance encapsulating *ALL* metadata
+    # "BeartypeCallRaiserMeta" dataclass instance encapsulating *ALL* metadata
     # required by each call to this wrapper function) to this wrapper function.
     # Doing so dramatically simplifies calls to the get_func_pith_violation()
     # getter inside the body of this wrapper function by enabling this metadata
     # to be passed as a single unified parameter (rather than individually as
     # multiple distinct parameters).
-    func_scope[ARG_NAME_CHECK_META] = BeartypeCheckMeta.make_from_decor_meta(
+    func_scope[ARG_NAME_CHECK_META] = BeartypeCallRaiserMeta.make_from_decor_meta(
         decor_meta)
 
     # Expose the callable currently being decorated to this wrapper function.

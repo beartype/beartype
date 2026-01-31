@@ -20,7 +20,7 @@ from beartype._check.checkmake import (
 )
 from beartype._check.convert.convmain import sanify_hint_root_func
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
 from beartype._data.code.pep.datacodepep484 import PEP484_CODE_CHECK_NORETURN
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import (

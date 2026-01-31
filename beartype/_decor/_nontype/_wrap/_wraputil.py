@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Next up is the "beartype._check.error" submodule. The critical issue
 #here is passing a new "call_meta" parameter to sanify_*() callables called
 #during exception raising. Action items here probably include:
-#* Refactoring the "BeartypeCheckMeta" dataclass to provide something
-#  resembling "call_meta". Obviously, the whole point of "BeartypeCheckMeta" is
+#* Refactoring the "BeartypeCallRaiserMeta" dataclass to provide something
+#  resembling "call_meta". Obviously, the whole point of "BeartypeCallRaiserMeta" is
 #  to avoid storing and passing the *FULL-FAT* "BeartypeCallDecorMeta" object.
 #  Doing so would blow up @beartype space complexity. That's not happening.
 #  So... uhh. What now? No idea. sanify_*() callables need a "call_meta:
@@ -23,37 +23,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #  We didn't quite think that one through. Hmm... *lol*
 #
 #  At the very least, we'll want to:
-#  * Rename the "beartype._check.metadata.metacheck" submodule to a new
-#    "beartype._check.metadata.hint.call.bearcallraiser" submodule.
-#  * Rename the "BeartypeCheckMeta" type to "BeartypeCallRaiserMeta".
-#  * Shift *ALL* of the existing "BeartypeCallRaiserMeta" slotted instance
-#    variables up onto the "BeartypeCallMetaABC" superclass. They're all
-#    sufficiently general to warrant general-purpose access.
-#  * Shift up the existing BeartypeCallRaiserMeta.__init__() implementation to
-#    BeartypeCallMetaABC.__init__() as well.
-#  * Refactor BeartypeCallDecorMeta.__init__() to call the superclass
-#    implementation appropriately.
-#  * Refactor "BeartypeCallDecorMeta" to alias "self.func = self.func_wrappee".
-#    I think, anyway? Double-check this by grepping where we instantiate
-#    "BeartypeCallRaiserMeta" objects, please.
-#  * Refactor sanify_*() and reduce_*() functions to access the newly redundant
-#    optional "func" parameter as "call_meta.func" instead.
 #  * *OKAY.* This is the big one. We somehow need to propagate the logic for the
 #    current call_meta.resolve_hint_pep484_ref_str() implementation onto the
 #    BeartypeCallRaiserMeta.resolve_hint_pep484_ref_str() implementation. If:
-#    * "isinstance(call_meta, BeartypeCallExternalMeta)", this is mostly
-#      trivial. Just:
-#      * Define a new resolve_hint_pep484_ref_str_caller_external() function
-#        whose implementation is the body of the existing
-#        BeartypeCallExternalMeta.resolve_hint_pep484_ref_str_caller_external()
-#        method.
-#      * Refactor
-#        BeartypeCallExternalMeta.resolve_hint_pep484_ref_str_caller_external()
-#        to just defer to this new resolve_hint_pep484_ref_str_caller_external()
-#        function.
-#      * *DONE*.
 #    * "isinstance(call_meta, BeartypeCallDecorMeta)", things look considerably
 #      dicier now. We're pretty sure we can still do this by:
+#      * *SEE COMMENTS FAR BELOW.* Ignore immediate comments below. Turns out
+#        this is considerably easier than expected. Phew!
 #      * Defining a new resolve_hint_pep484_ref_str_decor_func() function.
 #        Maybe call it resolve_hint_pep484_ref_str_call_meta_func() instead and
 #        have it accept a "call_meta: BeartypeCallMetaABC" parameter? Anyway,
@@ -117,15 +93,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #     "self.call_meta.func" instead.
 # * Initialize that type appropriately in "errmain".
 # * Pass "call_meta=self.call_meta" in ViolationCause.sanify_hint_child().
-#FIXME: Hack reduce_hint_pep484_ref() to detect and handle "typing.ForwardRef"
-#instances through kludgy calls to:
-#* The existing get_hint_pep484_ref_names_relative() factory.
-#* The existing make_forwardref_subbed_subtype() factory.
-#* Directly return the type returned by make_forwardref_subbed_subtype() rather
-#  than performing any further logic. *sigh*
-#
-#Non-ideal under Python >= 3.14, but who cares. Good enough for now. We just
-#need to merge this back into "main" already. Speed is the priority. Urgh!
+#FIXME: Quite a few remaining "FIXME:" comments to still resolve in the
+#"fwdresolve" submodule. *sigh*
 #FIXME: In theory, the above *MIGHT* be enough to get us back on our feet.
 #Repeatedly bang on tests at this point until most tests pass. If
 #"typing.ForwardRef" is a thorn in our side, we'll have to keep soldiering on

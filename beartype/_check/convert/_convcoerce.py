@@ -56,7 +56,7 @@ from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
 from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str_decor_meta
-from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
 from beartype._util.cache.map.utilmapunbounded import CacheUnboundedStrong
 from beartype._util.hint.pep.proposal.pep484.pep484union import (
     make_hint_pep484_union)

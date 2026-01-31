@@ -62,7 +62,7 @@ from beartype.roar._roarexc import (
 from beartype.typing import Optional
 from beartype._check.convert.convmain import sanify_hint_any
 from beartype._check.error.errcause import ViolationCause
-from beartype._check.metadata.metacheck import BeartypeCheckMeta
+from beartype._check.metadata.call.callmetaraiser import BeartypeCallRaiserMeta
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeViolationVerbosity
@@ -92,7 +92,7 @@ from collections.abc import Callable as CallableABC
 # ....................{ GETTERS                            }....................
 def get_func_pith_violation(
     # Mandatory parameters.
-    check_meta: BeartypeCheckMeta,
+    check_meta: BeartypeCallRaiserMeta,
     pith_name: str,
     pith_value: object,
 
@@ -107,7 +107,7 @@ def get_func_pith_violation(
 
     Parameters
     ----------
-    check_meta : BeartypeCheckMeta
+    check_meta : BeartypeCallRaiserMeta
         **Beartype type-check call metadata** (i.e., object encapsulating *all*
         metadata required by the current call to the wrapper function
         type-checking a :func:`beartype.beartype`-decorated callable).
@@ -147,7 +147,7 @@ def get_func_pith_violation(
     :func:`.get_hint_object_violation`
         Further details.
     '''
-    assert isinstance(check_meta, BeartypeCheckMeta), (
+    assert isinstance(check_meta, BeartypeCallRaiserMeta), (
         f'{repr(check_meta)} not type-checking call metadata.')
     assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
 

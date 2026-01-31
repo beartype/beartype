@@ -6,7 +6,7 @@
 '''
 **Beartype type-check call metadata dataclass** unit tests.
 
-This submodule unit tests the :func:`beartype._check.metadata.metacheck`
+This submodule unit tests the :func:`beartype._check.metadata.call.callmetaraiser`
 submodule.
 '''
 
@@ -19,15 +19,15 @@ submodule.
 # ....................{ TESTS                              }....................
 def test_metadata_check() -> None:
     '''
-    Test the :func:`beartype._check.metadata.metacheck.BeartypeCheckMeta`
+    Test the :func:`beartype._check.metadata.call.callmetaraiser.BeartypeCallRaiserMeta`
     dataclass.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import BeartypeConf
-    from beartype._check.metadata.metacheck import BeartypeCheckMeta
-    from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
+    from beartype._check.metadata.call.callmetaraiser import BeartypeCallRaiserMeta
+    from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
     from beartype_test.a00_unit.data.data_type import (
         Class,
         function_wrappee,
@@ -46,7 +46,7 @@ def test_metadata_check() -> None:
         func=function_wrappee, conf=conf, cls_stack=cls_stack)
 
     # Beartype type-checking call metadata reduced from this decorator metadata.
-    check_meta = BeartypeCheckMeta.make_from_decor_meta(decor_meta)
+    check_meta = BeartypeCallRaiserMeta.make_from_decor_meta(decor_meta)
 
     # ....................{ PASS                           }....................
     # Assert this metadata exposes the expected fields.

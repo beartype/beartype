@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype.typing import Tuple
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import (
     DictStrToHint,
@@ -86,11 +85,13 @@ def reduce_hint_pep484585_func_return(
     assert isinstance(func_annotations, dict), (
         f'{repr(func_annotations)} not dictionary.')
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
         get_hint_pep484585_args)
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
+    # ....................{ LOCALS                         }....................
     # Type hint annotating this callable's return, which the caller has already
     # explicitly guaranteed to exist.
     hint = func_annotations[ARG_NAME_RETURN]
@@ -99,13 +100,14 @@ def reduce_hint_pep484585_func_return(
     # if this hint is an isinstanceable class).
     hint_sign = get_hint_pep_sign_or_none(hint)
 
+    # ....................{ TYPE                           }....................
     # If the decorated callable is a coroutine...
     if is_func_coro(func):
         # If this hint is "Coroutine[...]"...
         if hint_sign is HintSignCoroutine:
             # 3-tuple of all child type hints subscripting this hint if
             # subscripted by three such hints *OR* raise an exception.
-            hint_args: Tuple[Hint, Hint, Hint] = get_hint_pep484585_args(  # type: ignore[assignment]
+            hint_args: tuple[Hint, Hint, Hint] = get_hint_pep484585_args(  # type: ignore[assignment]
                 hint=hint, args_len=3, exception_prefix=exception_prefix)
 
             # Reduce this hint to the last child type hint subscripting this
@@ -192,6 +194,7 @@ def reduce_hint_pep484585_func_return(
         # Else, this hint is valid as the return annotation of this callable.
     # Else, the decorated callable is none of the kinds detected above.
 
+    # ....................{ RETURN                         }....................
     # Return this possibly reduced hint.
     return hint
 

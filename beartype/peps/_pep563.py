@@ -30,7 +30,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypePep563Exception
 from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str_decor_meta
-from beartype._check.metadata.call.bearcalldecor import (
+from beartype._check.metadata.call.callmetadecor import (
     cull_beartype_call,
     make_beartype_call,
 )

@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
+from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
@@ -75,24 +75,12 @@ class BeartypeCallExternalMeta(BeartypeCallMetaABC):
 
         # Avoid circular import dependencies.
         from beartype._check.forward.fwdresolve import (
-            resolve_hint_pep484_ref_str)
-        from beartype._check.forward.scope.fwdscopemake import (
-            make_caller_external_scope_forward)
-
-        # Forward scope relative to the first external scope on the call stack,
-        # encapsulating a call to a public beartype callable by an external
-        # callable originating from a third-party package or module.
-        scope_forward = make_caller_external_scope_forward(
-            hint=hint,
-            exception_cls=exception_cls,
-            exception_prefix=exception_prefix,
-        )
+            resolve_hint_pep484_ref_str_caller_external)
 
         # Defer to this low-level resolver.
-        return resolve_hint_pep484_ref_str(
+        return resolve_hint_pep484_ref_str_caller_external(
             hint=hint,
             conf=conf,
-            scope_forward=scope_forward,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )

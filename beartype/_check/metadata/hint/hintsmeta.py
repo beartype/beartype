@@ -21,7 +21,7 @@ from beartype.typing import (
 )
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convmain import sanify_hint_child
-from beartype._check.metadata.call.bearcallabc import BeartypeCallMetaABC
+from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintmeta import HintMeta
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf

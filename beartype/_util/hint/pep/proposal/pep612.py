@@ -24,7 +24,7 @@ from beartype._cave._cavefast import (
     HintPep612ParamSpecArgType,
     HintPep612ParamSpecKwargType,
 )
-from beartype._check.metadata.call.bearcalldecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
 from beartype._data.typing.datatypingport import (
     Hint,
     ListHints,
