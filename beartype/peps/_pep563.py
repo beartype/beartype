@@ -31,8 +31,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypePep563Exception
 from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str_decor_meta
 from beartype._check.metadata.call.callmetadecor import (
-    cull_beartype_call,
-    make_beartype_call,
+    cull_decor_meta,
+    make_decor_meta,
 )
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
@@ -240,7 +240,7 @@ def resolve_pep563(
 
     # ..................{ LOCALS                             }..................
     # Beartype call metadata describing the passed callable.
-    decor_meta = make_beartype_call(func=func, conf=conf, cls_stack=cls_stack)
+    decor_meta = make_decor_meta(func=func, conf=conf, cls_stack=cls_stack)
 
     # Shallow copy of the dictionary to be returned. Why? Because the
     # "func.__annotations__" dictionary *CANNOT* be safely directly assigned to
@@ -283,7 +283,7 @@ def resolve_pep563(
     # generically resolving postponed annotations for all downstream third-party
     # callers is justified. Everyone benefits from replacing useless postponed
     # annotations with useful real annotations; so, do so.
-    cull_beartype_call(decor_meta)
+    cull_decor_meta(decor_meta)
 
     # print(
     #     f'{func.__name__}() PEP 563-postponed annotations resolved:'

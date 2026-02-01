@@ -130,7 +130,8 @@ class BeartypeCallMetaABC(object, metaclass=ABCMeta):
 
         Parameters
         ----------
-        See also the class docstring. All parameters default to :data:`None`.
+        See also the class docstring. For generality, all parameters are
+        optional and default to :data:`None`.
         '''
         assert isinstance(cls_stack, NoneTypeOr[tuple]), (
             f'{repr(cls_stack)} neither tuple nor "None".')

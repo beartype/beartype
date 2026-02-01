@@ -18,7 +18,8 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.forward.scope.fwdscopemake import (
     make_decor_meta_scope_forward)
-from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.callmetadecormin import (
+    BeartypeCallDecorMinimalMeta)
 from beartype._check.metadata.call.callmetaexternal import (
     BeartypeCallExternalMeta)
 from beartype._conf.confmain import BeartypeConf
@@ -222,7 +223,7 @@ def resolve_hint_pep484_ref_str_caller_external(
 #FIXME: Unit test us up, please.
 def resolve_hint_pep484_ref_str_decor_meta(
     # Mandatory parameters.
-    decor_meta: BeartypeCallDecorMeta,
+    decor_meta: BeartypeCallDecorMinimalMeta,
     hint: str,
 
     # Optional parameters.
@@ -243,9 +244,10 @@ def resolve_hint_pep484_ref_str_decor_meta(
 
     Parameters
     ----------
-    decor_meta : BeartypeCallDecorMeta
-        **Beartype decorator call metadata** (i.e., dataclass encapsulating
-        *all* metadata for the currently decorated callable).
+    decor_meta : BeartypeCallDecorMinimalMeta
+        **Beartype decorator call minimal metadata** (i.e., dataclass
+        encapsulating the minimal metadata required to type-check the currently
+        decorated callable at the time that callable is subsequently called).
     hint : str
         Stringified forward reference type hint to be resolved.
     exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
@@ -267,7 +269,7 @@ def resolve_hint_pep484_ref_str_decor_meta(
         global and local scopes of the decorated callable raises an exception,
         typically due to this reference being syntactically invalid as Python.
     '''
-    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
+    assert isinstance(decor_meta, BeartypeCallDecorMinimalMeta), (
         f'{repr(decor_meta)} not beartype decorator call metadata.')
     assert isinstance(hint, str), (
         f'{repr(hint)} not PEP 484 stringified forward reference type hint.')

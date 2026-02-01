@@ -22,8 +22,8 @@ from beartype.typing import (
     no_type_check,
 )
 from beartype._check.metadata.call.callmetadecor import (
-    cull_beartype_call,
-    make_beartype_call,
+    cull_decor_meta,
+    make_decor_meta,
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
@@ -394,7 +394,7 @@ def beartype_func(
     # Else, that callable is beartypeable. Let's do this, folks.
 
     # Beartype call metadata describing that callable.
-    decor_meta = make_beartype_call(
+    decor_meta = make_decor_meta(
         func=func, conf=conf, wrapper=wrapper, **kwargs)  # pyright: ignore
     # print(f'Decorating {repr(decor_meta)} with wrapper {repr(wrapper)}...')
 
@@ -440,7 +440,7 @@ def beartype_func(
     set_func_beartyped(func_wrapper)
 
     # Deinitialize this beartype call metadata.
-    cull_beartype_call(decor_meta)
+    cull_decor_meta(decor_meta)
 
     # Return this wrapper.
     return func_wrapper  # type: ignore[return-value]

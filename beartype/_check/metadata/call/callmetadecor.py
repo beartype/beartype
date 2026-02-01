@@ -19,7 +19,8 @@ from beartype.roar import (
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.metadata.call.callmetadecormin import (
+    BeartypeCallDecorMinimalMeta)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.func.datacodefuncwrap import (
     CODE_NORMAL_RETURN_CHECKED,
@@ -71,7 +72,7 @@ from typing import (
 )
 
 # ....................{ SUBCLASSES                         }....................
-class BeartypeCallDecorMeta(BeartypeCallMetaABC):
+class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
     '''
     **Beartype decorator call metadata** (i.e., dataclass encapsulating *all*
     metadata for the callable currently being decorated by the
@@ -885,6 +886,30 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
         # Set the hint annotating this parameter or return to the passed hint.
         self.func_annotations[pith_name] = hint
 
+    # ..................{ MINIFIERS                          }..................
+    def minify(self) -> BeartypeCallDecorMinimalMeta:
+        '''
+        **Beartype decorator call minimal metadata** (i.e., dataclass
+        encapsulating the minimal metadata required to type-check the callable
+        currently being decorated by the :func:`beartype.beartype` decorator at
+        the post-decoration time that callable is subsequently called) minified
+        from this beartype decorator call maximal metadata.
+
+        Returns
+        -------
+        BeartypeCallDecorMinimalMeta
+            Minimal metadata minified from this maximal metadata.
+        '''
+
+        # Create and return a new instance of this minimal dataclass minified
+        # from the passed maximal dataclass.
+        return BeartypeCallDecorMinimalMeta(
+            conf=self.conf,
+            cls_stack=self.cls_stack,
+            func=self.func_wrappee,
+            func_annotations=self.func_annotations,
+        )
+
     # ..................{ LABELLERS                          }..................
     def label_func_wrapper(self) -> str:
         '''
@@ -902,40 +927,9 @@ class BeartypeCallDecorMeta(BeartypeCallMetaABC):
         # One-liner of Ultimate Beauty: we invoke thee in this line!
         return f'@beartyped {self.func_wrapper_name}() wrapper'
 
-    # ..................{ RESOLVERS                          }..................
-    def resolve_hint_pep484_ref_str(
-        self,
-
-        # Mandatory parameters.
-        hint: str,
-        conf: BeartypeConf,
-
-        # Optional parameters.
-        exception_cls: TypeException = BeartypeDecorHintForwardRefException,
-        exception_prefix: str = '',
-    ) -> Hint:
-
-        # Avoid circular import dependencies.
-        from beartype._check.forward.fwdresolve import (
-            resolve_hint_pep484_ref_str_decor_meta)
-
-        # Validate sanity. Since this dataclass already internally persists the
-        # relevant configuration, this subclass method *ONLY* accepts a
-        # configuration to comply with the superclass API. Ideally, these two
-        # configurations should be the same. Validate that this is the case.
-        assert conf is self.conf, f'{repr(conf)} != {repr(self.conf)}.'
-
-        # Defer to this low-level resolver.
-        return resolve_hint_pep484_ref_str_decor_meta(
-            decor_meta=self,
-            hint=hint,
-            exception_cls=exception_cls,
-            exception_prefix=exception_prefix,
-        )
-
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
-def make_beartype_call(**kwargs) -> BeartypeCallDecorMeta:
+def make_decor_meta(**kwargs) -> BeartypeCallDecorMeta:
     '''
     **Beartype call metadata** (i.e., object encapsulating *all* metadata for
     the passed user-defined callable, typically currently being decorated by the
@@ -978,7 +972,7 @@ def make_beartype_call(**kwargs) -> BeartypeCallDecorMeta:
 
 
 #FIXME: Unit test us up, please.
-def cull_beartype_call(decor_meta: BeartypeCallDecorMeta) -> None:
+def cull_decor_meta(decor_meta: BeartypeCallDecorMeta) -> None:
     '''
     Deinitialize the passed **beartype call metadata** (i.e., object
     encapsulating *all* metadata for the passed user-defined callable, typically

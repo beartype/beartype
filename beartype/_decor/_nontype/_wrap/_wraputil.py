@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Next up is the "beartype._check.error" submodule. The critical issue
 #here is passing a new "call_meta" parameter to sanify_*() callables called
 #during exception raising. Action items here probably include:
-#* Refactoring the "BeartypeCallRaiserMeta" dataclass to provide something
-#  resembling "call_meta". Obviously, the whole point of "BeartypeCallRaiserMeta" is
+#* Refactoring the "BeartypeCallDecorMinimalMeta" dataclass to provide something
+#  resembling "call_meta". Obviously, the whole point of "BeartypeCallDecorMinimalMeta" is
 #  to avoid storing and passing the *FULL-FAT* "BeartypeCallDecorMeta" object.
 #  Doing so would blow up @beartype space complexity. That's not happening.
 #  So... uhh. What now? No idea. sanify_*() callables need a "call_meta:
@@ -23,9 +23,26 @@ This private submodule is *not* intended for importation by downstream callers.
 #  We didn't quite think that one through. Hmm... *lol*
 #
 #  At the very least, we'll want to:
+#  * Shift all instance variables required by
+#    resolve_hint_pep484_ref_str_decor_meta() up from
+#    "BeartypeCallDecorMeta" to "BeartypeCallDecorMinimalMeta".
+#  * Refactor get_hint_object_violation() to accept a new mandatory "call_meta"
+#    parameter. This is necessary for forward hint resolution. Note this means
+#    that other parameters like "func" and "cls_stack" no longer need to be
+#    explicitly passed. Nice!
+#  * The bigger issue is that *ALL* die_if_unbearable() calls now need to pass
+#    a new "BeartypeCallDecorMinimalMeta" object to get_hint_object_violation().
+#    Since this object *NEVER* changes, it should be a new singleton:
+#        #FIXME: Almost there, but not quite right. We'll need to also set its
+#        #"resolve_*" parameter to be specific to external callers, too.
+#        BEARTYPE_CALL_EXTERNAL_RAISER = BeartypeCallDecorMinimalMeta()
+#  * Rename "ARG_NAME_CHECK_META" to "ARG_NAME_CALL_META".
+#  * Modify "CODE_GET_HINT_OBJECT_VIOLATION" to pass "call_meta=".
+#  * In make_code_raiser_hint_object_check(), set:
+#        func_scope[ARG_NAME_CALL_META] = BEARTYPE_CALL_EXTERNAL_RAISER
 #  * *OKAY.* This is the big one. We somehow need to propagate the logic for the
 #    current call_meta.resolve_hint_pep484_ref_str() implementation onto the
-#    BeartypeCallRaiserMeta.resolve_hint_pep484_ref_str() implementation. If:
+#    BeartypeCallDecorMinimalMeta.resolve_hint_pep484_ref_str() implementation. If:
 #    * "isinstance(call_meta, BeartypeCallDecorMeta)", things look considerably
 #      dicier now. We're pretty sure we can still do this by:
 #      * *SEE COMMENTS FAR BELOW.* Ignore immediate comments below. Turns out
@@ -56,7 +73,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        * Define a new "BeartypeCallFuncMeta(BeartypeCallMetaABC):" subclass.
 #        * Newly subclass:
 #          * "BeartypeCallDecorMeta(BeartypeCallFuncMeta):".
-#          * "BeartypeCallRaiserMeta(BeartypeCallFuncMeta):".
+#          * "BeartypeCallDecorMinimalMeta(BeartypeCallFuncMeta):".
 #          You see where we're going, right? Right.
 #        * Add *ALL* instance variables uniquely required by
 #          resolve_hint_pep484_ref_str_decor_meta() to
@@ -70,24 +87,24 @@ This private submodule is *not* intended for importation by downstream callers.
 #          resolve_hint_pep484_ref_str_caller_external().
 #        * *DONE.* Preserve all existing caching-oriented logic in
 #          resolve_hint_pep484_ref_str_func(). It should just work as is now.
-#    * Our new BeartypeCallRaiserMeta.resolve_hint_pep484_ref_str()
+#    * Our new BeartypeCallDecorMinimalMeta.resolve_hint_pep484_ref_str()
 #      implementation then just needs some sane means of conditionally calling
 #      either resolve_hint_pep484_ref_str_caller_external() or
 #      resolve_hint_pep484_ref_str_decor_func() as needed. If those two
 #      resolvers end up sharing the same API, that'd be the easiest way; just:
-#      * Add a new private "BeartypeCallRaiserMeta._resolve_hint_pep484_ref_str"
+#      * Add a new private "BeartypeCallDecorMinimalMeta._resolve_hint_pep484_ref_str"
 #        slotted instance variable to that dataclass.
 #      * Add a new public *MANDATORY* "resolve_hint_pep484_ref_str" parameter to
-#        BeartypeCallRaiserMeta.__init__().
+#        BeartypeCallDecorMinimalMeta.__init__().
 #      * Defer to self._resolve_hint_pep484_ref_str() as the body of
-#        BeartypeCallRaiserMeta.resolve_hint_pep484_ref_str().
+#        BeartypeCallDecorMinimalMeta.resolve_hint_pep484_ref_str().
 #      * *DONE*.
 #
 #      In other words, make those two resolvers share the same API. \o/
 #
 # Almost there. Then, we'll need to:
 # * Refactor the "ViolationCause" type. Notably:
-#   * Define a new "call_meta: BeartypeCallRaiserMeta" slot in that type.
+#   * Define a new "call_meta: BeartypeCallDecorMinimalMeta" slot in that type.
 #   * Replace the existing "cls_stack" and "func" instance variables of that
 #     type with indirect access of "self.call_meta.cls_stack" and
 #     "self.call_meta.func" instead.
