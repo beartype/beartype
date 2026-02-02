@@ -54,11 +54,11 @@ from beartype._util.kind.maplike.utilmapset import remove_mapping_keys
 def reduce_hint(
     # Mandatory parameters.
     hint: Hint,
+    call_meta: BeartypeCallMetaABC,
 
     # Optional keyword-only parameters.
     *,
     arg_kind: Optional[ArgKind] = None,
-    call_meta: BeartypeCallMetaABC = BEARTYPE_CALL_EXTERNAL_META,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     hint_parent_sane: Optional[HintSane] = None,
     hint_sign_seed: HintSignOrNoneOrSentinel = SENTINEL,
@@ -105,14 +105,10 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    call_meta : BeartypeCallMetaABC, default: BEARTYPE_CALL_EXTERNAL_META
+    call_meta : BeartypeCallMetaABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
-        currently being type-checked by the end user). Defaults to the beartype
-        external call metadata singleton for convenience, enabling child
-        reductions to dynamically resolve :pep:`484-compliant forward reference
-        type hints visitable from this hint against the first external lexical
-        scope on the call stack originating from a third-party package.
+        currently being type-checked by the end user).
     conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
@@ -434,7 +430,7 @@ def reduce_hint(
     # Return this possibly reduced hint.
     return hint_or_sane_curr
 
-
+# ....................{ REDUCERS ~ higher-level            }....................
 def reduce_hint_child(hint: Hint, kwargs: DictStrToAny) -> HintSane:
     '''
     Lower-level child type hint reduced (i.e., converted) from the passed
@@ -481,6 +477,49 @@ def reduce_hint_child(hint: Hint, kwargs: DictStrToAny) -> HintSane:
     remove_mapping_keys(kwargs, _REDUCE_HINT_CHILD_ARG_NAMES_UNSAFE)
 
     # Return this child hint possibly reduced to a lower-level hint.
+    return reduce_hint(hint=hint, **kwargs)
+
+
+def reduce_hint_caller_external(hint: Hint, **kwargs) -> HintSane:
+    '''
+    Lower-level type hint reduced (i.e., converted) relative to the external
+    caller from the passed higher-level type hint if this hint is reducible *or*
+    this hint as is otherwise (i.e., if this hint is irreducible).
+
+    This reducer is a convenience wrapper for the more general-purpose
+    :func:`.reduce_hint` reducer, principally intended to be called from unit
+    tests. Specifically, this reducer defaults the ``call_meta`` parameter
+    accepted by the :func:`.reduce_hint` reduce to the **beartype external call
+    metadata singleton** (i.e., :data:`.BEARTYPE_CALL_EXTERNAL_META`). Doing so
+    reduces :pep:`484-compliant forward reference type hints visitable from the
+    passed type hint against the first external lexical scope on the call stack
+    originating from a third-party package or module. This default is
+    appropriate only for unit tests rather than real-world use cases.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be reduced.
+
+    All remaining keyword parameters are passed as is to the
+    :func:`.reduce_hint` reducer.
+
+    Returns
+    -------
+    HintSane
+        Either:
+
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
+        * Else if this unignorable hint is reducible to another hint, metadata
+          encapsulating this reduction.
+        * Else, this unignorable hint is irreducible. In this case, metadata
+          encapsulating this hint unmodified.
+    '''
+
+    # Default to the beartype external call metadata singleton.
+    kwargs['call_meta'] = BEARTYPE_CALL_EXTERNAL_META
+
+    # Return this hint possibly reduced to a lower-level hint.
     return reduce_hint(hint=hint, **kwargs)
 
 # ....................{ PRIVATE ~ reducers                 }....................

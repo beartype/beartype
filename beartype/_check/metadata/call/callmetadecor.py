@@ -12,10 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeDecorHintForwardRefException,
-    BeartypeDecorWrappeeException,
-)
+from beartype.roar import BeartypeDecorWrappeeException
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
@@ -38,7 +35,6 @@ from beartype._data.code.pep.datacodepep525 import (
 from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep649HintableAnnotations,
-    TypeException,
     TypeStack,
 )
 from beartype._data.typing.datatypingport import Hint
@@ -65,7 +61,9 @@ from beartype._util.text.utiltextprefix import prefix_callable_pith
 from collections.abc import (
     Callable,
     FrozenSet,
+    Iterable,
 )
+from contextlib import contextmanager
 from typing import (
     TYPE_CHECKING,
     Optional,
@@ -266,7 +264,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'conf',
         'func_annotations_get',
         'func_wrappee',
         'func_wrappee_is_nested',
@@ -927,6 +924,42 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # One-liner of Ultimate Beauty: we invoke thee in this line!
         return f'@beartyped {self.func_wrapper_name}() wrapper'
 
+# ....................{ CONTEXT MANAGERS                   }....................
+@contextmanager
+def new_decor_meta(**kwargs) -> Iterable[BeartypeCallDecorMeta]:
+    '''
+    :func:`contextlib.contextmanager`-based context manager encapsulating the
+    temporary instantiation (and subsequent finalization) of **beartype call
+    metadata** (i.e., object encapsulating *all* metadata for the passed
+    user-defined callable, typically currently being decorated by the
+    :func:`beartype.beartype` decorator) isolated to the body of this manager.
+
+    This context manager is a high-level convenience principally intended to
+    be called from unit tests. For that reason, efficiency is irrelevant.
+
+    Parameters
+    ----------
+    All keyword parameters are passed as is to the
+    :meth:`.BeartypeCallDecorMeta.reinit` method.
+
+    Yields
+    ------
+    BeartypeCallDecorMeta
+        Beartype call metadata describing this callable.
+    '''
+
+    # Beartype call metadata initialized with these parameters.
+    decor_meta = make_decor_meta(**kwargs)
+
+    # Attempt to yield this metadata to the caller, typically accessible as:
+    #     with new_decor_meta(...) as decor_meta:
+    try:
+        yield decor_meta
+    # Regardless of whether the caller raises an exception from within the body
+    # of that "with" block, deinitialize this metadata.
+    finally:
+        cull_decor_meta(decor_meta)
+
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
 def make_decor_meta(**kwargs) -> BeartypeCallDecorMeta:
@@ -952,8 +985,8 @@ def make_decor_meta(**kwargs) -> BeartypeCallDecorMeta:
 
     Parameters
     ----------
-    All keyword parameters are passed as is to the :meth:`.BeartypeCallDecorMeta.reinit`
-    method.
+    All keyword parameters are passed as is to the
+    :meth:`.BeartypeCallDecorMeta.reinit` method.
 
     Returns
     -------

@@ -21,7 +21,7 @@ from contextlib import (
     contextmanager,
 )
 
-# ....................{ STRINGS                            }....................
+# ....................{ CONTEXT MANAGERS                   }....................
 @asynccontextmanager
 async def _noop_context_manager_async() -> AsyncIterator[None]:
     '''

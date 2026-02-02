@@ -23,6 +23,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #  We didn't quite think that one through. Hmm... *lol*
 #
 #  At the very least, we'll want to:
+#  * Refactor all obsolete calls to make_from_decor_meta*-style class methods to
+#    probably just minify_decor_meta_kwargs() now.
 #  * Shift all instance variables required by
 #    resolve_hint_pep484_ref_str_decor_meta() up from
 #    "BeartypeCallDecorMeta" to "BeartypeCallDecorMinimalMeta".

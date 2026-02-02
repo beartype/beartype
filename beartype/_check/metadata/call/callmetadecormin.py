@@ -139,8 +139,8 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
             exception_prefix=exception_prefix,
         )
 
-# ....................{ FACTORIES                          }....................
-def minify_kwargs(self, **kwargs) -> BeartypeCallDecorMinimalMeta:
+# ....................{ MINIFIERS                          }....................
+def minify_decor_meta_kwargs(self, **kwargs) -> BeartypeCallDecorMinimalMeta:
     '''
     **Beartype decorator call minimal metadata** (i.e., dataclass
     encapsulating the minimal metadata required to type-check the callable
@@ -164,19 +164,12 @@ def minify_kwargs(self, **kwargs) -> BeartypeCallDecorMinimalMeta:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._check.metadata.call.callmetadecor import (
-        make_decor_meta,
-        cull_decor_meta,
-    )
+    from beartype._check.metadata.call.callmetadecor import new_decor_meta
 
-    # Maximal metadata to be minified below.
-    decor_meta = make_decor_meta(**kwargs)
-
-    # Beartype type-checking call metadata reduced from this metadata.
-    decor_meta_min = decor_meta.minify()
-
-    # Deinitialize this maximal metadata.
-    cull_decor_meta(decor_meta)
+    # With maximal metadata initialized by these parameters...
+    with new_decor_meta(**kwargs) as decor_meta:
+        # Minimal metadata reduced from this maximal metadata.
+        decor_meta_min = decor_meta.minify()
 
     # Return this metadata.
     return decor_meta_min

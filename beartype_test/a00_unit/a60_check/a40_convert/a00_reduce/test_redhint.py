@@ -37,7 +37,10 @@ def test_reduce_hint(
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype._check.convert._reduce.redmain import reduce_hint
+    from beartype._check.convert._reduce.redmain import (
+        reduce_hint_caller_external)
+    from beartype._check.metadata.call.callmetadecormin import (
+        BeartypeCallDecorMinimalMeta)
     from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
         HintReductionInvalid,
         HintReductionValid,
@@ -47,12 +50,26 @@ def test_reduce_hint(
     # ....................{ PASS                           }....................
     # For each reduction case...
     for hint_reduction_meta in hints_reduction_meta:
+        #FIXME: *NON-IDEAL.* Refactor as follows:
+        #* Each "hint_reduction_meta" should define a new "decor_meta_kwargs:
+        #  DictStrToAny" instance variable, defaulting to the empty frozen
+        #  dictionary.
+        #* Then trivially pass that dictionary here as:
+        #      with new_decor_meta(**kwargs) as decor_meta:
+
+        # Beartype decorator call metadata, resolving forward references
+        # relative to the body of this unit test for simplicity.
+        call_meta = BeartypeCallDecorMinimalMeta(
+            cls_stack=hint_reduction_meta.cls_stack,
+            conf=hint_reduction_meta.conf,
+        )
+
         # If this is case encapsulates a valid reduction...
         if isinstance(hint_reduction_meta, HintReductionValid):
             # Sanified metadata encapsulating the reduction of this input hint.
-            hint_reduced_sane = reduce_hint(
+            hint_reduced_sane = reduce_hint_caller_external(
+                call_meta=call_meta,
                 hint=hint_reduction_meta.hint_unreduced,
-                cls_stack=hint_reduction_meta.cls_stack,
                 conf=hint_reduction_meta.conf,
             )
 
@@ -66,9 +83,9 @@ def test_reduce_hint(
             # Assert that this reducer raises the expected type of exception
             # when passed this input hint.
             with raises(hint_reduction_meta.exception_type):
-                reduce_hint(
+                reduce_hint_caller_external(
+                    call_meta=call_meta,
                     hint=hint_reduction_meta.hint_unreduced,
-                    cls_stack=hint_reduction_meta.cls_stack,
                     conf=hint_reduction_meta.conf,
                 )
 
@@ -93,24 +110,30 @@ def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
 
     # Defer test-specific imports.
     from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
-    from beartype._check.convert._reduce.redmain import reduce_hint
+    from beartype._check.convert._reduce.redmain import (
+        reduce_hint_caller_external)
     from beartype_test.a00_unit.data.hint.data_hint import (
         HINTS_NONPEP_UNIGNORABLE)
 
     # Assert this tester accepts ignorable type hints.
     for hint_ignorable in hints_ignorable:
-        assert reduce_hint(hint_ignorable) is HINT_SANE_IGNORABLE
+        assert reduce_hint_caller_external(hint_ignorable) is (
+            HINT_SANE_IGNORABLE)
 
     # Assert this tester rejects unignorable PEP-noncompliant type hints.
     for hint_unignorable in HINTS_NONPEP_UNIGNORABLE:
-        assert reduce_hint(hint_unignorable) is not HINT_SANE_IGNORABLE
+        assert reduce_hint_caller_external(hint_unignorable) is not (
+            HINT_SANE_IGNORABLE)
 
     # Assert this tester:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
         # True only if this hint reduces to the ignorable "Any" singleton.
-        is_hint_ignorable = reduce_hint(hint_pep_meta.hint) is HINT_SANE_IGNORABLE
+        is_hint_ignorable = (
+            reduce_hint_caller_external(hint_pep_meta.hint) is
+            HINT_SANE_IGNORABLE
+        )
 
         # Assert this hint is either ignorable or unignorable as expected.
         assert hint_pep_meta.is_ignorable == is_hint_ignorable
