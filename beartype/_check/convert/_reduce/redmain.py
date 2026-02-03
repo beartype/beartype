@@ -53,8 +53,8 @@ from beartype._util.kind.maplike.utilmapset import remove_mapping_keys
 # ....................{ REDUCERS                           }....................
 def reduce_hint(
     # Mandatory parameters.
-    hint: Hint,
     call_meta: BeartypeCallMetaABC,
+    hint: Hint,
 
     # Optional keyword-only parameters.
     *,
@@ -93,6 +93,10 @@ def reduce_hint(
 
     Parameters
     ----------
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     hint : Hint
         Type hint to be possibly reduced.
     arg_kind : Optional[ArgKind], default: None
@@ -105,10 +109,6 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    call_meta : BeartypeCallMetaABC
-        **Beartype call metadata** (i.e., dataclass aggregating *all* common
-        metadata encapsulating the user-defined callable, type, or statement
-        currently being type-checked by the end user).
     conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults

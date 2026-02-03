@@ -18,7 +18,8 @@ from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._check.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
 from beartype._check.error.errcause import ViolationCause
-from beartype._check.error._errtype import find_cause_type_instance_origin
+from beartype._check.error._nonpep.errnonpeptype import (
+    find_cause_type_instance_origin)
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._data.hint.sign.datahintsigns import HintSignPep484585TupleFixed
 from beartype._data.hint.sign.datahintsignmap import (

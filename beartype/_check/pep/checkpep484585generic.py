@@ -36,7 +36,6 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic_user)
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
-from typing import Optional
 
 # ....................{ PRIVATE ~ hints                    }....................
 HintPep484585GenericUnsubbedBaseUnerased = tuple[HintSane, HintSign]
@@ -56,10 +55,10 @@ HintPep484585GenericUnsubbedBasesUnerased = tuple[
 # ....................{ GETTERS                            }....................
 def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
     # Mandatory parameters.
+    call_meta: BeartypeCallMetaABC,
     hint_sane: HintSane,
 
     # Optional parameters.
-    call_meta: Optional[BeartypeCallMetaABC] = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
@@ -77,8 +76,8 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
 
     # Defer to this lower-level memoized getter.
     return get_hint_pep484585_generic_unsubbed_bases_unerased(
-        hint_sane,
         call_meta,
+        hint_sane,
         conf,
         exception_prefix,
         exception_cls,
@@ -92,6 +91,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
 @callable_cached
 def get_hint_pep484585_generic_unsubbed_bases_unerased(
     # Mandatory parameters.
+    call_meta: BeartypeCallMetaABC,
     hint_sane: HintSane,
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -103,8 +103,6 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
     # Note that these parameters are intentionally ordered so as to trivialize
     # the calling convention. Since this getter is memoized, callers *MUST* pass
     # these parameters positionally rather than by keyword.
-    #FIXME: Render this mandatory rather than optional, please. *sigh*
-    call_meta: Optional[BeartypeCallMetaABC] = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_prefix: str = '',
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
@@ -268,14 +266,14 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
 
     Parameters
     ----------
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     hint_sane : HintSane
         **Sanified type hint metadata** (i.e., :data:`.HintSane` object)
         encapsulating the :pep:`484`- or :pep:`585`-compliant unsubscripted
         generic to be inspected.
-    call_meta : Optional[BeartypeCallMetaABC], default: None
-        **Beartype call metadata** (i.e., dataclass aggregating *all* common
-        metadata encapsulating the user-defined callable, type, or statement
-        currently being type-checked by the end user). Defaults to :data:`None`.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
@@ -459,11 +457,11 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
 
         # Metadata encapsulating the sanification of this pseudo-superclass.
         hint_child_sane = sanify_hint_child(
+            call_meta=call_meta,
+            conf=conf,
             hint=hint_sanify,
             hint_parent_sane=hint_base_subclass_sane,
             hint_sign_seed=hint_sign_seed,
-            call_meta=call_meta,
-            conf=conf,
             exception_prefix=exception_prefix,
         )
         # print(f'generic {hint} base: {repr(hint_base)}')

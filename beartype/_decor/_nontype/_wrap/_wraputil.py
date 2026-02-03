@@ -23,23 +23,47 @@ This private submodule is *not* intended for importation by downstream callers.
 #  We didn't quite think that one through. Hmm... *lol*
 #
 #  At the very least, we'll want to:
-#  * Refactor all obsolete calls to make_from_decor_meta*-style class methods to
-#    probably just minify_decor_meta_kwargs() now.
+#  * Replace the current overkill "BeartypeCallDecorMeta.func_wrappee_is_nested"
+#    instance variable with a new BeartypeCallDecorMinimalMeta.func_is_nested()
+#    property resembling:
+#        def func_is_nested(self) -> bool:
+#            return bool(self.cls_stack) or is_func_nested(self.func)
+#
+#    Note that the original "func_wrappee_is_nested" definition appears to be
+#    bugged. That variable almost certainly should have tested
+#    "is_func_nested(self.func_wrappee_wrappee)" rather than
+#    "is_func_nested(self.func_wrappee)".
+#
+#    Also, don't bother caching. is_func_nested() is already cached. \o/
+#
+#    * *WAIT*. Even a func_is_nested() method is overkill. We only call that
+#      method twice, both from resolve_hint_pep484_ref_str_decor_meta().
+#      Instead:
+#      * Excise the "BeartypeCallDecorMeta.func_wrappee_is_nested" instance
+#        variable entirely.
+#      * In resolve_hint_pep484_ref_str_decor_meta():
+#        * Localize at the very start:
+#              is_func_nested = (
+#                  bool(decor_meta.cls_stack) or is_func_nested(decor_meta.func))
+#        * Pass "is_func_nested" as a new mandatory parameter to the
+#          make_scope_forward_decor_meta() function.
+#      * Facepalm. *lol*
+#  * Localize "decor_meta.func_wrappee_scope_nested_names" inside
+#    resolve_hint_pep484_ref_str_decor_meta(). That set is *ONLY* required for
+#    the edge case in which a forward reference annotates a nested callable
+#    directly decorated by @beartype, which rarely even occurs in the modern
+#    era. Why? Because if a callable is nested, then the *TYPE* (rather than
+#    that callable) should have been decorated by @beratype. Decorating nested
+#    callables by @beartype is heavily frowned upon.
 #  * Shift all instance variables required by
 #    resolve_hint_pep484_ref_str_decor_meta() up from
 #    "BeartypeCallDecorMeta" to "BeartypeCallDecorMinimalMeta".
-#  * Refactor get_hint_object_violation() to accept a new mandatory "call_meta"
-#    parameter. This is necessary for forward hint resolution. Note this means
-#    that other parameters like "func" and "cls_stack" no longer need to be
-#    explicitly passed. Nice!
 #  * The bigger issue is that *ALL* die_if_unbearable() calls now need to pass
 #    a new "BeartypeCallDecorMinimalMeta" object to get_hint_object_violation().
 #    Since this object *NEVER* changes, it should be a new singleton:
 #        #FIXME: Almost there, but not quite right. We'll need to also set its
 #        #"resolve_*" parameter to be specific to external callers, too.
 #        BEARTYPE_CALL_EXTERNAL_RAISER = BeartypeCallDecorMinimalMeta()
-#  * Rename "ARG_NAME_CHECK_META" to "ARG_NAME_CALL_META".
-#  * Modify "CODE_GET_HINT_OBJECT_VIOLATION" to pass "call_meta=".
 #  * In make_code_raiser_hint_object_check(), set:
 #        func_scope[ARG_NAME_CALL_META] = BEARTYPE_CALL_EXTERNAL_RAISER
 #  * *OKAY.* This is the big one. We somehow need to propagate the logic for the
@@ -134,6 +158,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * reduce_hint_pep484_ref_annotationlib().
 #  * reduce_hint_pep484_ref_str().
 #FIXME: Excise all of the following, which no longer has any reason to exist:
+#* import_pep484_ref_type().
 #* find_hint_pep484_ref_on_cls_stack_or_none() function, possibly. *shrug*
 #* canonicalize_hint_pep484_ref(). Sadly, the entire "pep484refcanonic"
 #  submodule is an ill-defined thought experiment that no longer applies. *weep*

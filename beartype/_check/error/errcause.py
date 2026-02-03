@@ -62,6 +62,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convmain import sanify_hint_child
+from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
@@ -72,10 +73,7 @@ from beartype._data.typing.datatypingport import (
     Hint,
     TupleHints,
 )
-from beartype._data.typing.datatyping import (
-    HintSignOrNoneOrSentinel,
-    TypeStack,
-)
+from beartype._data.typing.datatyping import HintSignOrNoneOrSentinel
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
@@ -97,6 +95,10 @@ class ViolationCause(object):
 
     Attributes
     ----------
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     cause_indent : str
         **Indentation** (i.e., string of zero or more spaces) preceding each
         line of the string returned by this getter if this string spans
@@ -107,10 +109,6 @@ class ViolationCause(object):
 
         * Violates this hint, a human-readable string describing this violation.
         * Satisfies this hint, :data:`None`.
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
@@ -119,12 +117,6 @@ class ViolationCause(object):
         Human-readable label describing the parameter or return value from
         which this object originates, typically embedded in exceptions raised
         from this getter in the event of unexpected runtime failure.
-    func : Optional[Callable]
-        Either:
-
-        * If this violation originates from a decorated callable, that
-          callable.
-        * Else, :data:`None`.
     hint : Hint
         Type hint to validate this object against.
     hint_childs : Optional[TupleHints]
@@ -182,12 +174,10 @@ class ViolationCause(object):
     # * Prevent accidental declaration of erroneous instance variables.
     # * Minimize space and time complexity.
     __slots__ = (
+        'call_meta',
         'cause_indent',
         'cause_str_or_none',
-        'cls_stack',
         'conf',
-        'exception_prefix',
-        'func',
         'hint',
         'hint_childs',
         'hint_childs_sane',
@@ -196,18 +186,16 @@ class ViolationCause(object):
         'pith',
         'pith_name',
         'random_int',
+        'exception_prefix',
     )
-
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
+        call_meta: BeartypeCallMetaABC
         cause_indent: str
         cause_str_or_none: Optional[str]
-        cls_stack: TypeStack
         conf: BeartypeConf
-        exception_prefix: str
-        func: Optional[Callable]
         hint: Hint
         hint_childs: TupleHints
         hint_childs_sane: TupleHintSane
@@ -216,14 +204,14 @@ class ViolationCause(object):
         pith: Any
         pith_name: Optional[str]
         random_int: Optional[int]
+        exception_prefix: str
 
     # ..................{ CLASS VARIABLES ~ set              }..................
     _COPY_VAR_NAMES = frozenset((
+        'call_meta',
         'cause_indent',
-        'cls_stack',
         'conf',
         'exception_prefix',
-        'func',
         'hint_sane',
         'pith',
         'pith_name',
@@ -257,15 +245,14 @@ class ViolationCause(object):
         self,
 
         # Mandatory parameters.
-        hint_sane: HintSane,
+        call_meta: BeartypeCallMetaABC,
         cause_indent: str,
-        cls_stack: TypeStack,
         conf: BeartypeConf,
-        exception_prefix: str,
-        func: Optional[Callable],
+        hint_sane: HintSane,
         pith: Any,
         pith_name: Optional[str],
         random_int: Optional[int],
+        exception_prefix: str,
 
         # Optional parameters.
         cause_str_or_none: Optional[str] = None,
@@ -326,24 +313,22 @@ class ViolationCause(object):
 
         See the class docstring for a description of all remaining parameters.
         '''
-        assert isinstance(cls_stack, NoneTypeOr[tuple]), (
-            f'{repr(cls_stack)} neither tuple nor "None".')
+        assert isinstance(call_meta, BeartypeCallMetaABC), (
+            f'{repr(call_meta)} not beartype call metadata.')
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not configuration.')
-        assert func is None or callable(func), (
-            f'{repr(func)} neither callable nor "None".')
         assert isinstance(cause_indent, str), (
             f'{repr(cause_indent)} not string.')
         assert isinstance(cause_str_or_none, NoneTypeOr[str]), (
             f'{repr(cause_str_or_none)} not string or "None".')
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
         assert isinstance(hint_sane, HintSane), (
             f'{repr(hint_sane)} not sanified metadata.')
         assert isinstance(pith_name, NoneTypeOr[str]), (
             f'{repr(pith_name)} not string or "None".')
         assert isinstance(random_int, NoneTypeOr[int]), (
             f'{repr(random_int)} not integer or "None".')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
 
         # If the caller did *NOT* pass a non-default sign identifying this hint,
         # default this sign to the default sign identifying this hint.
@@ -355,12 +340,11 @@ class ViolationCause(object):
             f'{repr(hint_sane)} neither hint sign, "None", nor "SENTINEL".')
 
         # Classify all passed parameters.
+        self.call_meta = call_meta
         self.cause_indent = cause_indent
         self.cause_str_or_none = cause_str_or_none
-        self.cls_stack = cls_stack
         self.conf = conf
         self.exception_prefix = exception_prefix
-        self.func = func
         self.hint_sane = hint_sane
         self.hint_sign = hint_sign  # pyright: ignore
         self.pith = pith
@@ -449,7 +433,7 @@ class ViolationCause(object):
             hint_childs_sane.append(hint_child_sane)
 
         # Tuples of the zero or more possibly ignorable sane child hints and
-        # supplementary metadatum, coerced from these lists.
+        # supplementary metadata, coerced from these lists.
         self.hint_childs = tuple(hint_childs)
         self.hint_childs_sane = tuple(hint_childs_sane)
 
@@ -468,11 +452,10 @@ class ViolationCause(object):
             f'hint_sign={repr(self.hint_sign)}, '
             f'hint_childs={repr(self.hint_childs)}, '
             f'hint_childs_sane={repr(self.hint_childs_sane)}, '
+            f'call_meta={repr(self.call_meta)}, '
             f'cause_indent={repr(self.cause_indent)}, '
             f'cause_str_or_none={repr(self.cause_str_or_none)}, '
-            f'cls_stack={repr(self.cls_stack)}, '
             f'conf={repr(self.conf)}, '
-            f'func={repr(self.func)}, '
             f'pith={repr(self.pith)}, '
             f'pith_name={repr(self.pith_name)}, '
             f'random_int={repr(self.random_int)}, '
@@ -555,7 +538,7 @@ class ViolationCause(object):
         # type origin. In this case, this hint was type-checked shallowly.
         ):
             # Avoid circular import dependencies.
-            from beartype._check.error._errtype import (
+            from beartype._check.error._nonpep.errnonpeptype import (
                 find_cause_type_instance_origin)
 
             # Defer to the getter function supporting hints originating from
@@ -708,8 +691,8 @@ class ViolationCause(object):
         PEP-noncompliant hint transitively subscripting the root hint annotating
         a parameter or return of the currently decorated callable) if this hint
         is both reducible and unignorable, this hint unmodified if this hint is
-        both irreducible and unignorable, or :obj:`.HINT_SANE_IGNORABLE` otherwise
-        (i.e., if this hint is ignorable).
+        both irreducible and unignorable, or :obj:`.HINT_SANE_IGNORABLE`
+        otherwise (i.e., if this hint is ignorable).
 
         This method is merely a convenience wrapper for the lower-level
         :func:`.sanify_hint_child` sanifier.
@@ -718,12 +701,6 @@ class ViolationCause(object):
         ----------
         hint_child_insane : Hint
             Child type hint to be sanified.
-        hint_parent_sane : HintSane
-            **Sanified parent type hint metadata** (i.e., immutable and thus
-            hashable object encapsulating *all* metadata previously returned by
-            :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
-            the possibly PEP-noncompliant parent hint of this child hint into a
-            fully PEP-compliant parent hint).
         hint_parent_sane : Optional[HintSane], default: None
             **Sanified parent type hint metadata** (i.e., immutable and thus
             hashable object encapsulating *all* metadata previously returned by
@@ -757,10 +734,10 @@ class ViolationCause(object):
 
         # Metadata encapsulating the sanification of this child hint.
         hint_sane_child = sanify_hint_child(
+            call_meta=self.call_meta,
+            conf=self.conf,
             hint=hint_child_insane,
             hint_parent_sane=hint_parent_sane,
-            cls_stack=self.cls_stack,
-            conf=self.conf,
             pith_name=self.pith_name,
             exception_prefix=self.exception_prefix,
         )

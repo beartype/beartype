@@ -17,18 +17,15 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.forward.scope.fwdscopemake import (
-    make_decor_meta_scope_forward)
+    make_scope_forward_decor_meta)
 from beartype._check.metadata.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
-from beartype._check.metadata.call.callmetaexternal import (
-    BeartypeCallExternalMeta)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.text.utiltextansi import color_hint
 from beartype._util.utilobject import get_object_basename_scoped
 from traceback import format_exc
-from typing import Optional
 
 # ....................{ RESOLVERS                          }....................
 #FIXME: Unit test us up, please.
@@ -144,7 +141,6 @@ def resolve_hint_pep484_ref_str_caller_external(
     conf: BeartypeConf,
 
     # Optional parameters.
-    call_meta: Optional[BeartypeCallExternalMeta] = None,
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
 ) -> Hint:
@@ -163,12 +159,6 @@ def resolve_hint_pep484_ref_str_caller_external(
 
     Parameters
     ----------
-    call_meta : Optional[BeartypeCallExternalMeta]
-        **Beartype external call metadata** (i.e., dataclass encapsulating *all*
-        metadata for that external lexical scope). Defaults to :data:`None`.
-        This resolver unconditionally ignores this parameter, which exists
-        *only* to unify the API between this and the sibling
-        :func:`.resolve_hint_pep484_ref_str_decor_meta` resolver.
     hint : str
         Stringified forward reference type hint to be resolved.
     conf : BeartypeConf
@@ -199,12 +189,12 @@ def resolve_hint_pep484_ref_str_caller_external(
 
     # Avoid circular import dependencies.
     from beartype._check.forward.scope.fwdscopemake import (
-        make_caller_external_scope_forward)
+        make_scope_forward_caller_external)
 
     # Forward scope relative to the first external scope on the call stack,
     # encapsulating a call to a public beartype callable by an external
     # callable originating from a third-party package or module.
-    scope_forward = make_caller_external_scope_forward(
+    scope_forward = make_scope_forward_caller_external(
         hint=hint,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
@@ -275,11 +265,6 @@ def resolve_hint_pep484_ref_str_decor_meta(
         f'{repr(hint)} not PEP 484 stringified forward reference type hint.')
     # print(f'Resolving decorator-time stringified type hint {repr(hint)}...')
 
-    # ..................{ LOCALS                             }..................
-    # Currently decorated callable, localized to improve both readability and
-    # negligible efficiency when accessed below.
-    func = decor_meta.func_wrappee_wrappee
-
     # ..................{ DISAMBIGUATION                     }..................
     # If...
     if (
@@ -298,7 +283,7 @@ def resolve_hint_pep484_ref_str_decor_meta(
         # be decided, do so.
         if decor_meta.func_wrappee_scope_nested_names is None:
             decor_meta.func_wrappee_scope_nested_names = frozenset(
-                get_object_basename_scoped(func).rsplit(sep='.'))
+                get_object_basename_scoped(decor_meta.func).rsplit(sep='.'))
         # Else, this non-empty frozen set has already been decided.
         #
         # In either case, this frozen set has now been decided. I choose you!
@@ -443,7 +428,7 @@ def resolve_hint_pep484_ref_str_decor_meta(
     # * "cls_stack is not None". Ergo, that callable is a method only
     #   transitively decorated by the type declaring that method being directly
     #   decorated by the @beartype decorator. In this case, the
-    #   make_decor_meta_scope_forward() factory defined below already guarantees
+    #   make_scope_forward_decor_meta() factory defined below already guarantees
     #   this hint to be locally unambiguous via the following logic:
     #       # Add new locals exposing these types to type hints, overwriting any
     #       # locals of the same names in the higher-level local scope for any
@@ -461,7 +446,7 @@ def resolve_hint_pep484_ref_str_decor_meta(
 
     # ..................{ SCOPE                              }..................
     # Decide the forward scope of the decorated callable.
-    make_decor_meta_scope_forward(
+    make_scope_forward_decor_meta(
         decor_meta=decor_meta,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,

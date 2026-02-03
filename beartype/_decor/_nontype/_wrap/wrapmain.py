@@ -21,12 +21,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.metadata.call.callmetadecormin import BeartypeCallDecorMinimalMeta
 from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
 from beartype._data.code.func.datacodefuncwrap import CODE_WRAPPER_SIGNATURE
 from beartype._data.code.datacodename import (
-    ARG_NAME_CHECK_META,
+    ARG_NAME_CALL_META,
     ARG_NAME_FUNC,
 )
 from beartype._decor._nontype._wrap._wrapargs import (
@@ -48,7 +47,9 @@ def generate_code(decor_meta: BeartypeCallDecorMeta) -> str:
     Parameters
     ----------
     decor_meta : BeartypeCallDecorMeta
-        Decorated callable to be type-checked.
+        **Beartype decorator call metadata** (i.e., dataclass encapsulating
+        *all* metadata required to generate code type-checking the currently
+        :func:`beartype.beartype`-decorated callable).
 
     Returns
     -------
@@ -151,18 +152,17 @@ def generate_code(decor_meta: BeartypeCallDecorMeta) -> str:
 
     # Expose private beartype type-checking call metadata (i.e.,
     # "beartype"-specific hidden parameter whose default value is the
-    # "BeartypeCallDecorMinimalMeta" dataclass instance encapsulating *ALL* metadata
-    # required by each call to this wrapper function) to this wrapper function.
-    # Doing so dramatically simplifies calls to the get_func_pith_violation()
-    # getter inside the body of this wrapper function by enabling this metadata
-    # to be passed as a single unified parameter (rather than individually as
-    # multiple distinct parameters).
-    func_scope[ARG_NAME_CHECK_META] = BeartypeCallDecorMinimalMeta.make_from_decor_meta(
-        decor_meta)
+    # "BeartypeCallDecorMinimalMeta" dataclass instance encapsulating *ALL*
+    # metadata required by each call to this wrapper function) to this wrapper
+    # function. Doing so dramatically simplifies calls to the
+    # get_func_pith_violation() getter inside the body of this wrapper function
+    # by enabling this metadata to be passed as a single unified parameter
+    # (rather than individually as multiple distinct parameters).
+    func_scope[ARG_NAME_CALL_META] = decor_meta.minify()
 
     # Expose the callable currently being decorated to this wrapper function.
     # Technically, doing so is merely an optimization; this callable is also
-    # accessible as the "ARG_NAME_CHECK_META.func" instance variable in the body
+    # accessible as the "ARG_NAME_CALL_META.func" instance variable in the body
     # of this wrapper function. Pragmatically, doing so is a trivial
     # optimization that could yield non-trivial benefits (e.g., if this wrapper
     # function is frequently called).

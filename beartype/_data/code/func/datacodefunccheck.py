@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.code.datacodename import (
-    ARG_NAME_CHECK_META,
+    ARG_NAME_CALL_META,
     ARG_NAME_CONF,
     ARG_NAME_EXCEPTION_PREFIX,
     ARG_NAME_GET_VIOLATION,
@@ -96,9 +96,10 @@ callable against the type hint annotating that parameter or return.
 # ....................{ CODE ~ violation : get             }....................
 CODE_GET_HINT_OBJECT_VIOLATION = f''':
             {VAR_NAME_VIOLATION} = {ARG_NAME_GET_VIOLATION}(
-                obj={VAR_NAME_PITH_ROOT},
-                hint={ARG_NAME_HINT},
+                call_meta={ARG_NAME_CALL_META},
                 conf={ARG_NAME_CONF},
+                hint={ARG_NAME_HINT},
+                obj={VAR_NAME_PITH_ROOT},
                 exception_prefix={ARG_NAME_EXCEPTION_PREFIX},{{arg_random_int}}
             )
 '''
@@ -119,7 +120,7 @@ This snippet expects to be formatted with these named interpolations:
 
 CODE_GET_FUNC_PITH_VIOLATION = f''':
             {VAR_NAME_VIOLATION} = {ARG_NAME_GET_VIOLATION}(
-                check_meta={ARG_NAME_CHECK_META},
+                call_meta={ARG_NAME_CALL_META},
                 pith_name={{pith_name}},
                 pith_value={VAR_NAME_PITH_ROOT},{{arg_random_int}}
             )

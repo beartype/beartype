@@ -13,39 +13,12 @@ for those types and callables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Let's do this for QA glory, fam:
-#* Do *TONS* of other stuff here. Namely:
-#  * Define a new temporary "codemainnew" submodule defining a new
-#    make_check_expr() function. This super-refactored make_check_expr() should
-#    receive a new optional "hint_scope: Optional[BeartypeForwardScope] = None"
-#    parameter. Do nothing with that "hint_scope" for now. Just get this to
-#    work.
-#  * Implement the changes listed in "_wraputil", please.
-#  * Define a new temporary "_wrapreturnnew" submodule as well, which should
-#    pass the current return hint to is_hint_contextual() and, if that tester
-#    returns True:
-#    * Call make_decor_meta_scope_forward() to instantiate a new forward scope.
-#    * Pass that forward scope to our new make_check_expr().
-#* Try substituting "_wrapreturn" for "_wrapreturnnew". If thinks actually work,
-#  we can incrementally proceed from there. \o/
-#* *AFTER EVERYTHING ELSE WORKS,* refactor our reduce_hint_pep484_ref() reducer
-#  to call _resolve_func_scope_forward_hint() rather than
-#  find_hint_pep484_ref_on_cls_stack_or_none(). When doing so, however, note
-#  that we'll need to guard against the leading edge case detailed in
-#  resolve_hint_pep484_ref_str_decor_meta():
-#      if hint in decor_meta.func_wrappee_scope_nested_names:
-#          return hint
-#  Remember, however, that trivial test is *BUGGED.* It *DOES* efficiently
-#  detect unqualified basenames of non-nested types (e.g., "Outer", "Inner") but
-#  fails to detect partially-qualified basenames of nested types (e.g.,
-#  "Outer.Inner"). Ugh!
-
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
-from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
+from beartype._check.metadata.call.callmetadecormin import (
+    BeartypeCallDecorMinimalMeta)
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import TypeException
@@ -68,7 +41,7 @@ from beartype._util.utilobject import get_object_name
 
 # ....................{ FACTORIES ~ caller                 }....................
 #FIXME: Unit test us up, please.
-def make_caller_external_scope_forward(
+def make_scope_forward_caller_external(
     # Optional parameters.
     hint: HintOrSentinel = SENTINEL,
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
@@ -148,14 +121,14 @@ def make_caller_external_scope_forward(
 
     # ....................{ RETURN                         }....................
     # Return this forward scope for orthogonality with the sibling
-    # make_caller_external_scope_forward() factory.
+    # make_scope_forward_caller_external() factory.
     return caller_scope
 
 # ....................{ FACTORIES ~ decorated              }....................
 #FIXME: Unit test us up, please.
-def make_decor_meta_scope_forward(
+def make_scope_forward_decor_meta(
     # Mandatory parameters.
-    decor_meta: BeartypeCallDecorMeta,
+    decor_meta: BeartypeCallDecorMinimalMeta,
 
     # Optional parameters.
     hint: HintOrSentinel = SENTINEL,
@@ -178,8 +151,10 @@ def make_decor_meta_scope_forward(
 
     Parameters
     ----------
-    decor_meta : BeartypeCallDecorMeta
-        Decorated callable to create a forward scope for.
+    decor_meta : BeartypeCallDecorMinimalMeta
+        **Beartype decorator call minimal metadata** (i.e., dataclass
+        encapsulating the minimal metadata required to type-check the currently
+        decorated callable at the time that callable is subsequently called).
     hint : HintOrSentinel, default: SENTINEL
         :pep:`484`-compliant forward reference type hint requiring this forward
         scope if any *or* the sentinel placeholder. This factory embeds this
@@ -197,8 +172,8 @@ def make_decor_meta_scope_forward(
     BeartypeForwardScope
         Forward scope relative to the currently decorated callable.
     '''
-    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
-        f'{repr(decor_meta)} not @beartype call.')
+    assert isinstance(decor_meta, BeartypeCallDecorMinimalMeta), (
+        f'{repr(decor_meta)} not beartype decorator call metadata.')
 
     # ....................{ PREAMBLE                       }....................
     # If the forward scope of the decorated callable has already been decided,
@@ -210,7 +185,7 @@ def make_decor_meta_scope_forward(
     # ....................{ LOCALS                         }....................
     # Decorated callable and metadata associated with that callable, localized
     # to improve both readability and negligible efficiency when accessed below.
-    func = decor_meta.func_wrappee_wrappee
+    func = decor_meta.func
     cls_stack = decor_meta.cls_stack
 
     # Global scope of the decorated callable.
@@ -267,8 +242,8 @@ def make_decor_meta_scope_forward(
     # ..................{ NESTED                             }..................
     #FIXME: Shift this entire "if: ... else: ..." construct into a new private
     #_get_decor_meta_scope_forward_locals() getter for maintainability, please.
-    # If the decorated callable is nested (rather than global) and thus
-    # *MAY* have a non-empty local nested scope...
+    # If the decorated callable is nested (rather than global) and thus *MAY*
+    # have a non-empty local nested scope...
     if decor_meta.func_wrappee_is_nested:
         # Attempt to...
         try:
@@ -498,5 +473,5 @@ def make_decor_meta_scope_forward(
 
     # ....................{ RETURN                         }....................
     # Return this forward scope for orthogonality with the sibling
-    # make_caller_external_scope_forward() factory.
+    # make_scope_forward_caller_external() factory.
     return func_scope

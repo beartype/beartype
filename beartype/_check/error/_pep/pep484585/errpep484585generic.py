@@ -16,7 +16,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.hint.sign.datahintsigns import (
     HintSignPep484585GenericUnsubbed)
 from beartype._check.error.errcause import ViolationCause
-from beartype._check.error._errtype import find_cause_instance_type
+from beartype._check.error._nonpep.errnonpeptype import (
+    find_cause_instance_type)
 from beartype._check.pep.checkpep484585generic import (
     get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
@@ -71,9 +72,9 @@ def find_cause_pep484585_generic_unsubbed(
     # unsubscripted generic *AND* the sign identifying this pseudo-superclass...
     for hint_child_sane, hint_child_sign in (
         get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
-            hint_sane=cause.hint_sane,
-            cls_stack=cause.cls_stack,
+            call_meta=cause.call_meta,
             conf=cause.conf,
+            hint_sane=cause.hint_sane,
             exception_prefix=cause.exception_prefix,
         )
     ):

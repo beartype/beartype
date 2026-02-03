@@ -41,7 +41,6 @@ def _init() -> None:
     # Defer heavyweight imports.
     from beartype._data.hint.sign.datahintsigns import (
         HintSignAnnotated,
-        HintSignForwardRef,
         HintSignLiteral,
         HintSignNoReturn,
         HintSignPep484585GenericUnsubbed,
@@ -55,7 +54,6 @@ def _init() -> None:
         HINT_SIGNS_UNION,
     )
     from beartype._check.error._nonpep.errnonpeptype import (
-        find_cause_instance_type_forwardref,
         find_cause_nonpep,
         find_cause_type_instance_origin,
     )
@@ -107,7 +105,6 @@ def _init() -> None:
         None: find_cause_nonpep,
 
         # ....................{ PEP 484                    }....................
-        HintSignForwardRef: find_cause_instance_type_forwardref,
         HintSignNoReturn: find_cause_pep484_noreturn,
 
         # ....................{ PEP (484|585)              }....................

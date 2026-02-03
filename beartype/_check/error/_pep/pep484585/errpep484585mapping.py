@@ -19,7 +19,8 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._check.error.errcause import ViolationCause
-from beartype._check.error._errtype import find_cause_type_instance_origin
+from beartype._check.error._nonpep.errnonpeptype import (
+    find_cause_type_instance_origin)
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._data.hint.sign.datahintsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)

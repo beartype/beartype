@@ -6,8 +6,8 @@
 '''
 **Beartype decorator call metadata dataclass** unit tests.
 
-This submodule unit tests the :func:`beartype._check.metadata.call.callmetadecor`
-submodule.
+This submodule unit tests the
+:func:`beartype._check.metadata.call.callmetadecor` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -17,7 +17,7 @@ submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_bearcalldecor() -> None:
+def test_callmetadecor() -> None:
     '''
     Test the
     :func:`beartype._check.metadata.call.callmetadecor.BeartypeCallDecorMeta`

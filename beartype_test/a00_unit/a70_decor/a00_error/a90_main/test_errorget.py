@@ -39,7 +39,8 @@ def test_get_func_pith_violation() -> None:
     )
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.metadata.call.callmetadecormin import BeartypeCallDecorMinimalMeta
+    from beartype._check.metadata.call.callmetadecormin import (
+        minify_decor_meta_kwargs)
     from pytest import raises
 
     # ..................{ LOCALS                             }..................
@@ -56,7 +57,7 @@ def test_get_func_pith_violation() -> None:
         return achromatic_voice
 
     # Beartype type-checking call metadata reduced from this decorator metadata.
-    check_meta = BeartypeCallDecorMinimalMeta.make_from_decor_meta_kwargs(
+    call_meta = minify_decor_meta_kwargs(
         func=forest_unknown, conf=BeartypeConf())
 
     # ..................{ PASS                               }..................
@@ -64,7 +65,7 @@ def test_get_func_pith_violation() -> None:
     # parameter annotated by a PEP-compliant type hint failing to shallowly
     # satisfy the type of that type hint.
     violation = get_func_pith_violation(
-        check_meta=check_meta,
+        call_meta=call_meta,
         pith_name='secret_orchard',
         pith_value=(
             'You are in a forest unknown:',
@@ -77,7 +78,7 @@ def test_get_func_pith_violation() -> None:
     # parameter annotated by a PEP-compliant type hint failing to deeply satisfy
     # the type of that type hint.
     violation = get_func_pith_violation(
-        check_meta=check_meta,
+        call_meta=call_meta,
         pith_name='secret_orchard',
         pith_value=[
             b'I am awaiting the sunrise',
@@ -91,7 +92,7 @@ def test_get_func_pith_violation() -> None:
     # parameter annotated by a PEP-noncompliant type hint failing to shallowly
     # satisfy the type of that type hint.
     violation = get_func_pith_violation(
-        check_meta=check_meta,
+        call_meta=call_meta,
         pith_name='to_bid_you_farewell',
         pith_value=(
             b'Once it came you lied,'
@@ -105,7 +106,7 @@ def test_get_func_pith_violation() -> None:
     # return value annotated by a PEP-compliant type hint failing to satisfy
     # that type hint.
     violation = get_func_pith_violation(
-        check_meta=check_meta,
+        call_meta=call_meta,
         pith_name=ARG_NAME_RETURN,
         pith_value=[
             'Sunbirds leave their dark recesses.',
@@ -120,7 +121,7 @@ def test_get_func_pith_violation() -> None:
     # unannotated parameter.
     with raises(_BeartypeCallHintPepRaiseException):
         get_func_pith_violation(
-            check_meta=check_meta,
+            call_meta=call_meta,
             pith_name='achromatic_voice',
             pith_value=(
                 'And your voice is vast and achromatic,'
@@ -134,7 +135,7 @@ def test_get_func_pith_violation() -> None:
     # (i.e., is neither PEP-compliant nor -noncompliant).
     with raises(BeartypeDecorHintNonpepException):
         get_func_pith_violation(
-            check_meta=check_meta,
+            call_meta=call_meta,
             pith_name='amaranth_symbol',
             pith_value=(
                 'I have kept it,'
@@ -165,7 +166,8 @@ def test_get_func_pith_violation_conf_is_color() -> None:
         Union,
     )
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.metadata.call.callmetadecormin import BeartypeCallDecorMinimalMeta
+    from beartype._check.metadata.call.callmetadecormin import (
+        minify_decor_meta_kwargs)
     from beartype._util.os.utilostty import is_stdout_terminal
     from beartype._util.text.utiltextansi import is_str_ansi
 
@@ -192,7 +194,7 @@ def test_get_func_pith_violation_conf_is_color() -> None:
     # ..................{ PASS                               }..................
     # Violation configured to contain ANSI escape sequences.
     violation = get_func_pith_violation(
-        check_meta=BeartypeCallDecorMinimalMeta.make_from_decor_meta_kwargs(
+        call_meta=minify_decor_meta_kwargs(
             func=she_drew_back, conf=BeartypeConf(is_color=True)), **kwargs)
 
     # Assert this violation message contains ANSI escape sequences.
@@ -200,7 +202,7 @@ def test_get_func_pith_violation_conf_is_color() -> None:
 
     # Violation configured to contain *NO* ANSI escape sequences.
     violation = get_func_pith_violation(
-        check_meta=BeartypeCallDecorMinimalMeta.make_from_decor_meta_kwargs(
+        call_meta=minify_decor_meta_kwargs(
             func=she_drew_back, conf=BeartypeConf(is_color=False)), **kwargs)
 
     # Assert this violation message contains *NO* ANSI escape sequences.
@@ -209,7 +211,7 @@ def test_get_func_pith_violation_conf_is_color() -> None:
     # Violation configured to conditionally contain ANSI escape sequences only
     # when standard output is attached to an interactive terminal.
     violation = get_func_pith_violation(
-        check_meta=BeartypeCallDecorMinimalMeta.make_from_decor_meta_kwargs(
+        call_meta=minify_decor_meta_kwargs(
             func=she_drew_back, conf=BeartypeConf(is_color=None)), **kwargs)
 
     # Assert this violation message contains ANSI escape sequences only when
@@ -229,14 +231,11 @@ def test_get_func_pith_violation_conf_violation_types() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import BeartypeConf
-    from beartype.typing import (
-        List,
-        Tuple,
-        Union,
-    )
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.metadata.call.callmetadecormin import BeartypeCallDecorMinimalMeta
+    from beartype._check.metadata.call.callmetadecormin import (
+        minify_decor_meta_kwargs)
+    from typing import Union
 
     # ..................{ LOCALS                             }..................
     class InvolvedAndSwallowed(Exception):
@@ -248,7 +247,7 @@ def test_get_func_pith_violation_conf_violation_types() -> None:
 
 
     def now_blackness(
-        veiled_his: List[str], dizzy_eyes) -> Union[int, Tuple[str, ...]]:
+        veiled_his: list[str], dizzy_eyes) -> Union[int, tuple[str, ...]]:
         '''
         Arbitrary callable exercised below.
         '''
@@ -258,7 +257,7 @@ def test_get_func_pith_violation_conf_violation_types() -> None:
     # ..................{ PASS                               }..................
     # Parameter violation configured to be a non-default exception subclass.
     param_violation = get_func_pith_violation(
-        check_meta=BeartypeCallDecorMinimalMeta.make_from_decor_meta_kwargs(
+        call_meta=minify_decor_meta_kwargs(
             func=now_blackness, conf=BeartypeConf(
                 violation_param_type=InvolvedAndSwallowed)),
         pith_name='veiled_his',
@@ -273,7 +272,7 @@ def test_get_func_pith_violation_conf_violation_types() -> None:
 
     # Return violation configured to be a non-default exception subclass.
     return_violation = get_func_pith_violation(
-        check_meta=BeartypeCallDecorMinimalMeta.make_from_decor_meta_kwargs(
+        call_meta=minify_decor_meta_kwargs(
             func=now_blackness, conf=BeartypeConf(
                 violation_return_type=InvolvedAndSwallowed)),
         pith_name=ARG_NAME_RETURN,
@@ -307,7 +306,8 @@ def test_get_func_pith_violation_conf_violation_verbosity() -> None:
         Union,
     )
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.metadata.call.callmetadecormin import BeartypeCallDecorMinimalMeta
+    from beartype._check.metadata.call.callmetadecormin import (
+        minify_decor_meta_kwargs)
 
     # ..................{ LOCALS                             }..................
     def like_a_dark_flood(
@@ -335,7 +335,7 @@ def test_get_func_pith_violation_conf_violation_verbosity() -> None:
     violations = tuple(
         # Violation whose message is configured to be this verbose...
         get_func_pith_violation(
-            check_meta=BeartypeCallDecorMinimalMeta.make_from_decor_meta_kwargs(
+            call_meta=minify_decor_meta_kwargs(
                 func=like_a_dark_flood, conf=BeartypeConf(
                     violation_verbosity=violation_verbosity)), **kwargs)
         # For each kind of violation verbosity.

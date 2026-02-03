@@ -40,7 +40,7 @@ def test_reduce_hint(
     from beartype._check.convert._reduce.redmain import (
         reduce_hint_caller_external)
     from beartype._check.metadata.call.callmetadecormin import (
-        BeartypeCallDecorMinimalMeta)
+        minify_decor_meta_kwargs)
     from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
         HintReductionInvalid,
         HintReductionValid,
@@ -51,17 +51,25 @@ def test_reduce_hint(
     # For each reduction case...
     for hint_reduction_meta in hints_reduction_meta:
         #FIXME: *NON-IDEAL.* Refactor as follows:
-        #* Each "hint_reduction_meta" should define a new "decor_meta_kwargs:
-        #  DictStrToAny" instance variable, defaulting to the empty frozen
-        #  dictionary.
+        #* "hint_reduction_meta" should define a single "decor_meta_kwargs:
+        #  DictStrToAny" instance variable rather than "cls_stack" and "conf",
+        #  defaulting to the empty frozen dictionary.
         #* Then trivially pass that dictionary here as:
-        #      with new_decor_meta(**kwargs) as decor_meta:
+        #      call_meta = minify_decor_meta_kwargs(
+        #          # Arbitrary callable annotated by one or more arbitrary type hints,
+        #          # passed purely to satisfy API constraints.
+        #          func=test_reduce_hint,
+        #          **kwargs
+        #      )
 
         # Beartype decorator call metadata, resolving forward references
         # relative to the body of this unit test for simplicity.
-        call_meta = BeartypeCallDecorMinimalMeta(
+        call_meta = minify_decor_meta_kwargs(
             cls_stack=hint_reduction_meta.cls_stack,
             conf=hint_reduction_meta.conf,
+            # Arbitrary callable annotated by one or more arbitrary type hints,
+            # passed purely to satisfy API constraints.
+            func=test_reduce_hint,
         )
 
         # If this is case encapsulates a valid reduction...

@@ -34,7 +34,6 @@ from beartype._data.code.pep.datacodepep525 import (
 )
 from beartype._data.typing.datatyping import (
     LexicalScope,
-    Pep649HintableAnnotations,
     TypeStack,
 )
 from beartype._data.typing.datatypingport import Hint
@@ -284,9 +283,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        conf: BeartypeConf
-        func: Callable
-        func_annotations: Pep649HintableAnnotations
         func_annotations_get: Callable[[str, object], object]
         func_wrappee: Callable
         func_wrappee_is_nested: bool
@@ -302,20 +298,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         func_wrapper_name: str
         func_wrapper_scope: LexicalScope
         _is_func_annotations_dirty: bool
-
-    # Coerce instances of this class to be unhashable, preventing spurious
-    # issues when accidentally passing these instances to memoized callables by
-    # implicitly raising a "TypeError" exception on the first call to those
-    # callables. There exists no tangible benefit to permitting these instances
-    # to be hashed (and thus also cached), since these instances are:
-    # * Specific to the decorated callable and thus *NOT* safely cacheable
-    #   across functions applying to different decorated callables.
-    # * Already cached via the acquire_instance() function called by the
-    #   "beartype._decor.decormain" submodule.
-    #
-    # See also:
-    #     https://docs.python.org/3/reference/datamodel.html#object.__hash__
-    __hash__ = None  # type: ignore[assignment]
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self) -> None:
@@ -333,8 +315,15 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
            initialize these instances.
         '''
 
-        # Initialize our superclass.
-        super().__init__()
+        # Avoid explicitly initializing our superclass. The public API of this
+        # subclass cleanly conforms with the public API of our superclass in
+        # everything except instantiation. Clean object-oriented design
+        # frequently breaks down in the margins. This is such a margin. Although
+        # this design flaw *COULD* be rectified by defining a new
+        # "BeartypeCallDecorABC" superclass at the root of these two classes,
+        # doing so would only uselessly increase space and time consumption for
+        # literally *NO* gain whatsoever. OO: it is what it is.
+        # super().__init__()
 
         # Nullify instance variables for safety.
         self.deinit()
@@ -508,7 +497,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
 
         # ..................{ VARS ~ func : wrappee          }..................
         # Wrappee callable currently being decorated.
-        self.func = self.func_wrappee = func
+        self.func_wrappee = func
 
         # True only if this wrappee callable is nested. As a minor efficiency
         # gain, we can avoid the slightly expensive call to is_func_nested() by
@@ -535,7 +524,17 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
 
         # ..................{ VARS ~ func : wrappee wrappee  }..................
         # Possibly unwrapped callable unwrapped from this wrappee callable.
-        self.func_wrappee_wrappee = unwrap_func_all_isomorphic(
+        #
+        # Note that this "func" instance variable is intentionally aliased to
+        # this "func_wrappee_wrappee" rather than the passed "func_wrappee".
+        # Why? Specifically, because the
+        # resolve_hint_pep484_ref_str_decor_meta() function accepting a
+        # general-purpose "decor_meta: BeartypeCallDecorMinimalMeta" parameter
+        # *MUST* dynamically resolve type hints against the original local and
+        # global scope of the original callable decorated by @beartype (rather
+        # than a differing local and global scope of a differing callable
+        # created and returned by other intermediary third-party decorators).
+        self.func = self.func_wrappee_wrappee = unwrap_func_all_isomorphic(
             func=func, wrapper=wrapper)
         # print(f'func_wrappee: {self.func_wrappee}')
         # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')

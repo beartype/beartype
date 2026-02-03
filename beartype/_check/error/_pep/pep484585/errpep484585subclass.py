@@ -12,20 +12,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._data.typing.datatyping import TypeOrTupleTypes
 from beartype._data.hint.sign.datahintsigns import (
-    HintSignForwardRef,
     HintSignType,
     HintSignUnion,
 )
 from beartype._util.cls.pep.clspep3119 import die_unless_object_issubclassable
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.hint.pep.proposal.pep484.forward.pep484refgeneral import (
-    import_pep484_ref_type)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
@@ -84,22 +80,10 @@ def find_cause_pep484585_subclass(cause: ViolationCause) -> ViolationCause:
     # Arbitrary object uniquely identifying this superclass.
     hint_child_sign = get_hint_pep_sign_or_none(hint_child)  # pyright: ignore
 
-    # If this child hint is a forward reference to a superclass...
-    if hint_child_sign is HintSignForwardRef:
-        # Superclass referred to by this absolute or relative forward reference.
-        hint_child = import_pep484_ref_type(
-            hint=hint_child,  # type: ignore[arg-type]
-            cls_stack=cause.cls_stack,
-            func=cause.func,
-            exception_cls=BeartypeCallHintForwardRefException,
-            exception_prefix=cause.exception_prefix,
-        )
-    # Else, this child hint is *NOT* a forward reference.
-    #
     # If this child hint is a union of superclasses, reduce this union to a
     # tuple of superclasses. Only the latter is safely passable as the second
     # parameter to the issubclass() builtin under all supported Python versions.
-    elif hint_child_sign is HintSignUnion:
+    if hint_child_sign is HintSignUnion:
         hint_child = get_hint_pep_args(hint_child)
     # Else, this child hint is *NOT* a union. By process of elimination, this
     # child hint *MUST be a class. In this case, preserve this class as is.

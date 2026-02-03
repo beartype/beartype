@@ -31,7 +31,7 @@ from beartype._data.typing.datatyping import (
     Codeobjable,
     TypeException,
 )
-# from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.arg.utilfuncarglen import (
     get_func_args_nonvariadic_len)
 from beartype._util.func.arg.utilfuncargtest import (
@@ -882,6 +882,7 @@ def is_func_sync_generator(func: object) -> TypeIs[Callable]:
     )
 
 # ....................{ TESTERS : nested                   }....................
+@callable_cached
 def is_func_nested(func: Callable) -> bool:
     '''
     :data:`True` only if the passed callable is **nested** (i.e., a pure-Python
@@ -901,6 +902,8 @@ def is_func_nested(func: Callable) -> bool:
          def muh_parent_callable():           # <-- parent callable
              def muh_nested_callable(): pass  # <-- nested non-closure function
              return muh_nested_callable
+
+    This tester is memoized for efficiency.
 
     Parameters
     ----------

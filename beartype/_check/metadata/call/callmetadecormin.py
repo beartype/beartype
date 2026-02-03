@@ -67,28 +67,28 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         conf: BeartypeConf
+        func: Callable
+        func_annotations: Pep649HintableAnnotations
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
-
-        # Optional parameters.
-        cls_stack: TypeStack = None,
-        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-        func: Optional[Callable] = None,
-        func_annotations: Optional[Pep649HintableAnnotations] = None,
+        cls_stack: TypeStack,
+        conf: BeartypeConf,
+        func: Callable,
+        func_annotations: Pep649HintableAnnotations,
     ) -> None:
         '''
         Initialize this metadata with the passed parameters.
 
         Caveats
         -------
-        **Avoid calling this low-level initializer directly.** Instead,
-        instantiate instances of this dataclass by calling the
-        :meth:`make_from_decor_meta` class method -- reducing existing
-        instances of the parent
-        :class:`beartype._check.metadata.call.callmetadecor.BeartypeCallDecorMeta`
-        dataclass to instances of this child dataclass.
+        **This low-level dataclass does not need to be instantiated
+        explicitly.** Instead, instantiate instances of this dataclass by
+        calling the higher-level
+        :meth:`beartype._check.metadata.call.callmetadecor.BeartypeCallDecorMeta.minify`
+        method -- reducing existing instances of the parent dataclass to
+        instances of this child dataclass.
 
         Parameters
         ----------
@@ -140,7 +140,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
         )
 
 # ....................{ MINIFIERS                          }....................
-def minify_decor_meta_kwargs(self, **kwargs) -> BeartypeCallDecorMinimalMeta:
+def minify_decor_meta_kwargs(**kwargs) -> BeartypeCallDecorMinimalMeta:
     '''
     **Beartype decorator call minimal metadata** (i.e., dataclass
     encapsulating the minimal metadata required to type-check the callable

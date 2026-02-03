@@ -111,6 +111,9 @@ class BeartypeCallMetaABC(object, metaclass=ABCMeta):
     # to be hashed (and thus also cached), since these instances are:
     # * Specific to the decorated callable and thus *NOT* safely cacheable
     #   across functions applying to different decorated callables.
+    # * In a subset of concrete subclasses, already cached (e.g., via the
+    #   acquire_instance() function called by the "beartype._decor.decormain"
+    #   submodule).
     #
     # See also:
     #     https://docs.python.org/3/reference/datamodel.html#object.__hash__
