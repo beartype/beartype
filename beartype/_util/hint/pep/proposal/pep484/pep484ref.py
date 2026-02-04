@@ -95,8 +95,8 @@ def get_hint_pep484_ref_names_relative(
     '''
     Possibly undefined fully-qualified module name and possibly qualified
     classname referred to by the passed :pep:`484`-compliant **forward reference
-    hint** (i.e., object indirectly referring to a user-defined type that
-    typically has yet to be defined).
+    type hint** (i.e., object indirectly referring to a type hint that typically
+    has yet to be defined).
 
     This getter is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as the implementation mostly reduces to an
@@ -117,8 +117,8 @@ def get_hint_pep484_ref_names_relative(
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
     exception_prefix : str, default: ''
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -220,93 +220,3 @@ def get_hint_pep484_ref_names_relative(
 
     # Return metadata describing this forward reference relative to this module.
     return hint_module_name, hint_name
-
-# ....................{ IMPORTERS                          }....................
-#FIXME: Unit test us up, please.
-def import_pep484_ref_type(
-    # Mandatory parameters.
-    hint: HintPep484Ref,
-
-    # Optional parameters.
-    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
-    exception_prefix: str = '',
-    **kwargs
-) -> type:
-    '''
-    Class referred to by the passed :pep:`484`-compliant **forward reference
-    hint** (i.e., object indirectly referring to a user-defined type that
-    typically has yet to be defined) canonicalized if this hint is unqualified
-    relative to the module declaring the first of whichever of the passed owner
-    type and/or callable is *not* :data:`None`.
-
-    This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the passed object is typically a
-    :func:`beartype.beartype`-decorated callable passed exactly once to this
-    function.
-
-    Parameters
-    ----------
-    hint : HintPep484Ref
-        Forward reference type hint to be resolved.
-    exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :exc:`.BeartypeDecorHintForwardRefException`.
-    exception_prefix : str, default: ''
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
-
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`.canonicalize_hint_pep484_ref` getter.
-
-    Returns
-    -------
-    type
-        Class referred to by this forward reference.
-
-    Raises
-    ------
-    exception_cls
-        If either:
-
-        * This forward reference is *not* actually a forward reference.
-        * This forward reference is **relative** (i.e., contains *no* ``.``
-          delimiters) and either:
-
-          * Neither the passed callable nor class define the ``__module__``
-            dunder attribute.
-          * The passed callable and/or class define the ``__module__``
-            dunder attribute, but the values of those attributes all refer to
-            unimportable modules that do *not* appear to physically exist.
-        * The object referred to by this forward reference is either:
-
-          * Undefined.
-          * Defined but not a class.
-
-    See Also
-    --------
-    :func:`.canonicalize_hint_pep484_ref`
-        Further details.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._check.forward.reference.fwdrefmake import (
-        make_forwardref_subbable_subtype)
-    from beartype._util.hint.pep.proposal.pep484.forward.pep484refcanonic import (
-        canonicalize_hint_pep484_ref)
-
-    # Possibly undefined fully-qualified module name and possibly unqualified
-    # classname referred to by this forward reference relative to this type
-    # stack and callable.
-    hint_module_name, hint_ref_name = canonicalize_hint_pep484_ref(
-        hint=hint,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-        **kwargs
-    )
-
-    # Forward reference proxy referring to this class.
-    hint_ref = make_forwardref_subbable_subtype(
-        hint_module_name, hint_ref_name)
-
-    # Return the class dynamically imported from this proxy.
-    return hint_ref.__type_beartype__

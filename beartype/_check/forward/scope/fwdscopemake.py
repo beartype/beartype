@@ -19,10 +19,8 @@ from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.metadata.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
-from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.typing.datatypingport import HintOrSentinel
 from beartype._util.cls.utilclsget import get_type_locals
 from beartype._util.func.utilfuncframe import (
     find_frame_caller_external,
@@ -35,15 +33,12 @@ from beartype._util.func.utilfuncscope import (
     get_func_locals,
 )
 from beartype._util.hint.pep.proposal.pep695 import resolve_func_scope_pep695
-from beartype._util.module.utilmodget import get_object_module_name_or_none
-from beartype._util.text.utiltextlabel import label_callable
-from beartype._util.utilobject import get_object_name
+from beartype._util.module.utilmodget import get_object_module_name
 
 # ....................{ FACTORIES ~ caller                 }....................
 #FIXME: Unit test us up, please.
 def make_scope_forward_caller_external(
     # Optional parameters.
-    hint: HintOrSentinel = SENTINEL,
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
 ) -> BeartypeForwardScope:
@@ -59,16 +54,11 @@ def make_scope_forward_caller_external(
     module or package *except* those residing in the :mod:`beartype` package).
 
     This factory is internally memoized into the
-    :attr:`decor_meta.func_wrappee_scope_forward` instance variable of the
+    :attr:`decor_metafunc_wrappee_wrappee_scope_forward` instance variable of the
     passed metadata.
 
     Parameters
     ----------
-    hint : HintOrSentinel, default: SENTINEL
-        :pep:`484`-compliant forward reference type hint requiring this forward
-        scope if any *or* the sentinel placeholder. This factory embeds this
-        hint in exception messages for readability. Defaults to the sentinel
-        placeholder.
     exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
@@ -85,43 +75,42 @@ def make_scope_forward_caller_external(
     # ....................{ CALLER                         }....................
     # Stack frame encapsulating the external caller.
     caller_frame = find_frame_caller_external(
-        # Additionally ignore the current frame on the call stack
-        # encapsulating the current call to this factory function.
+        # Additionally ignore the current frame on the call stack encapsulating
+        # the current call to this factory function.
         ignore_frames=1,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
 
-    # Fully-qualified name of the module declaring this external caller if that
-    # caller defines the "__module__" dunder attribute *OR* "None" (i.e., if
-    # that caller fails to define that attribute).
-    caller_module_name = get_frame_module_name_or_none(caller_frame)
-
     # Global and local scopes directly accessible to this external caller.
     caller_globals = get_frame_globals(caller_frame)
     caller_locals = get_frame_locals(caller_frame)
 
+    # Fully-qualified name of the module declaring this external caller if that
+    # caller defines the "__module__" dunder attribute *OR* "None" otherwise
+    # (i.e., if that caller fails to define that attribute).
+    caller_module_name = get_frame_module_name_or_none(caller_frame)
+
     # ....................{ SCOPE                          }....................
     # Forward scope compositing this global and local scope of the external
-    # caller as well as dynamically replacing each unresolved attribute of
-    # each stringified type hint with a forward reference proxy resolving that
+    # caller as well as dynamically replacing each unresolved attribute of each
+    # stringified type hint with a forward reference proxy resolving that
     # attribute on the first attempt to pass that attribute as the second
     # parameter to an isinstance()- or issubclass()based runtime type-check.
     caller_scope = BeartypeForwardScope(scope_name=caller_module_name)  # type: ignore[arg-type]
 
     # Composite this global and local scope into this forward scope (in that
-    # order), implicitly overwriting first each builtin attribute and then
-    # each global attribute previously copied into this forward scope with
-    # each global and then local attribute of the same name. Since locals
-    # *ALWAYS* assume precedence over globals *ALWAYS* assume precedence
-    # over builtins, order of operation is *EXTREMELY* significant here.
+    # order), implicitly overwriting first each builtin attribute and then each
+    # global attribute previously copied into this forward scope with each
+    # global and then local attribute of the same name. Since locals *ALWAYS*
+    # assume precedence over globals *ALWAYS* assume precedence over builtins,
+    # order of operation is *EXTREMELY* significant here.
     caller_scope.update(caller_globals)
     caller_scope.update(caller_locals)
-    # print(f'Forward scope: {decor_meta.func_wrappee_scope_forward}')
+    # print(f'Forward scope: {decor_metafunc_wrappee_wrappee_scope_forward}')
 
     # ....................{ RETURN                         }....................
-    # Return this forward scope for orthogonality with the sibling
-    # make_scope_forward_caller_external() factory.
+    # Return this forward scope.
     return caller_scope
 
 # ....................{ FACTORIES ~ decorated              }....................
@@ -129,9 +118,9 @@ def make_scope_forward_caller_external(
 def make_scope_forward_decor_meta(
     # Mandatory parameters.
     decor_meta: BeartypeCallDecorMinimalMeta,
+    func_is_nested: bool,
 
     # Optional parameters.
-    hint: HintOrSentinel = SENTINEL,
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
 ) -> BeartypeForwardScope:
@@ -146,7 +135,7 @@ def make_scope_forward_decor_meta(
     decorated callable described by the passed metadata.
 
     This factory is internally memoized into the
-    :attr:`decor_meta.func_wrappee_scope_forward` instance variable of the
+    :attr:`decor_metafunc_wrappee_wrappee_scope_forward` instance variable of the
     passed metadata.
 
     Parameters
@@ -155,12 +144,14 @@ def make_scope_forward_decor_meta(
         **Beartype decorator call minimal metadata** (i.e., dataclass
         encapsulating the minimal metadata required to type-check the currently
         decorated callable at the time that callable is subsequently called).
-    hint : HintOrSentinel, default: SENTINEL
-        :pep:`484`-compliant forward reference type hint requiring this forward
-        scope if any *or* the sentinel placeholder. This factory embeds this
-        hint in exception messages for readability. Defaults to the sentinel
-        placeholder.
-    exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
+    func_is_nested : bool
+         Either:
+
+         * If the currently decorated callable is **nested** (i.e., declared in
+           the body of another pure-Python callable or class), :data:`True`.
+         * If the currently decorated callable is **global** (i.e., declared at
+           module scope in its submodule), :data:`False`.
+    exception_cls : type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
     exception_prefix : str, default: ''
@@ -174,12 +165,14 @@ def make_scope_forward_decor_meta(
     '''
     assert isinstance(decor_meta, BeartypeCallDecorMinimalMeta), (
         f'{repr(decor_meta)} not beartype decorator call metadata.')
+    assert isinstance(func_is_nested, bool), (
+        f'{repr(func_is_nested)} not boolean.')
 
     # ....................{ PREAMBLE                       }....................
     # If the forward scope of the decorated callable has already been decided,
     # immediately return this scope as is.
-    if decor_meta.func_wrappee_scope_forward is not None:
-        return decor_meta.func_wrappee_scope_forward
+    if decor_meta.func_wrappee_wrappee_scope_forward is not None:
+        return decor_meta.func_wrappee_wrappee_scope_forward
     # Else, this forward scope has yet to be decided.
 
     # ....................{ LOCALS                         }....................
@@ -192,59 +185,18 @@ def make_scope_forward_decor_meta(
     func_globals = get_func_globals(func=func, exception_cls=exception_cls)
 
     # Fully-qualified name of the module declaring the decorated callable if
-    # that callable defines the "__module__" dunder attribute *OR* "None"
-    # (i.e., if that callable fails to define that attribute).
-    func_module_name = get_object_module_name_or_none(func)
-
-    # If the decorated callable fails to define the "__module__" dunder
-    # attribute, there exists *NO* known module against which to resolve
-    # this stringified type hint. Since this implies that this hint *CANNOT*
-    # be reliably resolved, raise an exception.
+    # that callable defines the "__module__" dunder attribute.
     #
-    # Note that this is an uncommon edge case that nonetheless occurs
-    # frequently enough to warrant explicit handling by raising a more
-    # human-readable exception than would otherwise be raised (e.g., if the
-    # lower-level get_object_module_name() getter were called instead
-    # above). Notably, the third-party "markdown-exec" package behaved like
-    # this -- and possibly still does. See also:
-    #     https://github.com/beartype/beartype/issues/381
-    if not func_module_name:
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not exception type.')
-
-        # Fully-qualified name of the currently decorated callable.
-        func_name = get_object_name(func)
-
-        # Human-readable label describing that callable.
-        func_label = label_callable(func)
-
-        # If the caller passed a PEP 484-compliant forward reference hint,
-        # prefix this exception message by this hint for readability.
-        if hint is not SENTINEL:
-            exception_prefix += (
-                f'PEP 484 forward reference type hint "{repr(hint)}" '
-                f'unresolvable, as '
-            )
-        # Else, the caller passed *NO* such hint.
-
-        # Raise this exception.
-        raise exception_cls(
-            f'{exception_prefix}'
-            f'callable "{func_name}.__module__" dunder attribute undefined '
-            f'(e.g., as {func_label} defined dynamically in-memory). '
-            f'So much bad stuff is happening here all at once that '
-            f'@beartype can no longer cope with the explosion in badness.'
-        )
-    # Else, the decorated callable defines that attribute.
+    # Note the parent resolve_hint_pep484_ref_str_decor_meta() call already
+    # guarantees this attribute to be non-"None" and thus raise *NO* exception.
+    func_module_name = get_object_module_name(func)
 
     # ..................{ NESTED                             }..................
     #FIXME: Shift this entire "if: ... else: ..." construct into a new private
     #_get_decor_meta_scope_forward_locals() getter for maintainability, please.
     # If the decorated callable is nested (rather than global) and thus *MAY*
     # have a non-empty local nested scope...
-    if decor_meta.func_wrappee_is_nested:
+    if func_is_nested:
         # Attempt to...
         try:
             # Local scope of the decorated callable, localized to improve
@@ -444,8 +396,8 @@ def make_scope_forward_decor_meta(
     #     def muh_func(muh_arg: 'Dict[str, MuhGeneric[int]]') -> None: ...
     #
     #     class MuhGeneric(Generic[T]): ...
-    func_scope = decor_meta.func_wrappee_scope_forward = BeartypeForwardScope(
-        scope_name=func_module_name)  # type: ignore[arg-type]
+    func_scope = decor_meta.func_wrappee_wrappee_scope_forward = (
+        BeartypeForwardScope(scope_name=func_module_name))
 
     # Composite this global and local scope into this forward scope (in that
     # order), implicitly overwriting first each builtin attribute and then
@@ -455,7 +407,7 @@ def make_scope_forward_decor_meta(
     # over builtins, order of operation is *EXTREMELY* significant here.
     func_scope.update(func_globals)
     func_scope.update(func_locals)
-    # print(f'Forward scope: {decor_meta.func_wrappee_scope_forward}')
+    # print(f'Forward scope: {decor_metafunc_wrappee_wrappee_scope_forward}')
 
     # ..................{ PEP 695                            }..................
     # If the decorated callable resides in one or more PEP 695-compliant type
@@ -465,13 +417,12 @@ def make_scope_forward_decor_meta(
     # name, vaguely replicating the scoping rules established by PEP 695:
     #     https://peps.python.org/pep-0695/#type-parameter-scopes
     resolve_func_scope_pep695(
-        func=func,
         func_scope=func_scope,
+        func=func,
         cls_stack=cls_stack,
         exception_prefix=exception_prefix,
     )
 
     # ....................{ RETURN                         }....................
-    # Return this forward scope for orthogonality with the sibling
-    # make_scope_forward_caller_external() factory.
+    # Return this forward scope.
     return func_scope

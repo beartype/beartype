@@ -1521,10 +1521,18 @@ Specifically, for any callable parameter or return type annotated with:
 * The empty tuple, :func:`beartype.beartype` raises a fatal exception.
 '''
 
-# ....................{ TUPLES ~ py                        }....................
+# ....................{ TUPLES ~ core                      }....................
 ModuleOrStrTypes = (ModuleType, StrType)
 '''
 Tuple of both the module *and* string type.
+'''
+
+
+ModuleableTypes = (ClassType, FunctionType)
+'''
+Tuple of all **moduleable types** (i.e., types whose instances define the
+``__module__`` dunder attribute whose values are the fully-qualified names of
+the modules defining those instances).
 '''
 
 

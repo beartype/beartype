@@ -8,7 +8,7 @@ Test-wide :pep:`484`-compliant **relative forward reference type hint utility**
 unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484.forward.pep484refgeneral` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484.pep484ref` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,7 +21,7 @@ This submodule unit tests the public API of the private
 def test_get_hint_pep484_ref_names_relative() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484.forward.pep484refgeneral.get_hint_pep484_ref_names_relative`
+    :func:`beartype._util.hint.pep.proposal.pep484.pep484ref.get_hint_pep484_ref_names_relative`
     getter.
     '''
 
@@ -29,7 +29,7 @@ def test_get_hint_pep484_ref_names_relative() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype.typing import ForwardRef
-    from beartype._util.hint.pep.proposal.pep484.forward.pep484refgeneral import (
+    from beartype._util.hint.pep.proposal.pep484.pep484ref import (
         get_hint_pep484_ref_names_relative)
     from pytest import raises
 

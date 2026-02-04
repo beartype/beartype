@@ -53,7 +53,7 @@ from beartype._util.hint.utilhintget import get_hint_repr
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.text.utiltextprefix import prefix_callable_arg_name
 from beartype._data.kind.datakindiota import SENTINEL
-from collections.abc import Set
+from collections.abc import MutableSet
 from typing import Optional
 from warnings import catch_warnings
 
@@ -127,7 +127,7 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
     #@beartype to generate callable-specific wrapper signatures.
 
     # Either...
-    args_name_keywordable: Optional[Set[str]] = (
+    args_name_keywordable: Optional[MutableSet[str]] = (
         #FIXME: [SPEED] Minor optimization. If the decorated callable *ONLY*
         #accepts an annotated variadic keyword parameter and no other
         #parameters, then the empty set reused from a global "SET_EMPTY" import

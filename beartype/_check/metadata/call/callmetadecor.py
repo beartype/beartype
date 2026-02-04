@@ -47,7 +47,6 @@ from beartype._util.func.utilfunccodeobj import (
 )
 from beartype._util.func.utilfunctest import (
     is_func_coro,
-    is_func_nested,
     is_func_sync_generator,
     is_func_async_generator,
 )
@@ -59,7 +58,6 @@ from beartype._util.hint.pep.proposal.pep649 import (
 from beartype._util.text.utiltextprefix import prefix_callable_pith
 from collections.abc import (
     Callable,
-    FrozenSet,
     Iterable,
 )
 from contextlib import contextmanager
@@ -145,14 +143,21 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         *usually* be accessed instead; although higher-level, this callable may
         only be a wrapper function and hence yield inaccurate or even erroneous
         metadata (especially the code object) for the callable being wrapped.
-    func_wrappee_is_nested : bool
-        Either:
-
-        * If this wrappee callable is **nested** (i.e., declared in the body of
-          another pure-Python callable or class), :data:`True`.
-        * If this wrappee callable is **global** (i.e., declared at module scope
-          in its submodule), :data:`False`.
-    func_wrappee_scope_forward : Optional[BeartypeForwardScope]
+    func_wrappee_wrappee : Callable
+        Possibly unwrapped **decorated callable wrappee** (i.e., low-level
+        callable wrapped by the high-level :attr:`func_wrappee` callable
+        currently being decorated by the :func:`beartype.beartype` decorator).
+        If the higher-level :attr:`func_wrappee` callable does *not* actually
+        wrap another callable, this callable is identical to that callable.
+    func_wrappee_wrappee_codeobj : CallableCodeObjectType
+        Possibly unwrapped **decorated callable wrappee code object** (i.e.,
+        code object underlying the low-level :attr:`func_wrappee_wrappee`
+        callable wrapped by the high-level :attr:`func_wrappee` callable
+        currently being decorated by the :func:`beartype.beartype` decorator).
+        For efficiency, this code object should *always* be accessed in lieu of
+        inefficiently calling the comparatively slower
+        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
+    func_wrappee_wrappee_scope_forward : Optional[BeartypeForwardScope]
         Either:
 
         * If this wrappee callable is annotated by at least one **stringified
@@ -176,36 +181,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
           annotating this wrappee callable.
         * All callables have local scopes *except* global functions, whose local
           scopes are by definition the empty dictionary.
-    func_wrappee_scope_nested_names : Optional[frozenset[str]]
-        Either:
-
-        * If this wrappee callable is annotated by at least one stringified type
-          hint that :mod:`beartype` has already resolved to its referent,
-          either:
-
-          * If this wrappee callable is **nested** (i.e., declared in the body
-            of another pure-Python callable or class), the non-empty frozen set
-            of the unqualified names of all parent callables lexically
-            containing this nested wrappee callable (including this nested
-            wrappee callable itself).
-          * Else, this wrappee callable is declared at global scope in its
-            submodule. In this case, the empty frozen set.
-
-        * Else, :data:`None`.
-    func_wrappee_wrappee : Callable
-        Possibly unwrapped **decorated callable wrappee** (i.e., low-level
-        callable wrapped by the high-level :attr:`func_wrappee` callable
-        currently being decorated by the :func:`beartype.beartype` decorator).
-        If the higher-level :attr:`func_wrappee` callable does *not* actually
-        wrap another callable, this callable is identical to that callable.
-    func_wrappee_wrappee_codeobj : CallableCodeObjectType
-        Possibly unwrapped **decorated callable wrappee code object** (i.e.,
-        code object underlying the low-level :attr:`func_wrappee_wrappee`
-        callable wrapped by the high-level :attr:`func_wrappee` callable
-        currently being decorated by the :func:`beartype.beartype` decorator).
-        For efficiency, this code object should *always* be accessed in lieu of
-        inefficiently calling the comparatively slower
-        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
     func_wrapper : Callable
         **Wrapper callable** to be unwrapped in the event that the
         :attr:`func_wrappee` differs from the callable to be unwrapped.
@@ -265,11 +240,9 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
     __slots__ = (
         'func_annotations_get',
         'func_wrappee',
-        'func_wrappee_is_nested',
-        'func_wrappee_scope_forward',
-        'func_wrappee_scope_nested_names',
         'func_wrappee_wrappee',
         'func_wrappee_wrappee_codeobj',
+        'func_wrappee_wrappee_scope_forward',
         'func_wrapper',
         'func_wrapper_code_call_prefix',
         'func_wrapper_code_return_checked',
@@ -285,11 +258,9 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
     if TYPE_CHECKING:
         func_annotations_get: Callable[[str, object], object]
         func_wrappee: Callable
-        func_wrappee_is_nested: bool
-        func_wrappee_scope_forward: Optional[BeartypeForwardScope]
-        func_wrappee_scope_nested_names: Optional[FrozenSet[str]]
         func_wrappee_wrappee: Callable
         func_wrappee_wrappee_codeobj: CallableCodeObjectType
+        func_wrappee_wrappee_scope_forward: Optional[BeartypeForwardScope]
         func_wrapper: Callable
         func_wrapper_code_call_prefix: str
         func_wrapper_code_return_checked: str
@@ -351,15 +322,13 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # Nullify all remaining instance variables for safety.
         self.cls_stack = (
         self.conf) = (  # type: ignore[assignment]
-        self.func) = (
+        self.func) = (  # type: ignore[assignment]
         self.func_annotations) = (  # type: ignore[assignment]
         self.func_annotations_get) = (  # type: ignore[assignment]
         self.func_wrappee) = (  # type: ignore[assignment]
-        self.func_wrappee_is_nested) = (  # type: ignore[assignment]
-        self.func_wrappee_scope_forward) = (  # type: ignore[assignment]
-        self.func_wrappee_scope_nested_names) = (  # type: ignore[assignment]
         self.func_wrappee_wrappee) = (  # type: ignore[assignment]
         self.func_wrappee_wrappee_codeobj) = (  # type: ignore[assignment]
+        self.func_wrappee_wrappee_scope_forward) = (
         self.func_wrapper) = (  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix) = (  # type: ignore[assignment]
         self.func_wrapper_code_return_checked) = (  # type: ignore[assignment]
@@ -499,19 +468,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # Wrappee callable currently being decorated.
         self.func_wrappee = func
 
-        # True only if this wrappee callable is nested. As a minor efficiency
-        # gain, we can avoid the slightly expensive call to is_func_nested() by
-        # noting that:
-        # * If the class stack is non-empty, then this wrappee callable is
-        #   necessarily nested in one or more classes.
-        # * Else, defer to the is_func_nested() tester.
-        self.func_wrappee_is_nested = bool(cls_stack) or is_func_nested(func)
-
-        # Defer the resolution of both global and local scopes for this wrappee
-        # callable until needed to subsequently resolve stringified type hints.
-        self.func_wrappee_scope_forward = None
-        self.func_wrappee_scope_nested_names = None
-
         # Possibly wrapped wrappee code object (i.e., code object underlying the
         # callable currently being type-checked by the @beartype decorator) if
         # this wrappee is pure-Python *OR* "None" otherwise.
@@ -545,6 +501,10 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
             func=self.func_wrappee_wrappee,
             exception_cls=BeartypeDecorWrappeeException,
         )
+
+        # Defer the resolution of the global and local scope for that callable
+        # until needed to subsequently resolve stringified type hints.
+        self.func_wrappee_wrappee_scope_forward = None
 
         # ..................{ VARS ~ func : wrapper          }..................
         # Wrapper callable to be unwrapped in the event that the

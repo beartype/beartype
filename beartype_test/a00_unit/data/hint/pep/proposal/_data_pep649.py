@@ -10,7 +10,7 @@ cases in unit tests requiring these fixtures).
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep649_meta() -> 'List[HintPepMetadata]':
+def hints_pep649_meta() -> 'list[HintPepMetadata]':
     '''
     List of :pep:`649`-compliant **type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`

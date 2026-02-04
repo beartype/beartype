@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import TYPE_CHECKING
+from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     Pep649HintableAnnotations,
@@ -167,7 +167,7 @@ def minify_decor_meta_kwargs(**kwargs) -> BeartypeCallDecorMinimalMeta:
     from beartype._check.metadata.call.callmetadecor import new_decor_meta
 
     # With maximal metadata initialized by these parameters...
-    with new_decor_meta(**kwargs) as decor_meta:
+    with new_decor_meta(**kwargs) as decor_meta:  # type: ignore[var-annotated]
         # Minimal metadata reduced from this maximal metadata.
         decor_meta_min = decor_meta.minify()
 

@@ -150,11 +150,9 @@ def generate_code(decor_meta: BeartypeCallDecorMeta) -> str:
     # the signature of this wrapper function, localized merely for readability.
     func_scope = decor_meta.func_wrapper_scope
 
-    # Expose private beartype type-checking call metadata (i.e.,
-    # "beartype"-specific hidden parameter whose default value is the
-    # "BeartypeCallDecorMinimalMeta" dataclass instance encapsulating *ALL*
-    # metadata required by each call to this wrapper function) to this wrapper
-    # function. Doing so dramatically simplifies calls to the
+    # Expose the minimal metadata required by each call to this wrapper function
+    # as a beartype-specific hidden parameter passed to this wrapper function,
+    # whose default value is that metadata. Doing so simplifies calls to the
     # get_func_pith_violation() getter inside the body of this wrapper function
     # by enabling this metadata to be passed as a single unified parameter
     # (rather than individually as multiple distinct parameters).

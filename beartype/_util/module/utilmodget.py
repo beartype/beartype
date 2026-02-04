@@ -11,12 +11,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._cave._cavefast import ModuleType
 from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype.typing import Optional
+from beartype._cave._cavefast import (
+    ModuleType,
+    ModuleableTypes,
+)
+from beartype._data.typing.datatyping import TypeException
 from inspect import findsource
 from pathlib import Path
 from sys import modules as sys_modules
+from typing import Optional
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -177,7 +181,14 @@ def get_object_module_line_number_begin(obj: object) -> int:
 
 # ....................{ GETTERS ~ object : name            }....................
 #FIXME: Unit test us up, please.
-def get_object_module_name(obj: object) -> str:
+def get_object_module_name(
+    # Mandatory parameters.
+    obj: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilModuleException,
+    exception_prefix: str = '',
+) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring the passed object if this
@@ -188,6 +199,12 @@ def get_object_module_name(obj: object) -> str:
     ----------
     obj : object
         Object to be inspected.
+    exception_cls : type[Exception], default: _BeartypeUtilModuleException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilModuleException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -196,7 +213,7 @@ def get_object_module_name(obj: object) -> str:
 
     Raises
     ------
-    _BeartypeUtilModuleException
+    exception_cls
         If this object does *not* define the ``__module__`` dunder attribute.
     '''
 
@@ -204,13 +221,33 @@ def get_object_module_name(obj: object) -> str:
     # defines the "__module__" dunder instance variable *OR* "None" otherwise.
     module_name = get_object_module_name_or_none(obj)
 
-    # If this object defines *NO* "__module__" dunder instance variable, raise
-    # an exception.
+    # If this object defines *NO* "__module__" dunder instance variable...
     if module_name is None:
-        raise _BeartypeUtilModuleException(
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception type.')
+
+        # Exception message to be raised.
+        exception_message = (
+            f'{exception_prefix}'
             f'{repr(obj)} "__module__" dunder attribute undefined '
-            f'(e.g., due to being neither class nor callable).'
         )
+
+        # If this object is *NOT* moduleable (i.e., an instance of a type
+        # well-known to define the "__module__" dunder attribute), suggest that
+        # to be the cause of this failure.
+        if not isinstance(obj, ModuleableTypes):
+            exception_message += (
+                '(e.g., due to being neither class nor callable).')
+        # Else, this object is moduleable. In this case, suggest an alternate
+        # cause more likely to be the cause of this failure.
+        else:
+            exception_message += (
+                f'(e.g., as {repr(obj)} defined dynamically in-memory).')
+
+        # Raise this exception.
+        raise exception_cls(exception_message)
     # Else, this fully-qualified module name exists.
 
     # Return this name.

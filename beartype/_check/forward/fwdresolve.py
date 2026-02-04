@@ -15,6 +15,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
+from beartype._check.forward.reference.fwdrefmake import (
+    make_forwardref_subbable_subtype)
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.forward.scope.fwdscopemake import (
     make_scope_forward_decor_meta)
@@ -23,8 +25,14 @@ from beartype._check.metadata.call.callmetadecormin import (
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
+from beartype._util.func.utilfunctest import is_func_nested
+from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.text.utiltextansi import color_hint
-from beartype._util.utilobject import get_object_basename_scoped
+from beartype._util.text.utiltextlabel import label_callable
+from beartype._util.utilobject import (
+    get_object_basename_scoped,
+    get_object_name,
+)
 from traceback import format_exc
 
 # ....................{ RESOLVERS                          }....................
@@ -195,7 +203,6 @@ def resolve_hint_pep484_ref_str_caller_external(
     # encapsulating a call to a public beartype callable by an external
     # callable originating from a third-party package or module.
     scope_forward = make_scope_forward_caller_external(
-        hint=hint,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
@@ -265,28 +272,92 @@ def resolve_hint_pep484_ref_str_decor_meta(
         f'{repr(hint)} not PEP 484 stringified forward reference type hint.')
     # print(f'Resolving decorator-time stringified type hint {repr(hint)}...')
 
-    # ..................{ DISAMBIGUATION                     }..................
+    # ..................{ LOCALS                             }..................
+    # Decorated callable and metadata associated with that callable, localized
+    # to improve both readability and negligible efficiency when accessed below.
+    func = decor_meta.func
+    cls_stack = decor_meta.cls_stack
+
+    # True only if that callable is nested. As a minor efficiency gain, we avoid
+    # the slightly expensive call to is_func_nested() by noting that:
+    # * If the class stack is non-empty, then this wrappee callable is
+    #   necessarily nested in one or more classes.
+    # * Else, defer to the is_func_nested() tester.
+    func_is_nested = bool(cls_stack) or is_func_nested(func)
+
+    # Fully-qualified name of the module declaring the decorated callable if
+    # that callable defines the "__module__" dunder attribute *OR* "None"
+    # otherwise (i.e., if that callable fails to define that attribute).
+    func_module_name = get_object_module_name_or_none(func)
+
+    # If the decorated callable fails to define the "__module__" dunder
+    # attribute, there exists *NO* known module against which to resolve this
+    # stringified type hint. Since this implies that this hint *CANNOT* be
+    # reliably resolved, raise an exception.
+    #
+    # Note that this is an uncommon edge case that nonetheless occurs frequently
+    # enough to warrant explicit handling by raising a more human-readable
+    # exception than would otherwise be raised (e.g., if the lower-level
+    # get_object_module_name() getter were called instead above). Notably, the
+    # third-party "markdown-exec" package behaved like this -- and possibly
+    # still does. See also:
+    #     https://github.com/beartype/beartype/issues/381
+    if not func_module_name:
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception type.')
+
+        # Fully-qualified name of the currently decorated callable.
+        func_name = get_object_name(func)
+
+        # Human-readable label describing that callable.
+        func_label = label_callable(func)
+
+        # Raise this exception.
+        raise exception_cls(
+            f'{exception_prefix}'
+            f'PEP 484 forward reference type hint "{repr(hint)}" '
+            f'unresolvable, as '
+            f'callable "{func_name}.__module__" dunder attribute undefined '
+            f'(e.g., as {func_label} defined dynamically in-memory). '
+            f'So much bad stuff is happening here all at once that '
+            f'@beartype can no longer cope with the explosion in badness.'
+        )
+    # Else, the decorated callable defines that attribute.
+
+    # ..................{ AMBIGUITY                          }..................
     # If...
     if (
         # That callable is directly decorated by the @beartype decorator (rather
         # than that callable being a method only transitively decorated by the
         # type declaring that method being directly decorated by the @beartype
         # decorator) *AND*...
-        decor_meta.cls_stack is None and
+        cls_stack is None and
         # That callable is nested (i.e., declared in the body of another
         # pure-Python callable or type)...
-        decor_meta.func_wrappee_is_nested
+        func_is_nested
     ):
-        # If the non-empty frozen set of the unqualified basenames of all parent
+        # Non-empty frozen set of the unqualified basenames of all parent
         # callables and types lexically containing this nested decorated
-        # callable (including this nested decorated callable itself) has yet to
-        # be decided, do so.
-        if decor_meta.func_wrappee_scope_nested_names is None:
-            decor_meta.func_wrappee_scope_nested_names = frozenset(
-                get_object_basename_scoped(decor_meta.func).rsplit(sep='.'))
-        # Else, this non-empty frozen set has already been decided.
+        # callable (including this nested decorated callable itself).
         #
-        # In either case, this frozen set has now been decided. I choose you!
+        # Note that this set *COULD* be cached across repeated calls to this
+        # resolver passed the same decorated callable metadata by simply storing
+        # this set as additional metadata. Indeed, we once did exactly that.
+        # Although doing so yet again would be trivial, doing so:
+        # * Would also increase beartype space consumption by requiring an
+        #   additional slot be stored in each "BeartypeCallDecorMinimalMeta"
+        #   instance associated with each type-checking wrapper function.
+        # * Would be mostly pointless. This set is *ONLY* required for the edge
+        #   case in which a forward reference annotates a nested callable
+        #   directly decorated by @beartype, which rarely even occurs anymore.
+        #   Why? Because if a callable is nested, that callable is probably a
+        #   method. That method's high-level class (rather that low-level
+        #   method itself) should have been decorated by @beartype. Decorating
+        #   methods directly by @beartype is heavily frowned upon.
+        func_basenames_scoped = frozenset(
+            get_object_basename_scoped(func).rsplit(sep='.'))
 
         # If this hint is the unqualified basename of a parent callable or type
         # of the decorated callable, this hint is a relative forward reference
@@ -396,17 +467,18 @@ def resolve_hint_pep484_ref_str_decor_meta(
         #FIXME: This trivial test is *BUGGED.* It *DOES* efficiently detect
         #unqualified basenames of non-nested types (e.g., "Outer", "Inner") but
         #fails to detect partially-qualified basenames of nested types (e.g.,
-        #"Outer.Inner"). Ugh!
-        if hint in decor_meta.func_wrappee_scope_nested_names:  # type: ignore[operator]
-            # print(f'Preserving string hint {repr(hint)}...')
+        #"Outer.Inner"). Resolve this once somebody actually complains. Ugh!
+        if hint in func_basenames_scoped:
+            # print(f'Proxying nested hint {repr(hint)}...')
 
-            #FIXME: *INSUFFICIENT.* We now need to create and return a
-            #full-blown beartype-specific forward reference proxy here by
-            #calling the make_forwardref_subbable_subtype() function.
-            #FIXME: Actually, this is probably a *GREAT* time to define that new
-            #make_forwardref_canonicalized_subtype() function we've been
-            #contemplating. No time like the present, yo.
-            return hint  # pyright: ignore
+            # Beartype-specific forward reference proxy deferring the detection
+            # of this type until required by a runtime type-check performed
+            # during some subsequent call to the currently decorated callable.
+            hint_resolved = make_forwardref_subbable_subtype(
+                scope_name=func_module_name, hint_name=hint)
+
+            # Resolve this stringified forward reference to this proxy.
+            return hint_resolved
         # Else, this hint is *NOT* the unqualified basename of a parent callable
         # or type of the decorated callable. In this case, this hint *COULD*
         # require dynamic evaluation under the eval() builtin. Why? Because this
@@ -446,13 +518,14 @@ def resolve_hint_pep484_ref_str_decor_meta(
 
     # ..................{ SCOPE                              }..................
     # Decide the forward scope of the decorated callable.
-    make_scope_forward_decor_meta(
+    func_scope_forward = make_scope_forward_decor_meta(
         decor_meta=decor_meta,
+        func_is_nested=func_is_nested,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
     # print(f'Resolving {repr(decor_meta)} string hint {repr(hint)} to forward reference proxy...')
-    # print(f'Resolving string hint {repr(hint)} against {repr(decor_meta.func_wrappee_scope_forward)}...')
+    # print(f'Resolving string hint {repr(hint)} against {repr(decor_metafunc_wrappee_wrappee_scope_forward)}...')
 
     # ..................{ RESOLVE                            }..................
     # Non-string type hint resolved from this stringified type hint. against
@@ -460,7 +533,7 @@ def resolve_hint_pep484_ref_str_decor_meta(
     hint_resolved = resolve_hint_pep484_ref_str(
         hint=hint,
         conf=decor_meta.conf,
-        scope_forward=decor_meta.func_wrappee_scope_forward,  # type: ignore[arg-type]
+        scope_forward=func_scope_forward,  # type: ignore[arg-type]
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )

@@ -16,11 +16,12 @@ from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_subbable_subtype)
 from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintsane import (
+    HintOrSane,
     HintSane,
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import HintPep484Ref
-from beartype._util.hint.pep.proposal.pep484.forward.pep484refgeneral import (
+from beartype._util.hint.pep.proposal.pep484.pep484ref import (
     get_hint_pep484_ref_names_relative)
 from typing import ForwardRef
 
@@ -32,7 +33,7 @@ def reduce_hint_pep484_ref(
     conf: BeartypeConf,
     exception_prefix: str,
     **kwargs
-) -> HintSane:
+) -> HintOrSane:
     '''
     Reduce the passed :pep:`484`-compliant **forward reference hint** (i.e.,
     object indirectly referring to a user-defined type that typically has yet to
@@ -89,12 +90,12 @@ def reduce_hint_pep484_ref(
         if ref_module_name:
             # Reduce this runtime-unusable PEP 484-compliant object-oriented
             # forward reference to a runtime-usable forward reference proxy.
-            hint = make_forwardref_subbable_subtype(
+            hint_resolved = make_forwardref_subbable_subtype(
                 scope_name=ref_module_name, hint_name=ref_type_name)
 
             # Return this proxy directly. All logic below assumes that "hint"
             # is now a stringified forward reference.
-            return hint
+            return hint_resolved
         # Else, this reference was instantiated with *NO* module name. This
         # classname is relative to an unknown module and thus currently
         # ambiguous. This ambiguity can *ONLY* be resolved by dynamically

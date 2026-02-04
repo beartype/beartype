@@ -11,141 +11,154 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Next up is the "beartype._check.error" submodule. The critical issue
-#here is passing a new "call_meta" parameter to sanify_*() callables called
-#during exception raising. Action items here probably include:
-#* Refactoring the "BeartypeCallDecorMinimalMeta" dataclass to provide something
-#  resembling "call_meta". Obviously, the whole point of "BeartypeCallDecorMinimalMeta" is
-#  to avoid storing and passing the *FULL-FAT* "BeartypeCallDecorMeta" object.
-#  Doing so would blow up @beartype space complexity. That's not happening.
-#  So... uhh. What now? No idea. sanify_*() callables need a "call_meta:
-#  BeartypeCallMetaABC" dataclass to properly resolve forward references. Woops.
-#  We didn't quite think that one through. Hmm... *lol*
+#FIXME: Shift "func_wrappee_wrappee_scope_forward" back up into
+#"BeartypeCallDecorMinimalMeta.func_scope_forward". Space consumption *WILL* be
+#a concern later but isn't critical. Merging back into "main" is critical now.
 #
-#  At the very least, we'll want to:
-#  * Replace the current overkill "BeartypeCallDecorMeta.func_wrappee_is_nested"
-#    instance variable with a new BeartypeCallDecorMinimalMeta.func_is_nested()
-#    property resembling:
-#        def func_is_nested(self) -> bool:
-#            return bool(self.cls_stack) or is_func_nested(self.func)
-#
-#    Note that the original "func_wrappee_is_nested" definition appears to be
-#    bugged. That variable almost certainly should have tested
-#    "is_func_nested(self.func_wrappee_wrappee)" rather than
-#    "is_func_nested(self.func_wrappee)".
-#
-#    Also, don't bother caching. is_func_nested() is already cached. \o/
-#
-#    * *WAIT*. Even a func_is_nested() method is overkill. We only call that
-#      method twice, both from resolve_hint_pep484_ref_str_decor_meta().
-#      Instead:
-#      * Excise the "BeartypeCallDecorMeta.func_wrappee_is_nested" instance
-#        variable entirely.
-#      * In resolve_hint_pep484_ref_str_decor_meta():
-#        * Localize at the very start:
-#              is_func_nested = (
-#                  bool(decor_meta.cls_stack) or is_func_nested(decor_meta.func))
-#        * Pass "is_func_nested" as a new mandatory parameter to the
-#          make_scope_forward_decor_meta() function.
-#      * Facepalm. *lol*
-#  * Localize "decor_meta.func_wrappee_scope_nested_names" inside
-#    resolve_hint_pep484_ref_str_decor_meta(). That set is *ONLY* required for
-#    the edge case in which a forward reference annotates a nested callable
-#    directly decorated by @beartype, which rarely even occurs in the modern
-#    era. Why? Because if a callable is nested, then the *TYPE* (rather than
-#    that callable) should have been decorated by @beratype. Decorating nested
-#    callables by @beartype is heavily frowned upon.
-#  * Shift all instance variables required by
-#    resolve_hint_pep484_ref_str_decor_meta() up from
-#    "BeartypeCallDecorMeta" to "BeartypeCallDecorMinimalMeta".
-#  * The bigger issue is that *ALL* die_if_unbearable() calls now need to pass
-#    a new "BeartypeCallDecorMinimalMeta" object to get_hint_object_violation().
-#    Since this object *NEVER* changes, it should be a new singleton:
-#        #FIXME: Almost there, but not quite right. We'll need to also set its
-#        #"resolve_*" parameter to be specific to external callers, too.
-#        BEARTYPE_CALL_EXTERNAL_RAISER = BeartypeCallDecorMinimalMeta()
-#  * In make_code_raiser_hint_object_check(), set:
-#        func_scope[ARG_NAME_CALL_META] = BEARTYPE_CALL_EXTERNAL_RAISER
-#  * *OKAY.* This is the big one. We somehow need to propagate the logic for the
-#    current call_meta.resolve_hint_pep484_ref_str() implementation onto the
-#    BeartypeCallDecorMinimalMeta.resolve_hint_pep484_ref_str() implementation. If:
-#    * "isinstance(call_meta, BeartypeCallDecorMeta)", things look considerably
-#      dicier now. We're pretty sure we can still do this by:
-#      * *SEE COMMENTS FAR BELOW.* Ignore immediate comments below. Turns out
-#        this is considerably easier than expected. Phew!
-#      * Defining a new resolve_hint_pep484_ref_str_decor_func() function.
-#        Maybe call it resolve_hint_pep484_ref_str_call_meta_func() instead and
-#        have it accept a "call_meta: BeartypeCallMetaABC" parameter? Anyway,
-#        the implementation should resemble that of the existing
-#        resolve_hint_pep484_ref_str_decor_meta() function -- *ONLY WITHOUT ALL
-#        OF THE CACHING.* At exception-raising time, efficiency and thus caching
-#        no longer matters. Ergo, we'll just inefficiently reconstruct the
-#        desired forward scope for each stringified forward reference we hit.
-#        *WHO CARES.* It'll work, which is all that matters.
-#      * Refactoring the resolve_hint_pep484_ref_str_decor_meta() function to
-#        internally defer to resolve_hint_pep484_ref_str_decor_func()...
-#        *SOMEHOW.*
-#      * Indeed, resolve_hint_pep484_ref_str_call_meta_func() could do lotsa fun
-#        (albeit dumb) stuff like testing whether:
-#        * "isinstance(call_meta, BeartypeCallDecorMeta)" and, if so, caching.
-#        * Else, not caching.
-#
-#        Yeah... it's dumb. *BUT IT'LL WORK.* All that matters at this point.
-#        The only alternative would be to go full-bore on an inheritance-style
-#        API with abstract methods and properties that do nothing by default in
-#        "BeartypeCallMetaABC". Seems like a ton of work for no gain. Who cares
-#        about pretty and object-oriented at this point? Just make this *WORK*.
-#      * *OH. WAIT.* We know. This... is totally clever! Just:
-#        * Define a new "BeartypeCallFuncMeta(BeartypeCallMetaABC):" subclass.
-#        * Newly subclass:
-#          * "BeartypeCallDecorMeta(BeartypeCallFuncMeta):".
-#          * "BeartypeCallDecorMinimalMeta(BeartypeCallFuncMeta):".
-#          You see where we're going, right? Right.
-#        * Add *ALL* instance variables uniquely required by
-#          resolve_hint_pep484_ref_str_decor_meta() to
-#          "BeartypeCallDecorResolvableMeta". We think there are just two? The
-#          forward scope and something else. *WHATEVAH.*
-#        * Rename resolve_hint_pep484_ref_str_call_meta_func() to
-#          resolve_hint_pep484_ref_str_func() for brevity.
-#        * Have resolve_hint_pep484_ref_str_func() accept a
-#          "call_meta: BeartypeCallFuncMeta" parameter -- intentionally named
-#          "call_meta" for API parity with
-#          resolve_hint_pep484_ref_str_caller_external().
-#        * *DONE.* Preserve all existing caching-oriented logic in
-#          resolve_hint_pep484_ref_str_func(). It should just work as is now.
-#    * Our new BeartypeCallDecorMinimalMeta.resolve_hint_pep484_ref_str()
-#      implementation then just needs some sane means of conditionally calling
-#      either resolve_hint_pep484_ref_str_caller_external() or
-#      resolve_hint_pep484_ref_str_decor_func() as needed. If those two
-#      resolvers end up sharing the same API, that'd be the easiest way; just:
-#      * Add a new private "BeartypeCallDecorMinimalMeta._resolve_hint_pep484_ref_str"
-#        slotted instance variable to that dataclass.
-#      * Add a new public *MANDATORY* "resolve_hint_pep484_ref_str" parameter to
-#        BeartypeCallDecorMinimalMeta.__init__().
-#      * Defer to self._resolve_hint_pep484_ref_str() as the body of
-#        BeartypeCallDecorMinimalMeta.resolve_hint_pep484_ref_str().
-#      * *DONE*.
-#
-#      In other words, make those two resolvers share the same API. \o/
-#
-# Almost there. Then, we'll need to:
-# * Refactor the "ViolationCause" type. Notably:
-#   * Define a new "call_meta: BeartypeCallDecorMinimalMeta" slot in that type.
-#   * Replace the existing "cls_stack" and "func" instance variables of that
-#     type with indirect access of "self.call_meta.cls_stack" and
-#     "self.call_meta.func" instead.
-# * Initialize that type appropriately in "errmain".
-# * Pass "call_meta=self.call_meta" in ViolationCause.sanify_hint_child().
-#FIXME: Quite a few remaining "FIXME:" comments to still resolve in the
-#"fwdresolve" submodule. *sigh*
+#When we do this:
+#* Type "BeartypeCallDecorMinimalMeta.func_scope_forward: Optional[LexicalScope]"
+#* Type "BeartypeCallDecorMeta.func_scope_forward: Optional[BeartypeForwardScope]"
 #FIXME: In theory, the above *MIGHT* be enough to get us back on our feet.
-#Repeatedly bang on tests at this point until most tests pass. If
-#"typing.ForwardRef" is a thorn in our side, we'll have to keep soldiering on
-#before merging this back into "main". *sigh*
-#FIXME: See "pep484refcanonic" for where to go next. *sigh*
-#FIXME: Grep the codebase for any last lingering references to the now mostly
-#useless "HintSignForwardRef" sign. All such code paths are now mostly
-#guaranteed to *NOT* be called anymore. Excise up that code, please. *sigh*
+#Repeatedly bang on tests at this point until most tests pass.
+#FIXME: *IMPORTANT.* The "BeartypeCallDecorMinimalMeta.func_scope_forward"
+#dictionary *MUST* be minified before being returned by the
+#BeartypeCallDecorMeta.minify() method. Failure to do this would violate both
+#sanity and this sound advice we already wrote:
+#    Forward scopes are dictionaries aggregating the global and local scope of
+#    this wrappee callable and thus consume excess space. Moreover, these
+#    dictionaries preserve strong references to all attributes accessible from
+#    the original scope and thus inhibit garbage collection of those attributes.
+#    Forward scopes are intrinsically unsafe to indefinitely cache.
+#
+#Thankfully, this is feasible. It might even be fun. To do so, we'll need to
+#generalize our existing "BeartypeForwardScope" implementation as follows:
+#
+#* Define a new remove_mapping_keys_except() function in the existing
+#  "utilmapset" submodule. The implementation is surprisingly trivial:
+#      def remove_mapping_keys_except(
+#          mapping: MutableMapping, keys: AbstractSet) -> None:
+#          # Set of all existing keys to be removed from this mapping, efficiently
+#          # defined as the set difference of the keys of this mapping with the passed
+#          # set of keys.
+#          mapping_keys = mapping.keys() - keys
+#
+#          #FIXME: This isn't *QUITE* the most efficient implementation, as
+#          #this call unnecessarily performs another:
+#          #    mapping_keys = mapping.keys() & keys
+#          #But... who cares!? Good enough for now. Let's just roll with this.
+#          # Remove these keys from this mapping.
+#          remove_mapping_keys(mapping=mapping, keys=mapping_keys)
+#* Unit test that, obviously.
+#* Define a new slotted "hint_names_accessed: SetStrs" instance variable.
+#* In __init__(), set:
+#      self.hint_names_accessed = set()
+#* Override __getitem__() as follows:
+#      def __getitem__(self, hint_name: str) -> Hint:
+#          hint = super().__getitem__(hint_name)
+#          self.hint_names_accessed.add(hint_name)
+#          return hint
+#* In BeartypeCallDecorMeta.minify():
+#      ...
+#
+#      # Minify this full-blown "BeartypeForwardScope" dictionary subclass
+#      # instance into a compact dictionary.
+#      func_scope_forward = decor_min_meta.func_scope_forward = dict(
+#          self.func_scope_forward)
+#
+#      # Minify this dictionary even further by stripping all keys *NOT*
+#      # explicitly required to resolve stringified type hints for this wrappee
+#      # callable from this dictionary.
+#      remove_mapping_keys_except(
+#          mapping=func_scope_forward,
+#          keys=func_scope_forward.hint_names_accessed
+#      )
+#
+#      return decor_min_meta
+#
+#Should work. *shrug*
+#FIXME: Calls to get_hint_pep484_ref_names_relative() like the following made
+#considerable sense under Python < 3.13:
+#    hint_module_name, hint_type_name = get_hint_pep484_ref_names_relative(
+#        hint=hint,
+#        exception_cls=exception_cls,
+#        exception_prefix=exception_prefix,
+#    )
+#
+#After all, "typing.ForwardRef" objects were just thin wrappers around simple
+#strings. Reducing the former to the latter was reasonable. Under Python >=
+#3.14, however, reducing "typing.ForwardRef" objects to the 2-tuple
+#"(hint_module_name, hint_type_name)" is a *REALLY* bad idea.
+#"typing.ForwardRef" objects are actually "annotationlib.ForwardRef" objects
+#now. They encapsulate *A LOT* of awesome functionality that cannot reasonably
+#be reduced to two strings like we are currently doing.
+#
+#Generalize this as follows, please:
+#* If this is Python >= 3.14, the passed "hint" is a "annotationlib.ForwardRef"
+#  object, *AND* this object defines a sufficient number of PEP 649-compliant
+#  dunder attributes to ensure that its evaluate() method can safely
+#  canonicalize that reference if relative to the referent it refers to:
+#  * Then preserve this "annotationlib.ForwardRef" object in an intelligent way.
+#
+#Note that what exactly "a sufficient number of PEP 649-compliant dunder
+#attributes" means can be reverse-engineered from the ForwardNef.evaluate()
+#method. Specifically, if this hint defines one or more of these instance
+#variables to be non-"None", then this hint can be safely canonicalized and
+#resolved by calling hint.evaluate():
+#* "hint.__forward_module__".
+#* "hint.__globals__".
+#* "hint.__owner__".
+#
+#Next, let's start with "annotationlib.ForwardRef". In and of itself,
+#"annotationlib.ForwardRef" isn't enough. Unlike beartype-specific forward
+#reference proxies, the "annotationlib.ForwardRef" type does *NOT* have a
+#metaclass defining the __instancecheck__() dunder method. In fact, the
+#"annotationlib.ForwardRef" type does *NOT* have a metaclass... *PERIOD.*
+#Without the __instancecheck__() dunder method, "annotationlib.ForwardRef"
+#objects are unusable in a general-purpose runtime context.
+#
+#To render "annotationlib.ForwardRef" objects usable in a general-purpose context,
+#we'll need to:
+#* Define a new "__annotationlib_beartype__: Optional[annotationlib.ForwardRef] = None"
+#  class variable in the existing "BeartypeForwardRefABC" superclass.
+#* Generalize the "BeartypeForwardRefMeta.__type_beartype__" property method to
+#  preferentially resolve this forward reference via "annotationlib"-specific
+#  rather than beartype-specific functionality: e.g.,
+#      @property
+#      def __type_beartype__(cls: BeartypeForwardRef) -> type:
+#         ...
+#         if cls.__annotationlib_beartype__ is not None:
+#             referent = cls.__annotationlib_beartype__.evaluate()
+#* Define a new make_forwardref_annotationlib_subtype() factory function in the
+#  existing "beartype._check.forward.reference.fwdrefmake" submodule with
+#  signature resembling:
+#      from typing import ForwardRef
+#      def make_forwardref_annotationlib_subtype(
+#          hint: ForwardRef) -> type[BeartypeForwardRefABC]:
+#* Define a new reusable "Pep484RefCanonicalized" type hint in the existing
+#  "beartype._data.annotationlib.datatyping" submodule resembling:
+#      Pep484RefCanonicalized = annotationlib.ForwardRef | tuple[str, str]
+#* Define a new higher-level make_forwardref_annotationlib_subtype() factory
+#  function in the existing "beartype._check.forward.reference.fwdrefmake"
+#  submodule with signature and logic resembling:
+#      from beartype._data.annotationlib.datatyping import Pep484RefCanonicalized
+#      from typing import ForwardRef
+#
+#      #FIXME: Actually, just call this make_forwardref_subtype().
+#      def make_forwardref_canonicalized_subtype(
+#          hint: Pep484RefCanonicalized) -> type[BeartypeForwardRefABC]:
+#          if isinstance(hint, tuple):
+#              #FIXME: Validate tuple length here, obviously. *sigh*
+#              hint_module_name, hint_type_name = hint
+#              return make_forwardref_subbable_subtype(
+#                  scope_name=hint_module_name,
+#                  hint_name=hint_type_name,
+#              )
+#          elif isinstance(hint, ForwardRef):
+#              return make_forwardref_annotationlib_subtype(hint)
+#FIXME: Next, we'll want to hunt down *ALL* calls to
+#get_hint_pep484_ref_names_relative() throughout the codebase. These calls are
+#now all problematic, because they improperly reduce "annotationlib.ForwardRef"
+#objects to 2-tuples of strings. We'll need to refactor these calls somehow.
 #FIXME: Disambiguate "HintSignForwardRef". This is trivial, because we're
 #currently ambiguously treating both "typing.ForwardRef" objects *AND* strings
 #as "HintSignForwardRef" for no particularly good reason. There's *NO* reason to
@@ -157,11 +170,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #  reducers with two distinct code paths:
 #  * reduce_hint_pep484_ref_annotationlib().
 #  * reduce_hint_pep484_ref_str().
-#FIXME: Excise all of the following, which no longer has any reason to exist:
-#* import_pep484_ref_type().
-#* find_hint_pep484_ref_on_cls_stack_or_none() function, possibly. *shrug*
-#* canonicalize_hint_pep484_ref(). Sadly, the entire "pep484refcanonic"
-#  submodule is an ill-defined thought experiment that no longer applies. *weep*
 #FIXME: Resurrect these older unit test assertions. Specifically:
 #* Assert that the reduce_hint() function returns "HintSane" objects whose
 #  "is_cacheable_check_expr" instance variables are true for these hints:

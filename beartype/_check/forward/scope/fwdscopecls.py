@@ -304,7 +304,7 @@ class BeartypeForwardScope(LexicalScope):
             # the eval() builtin to dynamically evaluate the passed stringified
             # type hint: e.g.,
             #     # This is the eval() call triggering this call.
-            #     hint_resolved = eval(hint, decor_meta.func_wrappee_scope_forward)
+            #     hint_resolved = eval(hint, decor_metafunc_wrappee_wrappee_scope_forward)
             #
             # In this case, the prior call to the is_frame_caller_beartype()
             # tester tested the stack frame of that eval() call and,

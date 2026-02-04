@@ -472,8 +472,8 @@ def _get_hint_pep695_parameterizable_typeparams(
 # ....................{ RESOLVERS                          }....................
 #FIXME: Unit test us up, please.
 def resolve_func_scope_pep695(
-    func: Callable,
     func_scope: LexicalScope,
+    func: Callable,
     cls_stack: TypeStack,
 
     # Optional parameters.
@@ -499,13 +499,13 @@ def resolve_func_scope_pep695(
 
     Parameters
     ----------
-    func : Callable
-        Callable currently being decorated by the :func:`beartype.beartype`
-        decorator.
     func_scope : LexicalScope
         **Lexical scope** (i.e., dictionary mapping from the name to value of
         each locally and globally accessible attribute in the local and global
         scope) of that callable.
+    func : Callable
+        Callable currently being decorated by the :func:`beartype.beartype`
+        decorator.
     cls_stack : TypeStack
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing that
@@ -517,9 +517,9 @@ def resolve_func_scope_pep695(
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
     '''
-    assert callable(func), f'{repr(func)} uncallable.'
     assert isinstance(func_scope, dict), (
         f'{repr(func_scope)} not lexical scope.')
+    assert callable(func), f'{repr(func)} uncallable.'
     assert isinstance(cls_stack, NoneTypeOr[tuple]), (
         f'{repr(cls_stack)} not type stack.')
 
@@ -531,7 +531,7 @@ def resolve_func_scope_pep695(
     # interpreter supports PEP 695.
 
     # PEP 695-specific lexical scope. Ideally, we'd simply reuse the existing
-    # "decor_meta.func_wrappee_scope_forward" scope rather than instantiate a
+    # "decor_metafunc_wrappee_wrappee_scope_forward" scope rather than instantiate a
     # PEP 695-specific lexical scope. Although both trivial and efficient, such
     # reuse would violate PEP 695. PEP 695 mandates that type-checkers:
     # * Raise errors when PEP 695-compliant type parameters parametrizing parent

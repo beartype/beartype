@@ -32,6 +32,7 @@ from beartype._check.signature.sigmake import make_func_signature
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.conftest import die_unless_conf
 from beartype._data.code.datacodename import (
+    ARG_NAME_CALL_META,
     ARG_NAME_CONF,
     ARG_NAME_EXCEPTION_PREFIX,
     ARG_NAME_GETRANDBITS,
@@ -733,6 +734,15 @@ def _make_func_checker(
                 exception_prefix,
             )
             # print(f'func_scope: {func_scope}')
+
+            # Expose this beartype external call metadata singleton to this
+            # wrapper function as a beartype-specific hidden parameter passed to
+            # this wrapper function, whose default value is that metadata. Doing
+            # so simplifies calls to the get_hint_object_violation() getter in
+            # the body of this wrapper function by enabling this metadata to be
+            # passed as a single unified parameter (rather than individually as
+            # multiple distinct parameters).
+            func_scope[ARG_NAME_CALL_META] = call_meta
 
             # Unqualified basename of this type-checking function to be created,
             # uniquified by suffixing an arbitrary integer unique to this

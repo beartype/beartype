@@ -86,7 +86,7 @@ class BeartypeCallExternalMeta(BeartypeCallMetaABC):
         )
 
 # ....................{ GLOBALS                            }....................
-BEARTYPE_CALL_EXTERNAL_META = BeartypeCallExternalMeta
+BEARTYPE_CALL_EXTERNAL_META = BeartypeCallExternalMeta()
 '''
 **Beartype external call metadata singleton** (i.e., public global constant
 :class:`.BeartypeCallExternalMeta` instance intended to be the *only*
