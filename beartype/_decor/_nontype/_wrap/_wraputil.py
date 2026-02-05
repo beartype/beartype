@@ -11,71 +11,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Shift "func_wrappee_wrappee_scope_forward" back up into
-#"BeartypeCallDecorMinimalMeta.func_scope_forward". Space consumption *WILL* be
-#a concern later but isn't critical. Merging back into "main" is critical now.
-#
-#When we do this:
-#* Type "BeartypeCallDecorMinimalMeta.func_scope_forward: Optional[LexicalScope]"
-#* Type "BeartypeCallDecorMeta.func_scope_forward: Optional[BeartypeForwardScope]"
 #FIXME: In theory, the above *MIGHT* be enough to get us back on our feet.
 #Repeatedly bang on tests at this point until most tests pass.
-#FIXME: *IMPORTANT.* The "BeartypeCallDecorMinimalMeta.func_scope_forward"
-#dictionary *MUST* be minified before being returned by the
-#BeartypeCallDecorMeta.minify() method. Failure to do this would violate both
-#sanity and this sound advice we already wrote:
-#    Forward scopes are dictionaries aggregating the global and local scope of
-#    this wrappee callable and thus consume excess space. Moreover, these
-#    dictionaries preserve strong references to all attributes accessible from
-#    the original scope and thus inhibit garbage collection of those attributes.
-#    Forward scopes are intrinsically unsafe to indefinitely cache.
-#
-#Thankfully, this is feasible. It might even be fun. To do so, we'll need to
-#generalize our existing "BeartypeForwardScope" implementation as follows:
-#
-#* Define a new remove_mapping_keys_except() function in the existing
-#  "utilmapset" submodule. The implementation is surprisingly trivial:
-#      def remove_mapping_keys_except(
-#          mapping: MutableMapping, keys: AbstractSet) -> None:
-#          # Set of all existing keys to be removed from this mapping, efficiently
-#          # defined as the set difference of the keys of this mapping with the passed
-#          # set of keys.
-#          mapping_keys = mapping.keys() - keys
-#
-#          #FIXME: This isn't *QUITE* the most efficient implementation, as
-#          #this call unnecessarily performs another:
-#          #    mapping_keys = mapping.keys() & keys
-#          #But... who cares!? Good enough for now. Let's just roll with this.
-#          # Remove these keys from this mapping.
-#          remove_mapping_keys(mapping=mapping, keys=mapping_keys)
-#* Unit test that, obviously.
-#* Define a new slotted "hint_names_accessed: SetStrs" instance variable.
-#* In __init__(), set:
-#      self.hint_names_accessed = set()
-#* Override __getitem__() as follows:
-#      def __getitem__(self, hint_name: str) -> Hint:
-#          hint = super().__getitem__(hint_name)
-#          self.hint_names_accessed.add(hint_name)
-#          return hint
-#* In BeartypeCallDecorMeta.minify():
-#      ...
-#
-#      # Minify this full-blown "BeartypeForwardScope" dictionary subclass
-#      # instance into a compact dictionary.
-#      func_scope_forward = decor_min_meta.func_scope_forward = dict(
-#          self.func_scope_forward)
-#
-#      # Minify this dictionary even further by stripping all keys *NOT*
-#      # explicitly required to resolve stringified type hints for this wrappee
-#      # callable from this dictionary.
-#      remove_mapping_keys_except(
-#          mapping=func_scope_forward,
-#          keys=func_scope_forward.hint_names_accessed
-#      )
-#
-#      return decor_min_meta
-#
-#Should work. *shrug*
 #FIXME: Calls to get_hint_pep484_ref_names_relative() like the following made
 #considerable sense under Python < 3.13:
 #    hint_module_name, hint_type_name = get_hint_pep484_ref_names_relative(

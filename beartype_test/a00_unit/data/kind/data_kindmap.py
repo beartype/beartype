@@ -151,6 +151,17 @@ FAREWELL_O_HIAWATHA_MINUS_THE_SONG_OF_HIAWATHA = {
 }
 '''
 Dictionary produced by removing all key-value pairs from the
-:data:`.IN_THE_LODGE_OF_HIAWATHA` dictionary whose keys are also keys of the
-the :data:`.THE_SONG_OF_HIAWATHA` dictionary.
+:data:`.FAREWELL_O_HIAWATHA` dictionary whose keys are also keys of the
+:data:`.THE_SONG_OF_HIAWATHA` dictionary.
+'''
+
+
+FAREWELL_O_HIAWATHA_EXCEPT_THE_SONG_OF_HIAWATHA = {
+    'Hiawatha': 'the Beloved,',
+    'In the': 'glory of the sunset,',
+}
+'''
+Dictionary produced by removing all key-value pairs from the
+:data:`.FAREWELL_O_HIAWATHA` dictionary except those whose keys are also
+keys of the the :data:`.THE_SONG_OF_HIAWATHA` dictionary.
 '''

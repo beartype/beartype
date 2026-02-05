@@ -14,10 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import TYPE_CHECKING
-from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
+    LexicalScope,
     Pep649HintableAnnotations,
     TypeException,
     TypeStack,
@@ -52,6 +52,30 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
         current decoration of the currently decorated callable).
+    func_scope_forward : Optional[LexicalScope]
+        Either:
+    
+        * If this wrappee callable is annotated by at least one **stringified
+          type hint** (i.e., declared as a :pep:`484`- or :pep:`563`-compliant
+          forward reference referring to an actual type hint that has yet to be
+          declared in the local and global scopes declaring this callable) that
+          :mod:`beartype` has already resolved to its referent, this wrappee
+          callable's **forward scope** (i.e., dictionary mapping from the name
+          to value of each locally and globally accessible attribute in the
+          local and global scope of this wrappee callable as well as deferring
+          the resolution of each currently undeclared attribute in that scope by
+          replacing that attribute with a forward reference proxy resolved only
+          when that attribute is passed as the second parameter to an
+          :func:`isinstance`- and :func:`issubclass`-based runtime type-check).
+        * Else, :data:`None`.
+    
+        Note that:
+    
+        * The reconstruction of this scope is computationally expensive and thus
+          deferred until needed to resolve the first stringified type hint
+          annotating this wrappee callable.
+        * All callables have local scopes *except* global functions, whose local
+          scopes are by definition the empty dictionary.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -61,6 +85,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'conf',
+        'func_scope_forward',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
@@ -69,6 +94,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
         conf: BeartypeConf
         func: Callable
         func_annotations: Pep649HintableAnnotations
+        func_scope_forward: Optional[LexicalScope]
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
@@ -77,17 +103,17 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
         conf: BeartypeConf,
         func: Callable,
         func_annotations: Pep649HintableAnnotations,
+        func_scope_forward: Optional[LexicalScope],
     ) -> None:
         '''
         Initialize this metadata with the passed parameters.
 
         Caveats
         -------
-        **This low-level dataclass does not need to be instantiated
-        explicitly.** Instead, instantiate instances of this dataclass by
-        calling the higher-level
+        **Avoid instantiating this low-level dataclass directly.** Instead,
+        instantiate this dataclass by calling the higher-level
         :meth:`beartype._check.metadata.call.callmetadecor.BeartypeCallDecorMeta.minify`
-        method -- reducing existing instances of the parent dataclass to
+        method. Doing so reduces existing instances of the parent dataclass to
         instances of this child dataclass.
 
         Parameters
@@ -107,6 +133,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
 
         # Classify all remaining passed parameters.
         self.conf = conf
+        self.func_scope_forward = func_scope_forward
 
     # ..................{ RESOLVERS                          }..................
     def resolve_hint_pep484_ref_str(

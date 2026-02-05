@@ -157,30 +157,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         For efficiency, this code object should *always* be accessed in lieu of
         inefficiently calling the comparatively slower
         :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
-    func_wrappee_wrappee_scope_forward : Optional[BeartypeForwardScope]
-        Either:
-
-        * If this wrappee callable is annotated by at least one **stringified
-          type hint** (i.e., declared as a :pep:`484`- or :pep:`563`-compliant
-          forward reference referring to an actual type hint that has yet to be
-          declared in the local and global scopes declaring this callable) that
-          :mod:`beartype` has already resolved to its referent, this wrappee
-          callable's **forward scope** (i.e., dictionary mapping from the name
-          to value of each locally and globally accessible attribute in the
-          local and global scope of this wrappee callable as well as deferring
-          the resolution of each currently undeclared attribute in that scope by
-          replacing that attribute with a forward reference proxy resolved only
-          when that attribute is passed as the second parameter to an
-          :func:`isinstance`- and :func:`issubclass`-based runtime type-check).
-        * Else, :data:`None`.
-
-        Note that:
-
-        * The reconstruction of this scope is computationally expensive and thus
-          deferred until needed to resolve the first stringified type hint
-          annotating this wrappee callable.
-        * All callables have local scopes *except* global functions, whose local
-          scopes are by definition the empty dictionary.
     func_wrapper : Callable
         **Wrapper callable** to be unwrapped in the event that the
         :attr:`func_wrappee` differs from the callable to be unwrapped.
@@ -242,7 +218,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         'func_wrappee',
         'func_wrappee_wrappee',
         'func_wrappee_wrappee_codeobj',
-        'func_wrappee_wrappee_scope_forward',
         'func_wrapper',
         'func_wrapper_code_call_prefix',
         'func_wrapper_code_return_checked',
@@ -257,10 +232,10 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         func_annotations_get: Callable[[str, object], object]
+        func_scope_forward: Optional[BeartypeForwardScope]
         func_wrappee: Callable
         func_wrappee_wrappee: Callable
         func_wrappee_wrappee_codeobj: CallableCodeObjectType
-        func_wrappee_wrappee_scope_forward: Optional[BeartypeForwardScope]
         func_wrapper: Callable
         func_wrapper_code_call_prefix: str
         func_wrapper_code_return_checked: str
@@ -325,10 +300,10 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         self.func) = (  # type: ignore[assignment]
         self.func_annotations) = (  # type: ignore[assignment]
         self.func_annotations_get) = (  # type: ignore[assignment]
+        self.func_scope_forward) = (
         self.func_wrappee) = (  # type: ignore[assignment]
         self.func_wrappee_wrappee) = (  # type: ignore[assignment]
         self.func_wrappee_wrappee_codeobj) = (  # type: ignore[assignment]
-        self.func_wrappee_wrappee_scope_forward) = (
         self.func_wrapper) = (  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix) = (  # type: ignore[assignment]
         self.func_wrapper_code_return_checked) = (  # type: ignore[assignment]
@@ -464,6 +439,10 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         self.conf = conf
         self.cls_stack = cls_stack
 
+        # Defer the resolution of the global and local scope for that callable
+        # until needed to subsequently resolve stringified type hints.
+        self.func_scope_forward = None
+
         # ..................{ VARS ~ func : wrappee          }..................
         # Wrappee callable currently being decorated.
         self.func_wrappee = func
@@ -501,10 +480,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
             func=self.func_wrappee_wrappee,
             exception_cls=BeartypeDecorWrappeeException,
         )
-
-        # Defer the resolution of the global and local scope for that callable
-        # until needed to subsequently resolve stringified type hints.
-        self.func_wrappee_wrappee_scope_forward = None
 
         # ..................{ VARS ~ func : wrapper          }..................
         # Wrapper callable to be unwrapped in the event that the
@@ -857,6 +832,26 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
             Minimal metadata minified from this maximal metadata.
         '''
 
+        # Minimal lexical scope (i.e., dictionary mapping from the name to value
+        # of each locally and globally accessible attribute in the local and
+        # global scope of a type or callable such that this dictionary is the
+        # minimal subset of key-value pairs needed to resolve *ONLY* the
+        # specific stringified forward reference type hints annotating the
+        # currently decorated callable), defined as either...
+        func_scope_forward_min = (
+            # If *NO* forward scope was created and cached by a prior call to
+            # the resolve_hint_pep484_ref_str() method created, implicitly
+            # preserve this attribute as the "None" singleton;
+            None
+            if self.func_scope_forward is None else
+            # Else, a forward scope was created and cached by such a call,
+            # implying the currently decorated callable is annotated by one or
+            # more stringified forward reference type hints. In this case,
+            # minify this forward scope for efficiency and safety. See also the
+            # BeartypeForwardScope.minify() docstring for further discussion.
+            self.func_scope_forward.minify()
+        )
+
         # Create and return a new instance of this minimal dataclass minified
         # from the passed maximal dataclass.
         return BeartypeCallDecorMinimalMeta(
@@ -864,6 +859,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
             cls_stack=self.cls_stack,
             func=self.func_wrappee,
             func_annotations=self.func_annotations,
+            func_scope_forward=func_scope_forward_min,
         )
 
     # ..................{ LABELLERS                          }..................

@@ -12,15 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilMappingException
-from beartype.typing import (
-    AbstractSet,
-    Collection,
-    Sequence,
-)
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import (
+    Collection,
+    Sequence,
     Hashable,
-    Sequence as SequenceABC,
     Mapping,
     MutableMapping,
     Set,  # <-- equivalent to "typing.AbstractSet", interestingly
@@ -167,7 +163,7 @@ def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
     :func:`beartype._util.kind.maplike.utilmaptest.die_if_mappings_two_items_collide`
         Further details.
     '''
-    assert isinstance(mappings, SequenceABC), f'{repr(mappings)} not sequence.'
+    assert isinstance(mappings, Sequence), f'{repr(mappings)} not sequence.'
 
     # Number of passed mappings.
     MAPPINGS_LEN = len(mappings)
@@ -204,7 +200,7 @@ def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
     return mapping_merged
 
 # ....................{ REMOVERS                           }....................
-def remove_mapping_keys(mapping: MutableMapping, keys: AbstractSet) -> None:
+def remove_mapping_keys(mapping: MutableMapping, keys: Set) -> None:
     '''
     Safely remove all keys from the passed mapping that are items of the passed
     set, silently ignoring any keys that are *not* already in this mapping.
@@ -215,7 +211,7 @@ def remove_mapping_keys(mapping: MutableMapping, keys: AbstractSet) -> None:
     ----------
     mapping : MutableMapping
         Mapping to remove these keys from.
-    keys : AbstractSet
+    keys : Set
         Set of all keys to be removed.
     '''
     assert isinstance(mapping, MutableMapping), (
@@ -225,14 +221,14 @@ def remove_mapping_keys(mapping: MutableMapping, keys: AbstractSet) -> None:
     # Set of all existing keys to be removed from this mapping, efficiently
     # defined as the intersection of the keys of this mapping with the passed
     # set of keys.
-    mapping_keys = mapping.keys() & keys
+    keys_remove = mapping.keys() & keys
 
     # If this mapping contains *NONE* of these keys, silently reduce to a noop.
     #
     # Note that this is an optimization. However, "for" loops internally raise
     # "StopIteration" exceptions on halt and thus incur a non-trivial cost.
     # Ergo, this is a non-trivial (read: valuable) optimization.
-    if not mapping_keys:
+    if not keys_remove:
         return
     # Else, this mapping contains one or more of these keys.
 
@@ -245,7 +241,7 @@ def remove_mapping_keys(mapping: MutableMapping, keys: AbstractSet) -> None:
     # Note that CPython currently provides *NO* efficient means of removing
     # multiple keys from a mapping in a single expression. This is known to be
     # the best approach, but it still requires manual iteration over these keys.
-    for mapping_key in mapping_keys:
+    for key_remove in keys_remove:
         # Safely remove the key-value pair from this mapping whose key is this
         # key if this mapping contains this key *OR* silently reduce to a noop
         # otherwise (i.e., if this mapping does *NOT* contain this key).
@@ -263,7 +259,41 @@ def remove_mapping_keys(mapping: MutableMapping, keys: AbstractSet) -> None:
         # * This is the standard idiom for efficiently removing key-value pairs
         #   where this key is *NOT* guaranteed to exist in this mapping.
         #   Simplicity and speed supercedes readability, sadly.
-        mapping_pop(mapping_key, None)
+        mapping_pop(key_remove, None)
+
+
+def remove_mapping_keys_except(mapping: MutableMapping, keys: Set) -> None:
+    '''
+    Safely remove all keys from the passed mapping *except* those that are items
+    of the passed set.
+
+    Equivalently, this method truncates (i.e., reduces) this mapping to *only*
+    those existing key-value pairs whose keys are items of this set.
+
+    This method is thread-safe against concurrent mutation by competing threads.
+
+    Parameters
+    ----------
+    mapping : MutableMapping
+        Mapping to remove these keys from.
+    keys : Set
+        Set of all keys to be removed.
+    '''
+    assert isinstance(mapping, MutableMapping), (
+        f'{repr(mapping)} not mutable mapping.')
+    assert isinstance(keys, Set), f'{repr(keys)} not set.'
+
+    # Set of all existing keys to be removed from this mapping, efficiently
+    # defined as the set difference of the keys of this mapping with the passed
+    # set of keys.
+    keys_remove = mapping.keys() - keys
+
+    #FIXME: This isn't *QUITE* the most efficient implementation, as
+    #this call unnecessarily performs another:
+    #    mapping_keys = mapping.keys() & keys
+    #But... who cares!? Good enough for now. Let's just roll with this.
+    # Remove these keys from this mapping.
+    remove_mapping_keys(mapping=mapping, keys=keys_remove)
 
 # ....................{ UPDATERS                           }....................
 def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:

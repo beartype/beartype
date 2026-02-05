@@ -118,6 +118,7 @@ def make_scope_forward_caller_external(
 def make_scope_forward_decor_meta(
     # Mandatory parameters.
     decor_meta: BeartypeCallDecorMinimalMeta,
+    hint: str,
     func_is_nested: bool,
 
     # Optional parameters.
@@ -144,6 +145,8 @@ def make_scope_forward_decor_meta(
         **Beartype decorator call minimal metadata** (i.e., dataclass
         encapsulating the minimal metadata required to type-check the currently
         decorated callable at the time that callable is subsequently called).
+    hint : str
+        Stringified forward reference type hint to be resolved.
     func_is_nested : bool
          Either:
 
@@ -171,9 +174,45 @@ def make_scope_forward_decor_meta(
     # ....................{ PREAMBLE                       }....................
     # If the forward scope of the decorated callable has already been decided,
     # immediately return this scope as is.
-    if decor_meta.func_wrappee_wrappee_scope_forward is not None:
-        return decor_meta.func_wrappee_wrappee_scope_forward
+    if decor_meta.func_scope_forward is not None:
+        return decor_meta.func_scope_forward
     # Else, this forward scope has yet to be decided.
+    #
+    # If this decorator call metadata is minimal (i.e.,
+    # "BeartypeCallDecorMinimalMeta" object) rather maximal (i.e.,
+    # "BeartypeCallDecorMeta" object), this forward scope should have already
+    # been decided by (in order):
+    # * Repeated calls to the
+    #   BeartypeCallDecorMeta.resolve_hint_pep484_ref_str() method of the
+    #   original maximal metadata.
+    # * A call to the BeartypeCallDecorMeta.minify() method, propagating the
+    #   forward scope from that maximal to this minimal metadata.
+    #
+    # But this forward scope is still undecided! Ergo, beartype failed to follow
+    # the above workflow. To compound matters, it is infeasible to reconstruct
+    # the forward scope associated with the original maximal metadata here. Why?
+    # Doing so requires the global scope (which is still trivially accessible as
+    # "func.__globals__") *AND* local scope (which was only previously
+    # accessible as "func_frame.f_locals" after iteratively searching the call
+    # stack for the stack frame encapsulating the decoration) of the previously
+    # decorated callable. Since that callable has already been decorated, that
+    # stack frame no longer exists. Ergo, that local scope is now inaccessible.
+    # Ergo, this forward scope *CANNOT* be reconstructed.
+    #
+    # Note that this should *NEVER* occur. Naturally, this just occurred.
+    elif decor_meta.__class__ is BeartypeCallDecorMinimalMeta:  # pragma: no cover
+        # Raise this exception.
+        raise exception_cls(
+            f'{exception_prefix}'
+            f'PEP 484 forward reference type hint "{hint}" unresolvable, as '
+            f'callable {repr(decor_meta.func)} forward reference scope not '
+            f'propagated onto wrapper function at decoration time. '
+            f'Beartype has failed us all... but kinda mostly just you.'
+        )
+    # Else, this decorator call metadata is maximal (i.e.,
+    # "BeartypeCallDecorMeta" object) rather than minimal (i.e.,
+    # "BeartypeCallDecorMinimalMeta" object). In this case, this forward scope
+    # is decidable as documented above. We do so now.
 
     # ....................{ LOCALS                         }....................
     # Decorated callable and metadata associated with that callable, localized
@@ -396,7 +435,7 @@ def make_scope_forward_decor_meta(
     #     def muh_func(muh_arg: 'Dict[str, MuhGeneric[int]]') -> None: ...
     #
     #     class MuhGeneric(Generic[T]): ...
-    func_scope = decor_meta.func_wrappee_wrappee_scope_forward = (
+    func_scope = decor_meta.func_scope_forward = (
         BeartypeForwardScope(scope_name=func_module_name))
 
     # Composite this global and local scope into this forward scope (in that

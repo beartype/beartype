@@ -270,6 +270,10 @@ def resolve_hint_pep484_ref_str_decor_meta(
         f'{repr(decor_meta)} not beartype decorator call metadata.')
     assert isinstance(hint, str), (
         f'{repr(hint)} not PEP 484 stringified forward reference type hint.')
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
+    assert isinstance(exception_cls, type), (
+        f'{repr(exception_cls)} not exception type.')
     # print(f'Resolving decorator-time stringified type hint {repr(hint)}...')
 
     # ..................{ LOCALS                             }..................
@@ -303,11 +307,6 @@ def resolve_hint_pep484_ref_str_decor_meta(
     # still does. See also:
     #     https://github.com/beartype/beartype/issues/381
     if not func_module_name:
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not exception type.')
-
         # Fully-qualified name of the currently decorated callable.
         func_name = get_object_name(func)
 
@@ -317,8 +316,7 @@ def resolve_hint_pep484_ref_str_decor_meta(
         # Raise this exception.
         raise exception_cls(
             f'{exception_prefix}'
-            f'PEP 484 forward reference type hint "{repr(hint)}" '
-            f'unresolvable, as '
+            f'PEP 484 forward reference type hint "{hint}" unresolvable, as '
             f'callable "{func_name}.__module__" dunder attribute undefined '
             f'(e.g., as {func_label} defined dynamically in-memory). '
             f'So much bad stuff is happening here all at once that '
@@ -520,6 +518,7 @@ def resolve_hint_pep484_ref_str_decor_meta(
     # Decide the forward scope of the decorated callable.
     func_scope_forward = make_scope_forward_decor_meta(
         decor_meta=decor_meta,
+        hint=hint,
         func_is_nested=func_is_nested,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,

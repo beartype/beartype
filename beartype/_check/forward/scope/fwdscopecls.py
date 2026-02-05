@@ -33,17 +33,24 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype._data.typing.datatyping import LexicalScope
 from beartype._check.forward.reference.fwdrefabc import (
     BeartypeForwardRefSubbableABC)
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_subbable_subtype)
+from beartype._data.typing.datatyping import (
+    LexicalScope,
+    SetStrs,
+)
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.func.utilfuncframe import (
     get_frame_caller_module_name_or_none,
     is_frame_caller_beartype,
 )
+from beartype._util.kind.maplike.utilmapset import (
+    remove_mapping_keys_except)
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from builtins import __dict__ as scope_builtins  # type: ignore[attr-defined]
+from typing import TYPE_CHECKING
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Unit test us up, please.
@@ -91,6 +98,17 @@ class BeartypeForwardScope(LexicalScope):
 
     Attributes
     ----------
+    _hint_names_destringified : set[str]
+        Set of the relative (i.e., unqualified) or absolute (i.e.,
+        fully-qualified) names of *all* :pep:`484`-compliant stringified type
+        hints implicitly destringified into non-string type hints by external
+        access of those hints as keys of this forward scope (e.g.,
+        ``scope_forward['MuhUndefinedType]``). The :func:`eval` call in the
+        :func:`beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str`
+        function is typically responsible for this destringification. The
+        :meth:`minify method subsequently truncates this forward scope to this
+        minimal subset of key-value pairs required to resolve the
+        specific stringified type hints annotating the decorated callable.
     _scope_name : str
         Fully-qualified name of this forward scope. See the :meth:`__init__`
         method for details.
@@ -102,8 +120,15 @@ class BeartypeForwardScope(LexicalScope):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
+        '_hint_names_destringified',
         '_scope_name',
     )
+
+    # Squelch false negatives from mypy. This is absurd. This is mypy. See:
+    #     https://github.com/python/mypy/issues/5941
+    if TYPE_CHECKING:
+        _hint_names_destringified: SetStrs
+        _scope_name: str
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
@@ -168,7 +193,47 @@ class BeartypeForwardScope(LexicalScope):
         # Classify all passed parameters.
         self._scope_name = scope_name
 
+        # Default all remaining parameters to sane initial values.
+        self._hint_names_destringified = set()
+
     # ..................{ DUNDERS                            }..................
+    def __getitem__(self, hint_name: str) -> Hint:
+        '''
+        Dunder method implicitly called on each ``[``- and ``]``-delimited
+        attempt to access a with the passed name against this forward scope.
+
+        Parameters
+        ----------
+        hint_name : str
+            Relative (i.e., unqualified) or absolute (i.e., fully-qualified)
+            name of this unresolved type hint.
+
+        Returns
+        -------
+        Hint:
+            Either:
+
+            * If this type hint already exists as an attribute in either the
+              local or global scope aggregated by this forward scope, that hint.
+            * Else, a **forward reference proxy** (i.e.,
+              :class:`.BeartypeForwardRefSubbableABC` object) deferring the
+              resolution of this unresolved type hint implicitly created and
+              returned by the lower-level :meth:`__missing__` dunder method.
+        '''
+
+        # Non-string type hint destringified from this stringified forward
+        # reference type hint, either explicitly against this dictionary by the
+        # default superclass implementation *OR* implicitly as a forward
+        # reference proxy by the __missing__() dunder method defined below).
+        hint = super().__getitem__(hint_name)
+
+        # Record this stringified reference as having been destringified.
+        self._hint_names_destringified.add(hint_name)
+
+        # Return this non-string type hint
+        return hint
+
+
     def __missing__(self, hint_name: str) -> (
         type[BeartypeForwardRefSubbableABC]):
         '''
@@ -195,17 +260,18 @@ class BeartypeForwardScope(LexicalScope):
         -------
         **This dunder method is susceptible to misuse by third-party frameworks
         that perform call stack inspection.** The higher-level
-        :func:`beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str_decor_meta` function
-        internally invokes this dunder method by calling the :func:`eval`
-        builtin, which then adds a new frame to the call stack whose
-        ``f_locals`` and ``f_globals`` attributes are *BOTH* this dictionary. If
+        :func:`beartype._check.forward.fwdresolve.resolve_hint_pep484_ref_str_decor_meta`
+        function internally invokes this dunder method by calling the
+        :func:`eval` builtin, which then adds a new frame to the call stack
+        whose ``f_locals`` and ``f_globals`` attributes are this dictionary. If
         some third-party framework introspects the call stack containing this
         new frame, this dictionary's failure to conform to the behavior of a
         lexical scope could induce failure in that third-party framework. Does
         this edge case arise in real-world usage, though? It does.
 
-        Consider ``pytest``, which detects whether each frame on the call stack
-        defines the ``pytest``-specific ``__tracebackhide__`` dunder attribute:
+        Consider :mod:`pytest`, which detects whether each frame on the call
+        stack defines the ``pytest``-specific ``__tracebackhide__`` dunder
+        attribute:
 
         .. code-block:: python
 
@@ -233,7 +299,7 @@ class BeartypeForwardScope(LexicalScope):
                if tbh and callable(tbh):
                    return tbh(excinfo)
 
-        In obscure edge cases involving :mod:`beartype`, ``pytest``, and
+        In obscure edge cases involving :mod:`beartype`, :mod:`pytest`, and
         :pep:`563`, one or both of the ``self.frame.f_locals`` and/or
         ``self.frame.f_globals`` dictionaries are instances of the
         :class:`beartype._check.forward.scope.fwdscopecls.BeartypeForwardScope`
@@ -377,3 +443,48 @@ class BeartypeForwardScope(LexicalScope):
 
         # Return this proxy.
         return forwardref_subtype
+
+    # ..................{ MINIFIERS                          }..................
+    #FIXME: Unit test us up, please.
+    def minify(self) -> LexicalScope:
+        '''
+        **Minimal lexical scope** (i.e., dictionary mapping from the name to
+        value of each locally and globally accessible attribute in the local and
+        global scope of a type or callable such that this dictionary is the
+        minimal subset of key-value pairs needed to resolve *only* the specific
+        :pep:`484`-compliant stringified forward reference type hints annotating
+        the currently decorated callable).
+
+        This minifier creates and returns the minimal dictionary required to
+        type-check the callable currently being decorated by the
+        :func:`beartype.beartype` decorator at the post-decoration time that
+        callable is subsequently called. Why? Because:
+
+        * Forward scopes are dictionaries aggregating the *entire* global and
+          local scope of that decorated callable and thus consume excess space.
+        * Moreover, these dictionaries preserve strong references to all
+          attributes accessible from that local and global scope and thus
+          inhibit garbage collection of those attributes.
+
+        Forward scopes are intrinsically unsafe to indefinitely cache. By
+        compare, the minimal dictionary created and returned by this minifier is
+        comparatively safer to indefinitely cache.
+
+        Returns
+        -------
+        LexicalScope
+            Minimal dictionary minified from this maximal forward scope.
+        '''
+
+        # Minimal dictionary to be returned, initialized to a copy of this
+        # maximal dictionary.
+        scope_forward_min = self.copy()
+
+        # Preserve *ONLY* the minimal subset of dictionary key-value pairs
+        # required to resolve the specific stringified forward references type
+        # hints annotating the currently decorated callable.
+        remove_mapping_keys_except(
+            mapping=scope_forward_min, keys=self._hint_names_destringified)
+
+        # Return this minimal dictionary.
+        return scope_forward_min
