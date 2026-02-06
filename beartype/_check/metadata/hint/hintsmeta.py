@@ -15,10 +15,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintRecursionException
-from beartype.typing import (
-    TYPE_CHECKING,
-    Optional,
-)
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
@@ -40,6 +36,10 @@ from beartype._util.cache.pool.utilcachepoollistfixed import (
     FixedList,
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+)
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
@@ -276,7 +276,7 @@ class HintsMeta(FixedList):
         '''
 
         # Classify all passed parameters.
-        self.call_meta = call_meta
+        self.call_meta = call_meta  # type: ignore[assignment]
         self.conf = conf
 
         # 1-based indentation level describing the initial level of indentation

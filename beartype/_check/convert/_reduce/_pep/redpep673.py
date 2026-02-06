@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`673`-compliant **literal string type hint reducers** (i.e.,
+Project-wide :pep:`673`-compliant **self string type hint reducers** (i.e.,
 low-level callables converting higher-level type hints created by subscripting
 the :obj:`typing.Self` type hint factory to lower-level type hints more readily
 consumable by :mod:`beartype`).

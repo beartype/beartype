@@ -480,7 +480,14 @@ def reduce_hint_child(hint: Hint, kwargs: DictStrToAny) -> HintSane:
     return reduce_hint(hint=hint, **kwargs)
 
 
-def reduce_hint_caller_external(hint: Hint, **kwargs) -> HintSane:
+def reduce_hint_any(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    call_meta: BeartypeCallMetaABC = BEARTYPE_CALL_EXTERNAL_META,
+    **kwargs
+) -> HintSane:
     '''
     Lower-level type hint reduced (i.e., converted) relative to the external
     caller from the passed higher-level type hint if this hint is reducible *or*
@@ -496,12 +503,28 @@ def reduce_hint_caller_external(hint: Hint, **kwargs) -> HintSane:
     originating from a third-party package or module. This default is
     appropriate only for unit tests rather than real-world use cases.
 
+    Caveats
+    -------
+    **The more fine-grained** :func:`.reduce_hint` **reducer should typically be
+    called instead.** This more coarse-grained reducer drops the mandatory
+    ``call_meta`` parameter required by the former, which is *not* necessarily a
+    good thing. That parameter should typically be passed. Failing to pass that
+    parameter drops essential metadata required to properly sanitize many kinds
+    of insane type hints.
+
     Parameters
     ----------
     hint : Hint
         Type hint to be reduced.
+    call_meta : BeartypeCallMetaABC, default: BEARTYPE_CALL_EXTERNAL_META
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user). Defaults to the beartype
+        external call metadata singleton, thus sanifying :pep:`484`-compliant
+        stringified forward reference type hints against the local and global
+        scope of the first third-party caller on the current call stack.
 
-    All remaining keyword parameters are passed as is to the
+    All remaining keyword parameters are passed as is to the lower-level
     :func:`.reduce_hint` reducer.
 
     Returns

@@ -38,7 +38,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignDeque,
     HintSignDict,
     HintSignFinal,
-    # HintSignForwardRef,
+    HintSignForwardRef,
     HintSignFrozenSet,
     HintSignGenerator,
     HintSignHashable,
@@ -689,8 +689,7 @@ _HINT_SIGNS_SUPPORTED_DEEP_NONCONTAINER: FrozenSetHintSign = frozenset((
     # "datahintsigns" submodule for further commentary.
     HintSignAny,
     HintSignBinaryIO,
-    #FIXME: Excise us up, please.
-    # HintSignForwardRef,
+    HintSignForwardRef,
     HintSignNewType,
     HintSignNone,
     HintSignTextIO,

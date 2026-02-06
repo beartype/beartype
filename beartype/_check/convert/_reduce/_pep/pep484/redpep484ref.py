@@ -28,9 +28,9 @@ from typing import ForwardRef
 # ....................{ REDUCERS ~ forwardref              }....................
 #FIXME: Unit test us up, please.
 def reduce_hint_pep484_ref(
-    hint: HintPep484Ref,
     call_meta: BeartypeCallMetaABC,
     conf: BeartypeConf,
+    hint: HintPep484Ref,
     exception_prefix: str,
     **kwargs
 ) -> HintOrSane:
@@ -48,15 +48,15 @@ def reduce_hint_pep484_ref(
 
     Parameters
     ----------
-    hint : Hint
-        Forward reference type hint to be reduced.
     call_meta : BeartypeCallMetaABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
-    conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
+    conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
+    hint : Hint
+        Forward reference type hint to be reduced.
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
@@ -69,6 +69,7 @@ def reduce_hint_pep484_ref(
         this forward reference dynamically resolves, relative to the local and
         global scope of the currently type-checked callable, type, or statement.
     '''
+    # print(f'Reducing forward reference {repr(hint)} under {repr(call_meta)}...')
 
     #FIXME: Under Python >= 3.14, instead call a completely different
     #make_forwardref_annotationlib_subtype() factory function. See also the

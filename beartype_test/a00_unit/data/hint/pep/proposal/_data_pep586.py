@@ -8,7 +8,7 @@ Project-wide :pep:`586`-compliant **type hint test data.**
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep586_meta() -> 'List[HintPepMetadata]':
+def hints_pep586_meta() -> 'list[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`586`-compliant **type hint
     metadata** (i.e.,

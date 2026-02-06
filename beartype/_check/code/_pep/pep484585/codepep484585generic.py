@@ -83,8 +83,8 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
     # unsubscripted generic *AND* the sign identifying this pseudo-superclass...
     for hint_child_sane, hint_child_sign in (
         get_hint_pep484585_generic_unsubbed_bases_unerased(
-            hint_sane,
             hints_meta.call_meta,
+            hint_sane,
             hints_meta.conf,
             hints_meta.exception_prefix,
         )

@@ -1433,7 +1433,8 @@ def make_check_expr(
     return check_expr
 
 # ....................{ PRIVATE ~ globals                  }....................
-_HINT_CONF_TO_CHECK_EXPR: dict[tuple[Hint, BeartypeConf], CodeGenerated] = {}
+_HINT_CONF_TO_CHECK_EXPR: dict[tuple[HintSane, BeartypeConf], CodeGenerated] = (
+    {})
 '''
 **Type-checking expression factory cache** (i.e., dictionary mapping from each
 2-tuple ``(hint, conf)`` of the same pair of parameters passed in each call of

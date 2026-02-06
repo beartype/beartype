@@ -37,6 +37,10 @@ class HintReductionABC(object):
 
     Attributes
     ----------
+    cls_stack : TypeStack
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
     conf : BeartypeConf
         Input beartype configuration configuring this reduction.
     hint_unreduced : Hint
@@ -135,6 +139,17 @@ class HintReductionValid(HintReductionABC):
         # Classify all remaining passed parameters.
         self.hint_reduced = hint_reduced
 
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    cls_stack={repr(self.cls_stack)},',
+            f'    conf={repr(self.conf)},',
+            f'    hint_unreduced={repr(self.hint_unreduced)},',
+            f'    hint_reduced={repr(self.hint_reduced)},',
+            f')',
+        ))
+
 
 class HintReductionInvalid(HintReductionABC):
     '''
@@ -171,3 +186,14 @@ class HintReductionInvalid(HintReductionABC):
 
         # Classify all remaining passed parameters.
         self.exception_type = exception_type
+
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    cls_stack={repr(self.cls_stack)},',
+            f'    conf={repr(self.conf)},',
+            f'    hint_unreduced={repr(self.hint_unreduced)},',
+            f'    exception_type={repr(self.exception_type)},',
+            f')',
+        ))

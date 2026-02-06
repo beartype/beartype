@@ -22,6 +22,8 @@ from beartype._check.convert._reduce.redmain import reduce_hint
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.callmetaexternal import (
+    BEARTYPE_CALL_EXTERNAL_META)
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
@@ -443,6 +445,7 @@ def sanify_hint_any(
     hint: Hint,
 
     # Optional parameters.
+    call_meta: BeartypeCallMetaABC = BEARTYPE_CALL_EXTERNAL_META,
     hint_parent_sane: Optional[HintSane] = None,
     **kwargs
 ) -> HintSane:
@@ -459,15 +462,22 @@ def sanify_hint_any(
     -------
     **The more fine-grained** :func:`.sanify_hint_child` **sanifier should
     typically be called instead.** This more coarse-grained sanifier drops the
-    mandatory ``hint_parent_sane`` parameter required by the former, which is
-    *not* necessarily a good thing. That parameter should typically be passed.
-    Failing to pass that parameter drops essential metadata required to properly
-    sanitize many insane type hints.
+    mandatory ``call_meta`` and ``hint_parent_sane`` parameters required by the
+    former, which is *not* necessarily a good thing. Those parameters should
+    typically be passed. Failing to pass those parameters drops essential
+    metadata required to properly sanitize many kinds of insane type hints.
 
     Parameters
     ----------
     hint : Hint
-        Child type hint to be sanified.
+        Type hint to be sanified.
+    call_meta : BeartypeCallMetaABC, default: BEARTYPE_CALL_EXTERNAL_META
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user). Defaults to the beartype
+        external call metadata singleton, thus sanifying :pep:`484`-compliant
+        stringified forward reference type hints against the local and global
+        scope of the first third-party caller on the current call stack.
     hint_parent_sane : Optional[HintSane], default: None
         Either:
 
@@ -480,7 +490,7 @@ def sanify_hint_any(
 
         Defaults to :data:`None`.
 
-    All remaining keyword parameters are as accepted by the comparable
+    All remaining keyword parameters are passed as is to the lower-level
     :func:`.sanify_hint_child` sanifier.
 
     Returns
@@ -497,4 +507,8 @@ def sanify_hint_any(
 
     # Defer to our betters.
     return sanify_hint_child(
-        hint=hint, hint_parent_sane=hint_parent_sane, **kwargs)
+        call_meta=call_meta,
+        hint=hint,
+        hint_parent_sane=hint_parent_sane,
+        **kwargs
+    )

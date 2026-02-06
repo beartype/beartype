@@ -58,7 +58,7 @@ from beartype._util.hint.pep.proposal.pep649 import (
 from beartype._util.text.utiltextprefix import prefix_callable_pith
 from collections.abc import (
     Callable,
-    Iterable,
+    Iterator,
 )
 from contextlib import contextmanager
 from typing import (
@@ -295,20 +295,20 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         self._is_func_annotations_dirty = False
 
         # Nullify all remaining instance variables for safety.
-        self.cls_stack = (
-        self.conf) = (  # type: ignore[assignment]
-        self.func) = (  # type: ignore[assignment]
-        self.func_annotations) = (  # type: ignore[assignment]
-        self.func_annotations_get) = (  # type: ignore[assignment]
-        self.func_scope_forward) = (
-        self.func_wrappee) = (  # type: ignore[assignment]
-        self.func_wrappee_wrappee) = (  # type: ignore[assignment]
-        self.func_wrappee_wrappee_codeobj) = (  # type: ignore[assignment]
-        self.func_wrapper) = (  # type: ignore[assignment]
-        self.func_wrapper_code_call_prefix) = (  # type: ignore[assignment]
-        self.func_wrapper_code_return_checked) = (  # type: ignore[assignment]
-        self.func_wrapper_code_return_unchecked) = (  # type: ignore[assignment]
-        self.func_wrapper_code_signature_prefix) = (  # type: ignore[assignment]
+        self.cls_stack = (  # type: ignore[assignment]
+        self.conf) = (  # pyright: ignore
+        self.func) = (  # pyright: ignore
+        self.func_annotations) = (  # pyright: ignore
+        self.func_annotations_get) = (  # pyright: ignore
+        self.func_scope_forward) = (  # pyright: ignore
+        self.func_wrappee) = (  # pyright: ignore
+        self.func_wrappee_wrappee) = (  # pyright: ignore
+        self.func_wrappee_wrappee_codeobj) = (  # pyright: ignore
+        self.func_wrapper) = (  # pyright: ignore
+        self.func_wrapper_code_call_prefix) = (  # pyright: ignore
+        self.func_wrapper_code_return_checked) = (  # pyright: ignore
+        self.func_wrapper_code_return_unchecked) = (  # pyright: ignore
+        self.func_wrapper_code_signature_prefix) = (  # pyright: ignore
         self.func_wrapper_name) = None  # type: ignore[assignment]
 
 
@@ -441,7 +441,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
 
         # Defer the resolution of the global and local scope for that callable
         # until needed to subsequently resolve stringified type hints.
-        self.func_scope_forward = None
+        self.func_scope_forward = None  # pyright: ignore
 
         # ..................{ VARS ~ func : wrappee          }..................
         # Wrappee callable currently being decorated.
@@ -881,7 +881,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
 
 # ....................{ CONTEXT MANAGERS                   }....................
 @contextmanager
-def new_decor_meta(**kwargs) -> Iterable[BeartypeCallDecorMeta]:
+def new_decor_meta(**kwargs) -> Iterator[BeartypeCallDecorMeta]:
     '''
     :func:`contextlib.contextmanager`-based context manager encapsulating the
     temporary instantiation (and subsequent finalization) of **beartype call

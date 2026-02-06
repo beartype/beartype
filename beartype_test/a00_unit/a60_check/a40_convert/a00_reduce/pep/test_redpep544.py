@@ -30,7 +30,7 @@ def test_reduce_hint_pep484_generic_io_to_pep544_protocol() -> None:
     from beartype.roar import BeartypeDecorHintPep544Exception
     from beartype.typing import Union
     from beartype._check.convert._reduce.redmain import (
-        reduce_hint_caller_external)
+        reduce_hint_any)
     from beartype._check.convert._reduce._pep.redpep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol)
     from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
@@ -43,7 +43,7 @@ def test_reduce_hint_pep484_generic_io_to_pep544_protocol() -> None:
     for pep484_generic_io in TYPES_PEP484_GENERIC_IO:
         # Metadata encapsulating the equivalent PEP 544-compliant protocol
         # reduced from this generic.
-        pep544_protocol_io_sane = reduce_hint_caller_external(pep484_generic_io)
+        pep544_protocol_io_sane = reduce_hint_any(pep484_generic_io)
 
         # This protocol.
         pep544_protocol_io = pep544_protocol_io_sane.hint

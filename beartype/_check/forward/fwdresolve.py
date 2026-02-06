@@ -274,6 +274,7 @@ def resolve_hint_pep484_ref_str_decor_meta(
         f'{repr(exception_prefix)} not string.')
     assert isinstance(exception_cls, type), (
         f'{repr(exception_cls)} not exception type.')
+
     # print(f'Resolving decorator-time stringified type hint {repr(hint)}...')
 
     # ..................{ LOCALS                             }..................

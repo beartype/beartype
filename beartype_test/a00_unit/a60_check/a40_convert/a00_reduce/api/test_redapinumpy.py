@@ -38,7 +38,7 @@ def test_reduce_hint_api_numpy() -> None:
     # Defer NumPy-specific imports.
     from beartype.roar import BeartypeDecorHintNonpepNumpyException
     from beartype._check.convert._reduce.redmain import (
-        reduce_hint_caller_external)
+        reduce_hint_any)
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
     from beartype._data.hint.sign.datahintsigns import HintSignAnnotated
     from numpy import float64
@@ -48,7 +48,7 @@ def test_reduce_hint_api_numpy() -> None:
     # ..................{ LOCALS                             }..................
     # Metadata encapsulating the reduction of a NumPy array type hint to a
     # beartype validator.
-    ndarray_reduced_sane = reduce_hint_caller_external(NDArray[float64])
+    ndarray_reduced_sane = reduce_hint_any(NDArray[float64])
 
     # This beartype validator.
     ndarray_reduced = ndarray_reduced_sane.hint
@@ -62,5 +62,5 @@ def test_reduce_hint_api_numpy() -> None:
     # subscripted by an object *NOT* reducible to a data type raises the
     # expected exception.
     with raises(BeartypeDecorHintNonpepNumpyException):
-        reduce_hint_caller_external(
+        reduce_hint_any(
             NDArray['From_my_wings_are_shaken_the_dews_that_waken'])

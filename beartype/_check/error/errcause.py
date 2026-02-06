@@ -16,10 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: The following "ViolationCause" instance variables are trivial aliases
 #and thus useless. They should be excised where time permits; so, never:
 #* "ViolationCause.hint" is just an alias for "ViolationCause.hint_sane.hint".
-#* The "ViolationCause.hint_childs" tuple is only used in one other submodule
-#  and can, in any case, be trivially reconstructed from the more useful
-#  "ViolationCause.hint_childs_sane" tuple. In other words, please excise
-#  "ViolationCause.hint_childs".
 
 #FIXME: The recursive "ViolationCause" class strongly overlaps with the equally
 #recursive (and substantially superior) "beartype.door.TypeHint" class. Ideally:
@@ -32,7 +28,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  dataclass encapsulating metadata describing the current type-checking
 #  violation. That metadata (e.g., "cause_indent") is inappropriate for
 #  general-purpose type hints. Exceptions include:
-#  * "hint", "hint_sign", and "hint_childs_sane" -- all of which are subsumed
+#  * "hint", "hint_sign", and "_hint_childs_sane" -- all of which are subsumed
 #    by the "TypeHint" dataclass and should thus be excised.
 #* Refactor the TypeHint._find_cause() method to accept an instance of
 #  the "_TypeHintUnbearability" dataclass: e.g.,
@@ -54,12 +50,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Optional,
-)
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
@@ -69,21 +59,28 @@ from beartype._check.metadata.hint.hintsane import (
     TupleHintSane,
 )
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.typing.datatypingport import (
-    Hint,
-    TupleHints,
-)
 from beartype._data.typing.datatyping import HintSignOrNoneOrSentinel
+from beartype._data.typing.datatypingport import Hint
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
-from beartype._data.kind.datakindiota import SENTINEL
+from beartype._data.kind.datakindiota import (
+    SENTINEL,
+    Iota,
+)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.utilobjmake import permute_object
+from collections.abc import Callable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Optional,
+    Union,
+)
 
 # ....................{ CLASSES                            }....................
 class ViolationCause(object):
@@ -119,28 +116,6 @@ class ViolationCause(object):
         from this getter in the event of unexpected runtime failure.
     hint : Hint
         Type hint to validate this object against.
-    hint_childs : Optional[TupleHints]
-        Either:
-
-        * If this hint is PEP-compliant, the possibly empty tuple of all child
-          hints subscripting (indexing) this hint.
-        * Else, :data:`None`.
-
-        This instance variable is effectively a streamlined variant of the
-        :attr:`hint_childs_sane` instance variable. Whereas the latter
-        *includes* all supplementary metadata, the former instance variable
-        *excludes* all supplementary metadata and thus only contains hints.
-    hint_childs_sane : Optional[TupleHintSane]
-        Either:
-
-        * If this hint is PEP-compliant, the possibly empty tuple of all child
-          hints subscripting (indexing) this hint such that each item is either:
-
-          * If sanifying this child hint generated supplementary metadata, that
-            metadata (i.e., a :class:`.HintSane` object).
-          * Else, this child hint as is.
-
-        * Else, :data:`None`.
     hint_sane : HintSane
         Metadata encapsulating the sanification (i.e., sanitization) of the type
         hint to validate this object against.
@@ -167,6 +142,23 @@ class ViolationCause(object):
         integer *or* ``None`` otherwise (i.e., if that function generated *no*
         such integer). See the same parameter accepted by the higher-level
         :func:`beartype._check.error.errmain.get_func_pith_violation` function.
+    _hint_childs_sane : Union[Iota, None, TupleHintSane]
+        Either:
+
+        * If the :meth:`.hint_childs_sane` property has yet to be accessed, the
+          sentinel placeholder.
+        * Else, the :meth:`.hint_childs_sane` property has been accessed at
+          least once. In this case, either:
+
+          * If this hint is PEP-compliant, the possibly empty tuple of all child
+            hints subscripting (indexing) this hint such that each item is
+            either:
+
+            * If sanifying this child hint generated supplementary metadata,
+              that metadata (i.e., :class:`.HintSane` object).
+            * Else, this child hint as is.
+
+          * Else, :data:`None`.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -179,14 +171,13 @@ class ViolationCause(object):
         'cause_str_or_none',
         'conf',
         'hint',
-        'hint_childs',
-        'hint_childs_sane',
         'hint_sane',
         'hint_sign',
         'pith',
         'pith_name',
         'random_int',
         'exception_prefix',
+        '_hint_childs_sane',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
@@ -197,14 +188,13 @@ class ViolationCause(object):
         cause_str_or_none: Optional[str]
         conf: BeartypeConf
         hint: Hint
-        hint_childs: TupleHints
-        hint_childs_sane: TupleHintSane
         hint_sane: HintSane
         hint_sign: Optional[HintSign]
         pith: Any
         pith_name: Optional[str]
         random_int: Optional[int]
         exception_prefix: str
+        _hint_childs_sane: Union[Iota, None, TupleHintSane]
 
     # ..................{ CLASS VARIABLES ~ set              }..................
     _COPY_VAR_NAMES = frozenset((
@@ -351,54 +341,87 @@ class ViolationCause(object):
         self.pith_name = pith_name
         self.random_int = random_int
 
-        # Nullify all remaining parameters for safety.
-        self.hint_childs = None  # type: ignore[assignment]
-        self.hint_childs_sane = None  # type: ignore[assignment]
-
         # Sane hint sanified from this possibly insane hint.
         self.hint = hint_sane.hint
 
-        # Initialize the "hint_childs" and "hint_childs_sane" instance variables
-        # of this violation cause.
-        self._init_hint_childs()
+        # Nullify all remaining parameters for safety.
+        self._hint_childs_sane = SENTINEL
 
-
-    def _init_hint_childs(self) -> None:
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
         '''
-        Initialize the :attr:`hint_childs` and :attr:`hint_childs_sane` instance
-        variables of this violation cause.
+        Machine-readable representation of this error cause.
         '''
 
+        # Represent this metadata with just the minimal subset of metadata
+        # needed to reasonably describe this metadata.
+        return (
+            f'{self.__class__.__name__}('
+            f'hint={repr(self.hint)}, '
+            f'hint_sane={repr(self.hint_sane)}, '
+            f'hint_sign={repr(self.hint_sign)}, '
+            f'call_meta={repr(self.call_meta)}, '
+            f'cause_indent={repr(self.cause_indent)}, '
+            f'cause_str_or_none={repr(self.cause_str_or_none)}, '
+            f'conf={repr(self.conf)}, '
+            f'pith={repr(self.pith)}, '
+            f'pith_name={repr(self.pith_name)}, '
+            f'random_int={repr(self.random_int)}, '
+            f'exception_prefix={repr(self.exception_prefix)}, '
+            f')'
+        )
+
+    # ..................{ PROERTIES                          }..................
+    @property
+    def hint_childs_sane(self) -> Optional[TupleHintSane]:
+        '''
+        Either:
+
+        * If this hint is PEP-compliant, the possibly empty tuple of all child
+          hints subscripting (indexing) this hint such that each item is either:
+
+          * If sanifying this child hint generated supplementary metadata, that
+            metadata (i.e., a :class:`.HintSane` object).
+          * Else, this child hint as is.
+
+        * Else, :data:`None`.
+        '''
+
+        # If this instance variable is *NOT* the sentinel placeholder, this
+        # tuple has already been computed by a prior access of this property.
+        # In this case, reduce to a noop by returning this pre-computed tuple.
+        if self._hint_childs_sane is not SENTINEL:
+            return self._hint_childs_sane
+        # Else, this instance variable is still the sentinel placeholder,
+        # implying this tuple has yet to be computed.
+        #
         # If this hint is either...
-        if (
+        elif (
             # Ignorable *OR*...
             self.hint_sane is HINT_SANE_IGNORABLE or
             # PEP-noncompliant...
             not is_hint_pep(self.hint)
+        # Then this hint *CANNOT* by definition be subscripted by any meaningful
+        # child hints. In this case...
         ):
-            # Then this hint *CANNOT* by definition be subscripted by any
-            # meaningful child hints. Silently reduce to a noop.
-            return
+            # Cache that this tuple is ignorable.
+            self._hint_childs_sane = None
+
+            # Return the same value.
+            return None
         # Else, this is an unignorable PEP-compliant hint. Since this hint
         # *COULD* be subscripted by meaningful child hints, continue.
 
         # Tuple of the zero or more arguments subscripting this hint.
         hint_childs_insane = get_hint_pep_args(self.hint)
 
-        # List of the zero or more possibly ignorable sane child hints
-        # subscripting this parent hint, initialized to the empty list.
-        hint_childs = []
-
         # List of the zero or more possibly ignorable metadata generated by
         # sanifying these child hints, initialized to the empty list.
-        hint_childs_sane = []
+        hint_childs_sane_list = []
 
         # For each possibly ignorable insane child hints subscripting this
         # parent hint...
         for hint_child_insane in hint_childs_insane:
-            # Sane child hint sanified from this possibly insane child hint.
-            hint_child: Hint = None  # pyright: ignore
-
             # Metadata encapsulating the sanification of this child hint.
             hint_child_sane: HintSane = None  # type: ignore[assignment]
 
@@ -419,49 +442,20 @@ class ViolationCause(object):
                     hint_child_insane=hint_child_insane,
                     hint_parent_sane=self.hint_sane,
                 )
-
-                # Sane child hint encapsulated by this metadata.
-                hint_child = hint_child_sane.hint
             # Else, this child hint is PEP-noncompliant. In this case, preserve
             # this child hint as is.
             else:
-                hint_child = hint_child_sane = hint_child_insane
+                hint_child_sane = hint_child_insane
 
-            # Append this possibly ignorable sane child hint and supplementary
-            # metadata to these lists.
-            hint_childs.append(hint_child)
-            hint_childs_sane.append(hint_child_sane)
+            # Append this possibly ignorable sane child hint to this lists.
+            hint_childs_sane_list.append(hint_child_sane)
 
-        # Tuples of the zero or more possibly ignorable sane child hints and
-        # supplementary metadata, coerced from these lists.
-        self.hint_childs = tuple(hint_childs)
-        self.hint_childs_sane = tuple(hint_childs_sane)
+        # Cache a tuple of the zero or more possibly ignorable sane child hints,
+        # coerced from this list.
+        self._hint_childs_sane = tuple(hint_childs_sane_list)
 
-    # ..................{ DUNDERS                            }..................
-    def __repr__(self) -> str:
-        '''
-        Machine-readable representation of this error cause.
-        '''
-
-        # Represent this metadata with just the minimal subset of metadata
-        # needed to reasonably describe this metadata.
-        return (
-            f'{self.__class__.__name__}('
-            f'hint={repr(self.hint)}, '
-            f'hint_sane={repr(self.hint_sane)}, '
-            f'hint_sign={repr(self.hint_sign)}, '
-            f'hint_childs={repr(self.hint_childs)}, '
-            f'hint_childs_sane={repr(self.hint_childs_sane)}, '
-            f'call_meta={repr(self.call_meta)}, '
-            f'cause_indent={repr(self.cause_indent)}, '
-            f'cause_str_or_none={repr(self.cause_str_or_none)}, '
-            f'conf={repr(self.conf)}, '
-            f'pith={repr(self.pith)}, '
-            f'pith_name={repr(self.pith_name)}, '
-            f'random_int={repr(self.random_int)}, '
-            f'exception_prefix={repr(self.exception_prefix)}, '
-            f')'
-        )
+        # Return the same tuple.
+        return self._hint_childs_sane
 
     # ..................{ FINDERS                            }..................
     def find_cause(self) -> 'ViolationCause':

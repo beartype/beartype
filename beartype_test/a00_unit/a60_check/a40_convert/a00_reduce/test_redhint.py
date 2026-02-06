@@ -37,10 +37,8 @@ def test_reduce_hint(
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype._check.convert._reduce.redmain import (
-        reduce_hint_caller_external)
-    from beartype._check.metadata.call.callmetadecormin import (
-        minify_decor_meta_kwargs)
+    from beartype._check.convert._reduce.redmain import reduce_hint
+    from beartype._check.metadata.call.callmetadecor import new_decor_meta
     from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
         HintReductionInvalid,
         HintReductionValid,
@@ -50,52 +48,42 @@ def test_reduce_hint(
     # ....................{ PASS                           }....................
     # For each reduction case...
     for hint_reduction_meta in hints_reduction_meta:
-        #FIXME: *NON-IDEAL.* Refactor as follows:
-        #* "hint_reduction_meta" should define a single "decor_meta_kwargs:
-        #  DictStrToAny" instance variable rather than "cls_stack" and "conf",
-        #  defaulting to the empty frozen dictionary.
-        #* Then trivially pass that dictionary here as:
-        #      call_meta = minify_decor_meta_kwargs(
-        #          # Arbitrary callable annotated by one or more arbitrary type hints,
-        #          # passed purely to satisfy API constraints.
-        #          func=test_reduce_hint,
-        #          **kwargs
-        #      )
-
-        # Beartype decorator call metadata, resolving forward references
-        # relative to the body of this unit test for simplicity.
-        call_meta = minify_decor_meta_kwargs(
+        # With beartype decorator call metadata encapsulating the implicit
+        # decoration of an arbitrary method of an arbitrary type, itself
+        # decorated explicitly via a type stack.
+        with new_decor_meta(
             cls_stack=hint_reduction_meta.cls_stack,
             conf=hint_reduction_meta.conf,
+
             # Arbitrary callable annotated by one or more arbitrary type hints,
             # passed purely to satisfy API constraints.
             func=test_reduce_hint,
-        )
-
-        # If this is case encapsulates a valid reduction...
-        if isinstance(hint_reduction_meta, HintReductionValid):
-            # Sanified metadata encapsulating the reduction of this input hint.
-            hint_reduced_sane = reduce_hint_caller_external(
-                call_meta=call_meta,
-                hint=hint_reduction_meta.hint_unreduced,
-                conf=hint_reduction_meta.conf,
-            )
-
-            # Assert that this reduction produced the expected output hint.
-            assert hint_reduced_sane.hint == hint_reduction_meta.hint_reduced
-        # Else, this case encapsulates an invalid reduction by elimination.
-        else:
-            # Assert this to be the case.
-            assert isinstance(hint_reduction_meta, HintReductionInvalid)
-
-            # Assert that this reducer raises the expected type of exception
-            # when passed this input hint.
-            with raises(hint_reduction_meta.exception_type):
-                reduce_hint_caller_external(
+        ) as call_meta:
+            # If this is case encapsulates a valid reduction...
+            if isinstance(hint_reduction_meta, HintReductionValid):
+                # Sanified metadata encapsulating the reduction of this hint.
+                hint_reduced_sane = reduce_hint(
                     call_meta=call_meta,
-                    hint=hint_reduction_meta.hint_unreduced,
                     conf=hint_reduction_meta.conf,
+                    hint=hint_reduction_meta.hint_unreduced,
                 )
+
+                # Assert that this reduction produced the expected output hint.
+                assert (
+                    hint_reduced_sane.hint == hint_reduction_meta.hint_reduced)
+            # Else, this case encapsulates an invalid reduction by elimination.
+            else:
+                # Assert this to be the case.
+                assert isinstance(hint_reduction_meta, HintReductionInvalid)
+
+                # Assert that this reducer raises the expected type of exception
+                # when passed this input hint.
+                with raises(hint_reduction_meta.exception_type):
+                    reduce_hint(
+                        call_meta=call_meta,
+                        conf=hint_reduction_meta.conf,
+                        hint=hint_reduction_meta.hint_unreduced,
+                    )
 
 # ....................{ TESTS ~ raiser                     }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
@@ -119,18 +107,18 @@ def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
     # Defer test-specific imports.
     from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
     from beartype._check.convert._reduce.redmain import (
-        reduce_hint_caller_external)
+        reduce_hint_any)
     from beartype_test.a00_unit.data.hint.data_hint import (
         HINTS_NONPEP_UNIGNORABLE)
 
     # Assert this tester accepts ignorable type hints.
     for hint_ignorable in hints_ignorable:
-        assert reduce_hint_caller_external(hint_ignorable) is (
+        assert reduce_hint_any(hint_ignorable) is (
             HINT_SANE_IGNORABLE)
 
     # Assert this tester rejects unignorable PEP-noncompliant type hints.
     for hint_unignorable in HINTS_NONPEP_UNIGNORABLE:
-        assert reduce_hint_caller_external(hint_unignorable) is not (
+        assert reduce_hint_any(hint_unignorable) is not (
             HINT_SANE_IGNORABLE)
 
     # Assert this tester:
@@ -139,7 +127,7 @@ def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
     for hint_pep_meta in hints_pep_meta:
         # True only if this hint reduces to the ignorable "Any" singleton.
         is_hint_ignorable = (
-            reduce_hint_caller_external(hint_pep_meta.hint) is
+            reduce_hint_any(hint_pep_meta.hint) is
             HINT_SANE_IGNORABLE
         )
 

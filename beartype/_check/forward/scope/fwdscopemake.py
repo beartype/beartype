@@ -20,7 +20,10 @@ from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.metadata.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
-from beartype._data.typing.datatyping import TypeException
+from beartype._data.typing.datatyping import (
+    LexicalScope,
+    TypeException,
+)
 from beartype._util.cls.utilclsget import get_type_locals
 from beartype._util.func.utilfuncframe import (
     find_frame_caller_external,
@@ -124,7 +127,7 @@ def make_scope_forward_decor_meta(
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
-) -> BeartypeForwardScope:
+) -> LexicalScope:
     '''
     Create and return a new **forward scope** (i.e., dictionary mapping from the
     name to value of each locally and globally accessible attribute in the local
@@ -163,7 +166,7 @@ def make_scope_forward_decor_meta(
 
     Returns
     -------
-    BeartypeForwardScope
+    LexicalScope
         Forward scope relative to the currently decorated callable.
     '''
     assert isinstance(decor_meta, BeartypeCallDecorMinimalMeta), (

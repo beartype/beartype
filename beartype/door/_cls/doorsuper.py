@@ -461,7 +461,8 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         return self._hint
 
 
-    @property
+    @property  # type: ignore
+    @property_cached
     def is_ignorable(self) -> bool:
         '''
         :data:`True` only if this type hint is **ignorable** (i.e., conveys
@@ -542,12 +543,15 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             :data:`True` only if this type hint is ignorable.
         '''
 
-        #FIXME: [SPEED] *SLOW.* Ideally, the result of calling
-        #sanify_hint_child() should be lazily memoized with a new private
-        #"_hint_sane" property, which this logic would then access instead.
+        #FIXME: If we end up calling sanify_hint_*() elsewhere, consider:
+        #* Defining a new a new private memoized "_hint_sane" property
+        #  internally caching the result of calling sanify_hint_any().
+        #* Refactor logic below to reference that property instead.
+        # Sanified hint metadata encapsulating the sanification of this hint.
+        hint_sane = sanify_hint_any(hint=self._hint)
 
         # Return true only if this hint is ignorable.
-        return sanify_hint_any(self._hint) is HINT_SANE_IGNORABLE  # pyright: ignore
+        return hint_sane is HINT_SANE_IGNORABLE  # pyright: ignore
 
     # ..................{ CHECKERS                           }..................
     def die_if_unbearable(

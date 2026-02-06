@@ -91,10 +91,10 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        conf: BeartypeConf
-        func: Callable
-        func_annotations: Pep649HintableAnnotations
-        func_scope_forward: Optional[LexicalScope]
+        conf: BeartypeConf  # pyright: ignore
+        func: Callable  # pyright: ignore
+        func_annotations: Pep649HintableAnnotations  # pyright: ignore
+        func_scope_forward: Optional[LexicalScope]  # pyright: ignore
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
