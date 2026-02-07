@@ -115,9 +115,9 @@ def resolve_hint_pep484_ref_str(
             f'{exception_prefix}'
             f'PEP 484 stringified forward reference type hint '
             f'{color_hint(text=repr(hint), is_color=conf.is_color)} '
-            f'invalid, as attempting to dynamically import '
+            f'unresolvable, as attempting to dynamically resolve '
             f'the target type (hint) referred to by '
-            f'this source reference raises:\n'
+            f'this source forward reference raises:\n'
             f'{format_exc()}'
         )
 
@@ -193,7 +193,7 @@ def resolve_hint_pep484_ref_str_caller_external(
     '''
     assert isinstance(hint, str), (
         f'{repr(hint)} not PEP 484 stringified forward reference type hint.')
-    # print(f'Resolving caller-time stringified type hint {repr(hint)}...')
+    # print(f'\n\nResolving caller-time stringified type hint {repr(hint)}...')
 
     # Avoid circular import dependencies.
     from beartype._check.forward.scope.fwdscopemake import (

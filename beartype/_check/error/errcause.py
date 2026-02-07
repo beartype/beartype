@@ -142,7 +142,7 @@ class ViolationCause(object):
         integer *or* ``None`` otherwise (i.e., if that function generated *no*
         such integer). See the same parameter accepted by the higher-level
         :func:`beartype._check.error.errmain.get_func_pith_violation` function.
-    _hint_childs_sane : Union[Iota, None, TupleHintSane]
+    _hint_childs_sane : Union[Iota, TupleHintSane]
         Either:
 
         * If the :meth:`.hint_childs_sane` property has yet to be accessed, the
@@ -158,7 +158,7 @@ class ViolationCause(object):
               that metadata (i.e., :class:`.HintSane` object).
             * Else, this child hint as is.
 
-          * Else, :data:`None`.
+          * Else, the empty tuple.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -194,7 +194,7 @@ class ViolationCause(object):
         pith_name: Optional[str]
         random_int: Optional[int]
         exception_prefix: str
-        _hint_childs_sane: Union[Iota, None, TupleHintSane]
+        _hint_childs_sane: Union[Iota, TupleHintSane]
 
     # ..................{ CLASS VARIABLES ~ set              }..................
     _COPY_VAR_NAMES = frozenset((
@@ -372,8 +372,10 @@ class ViolationCause(object):
         )
 
     # ..................{ PROERTIES                          }..................
+    #FIXME: This should almost certainly be cached via @property_cached. Doing
+    #so simplifies all of that awkward "SENTINEL" caching logic below. *shrug*
     @property
-    def hint_childs_sane(self) -> Optional[TupleHintSane]:
+    def hint_childs_sane(self) -> TupleHintSane:
         '''
         Either:
 
@@ -384,14 +386,14 @@ class ViolationCause(object):
             metadata (i.e., a :class:`.HintSane` object).
           * Else, this child hint as is.
 
-        * Else, :data:`None`.
+        * Else, the empty tuple.
         '''
 
         # If this instance variable is *NOT* the sentinel placeholder, this
         # tuple has already been computed by a prior access of this property.
         # In this case, reduce to a noop by returning this pre-computed tuple.
         if self._hint_childs_sane is not SENTINEL:
-            return self._hint_childs_sane
+            return self._hint_childs_sane  # type: ignore[return-value]
         # Else, this instance variable is still the sentinel placeholder,
         # implying this tuple has yet to be computed.
         #
@@ -405,10 +407,10 @@ class ViolationCause(object):
         # child hints. In this case...
         ):
             # Cache that this tuple is ignorable.
-            self._hint_childs_sane = None
+            self._hint_childs_sane = ()
 
             # Return the same value.
-            return None
+            return ()
         # Else, this is an unignorable PEP-compliant hint. Since this hint
         # *COULD* be subscripted by meaningful child hints, continue.
 

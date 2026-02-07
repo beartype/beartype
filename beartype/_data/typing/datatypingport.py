@@ -125,7 +125,7 @@ if TYPE_CHECKING:
             This factory is intentionally defined as a generic to prevent mypy
             from emitting false positives resembling:
 
-                beartype/door/_func/doorcheck.py:131: error: "HintBare" expects
+                beartype/door/_func/doorfunc.py:131: error: "HintBare" expects
                 no type arguments, but 1 given  [type-arg]
             '''
 

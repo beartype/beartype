@@ -60,7 +60,7 @@ from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
     TupleFixedTypeHint,
     TupleVariableTypeHint,
 )
-from beartype.door._func.doorcheck import (
+from beartype.door._func.doorfunc import (
     die_if_unbearable as die_if_unbearable,
     is_bearable as is_bearable,
     is_subhint as is_subhint,

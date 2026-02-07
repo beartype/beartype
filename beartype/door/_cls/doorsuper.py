@@ -18,7 +18,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doormeta import _TypeHintMetaclass
 from beartype.door._cls.util.doorclstest import die_unless_typehint
-from beartype.door._func.doorcheck import (
+from beartype.door._func.doorfunc import (
     die_if_unbearable,
     is_bearable,
 )

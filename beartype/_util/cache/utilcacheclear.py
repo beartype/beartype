@@ -37,6 +37,9 @@ def clear_caches() -> None:
     * The **tuple union cache** (i.e., private
       :data:`beartype._check.code.codescope._tuple_union_to_tuple_union`
       dictionary).
+    * The **type hint code factory cache** (i.e., private
+      :data:`beartype._check.code.codemain import _HINT_CONF_TO_CHECK_EXPR`
+      dictionary).
     * The **type hint coercion cache** (i.e., private
       :data:`beartype._check.convert._convcoerce._hint_repr_to_hint`
       dictionary).
@@ -49,6 +52,7 @@ def clear_caches() -> None:
     # common occurrence, cache clearing and thus calls to this function are a
     # comparatively rarer occurrence. We optimize for the common case.
     from beartype.door._cls.doormeta import _HINT_TO_WRAPPER
+    from beartype._check.code.codemain import _HINT_CONF_TO_CHECK_EXPR
     from beartype._check.code.codescope import _tuple_union_to_tuple_union
     from beartype._check.convert._convcoerce import _hint_repr_to_hint
     from beartype._check.forward.reference.fwdrefmake import (
@@ -60,6 +64,7 @@ def clear_caches() -> None:
 
     # Clear all relevant caches used throughout this subpackage.
     clear_object_attr_caches()
+    _HINT_CONF_TO_CHECK_EXPR.clear()
     _HINT_TO_HINTSANE.clear()
     _HINT_TO_WRAPPER.clear()
     _forwardref_args_to_forwardref.clear()

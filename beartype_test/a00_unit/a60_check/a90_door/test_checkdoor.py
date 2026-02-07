@@ -26,10 +26,11 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 #WARNINGS DUE TO MEMOIZATION.*
 #
 #Ergo, the only safe means of performing this test is to ensure that this test
-#internally clears all relevant beartype caches *BEFORE* performing any work. To
-#the best of our understanding, the only relevant beartype cache is that of our
-#core beartype._check.code.codemain.make_check_expr() function. Let us consider
-#how to sanitize this, please. Hmm... Actually, we're pretty sure there are more
+#internally clears all relevant beartype caches *BEFORE* performing any work
+#(e.g., by calling clear_caches()). To the best of our understanding, the only
+#relevant beartype cache is that of our core
+#beartype._check.code.codemain.make_check_expr() function. Let us consider how
+#to sanitize this, please. Hmm... Actually, we're pretty sure there are more
 #than one relevant caches. This is probably extremely non-trivial. The only
 #other alternative would be for the @callable_cached decorator to append each
 #cache it creates to a giant global private list somewhere, which this unit test
@@ -222,8 +223,8 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
     Test the :meth:`beartype.door.TypeHint.die_if_unbearable` raiser method.
 
     This test intentionally tests only the core functionality of this tester to
-    avoid violating Don't Repeat Yourself (DRY). This tester internally defers
-    to the procedural :class:`beartype.door.die_if_unbearable` tester, already
+    preserve  Don't Repeat Yourself (DRY). This tester internally defers to the
+    procedural :class:`beartype.door.die_if_unbearable` tester, already
     exhaustively tested by preceding unit tests.
 
     Parameters
@@ -299,14 +300,13 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
     from beartype.door import is_bearable
     from beartype.roar import (
         BeartypeConfException,
-        BeartypeDecorHintForwardRefException,
         BeartypeDecorHintNonpepException,
     )
     from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         PithUnsatisfiedMetadata)
     from pytest import raises
     # from pytest import raises, warns
-    from warnings import simplefilter
+    # from warnings import simplefilter
 
     # ....................{ SETUP                          }....................
     # # Force pytest to temporarily allow deprecation warnings to be caught by the
@@ -387,23 +387,6 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
             conf='Visit the hidden buds, or dreamless sleep',
         )
 
-    # ..................{ FAIL ~ refs                        }..................
-    class RollsItsLoudWatersToTheOceanWaves(object):
-        '''
-        Arbitrary class with which to test relative forward references below.
-        '''
-
-        pass
-
-    # Assert this tester raises the expected exception when passed a relative
-    # forward reference as the type hint, which this tester explicitly prohibits
-    # to promote both robustness and efficiency.
-    with raises(BeartypeDecorHintForwardRefException):
-        is_bearable(
-            obj='Breathes its swift vapours to the circling air.',
-            hint='RollsItsLoudWatersToTheOceanWaves',
-        )
-
 
 # See above for @ignore_warnings() discussion.
 @ignore_warnings(DeprecationWarning)
@@ -412,9 +395,9 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
     Test the :meth:`beartype.door.TypeHint.is_bearable` tester method.
 
     This test intentionally tests only the core functionality of this tester to
-    avoid violating Don't Repeat Yourself (DRY). This tester internally defers
-    to the procedural :class:`beartype.door.is_bearable` tester, already
-    exhaustively tested by preceding unit tests.
+    preserve Don't Repeat Yourself (DRY). This tester internally defers most of
+    its work to the procedural :class:`beartype.door.is_bearable` tester,
+    already exhaustively tested by preceding unit tests.
 
     Parameters
     ----------
@@ -456,3 +439,104 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
             # pith and hint.
             assert TypeHint(hint).is_bearable(pith, conf=conf) is (
                 is_bearable_expected)
+
+# ....................{ TESTS ~ forward references         }....................
+def test_door_forwardref(iter_hints_piths_meta) -> None:
+    '''
+    Test the :mod:`beartype.door` API with respect to forward references.
+
+    Resolving forward reference in statement-time type-checkers published by
+    the :mod:`beartype.door` package fundamentally differs from decoration-time
+    type-checking wrappers produced by the :func:`beartype.beartype` decorator.
+    Specifically:
+
+    * Statement-time type-checkers resolve forward references against the first
+      third-party lexical scope on the current call stack and thus require call
+      stack introspection.
+    * Decoration-time type-checkers resolve forward references against the
+      currently decorated callable (and possibly type) and thus require no call
+      stack introspection.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    from beartype.door import (
+        TypeHint,
+        die_if_unbearable,
+        is_bearable,
+    )
+    from beartype.roar import BeartypeDoorHintViolation
+    from pytest import raises
+    from typing import Union
+
+    # ..................{ HINTS                              }..................
+    # PEP 484-compliant union of a trivial child hint with a PEP 484-compliant
+    # stringified forward reference to the local type defined below (in the
+    # opposite of the optimal order).
+    #
+    # Note that order of child hints is *EXTREMELY* significant. To replicate
+    # worst-case end user behaviour, these child hints are intentionally ordered
+    # in a erroneous manner. Doing so validates that our code generator
+    # intentionally destroys (rather than preserves) this order when it
+    # dynamically generates type-checking code. Our code generator reduces the
+    # likelihood that union type-checks will raise unexpected exceptions by
+    # "short-circuiting" those type-checks as follows:
+    # * Prepending unions with child hints whose resolution is trivial (e.g.,
+    #   the "None" singleton, which is *ALWAYS* guaranteed to exist).
+    # * Appending unions with child hints whose resolution is non-trivial or
+    #   possibly even infeasible at various type-checking times (e.g.,
+    #   stringified forward references to undefined types).
+    to_the_ocean_waves = Union['RollsItsLoudWaters', None]
+
+    # Type hint wrapper encapsulating this union.
+    a_mist_arose = TypeHint(to_the_ocean_waves)
+
+    # ..................{ PASS                               }..................
+    # Assert that statement-level type-checkers accept PEP-compliant union type
+    # hints containing one or more unresolvable stringified forward references
+    # (e.g., referring to types that have yet to be defined) *WITHOUT* raising
+    # exceptions. See above for discussion.
+    assert is_bearable(None, to_the_ocean_waves) is True
+    assert a_mist_arose.is_bearable(None) is True
+    die_if_unbearable(None, to_the_ocean_waves)
+    a_mist_arose.die_if_unbearable(None)
+
+    # ..................{ CLASSES                            }..................
+    class RollsItsLoudWaters(object):
+        '''
+        Arbitrary class against which to test relative forward references below.
+
+        This class is intentionally defined in a local rather than global scope,
+        validating that statement-time type-checkers are able to resolve
+        relative forward references to local attributes *only* accessible by
+        introspecting the current call stack.
+        '''
+
+        pass
+
+    # Arbitrary instance of this class.
+    breathes_its_swift_vapours = RollsItsLoudWaters()
+
+    # Arbitrary object violating the union type hint defined above.
+    to_the_circling_air = 'Breathes its swift vapours to the circling air.'
+
+    # ..................{ PASS                               }..................
+    # Assert that statement-level type-checkers accept PEP-compliant union type
+    # hints containing one or more resolvable stringified forward references
+    # (e.g., referring to types that have now been defined) *WITHOUT* raising
+    # exceptions.
+    assert is_bearable(breathes_its_swift_vapours, to_the_ocean_waves) is True
+    assert a_mist_arose.is_bearable(breathes_its_swift_vapours) is True
+    die_if_unbearable(breathes_its_swift_vapours, to_the_ocean_waves)
+    a_mist_arose.die_if_unbearable(breathes_its_swift_vapours)
+
+    # ..................{ FAIL                               }..................
+    # Assert that statement-level type-checkers reject objects violating
+    # PEP-compliant union type hints containing one or more resolvable
+    # stringified forward references (e.g., referring to types that have now
+    # been defined) *WITHOUT* raising unexpected exceptions.
+    assert is_bearable(to_the_circling_air, to_the_ocean_waves) is False
+    assert a_mist_arose.is_bearable(to_the_circling_air) is False
+    with raises(BeartypeDoorHintViolation):
+        die_if_unbearable(to_the_circling_air, to_the_ocean_waves)
+    with raises(BeartypeDoorHintViolation):
+        a_mist_arose.die_if_unbearable(to_the_circling_air)

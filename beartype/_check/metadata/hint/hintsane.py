@@ -24,6 +24,7 @@ from beartype._data.typing.datatypingport import (
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+from beartype._util.utilobject import is_object_hashable
 from beartype._util.utilobjmake import permute_object
 from collections.abc import Iterable
 
@@ -120,39 +121,36 @@ class _HintSaneMetaclass(type):
         '''
         # print(f'[ _TypeHintMetaclass.__call__(hint={repr(hint)}, **kwargs={kwargs}) ]')
 
-        # ................{ UNCACHED                           }................
+        # True only if this hint is hashable.
+        is_hint_hashable = is_object_hashable(hint)
+
+        # If this hint is unhashable, this hint is also unmemoizable. Why?
+        # Because hints are memoized as hashable dictionary keys. In this case,
+        # notify the caller and avoid attempting to memoize this hint below.
+        if not is_hint_hashable:
+            kwargs['is_cacheable_check_expr'] = False
+        # Else, this hint is hashable.
+
         # If the caller passed one or more optional keyword parameters, this
-        # sanified type hint metadata *CANNOT* be memoized. Create and return an
+        # sanified hint metadata *CANNOT* be memoized. In this case, create an
         # unmemoized instance of that metadata in the standard way.
         if kwargs:
             # print('[ _HintSaneMetaclass.__call__ ] instantiating unmemoized...')
-            return super().__call__(hint, **kwargs)
-        # Else, this sanified type hint metadata can be memoized. Do so.
-
-        # ................{ CACHED                             }................
-        # Attempt to...
-        try:
-            # Sanified hint metadata previously cached under this hint if any
+            hint_sane = super().__call__(hint, **kwargs)
+        # Else, this sanified hint metadata can be memoized. In this case...
+        else:
+            # Sanified hint metadata previously cached against this hint if any
             # *OR* the sentinel placeholder otherwise.
             hint_sane = _HINT_TO_HINTSANE_get(hint, SENTINEL)
 
-            # If this metadata has already been cached, return this metadata.
-            if hint_sane is not SENTINEL:
-                return hint_sane  # type: ignore[return-value]
-            # Else, this metadata has yet to be cached.
+            # If this metadata has yet to be cached, sanify this hint and cache
+            # the resulting metadata against this hint.
+            if hint_sane is SENTINEL:
+                hint_sane = _HINT_TO_HINTSANE[hint] = super().__call__(hint)
+            # Else, this metadata has already been cached.
 
-            # New sanified hint metadata cached against this hint.
-            hint_sane = _HINT_TO_HINTSANE[hint] = (
-                super().__call__(hint, **kwargs))
-
-            # Return this metadata.
-            return hint_sane
-        # If this hint is unhashable, fallback to the default logic below.
-        except TypeError:
-            pass
-
-        # Create and return an unmemoized instance of this metadata as above.
-        return super().__call__(hint, **kwargs)
+        # Return this metadata.
+        return hint_sane  # pyright: ignore
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.

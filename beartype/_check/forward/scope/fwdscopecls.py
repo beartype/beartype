@@ -444,6 +444,19 @@ class BeartypeForwardScope(LexicalScope):
         # Return this proxy.
         return forwardref_subtype
 
+    # ..................{ CLEARERS                           }..................
+    #FIXME: Unit test us up, please.
+    def clear(self) -> None:
+        '''
+        Reduce this forward scope to the empty dictionary.
+        '''
+
+        # Defer to our superclass.
+        super().clear()
+
+        # Clear all subclass-specific instance variables as well. 
+        self._hint_names_destringified.clear()
+
     # ..................{ MINIFIERS                          }..................
     #FIXME: Unit test us up, please.
     def minify(self) -> LexicalScope:

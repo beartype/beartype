@@ -93,6 +93,9 @@ def make_scope_forward_caller_external(
     # caller defines the "__module__" dunder attribute *OR* "None" otherwise
     # (i.e., if that caller fails to define that attribute).
     caller_module_name = get_frame_module_name_or_none(caller_frame)
+    # print(f'Resolved external caller frame {caller_frame} in module "{caller_module_name}"!')
+    # print(f'Local scope:\n\t{caller_locals}')
+    # print(f'Global scope:\n\t{caller_globals}')
 
     # ....................{ SCOPE                          }....................
     # Forward scope compositing this global and local scope of the external

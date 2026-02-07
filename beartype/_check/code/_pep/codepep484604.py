@@ -21,10 +21,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #unions. The approach below is wild -- and not the good kind of "wild," either.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    List,
-    Tuple,
-)
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.hint.hintsane import (
@@ -41,8 +37,9 @@ from beartype._data.code.pep.datacodepep484604 import (
     CODE_PEP484604_UNION_PREFIX,
     CODE_PEP484604_UNION_SUFFIX,
 )
-from beartype._data.typing.datatypingport import Hint
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import DictTypeToAny
+from beartype._data.typing.datatypingport import Hint
 from beartype._data.hint.sign.datahintsignset import HINT_SIGNS_UNION
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
@@ -52,7 +49,6 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ FACTORIES                          }....................
 def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
@@ -196,7 +192,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
         #
         # Note that this PEP-compliant child hint *CANNOT* also be filtered into
         # the dictionary of PEP-noncompliant child hints, even if this child
-        # hint originates from a non-"typing" type (e.g., "List[int]" from
+        # hint originates from a non-"typing" type (e.g., "list[int]" from
         # "list"). Why? Because that would then induce false positives when the
         # current pith shallowly satisfies this non-"typing" type but does *NOT*
         # deeply satisfy this child hint.
@@ -219,44 +215,43 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
     # *BEFORE* less efficient code type-checking any PEP-compliant child hints
     # subscripting this union.
     if hint_childs_nonpep:
+        # Python expression evaluating to a tuple of these arguments.
+        #
+        # Note that we would ideally avoid coercing this set into a tuple when
+        # this set only contains one type by passing that type directly to the
+        # _add_func_wrapper_local_type() function. Sadly, the "set" class
+        # defines no convenient or efficient means of retrieving the only item
+        # of a 1-set. Indeed, the most efficient means of doing so is to iterate
+        # over that set and immediately halt iteration:
+        #     for first_item in muh_set: break
+        #
+        # While we *COULD* technically leverage that approach here, doing so
+        # would also mandate adding multiple intermediate tests, mitigating any
+        # performance gains. Ultimately, we avoid doing so by falling back to
+        # the usual approach. See also this relevant self-StackOverflow post:
+        #       https://stackoverflow.com/a/40054478/2809027
+        hint_curr_expr = add_hints_meta_scope_type_or_types(
+            hints_meta=hints_meta, type_or_types=hint_childs_nonpep.keys())
+
+        # Python expression yielding the value of the current pith such that...
+        pith_curr_expr = (
+            # If this union is also subscripted by one or more PEP-compliant
+            # child hints, prefer the expression assigning this value to a local
+            # variable efficiently reused by subsequent code generated for those
+            # PEP-compliant child hints.
+            hints_meta.pith_curr_assign_expr
+            if hint_childs_sane_pep else
+            # Else, this union is subscripted by *NO* PEP-compliant child hints.
+            # Since this is the first and only test generated for this union,
+            # prefer the expression yielding the value of the current pith
+            # *WITHOUT* assigning this value to a local variable, which would
+            # needlessly go unused.
+            hints_meta.pith_curr_expr
+        )
+
         hints_meta.func_curr_code += CODE_PEP484604_UNION_CHILD_NONPEP_format(
-            # Python expression yielding the value of the current pith.
-            # Specifically...
-            pith_curr_expr=(
-                # If this union is also subscripted by one or more
-                # PEP-compliant child hints, prefer the expression assigning
-                # this value to a local variable efficiently reused by
-                # subsequent code generated for those PEP-compliant child
-                # hints.
-                hints_meta.pith_curr_assign_expr
-                if hint_childs_sane_pep else
-                # Else, this union is subscripted by *NO* PEP-compliant
-                # child hints. Since this is the first and only test
-                # generated for this union, prefer the expression yielding
-                # the value of the current pith *WITHOUT* assigning this
-                # value to a local variable, which would needlessly go
-                # unused.
-                hints_meta.pith_curr_expr
-            ),
-            # Python expression evaluating to a tuple of these arguments.
-            #
-            # Note that we would ideally avoid coercing this set into a
-            # tuple when this set only contains one type by passing that
-            # type directly to the _add_func_wrapper_local_type() function.
-            # Sadly, the "set" class defines no convenient or efficient
-            # means of retrieving the only item of a 1-set. Indeed, the most
-            # efficient means of doing so is to iterate over that set and
-            # immediately halt iteration:
-            #     for first_item in muh_set: break
-            #
-            # While we *COULD* technically leverage that approach here,
-            # doing so would also mandate adding multiple intermediate
-            # tests, mitigating any performance gains. Ultimately, we avoid
-            # doing so by falling back to the usual approach. See also this
-            # relevant self-StackOverflow post:
-            #       https://stackoverflow.com/a/40054478/2809027
-            hint_curr_expr=add_hints_meta_scope_type_or_types(
-                hints_meta=hints_meta, type_or_types=hint_childs_nonpep.keys()),
+            hint_curr_expr=hint_curr_expr,
+            pith_curr_expr=pith_curr_expr,
         )
 
     # ....................{ FORMAT ~ pep                   }....................
@@ -365,7 +360,7 @@ def _get_hint_pep484604_union_args_flattened(
     nested child unions of this parent union hint.** A looser bound but somewhat
     more intelligible upper complexity bound would be :math:`O(n**m)`, where:
 
-    * :m.th:`n` is the maximum number of child hints in any deeply nested child
+    * :math:`n` is the maximum number of child hints in any deeply nested child
       union of this parent union hint.
     * :math:`m` is the maximum depth of the most deeply nested child union of
       this parent union hint.
@@ -381,7 +376,7 @@ def _get_hint_pep484604_union_args_flattened(
 
     Returns
     -------
-    Tuple[HintSane, ...]
+    tuple[HintSane, ...]
         Flattened tuple of the two or more child hints *or* **sanified child
         hint metadatum** (i.e., :class:`.HintSane` objects) subscripting
         this parent union hint.
@@ -440,12 +435,13 @@ def _get_hint_pep484604_union_args_flattened(
     # * "hint_parent_sane" is sanified metadata encapsulating the direct parent
     #   hint of "hint_child_insane". In theory, this should *ALWAYS* be a union
     #   hint -- either this root union hint *OR* a nested union hint thereof.
-    hint_childs_insane_unflattened: List[Tuple[Hint, HintSane]] = (
+    hint_childs_insane_unflattened: list[tuple[Hint, HintSane]] = (
         acquire_instance(list))
 
-    # Efficiently initialize this input stack to the non-empty list of all
-    # 2-tuples (hint_child_insane, union_hint_sane) containing all direct child
-    # hints of this union, equivalent to the following inefficient iteration:
+    # Initialize this input stack to the non-empty list of all 2-tuples
+    # '(hint_child_insane, union_hint_sane)" containing all direct child hints
+    # of this union. The following efficient one-liner is semantically
+    # equivalent to this inefficient iteration:
     #     for hint_child in hint_childs:
     #         hint_childs_insane_unflattened.append((
     #             hint_child, union_hint_sane))

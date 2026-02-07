@@ -59,7 +59,7 @@ from beartype.claw._clawstate import claw_state as __claw_state_beartype__
 # subpackage. Why? Because the former consumes marginally less space and time to
 # import than the latter. Whereas the latter imports the full "TypeHint" type
 # hierarchy, the former only imports low-level utility functions.
-from beartype.door._func.doorcheck import (
+from beartype.door._func.doorfunc import (
     die_if_unbearable as __die_if_unbearable_beartype__)
 
 # ....................{ IMPORTS ~ pep : 695                }....................
