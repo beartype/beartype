@@ -15,7 +15,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convmain import sanify_hint_root_statement
-from beartype._check.code.codemain import make_check_expr
+from beartype._check.code.codemain import (
+    is_hint_sane_conf_cached,
+    make_check_expr,
+)
 from beartype._check.error.errmain import (
     get_func_pith_violation,
     get_hint_object_violation,
@@ -342,8 +345,24 @@ def make_func_checker(
                 is_debug=conf.is_debug,
             )
 
-            # If that function is safely memoizable, do so.
-            if is_func_cacheable:
+            # If...
+            if (
+                # That function is *SUPERFICIALLY* memoizable *AND*...
+                is_func_cacheable and
+                # The lower-level make_check_expr() code factory internally
+                # called by the above call to the passed higher-level
+                # make_func() code factory memoized the type-checking expression
+                # it dynamically generated against this hint and configuration,
+                # then that function is *ACTUALLY* memoizable.
+                is_hint_sane_conf_cached(hint_sane, conf)
+                # Else, make_check_expr() refused to memoize this expression.
+                # Ergo, either this root hint itself *OR* one or more child
+                # hints transitively subscripting this root hint are
+                # unmemoizable (e.g., due to conditionally depending on
+                # caller-specific context). In either case, that function
+                # embedding this unmemoizable expression is also unmemoizable.
+            # In this case, memoize that function.
+            ):
                 hint_conf_exception_prefix_to_func_checker[CACHE_KEY] = (
                     func_checker)
             # Else, that function is *NOT* safely memoizable.

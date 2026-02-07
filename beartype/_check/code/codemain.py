@@ -147,6 +147,39 @@ from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from random import getrandbits
 
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please.
+def is_hint_sane_conf_cached(hint_sane: HintSane, conf: BeartypeConf) -> bool:
+    '''
+    :data:`True` only if a prior call to the :func:`.make_check_expr` factory
+    passed the passed parameters successfully memoized (cached) a type-checking
+    expression for these parameters into its internal cache.
+
+    Parameters
+    ----------
+    hint_sane : HintSane
+        **Sanified type hint metadata** (i.e., :data:`.HintSane` object)
+        encapsulating the hint to be type-checked.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
+
+    Returns
+    -------
+    bool
+        :data:`True` only if a type-checking expression has already been cached.
+    '''
+
+    # Return true only if...
+    return (
+        # This root hint is at least superficially cacheable (in which case
+        # this root hint is at least also hashable) *AND*...
+        hint_sane.is_cacheable_check_expr and
+        # The 2-tuple of these parameters is already in the cache internally
+        # utilized by the make_check_expr() code factory.
+        (hint_sane, conf) in _HINT_CONF_TO_CHECK_EXPR
+    )
+
 # ....................{ MAKERS                             }....................
 def make_check_expr(
     call_meta: BeartypeCallMetaABC,
