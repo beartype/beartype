@@ -32,7 +32,6 @@ def test_resolve_pep563() -> None:
         BeartypeDecorHintForwardRefException,
         BeartypePep563Exception,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_13
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve import (
         ToAvariceOrPride,
         FrequentWith,
@@ -49,15 +48,14 @@ def test_resolve_pep563() -> None:
     and_thrones_radiant_with_chrysolite = FrequentWith()
 
     # .....................{ FAIL                          }....................
-    # Assert that this function unsuccessfully raises the expected exception
-    # *BEFORE* resolving all PEP 563-postponed type hints annotating these
-    # callables.
+    # Assert that this function raises the expected exceptions *BEFORE*
+    # resolving all PEP 563-postponed type hints annotating these callables.
     with raises(BeartypeDecorHintForwardRefException):
         their_starry_domes(numberless_and_immeasurable_halls)
     with raises(BeartypeDecorHintForwardRefException):
         and_thrones_radiant_with_chrysolite.until_the_doves(
             numberless_and_immeasurable_halls)
-    with raises(BeartypeDecorHintForwardRefException):
+    with raises(BeartypeCallHintForwardRefException):
         and_thrones_radiant_with_chrysolite.crystal_column(
             'Nor had that scene of ampler majesty')
 

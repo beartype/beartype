@@ -21,6 +21,7 @@ point of this submodule is to explicitly call and thus exercise that resolver!
 # ....................{ IMPORTS                            }....................
 from __future__ import annotations
 from beartype.door import die_if_unbearable
+from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import Generic
 from beartype._data.typing.datatyping import T
 from beartype._util.hint.pep.proposal.pep649 import (
@@ -55,11 +56,25 @@ class FrequentWith(object):
         until_the_doves_hints = get_pep649_hintable_annotations(
             FrequentWith.until_the_doves)
 
-        # Subscripted generic type alias, resolved to this global attribute that
-        # has yet to be defined by the resolve_pep563() function called by the
-        # caller.
+        # Type hint annotating the parameter accepted by this function, possibly
+        # resolved to the value of the global "ExpandAbove" attribute if the
+        # caller has already passed this function to resolve_pep563().
         ExpandAbove_resolved = until_the_doves_hints[
             'and_squirrels_would_partake']
+
+        # If this hint is still its initial PEP 563-deferred stringified forward
+        # reference, this hint has *NOT* yet been resolved by an external call
+        # to the resolve_pep563() resolver. In this case, notify the caller by
+        # raising this beartype-specific exception.
+        if isinstance(ExpandAbove_resolved, str):
+            raise BeartypeDecorHintForwardRefException(
+                f'PEP 563-deferred FrequentWith.until_the_doves() '
+                f'parameter "and_squirrels_would_partake" '
+                f'type hint {repr(ExpandAbove_resolved)} still stringified.'
+            )
+        # Else, this hint is no longer its initial PEP 563-deferred stringified
+        # forward reference and has thus hint been resolved by an external call
+        # to the resolve_pep563() resolver.
 
         # If this parameter violates this type, raise an exception.
         die_if_unbearable(and_squirrels_would_partake, ExpandAbove_resolved)
@@ -120,9 +135,24 @@ def their_starry_domes(of_diamond_and_of_gold: ExpandAbove) -> ExpandAbove:
     their_starry_domes_hints = get_pep649_hintable_annotations(
         their_starry_domes)
 
-    # Subscripted generic type alias, resolved to this global attribute that has
-    # yet to be defined by the resolve_pep563() function called by the caller.
+    # Type hint annotating the parameter accepted by this function, possibly
+    # resolved to the value of the global "ExpandAbove" attribute if the caller
+    # has already passed this function to the resolve_pep563() resolver.
     ExpandAbove_resolved = their_starry_domes_hints['of_diamond_and_of_gold']
+
+    # If this hint is still its initial PEP 563-deferred stringified forward
+    # reference, this hint has *NOT* yet been resolved by an external call to
+    # the resolve_pep563() resolver. In this case, notify the caller by raising
+    # this beartype-specific exception.
+    if isinstance(ExpandAbove_resolved, str):
+        raise BeartypeDecorHintForwardRefException(
+            f'PEP 563-deferred their_starry_domes() '
+            f'parameter "of_diamond_and_of_gold" '
+            f'type hint {repr(ExpandAbove_resolved)} still stringified.'
+        )
+    # Else, this hint is no longer its initial PEP 563-deferred stringified
+    # forward reference and has thus hint been resolved by an external call to
+    # the resolve_pep563() resolver.
 
     # If this parameter unexpectedly violates this subscripted generic, raise an
     # exception.
@@ -137,5 +167,5 @@ ExpandAbove = ToAvariceOrPride[str]
 '''
 Arbitrary **subscripted generic type alias forward reference** (i.e.,
 :pep:`563`-postponed type hint referring to a global attribute that has yet to
-be defined whose value is a subscripted generic that *has* been defined),
+be defined whose value is a subscripted generic that *has* been defined).
 '''

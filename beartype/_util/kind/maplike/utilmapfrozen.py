@@ -9,15 +9,23 @@ implementing immutable mappings, preserving :math:`O(1)` complexity while
 prohibiting modification).
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Hallelujah! "PEP 814 – Add frozendict built-in type" introduced with
+#Python 3.15 obsoletes our bespoke "FrozenDict" defined below. Ergo:
+#* Under Python >= 3.15, just trivially alias:
+#      FrozenDict = frozendict
+#* Under Python <= 3.14, conditionally preserve our existing implementation.
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeKindFrozenDictException
-from beartype.typing import (
-    NoReturn,
-    SupportsIndex,
-    Tuple,
-)
 from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Mapping
+from typing import (
+    TYPE_CHECKING,
+    NoReturn,
+    Optional,
+    SupportsIndex,
+)
 
 # ....................{ CLASSES                            }....................
 #FIXME: Consider attempting to generalize with type variables: e.g.,
@@ -33,6 +41,14 @@ class FrozenDict(dict):
     passing as parameters to memoized callables and classes (e.g., our core
     :class:`beartype.BeartypeConf` class).
 
+    Parameters
+    ----------
+    _hash : Optional[int]
+        Either:
+
+        * If this dictionary is hashable, its hash.
+        * Else, :data:`None`.
+
     See Also
     --------
     https://stackoverflow.com/q/1151658/2809027
@@ -45,6 +61,11 @@ class FrozenDict(dict):
     # @beartype decorations. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = ('_hash',)
+
+    # Squelch false negatives from mypy. This is absurd. This is mypy. See:
+    #     https://github.com/python/mypy/issues/5941
+    if TYPE_CHECKING:
+        _hash: Optional[int]
 
     # ..................{ CLASS METHODS                      }..................
     @classmethod
@@ -65,10 +86,20 @@ class FrozenDict(dict):
         # Instantiate this immutable dictionary with all passed parameters.
         super().__init__(*args, **kwargs)
 
-        # Precompute the hash for this immutable dictionary at instantiation
-        # time for both efficiency and safety.
-        frozen_items = frozenset(self.items())  # <-- clever stuff
-        self._hash = hash(frozen_items)  # <---- more clever stuff
+        # Attempt to precompute the hash for this immutable dictionary at
+        # instantiation time, for both efficiency and safety.
+        try:
+            frozen_items = frozenset(self.items())  # <-- clever stuff
+            self._hash = hash(frozen_items)  # <---- more clever stuff
+        # If instantiating the frozen set above raises a "TypeError", then one
+        # or more passed values are unhashable. In this case, this frozen
+        # dictionary will also be unhashable but otherwise usable as an
+        # immutable container (e.g., to prohibit accidental modification).
+        # Preserve this usability by nullifying this hash, which the __hash__()
+        # dunder method subsequently detects and handles by raising a
+        # human-readable exception.
+        except TypeError:
+            self._hash = None
 
     # ..................{ DUNDERS                            }..................
     def __hash__(self) -> int:  # type: ignore[override]
@@ -78,14 +109,42 @@ class FrozenDict(dict):
         Defining this method satisfies the :class:`collections.abc.Hashable`
         abstract base class (ABC), enabling this dictionary to be used as in
         hashable containers (e.g., dictionaries, sets).
+
+        Raises
+        ------
+        TypeError
+            If one or more values of this dictionary are unhashable.
         '''
 
-        # Return the precomputed hash for this immutable dictionary.
+        # If this dictionary is unhashable, raise a human-readable exception.
+        if self._hash is None:
+            # Avoid circular import dependencies.
+            from beartype._util.utilobject import is_object_hashable
+
+            # For each value of this dictionary...
+            #
+            # Note that the keys of *ALL* dictionaries (both mutable and
+            # immutable) are necessarily hashable and thus need *NOT* be
+            # considered here.
+            for value in self.values():
+                # If this value is unhashable, raise an exception.
+                if not is_object_hashable(value):
+                    raise TypeError(
+                        f'Frozen dictionary {repr(self)} '
+                        f'value {repr(value)} unhashable.'
+                    )
+
+            # If the above iteration failed to raise an exception, do so anyway.
+            # Note that this should *NEVER* occur. Thus we sigh.
+            raise TypeError(f'Frozen dictionary {repr(self)} unhashable.')
+        # Else, this dictionary is hashable.
+
+        # Return the hash already precomputed by the __init__() method above.
         return self._hash
 
 
     def __reduce_ex__(self, protocol: SupportsIndex) -> (
-        Tuple[type, Tuple[dict]]):
+        tuple[type, tuple[dict]]):
         '''
         Pickle this immutable dictionary.
 

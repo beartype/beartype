@@ -218,14 +218,14 @@ class HintsMeta(FixedList):
         'func_wrapper_scope',
         'hint_curr_expr',
         'hint_curr_meta',
-        'indent_curr',
         'indent_child',
+        'indent_curr',
         'indent_level_child',
         'index_last',
         'is_check_expr_cacheable',
         'is_var_random_int_needed',
-        'pith_curr_expr',
         'pith_curr_assign_expr',
+        'pith_curr_expr',
         'pith_curr_var_name',
         'pith_curr_var_name_index',
     )
@@ -289,11 +289,14 @@ class HintsMeta(FixedList):
         self.pith_curr_var_name_index = 0
 
         # Nullify all remaining instance variables.
-        self.func_curr_code = (  # type: ignore[assignment]
+        self.call_meta = (  # type: ignore[assignment]
+        self.conf) = (  # pyright: ignore
+        self.func_curr_code) = (  # pyright: ignore
         self.hint_curr_expr) = (  # pyright: ignore
         self.hint_curr_meta) = (  # pyright: ignore
         self.indent_child) = (  # pyright: ignore
         self.indent_curr) = (  # pyright: ignore
+        self.is_check_expr_cacheable) = (  # pyright: ignore
         self.pith_curr_assign_expr) = (  # pyright: ignore
         self.pith_curr_expr) = (  # pyright: ignore
         self.pith_curr_var_name) = None  # type: ignore[assignment]

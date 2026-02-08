@@ -142,6 +142,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
 )
 from beartype._util.hint.utilhinttest import die_as_hint_unsupported
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
@@ -1424,10 +1425,6 @@ def make_check_expr(
         # all other logic for the currently visited hint).
         hints_meta_index_curr += 1
 
-    # ..................{ RETURN                             }..................
-    # Release the fixed list of all such metadata.
-    release_instance(hints_meta)
-
     # If the Python code snippet to be returned remains unchanged from its
     # initial value, the breadth-first search above failed to generate code. In
     # this case, raise an exception.
@@ -1443,6 +1440,7 @@ def make_check_expr(
             f'{EXCEPTION_PREFIX_HINT}{repr(hint_sane)} unchecked.')
     # Else, the breadth-first search above successfully generated code.
 
+    # ..................{ SCOPE                              }..................
     # If type-checking this hint requires a pseudo-random integer, pass a hidden
     # parameter to this wrapper function exposing the random.getrandbits()
     # function required to generate this integer.
@@ -1450,13 +1448,30 @@ def make_check_expr(
         hints_meta.func_wrapper_scope[ARG_NAME_GETRANDBITS] = getrandbits
     # Else, type-checking this hint requires *NO* pseudo-random integer.
 
-    # Type-checking expression dynamically generated above to be returned.
-    check_expr = (func_wrapper_code, hints_meta.func_wrapper_scope)
+    # ..................{ CACHE                              }..................
+    # Type-checking expression dynamically generated above to be returned
+    # *AFTER* finalizing these instance variables above.
+    check_expr = (
+        func_wrapper_code,
+
+        # Coerce this currently mutable non-frozen dictionary into an immutable
+        # frozen dictionary, preventing callers from erroneously modifying this
+        # frozen dictionary when memoized below and subsequently returned to
+        # different callers. Freezing this dictionary slightly reduces
+        # efficiency (which is slightly bad) but *DRAMATICALLY* eliminates
+        # otherwise impossible to debug memoization issues. Debugging wins! \o/
+        FrozenDict(hints_meta.func_wrapper_scope),
+    )
 
     # If this expression is safely memoizable into this cache, do so.
     if hints_meta.is_check_expr_cacheable:
         _HINT_CONF_TO_CHECK_EXPR[CACHE_KEY] = check_expr  # pyright: ignore
     # Else, this expression is *NOT* safely memoizable.
+
+    # ..................{ RETURN                             }..................
+    # Release this type-checking metadata queue *BEFORE* returning but *AFTER*
+    # performing all other logic possibly requiring this queue above.
+    release_instance(hints_meta)
 
     # Return this expression and associated metadata.
     # print(f'func_wrapper_scope: {hints_meta.func_wrapper_scope}')

@@ -364,17 +364,20 @@ def test_get_hint_object_violation() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-    from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from beartype._check.error.errmain import get_hint_object_violation
+    from beartype._check.metadata.call.callmetaexternal import (
+        BEARTYPE_CALL_EXTERNAL_META)
     from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+    from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from pytest import raises
 
     # ..................{ LOCALS                             }..................
     # Keyword arguments to be unconditionally passed to all getter calls below.
     kwargs = dict(
-        obj='Frantic with dizzying anguish, her blind flight',
-        hint=str,
+        call_meta=BEARTYPE_CALL_EXTERNAL_META,
         conf=BEARTYPE_CONF_DEFAULT,
+        hint=str,
+        obj='Frantic with dizzying anguish, her blind flight',
     )
 
     # ..................{ FAIL                               }..................

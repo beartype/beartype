@@ -290,9 +290,25 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         that callable.
         '''
 
-        # Restore instance variables to initial defaults.
+        # Defer the resolution of the global and local scope for the currently
+        # decorated callable until needed to resolve stringified type hints.
+        self.func_scope_forward = None  # pyright: ignore
+
+        # Empty the set of all hidden parameters required by this type-checking
+        # wrapper function.
         self.func_wrapper_scope: LexicalScope = {}
         self._is_func_annotations_dirty = False
+
+        # Default the same code snippets set by the reinit() method to those
+        # returning values from normal (i.e., non-generator) synchronous
+        # callables for sanity.
+        self.func_wrapper_code_return_checked = CODE_NORMAL_RETURN_CHECKED
+        self.func_wrapper_code_return_unchecked = (
+            CODE_NORMAL_RETURN_UNCHECKED_SYNC)
+
+        # Default all remaining code snippets to the empty string.
+        self.func_wrapper_code_call_prefix = ''
+        self.func_wrapper_code_signature_prefix = ''
 
         # Nullify all remaining instance variables for safety.
         self.cls_stack = (  # type: ignore[assignment]
@@ -305,10 +321,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         self.func_wrappee_wrappee) = (  # pyright: ignore
         self.func_wrappee_wrappee_codeobj) = (  # pyright: ignore
         self.func_wrapper) = (  # pyright: ignore
-        self.func_wrapper_code_call_prefix) = (  # pyright: ignore
-        self.func_wrapper_code_return_checked) = (  # pyright: ignore
-        self.func_wrapper_code_return_unchecked) = (  # pyright: ignore
-        self.func_wrapper_code_signature_prefix) = (  # pyright: ignore
         self.func_wrapper_name) = None  # type: ignore[assignment]
 
 
@@ -435,13 +447,12 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # stack. In either case, ignore this parameter.
 
         # ..................{ VARS                           }..................
-        # Classify all passed parameters.
-        self.conf = conf
-        self.cls_stack = cls_stack
+        # Deinitialize this metadata *BEFORE* overwriting these defaults below.
+        self.deinit()
 
-        # Defer the resolution of the global and local scope for that callable
-        # until needed to subsequently resolve stringified type hints.
-        self.func_scope_forward = None  # pyright: ignore
+        # Classify all passed parameters.
+        self.cls_stack = cls_stack
+        self.conf = conf
 
         # ..................{ VARS ~ func : wrappee          }..................
         # Wrappee callable currently being decorated.
@@ -485,10 +496,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # Wrapper callable to be unwrapped in the event that the
         # decorated callable differs from the callable to be unwrapped.
         self.func_wrapper = wrapper
-
-        # Efficiently reduce this local scope back to the dictionary of all
-        # parameters unconditionally required by *ALL* wrapper functions.
-        self.func_wrapper_scope.clear()
 
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = func.__name__
@@ -554,16 +561,6 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         self.func_annotations_get = self.func_annotations.get
 
         # ..................{ VARS ~ func : kind             }..................
-        # Default all remaining code snippets to the empty string.
-        self.func_wrapper_code_signature_prefix = ''
-        self.func_wrapper_code_call_prefix = ''
-
-        # Default the same code snippets set below to those returning values
-        # from normal (i.e., non-generator) synchronous callables for sanity.
-        self.func_wrapper_code_return_checked = CODE_NORMAL_RETURN_CHECKED
-        self.func_wrapper_code_return_unchecked = (
-            CODE_NORMAL_RETURN_UNCHECKED_SYNC)
-
         # If the wrappee callable currently being decorated is pure-Python...
         if func_wrappee_codeobj:
             # print(f'Decorated callable {repr(func)}...')

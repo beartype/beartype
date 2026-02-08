@@ -40,7 +40,7 @@ from beartype._data.code.datacodename import (
     ARG_NAME_EXCEPTION_PREFIX,
     ARG_NAME_GETRANDBITS,
     ARG_NAME_GET_VIOLATION,
-    ARG_NAME_HINT,
+    ARG_NAME_RAISER_HINT,
     ARG_NAME_WARN,
     CODE_PITH_ROOT_NAME_PLACEHOLDER,
     FUNC_CHECKER_NAME_PREFIX,
@@ -307,6 +307,9 @@ def make_func_checker(
             )
             # print(f'func_scope: {func_scope}')
 
+            # Mutable dictionary coerced from this immutable frozen dictionary.
+            func_scope = dict(func_scope)
+
             # Expose this beartype external call metadata singleton to this
             # wrapper function as a beartype-specific hidden parameter passed to
             # this wrapper function, whose default value is that metadata. Doing
@@ -366,6 +369,7 @@ def make_func_checker(
                 hint_conf_exception_prefix_to_func_checker[CACHE_KEY] = (
                     func_checker)
             # Else, that function is *NOT* safely memoizable.
+
         # If one or more warnings were issued, reissue these warnings with each
         # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
         # replaced by a human-readable description of this callable and
@@ -443,6 +447,9 @@ def make_code_raiser_hint_object_check(
     code_expr, func_scope = make_check_expr(
         call_meta=call_meta, hint_sane=hint_sane, conf=conf)
 
+    # Mutable dictionary coerced from this immutable frozen dictionary.
+    func_scope = dict(func_scope)
+
     # Pass hidden parameters to this raiser function exposing:
     # * The passed exception prefix accessed by this snippet.
     # * The get_hint_object_violation() getter called by the
@@ -454,7 +461,7 @@ def make_code_raiser_hint_object_check(
     #   preferable for the purposes of generating readable violations.
     func_scope[ARG_NAME_EXCEPTION_PREFIX] = exception_prefix
     func_scope[ARG_NAME_GET_VIOLATION] = get_hint_object_violation
-    func_scope[ARG_NAME_HINT] = hint_insane
+    func_scope[ARG_NAME_RAISER_HINT] = hint_insane
 
     #FIXME: [SPEED] Globalize this bound method as a negligible efficiency gain.
     # Code snippet generating a human-readable violation exception or warning
@@ -651,6 +658,9 @@ def make_code_raiser_func_pith_check(
     # an arbitrary object against this hint.
     code_expr, func_scope = make_check_expr(
         call_meta=decor_meta, hint_sane=hint_sane, conf=decor_meta.conf)
+
+    # Mutable dictionary coerced from this immutable frozen dictionary.
+    func_scope = dict(func_scope)
 
     # Expose the get_func_pith_violation() getter called by the
     # "CODE_GET_FUNC_PITH_VIOLATION" snippet as a "beartype"-specific hidden

@@ -19,7 +19,7 @@ from beartype._data.code.datacodename import (
     ARG_NAME_CONF,
     ARG_NAME_EXCEPTION_PREFIX,
     ARG_NAME_GET_VIOLATION,
-    ARG_NAME_HINT,
+    ARG_NAME_RAISER_HINT,
     ARG_NAME_WARN,
     VAR_NAME_PITH_ROOT,
     VAR_NAME_RANDOM_INT,
@@ -98,7 +98,7 @@ CODE_GET_HINT_OBJECT_VIOLATION = f''':
             {VAR_NAME_VIOLATION} = {ARG_NAME_GET_VIOLATION}(
                 call_meta={ARG_NAME_CALL_META},
                 conf={ARG_NAME_CONF},
-                hint={ARG_NAME_HINT},
+                hint={ARG_NAME_RAISER_HINT},
                 obj={VAR_NAME_PITH_ROOT},
                 exception_prefix={ARG_NAME_EXCEPTION_PREFIX},{{arg_random_int}}
             )
