@@ -109,7 +109,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * reduce_hint_pep484_ref_str().
 #FIXME: Resurrect these older unit test assertions. Specifically:
 #* Assert that the reduce_hint() function returns "HintSane" objects whose
-#  "is_cacheable_check_expr" instance variables are true for these hints:
+#  "is_check_expr_cacheable" instance variables are true for these hints:
 #       # Defer version-specific imports.
 #       from beartype.typing import Self
 #
@@ -162,7 +162,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #       assert is_hint_needs_cls_stack(list[Self]) is True
 #
 #* Assert that the reduce_hint() function returns "HintSane" objects whose
-#  "is_cacheable_check_expr" instance variables are false for *ALL* other hints.
+#  "is_check_expr_cacheable" instance variables are false for *ALL* other hints.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.code.datacodename import CODE_PITH_ROOT_NAME_PLACEHOLDER

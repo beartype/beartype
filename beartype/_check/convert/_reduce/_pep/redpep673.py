@@ -115,7 +115,7 @@ def reduce_hint_pep673(
         # Type-checking code dynamically generated for each "typing.Self" type
         # hint is contextually relative to the currently decorated class and
         # thus *CANNOT* be cached across all "typing.Self" type hints.
-        is_cacheable_check_expr=False,
+        is_check_expr_cacheable=False,
     )
 
     # Reduce this hint to this metadata.

@@ -116,7 +116,7 @@ def resolve_hint_pep484_ref_str(
             f'PEP 484 stringified forward reference type hint '
             f'{color_hint(text=repr(hint), is_color=conf.is_color)} '
             f'unresolvable, as attempting to dynamically resolve '
-            f'the target type (hint) referred to by '
+            f'the target type hint referred to by '
             f'this source forward reference raises:\n'
             f'{format_exc()}'
         )

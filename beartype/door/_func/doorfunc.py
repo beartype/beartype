@@ -329,7 +329,7 @@ hints, defined as:
 
 * Type hints whose sanification by the :meth:`.HintsMeta.sanify_hint_child`
   method returns **sanified hint metadata** (i.e., :class:`.HintSane` instance)
-  whose :attr:`.HintSane.is_cacheable_check_expr` instance variable is
+  whose :attr:`.HintSane.is_check_expr_cacheable` instance variable is
   :data:`False`.
 * Parent type hints transitively subscripted by one or more child type hints
   having such a sanification.

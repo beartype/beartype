@@ -140,7 +140,7 @@ def reduce_hint_pep484_ref(
         # contextually relative to the local and global scope of the currently
         # type-checked callable, type, or statement and thus *CANNOT* be cached
         # across all forward references.
-        is_cacheable_check_expr=False,
+        is_check_expr_cacheable=False,
     )
 
     # Return this metadata.
