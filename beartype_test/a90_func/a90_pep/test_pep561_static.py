@@ -50,7 +50,6 @@ from beartype_test._util.mark.pytskip import (
 #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
 @skip_unless_package('mypy')
 @skip_if_ci()
-@skip_if_pypy()
 def test_pep561_mypy() -> None:
     '''
     Integration test testing this project's compliance with :pep:`561` by

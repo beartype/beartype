@@ -15,7 +15,7 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import argparse, functools, re, sys, weakref
-from beartype_test._util.mark.pytskip import skip_if_pypy, skip_unless_package
+from beartype_test._util.mark.pytskip import skip_unless_package
 from collections import deque
 from collections.abc import Iterable
 from decimal import Decimal
@@ -487,23 +487,34 @@ def test_api_cave_type_core() -> None:
         cave.RegexMatchType,
         _THAT_OUR_SONS_MIGHT_FOLLOW_AFTER_BY_THE_BONES_ON_THE_WAY)
 
-# ....................{ TESTS ~ type : skip                }....................
-@skip_if_pypy()
-def test_api_cave_type_core_nonpypy() -> None:
+# ....................{ TESTS ~ type                       }....................
+def test_api_cave_type_core() -> None:
     '''
-    Test all core simple types published by the :mod:`beartype.cave` submodule
-    requiring the active Python interpreter to *not* be PyPy where this is the
-    case *or* reduce to a noop otherwise.
+    Test all core simple types published by the :mod:`beartype.cave` submodule on BOTH CPython and PyPy.
     '''
 
     # Import this submodule.
     from beartype import cave
 
-    # Test "FunctionOrMethodCType" against a bound C-based instance non-dunder
-    # method. Under PyPy, this method is a regular pure-Python bound method.
+    # Test "FunctionOrMethodCType" against true C-based builtins that are
+    # implemented in C/RPython on both CPython and PyPy.
+    #
+    # Note: On PyPy, bound methods of built-in types (like [].append) are
+    # implemented in pure Python, so we only test top-level builtins.
     _assert_type_objects(
         cave.FunctionOrMethodCType,
-        _IN_THE_SAND_DRIFT_ON_THE_VELDT_SIDE_IN_THE_FERN_SCRUB_WE_LAY.sub)
+        _IN_THE_SAND_DRIFT_ON_THE_VELDT_SIDE_IN_THE_FERN_SCRUB_WE_LAY.sub,  # Glinte: This is removed in the PyPy PR, so I expect this to fail, but I kept it for you
+        # Core builtins that are C-based on both CPython and PyPy
+        len,
+        iter,
+        isinstance,
+        hasattr,
+        getattr,
+        setattr,
+        delattr,
+        id,
+        hash,
+    )
 
 # ....................{ TESTS ~ tuple                      }....................
 def test_api_cave_tuple_core() -> None:

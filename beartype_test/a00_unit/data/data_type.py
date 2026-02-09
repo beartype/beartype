@@ -852,9 +852,9 @@ CALLABLES_C = frozenset((
     object().__str__, # Method Wrapper Type
     str.join,         # Method Descriptor Type
 
-    #FIXME: *UGH.* This probably should be callable under PyPy 3.6, but
+    #FIXME: *UGH.* This probably should be callable under PyPy 3.11, but
     #it's not, which is why we've currently disabled this. That's clearly a
-    #PyPy bug. Uncomment this *AFTER* we drop support for PyPy 3.6 (and any
+    #PyPy bug. Uncomment this *AFTER* we drop support for PyPy 3.11 (and any
     #newer PyPy versions also failing to implement this properly). We
     #should probably also consider filing an upstream issue with PyPy,
     #because this is non-ideal and non-orthogonal behaviour with CPython.
