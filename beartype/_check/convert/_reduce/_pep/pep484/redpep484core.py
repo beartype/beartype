@@ -23,6 +23,7 @@ from beartype._data.hint.datahintrepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED)
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.error.utilerrwarn import issue_warning
+from typing import NoReturn
 
 # ....................{ REDUCERS ~ deprecated              }....................
 def reduce_hint_pep484_deprecated(
@@ -101,8 +102,8 @@ def reduce_hint_pep484_deprecated(
 # ....................{ REDUCERS ~ singleton               }....................
 def reduce_hint_pep484_any(hint: Hint, exception_prefix: str) -> HintSane:
     '''
-    Reduce the passed :pep:`484`-compliant :obj:`typing.Any` singleton to the
-    ignorable :data:`.HINT_SANE_IGNORABLE` singleton.
+    Reduce the passed :pep:`484`-compliant :obj:`typing.Any` type hint singleton
+    to the ignorable :data:`.HINT_SANE_IGNORABLE` singleton.
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as the implementation trivially reduces
@@ -111,7 +112,7 @@ def reduce_hint_pep484_any(hint: Hint, exception_prefix: str) -> HintSane:
     Parameters
     ----------
     hint : Hint
-        :obj:`typing.Any` hint to be reduced.
+        :obj:`typing.Any` hint singleton to be reduced.
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
@@ -121,8 +122,34 @@ def reduce_hint_pep484_any(hint: Hint, exception_prefix: str) -> HintSane:
         Ignorable :data:`.HINT_SANE_IGNORABLE` singleton.
     '''
 
-    # Unconditionally ignore the "Any" singleton.
+    # Unconditionally ignore the "Any" hint singleton.
     return HINT_SANE_IGNORABLE
+
+
+def reduce_hint_pep484_never(hint: Hint, exception_prefix: str) -> Hint:
+    '''
+    Reduce the passed PEP-noncompliant :obj:`typing.Never` type hint singleton
+    to the :pep:`484`-compliant :obj:`typing.NoReturn` type hint singleton.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : Hint
+        :obj:`typing.Never` hint singleton to be reduced.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
+
+    Returns
+    -------
+    Hint
+        :pep:`484`-compliant :obj:`typing.NoReturn` hint singleton.
+    '''
+
+    # Unconditionally return the PEP 484-compliant "NoReturn" hint singleton.
+    return NoReturn
 
 
 # Note that this reducer is intentionally typed as returning "type" rather than

@@ -55,12 +55,13 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignMutableMapping,
     HintSignMutableSequence,
     HintSignMutableSet,
+    HintSignNever,
     HintSignNewType,
     HintSignNumpyArray,
     HintSignNone,
+    HintSignNoReturn,
     HintSignOptional,
     HintSignOrderedDict,
-    # HintSignPanderaAny,
     HintSignParamSpec,
     HintSignPattern,
     HintSignTypeAlias,
@@ -571,8 +572,27 @@ Notably, this set contains the signs of:
 I have no code and I must scream.
 '''
 
+# ....................{ SETS ~ pep : 484                   }....................
+HINT_SIGNS_PEP484_NEVER: FrozenSetHintSign = frozenset((
+    # ..................{ NON-PEP                            }..................
+    # PEP-noncompliant "typing.Never" type hint singleton has yet to be
+    # standardized but is increasingly popular (probably, due to its more
+    # concise and readable name), sadly.
+    HintSignNever,
+
+    # ..................{ PEP 484                            }..................
+    # PEP 484-compliant "typing.NoReturn" type hint singleton.
+    HintSignNoReturn,
+))
+'''
+Frozen set of all :pep:`484`-compliant **never signs** (i.e., arbitrary objects
+uniquely identifying PEP-compliant type hints semantically equivalent to the
+:pep:`484`-compliant :obj:`typing.Never` and :obj:`typing.NoReturn`, which are
+currently aliases of one other conveying identical semantics).
+'''
+
 # ....................{ SETS ~ pep : 557                   }....................
-HINT_SIGNS_DATACLASS_NONFIELDS: FrozenSetHintSign = frozenset((
+HINT_SIGNS_PEP557_DATACLASS_NONFIELDS: FrozenSetHintSign = frozenset((
     # ..................{ PEP 526                            }..................
     # PEP 526-compliant "typing.ClassVar[...]" type hints, signifying class
     # variables to actually be class variables rather than dataclass fields.
@@ -585,10 +605,11 @@ HINT_SIGNS_DATACLASS_NONFIELDS: FrozenSetHintSign = frozenset((
     HintSignPep557DataclassInitVar,
 ))
 '''
-Frozen set of all **dataclass non-field signs** (i.e., arbitrary objects
-uniquely identifying PEP-compliant root type hints annotating attributes defined
-at class scope in dataclasses decorated by the :pep:`557`-compliant
-:func:`dataclasses.dataclass` decorator to *not* be fields of those dataclasses).
+Frozen set of all :pep:`557`-compliant **dataclass non-field signs** (i.e.,
+arbitrary objects uniquely identifying PEP-compliant root type hints annotating
+attributes defined at class scope in dataclasses decorated by the
+:pep:`557`-compliant :func:`dataclasses.dataclass` decorator to *not* be fields
+of those dataclasses).
 '''
 
 # ....................{ SETS ~ pep : 612                   }....................
@@ -598,9 +619,9 @@ HINT_SIGNS_PEP612_CALLABLE_ARGLIST: FrozenSetHintSign = frozenset((
     HintSignParamSpec,
 ))
 '''
-Frozen set of all **callable argument signs** (i.e., arbitrary objects uniquely
-identifying PEP-compliant child type hints typing the argument lists of parent
-:class:`collections.abc.Callable` type hints).
+Frozen set of all :pep:`612`-compliant **callable argument signs** (i.e.,
+arbitrary objects uniquely identifying PEP-compliant child type hints typing the
+argument lists of parent :class:`collections.abc.Callable` type hints).
 
 This set necessarily excludes:
 

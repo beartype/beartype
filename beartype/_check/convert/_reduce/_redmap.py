@@ -12,10 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Dict,
-    Optional,
-)
 from beartype._check.convert._reduce._nonpep.rednonpeptype import (
     reduce_hint_nonpep)
 from beartype._check.convert._reduce._nonpep.api.redapinumpy import (
@@ -25,6 +21,7 @@ from beartype._check.convert._reduce._nonpep.api.redapipandera import (
 from beartype._check.convert._reduce._pep.pep484.redpep484core import (
     reduce_hint_pep484_any,
     reduce_hint_pep484_deprecated,
+    reduce_hint_pep484_never,
     reduce_hint_pep484_none,
 )
 from beartype._check.convert._reduce._pep.pep484.redpep484ref import (
@@ -98,6 +95,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignMutableMapping,
     HintSignMutableSequence,
     HintSignMutableSet,
+    HintSignNever,
     HintSignNewType,
     HintSignNone,
     HintSignNumpyArray,
@@ -141,6 +139,7 @@ from beartype._util.hint.pep.proposal.pep612 import (
 )
 from beartype._util.hint.pep.proposal.pep613 import reduce_hint_pep613
 from collections.abc import Callable
+from typing import Optional
 
 # ....................{ PRIVATE ~ hints                    }....................
 # Note that these type hints would ideally be defined with the mypy-specific
@@ -155,7 +154,7 @@ from collections.abc import Callable
 # done that. Why? Doing so would substantially increase the fragility of this
 # API by preventing us from readily adding and removing infrequently required
 # parameters (e.g., "cls_stack", "pith_name"). Callback protocols suck, frankly.
-_HintSignToReduceHintCached = Dict[Optional[HintSign], Callable]
+_HintSignToReduceHintCached = dict[Optional[HintSign], Callable]
 '''
 PEP-compliant type hint matching a **cached reducer dictionary** (i.e., mapping
 from each sign uniquely identifying various type hints to a memoized callable
@@ -182,8 +181,12 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #   raises an exception.
     None: reduce_hint_nonpep,
 
+    # Reduce PEP-noncompliant "typing.Never" singleton to the PEP 484-compliant
+    # "typing.NoReturn" singleton.
+    HintSignNever: reduce_hint_pep484_never,
+
     # ..................{ PEP 484                            }..................
-    # Reduce the PEP 484-compliant "Any" singleton to the ignorable
+    # Reduce the PEP 484-compliant "typing.Any" singleton to the ignorable
     # "HINT_SANE_IGNORABLE" singleton.
     HintSignAny: reduce_hint_pep484_any,
 

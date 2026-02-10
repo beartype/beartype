@@ -19,7 +19,7 @@ from beartype._data.typing.datatypingport import (
     Hint,
 )
 from beartype._data.hint.sign.datahintsignset import (
-    HINT_SIGNS_DATACLASS_NONFIELDS)
+    HINT_SIGNS_PEP557_DATACLASS_NONFIELDS)
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._util.cls.pep.clspep557 import (
     die_unless_type_pep557_dataclass,
@@ -236,7 +236,7 @@ def beartype_pep557_dataclass(
         # 563-postponed stringified type hints are guaranteed to have already
         # been resolved above, these hints are guaranteed to be both
         # non-stringified and root hints. W00t!
-        if field_hint_sign in HINT_SIGNS_DATACLASS_NONFIELDS:
+        if field_hint_sign in HINT_SIGNS_PEP557_DATACLASS_NONFIELDS:
             continue
         # Else, this sign signifies this class attribute to actually be a field.
 

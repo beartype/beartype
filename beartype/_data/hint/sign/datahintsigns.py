@@ -17,10 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # CAUTION: Attributes imported here at module scope *MUST* be explicitly
 # deleted from this module's namespace below.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.typing import (
-    FrozenSet,
-    List,
-)
 from beartype._data.hint.sign.datahintsigncls import HintSign as _HintSign
 
 # ....................{ SIGNS ~ implicit : pep : (484|585) }....................
@@ -61,7 +57,7 @@ of arbitrary child type hints): e.g.,
 '''
 
 # ....................{ SIGNS ~ explicit : setup           }....................
-_HINT_SIGNS_TYPING_LIST: List[_HintSign] = []
+_HINT_SIGNS_TYPING_LIST: list[_HintSign] = []
 '''
 List of the signs identifying *all* standard :mod:`typing` type hints and type
 hint factories.
@@ -322,7 +318,7 @@ HintSignUnpack          = _make_typing_hint_sign('Unpack')
 # attributes, which it oddly considers to comprise another namespace. *shrug*
 
 # ....................{ SIGNS ~ explicit : teardown        }....................
-HINT_SIGNS_TYPING: FrozenSet[_HintSign] = frozenset(_HINT_SIGNS_TYPING_LIST)
+HINT_SIGNS_TYPING: frozenset[_HintSign] = frozenset(_HINT_SIGNS_TYPING_LIST)
 '''
 Frozen set of all **typing signs** (i.e., identifying *all* standard
 PEP-compliant :mod:`typing` type hints and type hint factories available in the
@@ -545,8 +541,6 @@ arbitrary child type hints): e.g.,
 # Logic elsewhere subsequently assumes a one-to-one mapping between the
 # attributes of this namespace and signs.
 del (
-    FrozenSet,
-    List,
     _HINT_SIGNS_TYPING_LIST,
     _HintSign,
     _make_typing_hint_sign,

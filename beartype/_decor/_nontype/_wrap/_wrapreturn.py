@@ -27,6 +27,7 @@ from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
 )
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.code.func.datacodefuncwrap import CODE_CALL_CHECKED_format
@@ -36,7 +37,6 @@ from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.text.utiltextprefix import prefix_callable_return
-from beartype._data.kind.datakindiota import SENTINEL
 from typing import NoReturn
 from warnings import catch_warnings
 
@@ -135,8 +135,9 @@ def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
             )
             # print(f'Sanified {repr(decor_meta)} return hint {repr(hint_insane)} to {repr(hint_sane)}.')
 
-            # If this is the PEP 484-compliant "typing.NoReturn" type hint
-            # allowed *ONLY* as a return annotation...
+            # If this hint is either the PEP 484-compliant "typing.Never" *OR*
+            # "typing.NoReturn" type hint singletons permitted *ONLY* as return
+            # hint annotations...
             if hint_sane.hint is NoReturn:
                 # Pre-generated code snippet validating this callable to *NEVER*
                 # successfully return by unconditionally generating a violation.
@@ -154,7 +155,7 @@ def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
                 # Full code snippet to be returned.
                 func_wrapper_code = (
                     f'{code_noreturn_check}{code_noreturn_violation}')
-            # Else, this is *NOT* "typing.NoReturn".
+            # Else, this is neither "typing.Never" *NOR* "typing.NoReturn".
             #
             # If this hint is unignorable...
             elif hint_sane is not HINT_SANE_IGNORABLE:

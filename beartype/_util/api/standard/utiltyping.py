@@ -71,6 +71,66 @@ def is_typing_attr(
     return import_typing_attr_or_none(
         typing_attr_basename, exception_cls) is not None
 
+# ....................{ GETTERS                            }....................
+#FIXME: Unit test us up, please.
+@callable_cached
+def get_typing_attrs(typing_attr_basename: str) -> frozenset:
+    '''
+    Frozen set of all attributes with the passed unqualified basename declared
+    by all importable typing modules, silently ignoring those modules failing to
+    declare this attribute.
+
+    This getter intentionally returns a set rather than a list. Why? Duplicates.
+    The third-party :mod:`typing_extensions` module duplicates *all* type hint
+    factories implemented by the standard :mod:`typing` module under the most
+    recently released version of Python.
+
+    This getter is memoized for efficiency.
+
+    Attributes
+    ----------
+    typing_attr_basename : str
+        Unqualified name of the attribute to be dynamically imported from
+        each typing module.
+
+    Yields
+    ------
+    set
+        Set of all attributes with the passed unqualified basename declared by
+        all importable typing modules.
+    '''
+    assert isinstance(typing_attr_basename, str), (
+        f'{repr(typing_attr_basename)} not string.')
+
+    # Input non-empty tuple of the unqualified basenames of all typing module
+    # attributes semantically equivalent to the passed basename, defaulting to
+    # the 1-tuple containing *ONLY* the passed basename.
+    typing_attr_basename_aliases = _TYPING_ATTR_BASENAMES_TO_ALIASES.get(
+        typing_attr_basename, (typing_attr_basename,))
+
+    # Output set of all importable attributes to be returned by this getter.
+    typing_attrs: set = set()
+
+    # For the unqualified basename of each typing module attributes semantically
+    # equivalent to the passed basename...
+    for typing_attr_basename_alias in typing_attr_basename_aliases:
+        # For the fully-qualified name of each quasi-standard typing module...
+        for typing_module_name in TYPING_MODULE_NAMES:
+            # Attribute with this name dynamically imported from that module if
+            # that module defines this attribute *OR* "None" otherwise.
+            typing_attr = import_module_attr_or_none(
+                f'{typing_module_name}.{typing_attr_basename_alias}')
+
+            # If that module defines this attribute, append this attribute to
+            # this list.
+            if typing_attr is not None:
+                typing_attrs.add(typing_attr)
+            # Else, that module fails to define this this attribute. In this
+            # case, silently continue to the next module.
+
+    # Return this set, coerced into a frozen set for caching purposes.
+    return frozenset(typing_attrs)
+
 # ....................{ IMPORTERS                          }....................
 def import_typing_attr(
     # Mandatory parameters.
@@ -316,55 +376,18 @@ def import_typing_attr_or_fallback(
     # attribute *OR* this fallback otherwise.
     return typing_attr
 
-# ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
-@callable_cached
-def get_typing_attrs(typing_attr_basename: str) -> frozenset:
-    '''
-    Frozen set of all attributes with the passed unqualified basename declared
-    by all importable typing modules, silently ignoring those modules failing to
-    declare this attribute.
-
-    This getter intentionally returns a set rather than a list. Why? Duplicates.
-    The third-party :mod:`typing_extensions` module duplicates *all* type hint
-    factories implemented by the standard :mod:`typing` module under the most
-    recently released version of Python.
-
-    This getter is memoized for efficiency.
-
-    Attributes
-    ----------
-    typing_attr_basename : str
-        Unqualified name of the attribute to be dynamically imported from
-        each typing module.
-
-    Yields
-    ------
-    set
-        Set of all attributes with the passed unqualified basename declared by
-        all importable typing modules.
-    '''
-    assert isinstance(typing_attr_basename, str), (
-        f'{repr(typing_attr_basename)} not string.')
-
-    # Set of all importable attributes to be returned by this getter.
-    typing_attrs: set = set()
-
-    # For the fully-qualified name of each quasi-standard typing module...
-    for typing_module_name in TYPING_MODULE_NAMES:
-        # Attribute with this name dynamically imported from that module if that
-        # module defines this attribute *OR* "None" otherwise.
-        typing_attr = import_module_attr_or_none(
-            f'{typing_module_name}.{typing_attr_basename}')
-
-        # If that module fails to define this attribute, silently continue to
-        # the next module.
-        if typing_attr is None:
-            continue
-        # Else, that module declares this attribute.
-
-        # Append this attribute to this list.
-        typing_attrs.add(typing_attr)
-
-    # Return this set, coerced into a frozen set for caching purposes.
-    return frozenset(typing_attrs)
+# ....................{ PRIVATE ~ globals                  }....................
+_TYPING_ATTR_BASENAMES_TO_ALIASES = {
+    # ....................{ PEP ~ 484                      }....................
+    # The PEP 484-compliant "typing.NoReturn" type hint singleton was
+    # standardized prior to the subsequent introduction of its currently
+    # non-standard (albeit considerably more readable) "typing.Never" alias.
+    'NoReturn': ('NoReturn', 'Never',),
+}
+'''
+Dictionary mapping from each **canonical typing module attribute basename**
+(i.e., unqualified basename of each attribute declared by all importable typing
+modules under multiple different competing alternative basenames, each an
+interchangeable alias of the others) to the non-empty tuple of the unqualified
+basenames of all such aliases.
+'''

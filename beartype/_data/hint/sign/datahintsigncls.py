@@ -11,12 +11,6 @@ regardless of the Python version targeted by the active Python interpreter).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    FrozenSet,
-    Union,
-)
-
 # ....................{ CLASSES                            }....................
 class HintSign(object):
     '''
