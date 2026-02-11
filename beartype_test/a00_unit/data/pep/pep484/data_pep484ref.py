@@ -4,14 +4,14 @@
 # See "LICENSE" for further details.
 
 '''
-Test-wide **forward reference data submodule.**
+Test-wide :pep:`484`-compliant **stringified forward reference type hint**
+(i.e., strings whose values are the names of classes and tuples of classes, one
+or more of which typically have yet to be defined) data submodule.
 
-This submodule exercises **forward reference type hints** (i.e., strings whose
-values are the names of classes and tuples of classes, one or more of which
-typically have yet to be defined) support implemented in the
-:func:`beartype.beartype` decorator. This support can *only* be fully exercised
-from within an independent data submodule rather than the body of a unit test.
-Why? Because:
+This submodule exercises stringified forward reference support implemented in
+the :func:`beartype.beartype` decorator. This support can *only* be fully
+exercised from within an independent data submodule rather than the body of a
+unit test. Why? Because:
 
 * That decorator is only safely importable from within the body of a unit test.
 * Forward reference type hints can only refer to objects defined at module
@@ -28,17 +28,19 @@ Why? Because:
 
 # ....................{ IMPORTS                            }....................
 from beartype import beartype
-from beartype.typing import (
+from beartype._data.typing.datatyping import T
+from typing import (
     Generic,
-    List,
     Optional,
-    Sequence,
-    Tuple,
-    Type,  # <-- intentionally imported due to being embedded in strings below
     TypeVar,
     Union,
 )
-from beartype._data.typing.datatyping import T
+from collections.abc import (
+    Callable,
+    Iterable,
+    Iterator,
+    Sequence,
+)
 
 # ....................{ LOCALS                             }....................
 LikeATornCloud = TypeVar('LikeATornCloud', bound='BeforeTheHurricane')
@@ -53,7 +55,7 @@ reference to a self-referential type that has yet to be defined.
 # possibly nested in one or more parent type hints.
 
 TheDarkestForwardRefOfTheYear = (
-    'beartype_test.a00_unit.data.hint.data_hintref.TheDarkestEveningOfTheYear')
+    'beartype_test.a00_unit.data.pep.pep484.data_pep484ref.TheDarkestEveningOfTheYear')
 @beartype
 def the_woods_are_lovely(dark_and_deep: TheDarkestForwardRefOfTheYear) -> (
     TheDarkestForwardRefOfTheYear):
@@ -114,27 +116,28 @@ def a_little_shallop(floating: NearTheShore = ()) -> NearTheShore:
 
 @beartype
 def its_fields_of_snow(
-    and_pinnacles_of_ice: 'List[TheDarkestForwardRefOfTheYear]') -> (
+    and_pinnacles_of_ice: 'list[TheDarkestForwardRefOfTheYear]') -> (
     TheDarkestForwardRefOfTheYear):
     '''
-    :func:`beartype.beartype`-decorated function annotated by a composite type
-    hint defined as a standard type hint subscripted by a relative forward
-    reference referring to a type that has yet to be declared.
+    :func:`beartype.beartype`-decorated function annotated by a
+    :pep:`484`-compliant stringified hint referring to a :pep:`585`-compliant
+    container hint subscripted by a relative forward reference referring to a
+    type that has yet to be declared.
     '''
 
     return and_pinnacles_of_ice[0]
 
 
-TheDarkestSubclassOfTheYear = 'Type[TheDarkestEveningOfTheYear]'
+TheDarkestSubclassOfTheYear = 'type[TheDarkestEveningOfTheYear]'
 @beartype
 def the_dry_leaf(rustles_in_the_brake: TheDarkestSubclassOfTheYear) -> (
     TheDarkestSubclassOfTheYear):
     '''
-    :func:`beartype.beartype`-decorated function annotated by a composite type
-    hint defined as a ``beartype.typing.Type[...]`` hint subscripted by a
-    relative forward reference referring to a type that has yet to be declared,
-    exercising an edge case with respect to proxying of :func:`issubclass`
-    type-checks in forward reference proxies.
+    :func:`beartype.beartype`-decorated function annotated by a
+    :pep:`484`-compliant stringified hint referring to a :pep:`585`-compliant
+    subclass hint subscripted by a relative forward reference referring to a
+    type that has yet to be declared, exercising an edge case with respect to
+    proxying of :func:`issubclass` type-checks in forward reference proxies.
 
     See Also
     --------
@@ -154,33 +157,81 @@ TheDarkestTupleOfTheYear = (complex, TheDarkestForwardRefOfTheYear, bool)
 def of_easy_wind(and_downy_flake: TheDarkestTupleOfTheYear) -> (
     TheDarkestTupleOfTheYear):
     '''
-    Decorated function annotated by a PEP-noncompliant tuple containing both
-    standard types and a fully-qualified forward reference referring to a type
-    that has yet to be declared.
+    :func:`beartype.beartype`-decorated function annotated by a PEP-noncompliant
+    tuple containing both standard types and a fully-qualified forward reference
+    referring to a type that has yet to be declared.
     '''
 
     return and_downy_flake
 
 # ....................{ CLASSES                            }....................
+# Order of definition is mostly significant for the types defined below.
+
 class TheDarkestEveningOfTheYear(str):
     '''
-    Arbitrary class previously referred to by forward references above.
+    Undecorated class previously referred to by forward references above.
     '''
 
     pass
 
 
+@beartype
+class AllHisBulkAnAgony(Sequence['WithSluggishSurge[T]']):
+    '''
+    :func:`beartype.beartype`-decorated :pep:`585`-compliant generic subclassing
+    a :mod:`collection.abc` abstract base classes (ABC) subscripted by a
+    :pep:`484`-compliant stringified forward reference to a :pep:`484`-compliant
+    generic that has yet to be defined parametrized by the same type variable.
+    '''
+
+    # ................{ INITIALIZERS                           }................
+    def __init__(self, sequence: tuple['WithSluggishSurge[T]']) -> None:
+        '''
+        Initialize this generic from the passed tuple.
+        '''
+
+        assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
+        self._sequence = sequence
+
+    # ................{ ABCs                                   }................
+    # Define all protocols mandated by ABCs subclassed by this generic.
+
+    def __call__(self) -> int:
+        return len(self)
+
+    def __contains__(self, obj: object) -> bool:
+        return obj in self._sequence
+
+    def __enter__(self) -> 'AllHisBulkAnAgony[T]':
+        return self
+
+    def __exit__(self, *args, **kwargs) -> bool:
+        return False
+
+    def __getitem__(self, index: int) -> 'WithSluggishSurge[T]':
+        return self._sequence[index]
+
+    def __iter__(self) -> Iterator['WithSluggishSurge[T]']:
+        return iter(self._sequence)
+
+    def __len__(self) -> bool:
+        return len(self._sequence)
+
+    def __reversed__(self) -> Iterable['WithSluggishSurge[T]']:
+        return reversed(self._sequence)
+
+
 class WithSluggishSurge(Generic[T]):
     '''
-    Arbitrary generic declaring a method annotated by a forward reference
-    referring to an instance of this same generic.
+    Undecorated :pep:`484`-compliant generic declaring a method annotated by a
+    forward reference referring to a parametrization of this same generic.
     '''
 
     @beartype
     def or_where_the_secret_caves(self) -> 'WithSluggishSurge[T]':
         '''
-        Arbitrary method annotated by a forward reference referring to an
-        instance of this same generic.
+        :func:`beartype.beartype`-decorated method annotated by a forward
+        reference referring to an instance of this same generic.
         '''
 
         return self
@@ -198,8 +249,8 @@ class BeforeTheHurricane(object):
     this class currently being defined).
     '''
 
-    def in_a_silver_vision_floats(self) -> Tuple[
-        LikeATornCloud, LikeATornCloud]:
+    def in_a_silver_vision_floats(self) -> (
+        tuple[LikeATornCloud, LikeATornCloud]):
         '''
         Method annotated by a 2-tuple of type variables whose bounds are
         expressed as PEP-compliant relative forward references to this class
@@ -282,51 +333,45 @@ hint defined as a standard type hint subscripted by an arbitrary type).
 '''
 
 # ....................{ CLOSURES                           }....................
-#FIXME: Technically, @beartype *MAYBE* could actually resolve nested forward
-#references by dynamically inspecting the call stack (depending on whether
-#Python injects parent callables into the call stacks of closures, which it
-#probably does, but there's no way of knowing until we try, and that's a lot of
-#work to go to for potentially no gain whatsoever if Python doesn't behave like
-#we think it does). That gets real cray-cray and non-portable real fast, so
-#we're better off avoiding that unless we absolutely must -- and we mustn't,
-#because PEP 484 + 563 + Python 3.10 means that unqualified forward references
-#*MUST* now refer to globally scoped classes. So... why even bother, you know?
+def between_the_woods_and_frozen_lake() -> tuple[Callable, Callable, type]:
+    '''
+    Undecorated callable internally defining and returning multiple
+    :func:`beartype.beartype`-decorated closures annotated by
+    :pep:`484`-compliant stringified forward references referring to types that
+    have yet to be declared.
+    '''
 
-# Note that we do *NOT* bother declaring nested callables annotated with forward
-# references to nested classes. Why? Unlike static analysis tooling, runtime
-# decorators have *NO* internal access into nested lexical scopes and thus
-# *CANNOT* by definition resolve forward references to nested classes.
-#
-# For example, the following callable is callable without exception but the
-# closures returned by that callable are *NOT*, because @beartype fails to
-# resolve the nested forward references annotating those closures:
-#     from collections.abc import Callable
-#     from typing import Tuple
-#
-#     # Undecorated callable nesting...
-#     def between_the_woods_and_frozen_lake() -> Tuple[Callable, Callable, type]:
-#         # ..................{ CLOSURES                          }..................
-#         # Decorated closure annotated by an  unnested unqualified forward
-#         # reference referring to a type that has yet to be declared.
-#         @beartype
-#         def to_stop_without(a_farmhouse_near: 'WhoseWoodsTheseAreIThinkIKnow') -> (
-#             'WhoseWoodsTheseAreIThinkIKnow'):
-#             return a_farmhouse_near
-#
-#         # Decorated closure annotated by a nested unqualified forward
-#         # reference referring to a type that has yet to be declared.
-#         TheDarkestNestedUnionOfTheYear = Union[
-#             int, 'WhoseWoodsTheseAreIThinkIKnow', bool]
-#         @beartype
-#         def to_watch_his_woods(
-#             fill_up_with_snow: TheDarkestNestedUnionOfTheYear) -> (
-#             TheDarkestNestedUnionOfTheYear):
-#             return fill_up_with_snow
-#
-#         # ..................{ CLASSES                           }..................
-#         # User-defined class previously referred to by forward references above.
-#         class WhoseWoodsTheseAreIThinkIKnow(str): pass
-#
-#         # ..................{ RETURNS                           }..................
-#         # Return *ALL* of the above constructs, including closures and classes.
-#         return (to_stop_without, to_watch_his_woods, WhoseWoodsTheseAreIThinkIKnow)
+    # ..................{ CALLABLES                          }..................
+    @beartype
+    def to_stop_without(a_farmhouse_near: 'WhoseWoodsTheseAreIThinkIKnow') -> (
+        'WhoseWoodsTheseAreIThinkIKnow'):
+        '''
+        :func:`beartype.beartype`-decorated decorated closure annotated by an
+        unnested unqualified forward reference referring to a type that has yet
+        to be declared.
+        '''
+
+        return a_farmhouse_near
+
+    TheDarkestNestedUnionOfTheYear = Union[
+        int, 'WhoseWoodsTheseAreIThinkIKnow', bool]
+
+    @beartype
+    def to_watch_his_woods(
+        fill_up_with_snow: TheDarkestNestedUnionOfTheYear) -> (
+        TheDarkestNestedUnionOfTheYear):
+        '''
+        :func:`beartype.beartype`-decorated decorated closure annotated by a
+        nested unqualified forward reference referring to a type that has yet to
+        be declared.
+        '''
+
+        return fill_up_with_snow
+
+    # ..................{ CLASSES                            }..................
+    # User-defined class previously referred to by forward references above.
+    class WhoseWoodsTheseAreIThinkIKnow(str): pass
+
+    # ..................{ RETURNS                            }..................
+    # Return *ALL* of the above constructs, including closures and classes.
+    return (to_stop_without, to_watch_his_woods, WhoseWoodsTheseAreIThinkIKnow)

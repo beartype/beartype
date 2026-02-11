@@ -168,7 +168,7 @@ class Pep484ContextManagerTSequenceT(
         return len(self._sequence)
 
     def __reversed__(self) -> Pep484Tuple[T]:
-        return self._sequence.reverse()
+        return reversed(self._sequence)
 
 
 class Pep484IterableTContainerT(Pep484Iterable[T], Pep484Container[T]):

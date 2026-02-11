@@ -29,12 +29,17 @@ def test_pep484_ref_data() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype.roar import BeartypeCallHintReturnViolation
-    from beartype_test.a00_unit.data.hint.data_hintref import (
+    from beartype.roar import (
+        BeartypeCallHintParamViolation,
+        BeartypeCallHintReturnViolation,
+    )
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484ref import (
+        AllHisBulkAnAgony,
         BeforeTheHurricane,
         TheDarkestEveningOfTheYear,
         WithSluggishSurge,
         a_little_shallop,
+        # between_the_woods_and_frozen_lake,
         but_i_have_promises,
         its_fields_of_snow,
         of_easy_wind,
@@ -42,34 +47,47 @@ def test_pep484_ref_data() -> None:
         the_dry_leaf,
         the_woods_are_lovely,
         winding_among_the_springs,
-        # between_the_woods_and_frozen_lake,
     )
     from pytest import raises
 
     # ..................{ LOCALS                             }..................
     # Objects passed below to exercise forward references.
-    MILES_TO_GO = TheDarkestEveningOfTheYear('And miles to go before I sleep')
-    WOODS = TheDarkestEveningOfTheYear('The woods are lovely, dark and deep,')
-    LAKE = TheDarkestEveningOfTheYear('Between the woods and frozen lake')
-    KNOW = TheDarkestEveningOfTheYear('Whose woods these are I think I know.')
-    WITH_BURNING_SMOKE = [
-        TheDarkestEveningOfTheYear('With burning smoke, or where bitumen lakes'),
+    miles_to_go = TheDarkestEveningOfTheYear('And miles to go before I sleep')
+    woods_are_lovely = TheDarkestEveningOfTheYear(
+        'The woods are lovely, dark and deep,')
+    and_frozen_lake = TheDarkestEveningOfTheYear(
+        'Between the woods and frozen lake')
+    i_think_i_know = TheDarkestEveningOfTheYear(
+        'Whose woods these are I think I know.')
+    with_burning_smoke = [
+        TheDarkestEveningOfTheYear(
+            'With burning smoke, or where bitumen lakes'),
         TheDarkestEveningOfTheYear('On black bare pointed islets ever beat'),
     ]
-    RUGGED_AND_DARK = WithSluggishSurge()
+    rugged_and_dark = WithSluggishSurge()
 
     # ..................{ PASS                               }..................
     # Assert these forward-referencing callables return the expected values.
-    assert a_little_shallop(WITH_BURNING_SMOKE) is WITH_BURNING_SMOKE
-    assert but_i_have_promises(MILES_TO_GO) is MILES_TO_GO
-    assert of_easy_wind(WOODS) is WOODS
-    assert stopping_by_woods_on(LAKE) is LAKE
-    assert the_woods_are_lovely(KNOW) is KNOW
-    assert its_fields_of_snow(WITH_BURNING_SMOKE) is WITH_BURNING_SMOKE[0]
+    assert a_little_shallop(with_burning_smoke) is with_burning_smoke
+    assert but_i_have_promises(miles_to_go) is miles_to_go
+    assert of_easy_wind(woods_are_lovely) is woods_are_lovely
+    assert stopping_by_woods_on(and_frozen_lake) is and_frozen_lake
+    assert the_woods_are_lovely(i_think_i_know) is i_think_i_know
+    assert its_fields_of_snow(with_burning_smoke) is with_burning_smoke[0]
     assert the_dry_leaf(TheDarkestEveningOfTheYear) is (
         TheDarkestEveningOfTheYear)
-    assert RUGGED_AND_DARK.or_where_the_secret_caves() is RUGGED_AND_DARK
-    assert winding_among_the_springs(RUGGED_AND_DARK) is RUGGED_AND_DARK
+    assert rugged_and_dark.or_where_the_secret_caves() is rugged_and_dark
+    assert winding_among_the_springs(rugged_and_dark) is rugged_and_dark
+
+    # ..................{ PASS ~ container                   }..................
+    # Assert that instantiating a sequence containing valid items satisfying its
+    # annotations raises *NO* type-checking violation.
+    crept_gradual = AllHisBulkAnAgony((rugged_and_dark,))
+
+    # Assert that calling various methods of this sequence behave as expected.
+    assert crept_gradual[0] is rugged_and_dark
+    assert next(iter(crept_gradual)) is rugged_and_dark
+    assert tuple(reversed(crept_gradual)) == (rugged_and_dark,)
 
     # ..................{ FAIL                               }..................
     # Assert that calling a method violating its return annotated as a 2-tuple
@@ -77,6 +95,11 @@ def test_pep484_ref_data() -> None:
     # forward references to the same class raises the expected violation.
     with raises(BeartypeCallHintReturnViolation):
         BeforeTheHurricane().in_a_silver_vision_floats()
+
+    # Assert that instantiating a custom sequence containing invalid items
+    # violating its annotations raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        AllHisBulkAnAgony(('Crept gradual, from the feet unto the crown,',))
 
     #FIXME: Disabled until we decide whether we want to bother trying to
     #resolve nested forward references or not.

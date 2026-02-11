@@ -185,7 +185,7 @@ class Pep585ContextManagerTSequenceT(
         return len(self._sequence)
 
     def __reversed__(self) -> tuple[T]:
-        return self._sequence.reverse()
+        return reversed(self._sequence)
 
 # ....................{ PEP 585 ~ usable : S, T            }....................
 # Generics that are actually instantiable and usable as valid objects.
