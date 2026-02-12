@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator configuration unit tests.**
+**Beartype decorator configuration** unit tests.
 
 This submodule unit tests high-level functionality of the
 :func:`beartype.beartype` decorator configured by the optional ``conf``

@@ -160,20 +160,16 @@ def test_get_func_pith_violation_conf_is_color() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import BeartypeConf
-    from beartype.typing import (
-        List,
-        Tuple,
-        Union,
-    )
     from beartype._check.error.errmain import get_func_pith_violation
     from beartype._check.metadata.call.callmetadecormin import (
         minify_decor_meta_kwargs)
     from beartype._util.os.utilostty import is_stdout_terminal
     from beartype._util.text.utiltextansi import is_str_ansi
+    from typing import Union
 
     # ..................{ LOCALS                             }..................
     def she_drew_back(
-        a_while: List[str], then_yielding) -> Union[int, Tuple[str, ...]]:
+        a_while: list[str], then_yielding) -> Union[int, tuple[str, ...]]:
         '''
         Arbitrary callable exercised below.
         '''

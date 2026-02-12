@@ -31,11 +31,11 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype.roar import BeartypePlugInstancecheckStrException
-    from beartype.typing import Any
     from beartype._check.error.errmain import get_func_pith_violation
     from beartype._check.metadata.call.callmetadecormin import (
         minify_decor_meta_kwargs)
     from pytest import raises
+    from typing import Any
 
     # ..................{ METACLASSES                        }..................
     class TheMysteryAndMeta(type):
