@@ -44,7 +44,8 @@ from beartype._util.utilobject import get_object_type_name
 #  really do need to iteratively search up the entire call stack before raising
 #  an exception. It's fine. Just do it. The alternative is broken badness.
 #FIXME: Unit test against all possible dataclass edge cases, including:
-#* Quoted relative forward references (e.g., "list['MuhUndefinedType']").
+#* Quoted relative forward references (e.g., "list['MuhUndefinedType']"). This
+#  works, but we still need to test it. *shrug*
 #* "typing.Self". We're *NOT* passing "cls_stack" to either the is_bearable() or
 #  die_if_unbearable() functions, because those functions currently fail to
 #  accept an optional "cls_stack" parameter. We should probably generalize both
@@ -73,7 +74,116 @@ from beartype._util.utilobject import get_object_type_name
 #  Oh -- and note that we'll need to iteratively resolve PEP 563-postponed
 #  stringified type hints against each such superclass "__annotations__" as
 #  well. Jeez. This sure got ugly fast, huh? So much sighing! *sigh sigh*
-#* PEP 563, subject to the constraints detailed above.
+#FIXME: Actually, we're *NOT* quite done here with respect to relative forward
+#references. There exist a few edge cases:
+#* Dataclass defined in global scope. In this case, relative forward references
+#  can *ALWAYS* be reliably resolved. No issue here.
+#* Dataclass defined in local scope. In this case, relative forward references
+#  *CANNOT* always be reliably resolved. There now exist two sub-cases:
+#  * Relative forward reference annotating a dataclass field defined in local
+#    scope such that that reference *ONLY* refers to previously defined locals
+#    and globals accessible in that scope. In this case, *NO* beartype-specific
+#    forward reference proxies are required and this reference can be
+#    deterministically resolved at dataclass definition time. No issue here.
+#  * Relative forward reference annotating a dataclass field defined in local
+#    scope such that that reference refers to one or more undefined attributes
+#    *NOT* currently accessible in that scope. In this case, one or more
+#    beartype-specific forward reference proxies are required and this reference
+#    *CANNOT* be deterministically resolved at dataclass definition time. This
+#    is the issue.
+#
+#    Thankfully, this issue can be resolved without *TOO* much API hardship. The
+#    core idea here is that we want our "BeartypeForwardScope" proxy factory to
+#    just instead return the root "object" superclass for unresolved forward
+#    references (rather than creating and returning new @beartype-specific
+#    forward reference proxies). Doing so effectively ignores unresolvable
+#    forward references. Specifically (in order):
+#    * Detect when the reduce_hint_pep484_ref() reducer reduces a PEP
+#      484-compliant stringified forward reference type hint to one or more
+#      beartype-specific forward reference proxies. We don't currently do
+#      this. So, API improvements will *DEFINITELY* be needed here.
+#      Thankfully, this shouldn't be *TOO* hard. The core idea is that we can
+#      detect this at the "BeartypeForwardScope" level by:
+#    * Defining a new BeartypeConf.permute() method if we haven't already,
+#      implemented similarly to existing permute() methods elsewhere.
+#    * Refactoring the "conf_kwargs"-specific code below to instead call:
+#          conf_new = conf.permute(
+#              violation_door_type=BeartypeCallHintPep557FieldViolation)
+#    * Defining a "BeartypeConf.is_ignore_pep484_ref_missing: bool = False"
+#      boolean option.
+#    * Generalizing the BeartypeForwardScope.__init__() signature to:
+#          class BeartypeForwardScope(...):
+#              def __init__(
+#                  ...,
+#
+#                  # Optional parameters.
+#                  is_ignore_hint_pep484_ref_missing: bool = True,
+#              ) -> None:
+#                  self._is_ignore_hint_pep484_ref_missing = (
+#                      is_ignore_hint_pep484_ref_missing)
+#    * Refactoring the BeartypeForwardScope.__missing__() dunder method to:
+#          def __missing__(...) -> type:
+#              if self._is_ignore_hint_pep484_ref_missing:
+#                  return object
+#
+#              ...
+#    * Detect when a dataclass is defined in local scope. Should be trivial.
+#      Just introspect the "cls.__qualname__" instance variable like usual.
+#      Localize this as a new "is_dataclass_local: bool = False" local var.
+#    * Refactoring the code below to unconditionally enable this new
+#      "BeartypeConf.is_ignore_pep484_ref_missing" option: e.g.,
+#          conf_new = conf.permute(
+#              is_ignore_pep484_ref_missing=is_dataclass_local,
+#              violation_door_type=BeartypeCallHintPep557FieldViolation,
+#          )
+#FIXME: *WAIT.* The above is great, but overkill. If you consider it, don't we
+#*ALWAYS* want to reduce missing stringified forward references to "object" when
+#the currently decorated callable is nested inside another callable? Almost
+#certainly. If we *DON'T* do that (which we currently don't), then we risk
+#catastrophic false positives and thus fatal exceptions in common edge cases.
+#Eliminating false positives *ALWAYS* has value in type-checking.
+#
+#Ergo, we don't need a new "BeartypeConf.is_ignore_pep484_ref_missing: bool"
+#boolean option. Instead, we just want to:
+#* Generalize the reduce_hint_pep484_ref() reducer to detect nested callables
+#  and react accordingly: e.g.,
+#    def reduce_hint_pep484_ref(...) -> Hint:
+#        ...
+#        hint_resolved = call_meta.resolve_hint_pep484_ref_str(
+#            conf=conf,
+#            hint=hint,
+#            is_ignore_ref_missing=(
+#                call_meta.func is not None and
+#                is_func_local(call_meta.func)
+#            ),
+#            exception_prefix=exception_prefix,
+#        )
+#* Actually, instead:
+#  * Generalize the get_func_locals() getter to additionally return the stack
+#    frame that it finds.
+#  * Generalize the BeartypeForwardScope.__init__() method to accept a new
+#    optional parameter:
+#        func_local_parent_codeobj_weakref: Optional[weakref.ref] = None
+#  * Generalize the BeartypeForwardScope.__missing__() method to pass
+#    "self.func_local_parent_codeobj_weakref" to the
+#    make_forwardref_subbable_subtype() factory as a new optional parameter with
+#    a similar signature as above. That factory should store this parameter if
+#    non-"None" as a new "__func_local_parent_codeobj_beartype__" class
+#    variable.
+#  * The __type_beartype__() method should then be refactored as follows:
+#    * If importing the target attribute fails, then fallback to checking
+#      "cls.__func_local_parent_codeobj_beartype__" and if non-"None" *JUST
+#      RETURN "object" FOR NOW.* Non-ideal, obviously. But suffices to just get
+#      this superficially working. Not a bad default, either.
+#  * In make_scope_forward_decor_meta():
+#    * Store that stack frame as a local variable.
+#    * When instantiating "BeartypeForwardScope", pass a new parameter:
+#          func_local_parent_codeobj_weakref=(
+#              weakref.ref(get_frame_codeobj(func_frame)
+#              if is_func_local(func) else
+#              None
+#          ),
+
 def beartype_pep557_dataclass(
     # Mandatory parameters.
     #
@@ -204,14 +314,16 @@ def beartype_pep557_dataclass(
     #        guh: ohnoes[str]
     #
     #To efficiently resolve this, we *PROBABLY* want to generalize our existing
-    #beartype.peps.resolve_pep563() resolver to additionally support types in
-    #addition to its existing support for classes. Naturally, this gets ugly
-    #fast. For example:
+    #beartype.peps.resolve_pep563() resolver to additionally support type
+    #aliases in addition to its existing support for classes. Naturally, this
+    #gets ugly fast. For example:
     #* The existing resolve_pep563() function accepts a "func" parameter.
     #  Consider deprecating this parameter and instead requesting that callers
     #  pass only a generic "obj" parameter.
     #* Generalize this function to accept an "obj" parameter resembling:
     #      obj: Annotationsable
+    #FIXME: Actually, the above should just work now without any additional
+    #improvements. Test that up though, please.
 
     # For the name and unsanified hint of each class attribute of this
     # dataclass...
@@ -277,23 +389,25 @@ def beartype_pep557_dataclass(
         #    that away for the moment. Alternately, we could *TRY* to generalize
         #    is_bearable() and die_if_unbearable() to accept these objects.
         #    But... probably not worth it for the moment. It is what it is.
-        #* Actually... we can do something even better! There's no particular
-        #  reason we have to call the public-facing is_bearable() and
-        #  die_if_unbearable() functions. Instead:
-        #  * Define new private-facing variants of those functions transparently
-        #    accepting a "hint: HintSane" parameter. Call them:
-        #    * is_hint_sane_bearable().
-        #    * die_if_hint_sane_unbearable().
-        #    In theory, this shouldn't be *TOO* hard.
-        #  * Call these private- rather than public-facing variants below.
-        #    Voila! Problem transparently resolved.
+        #FIXME: Actually... we can do something even better! There's no
+        #particular reason we have to call the public-facing is_bearable() and
+        #die_if_unbearable() functions. Instead:
+        #* Define new private-facing variants of those functions transparently
+        #  accepting a "hint: HintSane" parameter. Call them:
+        #  * is_hint_sane_bearable().
+        #  * die_if_hint_sane_unbearable().
+        #  In theory, this shouldn't be *TOO* hard.
+        #* Call these private- rather than public-facing variants below.
+        #  Voila! Problem transparently resolved.
 
         # Add this field back to this sanified dictionary.
         field_name_to_hint[field_name] = field_hint
 
     # ..................{ CLOSURES                           }..................
+    #FIXME: Docstring up this closure, please. *sigh*
     def check_pep557_dataclass_field(
         self, attr_name: str, attr_value: object) -> None:
+
         # Type hint annotating this dataclass attribute if this attribute is
         # annotated and thus (probably) a dataclass field *OR* "None" otherwise
         # (i.e., if this attribute is unannotated).

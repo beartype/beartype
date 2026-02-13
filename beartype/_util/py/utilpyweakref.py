@@ -12,13 +12,18 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilPythonWeakrefException
-from beartype.typing import (
-    Tuple,
-)
+from typing import Optional
 from weakref import ref as weakref_ref
 
+# ....................{ HINTS                              }....................
+WeakrefOrNone = Optional[weakref_ref]
+'''
+:pep:`484`-compliant type hint matching either a **weak reference** (i.e.,
+:class:`weakref.ref` object) *or* :data:`None`.
+'''
+
 # ....................{ GETTERS                            }....................
-def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
+def make_obj_weakref_and_repr(obj: object) -> tuple[WeakrefOrNone, str]:
     '''
     2-tuple ``(weakref, repr)`` weakly referring to the passed object.
 
@@ -29,28 +34,33 @@ def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
 
     Returns
     ----------
-    Tuple[object, str]
+    Tuple[WeakrefOrNone, str]
         2-tuple ``(weakref, repr)`` weakly referring to this object such that:
 
         * ``weakref`` is either:
 
-          * If this object supports weak references, a **weak reference** (i.e.,
-            :class:`weakref.ref` instance) to this object.
-          * If this object prohibits weak references (e.g., due to being a
-            common C-based variable-sized container like a tuple or string),
-            ``None``.
+          * If this **referent** (i.e., target object being weakly referred to)
+            is the :data:`None` singleton, the :data:`._WEAKREF_NONE`
+            placeholder.
+          * Else if this referent supports weak references, a **weak reference**
+            (i.e., :class:`weakref.ref` instance) to this object.
+          * Else if this referent prohibits weak references (e.g., due to being
+            a common C-based variable-sized container like a tuple or string),
+            :data:`None`.
 
         * ``repr`` is the machine-readable representation of this object,
           truncated to ~10KB to minimize space consumption in the worst case of
           an obscenely large object.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.text.utiltextrepr import represent_object
 
+    # ....................{ LOCALS                         }....................
     # Weak reference to this object if this object supports weak references *OR*
     # "None" otherwise (e.g., if this object is a variable-sized container).
-    obj_weakref = None
+    obj_weakref: WeakrefOrNone = None
 
     # Machine-readable representation of this object truncated to minimize space
     # consumption for the worst case of an obscenely large object.
@@ -62,13 +72,14 @@ def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
         max_len=1000,
     )
 
-    # If this object is "None", substitute "None" for this non-"None"
-    # placeholder. Since the "weakref.ref" class ambiguously returns "None" when
-    # this object has already been garbage-collected, this placeholder enables
-    # subsequent calls to the get_obj_weakref_or_repr() getter to disambiguate
-    # between these two common edge cases.
+    # ....................{ MAKE                           }....................
+    # If this object is "None", substitute in this non-"None" placeholder. Since
+    # the "weakref.ref" class ambiguously returns "None" when this object has
+    # already been garbage-collected, this placeholder enables subsequent calls
+    # to the get_obj_weakref_or_repr() getter to disambiguate between these two
+    # common edge cases.
     if obj is None:
-        obj_weakref = _WEAKREF_NONE
+        obj_weakref = _WEAKREF_NONE  # type: ignore[assignment]
     # Else, this object is *NOT* "None". In this case...
     else:
         # Attempt to classify a weak reference to this object for safety.
@@ -92,11 +103,13 @@ def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
         except TypeError:
             pass
 
+    # ....................{ RETURN                         }....................
     return obj_weakref, obj_repr
 
 
 
-def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
+def get_weakref_obj_or_repr(
+    obj_weakref: WeakrefOrNone, obj_repr: str) -> object:
     '''
     Object weakly referred to by the passed object if this object is indeed a
     weak reference to another existing object *or* the passed machine-readable
@@ -108,14 +121,16 @@ def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
 
     Parameters
     ----------
-    obj_weakref : object
+    obj_weakref : WeakrefOrNone
         Either:
 
         * If the **referent** (i.e., target object being weakly referred to) is
-          the ``None`` singleton, the :data:`_WEAKREF_NONE` placeholder.
+          the :data:`None` singleton, the :data:`._WEAKREF_NONE` placeholder.
         * Else if the referent supports weak references, a **weak reference**
           (i.e., :class:`weakref.ref` instance) to that object.
-        * Else, ``None``.
+        * Else if this referent prohibits weak references (e.g., due to being
+          a common C-based variable-sized container like a tuple or string),
+          :data:`None`.
     obj_repr : str
         Machine-readable representation of that object, typically truncated to
         some number of characters to avoid worst-case space consumption.

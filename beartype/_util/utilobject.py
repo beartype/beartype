@@ -161,10 +161,72 @@ def get_object_name(obj: Any) -> str:
         object_scopes_name
     )
 
-# ....................{ GETTERS ~ basename                 }....................
+# ....................{ GETTERS ~ basename : qualified     }....................
+#FIXME: Currently unused but preserved for posterity. *shrug*
+#FIXME: Unit test us up, please.
+# def get_object_basename_qualified_or_none(obj: Any) -> Optional[str]:
+#     '''
+#     **Lexically qualified basename** (i.e., ``.``-delimited string unambiguously
+#     identifying all lexical scopes encapsulating) the passed object if this
+#     object defines the ``__qualname__`` dunder attribute *or* :data:`None`
+#     otherwise (i.e., if this object defines *no* such attribute).
+#
+#     Specifically, this name comprises (in order):
+#
+#     #. If this object is transitively declared by another object (e.g., class,
+#        callable) and thus nested in that object, the unqualified basenames of
+#        all parent objects transitively declaring this object in that module:
+#        e.g.,
+#
+#        .. code-block:: python
+#
+#           >>> from beartype._util.utilobject import get_object_basename_scoped
+#           >>> def muh_func():
+#           ...     def muh_closure(): pass
+#           ...     return muh_closure()
+#           >>> get_object_basename_scoped(muh_func)
+#           'muh_func.<locals>.muh_closure'  # <-- bad Python
+#
+#     #. Unqualified basename of this object.
+#
+#     Caveats
+#     -------
+#     **The higher-level** :func:`.get_object_name` **getter should typically be
+#     called instead of this lower-level getter.** This getter unsafely:
+#
+#     * Requires the passed object to declare dunder attributes *not* generally
+#       declared by arbitrary instances of user-defined classes.
+#     * Omits the fully-qualified name of the module transitively declaring this
+#       object and thus fails to return fully-qualified names.
+#     * Contains one meaningless ``"<locals>"`` placeholder substring conveying
+#       *no* meaningful semantics for each parent callable nesting this object.
+#
+#     **This high-level getter should always be called in lieu of directly
+#     accessing the low-level** ``__qualname__`` **dunder attribute on objects.**
+#     That attribute is *not* guaranteed to exist.
+#
+#     Parameters
+#     ----------
+#     obj : object
+#         Object to be inspected.
+#
+#     Returns
+#     -------
+#     Optional[str]
+#         Either:
+#
+#         * If this object defines the ``__qualname__`` dunder attribute, the
+#           value of that attribute.
+#         * Else, :data:`None`.
+#     '''
+#
+#     # Tout-puissant one-liner!
+#     return getattr(obj, '__qualname__', None)
+
+# ....................{ GETTERS ~ basename : scoped        }....................
 def get_object_basename_scoped(obj: Any) -> str:
     '''
-    **Lexically scoped name** (i.e., ``.``-delimited string unambiguously
+    **Lexically scoped basename** (i.e., ``.``-delimited string unambiguously
     identifying all lexical scopes encapsulating) the passed object if this
     object defines either the ``__qualname__`` or ``__name__`` dunder attributes
     *or* raise an exception otherwise (i.e., if this object defines *no* such
@@ -178,7 +240,7 @@ def get_object_basename_scoped(obj: Any) -> str:
     Returns
     -------
     str
-        Lexically scoped name of this object.
+        Lexically scoped basename of this object.
 
     Raises
     ------
@@ -214,7 +276,7 @@ def get_object_basename_scoped(obj: Any) -> str:
 #FIXME: Unit test us up, please.
 def get_object_basename_scoped_or_none(obj: Any) -> Optional[str]:
     '''
-    **Lexically scoped name** (i.e., ``.``-delimited string unambiguously
+    **Lexically scoped basename** (i.e., ``.``-delimited string unambiguously
     identifying all lexical scopes encapsulating) the passed object if this
     object defines either the ``__qualname__`` or ``__name__`` dunder attributes
     *or* :data:`None` otherwise (i.e., if this object defines *no* such
@@ -245,7 +307,7 @@ def get_object_basename_scoped_or_none(obj: Any) -> Optional[str]:
 
     Caveats
     -------
-    **The higher-level** :func:`get_object_name` **getter should typically be
+    **The higher-level** :func:`.get_object_name` **getter should typically be
     called instead of this lower-level getter.** This getter unsafely:
 
     * Requires the passed object to declare dunder attributes *not* generally
@@ -270,15 +332,9 @@ def get_object_basename_scoped_or_none(obj: Any) -> Optional[str]:
         Either:
 
         * If this object defines at least one of the ``__qualname__`` or
-          ``__name__`` dunder attributes, the lexically scoped name of this
+          ``__name__`` dunder attributes, the lexically scoped basename of this
           object.
         * Else, :data:`None`.
-
-    Raises
-    ------
-    _BeartypeUtilObjectNameException
-        If this object defines neither ``__qualname__`` *nor* ``__name__``
-        dunder attributes.
     '''
 
     # Fully-qualified name of this object excluding its module name as follows:
@@ -293,7 +349,7 @@ def get_object_basename_scoped_or_none(obj: Any) -> Optional[str]:
     # * Else if this object defines the "__name__" dunder attribute whose value
     #   is the unqualified basename of this object, that value.
     # * Else, "None".
-    object_scoped_name = getattr(
+    basename_scoped = getattr(
         obj, '__qualname__', getattr(
             obj, '__name__', None))
 
@@ -301,10 +357,10 @@ def get_object_basename_scoped_or_none(obj: Any) -> Optional[str]:
     return (
         # If this name exists, all "<locals>" placeholder substrings globally
         # removed from this name as discussed above;
-        object_scoped_name.replace('<locals>.', '')
-        if object_scoped_name else
+        basename_scoped.replace('<locals>.', '')
+        if basename_scoped else
         # Else, either "None" or the empty string.
-        object_scoped_name
+        basename_scoped
     )
 
 # ....................{ GETTERS ~ filename                 }....................

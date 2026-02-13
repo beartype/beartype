@@ -121,36 +121,6 @@ def long_past_their_woodland_days():
     # Return the root class of this class hierarchy.
     return TheShadowsOfTheTreesAppear
 
-# ....................{ TESTS ~ tester                     }....................
-def test_is_func_nested() -> None:
-    '''
-    Test the
-    :func:`beartype._util.func.utilfuncscope.is_func_nested` tester.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.func.utilfunctest import is_func_nested
-
-    # Nested callable returned by the above callable.
-    when_the_ash_and_oak_and_the_birch_and_yew = (
-        when_in_the_springtime_of_the_year())
-
-    # Assert this tester accepts methods.
-    assert is_func_nested(
-        WhenOwlsCallTheBreathlessMoon.in_the_blue_veil_of_the_night) is True
-
-    # Assert this tester accepts nested callables.
-    # print(f'__nested__: {repr(when_the_ash_and_oak_and_the_birch_and_yew.__nested__)}')
-    assert is_func_nested(when_the_ash_and_oak_and_the_birch_and_yew) is True
-
-    # Assert this tester rejects non-nested parent callables declaring nested
-    # callables.
-    # print(f'__nested__: {repr(when_in_the_springtime_of_the_year.__nested__)}')
-    assert is_func_nested(when_in_the_springtime_of_the_year) is False
-
-    # Assert this tester rejects C-based builtins.
-    assert is_func_nested(iter) is False
-
 
 #FIXME: Unclear whether we'll ever require this, but preserved as is for now.
 # def test_get_func_wrappee() -> None:

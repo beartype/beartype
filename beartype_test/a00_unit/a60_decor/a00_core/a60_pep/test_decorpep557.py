@@ -60,7 +60,7 @@ def test_decor_pep557() -> None:
         # The frozen @dataclass decorator.
         dict(frozen=True),
 
-        # The slotted @dataclass decorator, only supported under Python >= 3.10.
+        # The slotted @dataclass decorator.
         dict(slots=True),
     ]
 

@@ -11,24 +11,20 @@ cases on behalf of higher-level unit test submodules.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    AsyncGenerator,
-    AsyncIterator,
-    Callable,
-    Coroutine,
-    Generator,
-    Iterable,
-    Iterator,
-    Tuple,
-)
 from beartype._util.func.utilfuncmake import make_func
 from collections import defaultdict
 from collections.abc import (
-    Hashable as HashableABC,
-    ItemsView as ItemsViewABC,
-    KeysView as KeysViewABC,
-    ValuesView as ValuesViewABC,
-    Sized as SizedABC,
+    AsyncGenerator,
+    AsyncIterator,
+    Coroutine,
+    Generator,
+    Hashable,
+    ItemsView,
+    Iterable,
+    Iterator,
+    KeysView,
+    Sized,
+    ValuesView,
 )
 from contextlib import (
     asynccontextmanager,
@@ -256,7 +252,26 @@ update_wrapper(
     assigned=(),
 )
 
-# ....................{ CALLABLES ~ sync : closure         }....................
+# ....................{ CALLABLES ~ sync : nested          }....................
+def func_nested_nonclosure_factory():
+    '''
+    Arbitrary **nested non-closure function** (i.e., a closure-like pure-Python
+    function that does *not* reference local attributes of the parent callable
+    enclosing that function and is thus technically *not* a closure) factory
+    function.
+    '''
+
+    def func_nested_nonclosure():
+        '''
+        Arbitrary nested non-closure function.
+        '''
+
+        pass
+
+    # Return this non-closure.
+    return func_nested_nonclosure
+
+# ....................{ CALLABLES ~ sync : nested : closure}....................
 def closure_factory():
     '''
     Arbitrary pure-Python closure factory function.
@@ -452,7 +467,7 @@ class ClassSized(object):
     :class:`str`).
     '''
 
-    def __init__(self, sized: SizedABC) -> None: self._sized = sized
+    def __init__(self, sized: Sized) -> None: self._sized = sized
     def __len__(self) -> int: return len(self._sized)
 
 # ....................{ CLASSES ~ abc : mapping            }....................
@@ -472,12 +487,12 @@ class ClassMapping(object):
         return self._items == other._items
     def __ne__(self, other: 'ClassMapping') -> bool:
         return self._items != other._items
-    def __getitem__(self, key: HashableABC) -> object: return self._items[key]
+    def __getitem__(self, key: Hashable) -> object: return self._items[key]
     def get(self, *args, **kwargs) -> object:
         return self._items.get(*args, **kwargs)
-    def items(self) -> ItemsViewABC: return self._items.items()
-    def keys(self) -> KeysViewABC: return self._items.keys()
-    def values(self) -> ValuesViewABC: return self._items.values()
+    def items(self) -> ItemsView: return self._items.items()
+    def keys(self) -> KeysView: return self._items.keys()
+    def values(self) -> ValuesView: return self._items.values()
 
 
 class ClassMutableMapping(ClassMapping):
@@ -487,13 +502,13 @@ class ClassMutableMapping(ClassMapping):
     subclassing a builtin mutable dictionary type (e.g., :class:`dict`).
     '''
 
-    def __delitem__(self, key: HashableABC) -> None: del self._items[key]
-    def __setitem__(self, key: HashableABC, value: object) -> None:
+    def __delitem__(self, key: Hashable) -> None: del self._items[key]
+    def __setitem__(self, key: Hashable, value: object) -> None:
         self._items[key] = value
     def clear(self) -> None: self._items.clear()
     def pop(self, *args, **kwargs) -> object:
         return self._items.pop(*args, **kwargs)
-    def popitem(self) -> Tuple[object, object]: return self._items.popitem()
+    def popitem(self) -> tuple[object, object]: return self._items.popitem()
     def setdefault(self, *args, **kwargs) -> object:
         return self._items.setdefault(*args, **kwargs)
     def update(self, *args, **kwargs) -> object:
@@ -780,6 +795,68 @@ class OtherSubclassSubclass(OtherSubclass):
     '''
 
     pass
+
+# ....................{ CLASSES ~ hierarchy : local        }....................
+def class_nested_nonclosure_factory():
+    '''
+    Arbitrary **nested non-closure type** (i.e., a closure-like pure-Python
+    type that does *not* reference local attributes of the parent callable
+    enclosing that type and is thus technically *not* a closure) factory
+    function.
+    '''
+
+    class ClassNestedNonclosure(object):
+        '''
+        Arbitrary pure-Python nested non-closure class defining arbitrary
+        methods.
+        '''
+
+        # ....................{ NESTED                     }....................
+        class LocalNestedClass(object):
+            '''
+            Arbitrary pure-Python **nested class** whose definition is nested
+            inside the definition of another nested non-closure class.
+            '''
+
+            pass
+
+        # ....................{ METHODS                        }....................
+        def instance_method(self):
+            '''
+            Arbitrary pure-Python instance method.
+            '''
+
+            pass
+
+
+        @property
+        def instance_property(self):
+            '''
+            Arbitrary pure-Python instance property.
+            '''
+
+            pass
+
+
+        @classmethod
+        def class_method(cls):
+            '''
+            Arbitrary pure-Python class method.
+            '''
+
+            pass
+
+
+        @staticmethod
+        def static_method():
+            '''
+            Arbitrary pure-Python static method.
+            '''
+
+            pass
+
+    # Return the nested non-closure class defined above.
+    return ClassNestedNonclosure
 
 # ....................{ CONSTANTS                          }....................
 CALLABLE_CODE_OBJECT = function.__code__

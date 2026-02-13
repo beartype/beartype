@@ -882,6 +882,99 @@ def is_func_sync_generator(func: object) -> TypeIs[Callable]:
     )
 
 # ....................{ TESTERS : nested                   }....................
+def is_func_closure(func: Any) -> TypeIs[Callable]:
+    '''
+    :data:`True` only if the passed callable is a **closure** (i.e., nested
+    callable accessing one or more variables declared by the parent callable
+    also declaring that callable).
+
+    Note that all closures are necessarily nested callables but that the
+    converse is *not* necessarily the case. In particular, a nested callable
+    accessing *no* variables declared by the parent callable also declaring that
+    callable is *not* a closure; it's simply a nested callable.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this callable is a closure.
+    '''
+
+    # Return true only if that callable defines the closure-specific
+    # "__closure__" dunder variable whose value is either:
+    # * If that callable is a closure, a tuple of zero or more cell variables.
+    # * If that callable is a pure-Python non-closure, "None".
+    # * If that callable is C-based, undefined.
+    return getattr(func, '__closure__', None) is not None
+
+
+@callable_cached
+def is_func_local(func: Callable) -> bool:
+    '''
+    :data:`True` only if the passed callable is **local** (i.e., a pure-Python
+    callable locally defined in the body of another pure-Python callable and
+    thus accessible *only* as a local attribute of the latter).
+
+    Equivalently, this tester returns :data:`True` only if that callable is
+    either:
+
+    * A closure, which by definition is nested inside another callable.
+    * A **nested non-closure function** (i.e., a closure-like function that does
+      *not* reference local attributes of the parent callable enclosing that
+      function and is thus technically *not* a closure): e.g.,
+
+      .. code-block:: python
+
+         def muh_parent_func():           # <-- parent function
+             def muh_nested_func(): pass  # <-- nested non-closure function
+             return muh_nested_func
+
+    * A **callable-isolated method** (i.e., a method of a type nested inside
+      another callable): e.g.,
+
+      .. code-block:: python
+
+         def muh_parent_func():                     # <-- parent function
+             class MuhType(object):                 # <-- nested type
+                 def muh_nested_method(self): pass  # <-- nested method
+             return MuhType.muh_nested_method
+
+    This tester is memoized for efficiency.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this callable is locally defined.
+    '''
+
+    # Return true only if either...
+    return (
+        # That callable is a closure (in which case that closure is necessarily
+        # nested inside another callable) *OR*...
+        #
+        # Note that this tester intentionally tests for whether that callable is
+        # a closure first, as doing so efficiently reduces to a constant-time
+        # attribute test -- whereas the following test for non-closure nested
+        # callables inefficiently requires a linear-time string search.
+        is_func_closure(func) or
+        # The fully-qualified name of that callable contains one or more
+        # ".<locals>." substrings, each signifying a local callable scope. Since
+        # *ALL* callables (i.e., both pure-Python and C-based) define a
+        # non-empty "__qualname__" dunder variable containing at least their
+        # unqualified names, this simplistic test is guaranteed to be safe.
+        '.<locals>.' in func.__qualname__
+    )
+
+
 @callable_cached
 def is_func_nested(func: Callable) -> bool:
     '''
@@ -899,9 +992,9 @@ def is_func_nested(func: Callable) -> bool:
 
       .. code-block:: python
 
-         def muh_parent_callable():           # <-- parent callable
-             def muh_nested_callable(): pass  # <-- nested non-closure function
-             return muh_nested_callable
+         def muh_parent_func():           # <-- parent function
+             def muh_nested_func(): pass  # <-- nested non-closure function
+             return muh_nested_func
 
     This tester is memoized for efficiency.
 
@@ -965,36 +1058,6 @@ def is_func_nested(func: Callable) -> bool:
         #       'MuhClass.muh_method'
         '.' in func.__qualname__
     )
-
-# ....................{ TESTERS ~ nested : closure         }....................
-def is_func_closure(func: Any) -> TypeIs[Callable]:
-    '''
-    :data:`True` only if the passed callable is a **closure** (i.e., nested
-    callable accessing one or more variables declared by the parent callable
-    also declaring that callable).
-
-    Note that all closures are necessarily nested callables but that the
-    converse is *not* necessarily the case. In particular, a nested callable
-    accessing *no* variables declared by the parent callable also declaring that
-    callable is *not* a closure; it's simply a nested callable.
-
-    Parameters
-    ----------
-    func : Callable
-        Callable to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this callable is a closure.
-    '''
-
-    # Return true only if that callable defines the closure-specific
-    # "__closure__" dunder variable whose value is either:
-    # * If that callable is a closure, a tuple of zero or more cell variables.
-    # * If that callable is a pure-Python non-closure, "None".
-    # * If that callable is C-based, undefined.
-    return getattr(func, '__closure__', None) is not None
 
 # ....................{ TESTERS ~ wrapper                  }....................
 def is_func_wrapper(func: Any) -> TypeIs[Callable]:

@@ -17,11 +17,6 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-# Note that the related test_is_func_nested() unit test is intentionally defined
-# in the companion "test_utilfuncscope" submodule rather than this submodule.
-# Why? Convenience, mostly. That submodule defines various callables of interest
-# that dramatically simplify the implementation of that unit test.
-
 def test_is_func_lambda() -> None:
     '''
     Test the
@@ -447,6 +442,105 @@ def test_is_func_closure() -> None:
 
     # Assert this tester rejects non-closure callables.
     assert is_func_closure(function) is False
+
+
+def test_is_func_local() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_local` tester.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.func.utilfunctest import is_func_local
+    from beartype_test.a00_unit.data.data_type import (
+        Class,
+        class_nested_nonclosure_factory,
+        closure_factory,
+        func_nested_nonclosure_factory,
+    )
+
+    # ....................{ LOCALS                         }....................
+    # Closure created and returned by this factory.
+    func_closure = closure_factory()
+
+    # Nested non-closure callable created and returned by this factory.
+    func_nested_nonclosure = func_nested_nonclosure_factory()
+
+    # Nested non-closure type created and returned by this factory.
+    ClassNestedNonclosure = class_nested_nonclosure_factory()
+
+    # ....................{ PASS                           }....................
+    # Assert this tester accepts all possible kinds of nested methods.
+    assert is_func_local(ClassNestedNonclosure.instance_method) is True
+    assert is_func_local(ClassNestedNonclosure.class_method) is True
+    assert is_func_local(ClassNestedNonclosure.static_method) is True
+
+    # Assert this tester accepts closures.
+    # print(f'__nested__: {repr(when_the_ash_and_oak_and_the_birch_and_yew.__nested__)}')
+    assert is_func_local(func_closure) is True
+
+    # Assert this tester accepts nested non-closure callables.
+    # print(f'__nested__: {repr(when_the_ash_and_oak_and_the_birch_and_yew.__nested__)}')
+    assert is_func_local(func_nested_nonclosure) is True
+
+    # ....................{ FAIL                           }....................
+    # Assert this tester rejects all possible kinds of non-nested methods.
+    assert is_func_local(Class.instance_method) is False
+    assert is_func_local(Class.class_method) is False
+    assert is_func_local(Class.static_method) is False
+
+    # Assert this tester rejects all other kinds of callables.
+    # print(f'__nested__: {repr(when_in_the_springtime_of_the_year.__nested__)}')
+    assert is_func_local(closure_factory) is False
+
+    # Assert this tester rejects C-based builtins.
+    assert is_func_local(iter) is False
+
+
+def test_is_func_nested() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_nested` tester.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.func.utilfunctest import is_func_nested
+    from beartype_test.a00_unit.data.data_type import (
+        Class,
+        closure_factory,
+        func_nested_nonclosure_factory,
+    )
+
+    # ....................{ LOCALS                         }....................
+    # Closure created and returned by this factory.
+    func_closure = closure_factory()
+
+    # Nested non-closure callable created and returned by this factory.
+    func_nested_nonclosure = func_nested_nonclosure_factory()
+
+    # ....................{ PASS                           }....................
+    # Assert this tester accepts all possible kinds of methods.
+    assert is_func_nested(Class.instance_method) is True
+    assert is_func_nested(Class.class_method) is True
+    assert is_func_nested(Class.static_method) is True
+
+    # Assert this tester accepts closures.
+    # print(f'__nested__: {repr(when_the_ash_and_oak_and_the_birch_and_yew.__nested__)}')
+    assert is_func_nested(func_closure) is True
+
+    # Assert this tester accepts nested non-closure callables.
+    # print(f'__nested__: {repr(when_the_ash_and_oak_and_the_birch_and_yew.__nested__)}')
+    assert is_func_nested(func_nested_nonclosure) is True
+
+    # ....................{ FAIL                           }....................
+    # Assert this tester rejects all other kinds of callables.
+    # print(f'__nested__: {repr(when_in_the_springtime_of_the_year.__nested__)}')
+    assert is_func_nested(closure_factory) is False
+
+    # Assert this tester rejects C-based builtins.
+    assert is_func_nested(iter) is False
 
 # ....................{ TESTS ~ nested : wrapper           }....................
 def test_is_func_wrapper() -> None:
