@@ -702,7 +702,7 @@ number of classes lexically nesting the currently decorated class as input
 metadata, as trivially provided by the length of this tuple.
 '''
 
-# ....................{ MODULE ~ beartype                  }....................
+# ....................{ API ~ beartype                     }....................
 #FIXME: mypy used to type-check this properly. Pyright never did. But even mypy
 #1.19.0 no longer accepts this. Weird stuff. Oh, well... who cares, huh?
 BeartypeForwardRef = Type[
@@ -723,7 +723,7 @@ PEP-compliant type hint matching a **forward reference proxy argument list**
 factory function, in the same order as positionally accepted by that function).
 '''
 
-# ....................{ MODULE ~ importlib                 }....................
+# ....................{ API ~ importlib                    }....................
 # Type hints specific to the standard "importlib" package.
 
 ImportPathHook = Callable[[str], PathEntryFinder]
@@ -733,7 +733,7 @@ creating and returning a new :class:`importlib.abc.PathEntryFinder` instance
 creating and leveraging a new :class:`importlib.machinery.FileLoader` instance).
 '''
 
-# ....................{ MODULE ~ pathlib                   }....................
+# ....................{ API ~ pathlib                      }....................
 # Type hints specific to the standard "pathlib" package.
 
 PathnameLike = str | Path

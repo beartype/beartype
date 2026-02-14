@@ -77,6 +77,7 @@ from typing import (
     Any,
     ForwardRef as _ForwardRef,
 )
+from weakref import ref as _ref
 
 # Note that:
 #
@@ -297,6 +298,15 @@ C-based type of all **reentrant thread locks** (i.e., :class:`threading.Lock`
 object implementing Python's lowest-level synchronization primitive such that
 subsequent attempts by the same thread to re-acquire such a previously acquired
 lock silently succeed).
+'''
+
+# ....................{ TYPES ~ api : weakref              }....................
+# C-based type of all non-reentrant thread locks, defined as either...
+WeakrefType = _ref
+'''
+C-based type of all **weak reference proxies** (i.e., :class:`weakref.ref`
+objects weakly referring to predominantly pure-Python objects supporting the
+weak reference protocol).
 '''
 
 # ....................{ TYPES ~ call                       }....................

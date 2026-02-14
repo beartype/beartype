@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintForwardRefException
-from beartype.typing import Dict
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import BeartypeForwardRef
 from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_isinstanceable)
@@ -23,7 +23,10 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic)
-from beartype._util.module.utilmodimport import import_module_attr
+from beartype._util.module.utilmodimport import (
+    import_module_attr,
+    import_module_attr_or_sentinel,
+)
 from beartype._util.text.utiltextidentifier import is_dunder
 
 # ....................{ METACLASSES                        }....................
@@ -447,19 +450,71 @@ class BeartypeForwardRefMeta(type):
             EXCEPTION_CLS = BeartypeCallHintForwardRefException
             EXCEPTION_PREFIX = 'Forward reference '
 
-            # Forward referent dynamically imported from this module.
-            referent = import_module_attr(
+            # Forward referent dynamically imported from this module if this
+            # module is both importable and defines this referent *OR* the
+            # sentinel placeholder (i.e., if this module is either unimportable
+            # or fails to define this referent).
+            referent = import_module_attr_or_sentinel(
                 attr_name=cls.__name_beartype__,
                 module_name=cls.__scope_name_beartype__,
                 exception_cls=EXCEPTION_CLS,
                 exception_prefix=EXCEPTION_PREFIX,
             )
 
+            # If this module is either unimportable *OR* fails to define
+            # this referent...
+            if referent is SENTINEL:
+                # If this proxy does *NOT* proxy a PEP 484-compliant stringified
+                # forward reference type hint annotating a locally decorated
+                # callable, raise a human-readable exception describing this
+                # failure by instead deferring to the mandatory variant of the
+                # import function called above.
+                #
+                # See the "__func_local_parent_codeobj_weakref_beartype__"
+                # docstring for further details.
+                if cls.__func_local_parent_codeobj_weakref_beartype__ is None:
+                    import_module_attr(
+                        attr_name=cls.__name_beartype__,
+                        module_name=cls.__scope_name_beartype__,
+                        exception_cls=EXCEPTION_CLS,
+                        exception_prefix=EXCEPTION_PREFIX,
+                    )
+
+                    # Validate sanity by ensuring that the prior call raised the
+                    # expected exception.
+                    assert False  # pragma: no cover
+                # Else, this proxy proxies a PEP 484-compliant stringified
+                # forward reference type hint annotating a locally decorated
+                # callable. In this case, avoid emitting false positives.
+
+                #FIXME: *NON-IDEAL*. Ideally, we would now disambiguate between
+                #the two edge cases documented by the
+                #"__func_local_parent_codeobj_weakref_beartype__" docstring.
+                #However, doing so (probably) requires us to implement some new
+                #functionality we don't currently have and is thus somewhat
+                #non-trivial. For the moment, avoid doing so until somebody
+                #strenuously complains about this. *lol* -> *sigh*
+                #
+                #Specifically, we want to do this:
+                #* Introspect up the call stack for the first stack frame whose
+                #  code object is the same code object weakly referred to by
+                #  this "__func_local_parent_codeobj_weakref_beartype__" class
+                #  variable.
+                #* Dynamically resolving this reference against the global and
+                #  local scope of that stack frame.
+                #* If this reference remains unresolvable at that point,
+                #  fallback to silently ignoring this reference as we do below.
+
+                # Silently ignore this reference by reducing it to the root
+                # "object" superclass.
+                referent = object
+            # Else, this module is both importable and defines this referent.
+            #
             # If this referent is this forward reference subclass, then this
             # subclass circularly proxies itself. Since allowing this edge case
             # would openly invite infinite recursion, we detect this edge case
             # and instead raise a human-readable exception.
-            if referent is cls:
+            elif referent is cls:
                 raise BeartypeCallHintForwardRefException(
                     f'Forward reference proxy {repr(cls)} circularly '
                     f'(i.e., infinitely recursively) references itself.'
@@ -543,7 +598,7 @@ class BeartypeForwardRefMeta(type):
         return referent  # type: ignore[return-value]
 
 # ....................{ PRIVATE ~ globals                  }....................
-_forwardref_to_referent: Dict[BeartypeForwardRef, type] = {}
+_forwardref_to_referent: dict[BeartypeForwardRef, type] = {}
 '''
 **Forward reference referent cache** (i.e., dictionary mapping from each forward
 reference proxy to the arbitrary class referred to by that proxy).

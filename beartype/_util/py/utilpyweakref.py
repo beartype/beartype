@@ -12,18 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilPythonWeakrefException
+from beartype._cave._cavefast import WeakrefType
 from typing import Optional
-from weakref import ref as weakref_ref
-
-# ....................{ HINTS                              }....................
-WeakrefOrNone = Optional[weakref_ref]
-'''
-:pep:`484`-compliant type hint matching either a **weak reference** (i.e.,
-:class:`weakref.ref` object) *or* :data:`None`.
-'''
 
 # ....................{ GETTERS                            }....................
-def make_obj_weakref_and_repr(obj: object) -> tuple[WeakrefOrNone, str]:
+def make_obj_weakref_and_repr(obj: object) -> tuple[Optional[WeakrefType], str]:
     '''
     2-tuple ``(weakref, repr)`` weakly referring to the passed object.
 
@@ -33,8 +26,8 @@ def make_obj_weakref_and_repr(obj: object) -> tuple[WeakrefOrNone, str]:
         Arbitrary object to be weakly referred to.
 
     Returns
-    ----------
-    Tuple[WeakrefOrNone, str]
+    -------
+    Tuple[Optional[WeakrefType], str]
         2-tuple ``(weakref, repr)`` weakly referring to this object such that:
 
         * ``weakref`` is either:
@@ -60,7 +53,7 @@ def make_obj_weakref_and_repr(obj: object) -> tuple[WeakrefOrNone, str]:
     # ....................{ LOCALS                         }....................
     # Weak reference to this object if this object supports weak references *OR*
     # "None" otherwise (e.g., if this object is a variable-sized container).
-    obj_weakref: WeakrefOrNone = None
+    obj_weakref: Optional[WeakrefType] = None
 
     # Machine-readable representation of this object truncated to minimize space
     # consumption for the worst case of an obscenely large object.
@@ -84,7 +77,7 @@ def make_obj_weakref_and_repr(obj: object) -> tuple[WeakrefOrNone, str]:
     else:
         # Attempt to classify a weak reference to this object for safety.
         try:
-            obj_weakref = weakref_ref(obj)
+            obj_weakref = WeakrefType(obj)
         # If doing so raises a "TypeError", this object *CANNOT* be weakly
         # referred to. Sadly, builtin variable-sized C-based types (e.g.,
         # "dict", "int", "list", "tuple") *CANNOT* be weakly referred to. This
@@ -109,7 +102,7 @@ def make_obj_weakref_and_repr(obj: object) -> tuple[WeakrefOrNone, str]:
 
 
 def get_weakref_obj_or_repr(
-    obj_weakref: WeakrefOrNone, obj_repr: str) -> object:
+    obj_weakref: Optional[WeakrefType], obj_repr: str) -> object:
     '''
     Object weakly referred to by the passed object if this object is indeed a
     weak reference to another existing object *or* the passed machine-readable
@@ -121,7 +114,7 @@ def get_weakref_obj_or_repr(
 
     Parameters
     ----------
-    obj_weakref : WeakrefOrNone
+    obj_weakref : Optional[WeakrefType]
         Either:
 
         * If the **referent** (i.e., target object being weakly referred to) is
@@ -136,7 +129,7 @@ def get_weakref_obj_or_repr(
         some number of characters to avoid worst-case space consumption.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -176,7 +169,7 @@ def get_weakref_obj_or_repr(
     # Else, this weak reference is *NOT* that placeholder.
     #
     # If this weak reference is *NOT* a weak reference, raise an exception.
-    elif not isinstance(obj_weakref, weakref_ref):
+    elif not isinstance(obj_weakref, WeakrefType):
         raise _BeartypeUtilPythonWeakrefException(
             f'Weak reference {repr(obj_weakref)} invalid '
             f'(i.e., neither weak reference, "None", nor "_WEAKREF_NONE").'

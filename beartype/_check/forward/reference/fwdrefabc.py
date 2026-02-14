@@ -18,6 +18,10 @@ from beartype.typing import (
     NoReturn,
     Optional,
 )
+from beartype._cave._cavefast import (
+    CallableCodeObjectType,
+    WeakrefType,
+)
 from beartype._data.typing.datatyping import (
     LexicalScope,
 )
@@ -37,10 +41,10 @@ from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 #FIXME: Unit test us up, please.
 class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
-    Abstract base class (ABC) of all **forward reference subclasses** (i.e.,
-    classes whose :class:`.BeartypeForwardRefMeta` metaclass defers the
-    resolution of stringified type hints referencing actual type hints that have
-    yet to be defined).
+    Abstract base class (ABC) of all **forward reference proxy subclasses**
+    (i.e., classes whose :class:`.BeartypeForwardRefMeta` metaclass defers the
+    resolution of :pep:`484`-compliant stringified forward reference type hints
+    referencing actual type hints that have yet to be defined).
 
     Caveats
     -------
@@ -55,20 +59,189 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     class variable is the name of the attribute referenced by that reference.
     '''
 
-    # ....................{ PRIVATE ~ class vars           }....................
+    # ....................{ CLASS VARS ~ mandatory         }....................
     __name_beartype__: str = None  # type: ignore[assignment]
     '''
     Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of the
     type hint referenced by this forward reference subclass.
+
+    This class variable is mandatory but defaults to :data:`None` to improve
+    debuggability in the event of developer error [read: us].
     '''
 
-
+    # ....................{ CLASS VARS ~ optional          }....................
     __scope_name_beartype__: Optional[str] = None
     '''
     Fully-qualified name of the lexical scope to which the type hint referenced
     by this forward reference subclass is relative if that type hint is relative
     (i.e., if :attr:`__name_beartype__` is relative) *or* ignored otherwise
     (i.e., if :attr:`__name_beartype__` is absolute).
+    '''
+
+
+    __func_local_parent_codeobj_weakref_beartype__: (
+        Optional[WeakrefType[CallableCodeObjectType]]) = None
+    '''
+    C-based **weak reference proxy** (i.e., :class:`weakref.ref` object) weakly
+    referring to the C-based code object underlying the lexical scope of the
+    parent module, type, or callable whose body locally defines the **locally
+    decorated callable** (i.e., :func:`beartype.beartype`-decorated pure-Python
+    callable locally defined inside another pure-Python callable) if this
+    forward reference proxy subtype proxies a :pep:`484`-compliant stringified
+    forward reference type hint annotating a locally decorated callable *or*
+    :data:`None` otherwise (i.e., if that hint annotates either no decorated
+    callable *or* a globally decorated callable).
+
+    This class variable enables this subtype to conditionally resolve an
+    otherwise unresolvable edge case. Generally speaking, there exist three
+    different kinds of stringified forward references (in increasing order of
+    resolution time and triviality):
+
+    * **References trivially resolveable at early decoration time.** In this
+      case, *no* forward reference proxy subtype is required at all. Instead,
+      the referent a reference refers to is resolved during decoration. In the
+      following example, since the user imports the :pep:`585`-compliant generic
+      :class:`collections.abc.Collection` *before* annotating the
+      :func:`beartype.`beartype`-decorated ``muh_easy_func`` function by the
+      reference ``'Collection[str]'`` *and* since the :class:`str` builtin
+      requires no importation, the :func:`beartype.`beartype` decorator fully
+      resolves that reference at decoration time (*without* needing to create a
+      forward reference proxy subtype): e.g.,
+
+      .. code-block:: python
+
+         from beartype import beartype
+         from collections.abc import Collection
+
+         # @beartype resolves 'Collection[str]' immediately at decoration time!
+         @beartype
+         def muh_easy_func(muh_arg: 'Collection[str]'): ...
+
+    * **References globally resolveable at later call time.** Suppose that
+      references *cannot* be trivially resolved at early decoration time but
+      that these references are either:
+
+      * The absolute names of global type hints defined in external modules.
+        These references can be globally resolved at later call time by
+        dynamically importing those external modules and then accessing those
+        hints from the global scopes of those modules.
+      * The relative names of global type hints that have yet to be defined in
+        the current module. These references can be globally resolved at later
+        call time by trivially accessing those hints from the global scope of
+        the current module (which requires no importation, obviously).
+
+      To do so, the :func:`beartype.beartype` decorator replaces each
+      unresolvable reference annotating the decorated callable by a forward
+      reference proxy subtype encapsulating those absolute names. In the
+      following example, since the user failed to import the
+      :pep:`585`-compliant generic :class:`collections.abc.Collection` *before*
+      annotating the :func:`beartype.`beartype`-decorated ``muh_harder_func``
+      function by the reference ``'Collection[str]'``, the
+      :func:`beartype.`beartype` decorator has no choice but to wrap that
+      reference by a forward reference proxy subtype. That proxy then
+      subsequently resolves that reference on the first call to that function by
+      dynamically importing that generic from its module: e.g.,
+
+      .. code-block:: python
+
+         from beartype import beartype
+
+         # @beartype wraps this forward reference by a forward reference proxy!
+         @beartype
+         def muh_harder_func(muh_arg: 'collections.abc.Collection[str]'): ...
+
+         # @beartype resolves that forward reference at call time (i.e., now)!
+         muh_harder_func(('This', 'is', 'harder', 'than', 'it', 'looks.'))
+
+    * **References locally resolveable at later local call time.** Suppose that
+      references *cannot* be trivially resolved at early decoration time but
+      that these references are neither the absolute names of global type hints
+      defined in external modules *nor* the relative names of global type hints
+      that have yet to be defined in the current module. By elimination, these
+      references *must* be the relative names of local type hints that have yet
+      to be defined in the local scopes of the parent callables defining the
+      :func:`beartype.beartype`-decorated callables annotated by these
+      references. Further suppose that these callables are subsequently called
+      in the same local scopes. These references can then be locally resolved at
+      that call time by non-trivially (in order):
+
+      #. Introspecting up the call stack for the first stack frame whose code
+         object is the same code object weakly referred to by this
+         ``__func_local_parent_codeobj_weakref_beartype__`` class variable.
+      #. Dynamically resolving this reference against the global and local scope
+         of that stack frame.
+
+      In the following example, since the :func:`beartype.`beartype`-decorated
+      ``muh_hardest_func`` function is locally defined by the parent
+      ``muh_parent_func`` function *and* since the :pep:`484`-compliant generic
+      ``MuhLocalType`` is undefined at the time ``muh_hardest_func`` is defined,
+      the :func:`beartype.`beartype` decorator has no choice but to wrap the
+      reference ``'MuhLocalType[str]'`` by a forward reference proxy subtype.
+      That proxy then subsequently resolves that reference on the first call to
+      that function in the same local scope (as described above): e.g.,
+
+      .. code-block:: python
+
+         def muh_parent_func():
+             from beartype import beartype
+
+             # @beartype wraps this forward reference by a reference proxy!
+             @beartype
+             def muh_hardest_func(muh_arg: 'MuhLocalType[str]'): ...
+
+             class MuhLocalType[T](): ...
+
+             # @beartype resolves that reference at this local call time!
+             muh_hardest_func(MuhLocalType[str]())
+
+    * **References totally unresolveable at later call time.** Suppose that
+      references *cannot* be trivially resolved at early decoration time, that
+      these references are the relative names of local type hints that have
+      yet to be defined in the local scopes of the parent callables defining the
+      :func:`beartype.beartype`-decorated callables annotated by these
+      references, and that these callables are only subsequently called outside
+      those local scopes. In this case, the stack frame whose code object is the
+      same code object weakly referred to by this
+      ``__func_local_parent_codeobj_weakref_beartype__`` class variable no
+      longer exists! Since the call stack no longer contains a relevant stack
+      frame, those hints are inaccessible. Although these proxies could raise a
+      fatal exception in this edge case, doing so would only constitute a false
+      positive and thus be harmful to QA. Why? Because pure static type-checkers
+      (e.g., :mod:`mypy`) *can* resolve these references. Although unresolveable
+      from the limited purview of runtime type-checking, these references are
+      entirely PEP-compliant and thus nonetheless valid. These proxies thus have
+      *no* choice but to conditionally ignore these references by dynamically
+      reducing them to the ignorable :class:`object` superclass.
+
+      In the following example, since the :func:`beartype.`beartype`-decorated
+      ``muh_hardest_func`` function is locally defined by the parent
+      ``muh_parent_func`` function, since the :pep:`484`-compliant generic
+      ``MuhLocalType`` is undefined at the time ``muh_hardest_func`` is defined,
+      *and* since ``muh_hardest_func`` is only externally called after being
+      returned by ``muh_parent_func``, the proxy wrapping the reference
+      ``'MuhLocalType[str]'`` has no choice but to ignore that reference by
+      reducing it to :class:`object` on the first call to that function in the
+      external global scope (as described above): e.g.,
+
+      .. code-block:: python
+
+         def muh_parent_func():
+             from beartype import beartype
+
+             # @beartype wraps this forward reference by a reference proxy!
+             @beartype
+             def muh_hardest_func(muh_arg: 'MuhLocalType[str]'): ...
+
+             class MuhLocalType[T](): ...
+             return muh_hardest_func, MuhLocalType
+
+         muh_hardest_func, SomeNonlocalType = muh_parent_func()
+
+         # @beartype *CANNOT* resolve that reference at this local call time!
+         # Technically, this call satisfies the forward reference annotating
+         # this function. Pragmatically, @beartype has *NO* means of resolving
+         # that forward reference and thus falls back to silently ignoring it.
+         muh_hardest_func(SomeNonlocalType[str]())
     '''
 
     # ....................{ INITIALIZERS                   }....................

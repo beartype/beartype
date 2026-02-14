@@ -170,11 +170,6 @@ from beartype._util.utilobject import get_object_type_name
 #    a similar signature as above. That factory should store this parameter if
 #    non-"None" as a new "__func_local_parent_codeobj_beartype__" class
 #    variable.
-#  * The __type_beartype__() method should then be refactored as follows:
-#    * If importing the target attribute fails, then fallback to checking
-#      "cls.__func_local_parent_codeobj_beartype__" and if non-"None" *JUST
-#      RETURN "object" FOR NOW.* Non-ideal, obviously. But suffices to just get
-#      this superficially working. Not a bad default, either.
 #  * In make_scope_forward_decor_meta():
 #    * Store that stack frame as a local variable.
 #    * When instantiating "BeartypeForwardScope", pass a new parameter:
