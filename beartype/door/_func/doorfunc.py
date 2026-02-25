@@ -55,6 +55,7 @@ from beartype._data.typing.datatypingport import (
     TypeIs,
 )
 from beartype._data.typing.datatyping import T
+from beartype.typing import Any
 
 # ....................{ VALIDATORS                         }....................
 def die_if_unbearable(
@@ -309,6 +310,15 @@ def is_subhint(subhint: Hint, superhint: Hint) -> bool:
 
     # Avoid circular import dependencies.
     from beartype.door._cls.doorsuper import TypeHint
+
+    # By design, "typing.Any" is assignable to every type hint at this
+    # public API boundary. Note that this check intentionally lives here
+    # rather than internally in TypeHint.is_subhint(), because unconstrained
+    # TypeVars are internally represented as TypeHint(Any) branches --
+    # making Any a universal subhint internally would incorrectly cause
+    # unconstrained TypeVars to also be subhints of everything.
+    if subhint is Any:
+        return True
 
     # The one-liner is mightier than the... many-liner.
     return TypeHint(subhint).is_subhint(TypeHint(superhint))

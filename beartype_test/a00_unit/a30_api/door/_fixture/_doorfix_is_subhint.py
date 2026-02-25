@@ -153,10 +153,10 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Tuple[object, ...], Any, True),
         (Union[int, MuhThing], Any, True),
 
-        # Although *ALL* type hints are subhints of "Any", "Any" is *ONLY* a
-        # subhint of itself.
+        # "Any" is itself a subhint of arbitrary superhints.
         (Any, Any, True),
-        (Any, object, False),
+        (Any, object, True),
+        (Any, str | None, True),
 
         # ..................{ PEP 484 ~ argless : bare       }..................
         # PEP 484-compliant unsubscripted type hints, which are necessarily
@@ -198,7 +198,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (T_sequence, T, True),
         (T_sequence, Any, True),
         (Any, T, True),  # Any is compatible with an unconstrained TypeVar
-        (Any, T_sequence, False),  # but not vice versa
+        (Any, T_sequence, True),
 
         # ..................{ PEP 484 ~ argless : number     }..................
         # Blame Guido.
