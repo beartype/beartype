@@ -259,9 +259,9 @@ Procedural API
 .. py:function::
    is_subhint(subhint: object, superhint: object) -> bool
 
-   :arg subhint: Type hint to tested as a subhint.
+   :arg subhint: Type hint to be tested as a subhint.
    :type subhint: object
-   :arg superhint: Type hint to tested as a superhint.
+   :arg superhint: Type hint or tuple of types to be tested as a superhint.
    :type superhint: object
    :return bool: :data:`True` only if ``subhint`` is a subhint of ``superhint``.
 
@@ -305,6 +305,10 @@ Procedural API
 
       # All classes are subclasses and thus subhints of themselves.
       >>> is_subhint(int, int)
+      True
+
+      # Tuple superhints are treated like an "or", matching issubclass().
+      >>> is_subhint(str, (int, str))
       True
 
    Equivalently, :func:`.is_subhint` returns :data:`True` only if *all* of the
