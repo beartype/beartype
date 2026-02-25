@@ -52,6 +52,7 @@ from beartype._data.typing.datatyping import CallableRaiserOrTester
 from beartype._data.typing.datatypingport import (
     Hint,
     HintBare,
+    HintOrTupleHints,
     TypeIs,
 )
 from beartype._data.typing.datatyping import T
@@ -245,7 +246,7 @@ def is_bearable(
     return func_tester(obj)  # type: ignore[return-value]
 
 # ....................{ TESTERS                            }....................
-def is_subhint(subhint: Hint, superhint: Hint) -> bool:
+def is_subhint(subhint: Hint, superhint: HintOrTupleHints) -> bool:
     '''
     :data:`True` only if the first passed hint is a **subhint** of the second
     passed hint, in which case this second hint is a **superhint** of this first
@@ -286,8 +287,10 @@ def is_subhint(subhint: Hint, superhint: Hint) -> bool:
     ----------
     subhint : Hint
         Type hint or type to be tested as the subhint.
-    superhint : Hint
+    superhint : HintOrTupleHints
         Type hint or type to be tested as the superhint.
+        If this is a tuple of hints, this tester returns :data:`True` if this
+        first hint is a subhint of at least one type in that tuple.
 
     Returns
     -------
@@ -309,6 +312,11 @@ def is_subhint(subhint: Hint, superhint: Hint) -> bool:
 
     # Avoid circular import dependencies.
     from beartype.door._cls.doorsuper import TypeHint
+
+    # If the superhint is a tuple of types, this subhint need only satisfy at
+    # least one tuple item.
+    if isinstance(superhint, tuple):
+        return any(is_subhint(subhint, superhint_item) for superhint_item in superhint)
 
     # The one-liner is mightier than the... many-liner.
     return TypeHint(subhint).is_subhint(TypeHint(superhint))

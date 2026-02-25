@@ -185,6 +185,12 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (int, NewStr, False),
         (str, NewStr, False),  # NewType act like subtypes
 
+        # Superhint being a tuple
+        (str, (int, str, list), True),
+        (MuhTuple, (int, tuple), True),
+        (bytes, (int,), False),
+        (str, (), False),
+
         # ..................{ PEP 484 ~ argless : typevar    }..................
         # PEP 484-compliant type variables.
         (list, T_sequence, True),
