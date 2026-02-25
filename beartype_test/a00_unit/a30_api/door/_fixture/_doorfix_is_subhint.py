@@ -158,6 +158,10 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Any, object, True),
         (Any, str | None, True),
 
+        # "Any" nested inside subscripted hints is assignable to concrete types.
+        (List[Any], List[int], True),
+        (List[Any], List[str], True),
+
         # ..................{ PEP 484 ~ argless : bare       }..................
         # PEP 484-compliant unsubscripted type hints, which are necessarily
         # subhints of themselves.

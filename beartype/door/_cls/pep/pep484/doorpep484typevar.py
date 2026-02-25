@@ -18,7 +18,6 @@ from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
 # from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype.typing import (
     TYPE_CHECKING,
-    Any,
     TypeVar,
 )
 from beartype._util.cache.utilcachecall import property_cached
@@ -104,7 +103,7 @@ class TypeVarTypeHint(UnionTypeHint):
         # Else, this type variable is unconstrained.
 
         #FIXME: Consider globalizing this as a private constant for efficiency.
-        # Return the 1-tuple containing only the "typing.Any" catch-all. Why?
-        # Because an unconstrained and unbounded type variable is semantically
-        # equivalent to a type variable bounded by "typing.Any".
-        return (TypeHint(Any),)  # pyright: ignore
+        # Return the 1-tuple containing only the "object" superclass. Why?
+        # Because PEP 484 states that an unconstrained and unbounded type
+        # variable has an implicit upper bound of "object".
+        return (TypeHint(object),)

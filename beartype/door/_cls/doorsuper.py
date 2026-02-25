@@ -713,6 +713,9 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
         # Return true only if either...
         return (
+            # This hint is the "typing.Any" catch-all (then this hint is
+            # necessarily a subhint of any hint) *OR*...
+            self._hint is Any or
             # That hint is the "typing.Any" catch-all (then this hint is
             # necessarily a subhint of that hint) *OR*...
             other._hint is Any or
