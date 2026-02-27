@@ -158,6 +158,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_MOST_3_16  as _IS_PYTHON_AT_MOST_3_16,
     IS_PYTHON_AT_MOST_3_15  as _IS_PYTHON_AT_MOST_3_15,
+    IS_PYTHON_AT_MOST_3_14 as _IS_PYTHON_AT_MOST_3_14,
     IS_PYTHON_AT_MOST_3_13  as _IS_PYTHON_AT_MOST_3_13,
     IS_PYTHON_AT_LEAST_3_14 as _IS_PYTHON_AT_LEAST_3_14,
     IS_PYTHON_AT_LEAST_3_13 as _IS_PYTHON_AT_LEAST_3_13,
@@ -214,7 +215,6 @@ from typing import (
     get_type_hints as get_type_hints,
     is_typeddict as is_typeddict,  # pyright: ignore
     no_type_check as no_type_check,
-    no_type_check_decorator as no_type_check_decorator,
     overload as overload,
 )
 
@@ -312,6 +312,16 @@ if _IS_PYTHON_AT_MOST_3_16:
         # Python 3.16 by the upstream CPython issue:
         #     https://github.com/python/cpython/issues/105578
         from typing import AnyStr as AnyStr
+
+# If the active Python interpreter targets at most Python <= 3.14...
+if _IS_PYTHON_AT_MOST_3_14:
+    # "no_type_check_decorator" has been deprecated as largely unused since
+    # 2023 and was removed entirely from 3.15:
+    #     https://github.com/python/cpython/issues/106309
+    #     https://github.com/python/cpython/pull/133602
+    from typing import (
+        no_type_check_decorator as no_type_check_decorator,
+    )
 
 # ....................{ PEP ~ 544                          }....................
 # If this interpreter is performing static type-checking (e.g., via mypy), defer

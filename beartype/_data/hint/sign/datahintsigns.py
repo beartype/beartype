@@ -274,7 +274,6 @@ HintSignLiteralString = _make_typing_hint_sign('LiteralString')
 HintSignNever         = _make_typing_hint_sign('Never')
 HintSignNewType       = _make_typing_hint_sign('NewType')
 # no_type_check   <-- unusable as a type hint
-# no_type_check_decorator   <-- unusable as a type hint
 HintSignNoDefault     = _make_typing_hint_sign('NoDefault')
 
 # Note that "NoReturn" is contextually valid *ONLY* as a top-level return hint.
