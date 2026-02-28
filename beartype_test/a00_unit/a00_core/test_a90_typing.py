@@ -50,6 +50,7 @@ def test_api_typing() -> None:
     from beartype import typing as beartype_typing
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_MOST_3_16,
+        IS_PYTHON_AT_LEAST_3_15,
         IS_PYTHON_AT_LEAST_3_13,
     )
 
@@ -168,6 +169,13 @@ def test_api_typing() -> None:
         # been permanently removed under newer Python versions.
         TYPING_ATTR_UNEQUAL_NAMES.add('ByteString')
     # Else, the active Python interpreter targets Python >= 3.17.
+
+    # If the active Python interpreter targets Python >= 3.15...
+    if IS_PYTHON_AT_LEAST_3_15:
+        # Add all hard-deprecated public "typing" attributes that have since
+        # been permanently removed under newer Python versions.
+        TYPING_ATTR_UNEQUAL_NAMES.add('no_type_check_decorator')
+    # Else, the active Python interpreter targets Python <= 3.14.
 
     # If the active Python interpreter targets Python >= 3.13...
     if IS_PYTHON_AT_LEAST_3_13:
