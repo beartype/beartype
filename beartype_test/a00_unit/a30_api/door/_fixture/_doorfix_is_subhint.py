@@ -147,6 +147,16 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     # is_subhint)" describing the subhint relations between two PEP-compliant
     # type hints) to be returned by this fixture.
     HINT_SUBHINT_CASES = [
+        # ..................{ NON-PEP ~ tuple                }..................
+        #FIXME: Uncomment when we decide to try properly resolving the following
+        #long-standing feature request:
+        #    https://github.com/beartype/beartype/issues/369
+        # # PEP-noncompliant tuple type union.
+        # (str, (int, str, list), True),
+        # (MuhTuple, (int, tuple), True),
+        # (bytes, (int,), False),
+        # (str, (), False),
+
         # ..................{ PEP 484 ~ argless : any        }..................
         # PEP 484-compliant catch-all type hint.
         (MuhThing, Any, True),
