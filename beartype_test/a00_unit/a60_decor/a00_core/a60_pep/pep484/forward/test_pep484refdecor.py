@@ -346,6 +346,7 @@ def test_pep484_ref_decor_pep695() -> None:
     # Defer test-specific imports.
     from beartype_test.a00_unit.data.pep.pep484.forward.data_pep484ref_decor_pep695 import (
         suddenly_on,
+        the_glancing_spheres,
     )
 
     # ..................{ PASS                               }..................
@@ -355,6 +356,12 @@ def test_pep484_ref_decor_pep695() -> None:
     planet_orb_of_fire = suddenly_on(WHEREON_HE_RODE)
     assert callable(planet_orb_of_fire)
     assert planet_orb_of_fire() is WHEREON_HE_RODE
+
+    # Assert that calling a callable decorated by a PEP 695-parametrized
+    # decorator with valid parameters returns the expected string.
+    CIRCLES_AND_ARCS = 'Circles, and arcs, and broad-belting colure,'
+    assert the_glancing_spheres(CIRCLES_AND_ARCS, 25) == (
+        f'{CIRCLES_AND_ARCS} {25}')
 
 # ....................{ TESTS ~ fail                       }....................
 def test_pep484_ref_decor_fail() -> None:
