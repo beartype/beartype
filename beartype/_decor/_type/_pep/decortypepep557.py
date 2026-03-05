@@ -32,20 +32,7 @@ from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobject import get_object_type_name
 
 # ....................{ DECORATORS                         }....................
-#FIXME: As a mandatory prerequisite *BEFORE* integrating this into the @beartype
-#codebase, we first need to:
-#* Generalize both is_bearable() and die_if_unbearable() to support quoted
-#  relative forward references. As always, the algorithm should iteratively
-#  search up the callstack for the first stack frame residing *OUTSIDE*
-#  @beartype. Actually... that doesn't suffice. Third-party frameworks
-#  leveraging @beartype could themselves be consuming other third-party type
-#  hints originating from users. Deciding where exactly those type hints were
-#  originally defined is *PROBABLY* infeasible in the general case. So, we
-#  really do need to iteratively search up the entire call stack before raising
-#  an exception. It's fine. Just do it. The alternative is broken badness.
 #FIXME: Unit test against all possible dataclass edge cases, including:
-#* Quoted relative forward references (e.g., "list['MuhUndefinedType']"). This
-#  works, but we still need to test it. *shrug*
 #* "typing.Self". We're *NOT* passing "cls_stack" to either the is_bearable() or
 #  die_if_unbearable() functions, because those functions currently fail to
 #  accept an optional "cls_stack" parameter. We should probably generalize both

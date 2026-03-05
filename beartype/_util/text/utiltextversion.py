@@ -12,11 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilTextVersionException
-from beartype.typing import Tuple
 from re import compile as re_compile
 
 # ....................{ CONVERTERS                         }....................
-def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
+def convert_str_version_to_tuple(version: str) -> tuple[int, ...]:
     '''
     Convert the passed human-readable ``.``-delimited version string into a
     machine-readable version tuple of corresponding integers, suitable for

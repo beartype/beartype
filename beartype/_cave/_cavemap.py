@@ -27,14 +27,13 @@
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCaveNoneTypeOrKeyException
-from beartype.typing import (
+from typing import (
     Any,
-    Tuple,
     Union,
 )
 
 # ....................{ HINTS                              }....................
-_TypeTuple = Tuple[Union[type, str], ...]
+_TypeTuple = tuple[Union[type, str], ...]
 '''
 PEP-compliant type hint matching a **type tuple** (i.e., tuple containing only
 types and forward references to deferred types specified as the fully-qualified
@@ -242,7 +241,7 @@ submodule to prevent cyclic import dependencies.
 '''
 
 
-_NoneTypes: Tuple[type, ...] = (_NoneType,)
+_NoneTypes: tuple[type, ...] = (_NoneType,)
 '''
 Tuple of only the type of the :data:`None` singleton.
 '''

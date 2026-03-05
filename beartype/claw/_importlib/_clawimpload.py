@@ -24,6 +24,7 @@ from beartype.roar import BeartypeClawImportAstException
 from beartype.typing import Optional
 from beartype._conf.confmain import BeartypeConf
 from beartype._util.ast.utilastget import get_node_repr_indented
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_15
 from beartype._util.text.utiltextlabel import label_exception
 from importlib import (  # type: ignore[attr-defined]
     _bootstrap_external,  # pyright: ignore
@@ -401,9 +402,15 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         data: bytes,
         path: str,
 
+        # Optional parameters.
+        #
+        # Note that the optional "fullname" parameter is accepted by the
+        # superclass method *ONLY* under Python >= 3.15.
+        fullname: Optional[str] = None,
+
         # Optional keyword-only parameters.
         *,
-        _optimize: int =-1,
+        _optimize: int = -1,
     ) -> CodeType:
         '''
         Code object dynamically compiled from the **sourceful Python package or
@@ -423,7 +430,15 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             or module to be decoded and dynamically compiled into a code object.
         path : str
             Absolute or relative filename of that Python package or module.
-        _optimize : int, optional
+        fullname : Optional[str], default: None,
+            Fully-qualified name of that Python package or module. In theory,
+            this name *should* be equal to the :mod:`beartype`-specific
+            :attr:`._module_name` instance variable and thus ignorable for
+            :mod:`beartype` purposes. In practice, it's best to assume nothing.
+            Defaults to :data:`None`, presumably for compatibility with
+            third-party packages targeting older Python versions that failed to
+            define this parameter.
+        _optimize : int, default: -1
             **Optimization level** (i.e., numeric integer signifying increasing
             levels of optimization under which to compile that Python package or
             module). Defaults to -1, implying the current interpreter-wide
@@ -453,8 +468,22 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # If that module has *NOT* been registered for type-checking, preserve
         # that module as is by simply deferring to the superclass method.
         if self._module_conf is None:
-            return super().source_to_code(  # type: ignore[call-arg]
-                data=data, path=path, _optimize=_optimize)  # pyright: ignore
+            # If the active Python interpreter targets Python >= 3.15, the
+            # superclass method accepts the additional optional "fullname"
+            # parameter. In this case, pass this parameter.
+            if IS_PYTHON_AT_LEAST_3_15:
+                return super().source_to_code(  # type: ignore[call-arg]
+                    data=data,
+                    path=path,
+                    fullname=fullname,  # pyright: ignore
+                    _optimize=_optimize,
+                )
+            # Else, the active Python interpreter targets Python <= 3.14. In
+            # this case, the superclass method accepts *NO* additional optional
+            # "fullname" parameter. Avoid passing this parameter.
+            else:
+                return super().source_to_code(  # type: ignore[call-arg]
+                    data=data, path=path, _optimize=_optimize)  # pyright: ignore
         # Else, that module has been registered for type-checking.
 
         # Plaintext decoded contents of that module.

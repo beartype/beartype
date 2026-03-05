@@ -137,14 +137,6 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # import machinery rather than non-standard dynamic import shenanigans (e.g.,
 # "from typing import Annotated" rather than
 # "import_typing_attr_or_none('Annotated')").
-# WARNING: To prevent "mypy --no-implicit-reexport" from raising literally
-# hundreds of errors at static analysis time, *ALL* public attributes *MUST* be
-# explicitly reimported under the same names with "{exception_name} as
-# {exception_name}" syntax rather than merely "{exception_name}". Yes, this is
-# ludicrous. Yes, this is mypy. For posterity, these failures resemble:
-#     beartype/_cave/_cavefast.py:47: error: Module "beartype.roar" does not
-#     explicitly export attribute "BeartypeCallUnavailableTypeException";
-#     implicit reexport disabled  [attr-defined]
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Effectively alias this third-party "beartype.typing" submodule to the standard
@@ -159,9 +151,10 @@ from typing import *  # pyright: ignore
 # of public attributes explicitly exported by the standard "typing" module with
 # semantically equivalent runtime-friendly alternatives. Specifically...
 if not TYPE_CHECKING:
+    # ....................{ IMPORTS                        }....................
     # Defer runtime-specific imports.
     from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_MOST_3_16  as _IS_PYTHON_AT_MOST_3_16,
+        IS_PYTHON_AT_MOST_3_14 as _IS_PYTHON_AT_MOST_3_14,
     )
 
     # ....................{ PEP ~ 544                      }....................
@@ -239,26 +232,136 @@ if not TYPE_CHECKING:
     Type = type
 
     # ....................{ PEP ~ 585 : removed            }....................
+    # If the active Python interpreter targets Python <= 3.14 and thus still
+    # defines the deprecated "typing.ByteString" type *WITHOUT* yet emitting a
+    # "DeprecationWarning" warning, delete that type implicitly imported above
+    # in favour of the preferable "collections.abc.ByteString" type.
+    #
+    # Look. It's complicated. And dumb. Really, really dumb.
+    if _IS_PYTHON_AT_MOST_3_14:
+        from collections.abc import ByteString
+    # Else, the active Python interpreter targets Python >= 3.15 and thus either
+    # no longer defines the deprecated "typing.ByteString" type at all *OR* does
+    # but only in a manner emitting *WITHOUT* yet emitting a
+    # "DeprecationWarning" warning. In either case, permit the __getattr__()
+    # dunder function defined below to handle this edge case more cleverly.
+# Else, the active Python interpreter is performing static type-checking. In
+# this case, force the unclean static type-checker to pretend that this
+# "beartype.typing" submodule is a trivial alias of the "typing" module by...
+# *DOING ABSOLUTELY NOTHING WHATSOEVER*. Beartype: "You win by doing nothing."
+
+# ....................{ DUNDERS                            }....................
+def __getattr__(attr_name: str) -> object:
+    '''
+    Dynamically retrieve a deprecated attribute with the passed unqualified name
+    from this submodule and emit a non-fatal deprecation warning on each such
+    retrieval if this submodule defines this attribute *or* raise an exception
+    otherwise.
+
+    The Python interpreter implicitly calls this :pep:`562`-compliant module
+    dunder function under Python >= 3.7 *after* failing to directly retrieve an
+    explicit attribute with this name from this submodule. Since this dunder
+    function is only called in the event of an error, neither space nor time
+    efficiency are a concern here.
+
+    Parameters
+    ----------
+    attr_name : str
+        Unqualified name of the deprecated attribute to be retrieved.
+
+    Returns
+    -------
+    object
+        Value of this deprecated attribute.
+
+    Warns
+    -----
+    DeprecationWarning
+        If this attribute is deprecated.
+
+    Raises
+    ------
+    AttributeError
+        If this attribute is unrecognized and thus erroneous.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer dunder-specific imports.
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_MOST_3_16,
+        IS_PYTHON_AT_LEAST_3_11,
+    )
+
+    # ....................{ PEP ~ 585 : removed            }....................
     # Alias *ALL* PEP 484-compliant public attributes defined by the standard
     # "typing" module that have since been quietly removed from that module
     # sooner than PEP 585 mandates these attributes be removed. Technically,
     # CPython itself is violating PEP 585 here. Pragmatically, nobody cares.
 
-    # If the active Python interpreter targets at most Python <= 3.16...
-    if _IS_PYTHON_AT_MOST_3_16:
-        # Alias the PEP 484-compliant "ByteString" type hint singleton to the
-        # PEP 585-compliant "collections.abc.ByteString" abstract base class
-        # (ABC). Both "collections.abc.ByteString" *AND* "typing.ByteString"
-        # have been scheduled for removal under Python 3.17 by the upstream
-        # CPython issue:
-        #     https://github.com/python/cpython/issues/91896
-        #
-        # Note that these attributes were originally scheduled for removal under
-        # Python 3.14. This removal was since deferred by three minor versions
-        # (and thus three years) to inform downstream third-party packages with
-        # proper "DeprecationWarning" warnings emitted by the "typing" module.
-        from collections.abc import ByteString as ByteString
-# Else, the active Python interpreter is performing static type-checking. In
-# this case, force the unclean static type-checker to pretend that this
-# "beartype.typing" submodule is a trivial alias of the "typing" module by...
-# *DOING ABSOLUTELY NOTHING WHATSOEVER*. Beartype: "You win by doing nothing."
+    # Alias the PEP 484-compliant "ByteString" type hint singleton to
+    # the PEP 585-compliant "collections.abc.ByteString" abstract base
+    # class (ABC). Both "collections.abc.ByteString" *AND*
+    # "typing.ByteString" have been scheduled for removal under Python
+    # 3.17 by the upstream CPython issue:
+    #     https://github.com/python/cpython/issues/91896
+    #
+    # Note that:
+    # * These attributes were originally scheduled for removal under Python
+    #   3.14. This removal was since deferred by three minor versions (and thus
+    #   three years) to inform downstream third-party packages with proper
+    #   "DeprecationWarning" warnings emitted by the "typing" module.
+    # * Unconditionally importing the "collections.abc.ByteString" type above
+    #   under either Python 3.15 or 3.16 would harmfully emit a
+    #   "DeprecationWarning" warning for all beartype users importing from this
+    #   "beartype.typing" subpackage even for users *NEVER* explicitly importing
+    #   "beartype.typing.ByteString". Clearly, that behaviour is unacceptable.
+    #   This submodule this behaves more intelligently under Python 3.15 and
+    #   3.16 by dynamically deferring the importation of that type until
+    #   explicitly accessed by the caller.
+
+    # If...
+    if (
+        # The active Python interpreter targets at most Python <= 3.16 *AND*...
+        IS_PYTHON_AT_MOST_3_16 and
+        # The caller is explicitly importing the deprecated
+        # "collections.abc.ByteString" type...
+        attr_name == 'ByteString'
+    ):
+        # Import and return this deprecated type.
+        from collections.abc import ByteString
+        return ByteString
+    # Else, either:
+    # * The active Python interpreter targets Python >= 3.17, in which case the
+    #   deprecated "collections.abc.ByteString" type no longer exists *OR*...
+    # * The caller is *NOT* explicitly importing the deprecated
+    #   "collections.abc.ByteString" type, in which case the attribute this
+    #   caller is explicitly importing is unrecognized.
+
+    # If the active Python interpreter targets Python >= 3.11, the "typing"
+    # module defines the __getattr__() dunder method. In this case...
+    if IS_PYTHON_AT_LEAST_3_11:
+        # Attempt to...
+        try:
+            # Import the typing.__getattr__() dunder method.
+            from typing import __getattr__ as typing_getattr  # type: ignore[attr-defined]
+
+            # Dynamically defer to this method, thus masequerading the
+            # "beartype.typing" subpackage as the "typing" module even for the
+            # proper subset of attributes only dynamically exposed by that module.
+            return typing_getattr(attr_name)
+        # If even the above call to the typing.__getattr__() dunder method raised
+        # the standard "AttributeError" exception, the caller requested an invalid
+        # attribute that genuinely does *NOT* exist. In this case, raise a similar
+        # "AttributeError" exception below specific to "beartype.typing".
+        except AttributeError:
+            pass
+    # Else, the active Python interpreter targets Python <= 3.10. In this case,
+    # the "typing" module fails to define the __getattr__() dunder method.
+
+    # Raise the same exception raised by Python on accessing a non-existent
+    # attribute of a module *NOT* defining this dunder function.
+    #
+    # Note that Python's non-trivial import machinery silently coerces this
+    # "AttributeError" exception into an "ImportError" exception. Just do it!
+    raise AttributeError(
+        f"module 'beartype.typing' has no attribute '{attr_name}'")

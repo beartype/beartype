@@ -37,11 +37,6 @@ callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarwarn import (
     _BeartypeConfReduceDecoratorExceptionToWarningDefault)
-from beartype.typing import (
-    TYPE_CHECKING,
-    Dict,
-    Optional,
-)
 from beartype._conf.confenum import (
     BeartypeStrategy,
     BeartypeViolationVerbosity,
@@ -67,6 +62,10 @@ from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.utilobject import get_object_type_basename
 from threading import Lock
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+)
 
 # ....................{ DATACLASSES                        }....................
 class BeartypeConf(object):
@@ -103,7 +102,7 @@ class BeartypeConf(object):
     _conf_args : tuple
         Tuple of the values of *all* possible keyword parameters (in arbitrary
         order) configuring this configuration.
-    _conf_kwargs : Dict[str, object]
+    _conf_kwargs : dict[str, object]
         Dictionary mapping from the names to values of *all* possible keyword
         parameters configuring this configuration.
     _hash : int
@@ -1467,7 +1466,7 @@ global for non-reentrant reuse elsewhere as a context manager).
 '''
 
 
-_beartype_conf_args_to_conf: Dict[tuple, BeartypeConf] = {}
+_beartype_conf_args_to_conf: dict[tuple, BeartypeConf] = {}
 '''
 Non-thread-safe **beartype configuration parameter cache** (i.e., dictionary
 mapping from the hash of each set of parameters accepted by a prior call of the

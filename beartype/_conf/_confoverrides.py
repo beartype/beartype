@@ -11,7 +11,6 @@ parameter accepted by the :class:`beartype.BeartypeConf.__init__` method).
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeConfParamException
-from beartype.typing import Optional
 from beartype._data.typing.datatyping import (
     DictStrToAny,
     Pep484TowerComplex,
@@ -19,6 +18,7 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+from typing import Optional
 
 # ....................{ GETTERS                            }....................
 def sanify_conf_kwargs_is_pep484_tower(conf_kwargs: DictStrToAny) -> None:

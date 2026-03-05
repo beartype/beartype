@@ -81,15 +81,14 @@ IS_PYTHON_AT_LEAST_3_15 = IS_PYTHON_AT_LEAST_3_16 or version_info >= (3, 15)
 '''
 
 
-#FIXME: Preserved if we ever require this. *shrug*
-# #FIXME: After dropping Python 3.14 support:
-# #* Remove all code conditionally testing this global.
-# #* Remove this global.
-# IS_PYTHON_AT_MOST_3_14 = not IS_PYTHON_AT_LEAST_3_15
-# '''
-# :data:`True` only if the active Python interpreter targets at most Python
-# 3.14.x.
-# '''
+#FIXME: After dropping Python 3.14 support:
+#* Remove all code conditionally testing this global.
+#* Remove this global.
+IS_PYTHON_AT_MOST_3_14 = not IS_PYTHON_AT_LEAST_3_15
+'''
+:data:`True` only if the active Python interpreter targets at most Python
+3.14.x.
+'''
 
 
 #FIXME: After dropping Python 3.13 support:

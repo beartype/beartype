@@ -17,13 +17,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # by this submodule. This submodule is typically called from the "__init__"
 # submodules of public subpackages.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.typing import (
-    Any,
-    Mapping,
-)
+from typing import Any
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
-from collections.abc import Mapping as MappingABC
+from collections.abc import Mapping
 from warnings import warn
 
 # ....................{ IMPORTERS                          }....................
@@ -95,9 +92,9 @@ def deprecate_module_attr(
     '''
     assert isinstance(attr_deprecated_name, str), (
         f'{repr(attr_deprecated_name)} not string.')
-    assert isinstance(attr_deprecated_name_to_nondeprecated_name, MappingABC), (
+    assert isinstance(attr_deprecated_name_to_nondeprecated_name, Mapping), (
         f'{repr(attr_deprecated_name_to_nondeprecated_name)} not mapping.')
-    assert isinstance(attr_nondeprecated_name_to_value, MappingABC), (
+    assert isinstance(attr_nondeprecated_name_to_value, Mapping), (
         f'{repr(attr_nondeprecated_name_to_value)} not mapping.')
 
     # Fully-qualified name of the caller's submodule. Since all physical
