@@ -36,12 +36,30 @@ testing the behaviour of these attributes to the subsequent
 from beartype_test._util.mark.pytmark import ignore_warnings
 
 # ....................{ TESTS                              }....................
+# *ORDER IS SIGNIFICANT.* This unit test must be defined *BEFORE* the sibling
+# test_api_typing() unit test, which otherwise squelches "DeprecationWarning"
+# warnings on the first importation of the "beartype.typing" subpackage.
+def test_api_typing_importability() -> None:
+    '''
+    Test whether the :mod:`beartype.typing` subpackage erroneously emits
+    non-fatal :exc:`DeprecationWarning` warnings as an accidental side effect of
+    merely being imported, which that subpackage occasionally does due to the
+    unavoidable non-triviality of its internal implementation.
+    '''
+
+    # Import "beartype.typing" as a trivial means of implicitly detecting
+    # whether doing so erroneously emits a "DeprecationWarning", which the
+    # test_api_typing() unit test defined below unconditionally ignores and thus
+    # has *NO* means of detecting.
+    from beartype import typing
+
+
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by this test. Urgh!
 @ignore_warnings(DeprecationWarning)
 def test_api_typing() -> None:
     '''
-    Test the public API of the :mod:`beartype.meta` submodule.
+    Test the public API of the :mod:`beartype.typing` subpackage.
 
     This test exercises that there exists a one-to-one mapping between public
     attributes exported by the :mod:`beartype.typing` and :mod:`typing`

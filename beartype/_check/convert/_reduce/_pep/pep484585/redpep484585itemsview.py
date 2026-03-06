@@ -55,7 +55,7 @@ def reduce_hint_pep484585_itemsview(hint: Hint, exception_prefix: str) -> Hint:
 
     # If this hint is a PEP 484-compliant deprecated "typing.ItemsView[...]"
     # type hint, emit a non-fatal deprecation warning.
-    reduce_hint_pep484_deprecated(hint=hint, exception_prefix=exception_prefix)
+    reduce_hint_pep484_deprecated(hint, exception_prefix)
 
     # Reduced hint to be returned, defaulting to the abstract base class (ABC)
     # of *ALL* items views.

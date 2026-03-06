@@ -65,7 +65,7 @@ def reduce_hint_pep484585_type(
 
     # If this is a PEP 484-compliant subclass hint, this hint has been
     # deprecated by PEP 585. In this case, issue a non-fatal warning.
-    reduce_hint_pep484_deprecated(hint=hint, exception_prefix=exception_prefix)
+    reduce_hint_pep484_deprecated(hint, exception_prefix)
 
     # If this hint is the unsubscripted PEP 484-compliant subclass type hint,
     # immediately reduce this hint to the "type" superclass.

@@ -12,11 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Any,
-    Iterable,
-    Iterator,
-)
+from typing import Any
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatyping import TypeWarning
 from beartype._util.error.utilerrtest import is_exception_message_str
@@ -25,7 +21,10 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_12,
 )
 from beartype._util.text.utiltextmunge import uppercase_str_char_first
-from collections.abc import Iterable as IterableABC
+from collections.abc import (
+    Iterable,
+    Iterator,
+)
 from contextlib import contextmanager
 from warnings import (
     WarningMessage,
@@ -183,8 +182,7 @@ def reissue_warnings_placeholder(
     https://stackoverflow.com/a/77516994/2809027
         StackOverflow answer strongly inspiring this implementation.
     '''
-    assert isinstance(warnings, IterableABC), (
-        f'{repr(warnings)} not iterable.')
+    assert isinstance(warnings, Iterable), f'{repr(warnings)} not iterable.'
     assert isinstance(source_str, str), f'{repr(source_str)} not string.'
     assert isinstance(target_str, str), f'{repr(target_str)} not string.'
 

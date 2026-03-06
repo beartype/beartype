@@ -18,7 +18,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintRecursionException
-from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert._reduce._redmap import (
     HINT_SIGN_TO_REDUCE_HINT_CACHED_get,
@@ -46,9 +45,11 @@ from beartype._data.typing.datatyping import (
     DictStrToAny,
     HintSignOrNoneOrSentinel,
 )
+from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.kind.maplike.utilmapset import remove_mapping_keys
+from typing import Optional
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint(
@@ -242,190 +243,214 @@ def reduce_hint(
     del hint
 
     # ....................{ SEARCH                         }....................
-    # Repeatedly reduce this hint to increasingly irreducible hints until this
-    # hint is no longer reducible. This algorithm iteratively reduces this hint
-    # with a battery of increasingly non-trivial reductions. For efficiency,
-    # reductions are intentionally ordered from most to least efficient.
-    while True:
-        # ....................{ REDUCE                     }....................
-        #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
-        # For each lower-level reducer...
-        for hint_reducer in _HINT_REDUCERS:
-            # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} via {hint_reducer}...')
+    # Attempt to...
+    try:
+        # Repeatedly reduce this hint to increasingly irreducible hints until
+        # this hint is no longer reducible. This algorithm iteratively reduces
+        # this hint with a battery of increasingly non-trivial reductions. For
+        # efficiency, reductions are intentionally ordered from most to least
+        # efficient.
+        while True:
+            # ....................{ REDUCE                 }....................
+            #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
+            # For each lower-level reducer...
+            for hint_reducer in _HINT_REDUCERS:
+                # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} via {hint_reducer}...')
 
-            # Either:
-            # * If this reducer reduces this hint:
-            #   * If this reduction produced supplementary metadata, metadata
-            #     encapsulating the reduction of this hint by this reducer.
-            #   * Else, the reduced hint reduced by this reducer.
-            # * Else, this unreduced hint as is.
-            hint_or_sane_curr = hint_reducer(
-                arg_kind=arg_kind,
-                call_meta=call_meta,
-                conf=conf,
-                hint=hint_curr,
-                hint_parent_sane=hint_parent_sane,
-                hint_sign_seed=hint_sign_seed,
-                pith_name=pith_name,
-                reductions_count=reductions_count,
-                exception_prefix=exception_prefix,
-            )
-            # print(f'[reduce_hint] Reduced to {hint_or_sane_curr}!')
-
-            # If this reduced hint is *NOT* this unreduced hint, this reducer
-            # reduced this hint. Halt reducing by these lower-level reducers,
-            # enabling the outer loop to decide whether to continue reducing.
-            if hint_or_sane_curr is not hint_curr:
-                # If this hint reduces to the ignorable "HINT_SANE_IGNORABLE"
-                # metadata singleton, then halt reducing immediately.
-                #
-                # Note that this is merely an optimization avoiding unnecessary
-                # iteration. Without this test, hints reduced to this ignorable
-                # singleton would require an additional loop through the
-                # "_HINT_REDUCERS" tuple. This test elides that iteration.
-                if hint_or_sane_curr is HINT_SANE_IGNORABLE:
-                    # print(f'[reduce_hint] Ignorably reduced!')
-                    return HINT_SANE_IGNORABLE
-                # Else, this hint is currently unignorable.
-                # print(f'[reduce_hint] Incrementally reduced!')
-
-                # Halt reducing immediately.
-                break
-            # Else, this unreduced hint remains unmodified. Since this reducer
-            # failed to reduce this hint, silently continue to the next reducer.
-        # If the above iteration failed to "break", then this unreduced hint
-        # remains unmodified across all lower-level reducers. This implies this
-        # hint to now be irreducible. Halt reducing immediately.
-        else:
-            # print(f'[reduce_hint] Irreducible!')
-            break
-        # Else, the above iteration hit a "break". This hint was reduced by a
-        # lower-level reducer above, implying that this hint *COULD* still be
-        # reducible. Silently continue reducing.
-
-        # ....................{ RESPOND                    }....................
-        # Respond to the lower-level reduction performed above.
-
-        # If reducing this hint generated supplementary metadata...
-        if isinstance(hint_or_sane_curr, HintSane):
-            # Extract the currently reduced hint from this metadata.
-            hint_curr = hint_or_sane_curr.hint
-
-            #FIXME: Should probably be performed down below outside this loop.
-            # If this hint reduces to the ignorable "HINT_IGNORABLE" singleton,
-            # then halt reducing immediately.
-            #
-            # Note that this is *NOT* merely an optimization avoiding
-            # unnecessary iteration as above. While similar, this logic is
-            # distinct from that above. This edge case arises when a reducer
-            # avoids reducing an ignorable hint to the higher-level ignorable
-            # "HINT_SANE_IGNORABLE" metadata singleton but instead encapsulates
-            # the lower-level "HINT_IGNORABLE" type hint singleton with a new
-            # "HintSane" object providing unique metadata describing the ignored
-            # type hint. That unique metadata enables parent reducers to
-            # selectively decide how to handle ignorable child type hints.
-            #
-            # Examples include:
-            # * The reduce_hint_pep484604() reducer for union type hints.
-            if hint_curr is HINT_IGNORABLE:
-                # Return either...
-                return (
-                    # If the caller requests that unique "HintSane" objects
-                    # encapsulating the "HINT_IGNORABLE" singleton be preserved,
-                    # do so by returning this metadata as is. Note that this is
-                    # *NOT* what most callers expect and thus not the default;
-                    hint_or_sane_curr
-                    if is_hint_ignorable_preserved else
-                    # Else, reduce this metadata to the standard ignorable
-                    # "HINT_SANE_IGNORABLE" singleton describing ignorable
-                    # hints. Note that this is what *MOST* callers expect and
-                    # thus the default.
-                    HINT_SANE_IGNORABLE
+                # Either:
+                # * If this reducer reduces this hint:
+                #   * If this reduction produced supplementary metadata,
+                #     metadata encapsulating the reduction of this hint by this
+                #     reducer.
+                #   * Else, the reduced hint reduced by this reducer.
+                # * Else, this unreduced hint as is.
+                hint_or_sane_curr = hint_reducer(
+                    arg_kind=arg_kind,
+                    call_meta=call_meta,
+                    conf=conf,
+                    hint=hint_curr,
+                    hint_parent_sane=hint_parent_sane,
+                    hint_sign_seed=hint_sign_seed,
+                    pith_name=pith_name,
+                    reductions_count=reductions_count,
+                    exception_prefix=exception_prefix,
                 )
-            # Else, this hint does *NOT* reduce to the ignorable
-            # "HINT_IGNORABLE" singleton. Ergo, this hint is unignorable.
+                # print(f'[reduce_hint] Reduced to {hint_or_sane_curr}!')
 
-            # Replace the sanified type hint metadata of the parent hint of this
-            # hint by the sanified type hint metadata of this hint itself. Doing
-            # so ensures that the next reducer passed the "hint_parent_sane"
-            # parameter preserves this metadata during its reduction. Since the
-            # most recent reducer call received the prior "hint_parent_sane"
-            # parameter, that reducer has already safely preserved the parent
-            # metadata by compositing that metadata into this
-            # "hint_or_sane_curr" metadata that that reducer returned. Srsly.
-            hint_parent_sane = hint_or_sane_curr
-        # Else, reducing this hint did *NOT* generate supplementary metadata,
-        # implying "hint_or_sane_curr" to be the currently reduced hint. In this
-        # case, record this currently reduced hint.
-        else:
-            hint_curr = hint_or_sane_curr
+                # If this reduced hint is *NOT* this unreduced hint, this
+                # reducer reduced this hint. Halt reducing by these lower-level
+                # reducers, enabling the outer loop to decide whether to
+                # continue reducing.
+                if hint_or_sane_curr is not hint_curr:
+                    # If this hint reduces to the ignorable
+                    # "HINT_SANE_IGNORABLE" metadata singleton, then halt
+                    # reducing immediately.
+                    #
+                    # Note that this is merely an optimization avoiding
+                    # unnecessary iteration. Without this test, hints reduced to
+                    # this ignorable singleton would require an additional loop
+                    # through the "_HINT_REDUCERS" tuple. This test elides that
+                    # iteration.
+                    if hint_or_sane_curr is HINT_SANE_IGNORABLE:
+                        # print(f'[reduce_hint] Ignorably reduced!')
+                        return HINT_SANE_IGNORABLE
+                    # Else, this hint is currently unignorable.
+                    # print(f'[reduce_hint] Incrementally reduced!')
 
-        #FIXME: Should probably be performed above the prior "if" conditional.
-        #FIXME: Currently unused, but useful. Could be required at some point.
-        # If this currently reduced hint is exactly the previously reduced hint,
-        # the above reducers failed to reduce this hint. Halt reducing entirely.
-        #
-        # Note that this is a rare (albeit valid) edge case that arises for
-        # reducers that unconditionally create and return new... The above
-        # "else:" block of the above "for hint_reducer in _HINT_REDUCERS:" loop
-        # if hint_or_sane_curr == hint_or_sane_prev:
-        #     break
+                    # Halt reducing immediately.
+                    break
+                # Else, this unreduced hint remains unmodified. Since this
+                # reducer failed to reduce this hint, silently continue to the
+                # next reducer.
+            # If the above iteration failed to "break", then this unreduced hint
+            # remains unmodified across all lower-level reducers. This implies
+            # this hint to now be irreducible. Halt reducing immediately.
+            else:
+                # print(f'[reduce_hint] Irreducible!')
+                break
+            # Else, the above iteration hit a "break". This hint was reduced by
+            # a lower-level reducer above, implying that this hint *COULD* still
+            # be reducible. Silently continue reducing.
 
-        # ....................{ RECURSION                  }....................
-        # Guard against infinite recursion in lower-level reductions with
-        # human-readable exceptions.
+            # ....................{ RESPONSE               }....................
+            # Respond to the lower-level reduction performed above.
 
-        # Increment the current number of total reductions internally performed
-        # by this call *BEFORE* detecting accidental recursion below.
-        reductions_count += 1
+            # If reducing this hint generated supplementary metadata...
+            if isinstance(hint_or_sane_curr, HintSane):
+                # Extract the currently reduced hint from this metadata.
+                hint_curr = hint_or_sane_curr.hint
 
-        #FIXME: Unit test this, please. No idea how yet. I sigh. *sigh*
-        # If the current number of total reductions internally performed
-        # by this call exceeds the maximum, raise an exception.
-        #
-        # Note that this should *NEVER* happen, but probably nonetheless will.
-        if reductions_count >= _REDUCTIONS_COUNT_MAX:  # pragma: no cover
-            raise BeartypeDecorHintRecursionException(
-                f'{exception_prefix}type hint {repr(hint_insane)} irreducible. '
-                f'Recursion detected when reducing between reduced type hints '
-                f'{repr(hint_or_sane_curr)} and {repr(hint_or_sane_prev)}. '
-                f'Please submit this exception traceback as a new issue '
-                f'to our friendly issue tracker:\n'
-                f'\t{URL_ISSUES}\n'
-                f'Beartype thanks you for your noble (yet ultimately tragic) '
-                f'sacrifice.'
+                #FIXME: Should probably be performed down below outside this loop.
+                # If this hint reduces to the ignorable "HINT_IGNORABLE"
+                # singleton, then halt reducing immediately.
+                #
+                # Note that this is *NOT* merely an optimization avoiding
+                # unnecessary iteration as above. While similar, this logic is
+                # distinct from that above. This edge case arises when a reducer
+                # avoids reducing an ignorable hint to the higher-level
+                # ignorable "HINT_SANE_IGNORABLE" metadata singleton but instead
+                # encapsulates the lower-level "HINT_IGNORABLE" type hint
+                # singleton with a new "HintSane" object providing unique
+                # metadata describing the ignored type hint. That unique
+                # metadata enables parent reducers to selectively decide how to
+                # handle ignorable child type hints.
+                #
+                # Examples include:
+                # * The reduce_hint_pep484604() reducer for union type hints.
+                if hint_curr is HINT_IGNORABLE:
+                    # Return either...
+                    return (
+                        # If the caller requests that unique "HintSane" objects
+                        # encapsulating the "HINT_IGNORABLE" singleton be
+                        # preserved, do so by returning this metadata as is.
+                        # Note that this is *NOT* what most callers expect and
+                        # thus not the default;
+                        hint_or_sane_curr
+                        if is_hint_ignorable_preserved else
+                        # Else, reduce this metadata to the standard ignorable
+                        # "HINT_SANE_IGNORABLE" singleton describing ignorable
+                        # hints. Note that this is what *MOST* callers expect
+                        # and thus the default.
+                        HINT_SANE_IGNORABLE
+                    )
+                # Else, this hint does *NOT* reduce to the ignorable
+                # "HINT_IGNORABLE" singleton. Ergo, this hint is unignorable.
+
+                # Replace the sanified type hint metadata of the parent hint of
+                # this hint by the sanified type hint metadata of this hint
+                # itself. Doing so ensures that the next reducer passed the
+                # "hint_parent_sane" parameter preserves this metadata during
+                # its reduction. Since the most recent reducer call received the
+                # prior "hint_parent_sane" parameter, that reducer has already
+                # safely preserved the parent metadata by compositing that
+                # metadata into this "hint_or_sane_curr" metadata that that
+                # reducer returned. Srsly.
+                hint_parent_sane = hint_or_sane_curr
+            # Else, reducing this hint did *NOT* generate supplementary
+            # metadata, implying "hint_or_sane_curr" to be the currently reduced
+            # hint. In this case, record this currently reduced hint.
+            else:
+                hint_curr = hint_or_sane_curr
+
+            #FIXME: Should probably be performed above the prior "if" conditional.
+            #FIXME: Currently unused, but useful. Could be required at some point.
+            # If this currently reduced hint is exactly the previously reduced hint,
+            # the above reducers failed to reduce this hint. Halt reducing entirely.
+            #
+            # Note that this is a rare (albeit valid) edge case that arises for
+            # reducers that unconditionally create and return new... The above
+            # "else:" block of the above "for hint_reducer in _HINT_REDUCERS:" loop
+            # if hint_or_sane_curr == hint_or_sane_prev:
+            #     break
+
+            # ....................{ RECURSE                }....................
+            # Guard against infinite recursion in lower-level reductions with
+            # human-readable exceptions.
+
+            # Increment the current number of total reductions internally
+            # performed by this call *BEFORE* detecting accidental recursion
+            # below.
+            reductions_count += 1
+
+            #FIXME: Unit test this, please. No idea how yet. I sigh. *sigh*
+            # If the current number of total reductions internally performed
+            # by this call exceeds the maximum, raise an exception.
+            #
+            # Note that this should *NEVER* happen, but nonetheless will.
+            if reductions_count >= _REDUCTIONS_COUNT_MAX:  # pragma: no cover
+                raise BeartypeDecorHintRecursionException(
+                    f'{exception_prefix}'
+                    f'type hint {repr(hint_insane)} irreducible. '
+                    f'Recursion detected when reducing between '
+                    f'reduced type hints '
+                    f'{repr(hint_or_sane_curr)} and {repr(hint_or_sane_prev)}. '
+                    f'Please submit this exception traceback as a new issue '
+                    f'to our friendly issue tracker:\n'
+                    f'\t{URL_ISSUES}\n'
+                    f'Beartype thanks you for your noble '
+                    f'(yet ultimately tragic) sacrifice.'
+                )
+            # Else, the current number of total reductions internally performed
+            # by this call is still less than the maximum. In this case,
+            # continue.
+
+            # ....................{ PREPARE                }....................
+            # Prepare for the next iterative reduction of this "while" loop.
+
+            # Previously reduced instance of this hint.
+            hint_or_sane_prev = hint_or_sane_curr
+
+            # Currently reduced instance of this hint, reverting back to the
+            # currently visited hint in preparation for subsequent reduction.
+            hint_or_sane_curr = hint_curr
+
+        # ....................{ RETURN                     }....................
+        # If this hint is *NOT* already sanified type hint metadata, this hint
+        # is unignorable. Why? Because, if this hint were ignorable, this hint
+        # would have been reduced to the "HINT_SANE_IGNORABLE" singleton. In
+        # this case...
+        if not isinstance(hint_or_sane_curr, HintSane):
+            # Encapsulate this hint with such metadata, defined as either...
+            hint_or_sane_curr = (
+                # If this hint has *NO* parent, this is a root hint. In this
+                # case, the trivial metadata shallowly encapsulating this root
+                # hint;
+                HintSane(hint_or_sane_curr)
+                if hint_parent_sane is None else
+                # Else, this hint has a parent. In this case, the non-trivial
+                # metadata deeply encapsulating both this non-root hint *AND*
+                # all metadata already associated with this parent hint.
+                hint_parent_sane.permute_sane(hint=hint_or_sane_curr)
             )
-        # Else, the current number of total reductions internally performed
-        # by this call is still less than the maximum. In this case, continue.
-
-        # ....................{ PREPARE                    }....................
-        # Prepare for the next iterative reduction of this "while" loop.
-
-        # Previously reduced instance of this hint.
-        hint_or_sane_prev = hint_or_sane_curr
-
-        # Currently reduced instance of this hint, reverting back to the
-        # currently visited hint in preparation for subsequent reduction.
-        hint_or_sane_curr = hint_curr
-
+        # Else, this hint is already sanified type hint metadata. In this case,
+        # preserve this metadata as is.
     # ....................{ RETURN                         }....................
-    # If this hint is *NOT* already sanified type hint metadata, this hint is
-    # unignorable. Why? Because, if this hint were ignorable, this hint would
-    # have been reduced to the "HINT_SANE_IGNORABLE" singleton. In this case...
-    if not isinstance(hint_or_sane_curr, HintSane):
-        # Encapsulate this hint with such metadata, defined as either...
-        hint_or_sane_curr = (
-            # If this hint has *NO* parent, this is a root hint. In this case,
-            # the trivial metadata shallowly encapsulating this root hint;
-            HintSane(hint_or_sane_curr)
-            if hint_parent_sane is None else
-            # Else, this hint has a parent. In this case, the non-trivial
-            # metadata deeply encapsulating both this non-root hint *AND* all
-            # metadata already associated with this parent hint.
-            hint_parent_sane.permute_sane(hint=hint_or_sane_curr)
-        )
-    # Else, this hint is already sanified type hint metadata. In this case,
-    # preserve this metadata as is.
+    # If doing so raises *ANY* exception, reraise this exception with each
+    # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by
+    # an explanatory prefix.
+    except Exception as exception:
+        reraise_exception_placeholder(
+            exception=exception, target_str=exception_prefix)
 
     # Return this possibly reduced hint.
     return hint_or_sane_curr
@@ -621,6 +646,21 @@ def _reduce_hint_cached(
         #
         #If that assertion fails, then document below why. The world needs to
         #know the horrible truth! *heh*
+        #FIXME: *OH WE SEE.* We definitely messed this up. Why? Because
+        #"exception_prefix" typically contains the fully-qualified name of the
+        #currently decorated callable, thus effectively *PREVENTING
+        #MEMOIZATION.* We're just uselessly burning cycles here.
+        #
+        #*STOP PASSING "exception_prefix" IMMEDIATELY, PLEASE.* We sigh! *sigh*
+        #Here's the game plan:
+        #* We need to manually go through the "HINT_SIGN_TO_REDUCE_HINT_CACHED"
+        #  dictionary in "_redmap" and, for each such reducer:
+        #  * Remove the "exception_prefix" parameter accepted by that reducer.
+        #  * Replace all instances of "exception_prefix" in the body of that
+        #    reducer with the "EXCEPTION_PLACEHOLDER" constant importable as:
+        #        from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+        #
+        #Trivial, but tedious. Thus, we do nothing for the moment. Ugh!
 
         # Reduce this hint by calling this reducer.
         #
