@@ -108,7 +108,7 @@ def reduce_hint_pep484_deprecated(hint: Hint, exception_prefix: str) -> Hint:
                 f' This hint may be removed at some unspecified future date. '
                 f'CPython "typing" devs whose spaghetti code you depend on '
                 f'originally intended to schedule this hint for removal after '
-                f'releasing Python 3.10 on October 7th, 2025. '
+                f'releasing Python 3.14 on October 7th, 2025. '
                 f'But... uhh, you may have noticed. '
                 f'2025 was a billion years ago. '
                 f'Nothing happened. Nothing got removed or even scheduled for '
