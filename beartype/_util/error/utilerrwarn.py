@@ -69,7 +69,7 @@ def warnings_ignored() -> Iterator[None]:
 # ....................{ WARNERS                            }....................
 # If the active Python interpreter targets Python >= 3.12, the standard
 # warnings.warn() function supports the optional "skip_file_prefixes" parameter
-# critical for emitting more useful warnings. In this case, define the
+# critical for emitting more useful warnings. In this case, define our
 # issue_warning() warner to pass that parameter.
 if IS_PYTHON_AT_LEAST_3_12:
     # ....................{ IMPORTS                        }....................
@@ -78,7 +78,13 @@ if IS_PYTHON_AT_LEAST_3_12:
     from os.path import dirname
 
     # ....................{ WARNERS                        }....................
-    def issue_warning(cls: TypeWarning, message: str) -> None:
+    def issue_warning(
+        # Mandatory parameters.
+        message: str,
+
+        # Optional parameters.
+        cls: TypeWarning = UserWarning,
+    ) -> None:
         # The warning you gave us is surely our last!
         warn(message, cls, skip_file_prefixes=_ISSUE_WARNING_IGNORE_DIRNAMES)  # type: ignore[call-overload]
         # warn(message, cls)  # type: ignore[call-overload]
@@ -98,9 +104,15 @@ if IS_PYTHON_AT_LEAST_3_12:
     substantially more useful and readable warnings for external callers.
     '''
 # Else, the active Python interpreter targets Python < 3.12. In this case,
-# define the issue_warning() warner to avoid passing that parameter.
+# define our issue_warning() warner to avoid passing that parameter.
 else:
-    def issue_warning(cls: TypeWarning, message: str) -> None:
+    def issue_warning(
+        # Mandatory parameters.
+        message: str,
+
+        # Optional parameters.
+        cls: TypeWarning = UserWarning,
+    ) -> None:
         # Time to cry your tears! Now cry!
         warn(message, cls)
 
@@ -120,10 +132,11 @@ issue_warning.__doc__ = (
 
     Parameters
     ----------
-    cls: Type[Warning]
-        Type of warning to be issued.
     message: str
         Human-readable warning message to be issued.
+    cls: type[Warning], default: UserWarning
+        Type of warning to be issued. Defaults to the builtin
+        :exc:`.UserWarning` type.
     '''
 )
 

@@ -255,6 +255,11 @@ def callable_cached(func: CallableT) -> CallableT:
             #FIXME: If testing, emit a non-fatal warning or possibly even raise
             #a fatal exception. In either case, we want our test suite to notify
             #us about this.
+            # print(f'Callable {repr(func)} caching failed on args: {args}')
+            # from beartype._util.error.utilerrwarn import issue_warning
+            # issue_warning(
+            #     f'Callable {repr(func)} caching failed on args: {args}')
+
             return func(*args)
 
         # Return this value.

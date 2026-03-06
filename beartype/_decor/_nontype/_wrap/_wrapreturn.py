@@ -145,8 +145,8 @@ def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
                     func_call_prefix=decor_meta.func_wrapper_code_call_prefix)
 
                 # Code snippet handling the previously generated violation by
-                # either raising that violation as a fatal exception or emitting
-                # that violation as a non-fatal warning.
+                # either raising that violation as a fatal exception *OR*
+                # emitting that violation as a non-fatal warning.
                 (
                     code_noreturn_violation,
                     func_scope,

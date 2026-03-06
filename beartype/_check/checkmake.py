@@ -68,6 +68,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.utilfuncmake import make_func
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from collections.abc import Callable
 from itertools import count
 from typing import Optional
@@ -390,7 +391,6 @@ def make_func_checker(
 
 # ....................{ FACTORIES ~ code                   }....................
 #FIXME: Unit test us up, please.
-@callable_cached
 def make_code_raiser_hint_object_check(
     call_meta: BeartypeCallMetaABC,
     hint_insane: Hint,
@@ -407,7 +407,16 @@ def make_code_raiser_hint_object_check(
     This factory underlies the public :func:`beartype.door.die_if_unbearable`
     type-checking raiser function.
 
-    This factory is memoized for efficiency.
+    This factory is intentionally *not* memoized (e.g., by
+    ``@callable_cached``), due to both accepting one or more unhashable
+    parameters (e.g., ``call_meta``) *and* only being called by the higher-level
+    memoized :func:`.make_func_checker` factory.
+
+    Caveats
+    -------
+    **This low-level factory is only intended to be passed to the higher-level**
+    :func:`.make_func_checker` **factory as the** ``make_code_check``
+    **parameter.** This factory is *not* intended to be called directly.
 
     Parameters
     ----------
@@ -488,7 +497,6 @@ def make_code_raiser_hint_object_check(
 
 
 #FIXME: Unit test us up, please.
-@callable_cached
 def make_code_tester_check(
     call_meta: BeartypeCallMetaABC,
     hint_insane: Hint,
@@ -504,7 +512,16 @@ def make_code_tester_check(
     This factory underlies the public :func:`beartype.door.is_bearable`
     type-checking tester function.
 
-    This factory is memoized for efficiency.
+    This factory is intentionally *not* memoized (e.g., by
+    ``@callable_cached``), due to both accepting one or more unhashable
+    parameters (e.g., ``call_meta``) *and* only being called by the higher-level
+    memoized :func:`.make_func_checker` factory.
+
+    Caveats
+    -------
+    **This low-level factory is only intended to be passed to the higher-level**
+    :func:`.make_func_checker` **factory as the** ``make_code_check``
+    **parameter.** This factory is *not* intended to be called directly.
 
     Parameters
     ----------
@@ -588,7 +605,7 @@ def make_code_raiser_func_pep484_noreturn_check(
         arg_random_int='', pith_name=ARG_NAME_RETURN_REPR)
 
     # Code snippet handling the previously generated violation by either raising
-    # that violation as a fatal exception or emitting that violation as a
+    # that violation as a fatal exception *OR* emitting that violation as a
     # non-fatal warning.
     code_handle_violation = _make_code_raiser_violation(
         conf=conf, func_scope=func_scope, pith_kind=PITH_KIND_FUNC_RETURN)
@@ -596,12 +613,19 @@ def make_code_raiser_func_pep484_noreturn_check(
     # Code snippet type-checking the root pith against the root hint.
     func_code = f'{code_get_violation}{code_handle_violation}'
 
+    # Coerce this currently mutable non-frozen dictionary into an immutable
+    # frozen dictionary, preventing callers from erroneously modifying this
+    # frozen dictionary when memoized below and subsequently returned to
+    # different callers. Freezing this dictionary slightly reduces efficiency
+    # (which is slightly bad) but *DRAMATICALLY* eliminates otherwise impossible
+    # to debug memoization issues. Debugging wins! \o/
+    func_scope_frozen = FrozenDict(func_scope)
+
     # Return all metadata required by higher-level callers.
-    return (func_code, func_scope)
+    return (func_code, func_scope_frozen)
 
 # ....................{ FACTORIES ~ code : raiser : pith   }....................
 #FIXME: Unit test us up, please.
-@callable_cached
 def make_code_raiser_func_pith_check(
     decor_meta: BeartypeCallDecorMeta,
     hint_sane: HintSane,
@@ -614,7 +638,9 @@ def make_code_raiser_func_pith_check(
     *or* emitting a non-fatal warning when that parameter or return violates
     this hint.
 
-    This factory is memoized for efficiency.
+    This factory is intentionally *not* memoized (e.g., by
+    ``@callable_cached``), due to accepting one or more unhashable parameters
+    (e.g., ``decor_meta``).
 
     Parameters
     ----------
@@ -628,8 +654,10 @@ def make_code_raiser_func_pith_check(
         generated and returned by this factory) type-checks a previously
         localized:
 
-        * **Parameter** accepted by a decorated callable, :data:`True`.
-        * **Return** returned from a decorated callable, :data:`False`.
+        * **Parameter** accepted by a decorated callable,
+          :data:`.PITH_KIND_FUNC_ARG`.
+        * **Return** returned from a decorated callable,
+          :data:`.PITH_KIND_FUNC_RETURN`.
 
         Note that, while it would be simpler for this factory to instead accept
         a pith name, doing so would also unmemoize this factory as well as all
@@ -792,13 +820,14 @@ def _make_code_raiser_violation(
         snippet generated and returned by this code factory type-checks a
         previously localized:
 
-        * Parameter of a decorated callable, :data:`PITH_KIND_FUNC_ARG`.
-        * Return of a decorated callable, :data:`PITH_KIND_FUNC_RETURN`.
+        * Parameter of a decorated callable, :data:`.PITH_KIND_FUNC_ARG`.
+        * Return of a decorated callable, :data:`.PITH_KIND_FUNC_RETURN`.
         * Arbitrary object passed to the parent
           :func:`beartype.door.die_if_uncallable` type-checker,
-          :data:`PITH_KIND_NONFUNC_OBJECT`.
+          :data:`.PITH_KIND_NONFUNC_OBJECT`.
 
-        Defaults to :data:`PITH_KIND_NONFUNC_OBJECT` for simplicity and readability.
+        Defaults to :data:`.PITH_KIND_NONFUNC_OBJECT` for both simplicity and
+        readability.
 
     Returns
     -------

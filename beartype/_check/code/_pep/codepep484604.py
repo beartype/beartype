@@ -322,7 +322,6 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
     # Else, this snippet is its initial value and thus ignorable.
 
 # ....................{ PRIVATE ~ getters                  }....................
-@callable_cached
 def _get_hint_pep484604_union_args_flattened(
     hints_meta: HintsMeta) -> TupleHintSane:
     '''
