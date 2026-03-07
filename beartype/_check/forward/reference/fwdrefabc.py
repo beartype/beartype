@@ -12,6 +12,113 @@ decorated by the :func:`beartype.beartype` decorator).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+# FIXME: *BRILLIANT*. We can dramatically improve forward resolution of *RELATIVE*
+# closure-specific stringified forward references. How? Easy:
+# * Define a new "BeartypeForwardRefABC.__is_unresolved_beartype__: bool = False"
+#   class variable. This variable is necessary to disambiguate the following two
+#   valid edge cases:
+#   * A forward reference refers to a variable whose value is "object". Although
+#     *HIGHLY* unlikely, @beartype can disambiguate this edge case. So, it should.
+#   * A forward reference is unresolvable. We thus artificially reduce it to
+#     "object". This is non-ideal.
+# * *WAIT*. We *COULD* define that new class variable. Or we could do something
+#   even more "clever" (i.e., stupidly smart). We could instead define the
+#   following "clever" type:
+#       class _BeartypeAnyMeta(type):
+#           '''
+#           Metaclass of the :class:`._BeartypeAny` type.
+#           '''
+#
+#           def __instancecheck__(cls: '_BeartypeAny', obj: object) -> Literal[True]:
+#               return True  # <-- lol
+#           def __subclasscheck__(cls: '_BeartypeAny', obj: object) -> Literal[True]:
+#               return True  # <-- lol
+#
+#
+#       #FIXME: Unit test us up, please. *sigh*
+#       class BeartypeAny(object, metaclass=_BeartypeAnyMeta):
+#           '''
+#           Runtime-friendly isinstanceable type syntactically distinct yet
+#           semantically analogous to:
+#
+#           * The builtin runtime-friendly root :class:`object` superclass.
+#           * The standard runtime-hostile :class:`typing.Any` type hint
+#             singleton.
+#
+#           Caveats
+#           -------
+#           **The builtin root** :class:`object` **superclass is more efficient
+#           than and thus preferable to this heavier-weight pure-Python analog.**
+#           This pure-Python analog should only be used where using
+#           :class:`object` instead would invite issues (e.g., ambiguities).
+#           '''
+#
+#           pass
+#
+#   Stupidly smart, right? Given that, we then trivially...
+# * In BeartypeForwardRefMeta.__type_beartype__(), revise this logic:
+#                 # Silently ignore this reference by reducing it to the root
+#                 # "object" superclass.
+#                 referent = object
+#   ...to instead resemble: 
+#                 #FIXME: Revise comments, please. *sigh
+#                 # Silently ignore this reference by reducing it to the root
+#                 # "object" superclass.
+#                 referent = BeartypeAny  # <-- heh
+# * In BeartypeForwardRefABC.__is_instance_beartype__(), expand this logic:
+#         # Return true only if this object is an instance of the external class
+#         # referenced by this forward reference.
+#         return isinstance(obj, cls.__type_beartype__)  # type: ignore[arg-type]
+#   ...to instead resemble: 
+#         #FIXME: Revise comments, please. *sigh
+#         # If the cls.__type_beartype__() property dynamically resolving the
+#         # stringified forward reference underlying this proxy failed to do so by
+#         # falling back to the beartype-specific private "BeartypeAny" type, do
+#         # *NOT* simply return true only if the passed object is an instance of
+#         # the external class referenced by this forward reference. Why? Because
+#         # the "BeartypeAny" metaclass unconditionally returns true for all
+#         # possible objects, inviting false negatives (i.e., failure to raise
+#         # type-checking violations if this object is *NOT* an instance of that
+#         # external class). Luckily, we can do better. Specifically...
+#         if cls.__type_beartype__ is BeartypeAny:
+#             #FIXME: Can we do even better? No idea. Maybe. Maybe not. We could
+#             #also try doing something like testing:
+#             #    get_object_name(obj) == f'__scope_name_beartype__.__name_beartype__'
+#             #Not sure if that's too restrictive and thus invites false
+#             #positives, which would be even worse than false negatives. Guess
+#             #we can just test that trivially and then discard the approach if it
+#             #clearly fails in obvious cases? Right. Sounds half-sane, huh?
+#
+#             # Unqualified basename of the type of the passed object.
+#             obj_classname = obj.__class__.__name__
+#
+#             # Return true only if that basename is also that of the type
+#             # referred to by this forward reference. Since these two types then
+#             # share the same basename, this object is likelier to be an instance
+#             # of the required type. Technically, this is merely a heuristic.
+#             # Pragmatically, this heuristic has the beneficial effect of
+#             # dramatically reducing the likelihood of false negatives in this
+#             # edge case (which is good) *WITHOUT* any concomitant harmful effect
+#             # like emitting false positives (which is also good). In other
+#             # words, this heuristic has entirely good effects and is thus
+#             # preferable to our only alternative (which is doing nothing at all).
+#             #
+#             # Why is this heuristic guaranteed to *NOT* emit false positives?
+#             # A trivial proof by contradiction demonstrates the fact. Assume
+#             # that 
+#             # Because, if that basename is *NOT* also that of the type referred
+#             # to by this forward reference, then this object *CANNOT* be an
+#             # instance of the required type. Why? Assume that object was an
+#             # instance of the required type. Then that basename would also be
+#             # that of the required type. But 
+#             return __name_beartype__
+#
+#         # Return true only if the passed object is an instance of the external
+#         # class referenced by this forward reference.
+#         return isinstance(obj, cls.__type_beartype__)  # type: ignore[arg-type]
+# * Revise BeartypeForwardRefABC.__is_subclass_beartype__() similarly.
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._data.typing.datatyping import (
