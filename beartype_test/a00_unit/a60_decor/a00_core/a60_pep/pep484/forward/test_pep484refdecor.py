@@ -49,7 +49,7 @@ def test_pep484_ref_decor_data() -> None:
         the_woods_are_lovely,
         winding_among_the_springs,
     )
-    from pytest import raises
+    from beartype_test._util.pytroar import raises_uncached
 
     # ..................{ LOCALS                             }..................
     # Objects passed below to exercise forward references.
@@ -67,6 +67,16 @@ def test_pep484_ref_decor_data() -> None:
     ]
     rugged_and_dark = WithSluggishSurge()
 
+    # 3-tuple of closures and classes nested in this callable.
+    (to_stop_without, to_watch_his_woods, WhoseWoodsTheseAreIThinkIKnow) = (
+        between_the_woods_and_frozen_lake())
+
+    # Objects passed below to exercise closure-relative forward references.
+    my_little_horse = WhoseWoodsTheseAreIThinkIKnow(
+        'My little horse must think it queer')
+    a_farmhouse_near = WhoseWoodsTheseAreIThinkIKnow(
+        'To stop without a farmhouse near')
+
     # ..................{ PASS                               }..................
     # Assert these forward-referencing callables return the expected values.
     assert a_little_shallop(with_burning_smoke) is with_burning_smoke
@@ -79,6 +89,14 @@ def test_pep484_ref_decor_data() -> None:
         TheDarkestEveningOfTheYear)
     assert rugged_and_dark.or_where_the_secret_caves() is rugged_and_dark
     assert winding_among_the_springs(rugged_and_dark) is rugged_and_dark
+
+    # Assert these forward-referencing closures return the expected values.
+    assert to_stop_without(my_little_horse) == my_little_horse
+    assert to_watch_his_woods(a_farmhouse_near) == a_farmhouse_near
+    assert to_watch_his_woods(True) is True
+    assert to_watch_his_woods(
+        len('Up to the zenith,—hieroglyphics old')) == (
+        len('Up to the zenith,—hieroglyphics old'))
 
     # ..................{ PASS ~ container                   }..................
     # Assert that instantiating a sequence containing valid items satisfying its
@@ -94,27 +112,22 @@ def test_pep484_ref_decor_data() -> None:
     # Assert that calling a method violating its return annotated as a 2-tuple
     # of type variables whose bounds are expressed as PEP-compliant relative
     # forward references to the same class raises the expected violation.
-    with raises(BeartypeCallHintReturnViolation):
+    with raises_uncached(BeartypeCallHintReturnViolation):
         BeforeTheHurricane().in_a_silver_vision_floats()
+
+    # Assert that calling a closure whose parameter is annotated as a
+    # PEP-compliant closure-relative forward reference to a type subsequently
+    # defined local to that closure when passed a parameter *NOT* an instance of
+    # that type raises the expected violation.
+    with raises_uncached(BeartypeCallHintParamViolation):
+        to_stop_without("Which sages and keen-ey'd astrologers")
+    with raises_uncached(BeartypeCallHintParamViolation):
+        to_watch_his_woods('Then living on the earth, with labouring thought')
 
     # Assert that instantiating a custom sequence containing invalid items
     # violating its annotations raises the expected exception.
-    with raises(BeartypeCallHintParamViolation):
+    with raises_uncached(BeartypeCallHintParamViolation):
         AllHisBulkAnAgony(('Crept gradual, from the feet unto the crown,',))
-
-    # ..................{ NESTED                             }..................
-    # 3-tuple of closures and classes nested in this callable.
-    (to_stop_without, to_watch_his_woods, WhoseWoodsTheseAreIThinkIKnow) = (
-        between_the_woods_and_frozen_lake())
-
-    # Objects passed below to exercise nested forward references.
-    MY_LITTLE_HORSE = WhoseWoodsTheseAreIThinkIKnow(
-        'My little horse must think it queer')
-    STOP = WhoseWoodsTheseAreIThinkIKnow('To stop without a farmhouse near')
-
-    # Assert these forward-referencing closures return the expected values.
-    assert to_stop_without(MY_LITTLE_HORSE) == MY_LITTLE_HORSE
-    assert to_watch_his_woods(STOP) == STOP
 
 # ....................{ TESTS ~ absolute : type : nonnested}....................
 def test_pep484_ref_decor_absolute() -> None:
@@ -450,7 +463,10 @@ def test_pep484_ref_call_fail() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintForwardRefException
+    from beartype.roar import (
+        BeartypeCallHintForwardRefException,
+        BeartypeCallHintParamViolation,
+    )
     from beartype.typing import Union
     from beartype_test._util.pytroar import raises_uncached
 
@@ -524,19 +540,12 @@ def test_pep484_ref_call_fail() -> None:
         return and_ages_hence
 
     # ..................{ FAIL                               }..................
-    # Assert that calling these callables annotated by relative forward
-    # references referring to non-existent types raise *NO* exceptions. Why?
-    # Because detecting this edge case is highly non-trivial, @beartype
-    # currently reduces unresolved relative forward references annotating
-    # locally defined callables to the ignorable "object" superclass.
-    assert yet_knowing_how_way('And that has made all the difference.') == (
-        'And that has made all the difference.')
-    assert somewhere_ages('I doubted if I should ever come back.') == (
-        'I doubted if I should ever come back.')
-
-    # ..................{ FAIL                               }..................
     # Assert that calling these callables raise the expected exceptions.
     with raises_uncached(BeartypeCallHintForwardRefException):
         the_road('Two roads diverged in a wood, and I—')
     with raises_uncached(BeartypeCallHintForwardRefException):
         in_leaves_no_step('I took the one less traveled by,')
+    with raises_uncached(BeartypeCallHintParamViolation):
+        yet_knowing_how_way('And that has made all the difference.')
+    with raises_uncached(BeartypeCallHintParamViolation):
+        somewhere_ages('I doubted if I should ever come back.')

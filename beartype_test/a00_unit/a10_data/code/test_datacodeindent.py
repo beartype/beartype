@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Python expression indentation substring unit tests.**
+Beartype **Python expression indentation substring** unit tests.
 
 This submodule unit tests the public API of the public
 :mod:`beartype._data.hint.sign.datahintsignset` submodule.

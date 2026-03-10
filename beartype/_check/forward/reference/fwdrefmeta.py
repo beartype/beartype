@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintForwardRefException
+from beartype._data.cls.dataclsany import BeartypeAny
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import BeartypeForwardRef
 from beartype._util.cls.pep.clspep3119 import (
@@ -505,9 +506,36 @@ class BeartypeForwardRefMeta(type):
                 #* If this reference remains unresolvable at that point,
                 #  fallback to silently ignoring this reference as we do below.
 
-                # Silently ignore this reference by reducing it to the root
-                # "object" superclass.
-                referent = object
+                # Indirectly notify the beartype-specific parent
+                # __is_instance_beartype__() and __is_subclass_beartype__()
+                # dunder methods called by the beartype-agnostic parent parent
+                # __instancecheck__() and __subclasscheck__() dunder methods
+                # this reference *CANNOT* be resolved to its referent. How? By
+                # pretending to resolve this reference to an arbitrary private
+                # type isolated to the beartype codebase. This type is private
+                # and thus guaranteed to *NEVER* be ambiguously used as a type
+                # hint referred to by stringified forward references in external
+                # third-party packages.
+                #
+                # Pretending to resolve this reference to this type is a crude
+                # unreadable alternative to internally setting a hypothetical
+                # "__is_type_unresolved_beartype__" class variable defined on
+                # the "BeartypeForwardRefABC" type. Although more readable and
+                # thus superficially preferable, the latter approach also
+                # requires defining yet another class variable consuming
+                # corresponding space merely to facilitate communication between
+                # this parent metaclass and its child classes. Space efficiency
+                # takes precedence over marginal code readability. So it goes.
+                #
+                # This private type has been intentionally selected so as to
+                # minimize unexpected issues in the unlikely event of Murphy and
+                # Her Dumb Law. Since "BeartypeAny" is semantically analogous to
+                # the ignorable root "object" superclass, resolving to
+                # "BeartypeAny" here implies that erroneously implemented
+                # __is_instance_beartype__() and __is_subclass_beartype__()
+                # dunder methods would safely fallback to silently ignoring the
+                # passed objects without complaint. It is what it is.
+                referent = BeartypeAny
             # Else, this module is both importable and defines this referent.
             #
             # If this referent is this forward reference subclass, then this

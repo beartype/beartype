@@ -980,8 +980,8 @@ BUILTIN_TYPES = frozenset((
     tuple,
 ))
 '''
-Frozen set of all **builtin types** i.e., globally accessible C-based type
-requiring *no* explicit importation)(.
+Frozen set of all **builtin types** (i.e., globally accessible C-based type
+requiring *no* explicit importation).
 '''
 
 # ....................{ SETS ~ type : non-builtin          }....................
