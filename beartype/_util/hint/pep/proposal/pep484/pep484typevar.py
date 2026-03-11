@@ -234,8 +234,8 @@ def get_hint_pep484_typevar_bounded_constraints_or_none(
     from beartype._util.hint.pep.proposal.pep484604 import (
         make_hint_pep484604_union)
     from beartype._util.hint.pep.proposal.pep749 import (
-        get_hint_pep749_subhint_mandatory,
-        get_hint_pep749_subhint_optional,
+        get_hint_pep749_evaluator_mandatory,
+        get_hint_pep749_evaluator_optional,
     )
 
     # If this hint is *NOT* a type variable, raise an exception.
@@ -247,10 +247,10 @@ def get_hint_pep484_typevar_bounded_constraints_or_none(
     hint_bounded_constraints: Hint = None
 
     # Tuple of the zero or more child hints constraining this type variable.
-    hint_constraints = get_hint_pep749_subhint_mandatory(
+    hint_constraints = get_hint_pep749_evaluator_mandatory(
         hint=hint,  # pyright: ignore
-        subhint_name_dynamic='evaluate_constraints',
-        subhint_name_static='__constraints__',
+        evaluator_name_dynamic='evaluate_constraints',
+        evaluator_name_static='__constraints__',
         exception_cls=BeartypeDecorHintPep484TypeVarException,
         exception_prefix=exception_prefix,
     )
@@ -280,11 +280,11 @@ def get_hint_pep484_typevar_bounded_constraints_or_none(
         #   variable would thus be equivalent to "None", which is useless,
         #   because "None" could (and should) just be used instead. PEP 484
         #   thus treats "None" as an invalid bound synonymous with *NO* bound.
-        hint_bound = get_hint_pep749_subhint_optional(
+        hint_bound = get_hint_pep749_evaluator_optional(
             hint=hint,  # pyright: ignore
-            subhint_name_dynamic='evaluate_bound',
-            subhint_name_static='__bound__',
-            subhint_value_null=None,
+            evaluator_name_dynamic='evaluate_bound',
+            evaluator_name_static='__bound__',
+            evaluator_value_null=None,
             exception_cls=BeartypeDecorHintPep484TypeVarException,
             exception_prefix=exception_prefix,
         )

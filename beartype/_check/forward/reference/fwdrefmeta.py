@@ -347,6 +347,9 @@ class BeartypeForwardRefMeta(type):
             f'<forwardref {cls.__name__}('
               f'__name_beartype__={repr(cls.__name_beartype__)}'
             f', __scope_name_beartype__={repr(cls.__scope_name_beartype__)}'
+            f', __pep749_ref_beartype__={repr(cls.__pep749_ref_beartype__)}'
+            f', __func_local_parent_codeobj_weakref_beartype__='
+              f'{repr(cls.__func_local_parent_codeobj_weakref_beartype__)}'
         )
 
         #FIXME: Unit test this edge case, please.
@@ -445,7 +448,19 @@ class BeartypeForwardRefMeta(type):
         # If this referent has yet to be resolved, this is the first call to
         # this property. In this case...
         if referent is None:  # type: ignore[has-type]
-            # print(f'Importing forward ref "{cls.__name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
+            #FIXME: Inject "__pep749_ref_beartype__"-specific logic here! \o/
+
+            #FIXME: Uhh... *WAT*? Refactor as follows for sanity:
+            #* Define a new "BeartypeCallHintPep484ForwardRefException"
+            #  exception type subclassing the existing
+            #  "BeartypeCallHintForwardRefException" superclass.
+            #* Globally replace "EXCEPTION_CLS" by 
+            #  "BeartypeCallHintPep484ForwardRefException" below. Then remove
+            #  that local. No idea what we were cogitating there... *sigh*
+            #* Globalize "EXCEPTION_PREFIX" as a new
+            #  "_EXCEPTION_PREFIX_HINT_PEP484_REF" string global:
+            #      _EXCEPTION_PREFIX_HINT_PEP484_REF = (
+            #          'PEP 484 stringified forward reference type hint')
 
             # Exception subclass and prefix to be raised below.
             EXCEPTION_CLS = BeartypeCallHintForwardRefException
@@ -455,6 +470,7 @@ class BeartypeForwardRefMeta(type):
             # module is both importable and defines this referent *OR* the
             # sentinel placeholder (i.e., if this module is either unimportable
             # or fails to define this referent).
+            # print(f'Importing forward ref "{cls.__name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
             referent = import_module_attr_or_sentinel(
                 attr_name=cls.__name_beartype__,
                 module_name=cls.__scope_name_beartype__,

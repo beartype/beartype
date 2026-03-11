@@ -20,9 +20,9 @@ This submodule unit tests the public API of the private
 def test_get_hint_pep749_subhint() -> None:
     '''
     Test the pair of private
-    :mod:`beartype._util.hint.pep.proposal.pep749.get_hint_pep749_subhint_mandatory`
+    :mod:`beartype._util.hint.pep.proposal.pep749.get_hint_pep749_evaluator_mandatory`
     and
-    :mod:`beartype._util.hint.pep.proposal.pep749.get_hint_pep749_subhint_optional`
+    :mod:`beartype._util.hint.pep.proposal.pep749.get_hint_pep749_evaluator_optional`
     getters.
     '''
 
@@ -30,11 +30,12 @@ def test_get_hint_pep749_subhint() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep749Exception
     from beartype.typing import Optional
+    from beartype._cave._cavefast import HintPep749RefFormat  # pyright: ignore
     from beartype._data.kind.datakindiota import SENTINEL
     from beartype._data.typing.datatypingport import Hint
     from beartype._util.hint.pep.proposal.pep749 import (
-        get_hint_pep749_subhint_mandatory,
-        get_hint_pep749_subhint_optional,
+        get_hint_pep749_evaluator_mandatory,
+        get_hint_pep749_evaluator_optional,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
     from pytest import raises
@@ -101,80 +102,77 @@ def test_get_hint_pep749_subhint() -> None:
     # Assert these getters when passed a hint returns the subhint with the
     # passed static attribute name (when this subhint contains *NO* unquoted
     # forward references and is *NOT* the null).
-    assert get_hint_pep749_subhint_mandatory(
+    assert get_hint_pep749_evaluator_mandatory(
         hint=but_horrors,
-        subhint_name_dynamic='or_prophesyings',
-        subhint_name_static='of_his_passing_bell',
-    ) is get_hint_pep749_subhint_optional(
+        evaluator_name_dynamic='or_prophesyings',
+        evaluator_name_static='of_his_passing_bell',
+    ) is get_hint_pep749_evaluator_optional(
         hint=but_horrors,
-        subhint_name_dynamic='or_prophesyings',
-        subhint_name_static='of_his_passing_bell',
-        subhint_value_null=SUBHINT_VALUE_NULL,
+        evaluator_name_dynamic='or_prophesyings',
+        evaluator_name_static='of_his_passing_bell',
+        evaluator_value_null=SUBHINT_VALUE_NULL,
     ) is UponTheFirstToll.of_his_passing_bell
 
     # Assert this getter when passed a hint returns the sentinel placeholder
     # (when this subhint contains *NO* unquoted forward references but is the
     # null).
-    assert get_hint_pep749_subhint_optional(
+    assert get_hint_pep749_evaluator_optional(
         hint=but_horrors,
-        subhint_name_dynamic='or_prophesyings',
-        subhint_name_static='oft_made_hyperion_ache',
-        subhint_value_null=SUBHINT_VALUE_NULL,
+        evaluator_name_dynamic='or_prophesyings',
+        evaluator_name_static='oft_made_hyperion_ache',
+        evaluator_value_null=SUBHINT_VALUE_NULL,
     ) is SENTINEL
 
     # ....................{ FAIL                           }....................
     # Assert this getter raises the expected exception when passed a hint that
     # defines *NO* subhint with the passed static or dynamic attribute names.
     with raises(BeartypeDecorHintPep749Exception):
-        get_hint_pep749_subhint_mandatory(
+        get_hint_pep749_evaluator_mandatory(
             hint="But horrors, portion'd to a giant nerve,",
-            subhint_name_dynamic='or_prophesyings',
-            subhint_name_static='of_his_passing_bell',
+            evaluator_name_dynamic='or_prophesyings',
+            evaluator_name_static='of_his_passing_bell',
         )
 
     # ....................{ VERSIONS                       }....................
     # If the active Python interpreter targets Python >= 3.14 and thus supports
     # PEP 749...
     if IS_PYTHON_AT_LEAST_3_14:
-        # Defer version-specific imports.
-        from annotationlib import Format
-
         # Assert these getters when passed a hint returns the subhint with the
         # passed dynamic attribute name (when this subhint contains one or more
         # unquoted forward references and is *NOT* the null).
-        assert get_hint_pep749_subhint_mandatory(
+        assert get_hint_pep749_evaluator_mandatory(
             hint=but_horrors,
-            subhint_name_dynamic='or_prophesyings',
-            subhint_name_static='portioned_to_a_giant_nerve',
-        ) is get_hint_pep749_subhint_optional(
+            evaluator_name_dynamic='or_prophesyings',
+            evaluator_name_static='portioned_to_a_giant_nerve',
+        ) is get_hint_pep749_evaluator_optional(
             hint=but_horrors,
-            subhint_name_dynamic='or_prophesyings',
-            subhint_name_static='portioned_to_a_giant_nerve',
-            subhint_value_null=SUBHINT_VALUE_NULL,
+            evaluator_name_dynamic='or_prophesyings',
+            evaluator_name_static='portioned_to_a_giant_nerve',
+            evaluator_value_null=SUBHINT_VALUE_NULL,
         ) == 'Or prophesyings of the midnight lamp;'
 
         # Assert these getters when passed a hint returns the stringified
         # subhint with the passed dynamic attribute name (when this subhint
         # contains one or more unquoted forward references and is *NOT* the
         # null) under the string format.
-        assert get_hint_pep749_subhint_optional(
+        assert get_hint_pep749_evaluator_optional(
             hint=but_horrors,
-            subhint_name_dynamic='or_prophesyings',
-            subhint_name_static='portioned_to_a_giant_nerve',
-            subhint_value_null=SUBHINT_VALUE_NULL,
-            hint_format=Format.STRING,
+            evaluator_name_dynamic='or_prophesyings',
+            evaluator_name_static='portioned_to_a_giant_nerve',
+            evaluator_value_null=SUBHINT_VALUE_NULL,
+            hint_format=HintPep749RefFormat.STRING,
         ) == 'Or prophesyings of the midnight lamp;'
 
         # Assert this getter raises the expected exception when passed a hint
         # whose subhint contains one or more unquoted forward references under
         # the value format.
         with raises(NameError):
-            assert get_hint_pep749_subhint_optional(
+            assert get_hint_pep749_evaluator_optional(
                 hint=but_horrors,
-                subhint_name_dynamic='or_prophesyings',
-                subhint_name_static='portioned_to_a_giant_nerve',
-                subhint_value_null=SUBHINT_VALUE_NULL,
-                hint_format=Format.VALUE,
+                evaluator_name_dynamic='or_prophesyings',
+                evaluator_name_static='portioned_to_a_giant_nerve',
+                evaluator_value_null=SUBHINT_VALUE_NULL,
+                hint_format=HintPep749RefFormat.VALUE,
             )
     # Else, this interpreter targets Python < 3.14 and thus fails to support PEP
     # 749.

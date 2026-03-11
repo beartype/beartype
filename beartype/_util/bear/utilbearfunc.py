@@ -17,7 +17,7 @@ from beartype._util.api.external.utilsphinx import is_sphinx_autodocing
 from beartype._util.bear.utilbearblack import is_object_blacklisted
 from beartype._util.func.pep.utilpep484func import (
     is_func_pep484_notypechecked)
-from beartype._util.hint.pep.proposal.pep649 import (
+from beartype._util.hint.pep.proposal.pep649749 import (
     get_pep649_hintable_annotations_or_none)
 from beartype._util.py.utilpyinterpreter import is_python_optimized
 from collections.abc import Callable

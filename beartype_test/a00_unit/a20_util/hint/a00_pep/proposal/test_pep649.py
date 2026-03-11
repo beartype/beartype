@@ -7,7 +7,7 @@
 Project-wide :pep:`649` **type hint utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep649` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep649749` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_get_pep649_hintable_annotations() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep649.get_pep649_hintable_annotations`
+    :mod:`beartype._util.hint.pep.proposal.pep649749.get_pep649_hintable_annotations`
     getter.
     '''
 
@@ -29,7 +29,7 @@ def test_get_pep649_hintable_annotations() -> None:
     from beartype.roar import BeartypeDecorHintPep649Exception
     from beartype.typing import Optional
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-    from beartype._util.hint.pep.proposal.pep649 import (
+    from beartype._util.hint.pep.proposal.pep649749 import (
         get_pep649_hintable_annotations)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
     from pytest import raises

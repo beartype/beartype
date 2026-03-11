@@ -24,7 +24,7 @@ from beartype.door import die_if_unbearable
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import Generic
 from beartype._data.typing.datatyping import T
-from beartype._util.hint.pep.proposal.pep649 import (
+from beartype._util.hint.pep.proposal.pep649749 import (
     get_pep649_hintable_annotations)
 
 # ....................{ CLASSES                            }....................

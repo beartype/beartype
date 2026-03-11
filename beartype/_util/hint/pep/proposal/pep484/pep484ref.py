@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype._cave._cavefast import HintPep484RefTypes
+from beartype._cave._cavefast import HintPep484749RefTypes
 from beartype._data.typing.datatyping import (
     HintPep484Ref,
     TupleStrOrNoneAndStr,
@@ -70,7 +70,7 @@ def die_unless_hint_pep484_ref(
     '''
 
     # If this object is *NOT* a forward reference type hint, raise an exception.
-    if not isinstance(hint, HintPep484RefTypes):
+    if not isinstance(hint, HintPep484749RefTypes):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception subclass.')
         assert isinstance(exception_prefix, str), (

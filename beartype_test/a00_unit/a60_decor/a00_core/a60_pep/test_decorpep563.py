@@ -137,7 +137,7 @@ def test_pep563_module() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype._util.hint.pep.proposal.pep649 import (
+    from beartype._util.hint.pep.proposal.pep649749 import (
         get_pep649_hintable_annotations,
         set_pep649_hintable_annotations,
     )

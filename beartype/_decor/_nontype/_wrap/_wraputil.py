@@ -11,8 +11,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: In theory, the above *MIGHT* be enough to get us back on our feet.
-#Repeatedly bang on tests at this point until most tests pass.
 #FIXME: Calls to get_hint_pep484_ref_names_relative() like the following made
 #considerable sense under Python < 3.13:
 #    hint_module_name, hint_type_name = get_hint_pep484_ref_names_relative(
@@ -55,8 +53,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #To render "annotationlib.ForwardRef" objects usable in a general-purpose context,
 #we'll need to:
-#* Define a new "__annotationlib_beartype__: Optional[annotationlib.ForwardRef] = None"
-#  class variable in the existing "BeartypeForwardRefABC" superclass.
 #* Generalize the "BeartypeForwardRefMeta.__type_beartype__" property method to
 #  preferentially resolve this forward reference via "annotationlib"-specific
 #  rather than beartype-specific functionality: e.g.,
@@ -65,6 +61,30 @@ This private submodule is *not* intended for importation by downstream callers.
 #         ...
 #         if cls.__annotationlib_beartype__ is not None:
 #             referent = cls.__annotationlib_beartype__.evaluate()
+#  * Actually, it's not quite that simple. We want to wrap that evaluate() call
+#    with "try: ... except..." logic raising human-readable exceptions. Instead:
+#    * Define a new resolve_hint_pep749_ref_pure() resolver, whose
+#      implementation should vaguely resemble that of the existing
+#      _resolve_hint_pep484_ref_str() resolver.
+#    * Define a new "BeartypeCallHintPep749ForwardRefException"
+#      exception type subclassing the existing
+#      "BeartypeCallHintForwardRefException" superclass.
+#    * Call resolve_hint_pep749_ref_pure() like so:
+#        @property
+#        def __type_beartype__(cls: BeartypeForwardRef) -> type:
+#           ...
+#           if cls.__pep749_ref_beartype__ is not None:
+#               referent = resolve_hint_pep749_ref_pure(
+#                   hint=cls.__pep749_ref_beartype__,
+#                   #FIXME: Actually, don't bother explicitly passing these.
+#                   #Just set these as the defaults for these optional args.
+#                   exception_cls=BeartypeCallHintPep749ForwardRefException,
+#                   exception_prefix=_EXCEPTION_PREFIX_HINT_PEP749_REF,
+#               )
+#    * Define a new private string global. Wait. Instead, just use this as the
+#      default for this optional arg (as suggested above):
+#        _EXCEPTION_PREFIX_HINT_PEP749_REF = (
+#            'PEP 749 forward reference resolver')
 #* Define a new make_forwardref_annotationlib_subtype() factory function in the
 #  existing "beartype._check.forward.reference.fwdrefmake" submodule with
 #  signature resembling:

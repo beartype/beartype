@@ -33,7 +33,7 @@ from beartype._util.func.utilfunctest import (
     is_func_async_generator,
     is_func_sync_generator,
 )
-from beartype._util.hint.pep.proposal.pep649 import (
+from beartype._util.hint.pep.proposal.pep649749 import (
     get_pep649_hintable_annotations)
 from beartype._util.text.utiltextprefix import prefix_callable_return
 from collections.abc import (

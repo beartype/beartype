@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`649`-compliant **annotations** (i.e., ``__annotation__``
-dunder dictionaries under Python >= 3.14 dynamically created by
-``__annotate__()`` dunder methods, mapping from the names of annotated child
+Project-wide :pep:`649`- and :pep:`749`-compliant **annotations** (i.e.,
+``__annotation__`` dunder dictionaries under Python >= 3.14 dynamically created
+by ``__annotate__()`` dunder methods, mapping from the names of annotated child
 objects of parent hintables to the type hints annotating those child objects).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -19,7 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep649Exception
 from beartype.typing import Optional
-from beartype._cave._cavefast import Format  # pyright: ignore
+from beartype._cave._cavefast import HintPep749RefFormat  # type: ignore[attr-defined]
 from beartype._data.typing.datatyping import (
     Pep649Hintable,
     Pep649HintableAnnotations,
@@ -36,7 +36,7 @@ def get_pep649_hintable_annotations(
     hintable: Pep649Hintable,
 
     # Optional parameters.
-    hint_format: Format = Format.FORWARDREF,
+    hint_format: HintPep749RefFormat = HintPep749RefFormat.FORWARDREF,
     exception_cls: TypeException = BeartypeDecorHintPep649Exception,
     exception_prefix: str = '',
 ) -> Pep649HintableAnnotations:
@@ -62,33 +62,34 @@ def get_pep649_hintable_annotations(
     ----------
     hintable : Pep649Hintable
         Hintable to be inspected.
-    hint_format : Format, default: Format.FORWARDREF
-        Format of annotated hints to be returned. Defaults to
-        :attr:`Format.FORWARDREF`, in which case this getter safely encapsulates
-        each otherwise unsafe unquoted forward reference transitively
-        subscripting each hint annotating this hintable with a safe
+    hint_format : HintPep749RefFormat, default: HintPep749RefFormat.FORWARDREF
+        HintPep749RefFormat of annotated hints to be returned. Defaults to
+        :attr:`HintPep749RefFormat.FORWARDREF`, in which case this getter safely
+        encapsulates each otherwise unsafe unquoted forward reference
+        transitively subscripting each hint annotating this hintable with a safe
         :class:`annotationlib.ForwardRef` object. Note that the remaining
         formats are situational at best. Specifically:
 
-        * The :attr:`Format.VALUE` format is useful *only* to detect whether
-          this hintable is annotated by one or more unquoted forward references
-          or not. These hintables occasionally require special-case handling
-          elsewhere, which this format facilitates. Notably, if this hintable is
-          annotated by one or more unquoted forward references, this getter
-          raises a :exc:`NameError` exception when passed this format.
-        * The :attr:`Format.STRING` format is useful mostly just for
-          documentation purposes. A tangential use case does *occasionally*
+        * The :attr:`HintPep749RefFormat.VALUE` format is useful *only* to
+          detect whether this hintable is annotated by one or more unquoted
+          forward references or not. These hintables occasionally require
+          special-case handling elsewhere, which this format facilitates.
+          Notably, if this hintable is annotated by one or more unquoted forward
+          references, this getter raises a :exc:`NameError` exception when
+          passed this format.
+        * The :attr:`HintPep749RefFormat.STRING` format is useful mostly just
+          for documentation purposes. A tangential use case does *occasionally*
           arise, though: comparing annotations dictionaries of two hintables
           annotated by one or more unquoted forward references such that one of
           those dictionaries was postponed under :pep:`563` (i.e., ``from
           __future__ import annotations``). These dictionaries are comparable
-          under this format but *not* the default :attr:`Format.FORWARDREF`
-          format. Why? **Forward reference proxies** (i.e.,
-          :class:`annotationlib.ForwardRef` objects). Whereas
-          :attr:`Format.FORWARDREF` injects incomparable forward reference
-          proxies into these dictionaries that effectively prohibit dictionary
-          comparisons, this format just preserves unquoted forward references
-          in the strings it returns.
+          under this format but *not* the default
+          :attr:`HintPep749RefFormat.FORWARDREF` format. Why? **Forward
+          reference proxies** (i.e., :class:`annotationlib.ForwardRef` objects).
+          Whereas :attr:`HintPep749RefFormat.FORWARDREF` injects incomparable
+          forward reference proxies into these dictionaries that effectively
+          prohibit dictionary comparisons, this format just preserves unquoted
+          forward references in the strings it returns.
     exception_cls : TypeException, default: BeartypeDecorHintPep649Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep649Exception`.
@@ -167,14 +168,14 @@ if IS_PYTHON_AT_LEAST_3_14:
         hintable: Pep649Hintable,
 
         # Optional parameters.
-        hint_format: Format = Format.FORWARDREF,
+        hint_format: HintPep749RefFormat = HintPep749RefFormat.FORWARDREF,
         exception_cls: TypeException = BeartypeDecorHintPep649Exception,
         exception_prefix: str = '',
     ) -> Optional[Pep649HintableAnnotations]:
 
         # ....................{ PEP 649                    }....................
         # If the caller requested the default "FORWARDREF" format...
-        if hint_format is Format.FORWARDREF:
+        if hint_format is HintPep749RefFormat.FORWARDREF:
             # For efficiency, attempt to first assume that this hintable's
             # "__annotations__" dunder dictionary complies with the non-default
             # "VALUE" format (i.e., if this hintable is annotated by type hints
@@ -257,7 +258,7 @@ if IS_PYTHON_AT_LEAST_3_14:
         #    non-default "VALUE" format.
         # 2. Caches the returned "__annotations__" dunder dictionary inside this
         #    hintable. This getter avoids re-caching this dictionary.
-        elif hint_format is Format.VALUE:
+        elif hint_format is HintPep749RefFormat.VALUE:
             return getattr(hintable, '__annotations__', None)
         # Else, the caller requested another non-default format (e.g.,
         # "STRING"). Since this format is so situational as to be functionally
@@ -396,7 +397,7 @@ if IS_PYTHON_AT_LEAST_3_14:
 
             # ....................{ CLOSURE                }....................
             def __annotate_beartype__(
-                hint_format: Format) -> Pep649HintableAnnotations:
+                hint_format: HintPep749RefFormat) -> Pep649HintableAnnotations:
                 f'''
                 Hintable {repr(hintable)} :pep:`649`- and :pep:`749`-compliant
                 ``__annotate__()`` dunder method, modifying the user-defined
@@ -417,7 +418,7 @@ if IS_PYTHON_AT_LEAST_3_14:
 
                 Parameters
                 ----------
-                hint_format : Format
+                hint_format : HintPep749RefFormat
                     Kind of annotation format to be returned. See also
                     :pep:`649` and :pep:`749` for further details.
 
@@ -432,8 +433,8 @@ if IS_PYTHON_AT_LEAST_3_14:
                 #subtle and non-trivial to debug issues in user code like this.
                 #To resolve this, CPython devs should consider:
                 #* Defining a new "_annotationlib" C extension.
-                #* Moving the existing "annotationlib.Format" enum to this C
-                #  extension.
+                #* Moving the existing "annotationlib.HintPep749RefFormat" enum
+                #  to this C extension.
                 #* Adding to the top of "annotationlib":
                 #      from _annotationlib import Format
                 #* Refactoring the C-based CPython interpreter to pass the
@@ -450,7 +451,7 @@ if IS_PYTHON_AT_LEAST_3_14:
                 # sporadic false negatives or positives. We know. We were there.
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-                #FIXME: [SPEED] Globalize access to frequently accessed "Format"
+                #FIXME: [SPEED] Globalize access to frequently accessed "HintPep749RefFormat"
                 #members and reference those globals instead below. This method
                 #*COULD* be frequently called enough to warrant micro-optimization.
 
@@ -490,12 +491,12 @@ if IS_PYTHON_AT_LEAST_3_14:
                 #   the "FORWARDREF" format simply reduces to "VALUE" if a
                 #   dictionary contains *NO* unquoted forward references, this
                 #   case is still *WONDERFUL!*
-                if hint_format == Format.FORWARDREF:  # <-- "==", *NOT* "is"!
+                if hint_format == HintPep749RefFormat.FORWARDREF:  # <-- "==", *NOT* "is"!
                     return annotations
                 # Else, the caller did *NOT* request the "FORWARDREF" format.
                 #
                 # If the caller requested the "VALUE" format...
-                elif hint_format == Format.VALUE:  # <-- "==", *NOT* "is"!
+                elif hint_format == HintPep749RefFormat.VALUE:  # <-- "==", *NOT* "is"!
                     # If attempting to access the existing "__annotations__"
                     # dunder dictionary set on this hintable cached according to
                     # the non-default "VALUE" format raised a "NameError"
@@ -509,11 +510,12 @@ if IS_PYTHON_AT_LEAST_3_14:
                     # implying this hintable was annotated by type hints
                     # transitively subscripted by *NO* unquoted forward
                     # references, implying the old "__annotations__" dunder
-                    # dictionary complies with the "Format.VALUE" format.
+                    # dictionary complies with the "HintPep749RefFormat.VALUE"
+                    # format.
 
                     # Return the new "__annotations__" dunder dictionary. By
                     # definition, this dictionary exists and thus implicitly
-                    # complies with the "Format.VALUE" format as well.
+                    # complies with the "HintPep749RefFormat.VALUE" format too.
                     return annotations
                 # Else, the caller did *NOT* request the "VALUE" format.
                 #
@@ -568,7 +570,7 @@ if IS_PYTHON_AT_LEAST_3_14:
                 # print(f'new annotations: {annotations}')
                 # print(f'{hintable}.__annotate__: {hintable.__annotate__}')
                 # print(f'{hintable}.__annotations__: {hintable.__annotations__}')
-                # print(f'{hintable}.__annotate__(3): {hintable.__annotate__(Format.FORWARDREF)}')
+                # print(f'{hintable}.__annotate__(3): {hintable.__annotate__(HintPep749RefFormat.FORWARDREF)}')
                 # hintable_annotations_cached = get_pep649_hintable_annotations(hintable)
                 # print(f'{hintable}.__annotate__(3) [cached]: {hintable_annotations_cached}')
             # If doing so fails with an exception resembling the following, this
@@ -765,7 +767,7 @@ if IS_PYTHON_AT_LEAST_3_14:
     # ....................{ PRIVATE ~ getters              }....................
     def _get_pep649_hintable_annotations_or_none_uncached(
         hintable: Pep649Hintable,
-        hint_format: Format,
+        hint_format: HintPep749RefFormat,
         exception_cls: TypeException,
         exception_prefix: str,
     ) -> Optional[Pep649HintableAnnotations]:
@@ -790,8 +792,8 @@ if IS_PYTHON_AT_LEAST_3_14:
         ----------
         hintable : Pep649Hintable
             Hintable to be inspected.
-        hint_format : Format
-            Format of annotated hints to be returned.
+        hint_format : HintPep749RefFormat
+            HintPep749RefFormat of annotated hints to be returned.
         exception_cls : TypeException
             Type of exception to be raised in the event of a fatal error.
         exception_prefix : str
@@ -828,7 +830,7 @@ if IS_PYTHON_AT_LEAST_3_14:
         # annotationlib.get_annotations() getter. Why? Because that getter
         # raises unreadable exceptions when passed this format under various
         # common edge cases. Instead...
-        if hint_format is Format.FORWARDREF:
+        if hint_format is HintPep749RefFormat.FORWARDREF:
             # ....................{ PEP 649                }....................
             # If this hintable defines the PEP 649-compliant __annotate__()
             # dunder method to be anything *OTHER* than "None", this hintable is
@@ -882,10 +884,10 @@ if IS_PYTHON_AT_LEAST_3_14:
                 # the PEP 649-compliant low-level __annotate__() dunder callable
                 # rather than the PEP 484-compliant "__annotations__" dunder
                 # attribute. Why? Because the latter reduces to calling
-                # "get_annotations(hintable, format=Format.VALUE)", which raises
-                # a "NameError" exception if the passed hintable is annotated by
-                # one or more unquoted forward references. This is unacceptable
-                # API design. Yet, this is Python >= 3.14.
+                # "get_annotations(hintable, format=HintPep749RefFormat.VALUE)",
+                # which raises a "NameError" exception if the passed hintable is
+                # annotated by one or more unquoted forward references. This is
+                # unacceptable API design. Yet, this is Python >= 3.14.
                 #
                 # Note that:
                 # * get_annotations() is guaranteed to *NEVER* return "None". If
@@ -1008,15 +1010,16 @@ if IS_PYTHON_AT_LEAST_3_14:
         # ....................{ RETURN                     }....................
         #FIXME: Actually, let's just return this mutable annotations dictionary
         #as is for the moment. Although non-ideal, this is mostly fine. Why?
-        #Because when "hint_format" is the default "Format.FORWARDREF" (which is
-        #the case for 99.99% of all calls to this getter), this annotations
-        #dictionary is guaranteed to be a copy of the underlying
-        #"__annotations__" dunder dictionary. Mutating a copy is always fine. Of
-        #course, we then memoize this copy. Ordinarily, mutating a memoized
-        #object would absolutely *NOT* be fine. In this case, though, mutating
-        #this memoized object is actually ideal. Why? Because then we only need
-        #to coerce hints once (e.g., via a call to the coerce_func_hint_root()
-        #function), because the result of doing so is then memoized.
+        #Because when "hint_format" is the default
+        #"HintPep749RefFormat.FORWARDREF" (which is the case for 99.99% of all
+        #calls to this getter), this annotations dictionary is guaranteed to be
+        #a copy of the underlying "__annotations__" dunder dictionary. Mutating
+        #a copy is always fine. Of course, we then memoize this copy.
+        #Ordinarily, mutating a memoized object would absolutely *NOT* be fine.
+        #In this case, though, mutating this memoized object is actually ideal.
+        #Why? Because then we only need to coerce hints once (e.g., via a call
+        #to the coerce_func_hint_root() function), because the result of doing
+        #so is then memoized.
 
         # Return this annotations dictionary, coerced into an immutable frozen
         # dictionary for safety (e.g., to prevent accidental external mutation).
@@ -1125,21 +1128,21 @@ get_pep649_hintable_annotations_or_none.__doc__ = (
     This getter is memoized *only* under Python >= 3.14. Why? Because the
     lower-level :func:`annotationlib.get_annotations` getter underlying this
     higher-level getter *only* memoizes the annotations dictionary it creates
-    and returns when passed the ``format=Format.VALUE`` keyword parameter. When
-    passed *any* other ``format`` value, :func:`annotationlib.get_annotations`
-    avoids avoids caching its return value. Creating this return value is
-    algorithmically non-trivial and expensive. Sadly, we are effectively
-    required to memoize this return value here.
+    and returns when passed the ``format=HintPep749RefFormat.VALUE`` keyword
+    parameter. When passed *any* other ``format`` value,
+    :func:`annotationlib.get_annotations` avoids avoids caching its return
+    value. Creating this return value is algorithmically non-trivial and
+    expensive. Sadly, we are effectively required to memoize this return here.
 
     Parameters
     ----------
     hintable : Pep649Hintable
         Hintable to be inspected.
-    hint_format : Format, default: Format.FORWARDREF
-        Format of annotated hints to be returned. Defaults to
-        :attr:`Format.FORWARDREF`, in which case this getter safely encapsulates
-        each otherwise unsafe unquoted forward reference transitively
-        subscripting each hint annotating this hintable with a safe
+    hint_format : HintPep749RefFormat, default: HintPep749RefFormat.FORWARDREF
+        HintPep749RefFormat of annotated hints to be returned. Defaults to
+        :attr:`HintPep749RefFormat.FORWARDREF`, in which case this getter safely
+        encapsulates each otherwise unsafe unquoted forward reference
+        transitively subscripting each hint annotating this hintable with a safe
         :class:`annotationlib.ForwardRef` object. See also the higher-level
         :func`.get_pep649_hintable_annotations` getter for further details.
     exception_cls : TypeException, default: BeartypeDecorHintPep649Exception
@@ -1171,36 +1174,38 @@ set_pep649_hintable_annotations.__doc__ = (
 
     Caveats
     -------
-    **This setter preserves unmodified the existing** :attr:`Format.VALUE`
-    **and** :attr:`Format.STRING` **formats of the** ``__annotations__``
-    **dunder dictionary of the passed hintable,** as originally created and
-    returned by the original ``__annotate__`` dunder method bound to this
-    hintable. This setter *only* modifies the :attr:`Format.FORWARDREF` format.
-    Why? Because there exist two distinct cases, which although distinct imply
-    the same conclusion:
+    **This setter preserves unmodified the existing**
+    :attr:`HintPep749RefFormat.VALUE` **and** :attr:`HintPep749RefFormat.STRING`
+    **formats of the** ``__annotations__`` **dunder dictionary of the passed
+    hintable,** as originally created and returned by the original
+    ``__annotate__`` dunder method bound to this hintable. This setter *only*
+    modifies the :attr:`HintPep749RefFormat.FORWARDREF` format. Why? Because
+    there exist two distinct cases, which although distinct imply the same
+    conclusion:
 
     * When the caller of an ``__annotate__`` dunder method passes the
-      :attr:`Format.VALUE` format, they expect that method to raise a
-      :exc:`NameError` exception if the ``__annotations__`` dunder dictionary
+      :attr:`HintPep749RefFormat.VALUE` format, they expect that method to raise
+      a :exc:`NameError` exception if the ``__annotations__`` dunder dictionary
       underlying that call contains one or more unquoted forward references.
       Indeed, this is the *only* efficient (and thus reasonable) means of
       detecting whether a hintable is annotated by unquoted forward references.
-      This is also the only valid use case for passing the :attr:`Format.VALUE`
-      format. Although this valid use case is of marginal utility, it is still
-      of utility and *must* be preserved as such. But the passed ``annotations``
-      dictionary exists (rather than raising a :exc:`NameError` exception) and
-      thus contains *no* unquoted forward references! Ergo, this ``annotations``
-      dictionary *cannot* be returned if the caller passes the
-      :attr:`Format.VALUE` format. Doing so would destroy this format's only
-      valid use case, which can only be preserved by deferring to the original
-      ``__annotate__`` dunder method bound to this hintable.
+      This is also the only valid use case for passing the
+      :attr:`HintPep749RefFormat.VALUE` format. Although this valid use case is
+      of marginal utility, it is still of utility and *must* be preserved as
+      such. But the passed ``annotations`` dictionary exists (rather than
+      raising a :exc:`NameError` exception) and thus contains *no* unquoted
+      forward references! Ergo, this ``annotations`` dictionary *cannot* be
+      returned if the caller passes the :attr:`HintPep749RefFormat.VALUE`
+      format. Doing so would destroy this format's only valid use case, which
+      can only be preserved by deferring to the original ``__annotate__`` dunder
+      method bound to this hintable.
     * When the caller of an ``__annotate__`` dunder method passes the
-      :attr:`Format.STRING` format, they expect that method to return
-      human- and machine-readable string representations of the *original* type
-      hints annotating this hintable. These strings are expected to be readably
-      concise and machine-comparable. These strings are, in particular, *not*
-      expected to contain **forward reference proxies** (e.g., either standard
-      :class:`annotationlib.ForwardRef` objects or non-standard
+      :attr:`HintPep749RefFormat.STRING` format, they expect that method to
+      return human- and machine-readable string representations of the
+      *original* type hints annotating this hintable. These strings are expected
+      to be readably concise and machine-comparable. These strings are, in
+      particular, *not* expected to contain **forward reference proxies** (e.g.,
+      either standard :class:`annotationlib.ForwardRef` objects or non-standard
       beartype-specific objects behaving similarly). Forward reference proxies
       typically have verbose string representations, confounding
       human-readability. They also do *not* necessarily compare equal to other
@@ -1209,9 +1214,9 @@ set_pep649_hintable_annotations.__doc__ = (
       *no* forward reference proxies. However, the dictionaries passed to this
       setter often contain forward reference proxies! Ergo, this ``annotations``
       dictionary *cannot* be returned if the caller passes the
-      :attr:`Format.STRING` format. Doing so would destroy this format's most
-      common use cases, which can only be preserved by deferring to the original
-      ``__annotate__`` dunder method bound to this hintable.
+      :attr:`HintPep749RefFormat.STRING` format. Doing so would destroy this
+      format's most common use cases, which can only be preserved by deferring
+      to the original ``__annotate__`` dunder method bound to this hintable.
 
       More generally (and ignoring the above concerns about forward reference
       proxies), we can say that callers requesting documentation are ultimately
@@ -1225,11 +1230,12 @@ set_pep649_hintable_annotations.__doc__ = (
     to this hintable,** monkey-patching that method with a new ``__annotate__``
     dunder method that returns either:
 
-    * If the caller passed the :attr:`Format.FORWARDREF` format, the
-      ``annotations`` parameter passed to this higher-level setter.
-    * Else (e.g., if the caller passed either the :attr:`Format.VALUE` or
-      :attr:`Format.STRING` formats), the result of calling the original
-      ``__annotate__`` dunder method bound to this hintable.
+    * If the caller passed the :attr:`HintPep749RefFormat.FORWARDREF` format,
+      the ``annotations`` parameter passed to this higher-level setter.
+    * Else (e.g., if the caller passed either the
+      :attr:`HintPep749RefFormat.VALUE` or :attr:`HintPep749RefFormat.STRING`
+      formats), the result of calling the original ``__annotate__`` dunder
+      method bound to this hintable.
 
     Parameters
     ----------

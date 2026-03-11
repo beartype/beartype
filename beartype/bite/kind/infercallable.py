@@ -96,7 +96,7 @@ from beartype._util.hint.pep.proposal.pep612 import (
     get_hint_pep612_paramspec,
     make_hint_pep612_concatenate_list_or_none,
 )
-from beartype._util.hint.pep.proposal.pep649 import (
+from beartype._util.hint.pep.proposal.pep649749 import (
     get_pep649_hintable_annotations)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 from collections.abc import (

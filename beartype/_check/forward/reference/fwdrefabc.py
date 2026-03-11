@@ -14,13 +14,17 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
+from beartype._cave._cavefast import HintPep484749RefPureType
 from beartype._data.cls.dataclsany import BeartypeAny
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
     LexicalScope,
 )
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
-from typing import NoReturn
+from typing import (
+    NoReturn,
+    Optional,
+)
 
 # ....................{ SUPERCLASSES                       }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -71,6 +75,17 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     by this forward reference subclass is relative if that type hint is relative
     (i.e., if :attr:`__name_beartype__` is relative) *or* ignored otherwise
     (i.e., if :attr:`__name_beartype__` is absolute).
+    '''
+
+
+    __pep749_ref_beartype__: Optional[HintPep484749RefPureType] = None
+    '''
+    :pep:`749`-compliant **forward reference type hint** (i.e.,
+    higher-level pure-Python object-oriented :class:`annotationlib.ForwardRef`
+    object defining a dynamically resolvable reference referring to the
+    lower-level type hint encapsulated by this forward reference subclass) if
+    this subclass originates from such an object *or* :data:`None` otherwise
+    (i.e., if this subclass does *not* originate from such an object).
     '''
 
 

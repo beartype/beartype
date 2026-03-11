@@ -83,7 +83,7 @@ def get_hint_pep484612646_typearg_packed_default_or_sentinel(
     from beartype._util.hint.pep.proposal.pep484612646 import (
         die_unless_hint_pep484612646_typearg_packed)
     from beartype._util.hint.pep.proposal.pep749 import (
-        get_hint_pep749_subhint_optional)
+        get_hint_pep749_evaluator_optional)
 
     # If this hint is *NOT* a packed type parameter, raise an exception.
     die_unless_hint_pep484612646_typearg_packed(
@@ -105,11 +105,11 @@ def get_hint_pep484612646_typearg_packed_default_or_sentinel(
 
         # Child hint to which this type parameter defaults if this type
         # parameter has a default *OR* the sentinel placeholder otherwise.
-        hint_default = get_hint_pep749_subhint_optional(
+        hint_default = get_hint_pep749_evaluator_optional(
             hint=hint,  # pyright: ignore
-            subhint_name_dynamic='evaluate_default',
-            subhint_name_static='__default__',
-            subhint_value_null=NoDefault,
+            evaluator_name_dynamic='evaluate_default',
+            evaluator_name_static='__default__',
+            evaluator_value_null=NoDefault,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )

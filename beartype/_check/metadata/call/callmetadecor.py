@@ -51,7 +51,7 @@ from beartype._util.func.utilfunctest import (
     is_func_async_generator,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
-from beartype._util.hint.pep.proposal.pep649 import (
+from beartype._util.hint.pep.proposal.pep649749 import (
     get_pep649_hintable_annotations,
     set_pep649_hintable_annotations,
 )

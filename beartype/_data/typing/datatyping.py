@@ -755,7 +755,7 @@ all forward reference objects).
 
 See Also
 --------
-:data:`beartype._cave._cavefast.HintPep484RefTypes`
+:data:`beartype._cave._cavefast.HintPep484749RefTypes`
     Further details.
 '''
 

@@ -35,6 +35,7 @@ from beartype._util.utilobject import (
     get_object_basename_scoped,
     get_object_name,
 )
+from textwrap import indent
 from traceback import format_exc
 
 # ....................{ RESOLVERS ~ metadata               }....................
@@ -512,6 +513,10 @@ def _resolve_hint_pep484_ref_str(
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
+        # Human-readable traceback formatted from this lower-level exception,
+        # indented so as to improve readability when embedded below.
+        exception_traceback = indent(text=format_exc(), prefix='\t')
+
         # Human-readable message to be raised.
         exception_message = (
             f'{exception_prefix}'
@@ -520,7 +525,7 @@ def _resolve_hint_pep484_ref_str(
             f'unresolvable, as attempting to dynamically resolve '
             f'the target type hint referred to by '
             f'this source forward reference raises:\n'
-            f'{format_exc()}'
+            f'{exception_traceback}'
         )
 
         # If the beartype configuration associated with the decorated

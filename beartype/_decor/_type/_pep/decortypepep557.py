@@ -26,7 +26,7 @@ from beartype._util.cls.pep.clspep557 import (
     is_pep557_dataclass_frozen,
 )
 from beartype._util.cls.utilclsset import set_type_attr
-from beartype._util.hint.pep.proposal.pep649 import (
+from beartype._util.hint.pep.proposal.pep649749 import (
     get_pep649_hintable_annotations)
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobject import get_object_type_name

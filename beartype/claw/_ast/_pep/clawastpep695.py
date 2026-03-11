@@ -30,8 +30,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #            # contains one or more unquoted forward references to undefined types.
 #            hint = get_hint_pep749_subhint_or_sentinel(
 #                hint=hint,
-#                subhint_name_dynamic='evaluate_value',
-#                subhint_name_static='__value__',
+#                evaluator_name_dynamic='evaluate_value',
+#                evaluator_name_static='__value__',
 #             )
 #* The "BeartypeNodeTransformerPep695Mixin" should *TOTALLY REDUCE TO A NOOP.*
 #  This mixin is no longer relevant in the Python >= 3.14 world, which is great.

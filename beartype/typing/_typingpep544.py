@@ -368,7 +368,7 @@ def _is_obj_structural_subtype(cls, obj: Any) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep649 import (
+    from beartype._util.hint.pep.proposal.pep649749 import (
         get_pep649_hintable_annotations_or_none)
 
     # Dictionary mapping from the name to value of each attribute directly
