@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilExceptionException
-from beartype._util.text.utiltextlabel import label_exception
+from beartype._util.text.utiltextlabel import label_exception_message
 
 # ....................{ GETTERS                            }....................
 def get_name_error_attr_name(name_error: NameError) -> str:
@@ -113,7 +113,7 @@ def get_name_error_attr_name(name_error: NameError) -> str:
     # Note that this should *NEVER* occur. Of course, this will occur.
     if not attr_name:
         raise _BeartypeUtilExceptionException(  # pragma: no cover
-            f'Non-standard "{label_exception(name_error)}" unrecognized '
+            f'Non-standard "{label_exception_message(name_error)}" unrecognized '
             f"(i.e., single-quoted substring '{{attr_name}}' not found)."
         ) from name_error
     # Else, this name error is recognized.
@@ -123,7 +123,7 @@ def get_name_error_attr_name(name_error: NameError) -> str:
     # Note that this should *NEVER* occur. Of course, this will occur.
     elif not attr_name.isidentifier():
         raise _BeartypeUtilExceptionException(  # pragma: no cover
-            f'Non-standard "{label_exception(name_error)}" unrecognized '
+            f'Non-standard "{label_exception_message(name_error)}" unrecognized '
             f"(i.e., single-quoted substring '{attr_name}' found but not a "
             f'valid Python identifier).'
         ) from name_error

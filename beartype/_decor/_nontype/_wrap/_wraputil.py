@@ -11,9 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Calls to get_hint_pep484_ref_names_relative() like the following made
+#FIXME: Calls to get_hint_pep484749_ref_names() like the following made
 #considerable sense under Python < 3.13:
-#    hint_module_name, hint_type_name = get_hint_pep484_ref_names_relative(
+#    hint_module_name, hint_type_name = get_hint_pep484749_ref_names(
 #        hint=hint,
 #        exception_cls=exception_cls,
 #        exception_prefix=exception_prefix,
@@ -113,7 +113,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #          elif isinstance(hint, ForwardRef):
 #              return make_forwardref_annotationlib_subtype(hint)
 #FIXME: Next, we'll want to hunt down *ALL* calls to
-#get_hint_pep484_ref_names_relative() throughout the codebase. These calls are
+#get_hint_pep484749_ref_names() throughout the codebase. These calls are
 #now all problematic, because they improperly reduce "annotationlib.ForwardRef"
 #objects to 2-tuples of strings. We'll need to refactor these calls somehow.
 #FIXME: Disambiguate "HintSignForwardRef". This is trivial, because we're

@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype._cave._cavefast import HintPep484749RefPureType
+from beartype._cave._cavefast import HintPep484749RefObjectType
 from beartype._data.cls.dataclsany import BeartypeAny
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
@@ -78,7 +78,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
 
 
-    __pep749_ref_beartype__: Optional[HintPep484749RefPureType] = None
+    __pep749_ref_beartype__: Optional[HintPep484749RefObjectType] = None
     '''
     :pep:`749`-compliant **forward reference type hint** (i.e.,
     higher-level pure-Python object-oriented :class:`annotationlib.ForwardRef`

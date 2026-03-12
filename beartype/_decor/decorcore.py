@@ -232,8 +232,8 @@ def _beartype_object_nonfatal(
         #     # and readability by coercing *ONLY* this message (rather than both
         #     # this message *AND* traceback) truncated to a reasonable maximum
         #     # length into a warning message.
-        #     # truncate_str(text=label_exception(exception), max_len=1024)
-        #     label_exception(exception)
+        #     # truncate_str(text=label_exception_message(exception), max_len=1024)
+        #     label_exception_message(exception)
         #     if isinstance(exception, BeartypeException) else
         #     # Else, this exception is *NOT* beartype-specific. In this case,
         #     # this exception's message is probably *NOT* human-readable as is.

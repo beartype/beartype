@@ -12,15 +12,193 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep749Exception
-from beartype._cave._cavefast import HintPep749RefFormat  # type: ignore[attr-defined]
+from beartype.roar import (
+    BeartypeCallHintPep749ForwardRefObjectException,
+    BeartypeDecorHintPep749Exception,
+)
+from beartype._cave._cavefast import (  # type: ignore[attr-defined]
+    HintPep749RefFormat,  # pyright: ignore
+    HintPep484749RefObjectType,
+)
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import (
     Hint,
     HintOrSentinel,
 )
+from beartype._util.text.utiltextlabel import label_exception_traceback
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
+
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please!
+def is_hint_pep749_ref_object_resolvable(
+    hint: HintPep484749RefObjectType) -> bool:
+    '''
+    :data:`True` only if the passed :pep:`749`-compliant **object-oriented
+    forward reference type hint** (i.e., :class:`annotationlib.ForwardRef`
+    object encapsulating all metadata required to dynamically resolve at runtime
+    a reference to a referent target type hint that typically has yet to be
+    defined in the current lexical scope) is dynamically resolvable at runtime
+    (i.e., actually does encapsulate all such requisite metadata).
+
+    This reference may be safely passed to the corresponding
+    :func:`.resolve_hint_pep749_ref_object` resolver *if and only if* this
+    tester returns :data:`True`. Callers should thus gate calls to that resolver
+    in ``if`` conditionals first calling this tester. Why? Because only a subset
+    of object-oriented forward references are safely resolvable at runtime.
+    Almost all parameters (and thus requisite metadata) accepted by the
+    :meth:`annotationlib.ForwardRef.__init__` and
+    :meth:`typing.ForwardRef.__init__` constructors are optional. Moreover,
+    those parameters default to unhelpful default values (e.g., :data:`None`).
+    Object-oriented forward reference type hints are thus *not* guaranteed to be
+    dynamically resolvable at runtime to their referent target type hints.
+
+    This tester returns :data:`True` for the proper subset of
+    :class:`annotationlib.ForwardRef` objects whose
+    :meth:`annotationlib.ForwardRef.evaluate` methods raise *no* unexpected
+    exceptions. All other :class:`annotationlib.ForwardRef` objects are unusable
+    for runtime resolution purposes. What constitutes "the proper subset of
+    :class:`annotationlib.ForwardRef` objects whose
+    :meth:`annotationlib.ForwardRef.evaluate` methods raise *no* unexpected
+    exceptions" can be reverse-engineered by inspection from the body of that
+    method. Specifically, if the passed reference defines *all* of the following
+    instance variables to be non-empty strings, this reference can be safely
+    resolved by calling its :meth:`annotationlib.ForwardRef.evaluate`:
+
+    * The PEP 484-compliant :attr:`annotationlib.ForwardRef.__forward_module__`
+      field, which suffices to resolve references to referent target type hints
+      externally defined as globals (but not locals, clearly).
+    * The private :attr:`annotationlib.ForwardRef.__owner__`` field, which
+      suffices to resolve resolve references to referent target type hints
+      externally defined as either locals or type parameters for the common case
+      in which that owner is a type. Note that this field is technically private
+      but nonetheless stable across at least Python 3.14 and 3.15. It is what
+      it is.
+
+    Parameters
+    ----------
+    hint : HintPep484749RefObjectType
+        Object-oriented forward reference type hint to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this reference is resolvable at runtime.
+    '''
+    assert isinstance(hint, HintPep484749RefObjectType), (
+        f'{repr(hint)} not "annotationlib.ForwardRef" object.')
+
+    # Return true only if...
+    return (
+        # The active Python interpreter targets Python >= 3.14 *AND*...
+        #
+        # Note that this implies this reference to actually be a full-blown
+        # "annotationlib.ForwardRef" object rather than a thin
+        # "typing.ForwardRef" wrapper. Under Python >= 3.14, the latter is
+        # simply a deprecated alias of the former.
+        IS_PYTHON_AT_LEAST_3_14 and
+        # These two instance variables are both non-empty strings.
+        bool(hint.__forward_module__ and hint.__owner__)  # type: ignore[attr-defined]
+    )
+
+# ....................{ RESOLVERS                          }....................
+#FIXME: Unit test us up, please.
+def resolve_hint_pep749_ref_object(
+    # Mandatory parameters.
+    hint: HintPep484749RefObjectType,
+
+    # Optional parameters.
+    exception_cls: TypeException = (
+        BeartypeCallHintPep749ForwardRefObjectException),
+    exception_prefix: str = '',
+) -> Hint:
+    '''
+    Resolve the passed :pep:`749`-compliant **object-oriented forward reference
+    type hint** (i.e., :class:`annotationlib.ForwardRef` object encapsulating
+    all metadata required to dynamically resolve at runtime a reference to a
+    referent target type hint that typically has yet to be defined in the
+    current lexical scope) to that referent target type hint.
+
+    This resolver is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator). Resolving both absolute *and* relative
+    forward references assumes contextual context (e.g., the fully-qualified
+    name of the object to which relative forward references are relative to)
+    that *cannot* be safely and context-freely memoized away.
+
+    Caveats
+    -------
+    **Callers should gate calls to this resolver in** ``if`` **conditionals
+    first calling the** :func:`.is_hint_pep749_ref_object_resolvable`
+    **tester.** Doing so substantially reduces the likelihood of unexpected
+    exceptions. Why? Because only a subset of object-oriented forward references
+    are safely resolvable at runtime. See that tester for further commentary.
+
+    Parameters
+    ----------
+    hint : HintPep484749RefObjectType
+        Object-oriented forward reference type hint to be resolved.
+    exception_cls : Type[Exception], default: BeartypeCallHintPep749ForwardRefObjectException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeCallHintPep749ForwardRefObjectException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Returns
+    -------
+    Hint
+        Non-string type hint to which this reference refers.
+
+    Raises
+    ------
+    exception_cls
+        If attempting to dynamically evaluate this reference raises an
+        exception, typically due to this reference being syntactically invalid
+        as Python.
+    '''
+    assert isinstance(hint, HintPep484749RefObjectType), (
+        f'{repr(hint)} not "annotationlib.ForwardRef" object.')
+
+    # Attempt to resolve this source forward reference to its target referent.
+    try:
+        hint_resolved = hint.evaluate()  # type: ignore[attr-defined]
+        # print(f'Resolved object-oriented type hint {repr(hint)} to {repr(hint_resolved)}...')
+    # If doing so fails for *ANY* reason whatsoever...
+    except Exception as exception:
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception class.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.proposal.pep484749 import (
+            get_hint_pep484749_ref_names)
+
+        # Possibly undefined fully-qualified module name and possibly
+        # unqualified classname referred to by this forward reference.
+        hint_module_name, hint_type_name = get_hint_pep484749_ref_names(
+            hint=hint, exception_prefix=exception_prefix)
+
+        # Human-readable traceback formatted from this exception, indented to
+        # improve readability when embedded below.
+        exception_traceback = label_exception_traceback(exception)
+
+        # Human-readable message to be raised.
+        exception_message = (
+            f'{exception_prefix}'
+            f'PEP 649 unquoted forward reference type hint "{hint_type_name}" '
+            f'in module "{hint_module_name}" wrapped by '
+            f'PEP 749 resolver {repr(hint)} '
+            f'unresolvable to its target referent:\n'
+            f'{exception_traceback}'
+        )
+
+        # Raise a human-readable exception wrapping the typically
+        # non-human-readable exception raised above.
+        raise exception_cls(exception_message) from exception
+
+    # Return this resolved hint.
+    return hint_resolved
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.

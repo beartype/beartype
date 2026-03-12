@@ -20,7 +20,7 @@ from beartype._data.typing.datatyping import (
     LexicalScope,
     TypeException,
 )
-from beartype._util.text.utiltextlabel import label_exception
+from beartype._util.text.utiltextlabel import label_exception_message
 from beartype._util.text.utiltextmunge import number_str_lines
 from beartype._util.utilobject import get_object_name
 from functools import update_wrapper
@@ -291,7 +291,7 @@ def make_func(
         raise exception_cls(
             f'{func_label or func_labeller()} '  # type: ignore[misc]
             f'unparseable, as @beartype generated invalid code raising:\n'
-            f'\t{label_exception(exception)}\n\n'
+            f'\t{label_exception_message(exception)}\n\n'
             f'{number_str_lines(func_code)}'
         ) from exception
 

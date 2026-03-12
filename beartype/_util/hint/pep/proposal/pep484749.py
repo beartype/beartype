@@ -4,10 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`--compliant **forward reference type hint utilities**
-(i.e., low-level callables introspecting :pep:`484`-compliant forward reference
-type hints in a general-purpose manner without regard for whether those
-references are relative or absolute).
+Project-wide :pep:`484`- and :pep:`749`-compliant **forward reference type hint
+utilities** (i.e., low-level callables introspecting forward references in a
+general-purpose manner without regard for the types of those references).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -16,10 +15,12 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import HintPep484749RefTypes
 from beartype._data.typing.datatyping import (
-    HintPep484Ref,
+    HintPep484749Ref,
     TupleStrOrNoneAndStr,
     TypeException,
 )
+from beartype._util.module.utilmodget import get_object_module_name_or_none
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
 from typing import Optional
 
 # ....................{ RAISERS                            }....................
@@ -29,9 +30,9 @@ from typing import Optional
 #performing that validation somewhere, so let's reuse that here, please.
 #Right. So, we already have an is_identifier() tester; now, we just need to
 #define a new die_unless_identifier() validator.
-def die_unless_hint_pep484_ref(
+def die_unless_hint_pep484749_ref(
     # Mandatory parameters.
-    hint: object,
+    hint: HintPep484749Ref,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
@@ -54,7 +55,7 @@ def die_unless_hint_pep484_ref(
 
     Parameters
     ----------
-    hint : object
+    hint : HintPep484749Ref
         Object to be validated.
     exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults
@@ -84,9 +85,9 @@ def die_unless_hint_pep484_ref(
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_hint_pep484_ref_names_relative(
+def get_hint_pep484749_ref_names(
     # Mandatory parameters.
-    hint: HintPep484Ref,
+    hint: HintPep484749Ref,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
@@ -111,7 +112,7 @@ def get_hint_pep484_ref_names_relative(
 
     Parameters
     ----------
-    hint : object
+    hint : HintPep484749Ref
         Forward reference to be introspected.
     exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults
@@ -153,7 +154,7 @@ def get_hint_pep484_ref_names_relative(
     '''
 
     # If this is *NOT* a forward reference, raise an exception.
-    die_unless_hint_pep484_ref(hint)
+    die_unless_hint_pep484749_ref(hint)
     # Else, this is a forward reference.
 
     # Possibly unqualified basename of the class to which reference refers.
@@ -184,15 +185,15 @@ def get_hint_pep484_ref_names_relative(
     if isinstance(hint, str):
         hint_name = hint
     # Else, this reference is *NOT* a string. By process of elimination, this
-    # reference *MUST* be a "typing.ForwardRef" instance. In this case...
+    # reference *MUST* be an "annotationlib.ForwardRef" *OR* "typing.ForwardRef"
+    # object. In this case...
     else:
         # Forward reference classname referred to by this reference.
         hint_name = hint.__forward_arg__
 
-        # Fully-qualified name of the module to which this presumably
-        # relative forward reference is relative to if any *OR* "None"
-        # otherwise (i.e., if *NO* such name was passed at forward reference
-        # instantiation time).
+        # Fully-qualified name of the module to which this presumably relative
+        # forward reference is relative to if any *OR* "None" otherwise (i.e.,
+        # if *NO* such name was passed at forward reference instantiation time).
         #
         # Since the active Python interpreter targets >= Python 3.10, this
         # "typing.ForwardRef" object defines an optional "__forward_module__:
@@ -217,6 +218,29 @@ def get_hint_pep484_ref_names_relative(
         #   currently only safely usable under Python >= 3.10 -- all patch
         #   releases of which are known to define this dunder attribute.
         hint_module_name = hint.__forward_module__
+
+        # If...
+        if (
+            # This reference was not instantiated with a module name *BUT*...
+            not hint_module_name and (
+                # The active Python interpreter targets Python >= 3.14 *AND*...
+                #
+                # Note that this implies this reference to be an
+                # "annotationlib.ForwardRef" object defining the private
+                # "__owner__" instance variable introspected below.
+                IS_PYTHON_AT_LEAST_3_14 and
+                # This reference was instantiated with an owner (typically
+                # either an arbitrary callable *OR* type)...
+                hint.__owner__ is not None  # type: ignore[attr-defined]
+            )
+        ):
+            # Fully-qualified name of the module defining that owner if any *OR*
+            # "None" otherwise (e.g., if neither a callable *NOR* type).
+            hint_module_name = get_object_module_name_or_none(hint.__owner__)  # type: ignore[attr-defined]
+        # Else, this reference was instantiated with either:
+        # * A module name. In this case, preserve that module name as is.
+        # * Neither a module *NOR* owner name. In this case, fallback to *NO*
+        #   module name.
 
     # Return metadata describing this forward reference relative to this module.
     return hint_module_name, hint_name

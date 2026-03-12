@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._cave._cavefast import HintPep484749RefPureType
+from beartype._cave._cavefast import HintPep484749RefObjectType
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_subbable_subtype)
 from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
@@ -21,17 +21,18 @@ from beartype._check.metadata.hint.hintsane import (
     HintSane,
 )
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.typing.datatyping import HintPep484Ref
-from beartype._util.hint.pep.proposal.pep484.pep484ref import (
-    get_hint_pep484_ref_names_relative)
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
+from beartype._data.typing.datatyping import HintPep484749Ref
+from beartype._util.hint.pep.proposal.pep484749 import (
+    get_hint_pep484749_ref_names)
+from beartype._util.hint.pep.proposal.pep749 import (
+    is_hint_pep749_ref_object_resolvable)
 
 # ....................{ REDUCERS ~ forwardref              }....................
 #FIXME: Unit test us up, please.
 def reduce_hint_pep484_ref(
     call_meta: BeartypeCallMetaABC,
     conf: BeartypeConf,
-    hint: HintPep484Ref,
+    hint: HintPep484749Ref,
     exception_prefix: str,
     **kwargs
 ) -> HintOrSane:
@@ -78,61 +79,52 @@ def reduce_hint_pep484_ref(
 
     # If this hint is a PEP 484- and 749-compliant object-oriented forward
     # reference (rather than a stringified forward reference)...
-    if isinstance(hint, HintPep484749RefPureType):
+    if isinstance(hint, HintPep484749RefObjectType):
         # Possibly undefined fully-qualified module name and possibly
         # unqualified classname referred to by this forward reference.
-        ref_module_name, ref_type_name = get_hint_pep484_ref_names_relative(
+        hint_module_name, hint_type_name = get_hint_pep484749_ref_names(
             hint=hint, exception_prefix=exception_prefix)
 
         # If this reference was instantiated with a module name (i.e., the
         # "__forward_module__" instance variable bound to this reference is a
         # non-empty string)...
-        if ref_module_name:
-            #FIXME: Extract this PEP 749-specific test into a new
-            #is_hint_pep749_ref_pure_resolvable() tester for safety.
-            if (
-                # The active Python interpreter targets Python >= 3.14 *AND*...
-                #
-                # In this case, this forward reference is actually a full-blown
-                # "annotationlib.ForwardRef" object rather than a thin
-                # "typing.ForwardRef" wrapper. Since "typing.ForwardRef" objects
-                # were thin wrappers wrapping simple strings, reducing the
-                # former to the latter (as we do below) was reasonable. Under
-                # Python >= 3.14, however, reducing full-blown
-                # "annotationlib.ForwardRef" objects in the same manner destroys
-                # their usefully non-trivial API and is thus unreasonable. Even
-                # under Python >= 3.14, however, note that *NOT* all
-                # "annotationlib.ForwardRef" objects are created equal. *ONLY*
-                # "annotationlib.ForwardRef" objects that are safely resolvable
-                # to the type hints they refer to (i.e., the proper subset of
-                # "annotationlib.ForwardRef" objects whose evaluate() methods
-                # raise *NO* unexpected exceptions) are usable. *ALL* other
-                # "annotationlib.ForwardRef" objects are unusable for runtime
-                # resolution purposes and thus reducible to simple strings here.
-                #
-                # What exactly constitutes the proper subset of
-                # "annotationlib.ForwardRef" objects whose evaluate() methods
-                # raise *NO* unexpected exceptions can be reverse-engineered by
-                # inspection from the body of that method. Specifically, if this
-                # hint defines *ALL* of these instance variables to be non-empty
-                # strings, this hint can be safely canonicalized and resolved by
-                # calling hint.evaluate():
-                # * The PEP 484-compliant "hint.__forward_module__" field, which
-                #   suffices to resolve globals. By the prior test, this field
-                #   is guaranteed to be non-empty here.
-                # * The *PRIVATE* "hint.__owner__" field, which suffices to
-                #   resolve both locals and type parameters for the case in
-                #   which that owner is a type. Note that this field is
-                #   technically private but appears to be stable across at least
-                #   Python 3.14 and 3.15. It is what it is. *shrug*
-                IS_PYTHON_AT_LEAST_3_14 and
-                # The *PRIVATE* "hint.__owner__" field is non-empty...
-                hint.__owner__  # type: ignore[attr-defined]
-            ):
-            # Then this forward reference object's evaluate() method is safely
-            # callable to resolve the hint this reference refers to. In this
-            # case...
-                #FIXME: Call make_forwardref_annotationlib_subtype() here! \o/
+        if hint_module_name:
+            # If this reference is a PEP 749-compliant
+            # "annotationlib.ForwardRef" object encapsulating *ALL* metadata
+            # needed to dynamically resolve the type hint it refers to, then
+            # reduce this reference to a beartype-specific forward reference
+            # proxy only thinly wrapping this "annotationlib.ForwardRef" object.
+            #
+            # Ideally, "annotationlib.ForwardRef" objects would themselves
+            # already be usable forward reference proxies. Sadly, they are not.
+            # Unlike beartype-specific forward #reference proxies, the
+            # "annotationlib.ForwardRef" type does *NOT* have a custom metaclass
+            # defining the __instancecheck__() and __subclasscheck__() dunder
+            # methods. In fact, that type does *NOT* have a custom metaclass...
+            # *PERIOD.* Without a metaclass defining those dunder methods,
+            # "annotationlib.ForwardRef" objects are unusable for the beartype
+            # context of general-purpose runtime type-checking.
+            #
+            # Note that forward references instantiated as non-deprecated
+            # full-blown PEP 749-compliant "annotationlib.ForwardRef" objects
+            # under Python >= 3.14 are distinct from those instantiated as
+            # deprecated thin PEP 484-compliant "typing.ForwardRef" wrappers
+            # under Python <= 3.13 -- despite those two types being aliases
+            # under Python >= 3.14. Since "typing.ForwardRef" wrappers only
+            # thinly wrap simple strings, reducing the former to the latter (as
+            # we do below) is reasonable under Python <= 3.13. Reducing
+            # "annotationlib.ForwardRef" objects in the same manner destroys
+            # their usefully non-trivial API and is thus unreasonable. Even
+            # under Python >= 3.14, however, note that *NOT* all
+            # "annotationlib.ForwardRef" objects are created equal. *ONLY*
+            # "annotationlib.ForwardRef" objects that are safely resolvable to
+            # the type hints they refer to (i.e., the proper subset of
+            # "annotationlib.ForwardRef" objects whose evaluate() methods raise
+            # *NO* unexpected exceptions) are usable. *ALL* other
+            # "annotationlib.ForwardRef" objects are unusable for runtime
+            # resolution purposes and thus reducible to simple strings here.
+            if is_hint_pep749_ref_object_resolvable(hint):
+                #FIXME: Call make_pep749_ref_subtype() here! \o/
                 pass
             # Else, either the active Python interpreter targets Python <= 3.13
             # *OR* the active Python interpreter targets Python >= 3.14 but
@@ -147,7 +139,7 @@ def reduce_hint_pep484_ref(
                 # Reduce this runtime-unusable PEP 484-compliant object-oriented
                 # forward reference to a runtime-usable forward reference proxy.
                 hint_resolved = make_forwardref_subbable_subtype(
-                    hint_name=ref_type_name, scope_name=ref_module_name)
+                    hint_name=hint_type_name, scope_name=hint_module_name)
 
                 # Return this proxy directly. All logic below assumes that
                 # "hint" is now a stringified forward reference.
@@ -163,7 +155,7 @@ def reduce_hint_pep484_ref(
         #    useful) ambiguous classname here.
         # 2. Reduce this ambiguous classname to a forward reference proxy below.
         else:
-            hint = ref_type_name
+            hint = hint_type_name
     # Else, this hint is a stringified forward reference.
     #
     # In any case, this hint should now be a stringified forward reference.

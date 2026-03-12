@@ -4,11 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-Test-wide :pep:`484`-compliant **relative forward reference type hint utility**
-unit tests.
+Test-wide :pep:`484`- and :pep:`749`-compliant **forward reference type hint
+utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484.pep484ref` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484749` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,19 +18,20 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ getter                     }....................
-def test_get_hint_pep484_ref_names_relative() -> None:
+def test_get_hint_pep484749_ref_names() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484.pep484ref.get_hint_pep484_ref_names_relative`
+    :func:`beartype._util.hint.pep.proposal.pep484.pep484ref.get_hint_pep484749_ref_names`
     getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
-    from beartype.typing import ForwardRef
-    from beartype._util.hint.pep.proposal.pep484.pep484ref import (
-        get_hint_pep484_ref_names_relative)
+    from beartype._cave._cavefast import HintPep484749RefObjectType
+    from beartype._util.hint.pep.proposal.pep484749 import (
+        get_hint_pep484749_ref_names)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -39,7 +40,7 @@ def test_get_hint_pep484_ref_names_relative() -> None:
     BREATH_AND = 'Were.limbs_and.breath_and'
 
     # Arbitrary absolute forward reference defined as a non-string.
-    BEING_INTERTWINED = ForwardRef(BREATH_AND)
+    BEING_INTERTWINED = HintPep484749RefObjectType(BREATH_AND)
 
     # Arbitrary fully-qualified names of a hypothetical module.
     OF_DIM_SLEEP = 'In_the.wide.pathless_desert'
@@ -51,49 +52,68 @@ def test_get_hint_pep484_ref_names_relative() -> None:
     # Assert this getter preserves the passed absolute forward reference as is
     # when defined as a string, regardless of whether the second passed object
     # defines the "__module__" dunder attribute.
-    assert get_hint_pep484_ref_names_relative(ALAS_ALAS) == (None, ALAS_ALAS)
+    assert get_hint_pep484749_ref_names(ALAS_ALAS) == (None, ALAS_ALAS)
 
     # Assert this getter preserves the passed absolute forward reference as is
     # when defined as a non-string, regardless of whether the second passed
     # object defines the "__module__" dunder attribute.
-    assert get_hint_pep484_ref_names_relative(BEING_INTERTWINED) == (None, BREATH_AND)
+    assert get_hint_pep484749_ref_names(BEING_INTERTWINED) == (None, BREATH_AND)
 
     # ....................{ PASS ~ module name             }....................
     # Since the active Python interpreter targets >= Python 3.10, then this
-    # typing.ForwardRef.__init__() method accepts an additional optional
+    # typing.HintPep484749RefObjectType.__init__() method accepts an additional optional
     # "module: Optional[str] = None" parameter preserving the fully-qualified
     # name of the module to which the passed unqualified basename is relative.
     # Assert that this getter successfully introspects that module name.
 
     # Arbitrary relative forward reference defined as a non-string relative to
-    # the fully-qualified names of a hypothetical module.
-    BEAUTIFUL_SHAPE = ForwardRef(THUS_TREACHEROUSLY, module=OF_DIM_SLEEP)
+    # the fully-qualified name of a hypothetical module.
+    BEAUTIFUL_SHAPE = HintPep484749RefObjectType(
+        THUS_TREACHEROUSLY, module=OF_DIM_SLEEP)
 
     # Arbitrary absolute forward reference defined as a non-string relative to
     # the fully-qualified names of a hypothetical module.
     #
     # Note that this exercises an edge case. Technically, passing both an
-    # absolute forward reference *AND* a module names is a non-sequitur.
-    # Pragmatically, the ForwardRef.__init__() method blindly permits callers to
-    # do just that. Ergo, @beartype *MUST* guard against this.
-    DARK_GATE_OF_DEATH = ForwardRef(ALAS_ALAS, module=OF_DIM_SLEEP)
+    # absolute forward reference *AND* module name is a non-sequitur.
+    # Pragmatically, the ForwardRef.__init__() constructor blindly permits
+    # callers to do just that. Ergo, @beartype *MUST* guard against this.
+    DARK_GATE_OF_DEATH = HintPep484749RefObjectType(
+        ALAS_ALAS, module=OF_DIM_SLEEP)
 
-    # Assert this getter canonicalizes the passed relative forward reference
-    # against the fully-qualified names of the module with which this reference
-    # was instantiated when defined as a non-string.
-    assert get_hint_pep484_ref_names_relative(BEAUTIFUL_SHAPE) == (
+    # Assert this getter canonicalizes this relative forward reference against
+    # the fully-qualified name of the module with which this reference was
+    # instantiated when defined as a non-string.
+    assert get_hint_pep484749_ref_names(BEAUTIFUL_SHAPE) == (
         OF_DIM_SLEEP, THUS_TREACHEROUSLY)
 
-    # Assert this getter preserves the passed absolute forward reference as is
-    # *WITHOUT* canonicalizing this reference against the fully-qualified names
+    # Assert this getter preserves this absolute forward reference as is
+    # *WITHOUT* canonicalizing this reference against the fully-qualified name
     # of the module with which this reference was instantiated when defined as a
     # non-string.
-    assert get_hint_pep484_ref_names_relative(DARK_GATE_OF_DEATH) == (
+    assert get_hint_pep484749_ref_names(DARK_GATE_OF_DEATH) == (
         OF_DIM_SLEEP, ALAS_ALAS)
+
+    # ....................{ PASS ~ pep : 749               }....................
+    # If the active Python interpreter targets Python >= 3.14 and thus defines
+    # the PEP 749-compliant "annotationlib.HintPep484749RefObjectType" type...
+    if IS_PYTHON_AT_LEAST_3_14:
+        # Arbitrary relative forward reference defined as a non-string relative
+        # to the fully-qualified name of an arbitrary type.
+        HIEROGLYPHICS_OLD = HintPep484749RefObjectType(
+            THUS_TREACHEROUSLY, owner=BeartypeDecorHintForwardRefException)
+
+        # Assert this getter canonicalizes this relative forward reference
+        # against the fully-qualified name of the module defining the arbritrary
+        # type passed as the value of the "owner" parameter above.
+        assert get_hint_pep484749_ref_names(HIEROGLYPHICS_OLD) == (
+            'beartype.roar._roarexc', THUS_TREACHEROUSLY)
+    # Else, the active Python interpreter targets Python <= 3.13 and thus fails
+    # to define that type.
 
     # ....................{ FAIL                           }....................
     # Assert this getter raises the expected exception when passed a type hint
     # that is *NOT* a valid forward reference.
     with raises(BeartypeDecorHintForwardRefException):
-        get_hint_pep484_ref_names_relative(
+        get_hint_pep484749_ref_names(
             b'Beyond the realms of dream that fleeting shade;')

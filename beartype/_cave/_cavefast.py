@@ -1252,19 +1252,6 @@ specifications, and :pep:`646`-compliant type variable tuples).
 '''
 
 # ....................{ TYPES ~ hint : pep : 749           }....................
-# If either this submodule is currently being statically type-checked by a pure
-# static type-checker *OR* this interpreter targets at most Python <= 3.13 and
-# thus fails to support either PEPs 649 or 749...
-if TYPE_CHECKING or IS_PYTHON_AT_MOST_3_13:
-    # Import equivalent deprecated attributes from the standard "typing" module.
-    from typing import ForwardRef as _ForwardRef
-# Else, the active Python interpreter importing this submodule at runtime
-# targets Python >= 3.14 and thus supports both PEPs 649 and 749. In this case,
-# trivially import PEP 649- and 749-compliant attributes directly from the
-# standard "annotationlib" module first introduced by Python 3.14.
-else:
-    from annotationlib import ForwardRef as _ForwardRef
-
 # If either...
 if (
     # This submodule is currently being statically type-checked by a pure static
@@ -1298,13 +1285,28 @@ else:
         STRING = 4
 
 # ....................{ TYPES ~ hint : pep : (484|749)     }....................
+# If either this submodule is currently being statically type-checked by a pure
+# static type-checker *OR* this interpreter targets at most Python <= 3.13 and
+# thus fails to support either PEPs 649 or 749...
+if TYPE_CHECKING or IS_PYTHON_AT_MOST_3_13:
+    # Import equivalent deprecated attributes from the standard "typing" module.
+    from typing import ForwardRef as _ForwardRef
+# Else, the active Python interpreter importing this submodule at runtime
+# targets Python >= 3.14 and thus supports both PEPs 649 and 749. In this case,
+# trivially import PEP 649- and 749-compliant attributes directly from the
+# standard "annotationlib" module first introduced by Python 3.14.
+else:
+    from annotationlib import ForwardRef as _ForwardRef
+
+
 #FIXME: Globally replace *ALL* usage of the deprecated "typing.ForwardRef" type
 #with this substantially safer type, please. *sigh*
-HintPep484749RefPureType = _ForwardRef
+HintPep484749RefObjectType = _ForwardRef
 '''
-Type of all :pep:`484`- and :pep:`749`-compliant **pure-Python forward reference
-type hints** (i.e., object-oriented objects encapsulating references to other
-objects that typically have yet to be defined).
+Type of all :pep:`484`- and :pep:`749`-compliant **object-oriented forward
+reference type hints** (i.e., pure-Python objects encapsulating all metadata
+required to dynamically resolve at runtime references to referent target type
+hints that typically have yet to be defined in some lexical scope).
 
 If the active Python interpreter targets:
 
@@ -1314,7 +1316,7 @@ If the active Python interpreter targets:
 '''
 
 
-HintPep484749RefTypes: tuple[type, ...] = (str, HintPep484749RefPureType)
+HintPep484749RefTypes: tuple[type, ...] = (str, HintPep484749RefObjectType)
 '''
 Tuple union of the types of all :pep:`484`- and :pep:`749`-compliant **forward
 reference type hints** (i.e., objects encapsulating references to other objects
@@ -1325,7 +1327,7 @@ Specifically, this union contains:
 * :class:`str`, the type of all :pep:`484`-compliant C-based forward reference
   objects implicitly preserved by all :pep:`585`-compliant type hint factories
   when subscripted by a string.
-* :class:`.HintPep484749RefPureType`, the type of all :pep:`484`- and
+* :class:`.HintPep484749RefObjectType`, the type of all :pep:`484`- and
   :pep:`749`-compliant pure-Python forward reference objects implicitly created
   by all :mod:`typing` type hint factories when subscripted by a string.
 

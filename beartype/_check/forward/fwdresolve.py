@@ -30,13 +30,14 @@ from beartype._data.typing.datatypingport import Hint
 from beartype._util.func.utilfunctest import is_func_nested
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.text.utiltextansi import color_hint
-from beartype._util.text.utiltextlabel import label_callable
+from beartype._util.text.utiltextlabel import (
+    label_callable,
+    label_exception_traceback,
+)
 from beartype._util.utilobject import (
     get_object_basename_scoped,
     get_object_name,
 )
-from textwrap import indent
-from traceback import format_exc
 
 # ....................{ RESOLVERS ~ metadata               }....................
 #FIXME: Unit test us up, please.
@@ -506,32 +507,29 @@ def _resolve_hint_pep484_ref_str(
     try:
         hint_resolved = eval(hint, scope_forward)
         # print(f'Resolved stringified type hint {repr(hint)} to {repr(hint_resolved)}...')
-    # If doing so failed for *ANY* reason whatsoever...
+    # If doing so fails for *ANY* reason whatsoever...
     except Exception as exception:
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception class.')
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
-        # Human-readable traceback formatted from this lower-level exception,
-        # indented so as to improve readability when embedded below.
-        exception_traceback = indent(text=format_exc(), prefix='\t')
+        # Human-readable traceback formatted from this exception, indented to
+        # improve readability when embedded below.
+        exception_traceback = label_exception_traceback(exception)
 
         # Human-readable message to be raised.
         exception_message = (
             f'{exception_prefix}'
             f'PEP 484 stringified forward reference type hint '
             f'{color_hint(text=repr(hint), is_color=conf.is_color)} '
-            f'unresolvable, as attempting to dynamically resolve '
-            f'the target type hint referred to by '
-            f'this source forward reference raises:\n'
+            f'unresolvable to its target referent:\n'
             f'{exception_traceback}'
         )
 
         # If the beartype configuration associated with the decorated
         # callable enabled debugging, append debug-specific metadata to this
         # message.
-        # if True:
         if conf.is_debug:
             exception_message += (
                 f'\nComposite global and local scope enclosing this hint:\n\n'

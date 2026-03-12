@@ -25,7 +25,7 @@ from beartype.typing import Optional
 from beartype._conf.confmain import BeartypeConf
 from beartype._util.ast.utilastget import get_node_repr_indented
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_15
-from beartype._util.text.utiltextlabel import label_exception
+from beartype._util.text.utiltextlabel import label_exception_message
 from importlib import (  # type: ignore[attr-defined]
     _bootstrap_external,  # pyright: ignore
 )
@@ -545,7 +545,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
                 f'abstract syntax tree (AST):\n\n'
                 f'{get_node_repr_indented(module_ast_beartyped)}\n\n'
                 f'ast.compile() exception (when passed the above AST):\n\t'
-                f'{label_exception(exception)}'
+                f'{label_exception_message(exception)}'
             ) from exception
 
         # Return this code object.

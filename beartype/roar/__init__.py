@@ -42,6 +42,12 @@ raids native beehives for organic honey.
 from beartype.roar._roarexc import (
     # Exceptions.
     BeartypeException as BeartypeException,
+    BeartypeCallException as BeartypeCallException,
+    BeartypeCallUnavailableTypeException as BeartypeCallUnavailableTypeException,
+    BeartypeCallHintException as BeartypeCallHintException,
+    BeartypeCallHintForwardRefException as BeartypeCallHintForwardRefException,
+    BeartypeCallHintPep484ForwardRefStrException as BeartypeCallHintPep484ForwardRefStrException,
+    BeartypeCallHintPep749ForwardRefObjectException as BeartypeCallHintPep749ForwardRefObjectException,
     BeartypeCaveException as BeartypeCaveException,
     BeartypeCaveNoneTypeOrException as BeartypeCaveNoneTypeOrException,
     BeartypeCaveNoneTypeOrKeyException as BeartypeCaveNoneTypeOrKeyException,
@@ -103,10 +109,6 @@ from beartype.roar._roarexc import (
     BeartypeDecorHintRecursionException as BeartypeDecorHintRecursionException,
     BeartypeDecorParamException as BeartypeDecorParamException,
     BeartypeDecorParamNameException as BeartypeDecorParamNameException,
-    BeartypeCallException as BeartypeCallException,
-    BeartypeCallUnavailableTypeException as BeartypeCallUnavailableTypeException,
-    BeartypeCallHintException as BeartypeCallHintException,
-    BeartypeCallHintForwardRefException as BeartypeCallHintForwardRefException,
     BeartypeKindException as BeartypeKindException,
     BeartypeKindFrozenDictException as BeartypeKindFrozenDictException,
     BeartypeLibraryException as BeartypeLibraryException,
