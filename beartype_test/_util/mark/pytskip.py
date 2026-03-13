@@ -166,6 +166,26 @@ def skip_if_ci():
     return skip_if(is_ci(), reason='Incompatible with CI workflows.')
 
 # ....................{ SKIP ~ os                          }....................
+def skip_if_os_macos():
+    '''
+    Skip the decorated test or fixture if the active Python interpreter is
+    running under MacOS.
+
+    Returns
+    -------
+    pytest.skipif
+        Decorator skipping this text or fixture unless this interpreter is
+        running under MacOS *or* the identity decorator reducing to a noop
+        otherwise.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.os.utilostest import is_os_macos
+
+    # Skip this test if the current platform is MacOS.
+    return skip_if(is_os_macos(), reason='OS is MacOS.')
+
+
 def skip_if_os_windows():
     '''
     Skip the decorated test or fixture if the active Python interpreter is

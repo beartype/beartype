@@ -15,7 +15,10 @@ This submodule unit tests the public :mod:`beartype.bite.infer_hint` function.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_unless_package
+from beartype_test._util.mark.pytskip import (
+    skip_if_python_version_greater_than_or_equal_to,
+    skip_unless_package,
+)
 from collections.abc import Iterable
 
 # ....................{ TESTS                              }....................
@@ -308,6 +311,14 @@ def test_bite_infer_hint_numpy(
         assert infer_hint(obj) == hint
 
 
+#FIXME: Once the newest stable release of Pygments drop:
+#* *REQUIRE THAT MINIMUM VERSION OF PYGMENTS* in our "pyproject.toml", please.
+#* Excise "@skip_if_python_version_greater_than_or_equal_to('3.15.0')" below.
+# Note that this test currently fails under Python >= 3.15 with non-readable
+# exceptions originating from deep within the third-party "pygments" package.
+# Thankfully, this issue has already been resolved upstream. See also:
+#     https://github.com/pygments/pygments/issues/3039
+@skip_if_python_version_greater_than_or_equal_to('3.15.0')
 @skip_unless_package('pygments')
 def test_bite_infer_hint_pygments() -> None:
     '''

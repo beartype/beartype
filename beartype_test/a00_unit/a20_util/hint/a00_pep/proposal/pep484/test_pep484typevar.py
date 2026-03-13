@@ -38,15 +38,18 @@ def test_get_hint_pep484_typevar_bounded_constraints_or_none() -> None:
 
     # ....................{ PASS                           }....................
     # Assert this getter returns "None" for unbounded type variables.
-    assert get_hint_pep484_typevar_bounded_constraints_or_none(T) is None
+    assert get_hint_pep484_typevar_bounded_constraints_or_none(
+        hintable=None, hint=T) is None
 
     # Assert this getter reduces bounded type variables to their upper bound.
-    assert get_hint_pep484_typevar_bounded_constraints_or_none(T_int) is int
+    assert get_hint_pep484_typevar_bounded_constraints_or_none(
+        hintable=None, hint=T_int) is int
 
     # Union of all constraints parametrizing a constrained type variable,
     # reduced from that type variable.
-    typevar_constraints_union = get_hint_pep484_typevar_bounded_constraints_or_none(
-        T_str_or_bytes)
+    typevar_constraints_union = (
+        get_hint_pep484_typevar_bounded_constraints_or_none(
+            hintable=None, hint=T_str_or_bytes))
 
     # Assert this union contains all constraints parametrizing this variable.
     assert str   in typevar_constraints_union.__args__
@@ -56,4 +59,5 @@ def test_get_hint_pep484_typevar_bounded_constraints_or_none() -> None:
     # Assert this getter raises the expected exception when passed a non-type
     # variable.
     with raises(BeartypeDecorHintPep484Exception):
-        get_hint_pep484_typevar_bounded_constraints_or_none(str)
+        get_hint_pep484_typevar_bounded_constraints_or_none(
+            hintable=None, hint=str)

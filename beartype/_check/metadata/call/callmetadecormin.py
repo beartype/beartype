@@ -18,7 +18,7 @@ from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     LexicalScope,
-    Pep649HintableAnnotations,
+    Pep649749HintableAnnotations,
     TypeException,
     TypeStack,
 )
@@ -93,7 +93,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
     if TYPE_CHECKING:
         conf: BeartypeConf  # pyright: ignore
         func: Callable  # pyright: ignore
-        func_annotations: Pep649HintableAnnotations  # pyright: ignore
+        func_annotations: Pep649749HintableAnnotations  # pyright: ignore
         func_scope_forward: Optional[LexicalScope]  # pyright: ignore
 
     # ..................{ INITIALIZERS                       }..................
@@ -102,7 +102,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
         cls_stack: TypeStack,
         conf: BeartypeConf,
         func: Callable,
-        func_annotations: Pep649HintableAnnotations,
+        func_annotations: Pep649749HintableAnnotations,
         func_scope_forward: Optional[LexicalScope],
     ) -> None:
         '''

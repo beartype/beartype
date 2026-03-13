@@ -12,11 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Generic,
-    Optional,
-)
 from beartype._data.typing.datatypingport import Hint
+from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,
@@ -24,9 +21,14 @@ from beartype._check.metadata.hint.hintsane import (
 )
 from beartype._util.hint.pep.proposal.pep544 import is_hint_pep484_generic_io
 from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
+from typing import (
+    Generic,
+    Optional,
+)
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484585_generic_subbed(
+    call_meta: BeartypeCallMetaABC,
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
@@ -57,6 +59,10 @@ def reduce_hint_pep484585_generic_subbed(
 
     Parameters
     ----------
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     hint : Hint
         Subscripted generic to be reduced.
     hint_parent_sane : Optional[HintSane]
@@ -137,6 +143,7 @@ def reduce_hint_pep484585_generic_subbed(
     #   this subscripted generic.
     # print(f'[reduce_hint_pep484585_generic_subbed] Reducing subscripted generic {repr(hint)}...')
     hint_reduced = reduce_hint_pep484612646_subbed_typeargs_to_hints(
+        call_meta=call_meta,
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,

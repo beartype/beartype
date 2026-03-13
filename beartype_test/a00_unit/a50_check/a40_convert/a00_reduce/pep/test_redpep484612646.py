@@ -246,9 +246,10 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
             # Since this factory only uses this hint to construct readable
             # exception messages, the value of this hint is irrelevant for
             # testing purposes.
-            None,
-            hints_typearg,
-            hints_child,
+            hintable=None,
+            hint=None,
+            hints_typearg=hints_typearg,
+            hints_child=hints_child,
         )
 
         # Assert that this factory produced the expected output dictionary.
@@ -261,7 +262,11 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         # passed these input tuples.
         with raises(exception_type):
             _make_hint_pep484612646_typearg_to_hint(
-                None, hints_typearg, hints_child)
+                hintable=None,
+                hint=None,
+                hints_typearg=hints_typearg,
+                hints_child=hints_child,
+            )
 
 # ....................{ TESTS ~ reduce                     }....................
 def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
@@ -277,6 +282,8 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     from beartype.typing import Generic
     from beartype._check.convert._reduce._pep.redpep484612646 import (
         reduce_hint_pep484612646_subbed_typeargs_to_hints)
+    from beartype._check.metadata.call.callmetaexternal import (
+        BEARTYPE_CALL_EXTERNAL_META)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from beartype_test.a00_unit.data.pep.data_pep484 import (
         S,
@@ -288,7 +295,7 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     # Assert that this reducer reduces the PEP 484-compliant "typing.Generic"
     # superclass subscripted by only type variables to simply that superclass.
     assert reduce_hint_pep484612646_subbed_typeargs_to_hints(
-        Generic[S, T]) is Generic
+        call_meta=BEARTYPE_CALL_EXTERNAL_META, hint=Generic[S, T]) is Generic
 
     # ....................{ PEP 695                        }....................
     # If the active Python interpreter targets Python >= 3.12 and thus supports
@@ -314,4 +321,6 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     # is *NOT* a PEP 484- or 646-compliant type parameter.
     with raises(BeartypeDecorHintPep484612646Exception):
         reduce_hint_pep484612646_subbed_typeargs_to_hints(
-            'In thy devastating omnipotence,')
+            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            hint='In thy devastating omnipotence,',
+        )

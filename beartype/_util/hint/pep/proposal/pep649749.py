@@ -21,8 +21,8 @@ from beartype.roar import BeartypeDecorHintPep649Exception
 from beartype.typing import Optional
 from beartype._cave._cavefast import HintPep749RefFormat  # type: ignore[attr-defined]
 from beartype._data.typing.datatyping import (
-    Pep649Hintable,
-    Pep649HintableAnnotations,
+    Pep649749Hintable,
+    Pep649749HintableAnnotations,
     TypeException,
 )
 # from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
@@ -33,13 +33,13 @@ from beartype._util.text.utiltextlabel import label_object
 #FIXME: Unit test us up, please.
 def get_pep649_hintable_annotations(
     # Mandatory parameters.
-    hintable: Pep649Hintable,
+    hintable: Pep649749Hintable,
 
     # Optional parameters.
     hint_format: HintPep749RefFormat = HintPep749RefFormat.FORWARDREF,
     exception_cls: TypeException = BeartypeDecorHintPep649Exception,
     exception_prefix: str = '',
-) -> Pep649HintableAnnotations:
+) -> Pep649749HintableAnnotations:
     '''
     **Immutable memoized annotations** (i.e., :class:`.FrozenDict` instance
     encapsulating the possibly empty ``__annotations__`` dunder dictionary
@@ -60,7 +60,7 @@ def get_pep649_hintable_annotations(
 
     Parameters
     ----------
-    hintable : Pep649Hintable
+    hintable : Pep649749Hintable
         Hintable to be inspected.
     hint_format : HintPep749RefFormat, default: HintPep749RefFormat.FORWARDREF
         HintPep749RefFormat of annotated hints to be returned. Defaults to
@@ -99,7 +99,7 @@ def get_pep649_hintable_annotations(
 
     Returns
     -------
-    Pep649HintableAnnotations
+    Pep649749HintableAnnotations
         ``__annotations__`` dunder dictionary set on this hintable.
 
     Raises
@@ -165,13 +165,13 @@ if IS_PYTHON_AT_LEAST_3_14:
     #FIXME: Unit test us up, please.
     def get_pep649_hintable_annotations_or_none(  # pyright: ignore
         # Mandatory parameters.
-        hintable: Pep649Hintable,
+        hintable: Pep649749Hintable,
 
         # Optional parameters.
         hint_format: HintPep749RefFormat = HintPep749RefFormat.FORWARDREF,
         exception_cls: TypeException = BeartypeDecorHintPep649Exception,
         exception_prefix: str = '',
-    ) -> Optional[Pep649HintableAnnotations]:
+    ) -> Optional[Pep649749HintableAnnotations]:
 
         # ....................{ PEP 649                    }....................
         # If the caller requested the default "FORWARDREF" format...
@@ -311,8 +311,8 @@ if IS_PYTHON_AT_LEAST_3_14:
     #FIXME: Unit test us up, please.
     def set_pep649_hintable_annotations(
         # Mandatory parameters.
-        hintable: Pep649Hintable,
-        annotations: Pep649HintableAnnotations,
+        hintable: Pep649749Hintable,
+        annotations: Pep649749HintableAnnotations,
 
         # Optional parameters.
         exception_cls: TypeException = BeartypeDecorHintPep649Exception,
@@ -397,7 +397,8 @@ if IS_PYTHON_AT_LEAST_3_14:
 
             # ....................{ CLOSURE                }....................
             def __annotate_beartype__(
-                hint_format: HintPep749RefFormat) -> Pep649HintableAnnotations:
+                hint_format: HintPep749RefFormat) -> (
+                    Pep649749HintableAnnotations):
                 f'''
                 Hintable {repr(hintable)} :pep:`649`- and :pep:`749`-compliant
                 ``__annotate__()`` dunder method, modifying the user-defined
@@ -424,7 +425,7 @@ if IS_PYTHON_AT_LEAST_3_14:
 
                 Returns
                 -------
-                Pep649HintableAnnotations
+                Pep649749HintableAnnotations
                     ``__annotations__`` dunder dictionary set on this hintable.
                 '''
 
@@ -451,9 +452,10 @@ if IS_PYTHON_AT_LEAST_3_14:
                 # sporadic false negatives or positives. We know. We were there.
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-                #FIXME: [SPEED] Globalize access to frequently accessed "HintPep749RefFormat"
-                #members and reference those globals instead below. This method
-                #*COULD* be frequently called enough to warrant micro-optimization.
+                #FIXME: [SPEED] Globalize access to frequently accessed
+                #"HintPep749RefFormat" members and reference those globals
+                #instead below. This method *COULD* be frequently called enough
+                #to warrant micro-optimization.
 
                 # If the caller requested the default "FORWARDREF" format,
                 # trivially return the "__annotations__" dunder dictionary
@@ -766,11 +768,11 @@ if IS_PYTHON_AT_LEAST_3_14:
 
     # ....................{ PRIVATE ~ getters              }....................
     def _get_pep649_hintable_annotations_or_none_uncached(
-        hintable: Pep649Hintable,
+        hintable: Pep649749Hintable,
         hint_format: HintPep749RefFormat,
         exception_cls: TypeException,
         exception_prefix: str,
-    ) -> Optional[Pep649HintableAnnotations]:
+    ) -> Optional[Pep649749HintableAnnotations]:
         '''
         **Immutable unmemoized annotations** (i.e., :class:`.FrozenDict`
         instance encapsulating the possibly empty ``__annotations__`` dunder
@@ -790,7 +792,7 @@ if IS_PYTHON_AT_LEAST_3_14:
 
         Parameters
         ----------
-        hintable : Pep649Hintable
+        hintable : Pep649749Hintable
             Hintable to be inspected.
         hint_format : HintPep749RefFormat
             HintPep749RefFormat of annotated hints to be returned.
@@ -801,7 +803,7 @@ if IS_PYTHON_AT_LEAST_3_14:
 
         Returns
         -------
-        Optional[Pep649HintableAnnotations]
+        Optional[Pep649749HintableAnnotations]
             Either:
 
             * If this hintable is actually a hintable, the ``__annotations__``
@@ -822,7 +824,7 @@ if IS_PYTHON_AT_LEAST_3_14:
         # ....................{ LOCALS                     }....................
         # Annotations dictionary to be returned if this hintable is annotated
         # *OR* "None" otherwise (i.e., if this hintable is unannotated).
-        hintable_annotations: Optional[Pep649HintableAnnotations] = None
+        hintable_annotations: Optional[Pep649749HintableAnnotations] = None
 
         # ....................{ FORMAT ~ forwardref        }....................
         # If this format requests that unquoted forward references be wrapped by
@@ -1030,8 +1032,8 @@ if IS_PYTHON_AT_LEAST_3_14:
 else:
     # ....................{ GETTERS                        }....................
     def get_pep649_hintable_annotations_or_none(  # type: ignore[misc]
-        hintable: Pep649Hintable, **kwargs) -> (
-        Optional[Pep649HintableAnnotations]):
+        hintable: Pep649749Hintable, **kwargs) -> (
+        Optional[Pep649749HintableAnnotations]):
 
         # Return either the PEP 484-compliant "__annotations__" dunder attribute
         # if the passed hintable defines this attribute *OR* "None" otherwise
@@ -1049,8 +1051,8 @@ else:
     # ....................{ SETTERS                        }....................
     def set_pep649_hintable_annotations(
         # Mandatory parameters.
-        hintable: Pep649Hintable,
-        annotations: Pep649HintableAnnotations,
+        hintable: Pep649749Hintable,
+        annotations: Pep649749HintableAnnotations,
 
         # Optional parameters.
         exception_cls: TypeException = BeartypeDecorHintPep649Exception,
@@ -1136,7 +1138,7 @@ get_pep649_hintable_annotations_or_none.__doc__ = (
 
     Parameters
     ----------
-    hintable : Pep649Hintable
+    hintable : Pep649749Hintable
         Hintable to be inspected.
     hint_format : HintPep749RefFormat, default: HintPep749RefFormat.FORWARDREF
         HintPep749RefFormat of annotated hints to be returned. Defaults to
@@ -1154,7 +1156,7 @@ get_pep649_hintable_annotations_or_none.__doc__ = (
 
     Returns
     -------
-    Optional[Pep649HintableAnnotations]
+    Optional[Pep649749HintableAnnotations]
         Either:
 
         * If this hintable is actually a hintable, the ``__annotations__``
@@ -1239,9 +1241,9 @@ set_pep649_hintable_annotations.__doc__ = (
 
     Parameters
     ----------
-    hintable : Pep649Hintable
+    hintable : Pep649749Hintable
         Hintable to be inspected.
-    annotations : Pep649HintableAnnotations
+    annotations : Pep649749HintableAnnotations
         ``__annotations__`` dunder dictionary to set on this hintable.
     exception_cls : TypeException, default: BeartypeDecorHintPep649Exception
         Type of exception to be raised in the event of a fatal error. Defaults

@@ -216,15 +216,18 @@ def test_door_typehint_compare_fail() -> None:
     )
     from pytest import raises
 
+    # ....................{ LOCALS                         }....................
     a = TypeHint(Callable[[], list])
     b = TypeHint(Callable[..., Sequence[Any]])
 
+    # ....................{ PASS                           }....................
     assert a <= b
     assert a < b
     assert a != b
     assert not a > b
     assert not a >= b
 
+    # ....................{ FAIL                           }....................
     with raises(TypeError, match='not supported between'):
         a <= 1
     with raises(TypeError, match='not supported between'):
@@ -436,7 +439,11 @@ def test_door_typehint_is_ignorable(hints_pep_meta, hints_ignorable) -> None:
         if isinstance(hint, TypeVar):
             # Type hint synthesized from all bounded constraints parametrizing
             # this type variable if any *OR* "None" otherwise.
-            hint_typevar_bound = get_hint_pep484_typevar_bounded_constraints_or_none(hint)
+            hint_typevar_bound = (
+                get_hint_pep484_typevar_bounded_constraints_or_none(
+                    hintable=None,  # <-- silence, beartype API! silence!
+                    hint=hint,
+                ))
 
             # This type hint is ignorable only if either...
             hint_is_ignorable = (

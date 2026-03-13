@@ -16,6 +16,7 @@ from beartype.roar import BeartypeDecorHintPep696Exception
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import (
     Pep484612646TypeArgPacked,
+    Pep649749Hintable,
     TypeException,
 )
 from beartype._data.typing.datatypingport import (
@@ -23,11 +24,13 @@ from beartype._data.typing.datatypingport import (
     HintOrSentinel,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_13
+from typing import Optional
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please. *sigh*
 def get_hint_pep484612646_typearg_packed_default_or_sentinel(
     # Mandatory parameters.
+    hintable: Optional[Pep649749Hintable],
     hint: Pep484612646TypeArgPacked,
 
     # Optional parameters.
@@ -38,8 +41,8 @@ def get_hint_pep484612646_typearg_packed_default_or_sentinel(
     :pep:`696`-compliant **type parameter default** (i.e., child hint that may
     be an unquoted forward reference referring to a currently undefined type,
     initially passed as the value of the optional ``default`` parameter on the
-    construction of the passed type parameter) defined on the passed **type
-    parameter** (i.e., :pep:`484`-compliant type variable or
+    construction of the passed type parameter) defined on the passed **packed
+    type parameter** (i.e., :pep:`484`-compliant type variable or
     :pep:`646`-compliant type variable tuple) if any *or* the sentinel
     placeholder otherwise (i.e., if no default was defined on this type
     parameter).
@@ -51,11 +54,22 @@ def get_hint_pep484612646_typearg_packed_default_or_sentinel(
     is (of course) a valid :pep:`484`-compliant type hint.
 
     This getter is intentionally *not* memoized (e.g., by the
-    ``@callable_cached`` decorator), as the implementation trivially reduces to
-    a one-liner.
+    ``callable_cached`` decorator). Why? Because the ``hintable`` parameter is
+    typically a module, type, or callable contextually depending on lexical
+    scope and thus effectively prohibiting memoization.
 
     Parameters
     ----------
+    hintable : Optional[Pep649749Hintable]
+        **Hintable** (i.e., pure-Python module, type, or callable annotated by
+        this hint) to be passed as the optional ``owner`` parameter to the
+        low-level :func:`annotationlib.call_evaluate_function` function
+        underlying this high-level getter if any *or* :data:`None` otherwise
+        (e.g., if this hint was passed directly to either the
+        :func:`beartype.door.is_bearable` or
+        :func:`beartype.door.die_if_unbearable` functions and thus originates
+        from no hintable). A non-:data:`None` hintable is required to resolve
+        unquoted forward references transitively subscripting this hint.
     hint : Pep484612646TypeArgPacked
         Type parameter to be inspected.
     exception_cls : TypeException, default: BeartypeDecorHintPep696Exception
@@ -106,6 +120,7 @@ def get_hint_pep484612646_typearg_packed_default_or_sentinel(
         # Child hint to which this type parameter defaults if this type
         # parameter has a default *OR* the sentinel placeholder otherwise.
         hint_default = get_hint_pep749_evaluator_optional(
+            hintable=hintable,
             hint=hint,  # pyright: ignore
             evaluator_name_dynamic='evaluate_default',
             evaluator_name_static='__default__',

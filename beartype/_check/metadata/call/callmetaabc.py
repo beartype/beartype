@@ -24,7 +24,7 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
-    Pep649HintableAnnotations,
+    Pep649749HintableAnnotations,
     TypeException,
     TypeStack,
 )
@@ -102,7 +102,7 @@ class BeartypeCallMetaABC(object, metaclass=ABCMeta):
     if TYPE_CHECKING:
         cls_stack: TypeStack
         func: Optional[Callable]
-        func_annotations: Optional[Pep649HintableAnnotations]
+        func_annotations: Optional[Pep649749HintableAnnotations]
 
     # Coerce instances of this class to be unhashable, preventing spurious
     # issues when accidentally passing these instances to memoized callables by
@@ -126,7 +126,7 @@ class BeartypeCallMetaABC(object, metaclass=ABCMeta):
         # Optional parameters.
         cls_stack: TypeStack = None,
         func: Optional[Callable] = None,
-        func_annotations: Optional[Pep649HintableAnnotations] = None,
+        func_annotations: Optional[Pep649749HintableAnnotations] = None,
     ) -> None:
         '''
         Initialize this metadata with the passed parameters.

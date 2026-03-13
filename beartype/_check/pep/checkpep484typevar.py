@@ -15,11 +15,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep484TypeVarViolation
 from beartype.typing import TypeVar
 from beartype._data.typing.datatyping import (
+    Pep649749Hintable,
     TypeException,
 )
-from beartype._data.typing.datatypingport import (
-    Hint,
-)
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.cls.pep.clspep3119 import is_object_issubclassable
 from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep_type
 from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
@@ -27,6 +26,7 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     # is_hint_pep484_typevar,
 )
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
+from typing import Optional
 
 # ....................{ TODO                               }....................
 #FIXME: Generalize the die_if_hint_pep484_typevar_bound_unbearable()
@@ -76,13 +76,14 @@ from beartype._util.hint.pep.utilpeptest import is_hint_pep
 #FIXME: Unit test us up, please. *sigh*
 def die_if_hint_pep484_typevar_bound_unbearable(
     # Mandatory parameters.
+    hintable: Optional[Pep649749Hintable],
     hint: Hint,
     typevar: TypeVar,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484TypeVarViolation,
     exception_prefix: str = '',
-):
+) -> None:
     '''
     Raise an exception unless the passed type hint satisfies the bounds and/or
     constraints of the passed :pep:`484`-compliant **type variable** (i.e.,
@@ -95,9 +96,19 @@ def die_if_hint_pep484_typevar_bound_unbearable(
 
     Parameters
     ----------
+    hintable : Optional[Pep649749Hintable]
+        **Hintable** (i.e., pure-Python module, type, or callable annotated by
+        this hint) to be passed as the optional ``owner`` parameter to the
+        low-level :func:`annotationlib.call_evaluate_function` function
+        underlying this high-level getter if any *or* :data:`None` otherwise
+        (e.g., if this hint was passed directly to either the
+        :func:`beartype.door.is_bearable` or
+        :func:`beartype.door.die_if_unbearable` functions and thus originates
+        from no hintable). A non-:data:`None` hintable is required to resolve
+        unquoted forward references transitively subscripting this hint.
     hint : Hint
         Type hint to be validated.
-    hint : TypeVar
+    typevar : TypeVar
         Type variable to validate this type hint against.
     exception_cls : Type[Exception], default: BeartypeDecorHintPep484TypeVarViolation
         Type of exception to be raised in the event of a fatal error. Defaults
@@ -125,11 +136,11 @@ def die_if_hint_pep484_typevar_bound_unbearable(
     # PEP-compliant type hint synthesized from all bounded constraints
     # parametrizing this type variable if any *OR* "None" otherwise (i.e., if
     # this type variable was neither bounded nor constrained).
-    #
-    # Note that this call is intentionally passed positional rather positional
-    # keywords due to memoization.
     typevar_bound = get_hint_pep484_typevar_bounded_constraints_or_none(
-        typevar, exception_prefix)
+        hintable=hintable,
+        hint=typevar,
+        exception_prefix=exception_prefix,
+    )
     # print(f'[{typearg}] is_object_issubclassable({typevar_bound})? ...')
     # print(f'{is_object_issubclassable(typevar_bound, False)}')
 

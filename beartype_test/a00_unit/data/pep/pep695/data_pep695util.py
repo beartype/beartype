@@ -302,6 +302,8 @@ def unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695() -> 
     from beartype.roar import BeartypeDecorHintPep484612646Exception
     from beartype._check.convert._reduce._pep.redpep484612646 import (
         reduce_hint_pep484612646_subbed_typeargs_to_hints)
+    from beartype._check.metadata.call.callmetaexternal import (
+        BEARTYPE_CALL_EXTERNAL_META)
     from beartype._check.metadata.hint.hintsane import HintSane
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed
     from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
@@ -331,14 +333,18 @@ def unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695() -> 
     # these aliases and thus accessible *ONLY* by directly accessing the
     # "__parameters__" dunder attribute on these aliases. It is what it is.
     hint_sane = reduce_hint_pep484612646_subbed_typeargs_to_hints(
-        irresistible_career[int])
+        call_meta=BEARTYPE_CALL_EXTERNAL_META,
+        hint=irresistible_career[int],
+    )
     assert hint_sane == HintSane(
         hint=irresistible_career,
         typearg_to_hint=FrozenDict({irresistible_career_typevars[0]: int,}),
     )
 
     hint_sane = reduce_hint_pep484612646_subbed_typeargs_to_hints(
-        in_thy[bool, complex])
+        call_meta=BEARTYPE_CALL_EXTERNAL_META,
+        hint=in_thy[bool, complex],
+    )
     assert hint_sane == HintSane(
         hint=in_thy,
         typearg_to_hint=FrozenDict({
@@ -352,14 +358,22 @@ def unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695() -> 
     # that is *NOT* a PEP 695-compliant subscripted type alias.
     with raises(BeartypeDecorHintPep484612646Exception):
         reduce_hint_pep484612646_subbed_typeargs_to_hints(
-            'In thy devastating omnipotence,')
+            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            hint='In thy devastating omnipotence,'
+        )
 
     # Assert this getter raises the expected exception when passed a PEP
     # 695-compliant unsubscripted type alias.
     with raises(BeartypeDecorHintPep484612646Exception):
-        reduce_hint_pep484612646_subbed_typeargs_to_hints(guiding_its)
+        reduce_hint_pep484612646_subbed_typeargs_to_hints(
+            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            hint=guiding_its,
+        )
     with raises(BeartypeDecorHintPep484612646Exception):
-        reduce_hint_pep484612646_subbed_typeargs_to_hints(irresistible_career)
+        reduce_hint_pep484612646_subbed_typeargs_to_hints(
+            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            hint=irresistible_career,
+        )
 
 # ....................{ TESTS ~ decorator                  }....................
 #FIXME: Actually call this unit test!

@@ -103,10 +103,12 @@ def test_get_hint_pep749_subhint() -> None:
     # passed static attribute name (when this subhint contains *NO* unquoted
     # forward references and is *NOT* the null).
     assert get_hint_pep749_evaluator_mandatory(
+        hintable=None,  # <-- silence, beartype API! silence!
         hint=but_horrors,
         evaluator_name_dynamic='or_prophesyings',
         evaluator_name_static='of_his_passing_bell',
     ) is get_hint_pep749_evaluator_optional(
+        hintable=None,  # <-- silence, beartype API! silence!
         hint=but_horrors,
         evaluator_name_dynamic='or_prophesyings',
         evaluator_name_static='of_his_passing_bell',
@@ -117,6 +119,7 @@ def test_get_hint_pep749_subhint() -> None:
     # (when this subhint contains *NO* unquoted forward references but is the
     # null).
     assert get_hint_pep749_evaluator_optional(
+        hintable=None,  # <-- silence, beartype API! silence!
         hint=but_horrors,
         evaluator_name_dynamic='or_prophesyings',
         evaluator_name_static='oft_made_hyperion_ache',
@@ -128,6 +131,7 @@ def test_get_hint_pep749_subhint() -> None:
     # defines *NO* subhint with the passed static or dynamic attribute names.
     with raises(BeartypeDecorHintPep749Exception):
         get_hint_pep749_evaluator_mandatory(
+            hintable=None,  # <-- silence, beartype API! silence!
             hint="But horrors, portion'd to a giant nerve,",
             evaluator_name_dynamic='or_prophesyings',
             evaluator_name_static='of_his_passing_bell',
@@ -141,10 +145,12 @@ def test_get_hint_pep749_subhint() -> None:
         # passed dynamic attribute name (when this subhint contains one or more
         # unquoted forward references and is *NOT* the null).
         assert get_hint_pep749_evaluator_mandatory(
+            hintable=None,  # <-- silence, beartype API! silence!
             hint=but_horrors,
             evaluator_name_dynamic='or_prophesyings',
             evaluator_name_static='portioned_to_a_giant_nerve',
         ) is get_hint_pep749_evaluator_optional(
+            hintable=None,  # <-- silence, beartype API! silence!
             hint=but_horrors,
             evaluator_name_dynamic='or_prophesyings',
             evaluator_name_static='portioned_to_a_giant_nerve',
@@ -156,6 +162,7 @@ def test_get_hint_pep749_subhint() -> None:
         # contains one or more unquoted forward references and is *NOT* the
         # null) under the string format.
         assert get_hint_pep749_evaluator_optional(
+            hintable=None,  # <-- silence, beartype API! silence!
             hint=but_horrors,
             evaluator_name_dynamic='or_prophesyings',
             evaluator_name_static='portioned_to_a_giant_nerve',
@@ -168,6 +175,7 @@ def test_get_hint_pep749_subhint() -> None:
         # the value format.
         with raises(NameError):
             assert get_hint_pep749_evaluator_optional(
+                hintable=None,  # <-- silence, beartype API! silence!
                 hint=but_horrors,
                 evaluator_name_dynamic='or_prophesyings',
                 evaluator_name_static='portioned_to_a_giant_nerve',

@@ -51,14 +51,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484612646Exception
-from beartype.typing import (
-    Optional,
-    # TypeVar,
-)
 from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
+from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HINT_SANE_RECURSIVE,
@@ -76,6 +73,7 @@ from beartype._data.hint.sign.datahintsigns import (
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import (
     Pep484612646TypeArgUnpacked,
+    Pep649749Hintable,
     TuplePep484612646TypeArgsUnpacked,
 )
 from beartype._data.typing.datatypingport import (
@@ -83,7 +81,6 @@ from beartype._data.typing.datatypingport import (
     Pep484612646TypeArgUnpackedToHint,
     TupleHints,
 )
-from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     get_hint_pep484_typevar_bounded_constraints_or_none,
@@ -105,9 +102,11 @@ from beartype._util.hint.pep.utilpepget import (
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+from typing import Optional
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484612646_typearg(
+    call_meta: BeartypeCallMetaABC,
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
@@ -124,6 +123,10 @@ def reduce_hint_pep484612646_typearg(
 
     Parameters
     ----------
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     hint : Hint
         Type parameter to be reduced.
     hint_parent_sane : Optional[HintSane]
@@ -296,7 +299,10 @@ def reduce_hint_pep484612646_typearg(
         # *OR* the sentinel placeholder otherwise (i.e., if this type parameter
         # has *NO* default).
         hint_default = get_hint_pep484612646_typearg_packed_default_or_sentinel(
-            hint=hint_packed, exception_prefix=exception_prefix)
+            hintable=call_meta.func,
+            hint=hint_packed,
+            exception_prefix=exception_prefix,
+        )
 
         # If this type parameter has a default, reduce this type parameter to
         # this default.
@@ -317,10 +323,11 @@ def reduce_hint_pep484612646_typearg(
         # PEP-compliant hint synthesized from all bounded constraints
         # parametrizing this type parameter if any *OR* "None" otherwise (i.e.,
         # if this type parameter is both unbounded *AND* unconstrained).
-        #
-        # Note this call is passed positional parameters due to memoization.
         hint_reduced = get_hint_pep484_typevar_bounded_constraints_or_none(
-            hint_reduced, exception_prefix)  # pyright: ignore
+            hintable=call_meta.func,
+            hint=hint_reduced,  # pyright: ignore
+            exception_prefix=exception_prefix,
+        )
 
         # If this type parameter is both unbounded *AND* unconstrained, this
         # type parameter is currently *NOT* type-checkable and is thus
@@ -390,6 +397,7 @@ def reduce_hint_pep484612646_typearg(
 #with the "Caveats" in the docstring below, please. *megasigh*
 def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     # Mandatory parameters.
+    call_meta: BeartypeCallMetaABC,
     hint: Hint,
 
     # Optional parameters.
@@ -457,6 +465,10 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
 
     Parameters
     ----------
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     hint : Hint
         Subscripted hint to be inspected.
     hint_parent_sane : Optional[HintSane]
@@ -592,10 +604,12 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     try:
         # Type parameter lookup table mapping from each of these type parameters
         # to each of these corresponding child hints.
-        #
-        # Note that we pass parameters positionally due to memoization.
         typearg_to_hint = _make_hint_pep484612646_typearg_to_hint(
-            hint, hints_typearg, hints_child)
+            hintable=call_meta.func,
+            hint=hint,
+            hints_typearg=hints_typearg,
+            hints_child=hints_child,
+        )
     # print(f'Mapped hint {hint} to type parameter lookup table {typearg_to_hint}!')
     # If doing so raises *ANY* exception, reraise this exception with each
     # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by
@@ -697,6 +711,7 @@ semantics of this recursive data structure.
 
 # ....................{ PRIVATE ~ raisers                  }....................
 def _die_unless_hint_pep484_typevar_bound_bearable(
+    hintable: Optional[Pep649749Hintable],
     hint_child: Hint,
     hint_typearg: Pep484612646TypeArgUnpacked,
     hint_typearg_sign: Optional[HintSign],
@@ -711,6 +726,16 @@ def _die_unless_hint_pep484_typevar_bound_bearable(
 
     Parameters
     ----------
+    hintable : Optional[Pep649749Hintable]
+        **Hintable** (i.e., pure-Python module, type, or callable annotated by
+        this hint) to be passed as the optional ``owner`` parameter to the
+        low-level :func:`annotationlib.call_evaluate_function` function
+        underlying this high-level getter if any *or* :data:`None` otherwise
+        (e.g., if this hint was passed directly to either the
+        :func:`beartype.door.is_bearable` or
+        :func:`beartype.door.die_if_unbearable` functions and thus originates
+        from no hintable). A non-:data:`None` hintable is required to resolve
+        unquoted forward references transitively subscripting this hint.
     hint_child : Hint
         Child hint to be inspected.
     hint_typearg : Pep484612646TypeArgUnpacked
@@ -732,6 +757,7 @@ def _die_unless_hint_pep484_typevar_bound_bearable(
         # If this child hint violates this type variable's bounds and/or
         # constraints, raise an exception.
         die_if_hint_pep484_typevar_bound_unbearable(
+            hintable=hintable,
             hint=hint_child,
             typevar=hint_typearg,  # type: ignore[arg-type]
             exception_prefix=EXCEPTION_PLACEHOLDER,
@@ -743,8 +769,8 @@ def _die_unless_hint_pep484_typevar_bound_bearable(
     #
     # Note that this should *NEVER* occur. Python itself syntactically
     # guarantees *ALL* child hints parametrizing a PEP-compliant subscripted
-    # hint to be unpacked type parameters. Nonetheless, the caller is under
-    # no such constraints. To guard against dev bitrot, we validate this.
+    # hint to be unpacked type parameters. Nonetheless, the caller is under no
+    # such constraints. To guard against dev bitrot, we validate this.
     else:
         die_unless_hint_pep484612646_typearg_unpacked(
             hint=hint_typearg, exception_prefix=EXCEPTION_PLACEHOLDER)  # pyright: ignore
@@ -752,8 +778,8 @@ def _die_unless_hint_pep484_typevar_bound_bearable(
 # ....................{ PRIVATE ~ factories                }....................
 #FIXME: Unit test that this reducer reduces PEP 646-compliant unpacked type
 #variable tuples, please. *sigh*
-@callable_cached
 def _make_hint_pep484612646_typearg_to_hint(
+    hintable : Optional[Pep649749Hintable],
     hint: Hint,
     hints_typearg: TuplePep484612646TypeArgsUnpacked,
     hints_child: TupleHints,
@@ -764,13 +790,27 @@ def _make_hint_pep484612646_typearg_to_hint(
     variables or :pep:`646`-compliant type variable tuples) to the associated
     passed type hints as key-value pairs of this table.
 
-    This getter is memoized for efficiency. Notably, this getter creates and
-    returns a dictionary mapping each type parameter in the passed tuple of type
-    parameters to the associated type hint in the passed tuple of type hints
-    with the same 0-based tuple index as that type parameter.
+    This factory is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator). Why? Because the ``hintable`` parameter is
+    typically a module, type, or callable contextually depending on lexical
+    scope and thus effectively prohibiting memoization. Nonetheless, note that
+    this factory is expensive in both time and space. Notably, this factory
+    creates and returns a dictionary mapping each type parameter in the passed
+    tuple of type parameters to the associated type hint in the passed tuple of
+    type hints with the same 0-based tuple index as that type parameter.
 
     Parameters
     ----------
+    hintable : Optional[Pep649749Hintable]
+        **Hintable** (i.e., pure-Python module, type, or callable annotated by
+        this hint) to be passed as the optional ``owner`` parameter to the
+        low-level :func:`annotationlib.call_evaluate_function` function
+        underlying this high-level getter if any *or* :data:`None` otherwise
+        (e.g., if this hint was passed directly to either the
+        :func:`beartype.door.is_bearable` or
+        :func:`beartype.door.die_if_unbearable` functions and thus originates
+        from no hintable). A non-:data:`None` hintable is required to resolve
+        unquoted forward references transitively subscripting this hint.
     hint: Hint
         Parent hint presumably both subscripted by these child hints. This
         parent hint is currently only used to generate human-readable exception
@@ -975,6 +1015,7 @@ def _make_hint_pep484612646_typearg_to_hint(
         #   this child hint violates this type variable's bounded constraints.
         # * This type parameter is *NOT* a PEP 484-compliant type variable.
         _die_unless_hint_pep484_typevar_bound_bearable(
+            hintable=hintable,
             hint_child=hint_child,
             hint_typearg=hint_typearg,
             hint_typearg_sign=hint_typearg_sign,
@@ -1112,6 +1153,7 @@ def _make_hint_pep484612646_typearg_to_hint(
             #   this child hint violates this type variable's bounds.
             # * This type parameter is *NOT* a PEP 484-compliant type variable.
             _die_unless_hint_pep484_typevar_bound_bearable(
+                hintable=hintable,
                 hint_child=hint_child,
                 hint_typearg=hint_typearg,
                 hint_typearg_sign=hint_typearg_sign,

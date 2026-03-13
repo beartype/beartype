@@ -863,23 +863,24 @@ See Also
     Further details.
 '''
 
-# ....................{ PEP ~ 649                          }....................
-# Objects defining PEP 649-compliant __annotate__() dunder methods are either...
-Pep649Hintable = type | Callable | ModuleType
+# ....................{ PEP ~ (649|749)                    }....................
+# Objects defining PEP 649- and 749-compliant __annotate__() dunder methods are
+# either...
+Pep649749Hintable = type | Callable | ModuleType
 '''
-:pep:`649`-compliant type hint matching any **hintable** (i.e., ideally
-pure-Python object defining the ``__annotations__`` dunder attribute as well as
-the :pep:`649`-compliant ``__annotate__`` dunder method if the active Python
-interpreter targets Python >= 3.14).
+:pep:`649`- and :pep:`749`-compliant type hint matching any **hintable** (i.e.,
+ideally pure-Python object defining the ``__annotations__`` dunder attribute as
+well as the :pep:`649`-compliant ``__annotate__`` dunder method if the active
+Python interpreter targets Python >= 3.14).
 '''
 
 
-Pep649HintableAnnotations = DictStrToAny
+Pep649749HintableAnnotations = DictStrToAny
 '''
-:pep:`649`-compliant type hint matching any **hintable annotations** (i.e.,
-dictionary mapping from the name of each annotated parameter or return of a
-callable *or* annotated variable of a class or module to the type hint
-annotating that parameter, return, or variable).
+:pep:`649`- and :pep:`749`-compliant type hint matching any **hintable
+annotations** (i.e., dictionary mapping from the name of each annotated
+parameter or return of a callable *or* annotated variable of a class or module
+to the type hint annotating that parameter, return, or variable).
 '''
 
 # ....................{ PEP ~ 695                          }....................
