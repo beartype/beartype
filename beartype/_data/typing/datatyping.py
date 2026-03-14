@@ -230,6 +230,18 @@ of the :func:`beartype.beartype` decorator, including calls to that decorator
 in both configuration and decoration modes.
 '''
 
+# ....................{ BEARTYPE ~ forwardref              }....................
+#FIXME: mypy used to type-check this properly. Pyright never did. But even mypy
+#1.19.0 no longer accepts this. Weird stuff. Oh, well... who cares, huh?
+BeartypeForwardRef = type[
+    'beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC']   # type: ignore[name-defined]
+'''
+PEP-compliant type hint matching a **beartype-specific forward reference proxy**
+(i.e., concrete subclass of the abstract
+:class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
+superclass).
+'''
+
 # ....................{ CALLABLE                           }....................
 # Callable-specific type hints *NOT* required by subsequent type hints below.
 
@@ -909,29 +921,4 @@ PEP-compliant type hint matching *any* exception class.
 TypeWarning = type[Warning]
 '''
 PEP-compliant type hint matching *any* warning category.
-'''
-
-# ....................{ BEARTYPE ~ forwardref              }....................
-# Define type hints matching beartype-specific forward reference proxies *AFTER*
-# all reverse dependencies above. Sheesh! Even type hints go brutal, huh?
-
-#FIXME: mypy used to type-check this properly. Pyright never did. But even mypy
-#1.19.0 no longer accepts this. Weird stuff. Oh, well... who cares, huh?
-BeartypeForwardRef = type[
-    'beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC']   # type: ignore[name-defined]
-'''
-PEP-compliant type hint matching a **forward reference proxy** (i.e., concrete
-subclass of the abstract
-:class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
-superclass).
-'''
-
-
-BeartypeForwardRefArgs = tuple[
-    TupleTypes, str, str, FuncLocalParentCodeObjectWeakref]
-'''
-PEP-compliant type hint matching a **forward reference proxy argument list**
-(i.e., tuple of all parameters passed to each call of the low-level private
-:func:`beartype._check.forward.reference.fwdrefmake._make_forwardref_subtype`
-factory function, in the same order as positionally accepted by that function).
 '''

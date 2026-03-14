@@ -25,9 +25,6 @@ def clear_caches() -> None:
     * The **annotations dictionary cache** (i.e., private
       :data:`beartype._util.hint.pep.proposal.pep649749._MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS`
       dictionary).
-    * The **forward reference proxy cache** (i.e., private
-      :data:`beartype._check.forward.reference.fwdrefmake._forwardref_args_to_forwardref`
-      dictionary).
     * The **forward reference referee cache** (i.e., private
       :data:`beartype._check.forward.reference.fwdrefmeta._forwardref_to_referent`
       dictionary).
@@ -55,8 +52,6 @@ def clear_caches() -> None:
     from beartype._check.code.codemain import _HINT_CONF_TO_CHECK_EXPR
     from beartype._check.code.codescope import _tuple_union_to_tuple_union
     from beartype._check.convert._convcoerce import _hint_repr_to_hint
-    from beartype._check.forward.reference.fwdrefmake import (
-        _forwardref_args_to_forwardref)
     from beartype._check.forward.reference.fwdrefmeta import (
         _forwardref_to_referent)
     from beartype._check.metadata.hint.hintsane import _HINT_TO_HINTSANE
@@ -67,7 +62,6 @@ def clear_caches() -> None:
     _HINT_CONF_TO_CHECK_EXPR.clear()
     _HINT_TO_HINTSANE.clear()
     _HINT_TO_WRAPPER.clear()
-    _forwardref_args_to_forwardref.clear()
     _forwardref_to_referent.clear()
     _hint_repr_to_hint.clear()
     _tuple_union_to_tuple_union.clear()

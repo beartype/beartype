@@ -17,10 +17,10 @@ This submodule unit tests the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_make_forwardref_subbable_subtype() -> None:
+def test_proxy_hint_pep484_ref_str_subbable() -> None:
     '''
     Test the
-    :func:`beartype._check.forward.reference.fwdrefmake.make_forwardref_subbable_subtype`
+    :func:`beartype._check.forward.reference.fwdrefmake.proxy_hint_pep484_ref_str_subbable`
     factory.
     '''
 

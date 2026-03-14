@@ -13,10 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeCallHintPep484ForwardRefStrException
+from beartype.roar import (
+    BeartypeCallHintForwardRefException,
+    BeartypeCallHintPep484ForwardRefStrException,
+)
 from beartype._data.cls.dataclsany import BeartypeAny
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import BeartypeForwardRef
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.cls.pep.clspep3119 import die_unless_object_isinstanceable
 # from beartype._util.func.utilfuncframe import is_frame_caller_beartype
 from beartype._util.cache.utilcachecall import callable_cached
@@ -24,11 +28,14 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic)
+from beartype._util.hint.pep.proposal.pep484749 import (
+    resolve_hint_pep484749_ref_object)
 from beartype._util.module.utilmodimport import (
     import_module_attr,
     import_module_attr_or_sentinel,
 )
 from beartype._util.text.utiltextidentifier import is_dunder
+from typing import Optional
 
 # ....................{ METACLASSES                        }....................
 class BeartypeForwardRefMeta(type):
@@ -261,16 +268,97 @@ class BeartypeForwardRefMeta(type):
 
         # Avoid circular import dependencies.
         from beartype._check.forward.reference.fwdrefmake import (
-            make_forwardref_subbable_subtype)
+            proxy_hint_pep484_ref_str_subbable)
 
         # Return a new fully-qualified forward reference proxy subclass
         # concatenated as described above.
-        return make_forwardref_subbable_subtype(
+        return proxy_hint_pep484_ref_str_subbable(
+            scope_name=cls.__scope_name_beartype__,
             hint_name=f'{cls.__name_beartype__}.{hint_name}',
-            scope_name=cls.__scope_name_beartype__,  # type: ignore[arg-type]
+            exception_prefix=cls.__exception_prefix_beartype__
         )
 
 
+    @callable_cached
+    def __repr__(cls: BeartypeForwardRef) -> str:  # type: ignore[misc]
+        '''
+        Machine-readable string representing this forward reference subclass.
+
+        This dunder method is memoized for efficiency.
+        '''
+
+        # Machine-readable representation to be returned.
+        #
+        # Note that this representation intentionally:
+        # * Is prefixed by the @beartype-specific substring "<forwardref ",
+        #   resembling the representation of classes (e.g., "<class 'bool'>").
+        #   Why? Because various other @beartype submodules ignore objects whose
+        #   representations are prefixed by the "<" character, which are
+        #   usefully treated as having a standard representation that is
+        #   ignorable for most intents and purposes. This includes:
+        #   * The die_if_hint_pep604_inconsistent() raiser.
+        # * Omits the prefixing substring "__" and suffixing substring
+        #   "_beartype__" from the names of class variables appended below. Why?
+        #   Because those substrings are semantically meaningless and only serve
+        #   to further obfuscate the underlying forward reference in tracebacks.
+        cls_repr = f'<forwardref {cls.__name__}('
+
+        # If this reference thinly wraps a PEP 749-compliant object-oriented
+        # forward reference (i.e., "annotationlib.ForwardRef" object), append
+        # *ONLY* the representation of that object for brevity.
+        if cls.__hint_pep749_ref_beartype__:
+            cls_repr += f'pep749_ref={repr(cls.__hint_pep749_ref_beartype__)}'
+        # Else, this reference does *NOT* thinly wrap a PEP 749-compliant
+        # object-oriented forward reference (i.e., "annotationlib.ForwardRef"
+        # object). By elimination, this reference *MUST* thickly wrap a
+        # PEP 484-compliant stringified forward reference. In this case...
+        else:
+            # Append *ONLY* the representations of the relevant strings.
+            cls_repr += (
+                  f'name={repr(cls.__name_beartype__)}'
+                f', scope_name={repr(cls.__scope_name_beartype__)}'
+            )
+
+            # If this reference is additionally closure-relative, notify the
+            # user of that fact as well.
+            if cls.__func_local_parent_codeobj_weakref_beartype__:
+                cls_repr += (
+                    f', func_local_parent_codeobj_weakref='
+                    f'{repr(cls.__func_local_parent_codeobj_weakref_beartype__)}'
+                )
+            # Else, this reference is *NOT* additionally closure-relative.
+
+        #FIXME: Unit test this edge case, please.
+        # If this is a subscripted forward reference subclass, append additional
+        # metadata representing this subscription.
+        #
+        # Ideally, we would test whether this is a subclass of the
+        # "BeartypeForwardRefSubbedABC" superclass as follows:
+        #     if issubclass(cls, BeartypeForwardRefSubbedABC):
+        #
+        # Sadly, doing so invokes the __subclasscheck__() dunder method defined
+        # above, which invokes the
+        # BeartypeForwardRefABC.__is_subclass_beartype__() method defined
+        # above, which tests the type referred to by this subclass rather than
+        # this subclass itself. In short, this is why you play with madness.
+        try:
+            cls_repr += (
+                f', args={repr(cls.__args_beartype__)}'
+                f', kwargs={repr(cls.__kwargs_beartype__)}'
+            )
+        # If doing so fails with the expected "AttributeError", then this is
+        # *NOT* a subscripted forward reference subclass. Since this is
+        # ignorable, silently ignore this common case. *sigh*
+        except AttributeError:
+            pass
+
+        # Close this representation.
+        cls_repr += ')>'
+
+        # Return this representation.
+        return cls_repr
+
+    # ....................{ DUNDERS ~ pep : 3119           }....................
     def __instancecheck__(cls: BeartypeForwardRef, obj: object) -> bool:  # type: ignore[misc]
         '''
         :data:`True` only if the passed object is an instance of the external
@@ -326,86 +414,6 @@ class BeartypeForwardRefMeta(type):
         # object is an instance of the external class referenced by this
         # subclass.
         return cls.__is_subclass_beartype__(obj)
-
-
-    @callable_cached
-    def __repr__(cls: BeartypeForwardRef) -> str:  # type: ignore[misc]
-        '''
-        Machine-readable string representing this forward reference subclass.
-
-        This dunder method is memoized for efficiency.
-        '''
-
-        # Machine-readable representation to be returned.
-        #
-        # Note that this representation intentionally:
-        # * Is prefixed by the @beartype-specific substring "<forwardref ",
-        #   resembling the representation of classes (e.g., "<class 'bool'>").
-        #   Why? Because various other @beartype submodules ignore objects whose
-        #   representations are prefixed by the "<" character, which are
-        #   usefully treated as having a standard representation that is
-        #   ignorable for most intents and purposes. This includes:
-        #   * The die_if_hint_pep604_inconsistent() raiser.
-        # * Omits the prefixing substring "__" and suffixing substring
-        #   "_beartype__" from the names of class variables appended below. Why?
-        #   Because those substrings are semantically meaningless and only serve
-        #   to further obfuscate the underlying forward reference in tracebacks.
-        cls_repr = f'<forwardref {cls.__name__}('
-
-        # If this reference thinly wraps a PEP 749-compliant object-oriented
-        # forward reference (i.e., "annotationlib.ForwardRef" object), append
-        # *ONLY* the representation of that object for brevity.
-        if cls.__pep749_ref_beartype__:
-            cls_repr += f'pep749_ref={repr(cls.__pep749_ref_beartype__)}'
-        # Else, this reference does *NOT* thinly wrap a PEP 749-compliant
-        # object-oriented forward reference (i.e., "annotationlib.ForwardRef"
-        # object). By elimination, this reference *MUST* thickly wrap a
-        # PEP 484-compliant stringified forward reference. In this case...
-        else:
-            # Append *ONLY* the representations of the relevant strings.
-            cls_repr += (
-                  f'name={repr(cls.__name_beartype__)}'
-                f', scope_name={repr(cls.__scope_name_beartype__)}'
-            )
-
-            # If this reference is additionally closure-relative, notify the
-            # user of that fact as well.
-            if cls.__func_local_parent_codeobj_weakref_beartype__:
-                cls_repr += (
-                    f', func_local_parent_codeobj_weakref='
-                    f'{repr(cls.__func_local_parent_codeobj_weakref_beartype__)}'
-                )
-            # Else, this reference is *NOT* additionally closure-relative.
-
-        #FIXME: Unit test this edge case, please.
-        # If this is a subscripted forward reference subclass, append additional
-        # metadata representing this subscription.
-        #
-        # Ideally, we would test whether this is a subclass of the
-        # "BeartypeForwardRefSubbedABC" superclass as follows:
-        #     if issubclass(cls, BeartypeForwardRefSubbedABC):
-        #
-        # Sadly, doing so invokes the __subclasscheck__() dunder method defined
-        # above, which invokes the
-        # BeartypeForwardRefABC.__is_subclass_beartype__() method defined
-        # above, which tests the type referred to by this subclass rather than
-        # this subclass itself. In short, this is why you play with madness.
-        try:
-            cls_repr += (
-                f', args={repr(cls.__args_beartype__)}'
-                f', kwargs={repr(cls.__kwargs_beartype__)}'
-            )
-        # If doing so fails with the expected "AttributeError", then this is
-        # *NOT* a subscripted forward reference subclass. Since this is
-        # ignorable, silently ignore this common case. *sigh*
-        except AttributeError:
-            pass
-
-        # Close this representation.
-        cls_repr += ')>'
-
-        # Return this representation.
-        return cls_repr
 
     # ....................{ PROPERTIES                     }....................
     @property
@@ -468,119 +476,42 @@ class BeartypeForwardRefMeta(type):
         # Referent referred to by this forward reference proxy if a prior access
         # of this property has already resolved this referent *OR* "None" (i.e.,
         # if this is the first access of this property).
-        referent = _forwardref_to_referent_get(cls)
+        referent: Optional[Hint] = _forwardref_to_referent_get(cls)
 
         # If this referent has yet to be resolved, this is the first call to
         # this property. In this case...
         if referent is None:  # type: ignore[has-type]
-            #FIXME: Inject "__pep749_ref_beartype__"-specific logic here! \o/
+            # If this reference thinly wraps a PEP 749-compliant object-oriented
+            # forward reference, resolve this reference in a PEP 749-specific
+            # manner.
+            if cls.__hint_pep749_ref_beartype__:
+                # Forward referent dynamically imported from this module if this
+                # module is both importable and defines this referent *OR* the
+                # sentinel placeholder (i.e., if this module is either
+                # unimportable or fails to define this referent).
+                referent = resolve_hint_pep484749_ref_object(
+                    hint=cls.__hint_pep749_ref_beartype__,
+                    exception_prefix=cls.__exception_prefix_beartype__,
+                )
+            # Else, this reference does *NOT* thinly wrap a PEP 749-compliant
+            # object-oriented forward reference (i.e.,
+            # "annotationlib.ForwardRef" object). By elimination, this reference
+            # *MUST* thickly wrap a PEP 484-compliant stringified forward
+            # reference. In this case, resolve this reference in a PEP
+            # 484-specific manner.
+            else:
+                referent = _resolve_hint_pep484_ref_str(cls)
 
-            #FIXME: Uhh... *WAT*? Refactor as follows for sanity:
-            #* Globalize "EXCEPTION_PREFIX" as a new
-            #  "_EXCEPTION_PREFIX_HINT_PEP484_REF" string global:
-            #      _EXCEPTION_PREFIX_HINT_PEP484_REF = (
-            #          'PEP 484 stringified forward reference type hint')
-
-            # Exception subclass and prefix to be raised below.
-            exception_cls = BeartypeCallHintPep484ForwardRefStrException
-            exception_prefix = 'Forward reference '
-
-            # Forward referent dynamically imported from this module if this
-            # module is both importable and defines this referent *OR* the
-            # sentinel placeholder (i.e., if this module is either unimportable
-            # or fails to define this referent).
-            # print(f'Importing forward ref "{cls.__name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
-            referent = import_module_attr_or_sentinel(
-                attr_name=cls.__name_beartype__,
-                module_name=cls.__scope_name_beartype__,
-                exception_cls=exception_cls,
-                exception_prefix=exception_prefix,
-            )
-
-            # If this module is either unimportable *OR* fails to define
-            # this referent...
-            if referent is SENTINEL:
-                # If this proxy does *NOT* proxy a PEP 484-compliant stringified
-                # forward reference type hint annotating a locally decorated
-                # callable, raise a human-readable exception describing this
-                # failure by instead deferring to the mandatory variant of the
-                # import function called above.
-                #
-                # See the "__func_local_parent_codeobj_weakref_beartype__"
-                # docstring for further details.
-                if cls.__func_local_parent_codeobj_weakref_beartype__ is None:
-                    import_module_attr(
-                        attr_name=cls.__name_beartype__,
-                        module_name=cls.__scope_name_beartype__,
-                        exception_cls=exception_cls,
-                        exception_prefix=exception_prefix,
-                    )
-
-                    # Validate sanity by ensuring that the prior call raised the
-                    # expected exception.
-                    assert False  # pragma: no cover
-                # Else, this proxy proxies a PEP 484-compliant stringified
-                # forward reference type hint annotating a locally decorated
-                # callable. In this case, avoid emitting false positives.
-
-                #FIXME: *NON-IDEAL*. Ideally, we would now disambiguate between
-                #the two edge cases documented by the
-                #"__func_local_parent_codeobj_weakref_beartype__" docstring.
-                #However, doing so (probably) requires us to implement some new
-                #functionality we don't currently have and is thus somewhat
-                #non-trivial. For the moment, avoid doing so until somebody
-                #strenuously complains about this. *lol* -> *sigh*
-                #
-                #Specifically, we want to do this:
-                #* Introspect up the call stack for the first stack frame whose
-                #  code object is the same code object weakly referred to by
-                #  this "__func_local_parent_codeobj_weakref_beartype__" class
-                #  variable.
-                #* Dynamically resolving this reference against the global and
-                #  local scope of that stack frame.
-                #* If this reference remains unresolvable at that point,
-                #  fallback to silently ignoring this reference as we do below.
-
-                # Indirectly notify the beartype-specific parent
-                # __is_instance_beartype__() and __is_subclass_beartype__()
-                # dunder methods called by the beartype-agnostic parent parent
-                # __instancecheck__() and __subclasscheck__() dunder methods
-                # this reference *CANNOT* be resolved to its referent. How? By
-                # pretending to resolve this reference to an arbitrary private
-                # type isolated to the beartype codebase. This type is private
-                # and thus guaranteed to *NEVER* be ambiguously used as a type
-                # hint referred to by stringified forward references in external
-                # third-party packages.
-                #
-                # Pretending to resolve this reference to this type is a crude
-                # unreadable alternative to internally setting a hypothetical
-                # "__is_type_unresolved_beartype__" class variable defined on
-                # the "BeartypeForwardRefABC" type. Although more readable and
-                # thus superficially preferable, the latter approach also
-                # requires defining yet another class variable consuming
-                # corresponding space merely to facilitate communication between
-                # this parent metaclass and its child classes. Space efficiency
-                # takes precedence over marginal code readability. So it goes.
-                #
-                # This private type has been intentionally selected so as to
-                # minimize unexpected issues in the unlikely event of Murphy and
-                # Her Dumb Law. Since "BeartypeAny" is semantically analogous to
-                # the ignorable root "object" superclass, resolving to
-                # "BeartypeAny" here implies that erroneously implemented
-                # __is_instance_beartype__() and __is_subclass_beartype__()
-                # dunder methods would safely fallback to silently ignoring the
-                # passed objects without complaint. It is what it is.
-                referent = BeartypeAny
-            # Else, this module is both importable and defines this referent.
-            #
             # If this referent is this forward reference subclass, then this
             # subclass circularly proxies itself. Since allowing this edge case
             # would openly invite infinite recursion, we detect this edge case
             # and instead raise a human-readable exception.
-            elif referent is cls:
-                raise exception_cls(
-                    f'{exception_prefix}{repr(cls)} circularly '
-                    f'(i.e., infinitely recursively) references itself.'
+            if referent is cls:
+                raise BeartypeCallHintForwardRefException(
+                    f'{cls.__exception_prefix_beartype__}'
+                    f'forward reference proxy {repr(cls)} '
+                    f'circularly (i.e., infinitely recursively) '
+                    f'references itself.'
                 )
             # Else, this referent is *NOT* this forward reference subclass.
             #
@@ -590,8 +521,8 @@ class BeartypeForwardRefMeta(type):
             elif is_hint_pep484585_generic(referent):
                 referent = get_hint_pep484585_generic_type(
                     hint=referent,
-                    exception_cls=exception_cls,
-                    exception_prefix=exception_prefix,
+                    exception_cls=BeartypeCallHintForwardRefException,
+                    exception_prefix=cls.__exception_prefix_beartype__,
                 )
             # Else, this referent is *NOT* a subscripted generic.
 
@@ -634,9 +565,9 @@ class BeartypeForwardRefMeta(type):
             try:
                 # If this referent is *NOT* isinstanceable, raise an exception.
                 die_unless_object_isinstanceable(
-                    obj=referent,
-                    exception_cls=exception_cls,
-                    exception_prefix=exception_prefix,
+                    obj=referent,  # pyright: ignore
+                    exception_cls=BeartypeCallHintForwardRefException,
+                    exception_prefix=cls.__exception_prefix_beartype__,
 
                     # If this referent is itself a forward reference proxy,
                     # raise an exception if that proxy *CANNOT* be resolved to
@@ -661,7 +592,7 @@ class BeartypeForwardRefMeta(type):
         return referent  # type: ignore[return-value]
 
 # ....................{ PRIVATE ~ globals                  }....................
-_forwardref_to_referent: dict[BeartypeForwardRef, type] = {}
+_forwardref_to_referent: dict[BeartypeForwardRef, Hint] = {}
 '''
 **Forward reference referent cache** (i.e., dictionary mapping from each forward
 reference proxy to the arbitrary class referred to by that proxy).
@@ -685,7 +616,7 @@ _forwardref_to_referent_get = _forwardref_to_referent.get
 dictionary, globalized as a negligible microoptimization.
 '''
 
-# ....................{ PRIVATE ~ globals                  }....................
+# ....................{ PRIVATE ~ testers                  }....................
 #FIXME: Unit test us up, please.
 def _is_forwardref_resolved(hint: BeartypeForwardRef) -> bool:
     '''
@@ -706,3 +637,123 @@ def _is_forwardref_resolved(hint: BeartypeForwardRef) -> bool:
 
     # Return true only if this proxy has been resolved to its referent.
     return hint in _forwardref_to_referent
+
+# ....................{ PRIVATE ~ resolvers                }....................
+def _resolve_hint_pep484_ref_str(cls: BeartypeForwardRef) -> Hint:
+    '''
+    Resolve the :pep:`484`-compliant **stringified forward reference type
+    hint** (i.e., string referring to a referent target type hint that typically
+    has yet to be defined in the current lexical scope) encapsulated by the
+    passed **forward reference proxy subclass** (i.e.,
+    :class:`.BeartypeForwardRefMeta` instance) to that referent.
+
+    This resolver is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator). Resolving both absolute *and* relative
+    forward references assumes contextual context (e.g., the fully-qualified
+    name of the object to which relative forward references are relative to)
+    that *cannot* be safely and context-freely memoized away.
+
+    Parameters
+    ----------
+    cls : BeartypeForwardRef
+        Forward reference proxy subclass to be resolved.
+
+    Returns
+    -------
+    Hint
+        Non-string type hint to which this reference refers.
+
+    Raises
+    ------
+    exception_cls
+        If attempting to dynamically evaluate this reference raises an
+        exception, typically due to this reference being syntactically invalid
+        as Python.
+    '''
+    assert isinstance(cls, BeartypeForwardRefMeta), (
+        f'{repr(cls)} not beartype forward reference proxy.')
+
+    # Forward referent dynamically imported from this module if this module is
+    # both importable and defines this referent *OR* the sentinel placeholder
+    # (i.e., if this module is unimportable or fails to define this referent).
+    # print(f'Importing forward ref "{cls.__name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
+    referent = import_module_attr_or_sentinel(
+        attr_name=cls.__name_beartype__,  # pyright: ignore
+        module_name=cls.__scope_name_beartype__,  # pyright: ignore
+        exception_cls=BeartypeCallHintPep484ForwardRefStrException,
+        exception_prefix=cls.__exception_prefix_beartype__,  # pyright: ignore
+    )
+
+    # If this module is unimportable *OR* fails to define this referent...
+    if referent is SENTINEL:
+        # If this proxy does *NOT* proxy a PEP 484-compliant stringified forward
+        # reference type hint annotating a locally decorated callable, raise a
+        # human-readable exception describing this failure by instead deferring
+        # to the mandatory variant of the import function called above.
+        #
+        # See the "__func_local_parent_codeobj_weakref_beartype__" docstring for
+        # further details.
+        if cls.__func_local_parent_codeobj_weakref_beartype__ is None:
+            import_module_attr(
+                attr_name=cls.__name_beartype__,  # pyright: ignore
+                module_name=cls.__scope_name_beartype__,  # pyright: ignore
+                exception_cls=BeartypeCallHintPep484ForwardRefStrException,
+                exception_prefix=cls.__exception_prefix_beartype__,  # pyright: ignore
+            )
+
+            # Validate sanity by ensuring that the prior call raised the
+            # expected exception.
+            assert False  # pragma: no cover
+        # Else, this proxy proxies a PEP 484-compliant stringified forward
+        # reference type hint annotating a locally decorated callable. In this
+        # case, avoid emitting false positives.
+
+        #FIXME: *NON-IDEAL*. Ideally, we would now disambiguate between
+        #the two edge cases documented by the
+        #"__func_local_parent_codeobj_weakref_beartype__" docstring.
+        #However, doing so (probably) requires us to implement some new
+        #functionality we don't currently have and is thus somewhat
+        #non-trivial. For the moment, avoid doing so until somebody
+        #strenuously complains about this. *lol* -> *sigh*
+        #
+        #Specifically, we want to do this:
+        #* Introspect up the call stack for the first stack frame whose
+        #  code object is the same code object weakly referred to by
+        #  this "__func_local_parent_codeobj_weakref_beartype__" class
+        #  variable.
+        #* Dynamically resolving this reference against the global and
+        #  local scope of that stack frame.
+        #* If this reference remains unresolvable at that point,
+        #  fallback to silently ignoring this reference as we do below.
+
+        # Indirectly notify the beartype-specific parent
+        # __is_instance_beartype__() and __is_subclass_beartype__() dunder
+        # methods called by the beartype-agnostic parent parent
+        # __instancecheck__() and __subclasscheck__() dunder methods this
+        # reference *CANNOT* be resolved to its referent. How? By pretending to
+        # resolve this reference to an arbitrary private type isolated to the
+        # beartype codebase. This type is private and thus guaranteed to *NEVER*
+        # be ambiguously used as a type hint referred to by stringified forward
+        # references in third-party packages.
+        #
+        # Pretending to resolve this reference to this type is a crude
+        # unreadable alternative to internally setting a hypothetical
+        # "__is_type_unresolved_beartype__" class variable defined on the
+        # "BeartypeForwardRefABC" type. Although more readable and thus
+        # superficially preferable, the latter approach also requires defining
+        # yet another class variable consuming corresponding space merely to
+        # facilitate communication between this parent metaclass and its child
+        # classes. Space efficiency takes precedence over code readability.
+        #
+        # This private type has been intentionally selected so as to minimize
+        # unexpected issues in the unlikely event of Murphy and Her Dumb Law.
+        # Since "BeartypeAny" is semantically analogous to the ignorable root
+        # "object" superclass, resolving to "BeartypeAny" here implies that
+        # erroneously implemented __is_instance_beartype__() and
+        # __is_subclass_beartype__() dunder methods would fallback to silently
+        # ignoring the passed objects without complaint.
+        referent = BeartypeAny
+    # Else, this module is both importable and defines this referent.
+
+    # Return this referent.
+    return referent

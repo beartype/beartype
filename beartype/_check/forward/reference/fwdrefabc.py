@@ -68,8 +68,16 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     debuggability in the event of developer error [read: us].
     '''
 
+
+    __exception_prefix_beartype__: str = None  # type: ignore[assignment]
+    '''
+    Human-readable substring prefixing exception messages raised by methods
+    defined by this ABC, the metaclass of this ABC, and concrete subclasses of
+    this ABC.
+    '''
+
     # ....................{ CLASS VARS ~ optional          }....................
-    __scope_name_beartype__: str = None  # type: ignore[assignment]
+    __scope_name_beartype__: Optional[str] = None
     '''
     Fully-qualified name of the lexical scope to which the type hint referenced
     by this forward reference subclass is relative if that type hint is relative
@@ -78,7 +86,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
 
 
-    __pep749_ref_beartype__: Optional[HintPep484749RefObjectType] = None
+    __hint_pep749_ref_beartype__: Optional[HintPep484749RefObjectType] = None
     '''
     :pep:`749`-compliant **forward reference type hint** (i.e.,
     higher-level pure-Python object-oriented :class:`annotationlib.ForwardRef`
@@ -474,22 +482,19 @@ class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
 
         # Avoid circular import dependencies.
         from beartype._check.forward.reference.fwdrefmake import (
-            make_forwardref_subbed_subtype)
+            proxy_hint_pep484_ref_str_subbed)
 
-        # Subscripted forward reference to be returned.
-        forwardref_indexed_subtype = make_forwardref_subbed_subtype(
+        # Create and return a new subscripted forward reference proxy extending
+        # this subscriptable forward reference proxy with the passed parameters.
+        return proxy_hint_pep484_ref_str_subbed(
+            scope_name=cls.__scope_name_beartype__,  # type: ignore[arg-type]
             hint_name=cls.__name_beartype__,
-            scope_name=cls.__scope_name_beartype__,
+            exception_prefix=cls.__exception_prefix_beartype__,
             func_local_parent_codeobj_weakref=(
                 cls.__func_local_parent_codeobj_weakref_beartype__),
+            args=args,
+            kwargs=kwargs,
         )
-
-        # Classify the arguments subscripting this forward reference.
-        forwardref_indexed_subtype.__args_beartype__ = args  # pyright: ignore[reportGeneralTypeIssues]
-        forwardref_indexed_subtype.__kwargs_beartype__ = kwargs  # pyright: ignore[reportGeneralTypeIssues]
-
-        # Return this subscripted forward reference.
-        return forwardref_indexed_subtype
 
 # ....................{ PRIVATE ~ tuples                   }....................
 BeartypeForwardRefSubbableABC_BASES = (BeartypeForwardRefSubbableABC,)

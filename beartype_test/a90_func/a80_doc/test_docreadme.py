@@ -19,12 +19,19 @@ top-level ``README.rst`` file.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
-    # skip,
+    skip_if_python_version_greater_than_or_equal_to,
     skip_unless_package,
 )
 
 # ....................{ TESTS                              }....................
 #FIXME: Consider submitting as a StackOverflow post. Dis iz l33t, yo!
+#FIXME: Once the newest stable release of Pygments drop:
+#* *REQUIRE THAT MINIMUM VERSION OF PYGMENTS* in our "pyproject.toml", please.
+#* Excise "@skip_if_python_version_greater_than_or_equal_to('3.15.0')" below.
+# Note that this test currently fails under Python >= 3.15 with non-readable
+# exceptions originating from deep within the third-party "pygments" package.
+# Thankfully, this issue has already been resolved upstream. See also:
+#     https://github.com/pygments/pygments/issues/3039
 
 # If the third-party "docutils" package satisfying this minimum version is
 # unavailable, skip this test. Note that:
@@ -33,6 +40,7 @@ from beartype_test._util.mark.pytskip import (
 #   Unsurprisingly, even Sphinx parses reST with "docutils".
 # * This test makes assumptions about the "docutils" public API satisfied
 #   *ONLY* by this minimum version.
+@skip_if_python_version_greater_than_or_equal_to('3.15.0')
 @skip_unless_package(package_name='docutils', minimum_version='0.22.0')
 def test_doc_readme(monkeypatch) -> None:
     '''

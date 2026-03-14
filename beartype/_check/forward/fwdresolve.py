@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_subbable_subtype)
+    proxy_hint_pep484_ref_str_subbable)
 from beartype._check.forward.scope.fwdscopemake import (
     make_scope_forward_decor_meta)
 from beartype._check.metadata.call.callmetadecormin import (
@@ -371,8 +371,11 @@ def resolve_hint_pep484_ref_str_decor_meta(
             # Beartype-specific forward reference proxy deferring the detection
             # of this type until required by a runtime type-check performed
             # during some subsequent call to the currently decorated callable.
-            hint_resolved = make_forwardref_subbable_subtype(
-                hint_name=hint, scope_name=func_module_name)
+            hint_resolved = proxy_hint_pep484_ref_str_subbable(
+                scope_name=func_module_name,
+                hint_name=hint,
+                exception_prefix=exception_prefix,
+            )
 
             # Resolve this stringified forward reference to this proxy.
             return hint_resolved

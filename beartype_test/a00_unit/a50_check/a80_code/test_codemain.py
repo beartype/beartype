@@ -61,6 +61,7 @@ def test_make_check_expr() -> None:
 
         # Optional parameters.
         call_meta: BeartypeCallMetaABC = BEARTYPE_CALL_EXTERNAL_META,
+        is_exprs_equal: bool = True,
     ) -> None:
         '''
         Assert that the :func:`.make_check_expr` code factory avoids memoizing
@@ -80,7 +81,12 @@ def test_make_check_expr() -> None:
             :pep:`484`-compliant stringified forward reference type hints
             against the local and global scope of the first third-party caller
             on the current call stack.
+        is_exprs_equal : bool, default: True
+            :data:`True` only if the :func:`.make_check_expr` code factory when
+            repeatedly passed these same parameters returns type-checking code
+            snippets that are equal (but *not* identical).
         '''
+        assert isinstance(is_exprs_equal, bool)
 
         # Metadata encapsulating the sanification of this contextual hint.
         hint_sane = sanify_hint_any(call_meta=call_meta, hint=hint)
@@ -98,13 +104,16 @@ def test_make_check_expr() -> None:
         check_expr_1 = make_check_expr(**make_check_expr_kwargs)
         check_expr_2 = make_check_expr(**make_check_expr_kwargs)
 
-        # Assert that these snippets are equal but *NOT* identical (and thus
+        # Assert that these snippets are *NOT* identical (and thus
         # recreated rather than memoized by each make_check_expr() call).
-        assert check_expr_1 == check_expr_2
         assert check_expr_1 is not check_expr_2, (
             f'make_check_expr() erroneously memoized code type-checking '
             f'contextual hint {repr(hint)}.'
         )
+
+        # If requested by the caller, assert that these snippets are equal.
+        if is_exprs_equal:
+            assert check_expr_1 == check_expr_2
 
     # ....................{ PASS ~ pep : 484               }....................
     # Assert that the make_check_expr() code factory avoids memoizing PEP
@@ -120,7 +129,14 @@ def test_make_check_expr() -> None:
     # child hints subscripting otherwise non-contextual root hints such that the
     # former virally "infect" the latter with contextuality.
     assert_hint_check_expr_is_uncached(
-        hint=type['At_this_through_all_his_bulk_an_agony'])
+        hint=type['At_this_through_all_his_bulk_an_agony'],
+        # make_check_expr() internally reduces stringified forward references to
+        # forward reference proxies, which are contextual and thus *NOT* subject
+        # to memoization. The code snippets created and returned by
+        # make_check_expr() reference different forward reference proxies. Ergo,
+        # these code snippets are superficially unequal.
+        is_exprs_equal=False,
+    )
 
     # ....................{ PASS ~ pep : 673               }....................
     # If the active Python interpreter targets Python >= 3.11 and thus supports

@@ -4,18 +4,18 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **class getters** (i.e., low-level callables obtaining various
-properties of arbitrary classes).
+Project-wide **class getters** (i.e., low-level callables introspecting
+general-purpose properties of arbitrary classes).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilTypeException
+# from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype.typing import Optional
 from beartype._data.typing.datatyping import (
     LexicalScope,
-    TypeException,
+    # TypeException,
 )
 # from beartype._util.cache.utilcachecall import callable_cached
 
@@ -86,26 +86,11 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
 #in-memory string that has no relation to "sys.modules". Care is thus warranted.
 
 #FIXME: Unit test us up, please.
-def get_type_locals(
-    # Mandatory parameters.
-    cls: type,
-
-    # Optional parameters.
-    exception_cls: TypeException = _BeartypeUtilTypeException,
-) -> LexicalScope:
+def get_type_locals(cls: type) -> LexicalScope:
     '''
     **Local scope** (i.e., dictionary mapping from the name to value of each
     attribute directly declared by that class) for the passed class.
 
-    Caveats
-    -------
-    **This getter returns an immutable rather than mutable mapping.** Callers
-    requiring the latter are encouraged to manually coerce the immutable mapping
-    returned by this getter into a mutable mapping (e.g., by passing the former
-    to the :class:`dict` constructor as is).
-
-    Design
-    ------
     This getter currently reduces to a trivial one-liner returning
     ``cls.__dict__`` and has thus been defined mostly just for orthogonality
     with the comparable
@@ -149,13 +134,17 @@ def get_type_locals(
     that is useful in practice. We prefer a trivial one-liner, which behaves
     exactly as advertised and efficiently at decoration-time.
 
+    Caveats
+    -------
+    **This getter returns an immutable rather than mutable mapping.** Callers
+    requiring the latter are encouraged to manually coerce the immutable mapping
+    returned by this getter into a mutable mapping (e.g., by passing the former
+    to the :class:`dict` constructor as is).
+
     Parameters
     ----------
     cls : type
         Class to be inspected.
-    exception_cls : Type[Exception], optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :exc:`._BeartypeUtilTypeException`.
 
     Returns
     -------

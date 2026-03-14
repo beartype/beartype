@@ -115,7 +115,10 @@ def make_scope_forward_caller_external(
     # stringified type hint with a forward reference proxy resolving that
     # attribute on the first attempt to pass that attribute as the second
     # parameter to an isinstance()- or issubclass()based runtime type-check.
-    caller_scope = BeartypeForwardScope(scope_name=caller_module_name)  # type: ignore[arg-type]
+    caller_scope = BeartypeForwardScope(
+        scope_name=caller_module_name,
+        exception_prefix=exception_prefix,
+    )
 
     # Composite this global and local scope into this forward scope (in that
     # order), implicitly overwriting first each builtin attribute and then each
@@ -431,8 +434,7 @@ def make_scope_forward_decor_meta(
             # declared by the types directly defining those callables. Ergo, the
             # lexical scopes for parent types of this type (including the root
             # decorated type) are *ALL* irrelevant.
-            type_locals = get_type_locals(
-                cls=cls_curr, exception_cls=exception_cls)
+            type_locals = get_type_locals(cls_curr)
 
             # Forcefully merge this type scope into the current local scope,
             # implicitly overwriting any locals of the same name. Class
@@ -494,6 +496,7 @@ def make_scope_forward_decor_meta(
     func_scope = decor_meta.func_scope_forward = BeartypeForwardScope(
         scope_name=func_module_name,
         func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
+        exception_prefix=exception_prefix,
     )
 
     # ..................{ SCOPES ~ composite                 }..................

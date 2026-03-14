@@ -15,12 +15,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype._cave._cavefast import WeakrefCallableType
+from beartype._cave._cavefast import (
+    HintPep484749RefObjectType,
+    WeakrefCallableType,
+)
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.typing.datatyping import (
     BeartypeForwardRef,
-    BeartypeForwardRefArgs,
     FuncLocalParentCodeObjectWeakref,
+    LexicalScope,
     TupleTypes,
 )
 from beartype._check.forward.reference.fwdrefabc import (
@@ -30,34 +33,36 @@ from beartype._check.forward.reference.fwdrefabc import (
     BeartypeForwardRefSubbedABC_BASES,
 )
 from beartype._util.cls.utilclsmake import make_type
+from beartype._util.hint.pep.proposal.pep484749 import (
+    get_hint_pep484749_ref_names)
 from beartype._util.text.utiltextidentifier import die_unless_identifier
+from typing import Optional
 
-# ....................{ FACTORIES                          }....................
-def make_forwardref_subbable_subtype(
+# ....................{ PROXIERS ~ pep : 484               }....................
+def proxy_hint_pep484_ref_str_subbable(
     # Mandatory parameters.
     hint_name: str,
     scope_name: str,
+    exception_prefix: str,
 
     # Optional parameters.
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = None,
 ) -> type[BeartypeForwardRefSubbableABC]:
     '''
-    Create and return a new **subscriptable forward reference subclass** (i.e.,
-    concrete subclass of the :class:`.BeartypeForwardRefSubbableABC` abstract
-    base class (ABC) deferring the resolution of the unresolved type hint with
-    the passed name, transparently permitting this type hint to be subscripted
-    by any arbitrary child type hints).
+    Create and return a new **subscripted forward reference proxy** (i.e.,
+    concrete subclass of the :class:`.BeartypeForwardRefSubbedABC` abstract
+    base class (ABC)) deferring the resolution of the referent target type hint
+    with the passed :pep:`484`-compliant stringified module and hint names in a
+    permissive manner permitting this hint to be subscripted by any arbitrary
+    child type hints.
 
-    This factory is effectively memoized despite not being explicitly memoized
-    (e.g., by the :func:`callable_cached` decorator), as the lower-level private
-    :func:`._make_forwardref_subtype` factory called by this higher-level public
-    factory is itself internally memoized.
+    This getter is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator). Why? Because the value of the optional
+    ``exception_prefix`` parameter (usually) contextually depends on the
+    currently decorated callable and thus (effectively) prohibits memoization.
 
     Parameters
     ----------
-    hint_name : str
-        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
-        this unresolved type hint to be proxied.
     scope_name : str
         Possibly ignored fully-qualified name of the lexical scope in which this
         unresolved type hint was originally declared. For example:
@@ -66,6 +71,11 @@ def make_forwardref_subbable_subtype(
           resolve a global class or callable against this scope).
         * ``"some_package.some_module.SomeClass"`` for a class scope (e.g.,
           to resolve a nested class or callable against this scope).
+    hint_name : str
+        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
+        this unresolved type hint to be proxied.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
     func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
@@ -87,41 +97,49 @@ def make_forwardref_subbable_subtype(
         ``"."``-delimited Python identifiers.
     '''
 
-    # Subscriptable forward reference to be returned.
-    return _make_forwardref_subtype(  # type: ignore[return-value]
+    # Create and return a new subscriptable forward reference proxy proxying the
+    # passed referent target module and hint names.
+    return _proxy_hint_ref(  # type: ignore[return-value]
         type_bases=BeartypeForwardRefSubbableABC_BASES,
-        hint_name=hint_name,
         scope_name=scope_name,
+        hint_name=hint_name,
+        exception_prefix=exception_prefix,
         func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
     )
 
 
-def make_forwardref_subbed_subtype(
-    hint_name: str,
+def proxy_hint_pep484_ref_str_subbed(
     scope_name: str,
+    hint_name: str,
+    exception_prefix: str,
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref,
+    args: tuple,
+    kwargs: LexicalScope,
 ) -> type[BeartypeForwardRefSubbedABC]:
     '''
-    Create and return a new **subscripted forward reference subclass** (i.e.,
+    Create and return a new **subscripted forward reference proxy** (i.e.,
     concrete subclass of the :class:`.BeartypeForwardRefSubbedABC` abstract
-    base class (ABC) deferring the resolution of the unresolved type hint with
-    the passed name, transparently prohibiting this type hint from being
-    re-subscripted by any further child type hints).
+    base class (ABC)) deferring the resolution of the referent target type hint
+    with the passed :pep:`484`-compliant stringified module and hint names in a
+    strict manner prohibiting this hint from being re-subscripted by any further
+    child type hints.
 
-    This factory is effectively memoized despite not being explicitly memoized
-    (e.g., by the :func:`callable_cached` decorator), as the lower-level private
-    :func:`._make_forwardref_subtype` factory called by this higher-level public
-    factory is itself internally memoized.
+    This getter is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator). Why? Because the value of the optional
+    ``exception_prefix`` parameter (usually) contextually depends on the
+    currently decorated callable and thus (effectively) prohibits memoization.
 
     Parameters
     ----------
-    hint_name : str
-        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
-        this unresolved type hint to be proxied.
     scope_name : str
         Possibly ignored fully-qualified name of the lexical scope in which this
         unresolved type hint was originally declared. See also
-        :func:`.make_forwardref_subbable_subtype` docstring for further details.
+        :func:`.proxy_hint_pep484_ref_str_subbable` docstring for further details.
+    hint_name : str
+        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
+        this unresolved type hint to be proxied.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
     func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
@@ -130,11 +148,15 @@ def make_forwardref_subbed_subtype(
         callable *or* :data:`None` otherwise. See also the
         :attr:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details.
+    args : tuple
+        Tuple of all positional arguments subscripting this forward reference.
+    kwargs: LexicalScope,
+        Dictionary of all keyword arguments subscripting this forward reference.
 
     Returns
     -------
     type[BeartypeForwardRefSubbedABC]
-        Subscriptable forward reference proxy subclass proxying this type hint.
+        Subscripted forward reference proxy subclass proxying this type hint.
 
     Raises
     ------
@@ -142,28 +164,102 @@ def make_forwardref_subbed_subtype(
         If either ``hint_name`` or ``scope_name`` are *not* syntactically valid
         ``"."``-delimited Python identifiers.
     '''
+    assert isinstance(args, tuple), f'{repr(args)} not tuple.'
+    assert isinstance(kwargs, dict), f'{repr(kwargs)} not dictionary.'
 
-    # Subscriptable forward reference to be returned.
-    return _make_forwardref_subtype(  # type: ignore[return-value]
+    # Subscripted forward reference proxy to be returned.
+    ref_proxy = _proxy_hint_ref(  # type: ignore[return-value]
         type_bases=BeartypeForwardRefSubbedABC_BASES,
-        hint_name=hint_name,
         scope_name=scope_name,
+        hint_name=hint_name,
+        exception_prefix=exception_prefix,
         func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
     )
 
+    # Classify passed parameters with this proxy.
+    ref_proxy.__args_beartype__ = args  # pyright: ignore
+    ref_proxy.__kwargs_beartype__ = kwargs  # pyright: ignore
+
+    # Return this proxy.
+    return ref_proxy
+
+# ....................{ PROXIERS ~ pep : 749               }....................
+def proxy_hint_pep749_ref_object(
+    hint: HintPep484749RefObjectType,
+    exception_prefix: str,
+) -> type[BeartypeForwardRefSubbedABC]:
+    '''
+    Create and return a new **forward reference proxy** (i.e.,
+    concrete subclass of the :class:`.BeartypeForwardRefSubbableABC` abstract
+    base class (ABC)) deferring the resolution of the referent target type hint
+    encapsulated by the passed **object-oriented forward reference
+    type hint** (i.e., :class:`annotationlib.ForwardRef` object encapsulating
+    all metadata required to dynamically resolve at runtime a reference to a
+    referent target type hint that typically has yet to be defined in the
+    current lexical scope)
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator). Why? Because the value of the optional
+    ``exception_prefix`` parameter (usually) contextually depends on the
+    currently decorated callable and thus (effectively) prohibits memoization.
+
+    Parameters
+    ----------
+    hint : HintPep484749RefObjectType
+        Object-oriented forward reference type hint to be proxied.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
+
+    Returns
+    -------
+    type[BeartypeForwardRefSubbedABC]
+        Unsubscriptable forward reference proxy subclass proxying this hint.
+    '''
+    assert isinstance(hint, HintPep484749RefObjectType), (
+        f'{repr(hint)} not "annotationlib.ForwardRef" object.')
+
+    # Possibly undefined fully-qualified module name and possibly unqualified
+    # classname referred to by this forward reference.
+    hint_module_name, hint_type_name = get_hint_pep484749_ref_names(
+        hint=hint, exception_prefix=exception_prefix)
+
+    # Forward reference proxy proxying this PEP 749-compliant object-oriented
+    # forward reference type hint (i.e., "annotationlib.ForwardRef" object).
+    ref_proxy = _proxy_hint_ref(  # type: ignore[return-value]
+        #FIXME: The "BeartypeForwardRefSubbedABC" superclass *DEFINITELY* isn't
+        #quite right here, but (possibly) suffices for now. We'll take it! \o/
+        type_bases=BeartypeForwardRefSubbedABC_BASES,
+        scope_name=hint_module_name,
+        hint_name=hint_type_name,
+        exception_prefix=exception_prefix,
+    )
+
+    # Classify passed parameters with this proxy.
+    ref_proxy.__hint_pep749_ref_beartype__ = hint
+
+    # Return this proxy.
+    return ref_proxy
+
 # ....................{ PRIVATE ~ factories                }....................
-def _make_forwardref_subtype(
+def _proxy_hint_ref(
+    # Mandatory parameters.
     type_bases: TupleTypes,
+    scope_name: Optional[str],
     hint_name: str,
-    scope_name: str,
-    func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref,
+    exception_prefix: str,
+
+    # Optional parameters.
+    func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = None,
 ) -> BeartypeForwardRef:
     '''
     Create and return a new **forward reference subclass** (i.e., concrete
     subclass of the passed abstract base class (ABC) transparently deferring the
     resolution of the type hint with the passed name).
 
-    This factory is internally memoized for efficiency.
+    This getter is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator). Why? Because the value of the optional
+    ``exception_prefix`` parameter (usually) contextually depends on the
+    currently decorated callable and thus (effectively) prohibits memoization.
 
     Caveats
     -------
@@ -225,21 +321,23 @@ def _make_forwardref_subtype(
         subclass. For simplicity, this *must* be a 1-tuple ``(type_base,)``
         where ``type_base`` is a :class:`.BeartypeForwardRefSubbableABC`
         subclass.
+    scope_name : Optional[str]
+        Possibly ignored fully-qualified name of the lexical scope in which this
+        unresolved type hint was originally declared. See also the
+        :func:`.proxy_hint_pep484_ref_str_subbable` docstring for further details.
     hint_name : str
         Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of
         this unresolved type hint to be proxied.
-    scope_name : str
-        Possibly ignored fully-qualified name of the lexical scope in which this
-        unresolved type hint was originally declared. See also the
-        :func:`.make_forwardref_subbable_subtype` docstring for further details.
-    func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
+    func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref, default: None
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
         locally decorated callable if this forward reference proxy subtype
         proxies a stringified forward reference annotating a locally decorated
         callable *or* :data:`None` otherwise. See also the
         :attr:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
-        class variable docstring for further details.
+        class variable docstring for further details. Defaults to :data:`None`.
 
     Returns
     -------
@@ -253,54 +351,26 @@ def _make_forwardref_subtype(
         ``"."``-delimited Python identifiers.
     '''
 
-    # ....................{ MEMOIZE                        }....................
-    # Memoization of forward references is guaranteed to be safe despite the
-    # commonality of relative forward references that are contextually relative
-    # to the current module and possibly current nested class hierarchy being
-    # decorated in that module. Why? Because the caller is already guaranteed to
-    # have passed a fully-qualified "hint_name" and/or "scope_name". The caller
-    # has thus effectively passed the absolute name of a fully-qualified module
-    # to which this forward reference is relative. Altogether, this pair of
-    # "hint_name" and "scope_name" parameters uniquely refers to an absolute
-    # (rather than relative) module attribute. From the low-level perspective of
-    # this factory, relative forward references are high-level syntactic sugar
-    # the caller has already reduced on our behalf to equivalent absolute
-    # forward references and are thus of no interest or concern to this factory.
-    # Since memoization of absolute forward references is guaranteed to be safe,
-    # memoization is guaranteed to be safe here. So say we all.
-
-    # Tuple of all passed parameters (in arbitrary order).
-    args: BeartypeForwardRefArgs = (
-        type_bases, hint_name, scope_name, func_local_parent_codeobj_weakref)
-
-    # Forward reference proxy previously created and returned by a prior call to
-    # this function passed these parameters if any *OR* "None" otherwise (i.e.,
-    # if this is the first call to this function passed these parameters).
-    forwardref_subtype = _forwardref_args_to_forwardref_get(args, None)
-
-    # If this proxy has already been created, reuse and return this proxy as is.
-    if forwardref_subtype is not None:
-        return forwardref_subtype
-    # Else, this proxy has yet to be created.
-
     # ....................{ VALIDATE                       }....................
-    # Validate all passed parameters *AFTER* attempting to reuse a previously
-    # memoized forward reference, for efficiency.
+    assert isinstance(type_bases, tuple), f'{repr(type_bases)} not tuple.'
     assert len(type_bases) == 1, (
-        f'{repr(type_bases)} not 1-tuple of a single superclass.')
-    assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
+        f'{repr(type_bases)} not 1-tuple of one superclass.')
     assert isinstance(scope_name, str), f'{repr(scope_name)} not string.'
+    assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
     assert isinstance(
         func_local_parent_codeobj_weakref, NoneTypeOr[WeakrefCallableType]), (
         f'{repr(func_local_parent_codeobj_weakref)} neither weak reference '
-        f'nor "None".')
+        f'nor "None".'
+    )
 
     # If this attribute name is *NOT* a syntactically valid Python identifier,
     # raise an exception.
     die_unless_identifier(
         text=hint_name,
         exception_cls=BeartypeDecorHintForwardRefException,
-        exception_prefix='Forward reference ',
+        exception_prefix=exception_prefix,
     )
     # Else, this attribute name is a syntactically valid Python identifier.
 
@@ -316,49 +386,31 @@ def _make_forwardref_subtype(
 
     # ....................{ PROXY                          }....................
     # Forward reference proxy to be returned.
-    forwardref_subtype = make_type(
+    ref_proxy: BeartypeForwardRef = make_type(
         type_name=type_name,
         type_module_name=type_module_name,
         type_bases=type_bases,
         exception_cls=BeartypeDecorHintForwardRefException,
-        exception_prefix='Forward reference ',
+        exception_prefix=exception_prefix,
     )
 
     # Classify passed parameters with this proxy.
-    forwardref_subtype.__name_beartype__ = hint_name  # pyright: ignore
-    forwardref_subtype.__scope_name_beartype__ = scope_name  # pyright: ignore
-    forwardref_subtype.__func_local_parent_codeobj_weakref_beartype__ = (
+    ref_proxy.__scope_name_beartype__ = scope_name
+    ref_proxy.__name_beartype__ = hint_name
+
+    #FIXME: *LOL*. Sadly, the passed "exception_prefix" is unusable. Why?
+    #Because it's prefixed by "'$%ROOT_PITH_LABEL/~" and thus cached. Yikes. The
+    #culprit is almost certainly a *CACHED* reducer. The question then becomes:
+    #which *CACHED* reducers are inappropriately passing a cached
+    #"exception_prefix" down to this factory? Unfortunately, all such reducers
+    #will need to be refactored into equivalent *UNCACHED* reducers. *sigh*
+
+    # ref_proxy.__exception_prefix_beartype__ = (
+    #     f'{exception_prefix}forward reference ')
+    ref_proxy.__exception_prefix_beartype__ = 'Forward reference '
+
+    ref_proxy.__func_local_parent_codeobj_weakref_beartype__ = (
         func_local_parent_codeobj_weakref)
 
-    # Cache this proxy for reuse by subsequent calls to this factory function
-    # passed the same parameters.
-    _forwardref_args_to_forwardref[args] = forwardref_subtype
-
     # Return this proxy.
-    return forwardref_subtype
-
-# ....................{ PRIVATE ~ globals                  }....................
-_forwardref_args_to_forwardref: dict[
-    BeartypeForwardRefArgs, BeartypeForwardRef] = {}
-'''
-**Forward reference proxy cache** (i.e., dictionary mapping from the tuple of
-all parameters passed to each prior call of the
-:func:`._make_forwardref_subtype` factory function to the forward reference
-proxy dynamically created and returned by that call).
-
-This cache serves a dual purpose. Notably, this cache both enables:
-
-* External callers to iterate over all previously instantiated forward reference
-  proxies. This is particularly useful when responding to module reloading,
-  which requires that *all* previously cached types be uncached.
-* :func:`._make_forwardref_subtype` to internally memoize itself over its
-  passed parameters. Since the existing ``callable_cached`` decorator could
-  trivially do so as well, however, this is only a negligible side effect.
-'''
-
-
-_forwardref_args_to_forwardref_get = _forwardref_args_to_forwardref.get
-'''
-:meth:`dict.get` method bound to the :data:`._forwardref_args_to_forwardref`
-dictionary global (as a negligible micro-optimization).
-'''
+    return ref_proxy

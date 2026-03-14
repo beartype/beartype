@@ -13,7 +13,7 @@ on behalf of higher-level unit test submodules.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_subbable_subtype)
+    proxy_hint_pep484_ref_str_subbable)
 
 # ....................{ CONSTANTS                          }....................
 PACKAGE_NAME = 'beartype_test.a00_unit.data'
@@ -53,11 +53,12 @@ Fully-qualified name of the current test module.
 '''
 
 # ....................{ FORWARDREFS ~ invalid              }....................
-FORWARDREF_RELATIVE_CIRCULAR = make_forwardref_subbable_subtype(
-    # Unqualified basename of this global currently being declared.
-    hint_name='FORWARDREF_RELATIVE_CIRCULAR',
+FORWARDREF_RELATIVE_CIRCULAR = proxy_hint_pep484_ref_str_subbable(
     # Fully-qualified name of the current test module.
     scope_name=SCOPE_NAME,
+    # Unqualified basename of this global currently being declared.
+    hint_name='FORWARDREF_RELATIVE_CIRCULAR',
+    exception_prefix='',
 )
 '''
 **Circular forward reference proxy** (i.e., invalid proxy circularly and thus
@@ -69,10 +70,11 @@ own data submodule.
 '''
 
 # ....................{ FORWARDREFS ~ valid                }....................
-FORWARDREF_ABSOLUTE = make_forwardref_subbable_subtype(
-    hint_name=CLASS_NAME,
+FORWARDREF_ABSOLUTE = proxy_hint_pep484_ref_str_subbable(
     # Intentionally ignored fully-qualified name of this test submodule.
     scope_name=SCOPE_NAME,
+    hint_name=CLASS_NAME,
+    exception_prefix='',
 )
 '''
 Forward reference proxy to an unsubscripted type referenced by an absolute
@@ -80,19 +82,22 @@ Forward reference proxy to an unsubscripted type referenced by an absolute
 '''
 
 
-FORWARDREF_RELATIVE = make_forwardref_subbable_subtype(
-    hint_name=CLASS_BASENAME, scope_name=MODULE_NAME)
+FORWARDREF_RELATIVE = proxy_hint_pep484_ref_str_subbable(
+    scope_name=MODULE_NAME,
+    hint_name=CLASS_BASENAME,
+    exception_prefix='',
+)
 '''
 Forward reference proxy to an unsubscripted type referenced by a relative (i.e.,
 unqualified) name.
 '''
 
 
-FORWARDREF_MODULE_ABSOLUTE = make_forwardref_subbable_subtype(
-    hint_name=MODULE_NAME,
-
+FORWARDREF_MODULE_ABSOLUTE = proxy_hint_pep484_ref_str_subbable(
     # Intentionally ignored fully-qualified name of this test submodule.
     scope_name=SCOPE_NAME,
+    hint_name=MODULE_NAME,
+    exception_prefix='',
 )
 '''
 Forward reference proxy to a submodule of a subpackage referenced with an

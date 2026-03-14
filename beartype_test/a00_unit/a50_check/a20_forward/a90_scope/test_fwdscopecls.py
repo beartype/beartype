@@ -55,6 +55,8 @@ def test_beartype_forward_scope() -> None:
         # Last, the fully-qualified name of the forward reference-specific data
         # submodule imported from above (as a fallback).
         scope_name='beartype_test.a00_unit.data.data_type',
+        # Ignorable remaining mandatory parameters.
+        exception_prefix='',
     )
 
     # ....................{ PASS ~ resolve                 }....................
@@ -106,8 +108,10 @@ def test_beartype_forward_scope() -> None:
     # Assert that attempting to instantiate a forward scope with a scope name
     # that is *NOT* a valid Python identifier raises the expected exception.
     with raises(BeartypeDecorHintForwardRefException):
-        BeartypeForwardScope(scope_name=(
-            "He breath'd fierce breath against the sleepy portals,"))
+        BeartypeForwardScope(
+            scope_name="He breath'd fierce breath against the sleepy portals,",
+            exception_prefix='',
+        )
 
     # Assert that this forward scope accessed by an arbitrary non-string object
     # raises the expected exception.
