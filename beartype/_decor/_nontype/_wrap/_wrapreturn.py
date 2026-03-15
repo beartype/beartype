@@ -164,7 +164,10 @@ def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
                 # Note that this memoized code factory requires parameters to be
                 # passed positionally for efficiency.
                 pith_check_expr, func_scope = make_code_raiser_func_pith_check(
-                    decor_meta, hint_sane, PITH_KIND_FUNC_RETURN)
+                    decor_meta=decor_meta,
+                    hint_sane=hint_sane,
+                    pith_kind=PITH_KIND_FUNC_RETURN,
+                )
 
                 # Unmemoize this snippet against this return.
                 code_return_check = unmemoize_func_pith_check_expr(

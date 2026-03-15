@@ -268,14 +268,8 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 # Else, this hint is unignorable.
 
                 #FIXME: Fundamentally unsafe and thus temporarily disabled *FOR
-                #THE MOMENT.* The issue is that our current implementation of
-                #the is_bearable() tester internally called by this function
-                #refuses to resolve relative forward references -- which is
-                #obviously awful. Ideally, that tester *ABSOLUTELY* should
-                #resolve relative forward references. Until it does, however,
-                #this is verboten dark magic that is unsafe in the general case.
-                #FIXME: Note that there exist even *MORE* edge cases, however:
-                #@dataclass fields, which violate typing semantics: e.g.,
+                #THE MOMENT.* @dataclass fields, for example, violate typing
+                #semantics: e.g.,
                 #    from dataclasses import dataclass, field
                 #    from typing import Dict
                 #
@@ -332,7 +326,10 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 # Note that this memoized code factory requires parameters to be
                 # passed positionally for efficiency.
                 pith_check_expr, func_scope = make_code_raiser_func_pith_check(
-                    decor_meta, hint_sane, PITH_KIND_FUNC_ARG)
+                    decor_meta=decor_meta,
+                    hint_sane=hint_sane,
+                    pith_kind=PITH_KIND_FUNC_ARG,
+                )
 
                 # Unmemoize this snippet against the current parameter.
                 code_arg_check = unmemoize_func_pith_check_expr(
@@ -376,8 +373,8 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 #FIXME: Embed the kind of parameter both here and above as well
                 #(e.g., "positional-only", "keyword-only", "variadic
                 #positional"), ideally by improving the existing
-                #prefix_callable_arg_name() function to introspect this kind from
-                #the callable code object.
+                #prefix_callable_arg_name() function to introspect this kind
+                #from the callable code object.
                 target_str=prefix_callable_arg_name(
                     func=decor_meta.func_wrappee,
                     arg_name=arg_name,

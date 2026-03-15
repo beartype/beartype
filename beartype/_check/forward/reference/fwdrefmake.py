@@ -404,6 +404,57 @@ def _proxy_hint_ref(
     #which *CACHED* reducers are inappropriately passing a cached
     #"exception_prefix" down to this factory? Unfortunately, all such reducers
     #will need to be refactored into equivalent *UNCACHED* reducers. *sigh*
+    #FIXME: Actually, I wonder if "_wrapreturn" and "_wrapargs" might be
+    #inappropriately memoizing "exception_prefix". They probably are. *sigh*
+    #FIXME: OH. I SEE. "_wrapreturn" and "_wrapargs" ape memoizing
+    #"exception_prefix" appropriately. Which means... it's pretty much
+    #impossible to print a proper exception prefix. Which means:
+    #* We wasted all of our time. Woops.
+    #* Document in the "BeartypeForwardRefABC" superclass exactly why no
+    #  "__exception_prefix_beartype__" class variable is defined.
+    #* Remove "ref_proxy.__exception_prefix_beartype__" entirely.
+    #* *RESTORE MEMOIZATION TO THIS METHOD*. That's critical.
+    #FIXME: *OH, HO.* We were right after all. We just need (waitforit) yet
+    #another new mandatory reduce_hint() parameter:
+    #"exception_prefix_uncachable", intended to be used basically *ONLY* for
+    #forward references. It is what it is. *sigh*
+    #FIXME: *OKAY*. Looks like we want to:
+    #* Add a new "exception_prefix_uncachable" instance variable to our existing
+    #  "HintSane" dataclass.
+    #* In the existing "_wrapargs" and "_wrapreturn" submodules:
+    #  * Define a new "exception_prefix" local variable resembling:
+    #        exception_prefix = prefix_callable_arg_name(
+    #            func=decor_meta.func_wrappee,
+    #            arg_name=arg_name,
+    #            is_color=decor_meta.conf.is_color,
+    #        )
+    #  * Replace all non-memoized uses of "EXCEPTION_PLACEHOLDER" in those
+    #    submodules with "exception_prefix".
+    #  * Refactor all prior calls to prefix_callable_arg_name() in those
+    #    submodules with "exception_prefix".
+    #  * Narrow the nested "try: ... with catch_warnings(...):" blocks to the
+    #    minimal code that still requires memoization. Pretty sure that's just
+    #    the make_code_raiser_func_pith_check() factory! Great. A dramatic
+    #    simplification is now feasible:
+    #    * Shift the body of the unmemoize_func_pith_check_expr() function
+    #      directly into the body of the make_code_raiser_func_pith_check()
+    #      factory.
+    #    * Excise the unmemoize_func_pith_check_expr() function and parent
+    #      "_wraputil" submodule entirely.
+    #    * We can go ever further, though! Shift those nested "try: ... with
+    #      catch_warnings(...):" blocks directly into
+    #      make_code_raiser_func_pith_check(), too! \o/
+    #* And here's the important one. Generalize *ALL* sanifiers and reducers
+    #  accordingly. For example:
+    #  * Generalize sanify_hint_root_func() to internally set:
+    #        hint_sane.exception_prefix_uncachable = exception_prefix
+    #  * Generalize reducers to accept an additional
+    #    "exception_prefix_uncachable" parameter.
+    #* Ensure that "hint_sane_parent.exception_prefix_uncachable" is correctly
+    #  propagated during sanification and reduction onto child "hint_sane"
+    #  objects. Can't quite recall how we do that, currently. The
+    #  hints_meta.sanify_hint_child() method might be pertinent here. *shrug*
+    #* Generalize the "beartype._check.error" subpackage similarly if needed.
 
     # ref_proxy.__exception_prefix_beartype__ = (
     #     f'{exception_prefix}forward reference ')
