@@ -20,17 +20,17 @@ from beartype._cave._cavefast import (
     WeakrefCallableType,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.typing.datatyping import (
-    BeartypeForwardRef,
-    FuncLocalParentCodeObjectWeakref,
-    LexicalScope,
-    TupleTypes,
-)
-from beartype._check.forward.reference.fwdrefabc import (
+from beartype._check.forward.reference._fwdrefabc import (
     BeartypeForwardRefSubbableABC,
     BeartypeForwardRefSubbableABC_BASES,
     BeartypeForwardRefSubbedABC,
     BeartypeForwardRefSubbedABC_BASES,
+)
+from beartype._check.forward.reference.fwdreftyping import BeartypeForwardRef
+from beartype._data.typing.datatyping import (
+    FuncLocalParentCodeObjectWeakref,
+    LexicalScope,
+    TupleTypes,
 )
 from beartype._util.cls.utilclsmake import make_type
 from beartype._util.hint.pep.proposal.pep484749 import (
@@ -54,7 +54,7 @@ def proxy_hint_pep484_ref_str_subbable(
     base class (ABC)) deferring the resolution of the referent target type hint
     with the passed :pep:`484`-compliant stringified module and hint names in a
     permissive manner permitting this hint to be subscripted by any arbitrary
-    child type hints.
+    child type hints).
 
     This getter is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator). Why? Because the value of the optional
@@ -82,7 +82,7 @@ def proxy_hint_pep484_ref_str_subbable(
         locally decorated callable if this forward reference proxy subtype
         proxies a stringified forward reference annotating a locally decorated
         callable *or* :data:`None` otherwise. See also the
-        :attr:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
+        :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details.
 
     Returns
@@ -122,7 +122,7 @@ def proxy_hint_pep484_ref_str_subbed(
     base class (ABC)) deferring the resolution of the referent target type hint
     with the passed :pep:`484`-compliant stringified module and hint names in a
     strict manner prohibiting this hint from being re-subscripted by any further
-    child type hints.
+    child type hints).
 
     This getter is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator). Why? Because the value of the optional
@@ -146,7 +146,7 @@ def proxy_hint_pep484_ref_str_subbed(
         locally decorated callable if this forward reference proxy subtype
         proxies a stringified forward reference annotating a locally decorated
         callable *or* :data:`None` otherwise. See also the
-        :attr:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
+        :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details.
     args : tuple
         Tuple of all positional arguments subscripting this forward reference.
@@ -168,7 +168,7 @@ def proxy_hint_pep484_ref_str_subbed(
     assert isinstance(kwargs, dict), f'{repr(kwargs)} not dictionary.'
 
     # Subscripted forward reference proxy to be returned.
-    ref_proxy = _proxy_hint_ref(  # type: ignore[return-value]
+    ref_proxy: type[BeartypeForwardRefSubbedABC] = _proxy_hint_ref(  # type: ignore[assignment]
         type_bases=BeartypeForwardRefSubbedABC_BASES,
         scope_name=scope_name,
         hint_name=hint_name,
@@ -196,7 +196,7 @@ def proxy_hint_pep749_ref_object(
     type hint** (i.e., :class:`annotationlib.ForwardRef` object encapsulating
     all metadata required to dynamically resolve at runtime a reference to a
     referent target type hint that typically has yet to be defined in the
-    current lexical scope)
+    current lexical scope).
 
     This getter is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator). Why? Because the value of the optional
@@ -225,7 +225,7 @@ def proxy_hint_pep749_ref_object(
 
     # Forward reference proxy proxying this PEP 749-compliant object-oriented
     # forward reference type hint (i.e., "annotationlib.ForwardRef" object).
-    ref_proxy = _proxy_hint_ref(  # type: ignore[return-value]
+    ref_proxy: type[BeartypeForwardRefSubbedABC] = _proxy_hint_ref(  # type: ignore[assignment]
         #FIXME: The "BeartypeForwardRefSubbedABC" superclass *DEFINITELY* isn't
         #quite right here, but (possibly) suffices for now. We'll take it! \o/
         type_bases=BeartypeForwardRefSubbedABC_BASES,
@@ -336,7 +336,7 @@ def _proxy_hint_ref(
         locally decorated callable if this forward reference proxy subtype
         proxies a stringified forward reference annotating a locally decorated
         callable *or* :data:`None` otherwise. See also the
-        :attr:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
+        :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details. Defaults to :data:`None`.
 
     Returns
@@ -455,7 +455,6 @@ def _proxy_hint_ref(
     #  objects. Can't quite recall how we do that, currently. The
     #  hints_meta.sanify_hint_child() method might be pertinent here. *shrug*
     #* Generalize the "beartype._check.error" subpackage similarly if needed.
-
     # ref_proxy.__exception_prefix_beartype__ = (
     #     f'{exception_prefix}forward reference ')
     ref_proxy.__exception_prefix_beartype__ = 'Forward reference '

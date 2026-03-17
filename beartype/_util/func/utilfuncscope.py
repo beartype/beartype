@@ -15,13 +15,14 @@ from beartype.roar._roarexc import (
     _BeartypeUtilCallableScopeException,
     _BeartypeUtilCallableScopeNotFoundException,
 )
-from beartype._util.utilobject import get_object_basename_scoped
 from beartype._cave._cavefast import CallableFrameType
 from beartype._data.typing.datatyping import (
     LexicalScope,
     TypeException,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDictStrToAny
+from beartype._util.utilobject import get_object_basename_scoped
 from collections.abc import Callable
 from typing import Optional
 
@@ -134,20 +135,42 @@ def get_func_locals_frame(
     **kwargs
 ) -> tuple[LexicalScope, Optional[CallableFrameType]]:
     '''
-    Safely mutable **local scope** (i.e., dictionary mapping from the name to
-    value of each locally scoped attribute declared by a parent callable or type
-    transitively declaring that callable) and associated **local stack frame**
-    if the passed callable is **nested** (i.e., is a method *or* is a non-method
-    callable declared in the body of another callable) *or* the empty dictionary
-    and :data:`None` otherwise (i.e., if that callable is a global function
-    directly declared by a module).
-
-    As a caller convenience, this getter intentionally returns a new mutable
-    dictionary rather than the immutable non-dictionary originally providing
-    this stack frame's global scope.
+    Possibly immutable **local scope** (i.e., dictionary mapping from the name
+    to value of each locally scoped attribute declared by a parent callable or
+    type transitively declaring that callable) and associated **local stack
+    frame** if the passed callable is **nested** (i.e., is a method *or* is a
+    non-method callable declared in the body of another callable) *or* the empty
+    dictionary and :data:`None` otherwise (i.e., if that callable is a global
+    function directly declared by a module).
 
     Caveats
     -------
+    **This getter calls the low-level** :func:`sys._getframe` **getter.** If
+    that getter is undefined, this getter treats the passed callable as
+    module-scoped by returning the empty dictionary rather than raising an
+    exception. Since all standard Python implementations (e.g., CPython, PyPy)
+    define that getter, this should typically *not* be a real-world concern.
+
+    **This getter returns either the immutable empty frozen dictionary** (i.e.,
+    :class:`.FROZENDICT_EMPTY** singleton) **or a new mutable non-empty
+    dictionary.** Why? Efficiency. Callers intending to mutate the returned
+    dictionary should thus explicitly test for and handle the immutable empty
+    frozen dictionary (e.g., via coercion into :class:`dict`). Note that, in
+    either case, this getter *never* returns the immutable non-dictionary
+    originally providing this stack frame's global scope. Why? Because no one
+    ever wants or expects a lexical scope to be a non-dictionary.
+    Non-dictionaries are useless in this context.
+
+    **This getter returns a strong reference to the stack frame on the current
+    call stack encapsulating the call to the passed callable.** Holding strong
+    references to stack frames prevents Python from garbage-collecting *any*
+    global or local attributes accessible to those frames and is thus strongly
+    (...get it?) discouraged. Callers should thus either immediately (in order):
+
+    #. Demote that strong reference to a weak reference (e.g., by wrapping that
+       reference with the standard :class:`weakref.ref` type).
+    #. Delete that strong reference in the caller's scope (e.g., via ``del``).
+
     **This getter transparently supports methods.** In Python, methods are
     lexically nested in the scope encapsulating all previously declared **class
     variables** (i.e., variables declared from class scope and thus accessible
@@ -196,24 +219,6 @@ def get_func_locals_frame(
       objects are thus ignored rather than yielded.
     * Originate outside a module. Ergo, objects only dynamically defined
       in-memory with *no* parent module are thus ignored rather than yielded.
-
-    Caveats
-    -------
-    **This getter calls the low-level** :func:`sys._getframe` **getter.** If
-    that getter is undefined, this getter treats the passed callable as
-    module-scoped by returning the empty dictionary rather than raising an
-    exception. Since all standard Python implementations (e.g., CPython, PyPy)
-    define that getter, this should typically *not* be a real-world concern.
-
-    **This getter returns a strong reference to the stack frame on the current
-    call stack encapsulating the call to the passed callable.** Holding strong
-    references to stack frames prevents Python from garbage-collecting *any*
-    global or local attributes accessible to those frames and is thus strongly
-    (...get it?) discouraged. Callers should thus either immediately (in order):
-
-    #. Demote that strong reference to a weak reference (e.g., by wrapping that
-       reference with the standard :class:`weakref.ref` type).
-    #. Delete that strong reference in the caller's scope (e.g., via ``del``).
 
     **This getter is inefficient and should thus only be called if necessary.**
     Deciding the local scope for any callable exhibits worst-case linear time
@@ -698,7 +703,8 @@ whose IDs are positive. It's complicated. Did our hand-waving not convince you!?
 '''
 
 # ....................{ PRIVATE ~ globals : tuples         }....................
-_GET_FUNC_LOCALS_FRAME_NONE = (FROZENDICT_EMPTY, None)
+_GET_FUNC_LOCALS_FRAME_NONE: tuple[FrozenDictStrToAny, None] = (  # type: ignore[assignment]
+    FROZENDICT_EMPTY, None)
 '''
 2-tuple ``(scope_local, scope_frame)`` to be returned from the
 :func:`.get_func_locals_frame` getter for the common case that the passed

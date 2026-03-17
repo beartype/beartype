@@ -876,7 +876,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # One-liner of Ultimate Beauty: we invoke thee in this line!
         return f'@beartyped {self.func_wrapper_name}() wrapper'
 
-# ....................{ CONTEXT MANAGERS                   }....................
+# ....................{ CONTEXTS                           }....................
 @contextmanager
 def new_decor_meta(**kwargs) -> Iterator[BeartypeCallDecorMeta]:
     '''

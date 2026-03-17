@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ STRINGS                            }....................
-EXCEPTION_PLACEHOLDER = '$%ROOT_PITH_LABEL/~'
+EXCEPTION_PLACEHOLDER = EXCEPTION_PREFIX = '$%ROOT_PITH_LABEL/~'
 '''
 Non-human-readable source substring to be globally replaced by a human-readable
 target substring in the messages of memoized exceptions passed to the
@@ -88,4 +88,20 @@ target substring in the messages of memoized exceptions passed to the
 :func:`reraise_exception` function caused by violations raised when
 type-checking the default values of optional parameters for
 :func:`beartype.beartype`-decorated callables.
+'''
+
+
+EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL = (
+    f'{EXCEPTION_PLACEHOLDER}wrapper parameter ')
+'''
+Human-readable substring describing a new wrapper parameter required by the
+current root type hint in exception messages.
+'''
+
+
+EXCEPTION_PREFIX_HINT = f'{EXCEPTION_PLACEHOLDER}type hint '
+'''
+Human-readable substring describing the current root type hint generically
+(i.e., agnostic of the specific PEP standard to which this hint conforms) in
+exception messages.
 '''

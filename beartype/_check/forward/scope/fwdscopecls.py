@@ -35,9 +35,9 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import WeakrefCallableType
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.forward.reference.fwdrefabc import (
+from beartype._check.forward.reference._fwdrefabc import (
     BeartypeForwardRefSubbableABC)
-from beartype._check.forward.reference.fwdrefmake import (
+from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
 from beartype._data.py.databuiltins import BUILTIN_NAME_TO_VALUE
 from beartype._data.typing.datatyping import (
@@ -115,7 +115,7 @@ class BeartypeForwardScope(LexicalScope):
         defines the locally decorated callable if this forward reference
         proxy subtype proxies a stringified forward reference annotating a
         locally decorated callable *or* :data:`None` otherwise. See also the
-        :attr:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
+        :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details.
     _hint_names_destringified : set[str]
         Set of the relative (i.e., unqualified) or absolute (i.e.,
@@ -201,7 +201,7 @@ class BeartypeForwardScope(LexicalScope):
             defines the locally decorated callable if this forward reference
             proxy subtype proxies a stringified forward reference annotating a
             locally decorated callable *or* :data:`None` otherwise. See also the
-            :attr:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
+            :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
             class variable for further details.
         scope_dict : LexicalScope, default: scope_builtins
             Initial dictionary from which to populate this forward scope.
@@ -308,7 +308,7 @@ class BeartypeForwardScope(LexicalScope):
 
         This dunder method transparently replaces this unresolved type hint with
         a **forward reference proxy** (i.e., concrete subclass of the private
-        :class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
+        :class:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC`
         abstract base class (ABC), which resolves this type hint on the first
         call to the :func:`isinstance` builtin whose second argument is that
         subclass).
@@ -382,7 +382,7 @@ class BeartypeForwardScope(LexicalScope):
         Since forward reference proxies are types *and* since types are callable
         (in the sense that "calling" a type instantiates that type), forward
         reference proxies are callable. However, they're not. The
-        :class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
+        :class:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC`
         superclass prohibits instantiation by defining a ``__new__()`` dunder
         method that unconditionally raises exceptions, causing :mod:`pytest` to
         raise the same exceptions on attempting to ``return tbh(excinfo)``.

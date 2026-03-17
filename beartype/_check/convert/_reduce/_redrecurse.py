@@ -11,13 +11,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Optional,
-)
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.metadata.hint.hintsane import HintSane
+from beartype._check.metadata.hint.hintsane import (
+    HintSane,
+    FrozenDictHintToInt,
+)
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+from typing import Optional
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -190,7 +191,8 @@ def make_hint_sane_recursable(
     if hint_parent_sane is None:
         # Recursion guard recording the recursable form of this root hint to
         # have now been visited exactly once.
-        hint_recursable_to_depth = FrozenDict({hint_recursable: 1})
+        hint_recursable_to_depth: FrozenDictHintToInt = FrozenDict(
+            {hint_recursable: 1})
 
         # Metadata encapsulating this hint and recursion guard.
         hint_sane = HintSane(

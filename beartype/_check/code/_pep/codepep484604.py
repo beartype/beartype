@@ -45,7 +45,7 @@ from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
     release_instance,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+# from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep

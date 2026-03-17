@@ -20,7 +20,7 @@ from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
     LexicalScope,
 )
-from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.forward.reference._fwdrefmeta import BeartypeForwardRefMeta
 from typing import (
     NoReturn,
     Optional,
@@ -42,8 +42,8 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
     Abstract base class (ABC) of all **forward reference proxy subclasses**
     (i.e., classes whose :class:`.BeartypeForwardRefMeta` metaclass defers the
-    resolution of :pep:`484`-compliant stringified forward reference type hints
-    referencing actual type hints that have yet to be defined).
+    resolution of forward reference type hints referencing type hints that have
+    yet to be defined in the lexical scopes of external callers).
 
     Caveats
     -------
@@ -481,7 +481,7 @@ class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
         '''
 
         # Avoid circular import dependencies.
-        from beartype._check.forward.reference.fwdrefmake import (
+        from beartype._check.forward.reference.fwdrefproxy import (
             proxy_hint_pep484_ref_str_subbed)
 
         # Create and return a new subscripted forward reference proxy extending

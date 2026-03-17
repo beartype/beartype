@@ -28,7 +28,7 @@ def test_beartype_forward_scope() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype._check.forward.reference.fwdreftest import (
-        is_beartype_forwardref)
+        is_beartype_ref_proxy)
     from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -71,7 +71,7 @@ def test_beartype_forward_scope() -> None:
     # parameter by encapsulating those references in forward reference proxies.
     SubclassSubclassProxy = scope_forward.resolve_pep484_hint_str(
         'SubclassSubclass')
-    assert is_beartype_forwardref(SubclassSubclassProxy) is True
+    assert is_beartype_ref_proxy(SubclassSubclassProxy) is True
 
     # Assert that these proxies successfully proxy isinstance() checks against
     # the classes they proxy.

@@ -609,7 +609,7 @@ def is_type_isinstanceable(
 
     # Avoid circular import dependencies.
     from beartype._check.forward.reference.fwdreftest import (
-        is_beartype_forwardref)
+        is_beartype_ref_proxy)
     # print('Start!')
 
     # If this object is *NOT* a class, immediately return false.
@@ -624,7 +624,7 @@ def is_type_isinstanceable(
     #
     # Note that this test is efficient and thus tested *BEFORE*
     # isinstanceability, which is less efficient.
-    elif is_forwardref_valid and is_beartype_forwardref(cls):
+    elif is_forwardref_valid and is_beartype_ref_proxy(cls):
         # print(f'{repr(cls)} is forward reference proxy!')
         return True
     # Else, either the caller prefers to disregard this distinction *OR* this
@@ -834,7 +834,7 @@ def is_type_issubclassable(
 
     # Avoid circular import dependencies.
     from beartype._check.forward.reference.fwdreftest import (
-        is_beartype_forwardref)
+        is_beartype_ref_proxy)
 
     # If this object is *NOT* a class, immediately return false.
     if not isinstance(cls, type):
@@ -847,7 +847,7 @@ def is_type_issubclassable(
     #
     # Note that this test is efficient and thus tested *BEFORE*
     # isinstanceability, which is less efficient.
-    elif is_forwardref_valid and is_beartype_forwardref(cls):
+    elif is_forwardref_valid and is_beartype_ref_proxy(cls):
         return True
     # Else, either the caller prefers to disregard this distinction *OR* this
     # class is not a forward reference proxy type.

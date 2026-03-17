@@ -19,8 +19,9 @@ from beartype._check.checkmake import (
     make_code_raiser_func_pep484_noreturn_check,
 )
 from beartype._check.convert.convmain import sanify_hint_root_func
-from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
+from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._data.code.func.datacodefuncwrap import CODE_CALL_CHECKED_format
 from beartype._data.code.pep.datacodepep484 import PEP484_CODE_CHECK_NORETURN
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import (
@@ -30,9 +31,6 @@ from beartype._data.func.datafuncarg import (
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.code.func.datacodefuncwrap import CODE_CALL_CHECKED_format
-from beartype._decor._nontype._wrap._wraputil import (
-    unmemoize_func_pith_check_expr)
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.kind.maplike.utilmapset import update_mapping
@@ -147,10 +145,9 @@ def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
                 # Code snippet handling the previously generated violation by
                 # either raising that violation as a fatal exception *OR*
                 # emitting that violation as a non-fatal warning.
-                (
-                    code_noreturn_violation,
-                    func_scope,
-                ) = make_code_raiser_func_pep484_noreturn_check(decor_meta.conf)
+                code_noreturn_violation, func_scope = (
+                    make_code_raiser_func_pep484_noreturn_check(
+                        decor_meta.conf))
 
                 # Full code snippet to be returned.
                 func_wrapper_code = (
@@ -159,19 +156,19 @@ def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
             #
             # If this hint is unignorable...
             elif hint_sane is not HINT_SANE_IGNORABLE:
+                #FIXME: Deal with "beartype_ref_proxies", please. *sigh*
                 # Code snippet type-checking any arbitrary return.
                 #
                 # Note that this memoized code factory requires parameters to be
                 # passed positionally for efficiency.
-                pith_check_expr, func_scope = make_code_raiser_func_pith_check(
+                (
+                    code_return_check,
+                    func_scope,
+                    beartype_ref_proxies,
+                ) = make_code_raiser_func_pith_check(
                     decor_meta=decor_meta,
                     hint_sane=hint_sane,
                     pith_kind=PITH_KIND_FUNC_RETURN,
-                )
-
-                # Unmemoize this snippet against this return.
-                code_return_check = unmemoize_func_pith_check_expr(
-                    pith_check_expr=pith_check_expr,
                     pith_repr=ARG_NAME_RETURN_REPR,
                 )
 

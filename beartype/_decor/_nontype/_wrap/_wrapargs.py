@@ -40,8 +40,6 @@ from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
-from beartype._decor._nontype._wrap._wraputil import (
-    unmemoize_func_pith_check_expr)
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.arg.utilfuncargiter import (
@@ -321,19 +319,19 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 # Else, this kind of parameter is supported. Ergo, this code is
                 # non-"None".
 
+                #FIXME: Deal with "beartype_ref_proxies", please. *sigh*
                 # Code snippet type-checking any parameter with arbitrary name.
                 #
                 # Note that this memoized code factory requires parameters to be
                 # passed positionally for efficiency.
-                pith_check_expr, func_scope = make_code_raiser_func_pith_check(
+                (
+                    code_arg_check,
+                    func_scope,
+                    beartype_ref_proxies,
+                ) = make_code_raiser_func_pith_check(
                     decor_meta=decor_meta,
                     hint_sane=hint_sane,
                     pith_kind=PITH_KIND_FUNC_ARG,
-                )
-
-                # Unmemoize this snippet against the current parameter.
-                code_arg_check = unmemoize_func_pith_check_expr(
-                    pith_check_expr=pith_check_expr,
                     pith_repr=get_hint_repr(arg_name),
                 )
 
@@ -347,7 +345,6 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 # Merge the local scope required to check this parameter into
                 # the local scope required by the current wrapper function.
                 update_mapping(decor_meta.func_wrapper_locals, func_scope)
-
             # If one or more warnings were issued, reissue these warnings with
             # each placeholder substring (i.e., "EXCEPTION_PLACEHOLDER"
             # instance) replaced by a human-readable description of this

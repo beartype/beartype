@@ -49,7 +49,7 @@ from typing import Optional
 #decoration time that this function is typically called at. If this hint either:
 #* Is itself a forward reference proxy, ignore rather than validate this hint as
 #  a subhint of these bounded constraints. Doing so is trivial by simply calling
-#  "is_beartype_forwardref(hint)" here.
+#  "is_beartype_ref_proxy(hint)" here.
 #* Is *NOT* itself a forward reference proxy but is transitively subscripted by
 #  one or more forward reference proxies, ignore rather than validate this hint
 #  as a subhint of these bounded constraints. Doing so is *EXTREMELY

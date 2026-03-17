@@ -29,16 +29,13 @@ from beartype._util.utilobjmake import permute_object
 from collections.abc import Iterable
 
 # ....................{ HINTS                              }....................
-FrozenDictHintToInt = dict[Hint, int]
+# Note that this hint is intentionally defined here rather than in the 
+# "beartype._util.kind.maplike.utilmapfrozen" submodule imported from above,
+# which would otherwise be preferable. Why? To avoid circular imports. "Ugh!"
+FrozenDictHintToInt = FrozenDict[Hint, int]
 '''
 PEP-compliant type hint matching any dictionary itself mapping from
 PEP-compliant type hints to integers.
-
-Caveats
--------
-This hint currently erroneously matches mutable rather than immutable
-dictionaries. While the latter would be preferable, Python lacks a builtin
-immutable dictionary type and thus support for typing such types. So it goes.
 '''
 
 # ....................{ METACLASSES                        }....................

@@ -110,19 +110,19 @@ from beartype._cave._cavefast import (
     Pep695ParameterizableTypes,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.forward.reference.fwdrefmake import (
+from beartype._check.forward.reference._fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
-from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
-from beartype._data.typing.datatypingport import (
-    Hint,
-    TypeIs,
-)
 from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep695Parameterizable,
     TuplePep484612646TypeArgsPacked,
     TypeException,
     TypeStack,
+)
+from beartype._data.typing.datatypingport import (
+    Hint,
+    TypeIs,
 )
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
@@ -652,7 +652,7 @@ def iter_hint_pep695_unsubbed_forwardrefs(
 ) -> Iterable[BeartypeForwardRefMeta]:
     '''
     Iteratively create and yield one **forward reference proxy** (i.e.,
-    :class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
+    :class:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC`
     subclass) for each :pep:`484`-compliant stringified relative forward
     reference in the passed :pep:`695`-compliant **unsubscripted type alias**
     (i.e., object created by a statement of the form ``type {alias_name} =

@@ -13,9 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+from typing import Any
 
 # ....................{ DICTS                              }....................
-FROZENDICT_EMPTY = FrozenDict()
+FROZENDICT_EMPTY: FrozenDict[Any, Any] = FrozenDict()
 '''
 **Empty frozen dictionary** (i.e., :class:`.FrozenDict` object containing *no*
 key-value pairs).

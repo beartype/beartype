@@ -7,7 +7,7 @@
 Beartype **forward reference factory** unit tests.
 
 This submodule unit tests the
-:func:`beartype._check.forward.reference.fwdrefmake` submodule.
+:func:`beartype._check.forward.reference.fwdrefproxy` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,7 +20,7 @@ This submodule unit tests the
 def test_proxy_hint_pep484_ref_str_subbable() -> None:
     '''
     Test the
-    :func:`beartype._check.forward.reference.fwdrefmake.proxy_hint_pep484_ref_str_subbable`
+    :func:`beartype._check.forward.reference.fwdrefproxy.proxy_hint_pep484_ref_str_subbable`
     factory.
     '''
 

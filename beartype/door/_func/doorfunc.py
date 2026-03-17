@@ -230,9 +230,6 @@ def is_bearable(
     # high-level type-checking tester function.
     #
     # Note that parameters are intentionally passed positionally for efficiency.
-    # Since make_func_tester() is memoized, passing parameters by keyword would
-    # raise a non-fatal
-    # "_BeartypeUtilCallableCachedKwargsWarning" warning.
     func_tester = make_func_checker(
         hint,  # pyright: ignore
         conf,

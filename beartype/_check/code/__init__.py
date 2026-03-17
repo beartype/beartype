@@ -2625,7 +2625,7 @@
 #      previously called _express_hints_meta_scope_type_ref() function, then
 #      *THIS REFERENCE INDICATES A RECURSIVE TYPE HINT.* In this case:
 #      * Replace this forward reference with a new recursive type-checking
-#        "beartype._check.forward.reference.fwdrefabc.BeartypeForwardRef_{forwardref}"
+#        "beartype._check.forward.reference._fwdrefabc.BeartypeForwardRef_{forwardref}"
 #        subclass whose is_instance() tester method recursively calls itself
 #        indefinitely. If doing so generates a "RecursionError", @beartype
 #        considers that the user's problem. *wink*

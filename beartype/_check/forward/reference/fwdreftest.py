@@ -14,14 +14,18 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.forward.reference.fwdreftyping import BeartypeForwardRef
+from beartype._check.forward.reference._fwdrefmeta import BeartypeForwardRefMeta
+from beartype._data.typing.datatypingport import TypeIs
 
 # ....................{ TESTERS                            }....................
-def is_beartype_forwardref(obj: object) -> bool:
+def is_beartype_ref_proxy(obj: object) -> TypeIs[BeartypeForwardRef]:
     '''
-    :data:`True` only if the passed object is a **forward reference proxy**
-    (i.e., :mod:`beartype`-specific class whose metaclass is
-    class:`.BeartypeForwardRefMeta`).
+    :data:`True` only if the passed object is a :mod:`beartype`-specific
+    **forward reference proxy** (i.e., class whose
+    :class:`.BeartypeForwardRefMeta` metaclass defers the resolution of a
+    forward reference type hint referencing a type hint that has yet to be
+    defined in the lexical scope of an external caller).
 
     Caveats
     -------

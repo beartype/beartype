@@ -82,7 +82,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavefast import HintPep484749RefObjectType
-from beartype._check.forward.reference.fwdrefmake import (
+from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable,
     proxy_hint_pep749_ref_object,
 )

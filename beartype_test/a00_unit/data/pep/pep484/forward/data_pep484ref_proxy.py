@@ -5,14 +5,14 @@
 
 '''
 Test-wide **forward reference proxy** (i.e., low-level objects created by the
-:func:`beartype._check.forward.reference.fwdrefmake` submodule) data submodule.
+:func:`beartype._check.forward.reference.fwdrefproxy` submodule) data submodule.
 
 This submodule predefines forward reference proxies that test known edge cases
 on behalf of higher-level unit test submodules.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.forward.reference.fwdrefmake import (
+from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
 
 # ....................{ CONSTANTS                          }....................

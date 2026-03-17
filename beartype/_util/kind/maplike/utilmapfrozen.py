@@ -18,21 +18,21 @@ prohibiting modification).
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeKindFrozenDictException
+from beartype._data.typing.datatyping import S, T
 from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Mapping
 from typing import (
     TYPE_CHECKING,
+    Any,
     NoReturn,
     Optional,
     SupportsIndex,
 )
 
 # ....................{ CLASSES                            }....................
-#FIXME: Consider attempting to generalize with type variables: e.g.,
-#    class FrozenDict(dict[S, T]):
-#In theory, that should help static type-checkers. In practice, they'll probably
-#just complain about everything and be even more of a pain. We sigh. *sigh*
-class FrozenDict(dict):
+#FIXME: Generalize *ALL* of the methods below to leverage the "S" and "T" type
+#variables subscripting this declaration. For the moment, we can't be bothered!
+class FrozenDict(dict[S, T]):
     '''
     **Frozen dictionary** (i.e., immutable mapping preserving :math:`O(1)`
     complexity while prohibiting modification).
@@ -82,6 +82,14 @@ class FrozenDict(dict):
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, *args, **kwargs) -> None:
+        '''
+        Initialize this immutable dictionary with all passed parameters.
+
+        This dictionary is initializable in the same manner as the builtin
+        :meth:`dict.__init__` method. Since this dictionary is *not* mutatable
+        after initialization, callers are strongly advised to pass one or more
+        parameters to this constructor.
+        '''
 
         # Instantiate this immutable dictionary with all passed parameters.
         super().__init__(*args, **kwargs)
@@ -222,6 +230,7 @@ class FrozenDict(dict):
     # ..................{ MUTATORS                           }..................
     # Override all mutators (i.e., "dict" methods attempting to modify the
     # current immutable dictionary) to raise exceptions instead.
+
     def __setitem__(self, key, value) -> NoReturn:
         raise BeartypeKindFrozenDictException(
             f'Immutable dictionary {repr(self)} '
@@ -266,3 +275,10 @@ class FrozenDict(dict):
             f'not updatable from positional arguments {repr(args)} '
             f'and keyword arguments {repr(kwargs)}.'
         )
+
+# ....................{ HINTS                              }....................
+FrozenDictStrToAny = FrozenDict[str, Any]
+'''
+:pep:`585`-compliant type hint matching an immutable dictionary mapping from
+strings to arbitrary objects.
+'''

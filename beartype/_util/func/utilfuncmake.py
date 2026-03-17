@@ -12,10 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Callable,
-    Optional,
-)
 from beartype._data.typing.datatyping import (
     LexicalScope,
     TypeException,
@@ -23,11 +19,13 @@ from beartype._data.typing.datatyping import (
 from beartype._util.text.utiltextlabel import label_exception_message
 from beartype._util.text.utiltextmunge import number_str_lines
 from beartype._util.utilobject import get_object_name
+from collections.abc import Callable
 from functools import update_wrapper
 from linecache import cache as linecache_cache  # type: ignore[attr-defined]
+from typing import Optional
 from weakref import finalize
 
-# ....................{ MAKERS                             }....................
+# ....................{ FACTORIES                          }....................
 def make_func(
     # Mandatory arguments.
     func_name: str,
@@ -371,6 +369,15 @@ def make_func(
 
     # Return that function.
     return func
+
+# ....................{ FACTORIES ~ method                 }....................
+#FIXME: Preserved in the likelihood that we'll want a bound method factory again
+#at some point. *sigh*
+#from beartype._cave._cavefast import FunctionType
+#def make_method_bound(
+#    func: FunctionType, obj: object) -> Callable:
+#    assert isinstance(method_unbound, FunctionType)
+#    return func.__get__(obj, type(obj))
 
 # ....................{ COPIERS                            }....................
 #FIXME: Consider excising. Although awesome, this is no longer needed.
