@@ -168,7 +168,7 @@ This hint matches a 2-tuple ``(func_wrapper_code, func_wrapper_locals)``, where:
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
-def is_hint_sane_conf_cached(hint_sane: HintSane, conf: BeartypeConf) -> bool:
+def is_make_check_expr_cached(hint_sane: HintSane, conf: BeartypeConf) -> bool:
     '''
     :data:`True` only if a prior call to the :func:`.make_check_expr` factory
     passed the passed parameters successfully memoized (cached) a type-checking

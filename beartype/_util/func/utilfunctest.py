@@ -12,10 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Any,
-    Optional,
-)
 from beartype._cave._cavefast import (
     CallableCodeObjectType,
     FunctionType,
@@ -45,64 +41,13 @@ from inspect import (
     CO_COROUTINE,
     CO_GENERATOR,
 )
+from typing import (
+    Any,
+    NoReturn,
+    Optional,
+)
 
 # ....................{ RAISERS                            }....................
-def die_unless_func_codeobjable(
-    # Mandatory parameters.
-    func: Codeobjable,
-
-    # Optional parameters.
-    exception_cls: TypeException = _BeartypeUtilCallableException,
-    exception_prefix: str = '',
-) -> None:
-    '''
-    Raise an exception unless the passed object is **code-objectable** (i.e.,
-    either a pure-Python callable, low-level code object underlying a
-    pure-Python callable, or related object encapsulating such a code object).
-
-    Parameters
-    ----------
-    func : Codeobjable
-        Code-objectable to be validated.
-    exception_cls : TypeException, default: _BeartypeUtilCallableException
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`._BeartypeUtilCallableException`.
-    exception_prefix : str, default: ''
-        Human-readable substring prefixing raised exception messages. Defaults
-        to the empty string.
-
-    Raises
-    ------
-    exception_cls
-         Unless the passed callable is code-objectable.
-
-    See Also
-    --------
-    :func:`.is_func_codeobjable`
-        Further details.
-    '''
-
-    # If that callable is *NOT* code-objectable, raise an exception.
-    if not is_func_codeobjable(func):
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
-        assert issubclass(exception_cls, Exception), (
-            f'{repr(exception_cls)} not exception subclass.')
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
-
-        # Raise a human-readable exception.
-        raise exception_cls(
-            f'{exception_prefix}{repr(func)} code object not found, '
-            f'as neither:\n'
-            f'* Pure-Python callable.\n'
-            f'* C-based code object underlying a pure-Python callable.\n'
-            f'* Related C-based object encapsulating such a code object '
-            f'(e.g., call stack frame, generator object).'
-        )
-    # Else, that callable is code-objectable.
-
-
 #FIXME: Unit test us up, please.
 def die_unless_func_python(
     # Mandatory parameters.
@@ -153,6 +98,99 @@ def die_unless_func_python(
             f'pure-Python function or method.'
         )
     # Else, that callable is pure-Python.
+
+# ....................{ RAISERS ~ codeobjable              }....................
+def die_unless_func_codeobjable(
+    # Mandatory parameters.
+    func: Codeobjable,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed object is **code-objectable** (i.e.,
+    either a pure-Python callable, low-level code object underlying a
+    pure-Python callable, or related object encapsulating such a code object).
+
+    Parameters
+    ----------
+    func : Codeobjable
+        Code-objectable to be validated.
+    exception_cls : TypeException, default: _BeartypeUtilCallableException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    exception_cls
+         Unless the passed callable is code-objectable.
+
+    See Also
+    --------
+    :func:`.is_func_codeobjable`
+        Further details.
+    '''
+
+    # If that callable is *NOT* code-objectable, raise an exception.
+    if not is_func_codeobjable(func):
+        die_as_func_not_codeobjable(
+            func=func,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
+    # Else, that callable is code-objectable.
+
+
+def die_as_func_not_codeobjable(
+    # Mandatory parameters.
+    func: Codeobjable,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> NoReturn:
+    '''
+    Unconditionally raise an exception describing why the passed object is *not*
+    **code-objectable** (i.e., either a pure-Python callable, low-level code
+    object underlying a pure-Python callable, or related object encapsulating
+    such a code object).
+
+    Parameters
+    ----------
+    func : Codeobjable
+        Code-objectable to be validated.
+    exception_cls : TypeException, default: _BeartypeUtilCallableException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    exception_cls
+         Unless the passed callable is code-objectable.
+    '''
+    assert isinstance(exception_cls, type), (
+        f'{repr(exception_cls)} not class.')
+    assert issubclass(exception_cls, Exception), (
+        f'{repr(exception_cls)} not exception subclass.')
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
+
+    # Raise a human-readable exception.
+    raise exception_cls(
+        f'{exception_prefix}{repr(func)} code object not found, '
+        f'as neither:\n'
+        f'* Pure-Python callable.\n'
+        f'* C-based code object underlying a pure-Python callable.\n'
+        f'* Related C-based object encapsulating such a code object '
+        f'(e.g., call stack frame, generator object).'
+    )
 
 # ....................{ RAISERS ~ descriptors              }....................
 #FIXME: Unit test us up, please.

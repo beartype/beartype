@@ -116,10 +116,10 @@ def get_func_code_object(
     # If this callable is *NOT* pure-Python...
     if func_codeobj is None:
         # Avoid circular import dependencies.
-        from beartype._util.func.utilfunctest import die_unless_func_codeobjable
+        from beartype._util.func.utilfunctest import die_as_func_not_codeobjable
 
         # Raise an exception.
-        die_unless_func_codeobjable(
+        die_as_func_not_codeobjable(
             func=func,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
@@ -229,19 +229,25 @@ def get_func_code_object_or_none(
 
     # If this object is a pure-Python function...
     #
-    # Note that:
-    # * This test is intentionally a new "if" conditional rather than an
-    #   extension of the prior "elif" conditional. Doing so trivially unwraps
-    #   the pure-Python function encapsulated by a bound method descriptor.
-    # * This test intentionally leverages the standard "FunctionType"
-    #   class rather than our equivalent "beartype.cave.FunctionType" class to
-    #   avoid circular import issues.
+    # Note that this test is intentionally a new "if" conditional rather than an
+    # extension of the prior "elif" conditional. Doing so trivially unwraps
+    # the pure-Python function encapsulated by a bound method descriptor. \o/
     if isinstance(func, FunctionType):
-        # Return the code object of either:
-        # * If unwrapping this function, the lowest-level wrappee wrapped by
-        #   this function.
-        # * Else, this function as is.
-        func_codeobj = (unwrap_func_all(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
+        # If unwrapping this function...
+        if is_unwrap:
+            # Lower-level object wrapped by this function, which is *NOT*
+            # guaranteed to also be a pure-Python function.
+            func = unwrap_func_all(func)
+
+            # If this lower-level object is also a pure-Python function,
+            # return the code object of this function.
+            if isinstance(func, FunctionType):
+                func_codeobj = func.__code__
+            # Else, this lower-level object is *NOT* a pure-Python function.
+        # Else, this function is *NOT* being unwrapped. In this case, trivially
+        # return the code object of this function.
+        else:
+            func_codeobj = func.__code__
     # Else, this object is *NOT* a pure-Python function.
     #
     # If this object is a pure-Python generator, return this generator's code

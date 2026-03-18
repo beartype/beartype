@@ -120,6 +120,7 @@ def label_object_kind(obj: object) -> str:
     )
     from beartype._util.func.arg.utilfuncargget import (
         get_func_arg_name_first_or_none)
+    from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 
     # ....................{ LOCALS                         }....................
     # String to be returned, defaulting to a sensible placeholder.
@@ -170,10 +171,13 @@ def label_object_kind(obj: object) -> str:
         # Else, this object is a standard synchronous callable. In this case,
         # avoid prefixing this callable by a leading substring.
 
+        # Possibly lower-level callable wrapped by this higher-level callable.
+        func = unwrap_func_all_isomorphic(obj)  # type: ignore[arg-type]
+
         # Name of the first parameter accepted by that callable if any *OR*
         # "None" otherwise (i.e., if that callable is argumentless).
         arg_first_name = get_func_arg_name_first_or_none(
-            func=obj,
+            func=func,
             # If that callable is a C-based bound method descriptor
             # encapsulating a pure-Python instance or class method, instruct
             # this getter to return the name of the first mandatory flexible
@@ -186,6 +190,7 @@ def label_object_kind(obj: object) -> str:
             # * "self" if that descriptor encapsulates an instance method.
             # * "cls" if that descriptor encapsulates a class method.
             is_omit_boundmethod_arg_first=False,
+            is_unwrap=False,  # <-- "func" was already unwrapped above. I sigh.
         )
 
         # If this is the canonical first "self" parameter typically accepted by

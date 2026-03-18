@@ -14,14 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.typing.datatyping import (
-    BeartypeableT,
-    BoolTristate,
-)
-from beartype._util.text.utiltextlabel import (
-    label_callable,
-    label_type,
-)
+from beartype._data.typing.datatyping import BoolTristate
 from collections.abc import Callable
 
 # ....................{ PREFIXERS ~ object                 }....................

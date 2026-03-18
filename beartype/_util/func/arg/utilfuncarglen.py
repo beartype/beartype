@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import Tuple
 from beartype._cave._cavefast import (
     FunctionType,
     MethodBoundInstanceOrClassType,
@@ -30,7 +29,7 @@ from inspect import (
 from itertools import count
 
 # ....................{ HINTS                              }....................
-CallableArgsLens = Tuple[int, int, bool, bool]
+CallableArgsLens = tuple[int, int, bool, bool]
 '''
 PEP-compliant type hint matching **callable parameter length metadata** returned
 by the :func:`.get_func_args_lens` getter, defined as the 4-tuple
@@ -176,11 +175,11 @@ def get_func_args_lens(
     ----------
     func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
-    is_unwrap: bool, optional
+    is_unwrap: bool, default: True
         :data:`True` only if this getter implicitly calls the
-        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
-        Defaults to :data:`True` for safety. See :func:`.get_func_code_object` for
-        further commentary.
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all_isomorphic`
+        function. Defaults to :data:`True` for safety. See
+        :func:`.get_func_code_object` for further commentary.
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.

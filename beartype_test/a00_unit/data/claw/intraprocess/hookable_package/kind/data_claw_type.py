@@ -19,13 +19,10 @@ from beartype.roar import (
     BeartypeCallHintParamViolation,
     BeartypeDoorHintViolation,
 )
-from beartype.typing import (
-    Callable,
-    List,
-    Union,
-)
+from collections.abc import Callable
 from functools import wraps
 from pytest import raises
+from typing import Union
 
 # from beartype.claw._importlib.clawimpcache import module_name_to_beartype_conf
 # print(f'this_submodule conf: {repr(module_name_to_beartype_conf)}')
@@ -119,7 +116,7 @@ class HerFirstSweetKisses(object):
 
     def if_no_bright_bird(
         self, insect_or_gentle_beast: Union[complex, str]) -> (
-        Union[List[bytes], complex]):
+        Union[list[bytes], complex]):
         '''
         Arbitrary method accepting the passed object under the non-default
         beartype configuration decorating this class and returning that object
@@ -161,7 +158,7 @@ class HerFirstSweetKisses(object):
     @beartype  # <-- prefer the default beartype configuration yet again
     def i_consciously_have_injured(
         self, but_still_loved: Union[complex, bool]) -> (
-        Union[complex, List[bytes]]):
+        Union[complex, list[bytes]]):
         '''
         Arbitrary method accepting the passed object under the default beartype
         configuration and returning that object as is, enabling callers to

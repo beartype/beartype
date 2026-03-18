@@ -17,7 +17,7 @@ from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convmain import sanify_hint_root_statement
 from beartype._check.code.codemain import (
     CodeGenerated,
-    is_hint_sane_conf_cached,
+    is_make_check_expr_cached,
     make_check_expr,
 )
 from beartype._check.error.errmain import (
@@ -27,7 +27,10 @@ from beartype._check.error.errmain import (
 from beartype._check.forward.reference.fwdreftyping import (
     TupleBeartypeForwardRefs)
 from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.callmetadecor import (
+    BeartypeCallDecorMeta,
+    prefix_decor_meta_callable_pith,
+)
 from beartype._check.metadata.call.callmetaexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.metadata.hint.hintsane import (
@@ -60,7 +63,10 @@ from beartype._data.code.func.datacodefunccheck import (
     CODE_WARN_VIOLATION,
 )
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from beartype._data.func.datafuncarg import ARG_NAME_RETURN_REPR
+from beartype._data.func.datafuncarg import (
+    ARG_NAME_RETURN,
+    ARG_NAME_RETURN_REPR,
+)
 from beartype._data.typing.datatyping import (
     CallableRaiserOrTester,
     LexicalScope,
@@ -70,6 +76,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.utilfuncmake import make_func
+from beartype._util.hint.utilhintget import get_hint_repr
 from beartype._util.kind.maplike.utilmapfrozen import (
     FrozenDict,
     FrozenDictStrToAny,
@@ -392,7 +399,7 @@ def make_func_checker(
                 # make_func() code factory memoized the type-checking expression
                 # it dynamically generated against this hint and configuration,
                 # then that function is *ACTUALLY* memoizable.
-                is_hint_sane_conf_cached(hint_sane, conf)
+                is_make_check_expr_cached(hint_sane, conf)
                 # Else, make_check_expr() refused to memoize this expression.
                 # Ergo, either this root hint itself *OR* one or more child
                 # hints transitively subscripting this root hint are
@@ -534,20 +541,13 @@ def make_code_raiser_hint_object_check(
     )
 
     # ....................{ RETURN                         }....................
-    #FIXME: [SPEED] *INEFFICIENT.* Blindly reinstantiating a new
-    #"BeartypeCheckExprScope" here does work, of course, but also needlessly
-    #incurs the cost of reproducing the "func_scope_frozen.beartype_ref_proxies"
-    #tuple. Instead:
-    #* Define a new optional "beartype_ref_proxies:
-    #  Optional[TupleBeartypeForwardRefs] = None" parameter of the
-    #  BeartypeCheckExprScope.__init__() constructor.
-    #* Pass that below ala:
-    #     func_scope_refrozen = BeartypeCheckExprScope(
-    #        func_scope,
-    #        beartype_ref_proxies=func_scope_frozen.beartype_ref_proxies,
-    #     )
-    #     return (func_code, )
-    func_scope_refrozen = BeartypeCheckExprScope(func_scope)
+    # Type-checking expression lexical scope to be returned.
+    func_scope_refrozen = BeartypeCheckExprScope(
+        func_scope,
+        # Reuse the previously computed tuple of beartype-specific forward
+        # reference proxies, for efficiency.
+        beartype_ref_proxies=func_scope_frozen.beartype_ref_proxies,
+    )
 
     # Return all metadata required by higher-level callers.
     return (func_code, func_scope_refrozen)
@@ -686,12 +686,15 @@ def make_code_raiser_func_pep484_noreturn_check(
 
 # ....................{ FACTORIES ~ code : raiser : pith   }....................
 #FIXME: Unit test us up, please.
+#FIXME: [SPEED] This factory could (and should) be contextually memoized in a
+#similar manner to that of the lower-level make_check_expr() factory internally
+#called by this higher-level factory. That is exactly what the comparable
+#make_func_checker() factory now does, in fact! See the latter for details.
 def make_code_raiser_func_pith_check(
     decor_meta: BeartypeCallDecorMeta,
     hint_sane: HintSane,
-    pith_kind: bool,
-    pith_repr: str,
-) -> CodeRaiserFuncCheck:
+    pith_name: str,
+) -> CodeGenerated:
     '''
     Pure-Python code snippet of a type-checking raiser function type-checking a
     parameter or return of a decorated callable against the passed type hint
@@ -710,21 +713,8 @@ def make_code_raiser_func_pith_check(
         metadata encapsulating the currently decorated callable).
     hint_sane : HintSane
         Metadata encapsulating the sanification of the hint to be type-checked.
-    pith_kind : bool
-        If the **pith** (i.e., parameter or return being type-checked by the
-        code snippet generated and returned by this factory) type-checks a
-        previously localized:
-
-        * **Parameter** accepted by a decorated callable,
-          :data:`.PITH_KIND_FUNC_ARG`.
-        * **Return** returned from a decorated callable,
-          :data:`.PITH_KIND_FUNC_RETURN`.
-
-        Note that, while it would be simpler for this factory to instead accept
-        a pith name, doing so would also unmemoize this factory as well as all
-        higher-level factories calling this factory.
-    pith_repr : str
-        Machine-readable representation of the name of this parameter or return.
+    pith_name : str
+        Name of the parameter or return value of this callable to be labelled.
 
     Returns
     -------
@@ -740,7 +730,7 @@ def make_code_raiser_func_pith_check(
     '''
     assert isinstance(decor_meta, BeartypeCallDecorMeta), (
         f'{repr(decor_meta)} not beartype decorator call metadata.')
-    assert isinstance(pith_repr, str), f'{repr(pith_repr)} not string.'
+    assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with make_code_raiser_hint_object_check().
@@ -751,6 +741,25 @@ def make_code_raiser_func_pith_check(
     # an arbitrary object against this hint.
     code_expr, func_scope_frozen = make_check_expr(
         call_meta=decor_meta, hint_sane=hint_sane, conf=decor_meta.conf)
+
+    # ....................{ FORWARD REFERENCES             }....................
+    #FIXME: [SPEED] Optimize into a "while" loop. *lol*
+    # Human-readable substring prefixing exception messages subsequently raised
+    # at type-checking wrapper call time by beartype-specific forward reference
+    # proxies failing to resolve references they proxy if the decorated callable
+    # is annotated by one or more forward references *NOT* resolvable at
+    # decoration time *OR* "None" otherwise. Look. It's complicated. (Go away!)
+    exception_prefix: str = (
+        prefix_decor_meta_callable_pith(
+            decor_meta=decor_meta, pith_name=pith_name)
+        if func_scope_frozen.beartype_ref_proxies else
+        None  # type: ignore[assignment]
+    )
+
+    # For each such beartype-specific forward reference proxy, set the exception
+    # prefix associated with this proxy to... this exception prefix. So cool!
+    for beartype_ref_proxy in func_scope_frozen.beartype_ref_proxies:
+        beartype_ref_proxy.__exception_prefix_beartype__ = exception_prefix
 
     # ....................{ SCOPE                          }....................
     # Mutable dictionary coerced from this immutable frozen dictionary.
@@ -768,16 +777,29 @@ def make_code_raiser_func_pith_check(
     # when the root pith violates the root type hint.
     code_get_violation = CODE_GET_FUNC_PITH_VIOLATION.format(
         arg_random_int=_get_func_scope_arg_random_int(func_scope),
-        pith_name=pith_repr,
+        pith_name=get_hint_repr(pith_name),
     )
 
     # Code snippet handling the previously generated violation by either raising
     # that violation as a fatal exception or emitting that violation as a
     # non-fatal warning.
     code_handle_violation = _make_code_raiser_violation(
-        conf=decor_meta.conf, func_scope=func_scope, pith_kind=pith_kind)
+        conf=decor_meta.conf,
+        func_scope=func_scope,
 
-    # ....................{ CODE                           }....................
+        #FIXME: *SUPER-SILLY*. This can be trivially deduced from the passed
+        #"pith_name". Clearly, this is an ancient vestigial artifact of an era
+        #in which we tried *REALLY* hard to unconditionally cache this factory.
+        #Naturally, that was a catastrophic failure. Since this parameter no
+        #longer has a reason to live, excise us up, please. *sigh*
+        pith_kind=(
+            PITH_KIND_FUNC_RETURN
+            if pith_name is ARG_NAME_RETURN else
+            PITH_KIND_FUNC_ARG
+        ),
+    )
+
+    # ....................{ RETURN                         }....................
     # Code snippet type-checking the root pith against the root hint.
     func_code = (
         f'{CODE_RAISER_FUNC_PITH_CHECK_PREFIX}'
@@ -786,8 +808,16 @@ def make_code_raiser_func_pith_check(
         f'{code_handle_violation}'
     )
 
+    # Type-checking expression lexical scope to be returned.
+    func_scope_refrozen = BeartypeCheckExprScope(
+        func_scope,
+        # Reuse the previously computed tuple of beartype-specific forward
+        # reference proxies, for efficiency.
+        beartype_ref_proxies=func_scope_frozen.beartype_ref_proxies,
+    )
+
     # Return all metadata required by higher-level callers.
-    return (func_code, func_scope, func_scope_frozen.beartype_ref_proxies)
+    return (func_code, func_scope_refrozen)
 
 # ....................{ PRIVATE ~ globals                  }....................
 _func_checker_name_counter = count(start=0, step=1)

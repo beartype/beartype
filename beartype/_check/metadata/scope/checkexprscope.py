@@ -13,11 +13,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.reference.fwdreftest import is_beartype_ref_proxy
 from beartype._check.forward.reference.fwdreftyping import (
     TupleBeartypeForwardRefs)
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDictStrToAny
-from typing import TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+)
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
@@ -53,7 +57,12 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
         beartype_ref_proxies: TupleBeartypeForwardRefs
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(
+        self,
+        *args,
+        beartype_ref_proxies: Optional[TupleBeartypeForwardRefs] = None,
+        **kwargs
+    ) -> None:
         '''
         Initialize this type-checking expression lexical scope with all passed
         parameters.
@@ -62,16 +71,32 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
         :meth:`dict.__init__` method. Since this dictionary is *not* mutatable
         after initialization, callers are strongly advised to pass one or more
         parameters to this constructor.
+
+        Parameters
+        ----------
+        beartype_ref_proxies : tuple[BeartypeForwardRefMeta, ...], default: None
+            Tuple of all :mod:`beartype`-specific **forward reference proxies**
+            (i.e., classes whose metaclass defers the resolution of forward
+            reference type hints referencing type hints that have yet to be
+            defined in the lexical scopes of external callers). Defaults to
+            :data:`None`, in which case this tuple is automatically introspected
+            by iteration over the initial contents of this dictionary.
         '''
+        assert isinstance(beartype_ref_proxies, NoneTypeOr[tuple]), (
+            f'{repr(beartype_ref_proxies)} neither tuple nor "None".')
 
         # Instantiate this scope with all passed parameters.
         super().__init__(*args, **kwargs)
 
-        # Tuple of all beartype-specific forward reference proxies, efficiently
-        # defined as the proper subset of all attribute values accessed by this
-        # scope that are such proxies.
-        self.beartype_ref_proxies = tuple(
-            scope_value
-            for scope_value in self.values()
-            if is_beartype_ref_proxy(scope_value)
-        )
+        # If the caller failed to pass a tuple of all beartype-specific forward
+        # reference proxies, introspect this tuple as the proper subset of all
+        # attribute values accessed by this scope that are such proxies.
+        if beartype_ref_proxies is None:
+            self.beartype_ref_proxies = tuple(
+                scope_value
+                for scope_value in self.values()
+                if is_beartype_ref_proxy(scope_value)
+            )
+        # Else, the caller passed such a tuple. In this case, reuse that tuple.
+        else:
+            self.beartype_ref_proxies = beartype_ref_proxies

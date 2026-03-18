@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import Optional
 from beartype._data.typing.datatyping import (
     Codeobjable,
     TupleStrs,
@@ -27,6 +26,7 @@ from beartype._util.func.arg.utilfuncargiter import (
 )
 from beartype._util.func.arg.utilfuncarglen import get_func_args_len
 from beartype._util.func.utilfunccodeobj import get_func_code_object
+from typing import Optional
 
 # ....................{ GETTERS ~ meta                     }....................
 #FIXME: [SPEED] Consider refactoring this O(n) iteration into an O(1) lookup.
@@ -331,6 +331,7 @@ def get_func_arg_names(
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
+    assert func_codeobj is not None
 
     # Total number of parameters accepted by that callable.
     func_args_len = get_func_args_len(

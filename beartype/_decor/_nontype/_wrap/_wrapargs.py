@@ -21,12 +21,12 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorParamNameException,
 )
-from beartype._check.checkmake import (
-    PITH_KIND_FUNC_ARG,
-    make_code_raiser_func_pith_check,
-)
+from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convmain import sanify_hint_root_func
-from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
+from beartype._check.metadata.call.callmetadecor import (
+    BeartypeCallDecorMeta,
+    prefix_decor_meta_callable_arg_name,
+)
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
@@ -47,9 +47,7 @@ from beartype._util.func.arg.utilfuncargiter import (
     iter_func_args,
 )
 from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
-from beartype._util.hint.utilhintget import get_hint_repr
 from beartype._util.kind.maplike.utilmapset import update_mapping
-from beartype._util.text.utiltextprefix import prefix_callable_arg_name
 from beartype._data.kind.datakindiota import SENTINEL
 from collections.abc import MutableSet
 from typing import Optional
@@ -327,12 +325,10 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 (
                     code_arg_check,
                     func_scope,
-                    beartype_ref_proxies,
                 ) = make_code_raiser_func_pith_check(
                     decor_meta=decor_meta,
                     hint_sane=hint_sane,
-                    pith_kind=PITH_KIND_FUNC_ARG,
-                    pith_repr=get_hint_repr(arg_name),
+                    pith_name=arg_name,
                 )
 
                 # Python code snippet localizing this parameter.
@@ -353,11 +349,8 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 # print(f'warnings_issued: {warnings_issued}')
                 reissue_warnings_placeholder(
                     warnings=warnings_issued,
-                    target_str=prefix_callable_arg_name(
-                        func=decor_meta.func_wrappee,
-                        arg_name=arg_name,
-                        is_color=decor_meta.conf.is_color,
-                    ),
+                    target_str=prefix_decor_meta_callable_arg_name(
+                        decor_meta=decor_meta, arg_name=arg_name),
                 )
             # Else, *NO* warnings were issued.
         # If any exception was raised, reraise this exception with each
@@ -372,11 +365,8 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 #positional"), ideally by improving the existing
                 #prefix_callable_arg_name() function to introspect this kind
                 #from the callable code object.
-                target_str=prefix_callable_arg_name(
-                    func=decor_meta.func_wrappee,
-                    arg_name=arg_name,
-                    is_color=decor_meta.conf.is_color,
-                ),
+                target_str=prefix_decor_meta_callable_arg_name(
+                    decor_meta=decor_meta, arg_name=arg_name),
             )
 
     # ..................{ RETURN                             }..................
