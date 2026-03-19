@@ -189,9 +189,7 @@ def reduce_hint_pep484_ref(
         # purposes and thus reducible to simple strings here.
         if is_hint_pep484749_ref_object_resolvable(hint):
             hint_resolved = proxy_hint_pep749_ref_object(
-                hint=hint,
-                exception_prefix=exception_prefix,
-            )
+                hint=hint, exception_prefix=exception_prefix)
         # Else, either the active Python interpreter targets Python <= 3.13 *OR*
         # the active Python interpreter targets Python >= 3.14 but
         # "hint.__owner__" is empty. In either case, this forward reference

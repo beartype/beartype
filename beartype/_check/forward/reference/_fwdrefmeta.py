@@ -231,7 +231,7 @@ class BeartypeForwardRefMeta(type):
         # If this forward reference proxy has already been resolved to its
         # referent (e.g., by a prior isinstance() or issubclass() check),
         # forward this dunder method call directly to that referent.
-        if _is_forwardref_resolved(cls):
+        if _is_beartype_ref_proxy_resolved(cls):
             return getattr(cls.__type_beartype__, hint_name)
         # Else, this forward reference proxy has yet to be resolved.
         #
@@ -514,10 +514,9 @@ class BeartypeForwardRefMeta(type):
             # and instead raise a human-readable exception.
             if referent is cls:
                 raise BeartypeCallHintForwardRefException(
-                    f'{cls.__exception_prefix_beartype__}'
-                    f'forward reference proxy {repr(cls)} '
-                    f'circularly (i.e., infinitely recursively) '
-                    f'references itself.'
+                    f'{_make_beartype_ref_proxy_exception_prefix(cls)}'
+                    f'that target referent circularly '
+                    f'(i.e., infinitely recursively) references itself.'
                 )
             # Else, this referent is *NOT* this forward reference subclass.
             #
@@ -624,7 +623,7 @@ dictionary, globalized as a negligible microoptimization.
 
 # ....................{ PRIVATE ~ testers                  }....................
 #FIXME: Unit test us up, please.
-def _is_forwardref_resolved(hint: _BeartypeForwardRefABC) -> bool:
+def _is_beartype_ref_proxy_resolved(hint: _BeartypeForwardRefABC) -> bool:
     '''
     :data:`True` only if the passed **forward reference proxy** (i.e.,
     :class:`_BeartypeForwardRefABC` object) is already been resolved to its
@@ -644,7 +643,73 @@ def _is_forwardref_resolved(hint: _BeartypeForwardRefABC) -> bool:
     # Return true only if this proxy has been resolved to its referent.
     return hint in _forwardref_to_referent
 
+# ....................{ PRIVATE ~ factories                }....................
+#FIXME: Unit test us up, please. *sigh*
+def _make_beartype_ref_proxy_exception_prefix(
+    cls: _BeartypeForwardRefABC) -> str:
+    '''
+    Human-readable substring intended to prefix exception messages raised by
+    failures to resolve the :pep:`484`-compliant **stringified forward reference
+    type hint** (i.e., string referring to a referent target type hint that
+    typically has yet to be defined in the current lexical scope) encapsulated
+    by the passed **forward reference proxy subclass** (i.e.,
+    :class:`.BeartypeForwardRefMeta` instance).
+
+    Caveats
+    -------
+    **This factory function is computationally expensive and thus intended to be
+    called only when an exception is guaranteed to be raised.**
+
+    Parameters
+    ----------
+    cls : _BeartypeForwardRefABC
+        Forward reference proxy subclass to be resolved.
+
+    Returns
+    -------
+    str
+        Human-readable substring as detailed above.
+    '''
+    assert isinstance(cls, BeartypeForwardRefMeta), (
+        f'{repr(cls)} not beartype forward reference proxy.')
+
+    # Human-readable substring to prefix raised exception messages with.
+    exception_prefix = cls.__exception_prefix_beartype__
+
+    # If this reference thinly wraps a PEP 749-compliant object-oriented forward
+    # reference, define this substring in a PEP 749-specific manner.
+    if cls.__hint_pep749_ref_beartype__:
+        exception_prefix += 'PEP 649 unquoted forward reference type hint "'  # pyright: ignore
+    # Else, this reference does *NOT* thinly wrap a PEP 749-compliant
+    # object-oriented forward reference (i.e., "annotationlib.ForwardRef"
+    # object). By elimination, this reference *MUST* thickly wrap a
+    # PEP 484-compliant stringified forward reference. In this case...
+    else:
+        exception_prefix += (  # pyright: ignore
+            'PEP 484 stringified forward reference type hint "')
+
+    # PEP 484-compliant stringified forward reference type hint reconstituted
+    # from its constituent substrings encapsulated by this proxy.
+    #
+    # Note that:
+    # * The "cls.__scope_name_beartype__" class variable is guaranteed to be a
+    #   non-empty string *ONLY* for PEP 484-compliant stringified forward
+    #   reference type hints. Ergo, we make no assumptions of its existence.
+    # * PEP 749-compliant unquoted forward reference type hints literally do
+    #   *NOT* exist at runtime. Ergo, this hint *MUST* be reconstituted when
+    #   this proxy encapsulates such a hint.
+    if cls.__scope_name_beartype__:
+        exception_prefix += f'{cls.__scope_name_beartype__}.'
+    exception_prefix += (
+        f'{cls.__name_beartype__}" '
+        f'unresolvable to its target referent, as '
+    )
+
+    # Return this prefix.
+    return exception_prefix
+
 # ....................{ PRIVATE ~ resolvers                }....................
+#FIXME: Unit test us up, please. *sigh*
 def _resolve_hint_pep484_ref_str(cls: _BeartypeForwardRefABC) -> Hint:
     '''
     Resolve the :pep:`484`-compliant **stringified forward reference type
@@ -704,7 +769,7 @@ def _resolve_hint_pep484_ref_str(cls: _BeartypeForwardRefABC) -> Hint:
                 attr_name=cls.__name_beartype__,  # pyright: ignore
                 module_name=cls.__scope_name_beartype__,  # pyright: ignore
                 exception_cls=BeartypeCallHintPep484ForwardRefStrException,
-                exception_prefix=cls.__exception_prefix_beartype__,  # pyright: ignore
+                exception_prefix=_make_beartype_ref_proxy_exception_prefix(cls),
             )
 
             # Validate sanity by ensuring that the prior call raised the

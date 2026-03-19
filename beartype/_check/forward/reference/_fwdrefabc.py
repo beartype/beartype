@@ -69,11 +69,17 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
 
 
-    __exception_prefix_beartype__: str = None  # type: ignore[assignment]
+    __exception_prefix_beartype__: str = 'Forward reference '
     '''
     Human-readable substring prefixing exception messages raised by methods
     defined by this ABC, the metaclass of this ABC, and concrete subclasses of
     this ABC.
+
+    Technically, this substring is initialized to a reasonable default.
+    Pragmatically, callers are advised to call the
+    :func:`beartype._check.forward.reference.fwdrefset.set_beartype_ref_proxies_exception_prefix`
+    setter to overwrite this default across multiple forward reference proxies
+    simultaneously with a more contextually specific substring.
     '''
 
     # ....................{ CLASS VARS ~ optional          }....................
@@ -83,6 +89,17 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     by this forward reference subclass is relative if that type hint is relative
     (i.e., if :attr:`__name_beartype__` is relative) *or* ignored otherwise
     (i.e., if :attr:`__name_beartype__` is absolute).
+
+    Caveats
+    -------
+    **Callers should not assume this class variable to be a non-empty string.**
+    Specifically, if this proxy encapsulates a:
+
+    * :pep:`484`-compliant stringified forward reference type hint, this name is
+      guaranteed to be a non-empty string.
+    * :pep:`749`-compliant object-oriented forward reference type hint, this
+      name is either a non-empty string *or* :data:`None` (depending on that
+      hint).
     '''
 
 

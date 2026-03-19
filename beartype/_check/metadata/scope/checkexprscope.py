@@ -40,6 +40,11 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
         (i.e., classes whose metaclass defers the resolution of forward
         reference type hints referencing type hints that have yet to be defined
         in the lexical scopes of external callers).
+    is_check_expr_cacheable : bool
+        :data:`True` only if callers may safely cache (memoize) this scope.
+        Unsurprisingly, this boolean is an alias of the comparable
+        :attr:`beartype._check.metadata.hint.hintsmeta.HintsMeta.is_check_expr_cacheable`
+        boolean. See also that instance variable for further details.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -49,18 +54,24 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'beartype_ref_proxies',
+        'is_check_expr_cacheable',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         beartype_ref_proxies: TupleBeartypeForwardRefs
+        is_check_expr_cacheable: bool
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
+        # Optional positional parameters.
         *args,
+
+        # Optional keyword-only parameters.
         beartype_ref_proxies: Optional[TupleBeartypeForwardRefs] = None,
+        is_check_expr_cacheable: bool = False,
         **kwargs
     ) -> None:
         '''
@@ -81,9 +92,16 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
             defined in the lexical scopes of external callers). Defaults to
             :data:`None`, in which case this tuple is automatically introspected
             by iteration over the initial contents of this dictionary.
+        is_check_expr_cacheable: bool, default: False
+            :data:`True` only if callers may safely cache (memoize) this scope.
+            Unsurprisingly, this boolean is an alias of the comparable
+            :attr:`beartype._check.metadata.hint.hintsmeta.HintsMeta.is_check_expr_cacheable`
+            boolean. Defaults to :data:`False` for safety.
         '''
         assert isinstance(beartype_ref_proxies, NoneTypeOr[tuple]), (
             f'{repr(beartype_ref_proxies)} neither tuple nor "None".')
+        assert isinstance(is_check_expr_cacheable, bool), (
+            f'{repr(is_check_expr_cacheable)} not boolean.')
 
         # Instantiate this scope with all passed parameters.
         super().__init__(*args, **kwargs)
@@ -100,3 +118,38 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
         # Else, the caller passed such a tuple. In this case, reuse that tuple.
         else:
             self.beartype_ref_proxies = beartype_ref_proxies
+
+        # Classify all remaining parameters.
+        self.is_check_expr_cacheable = is_check_expr_cacheable
+
+    # ..................{ REFREEZERS                         }..................
+    def refreeze(self, *args, **kwargs) -> 'BeartypeCheckExprScope':
+        '''
+        New type-checking expression scope initialized both by the passed
+        parameters in the same manner as the builtin :meth:`dict.__init__`
+        method *and* by the same keyword-only parameters as originally passed to
+        the :meth:`.__init__` method of this type-checking expression scope.
+
+        This factory is typically called to freeze a mutable dictionary
+        previously unfrozen from a prior instance of this immutable dictionary.
+        This factory is syntactic sugar for manually instantiating new
+        type-checking expression scopes from existing scopes ala:
+
+        .. code-block:: python
+
+           func_scope_refrozen = BeartypeCheckExprScope(
+               func_scope,
+               beartype_ref_proxies=func_scope_frozen.beartype_ref_proxies,
+           )
+        '''
+
+        # Create and return a type-checking expression scope, initialized from
+        # this scope *AND* the passed parameters.
+        return BeartypeCheckExprScope(
+            *args,
+            # Reuse all previously computed instance variables bound to this
+            # scope, for efficiency.
+            beartype_ref_proxies=self.beartype_ref_proxies,
+            is_check_expr_cacheable=self.is_check_expr_cacheable,
+            **kwargs
+        )

@@ -317,7 +317,6 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 # Else, this kind of parameter is supported. Ergo, this code is
                 # non-"None".
 
-                #FIXME: Deal with "beartype_ref_proxies", please. *sigh*
                 # Code snippet type-checking any parameter with arbitrary name.
                 #
                 # Note that this memoized code factory requires parameters to be

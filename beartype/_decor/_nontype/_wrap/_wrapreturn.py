@@ -154,7 +154,6 @@ def code_check_return(decor_meta: BeartypeCallDecorMeta) -> str:
             #
             # If this hint is unignorable...
             elif hint_sane is not HINT_SANE_IGNORABLE:
-                #FIXME: Deal with "beartype_ref_proxies", please. *sigh*
                 # Code snippet type-checking any arbitrary return.
                 #
                 # Note that this memoized code factory requires parameters to be

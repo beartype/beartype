@@ -171,6 +171,10 @@ def label_object_kind(obj: object) -> str:
         # Else, this object is a standard synchronous callable. In this case,
         # avoid prefixing this callable by a leading substring.
 
+        #FIXME: *SUSPICIOUS.* We should just be able to accept the
+        #get_func_arg_name_first_or_none() default of "is_unwrap=True" below
+        #rather than doing this manually. Sadly, that approach currently raises
+        #inscrutable exceptions from deep within @beartype. Oh, @beartype...
         # Possibly lower-level callable wrapped by this higher-level callable.
         func = unwrap_func_all_isomorphic(obj)  # type: ignore[arg-type]
 

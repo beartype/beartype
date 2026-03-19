@@ -43,9 +43,9 @@ def proxy_hint_pep484_ref_str_subbable(
     # Mandatory parameters.
     hint_name: str,
     scope_name: str,
-    exception_prefix: str,
 
     # Optional parameters.
+    exception_prefix: Optional[str] = None,
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = None,
 ) -> type[BeartypeForwardRefSubbableABC]:
     '''
@@ -57,9 +57,10 @@ def proxy_hint_pep484_ref_str_subbable(
     child type hints).
 
     This getter is intentionally *not* memoized (e.g., by the
-    ``@callable_cached`` decorator). Why? Because the value of the optional
-    ``exception_prefix`` parameter (usually) contextually depends on the
-    currently decorated callable and thus (effectively) prohibits memoization.
+    ``@callable_cached`` decorator). Why? Because callers typically subsequently
+    overwrite the ``__exception_prefix_beartype__`` class variable of returned
+    proxies with strings contextually depending on the currently decorated
+    callable, effectively prohibiting memoization.
 
     Parameters
     ----------
@@ -74,9 +75,11 @@ def proxy_hint_pep484_ref_str_subbable(
     hint_name : str
         Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
         this unresolved type hint to be proxied.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
-    func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref
+    exception_prefix : Optional[str], default: None
+        Human-readable substring prefixing raised exception messages if any *or*
+        :data:`None` otherwise, in which case the returned proxy preserves its
+        default non-empty exception prefix.
+    func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref, default: None
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
         locally decorated callable if this forward reference proxy subtype
@@ -111,7 +114,13 @@ def proxy_hint_pep484_ref_str_subbable(
 def proxy_hint_pep484_ref_str_subbed(
     scope_name: str,
     hint_name: str,
+
+    # Note that this (and *ONLY* this) factory intentionally accepts a mandatory
+    # "exception_prefix" parameter, whose value derives from the parent proxy's
+    # "__exception_prefix_beartype__" class variable -- which is guaranteed to
+    # both exist and be a non-empty string.
     exception_prefix: str,
+
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref,
     args: tuple,
     kwargs: LexicalScope,
@@ -125,9 +134,10 @@ def proxy_hint_pep484_ref_str_subbed(
     child type hints).
 
     This getter is intentionally *not* memoized (e.g., by the
-    ``@callable_cached`` decorator). Why? Because the value of the optional
-    ``exception_prefix`` parameter (usually) contextually depends on the
-    currently decorated callable and thus (effectively) prohibits memoization.
+    ``@callable_cached`` decorator). Why? Because callers typically subsequently
+    overwrite the ``__exception_prefix_beartype__`` class variable of returned
+    proxies with strings contextually depending on the currently decorated
+    callable, effectively prohibiting memoization.
 
     Parameters
     ----------
@@ -185,8 +195,11 @@ def proxy_hint_pep484_ref_str_subbed(
 
 # ....................{ PROXIERS ~ pep : 749               }....................
 def proxy_hint_pep749_ref_object(
+    # Mandatory parameters.
     hint: HintPep484749RefObjectType,
-    exception_prefix: str,
+
+    # Optional parameters.
+    exception_prefix: Optional[str] = None,
 ) -> type[BeartypeForwardRefSubbedABC]:
     '''
     Create and return a new **forward reference proxy** (i.e.,
@@ -199,16 +212,19 @@ def proxy_hint_pep749_ref_object(
     current lexical scope).
 
     This getter is intentionally *not* memoized (e.g., by the
-    ``@callable_cached`` decorator). Why? Because the value of the optional
-    ``exception_prefix`` parameter (usually) contextually depends on the
-    currently decorated callable and thus (effectively) prohibits memoization.
+    ``@callable_cached`` decorator). Why? Because callers typically subsequently
+    overwrite the ``__exception_prefix_beartype__`` class variable of returned
+    proxies with strings contextually depending on the currently decorated
+    callable, effectively prohibiting memoization.
 
     Parameters
     ----------
     hint : HintPep484749RefObjectType
         Object-oriented forward reference type hint to be proxied.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
+    exception_prefix : Optional[str], default: None
+        Human-readable substring prefixing raised exception messages if any *or*
+        :data:`None` otherwise, in which case the returned proxy preserves its
+        default non-empty exception prefix.
 
     Returns
     -------
@@ -220,8 +236,7 @@ def proxy_hint_pep749_ref_object(
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference.
-    hint_module_name, hint_type_name = get_hint_pep484749_ref_names(
-        hint=hint, exception_prefix=exception_prefix)
+    hint_module_name, hint_type_name = get_hint_pep484749_ref_names(hint)
 
     # Forward reference proxy proxying this PEP 749-compliant object-oriented
     # forward reference type hint (i.e., "annotationlib.ForwardRef" object).
@@ -246,9 +261,9 @@ def _proxy_hint_ref(
     type_bases: TupleTypes,
     scope_name: Optional[str],
     hint_name: str,
-    exception_prefix: str,
 
     # Optional parameters.
+    exception_prefix: Optional[str] = None,
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = None,
 ) -> BeartypeForwardRef:
     '''
@@ -257,9 +272,10 @@ def _proxy_hint_ref(
     resolution of the type hint with the passed name).
 
     This getter is intentionally *not* memoized (e.g., by the
-    ``@callable_cached`` decorator). Why? Because the value of the optional
-    ``exception_prefix`` parameter (usually) contextually depends on the
-    currently decorated callable and thus (effectively) prohibits memoization.
+    ``@callable_cached`` decorator). Why? Because callers typically subsequently
+    overwrite the ``__exception_prefix_beartype__`` class variable of returned
+    proxies with strings contextually depending on the currently decorated
+    callable, effectively prohibiting memoization.
 
     Caveats
     -------
@@ -328,8 +344,10 @@ def _proxy_hint_ref(
     hint_name : str
         Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of
         this unresolved type hint to be proxied.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
+    exception_prefix : Optional[str], default: None
+        Human-readable substring prefixing raised exception messages if any *or*
+        :data:`None` otherwise, in which case the returned proxy preserves its
+        default non-empty exception prefix.
     func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref, default: None
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
@@ -357,13 +375,18 @@ def _proxy_hint_ref(
         f'{repr(type_bases)} not 1-tuple of one superclass.')
     assert isinstance(scope_name, str), f'{repr(scope_name)} not string.'
     assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
-    assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
+    assert isinstance(exception_prefix, NoneTypeOr[str]), (
+        f'{repr(exception_prefix)} neither string nor "None".')
     assert isinstance(
         func_local_parent_codeobj_weakref, NoneTypeOr[WeakrefCallableType]), (
         f'{repr(func_local_parent_codeobj_weakref)} neither weak reference '
         f'nor "None".'
     )
+
+    # If passed *NO* exception prefix, default this prefix to something sane.
+    if not exception_prefix:
+        exception_prefix = 'Forward reference '
+    # Else, an exception prefix was passed.
 
     # If this attribute name is *NOT* a syntactically valid Python identifier,
     # raise an exception.
@@ -394,71 +417,10 @@ def _proxy_hint_ref(
         exception_prefix=exception_prefix,
     )
 
-    # Classify passed parameters with this proxy.
+    # Classify all remaining passed parameters with this proxy.
     ref_proxy.__scope_name_beartype__ = scope_name
     ref_proxy.__name_beartype__ = hint_name
-
-    #FIXME: *LOL*. Sadly, the passed "exception_prefix" is unusable. Why?
-    #Because it's prefixed by "'$%ROOT_PITH_LABEL/~" and thus cached. Yikes. The
-    #culprit is almost certainly a *CACHED* reducer. The question then becomes:
-    #which *CACHED* reducers are inappropriately passing a cached
-    #"exception_prefix" down to this factory? Unfortunately, all such reducers
-    #will need to be refactored into equivalent *UNCACHED* reducers. *sigh*
-    #FIXME: Actually, I wonder if "_wrapreturn" and "_wrapargs" might be
-    #inappropriately memoizing "exception_prefix". They probably are. *sigh*
-    #FIXME: OH. I SEE. "_wrapreturn" and "_wrapargs" ape memoizing
-    #"exception_prefix" appropriately. Which means... it's pretty much
-    #impossible to print a proper exception prefix. Which means:
-    #* We wasted all of our time. Woops.
-    #* Document in the "BeartypeForwardRefABC" superclass exactly why no
-    #  "__exception_prefix_beartype__" class variable is defined.
-    #* Remove "ref_proxy.__exception_prefix_beartype__" entirely.
-    #* *RESTORE MEMOIZATION TO THIS METHOD*. That's critical.
-    #FIXME: *OH, HO.* We were right after all. We just need (waitforit) yet
-    #another new mandatory reduce_hint() parameter:
-    #"exception_prefix_uncachable", intended to be used basically *ONLY* for
-    #forward references. It is what it is. *sigh*
-    #FIXME: *OKAY*. Looks like we want to:
-    #* Add a new "exception_prefix_uncachable" instance variable to our existing
-    #  "HintSane" dataclass.
-    #* In the existing "_wrapargs" and "_wrapreturn" submodules:
-    #  * Define a new "exception_prefix" local variable resembling:
-    #        exception_prefix = prefix_callable_arg_name(
-    #            func=decor_meta.func_wrappee,
-    #            arg_name=arg_name,
-    #            is_color=decor_meta.conf.is_color,
-    #        )
-    #  * Replace all non-memoized uses of "EXCEPTION_PLACEHOLDER" in those
-    #    submodules with "exception_prefix".
-    #  * Refactor all prior calls to prefix_callable_arg_name() in those
-    #    submodules with "exception_prefix".
-    #  * Narrow the nested "try: ... with catch_warnings(...):" blocks to the
-    #    minimal code that still requires memoization. Pretty sure that's just
-    #    the make_code_raiser_func_pith_check() factory! Great. A dramatic
-    #    simplification is now feasible:
-    #    * Shift the body of the unmemoize_func_pith_check_expr() function
-    #      directly into the body of the make_code_raiser_func_pith_check()
-    #      factory.
-    #    * Excise the unmemoize_func_pith_check_expr() function and parent
-    #      "_wraputil" submodule entirely.
-    #    * We can go ever further, though! Shift those nested "try: ... with
-    #      catch_warnings(...):" blocks directly into
-    #      make_code_raiser_func_pith_check(), too! \o/
-    #* And here's the important one. Generalize *ALL* sanifiers and reducers
-    #  accordingly. For example:
-    #  * Generalize sanify_hint_root_func() to internally set:
-    #        hint_sane.exception_prefix_uncachable = exception_prefix
-    #  * Generalize reducers to accept an additional
-    #    "exception_prefix_uncachable" parameter.
-    #* Ensure that "hint_sane_parent.exception_prefix_uncachable" is correctly
-    #  propagated during sanification and reduction onto child "hint_sane"
-    #  objects. Can't quite recall how we do that, currently. The
-    #  hints_meta.sanify_hint_child() method might be pertinent here. *shrug*
-    #* Generalize the "beartype._check.error" subpackage similarly if needed.
-    # ref_proxy.__exception_prefix_beartype__ = (
-    #     f'{exception_prefix}forward reference ')
-    ref_proxy.__exception_prefix_beartype__ = 'Forward reference '
-
+    ref_proxy.__exception_prefix_beartype__ = exception_prefix
     ref_proxy.__func_local_parent_codeobj_weakref_beartype__ = (
         func_local_parent_codeobj_weakref)
 

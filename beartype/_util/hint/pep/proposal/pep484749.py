@@ -218,13 +218,6 @@ def get_hint_pep484749_ref_names(
     ``callable_cached`` decorator), as the implementation mostly reduces to an
     efficient one-liner.
 
-    Caveats
-    -------
-    **Callers are recommended to call the higher-level**
-    :func:`.canonicalize_hint_pep484_ref` **getter rather than this
-    lower-level getter,** which fails to guarantee canonicalization and is thus
-    considerably less safe.
-
     Parameters
     ----------
     hint : HintPep484749Ref
@@ -330,6 +323,20 @@ def get_hint_pep484749_ref_object_module_name_or_none(
     that typically has yet to be defined in the current lexical scope) is
     relative to if any *or* :data:`None` otherwise (i.e., if *no* such name was
     passed at the time this object was instantiated).
+
+    This getter is guaranteed to return a non-empty string *only* if this hint
+    originates from :mod:`beartype` itself. This includes any of the following:
+
+    * The low-level :func:`annotationlib.get_annotations` getter underlying the
+      higher-level
+      :func:`beartype._util.hint.pep.proposal.pep649749.get_pep649_hintable_annotations_or_none`
+      getter.
+    * The higher-level
+      :func:`beartype._util.hint.pep.proposal.pep749.get_hint_pep749_evaluator_mandatory`
+      getter.
+    * The higher-level
+      :func:`beartype._util.hint.pep.proposal.pep749.get_hint_pep749_evaluator_optional`
+      getter.
 
     Parameters
     ----------
@@ -483,8 +490,16 @@ def resolve_hint_pep484749_ref_object(
         exception_message = (
             f'{exception_prefix}'
             f'PEP 649 unquoted forward reference type hint "{hint_type_name}" '
-            f'in module "{hint_module_name}" wrapped by '
-            f'PEP 749 resolver {repr(hint)} '
+        )
+
+        # If this forward reference originates from a known module, append that.
+        if hint_module_name:
+            exception_message += f'in module "{hint_module_name}" '
+        # Else, this forward reference originates from *NO* known module.
+
+        # Finalize this message.
+        exception_message += (
+            f'wrapped by PEP 749 resolver {repr(hint)} '
             f'unresolvable to its target referent:\n'
             f'{exception_traceback}'
         )

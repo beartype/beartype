@@ -11,7 +11,6 @@ objects of parent hintables to the type hints annotating those child objects).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
-
 # ....................{ TODO                               }....................
 #FIXME: Also, don't neglect to *IMMEDIATELY* excise the
 #@method_cached_arg_by_id decorator. Quite a facepalm there, folks.
