@@ -25,7 +25,7 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import Generic
 from beartype._data.typing.datatyping import T
 from beartype._util.hint.pep.proposal.pep649749 import (
-    get_pep649_hintable_annotations)
+    get_pep649749_hintable_annotations)
 
 # ....................{ CLASSES                            }....................
 class ToAvariceOrPride(Generic[T]):
@@ -53,7 +53,7 @@ class FrequentWith(object):
 
         # "__annotations__" dunder dictionary of all hints annotating this
         # class method.
-        until_the_doves_hints = get_pep649_hintable_annotations(
+        until_the_doves_hints = get_pep649749_hintable_annotations(
             FrequentWith.until_the_doves)
 
         # Type hint annotating the parameter accepted by this function, possibly
@@ -99,7 +99,7 @@ class FrequentWith(object):
 
         # "__annotations__" dunder dictionary of all hints annotating this
         # class method.
-        crystal_column_hints = get_pep649_hintable_annotations(
+        crystal_column_hints = get_pep649749_hintable_annotations(
             FrequentWith.crystal_column)
 
         # Missing forward reference, defined merely as a placeholder forward
@@ -132,7 +132,7 @@ def their_starry_domes(of_diamond_and_of_gold: ExpandAbove) -> ExpandAbove:
     '''
 
     # "__annotations__" dunder dictionary of all hints annotating this function.
-    their_starry_domes_hints = get_pep649_hintable_annotations(
+    their_starry_domes_hints = get_pep649749_hintable_annotations(
         their_starry_domes)
 
     # Type hint annotating the parameter accepted by this function, possibly

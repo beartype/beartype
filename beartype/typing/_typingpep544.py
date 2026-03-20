@@ -369,7 +369,7 @@ def _is_obj_structural_subtype(cls, obj: Any) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep649749 import (
-        get_pep649_hintable_annotations_or_none)
+        get_pep649749_hintable_annotations_or_none)
 
     # Dictionary mapping from the name to value of each attribute directly
     # declared by this protocol class.
@@ -383,10 +383,10 @@ def _is_obj_structural_subtype(cls, obj: Any) -> bool:
     # attributes annotated by a type hint but lacking a value: e.g.,
     #     class SomeProtocol(Protocol):
     #         some_attr: int | str  # <-- note the lack of a value
-    # cls_attr_name_to_hint = get_pep649_hintable_annotations_or_none(cls)
+    # cls_attr_name_to_hint = get_pep649749_hintable_annotations_or_none(cls)
 
     #FIXME: Generalize to support Python 3.14. Super-nontrivial. We'll basically
-    #need to define a new get_pep649_hintable_dict_annotations_or_none() getter
+    #need to define a new get_pep649749_hintable_dict_annotations_or_none() getter
     #to perform *ONLY* the first half of the annotationslib.get_annotations()
     #getter. For now, doing nothing is preferable. Doing nothing simply means
     #that "beartype.typing.Protocol" users will be unable to use unquoted

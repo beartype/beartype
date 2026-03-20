@@ -19,10 +19,10 @@ Python 3.14.0.** If this is *not* the case, importing this submodule raises
 '''
 
 # ....................{ TESTS ~ getter                     }....................
-def unit_test_get_pep649_hintable_annotations() -> None:
+def unit_test_get_pep649749_hintable_annotations() -> None:
     '''
     Test the :pep:`649`-compliant implementation of the private
-    :mod:`beartype._util.hint.pep.proposal.pep649749.get_pep649_hintable_annotations`
+    :mod:`beartype._util.hint.pep.proposal.pep649749.get_pep649749_hintable_annotations`
     getter under Python >= 3.14.
     '''
 
@@ -36,7 +36,7 @@ def unit_test_get_pep649_hintable_annotations() -> None:
     #     Unpack,
     # )
     from beartype._util.hint.pep.proposal.pep649749 import (
-        get_pep649_hintable_annotations)
+        get_pep649749_hintable_annotations)
     from pytest import raises
 
     # # ....................{ CALLABLES                      }....................

@@ -34,7 +34,7 @@ from beartype._util.func.utilfunctest import (
     is_func_sync_generator,
 )
 from beartype._util.hint.pep.proposal.pep649749 import (
-    get_pep649_hintable_annotations)
+    get_pep649749_hintable_annotations)
 from beartype._util.text.utiltextprefix import prefix_callable_return
 from collections.abc import (
     AsyncGenerator,
@@ -233,7 +233,7 @@ def _die_of_hint_return_invalid(
         f'{repr(exception_suffix)} not string.')
 
     # "__annotations__" dunder dictionary providing this callable's type hints.
-    func_annotations = get_pep649_hintable_annotations(func)
+    func_annotations = get_pep649749_hintable_annotations(func)
 
     # Type hint annotating this callable's return, which the caller has already
     # explicitly guaranteed to exist.

@@ -97,7 +97,7 @@ from beartype._util.hint.pep.proposal.pep612 import (
     make_hint_pep612_concatenate_list_or_none,
 )
 from beartype._util.hint.pep.proposal.pep649749 import (
-    get_pep649_hintable_annotations)
+    get_pep649749_hintable_annotations)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 from collections.abc import (
     Callable as CallableABC,
@@ -277,7 +277,7 @@ def infer_hint_callable(func: CallableABC) -> Hint:
     #       # *NO* parameters should be annotated as such.
     #       >>> infer_hint(lambda: None)
     #       collections.abc.Callable[[], object]
-    pith_name_to_hint = get_pep649_hintable_annotations(func_wrapper)
+    pith_name_to_hint = get_pep649749_hintable_annotations(func_wrapper)
 
     # dict.get() method bound to this dictionary, localized for efficiency.
     pith_name_to_hint_get = pith_name_to_hint.get

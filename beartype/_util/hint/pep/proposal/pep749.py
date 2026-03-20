@@ -94,7 +94,7 @@ def get_hint_pep749_evaluator_mandatory(
         transitively subscripting each hint annotating this hintable with a safe
         :class:`annotationlib.ForwardRef` object. Note that the remaining
         formats are situational at best. See also the
-        :func`beartype._util.hint.pep.proposal.pep649749.get_pep649_hintable_annotations`
+        :func`beartype._util.hint.pep.proposal.pep649749.get_pep649749_hintable_annotations`
         getter for further details.
     exception_cls : TypeException, default: BeartypeDecorHintPep749Exception
         Type of exception to be raised in the event of a fatal error. Defaults
@@ -391,7 +391,7 @@ if IS_PYTHON_AT_LEAST_3_14:
             transitively subscripting each hint annotating this hintable with a
             safe :class:`annotationlib.ForwardRef` object. Note that the
             remaining formats are situational at best. See also the
-            :func`beartype._util.hint.pep.proposal.pep649749.get_pep649_hintable_annotations`
+            :func`beartype._util.hint.pep.proposal.pep649749.get_pep649749_hintable_annotations`
             getter for further details.
         exception_cls : TypeException, default: BeartypeDecorHintPep749Exception
             Type of exception to be raised in the event of a fatal error.
@@ -575,7 +575,7 @@ get_hint_pep749_evaluator_optional.__doc__ = (
         transitively subscripting each hint annotating this hintable with a safe
         :class:`annotationlib.ForwardRef` object. Note that the remaining
         formats are situational at best. See also the
-        :func`beartype._util.hint.pep.proposal.pep649749.get_pep649_hintable_annotations`
+        :func`beartype._util.hint.pep.proposal.pep649749.get_pep649749_hintable_annotations`
         getter for further details.
     exception_cls : TypeException, default: BeartypeDecorHintPep749Exception
         Type of exception to be raised in the event of a fatal error. Defaults

@@ -154,6 +154,8 @@ def reduce_hint_pep484_ref(
     # If this hint is a PEP 484- and 749-compliant object-oriented forward
     # reference (rather than a stringified forward reference)...
     if isinstance(hint, HintPep484749RefObjectType):
+        # print(f'Reducing PEP 749 {repr(hint)}...')
+
         # If this reference is a PEP 749-compliant "annotationlib.ForwardRef"
         # object encapsulating *ALL* metadata needed to dynamically resolve the
         # type hint it refers to, then reduce this reference to a
@@ -188,6 +190,7 @@ def reduce_hint_pep484_ref(
         # "annotationlib.ForwardRef" objects are unusable for runtime resolution
         # purposes and thus reducible to simple strings here.
         if is_hint_pep484749_ref_object_resolvable(hint):
+            # print(f'Proxying PEP 749 {repr(hint)}...')
             hint_resolved = proxy_hint_pep749_ref_object(
                 hint=hint, exception_prefix=exception_prefix)
         # Else, either the active Python interpreter targets Python <= 3.13 *OR*

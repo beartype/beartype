@@ -52,8 +52,8 @@ from beartype._util.func.utilfunctest import (
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 from beartype._util.hint.pep.proposal.pep649749 import (
-    get_pep649_hintable_annotations,
-    set_pep649_hintable_annotations,
+    get_pep649749_hintable_annotations,
+    set_pep649749_hintable_annotations,
 )
 from beartype._util.text.utiltextprefix import (
     prefix_callable_pith,
@@ -559,7 +559,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # thin isomorphic wrapper deferring to "wrapper" (i.e., the callable to
         # be unwrapped). Even if "func" were annotated with type hints, those
         # type hints would be useless for most intents and purposes.
-        self.func_annotations = get_pep649_hintable_annotations(
+        self.func_annotations = get_pep649749_hintable_annotations(
             hintable=wrapper, exception_cls=BeartypeDecorWrappeeException)
         # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)} w/ annotations {self.func_annotations}...')
 
@@ -769,7 +769,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
 
             # Set these modified annotations on the decorated callable
             # originating these annotations.
-            set_pep649_hintable_annotations(
+            set_pep649749_hintable_annotations(
                 hintable=self.func_wrapper, annotations=self.func_annotations)
 
             # Note this type hint dictionary to now be clean.
