@@ -3547,7 +3547,7 @@ def hints_pep484_reduction_meta() -> (
         Pep484TowerComplex,
         Pep484TowerFloat,
     )
-    from beartype._util.hint.pep.proposal.pep484604 import (
+    from beartype._util.hint.pep.proposal.pep484.pep484604union import (
         make_hint_pep484604_union)
     from beartype_test.a00_unit.data.data_type import Class
     from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (

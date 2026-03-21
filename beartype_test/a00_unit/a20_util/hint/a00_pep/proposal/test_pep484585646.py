@@ -8,7 +8,7 @@ Project-wide :pep:`484`-, :pep:`585`-, and :pep:`646`-compliant **tuple type
 hint utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484585646` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep646.pep484585646tuple` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,13 +21,13 @@ This submodule unit tests the public API of the private
 def test_is_hint_pep484585646_tuple_variadic_unpacked_if_needed() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585646.is_hint_pep484585646_tuple_variadic_unpacked_if_needed`
+    :func:`beartype._util.hint.pep.proposal.pep646.pep484585646tuple.is_hint_pep484585646_tuple_variadic_unpacked_if_needed`
     tester.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep484585646 import (
+    from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
         is_hint_pep484585646_tuple_variadic_unpacked_if_needed)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from typing import Tuple  # <-- intentionally import the PEP 484 variant
@@ -75,13 +75,13 @@ def test_is_hint_pep484585646_tuple_variadic_unpacked_if_needed() -> None:
 def test_is_hint_pep484585646_tuple_empty() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585646.is_hint_pep484585646_tuple_empty`
+    :func:`beartype._util.hint.pep.proposal.pep646.pep484585646tuple.is_hint_pep484585646_tuple_empty`
     tester.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep484585646 import (
+    from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
         is_hint_pep484585646_tuple_empty)
     from typing import Tuple  # <-- intentionally import the PEP 484 variant
 
@@ -111,13 +111,13 @@ def test_is_hint_pep484585646_tuple_empty() -> None:
 def test_get_hint_pep484585646_tuple_args_unpacked_if_needed() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep484585646.get_hint_pep484585646_tuple_args_unpacked_if_needed`
+    :mod:`beartype._util.hint.pep.proposal.pep646.pep484585646tuple.get_hint_pep484585646_tuple_args_unpacked_if_needed`
     getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep484585646 import (
+    from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
         get_hint_pep484585646_tuple_args_unpacked_if_needed)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 

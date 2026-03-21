@@ -130,14 +130,14 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import 
     is_hint_pep484585_generic_subbed,
     is_hint_pep484585_generic_unsubbed,
 )
-from beartype._util.hint.pep.proposal.pep484585646 import (
+from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
     disambiguate_hint_pep484585646_tuple_sign)
-from beartype._util.hint.pep.proposal.pep484604 import (
+from beartype._util.hint.pep.proposal.pep484.pep484604union import (
     die_if_hint_pep604_inconsistent)
 from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_builtin_subbed)
 from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
-from beartype._util.hint.pep.proposal.pep646692 import (
+from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
     disambiguate_hint_pep646692_unpacked_sign,
     is_hint_pep646_tuple_unpacked_prefix,
 )

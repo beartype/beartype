@@ -26,8 +26,8 @@ from beartype._util.cls.pep.clspep557 import (
     is_pep557_dataclass_frozen,
 )
 from beartype._util.cls.utilclsset import set_type_attr
-from beartype._util.hint.pep.proposal.pep649749 import (
-    get_pep649749_hintable_annotations)
+from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
+    get_hintable_pep649749_annotations)
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobject import get_object_type_name
 
@@ -170,7 +170,7 @@ def beartype_pep557_dataclass(
     # Unsanified (i.e., original) dictionary mapping from the name of each
     # possible field of this dataclass to the possibly insane type hint
     # annotating that field *AFTER* resolving all PEP 563-postponed type hints.
-    attr_name_to_hint_insane = get_pep649749_hintable_annotations(datacls)
+    attr_name_to_hint_insane = get_hintable_pep649749_annotations(datacls)
 
     # Sanified (i.e., sanitized) dictionary mapping from the name of each
     # guaranteable field of this dataclass to the ostensibly sane type hint

@@ -125,7 +125,7 @@ from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
     get_hint_pep484585_arg,
     get_hint_pep484585_args,
 )
-from beartype._util.hint.pep.proposal.pep484585646 import (
+from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
     is_hint_pep484585646_tuple_empty)
 from beartype._util.hint.pep.proposal.pep586 import get_hint_pep586_literals
 from beartype._util.hint.pep.proposal.pep593 import (

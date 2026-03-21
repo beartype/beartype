@@ -37,8 +37,8 @@ from beartype._check.metadata.call.callmetadecor import (
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import TypeStack
-from beartype._util.hint.pep.proposal.pep649749 import (
-    get_pep649749_hintable_annotations,
+from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
+    get_hintable_pep649749_annotations,
     set_pep649749_hintable_annotations,
 )
 from collections.abc import Callable
@@ -162,7 +162,7 @@ def resolve_pep563(
     # parameter and return of the passed callable to the non-string type hint
     # resolved from the string type hint annotating that parameter or return --
     # raising an exception if that callable is *NOT* a pure-Python callable.
-    func_annotations = get_pep649749_hintable_annotations(
+    func_annotations = get_hintable_pep649749_annotations(
         hintable=func, exception_cls=BeartypePep563Exception)
 
     # If that callable is unannotated, silently reduce to a noop.

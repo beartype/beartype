@@ -40,7 +40,7 @@ def hints_pep646_meta() -> (
         HintSignPep646TupleUnpacked,
         HintSignPep646TypeVarTupleUnpacked,
     )
-    from beartype._util.hint.pep.proposal.pep646692 import (
+    from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
         make_hint_pep646_tuple_unpacked_prefix,
         make_hint_pep646_tuple_unpacked_subbed,
         # make_hint_pep646_typevartuple_unpacked_prefix,

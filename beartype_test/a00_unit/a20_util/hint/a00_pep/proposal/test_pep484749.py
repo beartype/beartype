@@ -8,7 +8,7 @@ Test-wide :pep:`484`- and :pep:`749`-compliant **forward reference type hint
 utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484749` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep749.pep484749forwardref` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -29,7 +29,7 @@ def test_get_hint_pep484749_ref_names() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype._cave._cavefast import HintPep484749RefObjectType
-    from beartype._util.hint.pep.proposal.pep484749 import (
+    from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
         get_hint_pep484749_ref_names)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
     from pytest import raises

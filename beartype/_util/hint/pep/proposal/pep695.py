@@ -394,7 +394,7 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484612646 import (
+    from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
         get_hint_pep484612646_typearg_packed_name,
         is_hint_pep484612646_typearg_packed,
     )

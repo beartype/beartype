@@ -23,7 +23,7 @@ from beartype._data.typing.datatypingport import (
     ListHints,
     TupleHints,
 )
-from beartype._util.hint.pep.proposal.pep484604 import make_hint_pep484604_union
+from beartype._util.hint.pep.proposal.pep484.pep484604union import make_hint_pep484604_union
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
 # ....................{ TESTERS                            }....................

@@ -51,8 +51,8 @@ from beartype._util.func.utilfunctest import (
     is_func_async_generator,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
-from beartype._util.hint.pep.proposal.pep649749 import (
-    get_pep649749_hintable_annotations,
+from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
+    get_hintable_pep649749_annotations,
     set_pep649749_hintable_annotations,
 )
 from beartype._util.text.utiltextprefix import (
@@ -559,7 +559,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # thin isomorphic wrapper deferring to "wrapper" (i.e., the callable to
         # be unwrapped). Even if "func" were annotated with type hints, those
         # type hints would be useless for most intents and purposes.
-        self.func_annotations = get_pep649749_hintable_annotations(
+        self.func_annotations = get_hintable_pep649749_annotations(
             hintable=wrapper, exception_cls=BeartypeDecorWrappeeException)
         # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)} w/ annotations {self.func_annotations}...')
 

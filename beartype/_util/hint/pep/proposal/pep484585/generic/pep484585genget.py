@@ -37,7 +37,7 @@ from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484generic import (
     get_hint_pep484_generic_bases_unerased)
-from beartype._util.hint.pep.proposal.pep484612646 import (
+from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
     is_hint_pep484612646_typearg_unpacked)
 from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_bases_unerased,

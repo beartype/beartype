@@ -13,12 +13,9 @@ external callers).
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDoorHintViolation
-from beartype.typing import (
-    List,
-    Union,
-)
 from beartype._util.text.utiltextrepr import represent_object
 from pytest import raises
+from typing import Union
 
 # Import another submodule of this subpackage implicitly installing different
 # import hooks configured by another beartype configuration isolated to that
@@ -52,7 +49,7 @@ OF_STARRY_ICE = len('Of starry ice the grey grass and bare boughs;')
 # object violating the type hint annotating that statement raises the expected
 # exception.
 with raises(BeartypeDoorHintViolation) as exception_info:
-    of_starry_ice: Union[float, List[str]] = OF_STARRY_ICE
+    of_starry_ice: Union[float, list[str]] = OF_STARRY_ICE
 
 # Exception message raised by that assignment.
 exception_message = str(exception_info.value)
@@ -100,7 +97,7 @@ def beneath_the_cold_glare() -> None:
     # an object violating the type hint annotating that statement raises the
     # expected exception.
     with raises(BeartypeDoorHintViolation) as exception_info:
-        through_tangled_swamps: Union[float, List[str]] = OF_THE_DESOLATE_NIGHT
+        through_tangled_swamps: Union[float, list[str]] = OF_THE_DESOLATE_NIGHT
 
     # Exception message raised by that assignment.
     local_exception_message = str(exception_info.value)

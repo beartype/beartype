@@ -8,7 +8,7 @@ Project-wide :pep:`484`, :pep:`612`, and :pep:`644` **type parameter utility**
 unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484612646` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep646.pep484612646typevar` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,7 +21,7 @@ This submodule unit tests the public API of the private
 def test_get_hint_pep484612646_typearg_packed_name() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep484612646.get_hint_pep484612646_typearg_packed_name`
+    :mod:`beartype._util.hint.pep.proposal.pep646.pep484612646typevar.get_hint_pep484612646_typearg_packed_name`
     getter.
     '''
 
@@ -29,7 +29,7 @@ def test_get_hint_pep484612646_typearg_packed_name() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484612646Exception
     from beartype._data.typing.datatyping import T
-    from beartype._util.hint.pep.proposal.pep484612646 import (
+    from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
         get_hint_pep484612646_typearg_packed_name)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.pep.data_pep612 import P
@@ -65,7 +65,7 @@ def test_get_hint_pep484612646_typearg_packed_name() -> None:
 def test_pack_hint_pep484612646_typearg_unpacked() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep484612646.pack_hint_pep484612646_typearg_unpacked`
+    :mod:`beartype._util.hint.pep.proposal.pep646.pep484612646typevar.pack_hint_pep484612646_typearg_unpacked`
     getter.
     '''
 
@@ -73,7 +73,7 @@ def test_pack_hint_pep484612646_typearg_unpacked() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484612646Exception
     from beartype._data.typing.datatyping import T
-    from beartype._util.hint.pep.proposal.pep484612646 import (
+    from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
         pack_hint_pep484612646_typearg_unpacked)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from pytest import raises

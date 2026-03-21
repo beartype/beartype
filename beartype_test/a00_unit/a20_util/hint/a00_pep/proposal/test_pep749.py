@@ -7,7 +7,7 @@
 Project-wide :pep:`749` **type hint utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep749` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep749.pep749evaluate` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,9 +20,9 @@ This submodule unit tests the public API of the private
 def test_get_hint_pep749_subhint() -> None:
     '''
     Test the pair of private
-    :mod:`beartype._util.hint.pep.proposal.pep749.get_hint_pep749_evaluator_mandatory`
+    :mod:`beartype._util.hint.pep.proposal.pep749.pep749evaluate.get_hint_pep749_evaluator_mandatory`
     and
-    :mod:`beartype._util.hint.pep.proposal.pep749.get_hint_pep749_evaluator_optional`
+    :mod:`beartype._util.hint.pep.proposal.pep749.pep749evaluate.get_hint_pep749_evaluator_optional`
     getters.
     '''
 
@@ -33,7 +33,7 @@ def test_get_hint_pep749_subhint() -> None:
     from beartype._cave._cavefast import HintPep749RefFormat  # pyright: ignore
     from beartype._data.kind.datakindiota import SENTINEL
     from beartype._data.typing.datatypingport import Hint
-    from beartype._util.hint.pep.proposal.pep749 import (
+    from beartype._util.hint.pep.proposal.pep749.pep749evaluate import (
         get_hint_pep749_evaluator_mandatory,
         get_hint_pep749_evaluator_optional,
     )

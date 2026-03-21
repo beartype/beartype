@@ -551,20 +551,6 @@ class BeartypeDecorHintException(BeartypeDecorException):
     pass
 
 
-class BeartypeDecorHintForwardRefException(
-    BeartypeDecorHintException, _BeartypeHintForwardRefExceptionMixin):
-    '''
-    **Beartype decorator forward reference type hint exception.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated by an
-    **invalid forward reference type hint** (i.e., string whose value is the
-    name of a user-defined class that has yet to be declared).
-    '''
-
-    pass
-
-
 class BeartypeDecorHintRecursionException(BeartypeDecorHintException):
     '''
     **Beartype decorator type hint recursion exception.**
@@ -574,6 +560,59 @@ class BeartypeDecorHintRecursionException(BeartypeDecorHintException):
     one or more **infinitely recursive type hints** (i.e., hints that
     erroneously induce infinite recursion on attempting to dynamically generate
     pure-Python code type-checking against these hints).
+    '''
+
+    pass
+
+# ....................{ DECORATOR ~ hint : forwardref      }....................
+class BeartypeDecorHintForwardRefException(
+    BeartypeDecorHintException, _BeartypeHintForwardRefExceptionMixin):
+    '''
+    **Beartype decorator forward reference type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by an
+    **invalid forward reference type hint** (e.g., :pep:`484`-compliant
+    stringified forward reference type hint whose value is the name of a
+    user-defined class that has yet to be defined).
+    '''
+
+    pass
+
+
+class BeartypeDecorHintPep484ForwardRefStrException(
+    BeartypeDecorHintForwardRefException):
+    '''
+    **Beartype decorator** :pep:`484`-compliant **stringified forward reference
+    type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by a
+    :pep:`484`-compliant **stringified forward reference type hint** (i.e.,
+    absolute or relative name of a referent target type hint that typically has
+    yet to be defined in the current lexical scope) that cannot be dynamically
+    evaluated at decoration time (e.g., due to erroneously referring to a
+    non-existent attribute of a namespace defined in the current lexical scope).
+    '''
+
+    pass
+
+
+class BeartypeDecorHintPep749ForwardRefObjectException(
+    BeartypeDecorHintForwardRefException):
+    '''
+    **Beartype decorator** :pep:`749`-compliant **object-oriented forward
+    reference type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by a
+    :pep:`749`-compliant **object-oriented forward reference type hint** (i.e.,
+    :class:`annotationlib.ForwardRef` or :class:`typing.ForwardRef` object
+    encapsulating all metadata required to dynamically resolve at runtime a
+    reference to a referent target type hint that typically has yet to be
+    defined in the current lexical scope) that cannot be dynamically evaluated
+    at decoration time (e.g., due to erroneously referring to a non-existent
+    attribute of a namespace defined in the current lexical scope).
     '''
 
     pass

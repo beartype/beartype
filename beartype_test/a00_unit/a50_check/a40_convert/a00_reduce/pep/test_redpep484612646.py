@@ -141,7 +141,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         # ....................{ IMPORTS                    }....................
         # Defer PEP-specific imports.
         # from beartype.roar import BeartypeDecorHintPep646Exception
-        from beartype._util.hint.pep.proposal.pep646692 import (
+        from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
             make_hint_pep646_tuple_unpacked_prefix)
         from beartype_test.a00_unit.data.pep.data_pep646 import (
             tuple_fixed_empty_unpacked_prefix,

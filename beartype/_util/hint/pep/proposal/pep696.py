@@ -94,9 +94,9 @@ def get_hint_pep484612646_typearg_packed_default_or_sentinel(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484612646 import (
+    from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
         die_unless_hint_pep484612646_typearg_packed)
-    from beartype._util.hint.pep.proposal.pep749 import (
+    from beartype._util.hint.pep.proposal.pep749.pep749evaluate import (
         get_hint_pep749_evaluator_optional)
 
     # If this hint is *NOT* a packed type parameter, raise an exception.

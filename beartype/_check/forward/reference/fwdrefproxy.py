@@ -33,7 +33,7 @@ from beartype._data.typing.datatyping import (
     TupleTypes,
 )
 from beartype._util.cls.utilclsmake import make_type
-from beartype._util.hint.pep.proposal.pep484749 import (
+from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
     get_hint_pep484749_ref_names)
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from typing import Optional

@@ -94,7 +94,7 @@ def get_hint_pep749_evaluator_mandatory(
         transitively subscripting each hint annotating this hintable with a safe
         :class:`annotationlib.ForwardRef` object. Note that the remaining
         formats are situational at best. See also the
-        :func`beartype._util.hint.pep.proposal.pep649749.get_pep649749_hintable_annotations`
+        :func`beartype._util.hint.pep.proposal.pep749.pep649749annotate.get_hintable_pep649749_annotations`
         getter for further details.
     exception_cls : TypeException, default: BeartypeDecorHintPep749Exception
         Type of exception to be raised in the event of a fatal error. Defaults
@@ -217,32 +217,45 @@ def _get_hint_pep749_evaluator_optional_static(  # pyright: ignore
     assert isinstance(evaluator_name_static, str), (
         f'{repr(evaluator_name_static)} not string.')
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
+        get_hintable_pep649749_hint_or_hints_format_value_or_sentinel)
+
     # Subhint to be returned. Specifically, either:
     # * If this hint defines a static evaluator with this name, the value of
     #   this evaluator: a simple PEP-compliant child hint.
     # * Else, the sentinel placeholder.
-    evaluator_value = getattr(hint, evaluator_name_static, SENTINEL)
-
-    # If this hint defines *NO* static evaluator with this name, raise an
-    # exception.
     #
-    # Note that this should *NEVER* be the case.
-    if evaluator_value is SENTINEL:
+    # Note that the optional "exception_cls" parameter is intentionally *NOT*
+    # passed to ensure that a more granular exception type is raised.
+    evaluator_value = (
+        get_hintable_pep649749_hint_or_hints_format_value_or_sentinel(
+            hintable=hint,
+            attribute_name=evaluator_name_static,
+            exception_prefix=exception_prefix,
+        ))
+
+    # If this hint defines *NO* static evaluator with this name, raise a more
+    # readable higher-level exception than the builtin "AttributeError"
+    # exception raised by the above getter.
+    #
+    # Note that this should *NEVER* be the case. Thus, we facepalm. *facepalm*
+    if evaluator_value is SENTINEL:  # pragma: no cover
         raise exception_cls(
             f'{exception_prefix}type hint {repr(hint)} '
             f'static evaluator attribute "{evaluator_name_static}" undefined.'
         )
     # Else, this hint defines a static evaluator with this name.
-    #
-    # If this evaluator is the null value, silently reduce to a noop and
-    # immediately coerce this evaluator to the sentinel placeholder.
-    elif evaluator_value is evaluator_value_null:
-        evaluator_value = SENTINEL
-    # Else, this evaluator is *NOT* the null value. In this case, preserve this
-    # evaluator as is.
 
-    # Return this evaluator.
-    return evaluator_value
+    # Return either...
+    return (
+        # If this evaluator is *NOT* the null value, preserve this evaluator;
+        evaluator_value
+        if evaluator_value is not evaluator_value_null else
+        # Else, this evaluator is the null value. In this case, return the
+        # sentinel placeholder to notify the caller of this edge case.
+        SENTINEL
+    )
 
 # ....................{ VERSIONS                           }....................
 # If the active Python interpreter targets Python >= 3.14...
@@ -391,7 +404,7 @@ if IS_PYTHON_AT_LEAST_3_14:
             transitively subscripting each hint annotating this hintable with a
             safe :class:`annotationlib.ForwardRef` object. Note that the
             remaining formats are situational at best. See also the
-            :func`beartype._util.hint.pep.proposal.pep649749.get_pep649749_hintable_annotations`
+            :func`beartype._util.hint.pep.proposal.pep749.pep649749annotate.get_hintable_pep649749_annotations`
             getter for further details.
         exception_cls : TypeException, default: BeartypeDecorHintPep749Exception
             Type of exception to be raised in the event of a fatal error.
@@ -421,7 +434,7 @@ if IS_PYTHON_AT_LEAST_3_14:
         # Subhint to be returned. Specifically, either:
         # * If this hint defines a dynamic evaluator with this name, the value
         #   of this evaluator: a low-level C-based evaluator function
-        #   implemented by CPython, whose signature matches
+        #   implemented by CPython whose signature matches
         #   "Callable[[HintPep749RefFormat], Hint]".
         # * Else, the sentinel placeholder.
         evaluator_value = getattr(hint, evaluator_name_dynamic, SENTINEL)
@@ -447,17 +460,13 @@ if IS_PYTHON_AT_LEAST_3_14:
         #
         # Note that this should *NEVER* be the case.
         elif not callable(evaluator_value):
-            raise exception_cls(
-                f'{repr(evaluator_value)} uncallable.')
+            raise exception_cls(f'{repr(evaluator_value)} uncallable.')
         # Else, this evaluator is callable and thus an evaluator function. In
         # this case...
         else:
             # Subhint formatted by this evaluator function in this format.
             evaluator_value = call_evaluate_function(
-                evaluate=evaluator_value,
-                format=hint_format,
-                owner=hintable,
-            )
+                evaluate=evaluator_value, format=hint_format, owner=hintable)
 
             # If this evaluator is the null value, silently reduce to a noop and
             # immediately coerce this evaluator to the sentinel placeholder.
@@ -575,7 +584,7 @@ get_hint_pep749_evaluator_optional.__doc__ = (
         transitively subscripting each hint annotating this hintable with a safe
         :class:`annotationlib.ForwardRef` object. Note that the remaining
         formats are situational at best. See also the
-        :func`beartype._util.hint.pep.proposal.pep649749.get_pep649749_hintable_annotations`
+        :func`beartype._util.hint.pep.proposal.pep749.pep649749annotate.get_hintable_pep649749_annotations`
         getter for further details.
     exception_cls : TypeException, default: BeartypeDecorHintPep749Exception
         Type of exception to be raised in the event of a fatal error. Defaults

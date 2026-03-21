@@ -27,7 +27,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic)
-from beartype._util.hint.pep.proposal.pep484749 import (
+from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
     resolve_hint_pep484749_ref_object)
 from beartype._util.module.utilmodimport import (
     import_module_attr,

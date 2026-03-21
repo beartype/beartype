@@ -23,7 +23,7 @@ def clear_caches() -> None:
     this function clears:
 
     * The **annotations dictionary cache** (i.e., private
-      :data:`beartype._util.hint.pep.proposal.pep649749._MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS`
+      :data:`beartype._util.hint.pep.proposal.pep749.pep649749annotate._MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS`
       dictionary).
     * The **forward reference referee cache** (i.e., private
       :data:`beartype._check.forward.reference._fwdrefmeta._forwardref_to_referent`

@@ -379,7 +379,7 @@ class HintPepMetadata(HintNonpepMetadata):
         # Defer test-specific imports.
         from beartype._data.hint.sign.datahintsigncls import HintSign
         from beartype._util.hint.utilhintget import get_hint_repr
-        from beartype._util.hint.pep.proposal.pep484612646 import (
+        from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
             is_hint_pep484612646_typearg_packed)
         from beartype.door import TypeHint
 

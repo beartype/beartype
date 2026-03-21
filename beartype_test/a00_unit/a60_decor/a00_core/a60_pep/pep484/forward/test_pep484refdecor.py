@@ -344,7 +344,7 @@ def test_pep484_ref_decor_relative_type_nested() -> None:
     with raises_uncached(BeartypeCallHintParamViolation):
         accept_list_vast_and_muscular([LikeALitheSerpent(),])
 
-# ....................{ TESTS ~ relative : type : nested   }....................
+# ....................{ TESTS ~ pep : 695                  }....................
 @skip_if_python_version_less_than('3.12.0')
 def test_pep484_ref_decor_pep695() -> None:
     '''
@@ -375,6 +375,24 @@ def test_pep484_ref_decor_pep695() -> None:
     CIRCLES_AND_ARCS = 'Circles, and arcs, and broad-belting colure,'
     assert the_glancing_spheres(CIRCLES_AND_ARCS, 25) == (
         f'{CIRCLES_AND_ARCS} {25}')
+
+# ....................{ TESTS ~ pep : 749                  }....................
+@skip_if_python_version_less_than('3.14.0')
+def test_pep484_ref_decor_pep749() -> None:
+    '''
+    Test :func:`beartype.beartype`-decorated callables accepting one or more
+    parameters annotated by invalid forward reference type hints in both
+    :pep:`484`-compliant stringified *and* :pep:`749`-compliant object-oriented
+    form if the active Python interpreter targets Python >= 3.14 and thus
+    supports :pep:`749` *or* reduce to a noop otherwise.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    #
+    # Note that importing this data submodule suffices to perform this test.
+    from beartype_test.a00_unit.data.pep.pep484.forward import (
+        data_pep484ref_decor_pep749)
 
 # ....................{ TESTS ~ fail                       }....................
 def test_pep484_ref_decor_fail() -> None:

@@ -33,6 +33,8 @@ from beartype._data.hint.sign.datahintsigns import (
 
 # ....................{ RAISERS                            }....................
 #FIXME: Unit test us up, please. *sigh*
+#FIXME: Doesn't belong here. It's so sad! Shift into a new sibling
+#"pep646typevartuple" submodule, please. *shrug*
 def die_unless_hint_pep646_typevartuple_packed(
     # Mandatory parameters.
     hint: Hint,
@@ -460,7 +462,7 @@ def make_hint_pep646_tuple_unpacked_prefix(hints_child: TupleHints) -> Hint:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585646 import (
+    from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
         make_hint_pep484585_tuple_fixed)
 
     #FIXME: Uncomment after dropping Python <= 3.10 support, which raises a
@@ -518,7 +520,7 @@ def make_hint_pep646_tuple_unpacked_subbed(hints_child: TupleHints) -> Hint:
     from typing import Unpack  # type: ignore[attr-defined]
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585646 import (
+    from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
         make_hint_pep484585_tuple_fixed)
 
     # PEP 585-compliant tuple hint subscripted by these child hints.

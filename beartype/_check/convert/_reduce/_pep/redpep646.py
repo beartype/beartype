@@ -82,7 +82,7 @@ from beartype._data.hint.sign.datahintsigns import (
 )
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
-from beartype._util.hint.pep.proposal.pep484585646 import (
+from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
     get_hint_pep484585646_tuple_args_unpacked_if_needed,
     is_hint_pep484585646_tuple_variadic_unpacked_if_needed,
     make_hint_pep484585_tuple_fixed,

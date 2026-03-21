@@ -360,7 +360,7 @@ def get_hint_pep_typeargs_unpacked(hint: Hint) -> (
     # If this tuple is non-empty, this hint is parametrized. In this case...
     if hint_typeargs:
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep646692 import (
+        from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
             make_hint_pep646_typevartuple_unpacked_subbed)
 
         # List of all unpacked type parameters to be returned.

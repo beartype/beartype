@@ -137,8 +137,8 @@ def test_pep563_module() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype._util.hint.pep.proposal.pep649749 import (
-        get_pep649749_hintable_annotations,
+    from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
+        get_hintable_pep649749_annotations,
         set_pep649749_hintable_annotations,
     )
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
@@ -150,9 +150,9 @@ def test_pep563_module() -> None:
     # ....................{ LOCALS                         }....................
     # Dictionary of these callables' annotations, localized to enable debugging
     # in the likely event of unit test failure. *sigh*
-    get_minecraft_end_txt_annotations = get_pep649749_hintable_annotations(
+    get_minecraft_end_txt_annotations = get_hintable_pep649749_annotations(
         get_minecraft_end_txt)
-    get_minecraft_end_txt_stanza_annotations = get_pep649749_hintable_annotations(
+    get_minecraft_end_txt_stanza_annotations = get_hintable_pep649749_annotations(
         get_minecraft_end_txt_stanza)
 
     # from annotationlib import Format
@@ -160,7 +160,7 @@ def test_pep563_module() -> None:
     # print(f'{hintable}.__annotate__: {hintable.__annotate__}')
     # print(f'{hintable}.__annotations__: {hintable.__annotations__}')
     # print(f'{hintable}.__annotate__(3): {hintable.__annotate__(Format.FORWARDREF)}')
-    # hintable_annotations_cached = get_pep649749_hintable_annotations(hintable)
+    # hintable_annotations_cached = get_hintable_pep649749_annotations(hintable)
     # print(f'{hintable}.__annotate__(3) [cached]: {hintable_annotations_cached}')
 
     # ....................{ ASSERTS                        }....................
@@ -193,7 +193,7 @@ def test_pep563_module() -> None:
         annotations={
             arg_name: eval(param_hint, get_minecraft_end_txt.__globals__)
             for arg_name, param_hint in (
-                get_pep649749_hintable_annotations(get_minecraft_end_txt).items())
+                get_hintable_pep649749_annotations(get_minecraft_end_txt).items())
         },
     )
 

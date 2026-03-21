@@ -33,7 +33,7 @@ from beartype._util.hint.pep.utilpeptest import (
 )
 from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_builtin_subbed)
-from beartype._util.hint.pep.proposal.pep484604 import is_hint_pep604
+from beartype._util.hint.pep.proposal.pep484.pep484604union import is_hint_pep604
 
 # ....................{ RAISERS                            }....................
 def die_unless_hint(

@@ -26,7 +26,7 @@ from beartype._data.hint.sign.datahintsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_CONTAINER_ARGS_1)
-from beartype._util.hint.pep.proposal.pep484585646 import (
+from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
     is_hint_pep484585646_tuple_empty)
 from beartype._util.text.utiltextansi import color_type
 from beartype._util.text.utiltextprefix import prefix_pith_type

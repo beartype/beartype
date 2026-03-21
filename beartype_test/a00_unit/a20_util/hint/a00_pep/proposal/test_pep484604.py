@@ -8,7 +8,7 @@ Project-wide :pep:`484`- and :pep:`604`-compliant **union type hint utility**
 unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484604` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484.pep484604union` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,11 +21,11 @@ This submodule unit tests the public API of the private
 def test_is_hint_pep604() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep484604.is_hint_pep604` tester.
+    :mod:`beartype._util.hint.pep.proposal.pep484.pep484604union.is_hint_pep604` tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep484604 import is_hint_pep604
+    from beartype._util.hint.pep.proposal.pep484.pep484604union import is_hint_pep604
 
     # Assert this tester accepts a PEP 604-compliant union.
     assert is_hint_pep604(int | str | None) is True
@@ -37,7 +37,7 @@ def test_is_hint_pep604() -> None:
 def test_make_hint_pep484604_union() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep484604.make_hint_pep484604_union`
+    :mod:`beartype._util.hint.pep.proposal.pep484.pep484604union.make_hint_pep484604_union`
     factory.
     '''
 
@@ -47,7 +47,7 @@ def test_make_hint_pep484604_union() -> None:
     from beartype.typing import (
         Union,
     )
-    from beartype._util.hint.pep.proposal.pep484604 import (
+    from beartype._util.hint.pep.proposal.pep484.pep484604union import (
         make_hint_pep484604_union)
     from pytest import raises
     from typing import Annotated

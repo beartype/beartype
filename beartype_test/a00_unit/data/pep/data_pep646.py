@@ -22,7 +22,7 @@ Python 3.11.0.** If this is *not* the case, importing this submodule raises an
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import TypeVarTuple
-from beartype._util.hint.pep.proposal.pep646692 import (
+from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
     make_hint_pep646_tuple_unpacked_prefix,
     make_hint_pep646_tuple_unpacked_subbed,
     make_hint_pep646_typevartuple_unpacked_prefix,

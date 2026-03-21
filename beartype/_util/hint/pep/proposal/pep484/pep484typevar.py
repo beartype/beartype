@@ -244,9 +244,9 @@ def get_hint_pep484_typevar_bounded_constraints_or_none(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484604 import (
+    from beartype._util.hint.pep.proposal.pep484.pep484604union import (
         make_hint_pep484604_union)
-    from beartype._util.hint.pep.proposal.pep749 import (
+    from beartype._util.hint.pep.proposal.pep749.pep749evaluate import (
         get_hint_pep749_evaluator_mandatory,
         get_hint_pep749_evaluator_optional,
     )

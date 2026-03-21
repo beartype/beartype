@@ -229,7 +229,7 @@ def get_hint_pep484585646_tuple_args_unpacked_if_needed(
 
     .. code-block:: python
 
-       >>> from beartype._util.hint.pep.proposal.pep646692 import (
+       >>> from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
        ...     get_hint_pep484585646_tuple_args_unpacked_if_needed)
        >>> get_hint_pep484585646_tuple_args_unpacked_if_needed(hint_tuple_prefixed)
        (<class 'str'>, Ellipsis)  # <-- *GOOD*
@@ -261,7 +261,7 @@ def get_hint_pep484585646_tuple_args_unpacked_if_needed(
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
     from beartype._util.hint.pep.utilpepsign import (
         get_hint_pep_sign_ambiguous_or_none)
-    from beartype._util.hint.pep.proposal.pep646692 import (
+    from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
         get_hint_pep646692_unpack_arg)
 
     # Tuple of the zero or more child hints subscripting this hint if this hint

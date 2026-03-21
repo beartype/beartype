@@ -107,7 +107,7 @@ def test_get_hint_pep_typeargs_packed(hints_pep_meta) -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype._util.hint.pep.proposal.pep484612646 import (
+    from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
         is_hint_pep484612646_typearg_packed)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP

@@ -86,12 +86,12 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     get_hint_pep484_typevar_bounded_constraints_or_none,
     # is_hint_pep484_typevar,
 )
-from beartype._util.hint.pep.proposal.pep484612646 import (
+from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
     die_unless_hint_pep484612646_typearg_unpacked,
     is_hint_pep484612646_typearg_unpacked,
     pack_hint_pep484612646_typearg_unpacked,
 )
-from beartype._util.hint.pep.proposal.pep646692 import (
+from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
     make_hint_pep646_tuple_unpacked_prefix)
 from beartype._util.hint.pep.proposal.pep696 import (
     get_hint_pep484612646_typearg_packed_default_or_sentinel)

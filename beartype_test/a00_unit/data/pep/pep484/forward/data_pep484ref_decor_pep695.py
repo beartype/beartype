@@ -6,13 +6,13 @@
 '''
 Test-wide :pep:`484`-compliant **stringified forward reference type hint**
 (i.e., strings whose values are the names of classes and tuples of classes, one
-or more of which typically have yet to be defined) :pep:`695`-compliant
-decoration data submodule.
+or more of which typically have yet to be defined) and :pep:`695`-compliant
+**type parameter scope** (e.g., the ``[T]`` in ``def muh_func[T](...) -> 'T':``)
+integration data submodule.
 
 This submodule exercises stringified forward reference support implemented in
 the :func:`beartype.beartype` decorator when specifically decorating callables
-defining :pep:`695`-compliant **type parameter scopes** (e.g., the ``[T]`` in
-``def muh_func[T](...) -> 'T':``) annotated by stringified forward references
+defining type parameter scopes annotated by stringified forward references
 referring to those type parameters (e.g., the ``'T'`` in that function).
 
 Caveats

@@ -329,13 +329,13 @@ def get_hint_pep484749_ref_object_module_name_or_none(
 
     * The low-level :func:`annotationlib.get_annotations` getter underlying the
       higher-level
-      :func:`beartype._util.hint.pep.proposal.pep649749.get_pep649749_hintable_annotations_or_none`
+      :func:`beartype._util.hint.pep.proposal.pep749.pep649749annotate.get_hintable_pep649749_annotations_or_none`
       getter.
     * The higher-level
-      :func:`beartype._util.hint.pep.proposal.pep749.get_hint_pep749_evaluator_mandatory`
+      :func:`beartype._util.hint.pep.proposal.pep749.pep749evaluate.get_hint_pep749_evaluator_mandatory`
       getter.
     * The higher-level
-      :func:`beartype._util.hint.pep.proposal.pep749.get_hint_pep749_evaluator_optional`
+      :func:`beartype._util.hint.pep.proposal.pep749.pep749evaluate.get_hint_pep749_evaluator_optional`
       getter.
 
     Parameters

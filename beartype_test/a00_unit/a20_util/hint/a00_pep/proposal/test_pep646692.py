@@ -7,7 +7,7 @@
 Project-wide :pep:`646` and :pep:`692` **type hint utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep646692` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep646.pep646692unpack` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,13 +20,13 @@ This submodule unit tests the public API of the private
 def test_is_hint_pep646_tuple_unpacked_prefix() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep646692.is_hint_pep646_tuple_unpacked_prefix`
+    :mod:`beartype._util.hint.pep.proposal.pep646.pep646692unpack.is_hint_pep646_tuple_unpacked_prefix`
     tester.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep646692 import (
+    from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
         is_hint_pep646_tuple_unpacked_prefix)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
