@@ -419,7 +419,7 @@ def _proxy_hint_ref(
 
     # Classify all remaining passed parameters with this proxy.
     ref_proxy.__scope_name_beartype__ = scope_name
-    ref_proxy.__name_beartype__ = hint_name
+    ref_proxy.__hint_name_beartype__ = hint_name
     ref_proxy.__exception_prefix_beartype__ = exception_prefix
     ref_proxy.__func_local_parent_codeobj_weakref_beartype__ = (
         func_local_parent_codeobj_weakref)

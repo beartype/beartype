@@ -469,7 +469,7 @@ def label_exception_traceback(
 
     # If indenting this traceback, do so.
     if is_indented:
-        exception_traceback = indent(text=exception_traceback, prefix='\t')
+        exception_traceback = indent(text=exception_traceback, prefix='    ')
     # Else, avoid doing so.
 
     # Return this label.

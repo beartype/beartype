@@ -59,7 +59,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
 
     # ....................{ CLASS VARS ~ mandatory         }....................
-    __name_beartype__: str = None  # type: ignore[assignment]
+    __hint_name_beartype__: str = None  # type: ignore[assignment]
     '''
     Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of the
     type hint referenced by this forward reference subclass.
@@ -87,8 +87,8 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
     Fully-qualified name of the lexical scope to which the type hint referenced
     by this forward reference subclass is relative if that type hint is relative
-    (i.e., if :attr:`__name_beartype__` is relative) *or* ignored otherwise
-    (i.e., if :attr:`__name_beartype__` is absolute).
+    (i.e., if :attr:`__hint_name_beartype__` is relative) *or* ignored otherwise
+    (i.e., if :attr:`__hint_name_beartype__` is absolute).
 
     Caveats
     -------
@@ -313,7 +313,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize with the __is_subclass_beartype__() method below.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # If the cls.__type_beartype__() property dynamically resolving the
+        # If the cls.__resolved_type_beartype__() property dynamically resolving the
         # stringified forward reference underlying this proxy failed to do so by
         # falling back to the beartype-specific private "BeartypeAny" type, do
         # *NOT* simply return true only if the passed object is an instance of
@@ -322,10 +322,10 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
         # possible objects, inviting false negatives (i.e., failure to raise
         # type-checking violations if this object is *NOT* an instance of that
         # external class). Luckily, we can do better. Specifically...
-        if cls.__type_beartype__ is BeartypeAny:
+        if cls.__resolved_type_beartype__ is BeartypeAny:
             #FIXME: Can we do even better? No idea. Maybe. Maybe not. We could
             #also try doing something like testing:
-            #    get_object_name(obj) == f'__scope_name_beartype__.__name_beartype__'
+            #    get_object_name(obj) == f'__scope_name_beartype__.__hint_name_beartype__'
             #
             #Not sure if that's too restrictive and thus invites false
             #positives, which would be even worse than false negatives. Guess
@@ -357,23 +357,23 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
             # invites erroneous type-checking violations by returning False when
             # it should instead return True for some object "obj" and forward
             # reference proxy "cls", implying:
-            #     obj_classname != cls.__name_beartype__
+            #     obj_classname != cls.__hint_name_beartype__
             #
             # However, this heuristic should instead return True, implying that
             # this object *MUST* be an instance of the type referred to by the
             # stringified forward reference proxied by this proxy, implying:
-            #     obj_classname == cls.__name_beartype__
+            #     obj_classname == cls.__hint_name_beartype__
             #
             # A contradiction! Ergo, this heuristic is guaranteed to *NOT* emit
             # false positives. QED. \o/
-            return cls.__name_beartype__ == obj.__class__.__name__
-        # Else, the cls.__type_beartype__() property dynamically resolving the
+            return cls.__hint_name_beartype__ == obj.__class__.__name__
+        # Else, the cls.__resolved_type_beartype__() property dynamically resolving the
         # stringified forward reference underlying this proxy succeeded in doing
         # so. Ergo, the class returned by that property is trustworthy.
 
         # Return true only if the passed object is an instance of the external
         # class referenced by this forward reference.
-        return isinstance(obj, cls.__type_beartype__)
+        return isinstance(obj, cls.__resolved_type_beartype__)
 
 
     @classmethod
@@ -402,10 +402,10 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize with the __is_instance_beartype__() method above.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # If the cls.__type_beartype__() property dynamically resolving the
+        # If the cls.__resolved_type_beartype__() property dynamically resolving the
         # stringified forward reference underlying this proxy failed to do so by
         # falling back to the beartype-specific private "BeartypeAny" type...
-        if cls.__type_beartype__ is BeartypeAny:
+        if cls.__resolved_type_beartype__ is BeartypeAny:
             # If this object is *NOT* a type, raise the standard "TypeError"
             # exception expected to be raised by the issubclass() builtin in
             # this common edge case. To do so trivially, we intentionally
@@ -414,14 +414,14 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
 
             # Return true only if the unqualified basename of the type referred
             # to by this forward reference is the same as that of this object.
-            return cls.__name_beartype__ == subclass.__name__
-        # Else, the cls.__type_beartype__() property dynamically resolving the
+            return cls.__hint_name_beartype__ == subclass.__name__
+        # Else, the cls.__resolved_type_beartype__() property dynamically resolving the
         # stringified forward reference underlying this proxy succeeded in doing
         # so. Ergo, the class returned by that property is trustworthy.
 
         # Return true only if this object is a subclass of the external class
         # referenced by this forward reference.
-        return issubclass(subclass, cls.__type_beartype__)
+        return issubclass(subclass, cls.__resolved_type_beartype__)
 
 # ....................{ SUPERCLASSES ~ subscription        }....................
 #FIXME: Unit test us up, please.
@@ -505,7 +505,7 @@ class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
         # this subscriptable forward reference proxy with the passed parameters.
         return proxy_hint_pep484_ref_str_subbed(
             scope_name=cls.__scope_name_beartype__,  # type: ignore[arg-type]
-            hint_name=cls.__name_beartype__,
+            hint_name=cls.__hint_name_beartype__,
             exception_prefix=cls.__exception_prefix_beartype__,
             func_local_parent_codeobj_weakref=(
                 cls.__func_local_parent_codeobj_weakref_beartype__),

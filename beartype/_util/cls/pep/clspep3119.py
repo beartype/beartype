@@ -23,7 +23,7 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 
-# ....................{ RAISERS ~ instance                 }....................
+# ....................{ RAISERS ~ isinstanceable           }....................
 def die_unless_object_isinstanceable(
     # Mandatory parameters.
     obj: IsBuiltinOrSubclassableTypes,
@@ -65,12 +65,12 @@ def die_unless_object_isinstanceable(
           isinstanceable class. Note that forward reference proxies are
           isinstanceable classes *if and only if* the external classes they
           refer to have already been defined.
-    exception_cls : TypeException, optional
-        Type of exception to be raised. Defaults to
-        :exc:`.BeartypeDecorHintPep3119Exception`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+    exception_cls : TypeException, default: BeartypeDecorHintPep3119Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep3119Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -80,15 +80,21 @@ def die_unless_object_isinstanceable(
         * An isinstanceable class.
         * A tuple containing only isinstanceable classes.
         * A :pep:`604`-compliant new union.
+
+    See Also
+    --------
+    :func:`.die_unless_type_isinstanceable`
+        Further details.
     '''
 
     # Defer to this lower-level general-purpose raiser.
     _die_if_object_uncheckable(
         obj=obj,
-        obj_pith=None,
-        obj_raiser=die_unless_type_isinstanceable,
-        obj_tester=isinstance,  # type: ignore[arg-type]
         is_forwardref_valid=is_forwardref_valid,
+        type_raiser=die_unless_type_isinstanceable,
+        type_tester=is_type_isinstanceable,
+        builtin_tester=isinstance,  # type: ignore[arg-type]
+        builtin_tester_pith=None,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
@@ -228,12 +234,12 @@ def die_unless_type_isinstanceable(
           isinstanceable class. Note that forward reference proxies are
           isinstanceable classes *if and only if* the external classes they
           refer to have already been defined.
-    exception_cls : TypeException, optional
-        Type of exception to be raised. Defaults to
+    exception_cls : TypeException, default: BeartypeDecorHintPep3119Exception
+        Type of exception to be raised in the event of a fatal error. Defaults to
         :exc:`.BeartypeDecorHintPep3119Exception`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -269,71 +275,16 @@ def die_unless_type_isinstanceable(
     # human-readable exception embedding the original (typically unreadable)
     # "TypeError" exception implicitly raised by the metaclass of this class.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the is_type_isinstanceable() tester.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Attempt to pass this class as the second parameter to isinstance().
-    try:
-        isinstance(None, cls)  # type: ignore[arg-type]
-    # If doing so raised *ANY* exception, this class is *NOT* isinstanceable. In
-    # this case, raise a human-readable exception.
-    #
-    # See the docstring for further discussion.
-    except Exception as exception:
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not exception class.')
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
-
-        # If this exception ambiguously fails to indicate non-isinstanceability,
-        # silently reduce to a noop.
-        if _is_exception_ambiguous(exception):
-            return
-        # Else, this exception unambiguously indicates non-isinstanceability.
-        #
-        # If this exception already human-readably describes this
-        # non-isinstanceability, re-raise this exception as is.
-        elif _is_exception_sufficient(exception):
-            raise
-        # Else, this exception fails to human-readably describe this
-        # non-isinstanceability.
-
-        #FIXME: Uncomment after we uncover why doing so triggers an infinite
-        #circular exception chain when "hint" is a "GenericAlias". It's clearly
-        #the is_hint_pep544_protocol() call, but why? In any case, the simplest
-        #workaround would just be to inline the logic of
-        #is_hint_pep544_protocol() here directly. Yes, we know. *shrug*
-
-        # # Human-readable exception message to be raised as either...
-        # exception_message = (
-        #     # If this class is a PEP 544-compliant protocol, a message
-        #     # documenting this exact issue and how to resolve it;
-        #     (
-        #         f'{exception_prefix}PEP 544 protocol {hint} '
-        #         f'uncheckable at runtime (i.e., '
-        #         f'not decorated by @typing.runtime_checkable).'
-        #     )
-        #     if is_hint_pep544_protocol(hint) else
-        #     # Else, a fallback message documenting this general issue.
-        #     (
-        #         f'{exception_prefix}type {hint} uncheckable at runtime (i.e., '
-        #         f'not passable as second parameter to isinstance() '
-        #         f'due to raising "{exception}" from metaclass '
-        #         f'__instancecheck__() method).'
-        #     )
-        # )
-
-        # Exception message to be raised.
-        exception_message = (
-            f'{exception_prefix}{repr(cls)} uncheckable at runtime '
-            f'(i.e., not passable as second parameter to isinstance(), '
-            f'due to raising "{exception.__class__.__name__}: {exception}" '
-            f'from metaclass '
-            f'{cls.__class__.__name__}.__instancecheck__() method).'
-        )
-
-        # Raise this exception chained onto this lower-level exception.
-        raise exception_cls(exception_message) from exception
+    # Defer to this lower-level general-purpose raiser.
+    return _die_unless_object_builtin_checkable(
+        obj=cls,
+        is_forwardref_valid=is_forwardref_valid,
+        type_tester=is_type_isinstanceable,
+        builtin_tester=isinstance,  # type: ignore[arg-type]
+        builtin_tester_pith=None,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
 # ....................{ RAISERS ~ subclass                 }....................
 def die_unless_object_issubclassable(
@@ -377,12 +328,12 @@ def die_unless_object_issubclassable(
           isinstanceable class. Note that forward reference proxies are
           isinstanceable classes *if and only if* the external classes they
           refer to have already been defined.
-    exception_cls : TypeException, optional
-        Type of exception to be raised. Defaults to
+    exception_cls : TypeException, default: BeartypeDecorHintPep3119Exception
+        Type of exception to be raised in the event of a fatal error. Defaults to
         :exc:`.BeartypeDecorHintPep3119Exception`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -397,10 +348,11 @@ def die_unless_object_issubclassable(
     # Defer to this lower-level general-purpose raiser.
     _die_if_object_uncheckable(
         obj=obj,
-        obj_pith=type,
-        obj_raiser=die_unless_type_issubclassable,
-        obj_tester=issubclass,  # type: ignore[arg-type]
         is_forwardref_valid=is_forwardref_valid,
+        type_raiser=die_unless_type_issubclassable,
+        type_tester=is_type_issubclassable,
+        builtin_tester=issubclass,  # type: ignore[arg-type]
+        builtin_tester_pith=type,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
@@ -464,12 +416,12 @@ def die_unless_type_issubclassable(
           isinstanceable class. Note that forward reference proxies are
           isinstanceable classes *if and only if* the external classes they
           refer to have already been defined.
-    exception_cls : TypeException, optional
-        Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep3119Exception`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+    exception_cls : TypeException, default: BeartypeDecorHintPep3119Exception
+        Type of exception to be raised in the event of a fatal error. Defaults to
+        :exc:`.BeartypeDecorHintPep3119Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -500,49 +452,82 @@ def die_unless_type_issubclassable(
     # human-readable exception embedding the original (typically unreadable)
     # "TypeError" exception implicitly raised by the metaclass of this class.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the is_type_issubclassable() tester.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Attempt to pass this class as the second parameter to issubclass().
-    try:
-        issubclass(type, cls)  # type: ignore[arg-type]
-    # If doing so raised *ANY* exception, this class is *NOT* issubclassable. In
-    # this case, raise a human-readable exception.
-    #
-    # See the die_unless_type_isinstanceable() docstring for details.
-    except Exception as exception:
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not exception class.')
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
-
-        # If this exception ambiguously fails to indicate non-issubclassability,
-        # silently reduce to a noop.
-        if _is_exception_ambiguous(exception):
-            return
-        # Else, this exception unambiguously indicates non-issubclassability.
-        #
-        # If this exception already human-readably describes this
-        # non-issubclassability, re-raise this exception as is.
-        elif _is_exception_sufficient(exception):
-            raise
-        # Else, this exception fails to human-readably describe this
-        # non-issubclassability.
-
-        # Exception message to be raised.
-        exception_message = (
-            f'{exception_prefix}{repr(cls)} uncheckable at runtime '
-            f'(i.e., not passable as second parameter to issubclass(), '
-            f'due to raising "{exception.__class__.__name__}: {exception}" '
-            f'from metaclass '
-            f'{cls.__class__.__name__}.__subclasscheck__() method).'
-        )
-
-        # Raise this exception chained onto this lower-level exception.
-        raise exception_cls(exception_message) from exception
+    # Defer to this lower-level general-purpose raiser.
+    return _die_unless_object_builtin_checkable(
+        obj=cls,
+        is_forwardref_valid=is_forwardref_valid,
+        type_tester=is_type_isinstanceable,
+        builtin_tester=issubclass,  # type: ignore[arg-type]
+        builtin_tester_pith=type,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
 # ....................{ TESTERS ~ isinstanceable           }....................
-#FIXME: Define is_object_isinstanceable() similar to as done below, please.
+@callable_cached
+def is_object_isinstanceable(
+    # Mandatory parameters.
+    obj: object,
+
+    # Optional parameters.
+    is_forwardref_valid: bool = True,
+) -> TypeIs[IsBuiltinOrSubclassableTypes]:
+    '''
+    :data:`True` only if the passed object is **isinstanceable** (i.e., valid as
+    the second parameter to the :func:`isinstance` builtin).
+
+    This tester is memoized for efficiency.
+
+    Parameters
+    ----------
+    obj : IsBuiltinOrSubclassableTypes
+        Object to be tested.
+    is_forwardref_valid : bool, default: True
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). If this
+        boolean is:
+
+        * :data:`True`, this object is valid only when this object is either:
+
+          * An isinstanceable type.
+          * A forward reference proxy (regardless of whether this proxy is
+            currently resolvable to an isinstanceable type that has already been
+            externally defined).
+
+        * :data:`False`, this object is valid only when this object is either:
+
+          * An isinstanceable type.
+          * A forward reference proxy that is currently resolvable to an
+            isinstanceable type that has already been externally defined.
+
+        Defaults to :data:`True`, but probably shouldn't.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is either:
+
+        * An isinstanceable class.
+        * A tuple containing only isinstanceable classes.
+        * A :pep:`604`-compliant new union.
+
+    See Also
+    --------
+    :func:`.die_unless_type_isinstanceable`
+    :func:`.is_type_isinstanceable`
+        Further details.
+    '''
+
+    # Defer to this lower-level general-purpose raiser.
+    return _is_object_checkable(
+        obj=obj,
+        is_forwardref_valid=is_forwardref_valid,
+        type_tester=is_type_isinstanceable,
+        builtin_tester=isinstance,  # type: ignore[arg-type]
+        builtin_tester_pith=None,
+    )
+
 
 #FIXME: Unit test up the "is_forwardref_valid" parameter, please.
 @callable_cached
@@ -604,58 +589,14 @@ def is_type_isinstanceable(
     :func:`.die_unless_type_isinstanceable`
         Further details.
     '''
-    assert isinstance(is_forwardref_valid, bool), (
-        f'{repr(is_forwardref_valid)} not bool.')
 
-    # Avoid circular import dependencies.
-    from beartype._check.forward.reference.fwdreftest import (
-        is_beartype_ref_proxy)
-    # print('Start!')
-
-    # If this object is *NOT* a class, immediately return false.
-    if not isinstance(cls, type):
-        # print(f'{repr(cls)} not type!')
-        return False
-    # Else, this object is a class.
-    #
-    # If the caller allows this class to be a forward reference proxy type
-    # regardless of whether the external type this proxy refers to has been
-    # defined yet and this class is such a type, immediately return true.
-    #
-    # Note that this test is efficient and thus tested *BEFORE*
-    # isinstanceability, which is less efficient.
-    elif is_forwardref_valid and is_beartype_ref_proxy(cls):
-        # print(f'{repr(cls)} is forward reference proxy!')
-        return True
-    # Else, either the caller prefers to disregard this distinction *OR* this
-    # class is not a forward reference proxy type.
-    # print('Going!')
-
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with die_unless_type_isinstanceable().
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Attempt to pass this class as the second parameter to the isinstance()
-    # builtin to decide whether or not this class is safely usable as a
-    # standard class or not.
-    #
-    # Note that this leverages an EAFP (i.e., "It is easier to ask forgiveness
-    # than permission") approach and thus imposes a minor performance penalty,
-    # but that there exists *NO* faster alternative applicable to arbitrary
-    # user-defined classes, whose metaclasses may define an __instancecheck__()
-    # dunder method to raise exceptions and thus prohibit being passed as the
-    # second parameter to the isinstance() builtin, the primary means employed
-    # by @beartype wrapper functions to check arbitrary types.
-    try:
-        isinstance(None, cls)  # type: ignore[arg-type]
-    # If the prior function call raised *ANY* exception, return true only if
-    # this exception ambiguously suggests that this class could still be
-    # isinstanceable.
-    except Exception as exception:
-        return _is_exception_ambiguous(exception)
-
-    # Return true, as the prior isinstance() call raised *NO* exception,
-    # implying this class to probably (but *NOT* necessarily) be isinstanceable.
-    return True
+    # Defer to this lower-level general-purpose tester.
+    return _is_type_checkable(
+        cls=cls,
+        is_forwardref_valid=is_forwardref_valid,
+        builtin_tester=isinstance,  # type: ignore[arg-type]
+        builtin_tester_pith=None,
+    )
 
 # ....................{ TESTERS ~ issubclassable           }....................
 #FIXME: Unit test us up, please.
@@ -673,20 +614,11 @@ def is_object_issubclassable(
 
     This tester is memoized for efficiency.
 
-    Caveats
-    -------
-    See also the "Caveats" sections of the
-    :func:`.is_type_isinstanceable` docstring for further discussion,
-    substituting:
-
-    * ``__instancecheck__()`` for ``__subclasscheck__()``.
-    * :func:`isinstance` for :func:`issubclass`.
-
     Parameters
     ----------
     obj : IsBuiltinOrSubclassableTypes
         Object to be tested.
-    is_forwardref_valid : bool, optional
+    is_forwardref_valid : bool, default: True
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
         proxying an external type that may currently be undefined). If this
@@ -719,62 +651,18 @@ def is_object_issubclassable(
     See Also
     --------
     :func:`.die_unless_type_issubclassable`
+    :func:`.is_type_isinstanceable`
         Further details.
     '''
 
-    # If this object is a type, defer to this lower-level type-specific tester.
-    if isinstance(obj, type):
-        return is_type_issubclassable(obj, is_forwardref_valid)
-    # Else, this object is *NOT* a type.
-
-    # Avoid circular import dependencies.
-    from beartype._util.cls.utilclstest import is_type_or_types
-    from beartype._util.hint.pep.proposal.pep484.pep484604union import is_hint_pep604
-
-    # If this object is neither...
-    if not (
-        # A PEP 604-compliant new union *NOR*...
-        is_hint_pep604(obj) or
-        # A tuple of types...
-        is_type_or_types(obj)
-    # Then this object *CANNOT* be runtime-checkable. In this case, immediately
-    # short-circuit by returning false.
-    ):
-        return False
-    # Else, this object *COULD* be runtime-checkable. To decide whether this
-    # object is runtime-checkable, further handling is warranted.
-
-    #FIXME: *UGH*. DRY violation between this tester and the
-    #is_type_issubclassable(). Consider refactoring out into a new private
-    #_is_object_issubclassable_slow() tester, please. *sigh*
-
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with die_unless_type_issubclassable().
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Attempt to pass this object as the second parameter to the issubclass()
-    # builtin to decide whether or not this object is safely usable as a
-    # standard class or not.
-    #
-    # Note that this leverages an EAFP (i.e., "It is easier to ask forgiveness
-    # than permission") approach and thus imposes a minor performance penalty,
-    # but that there exists *NO* faster alternative applicable to arbitrary
-    # user-defined classes, whose metaclasses may define a __subclasscheck__()
-    # dunder method to raise exceptions and thus prohibit being passed as the
-    # second parameter to the issubclass() builtin, the primary means employed
-    # by @beartype wrapper functions to check arbitrary types.
-    try:
-        issubclass(type, obj)  # type: ignore[arg-type]
-
-        # If the prior function call raised *NO* exception, this object is
-        # probably but *NOT* necessarily issubclassable. Return true.
-    # If the prior function call raised *ANY* exception, return true only if
-    # this exception ambiguously suggests that this object could still be
-    # issubclassable.
-    except Exception as exception:
-        return _is_exception_ambiguous(exception)
-
-    # Look. Just do it. *sigh*
-    return True
+    # Defer to this lower-level general-purpose raiser.
+    return _is_object_checkable(
+        obj=obj,
+        is_forwardref_valid=is_forwardref_valid,
+        type_tester=is_type_isinstanceable,
+        builtin_tester=issubclass,  # type: ignore[arg-type]
+        builtin_tester_pith=type,
+    )
 
 
 #FIXME: Unit test up the "is_forwardref_valid" parameter, please.
@@ -792,15 +680,6 @@ def is_type_issubclassable(
     method that raises a :exc:`TypeError` exception).
 
     This tester is memoized for efficiency.
-
-    Caveats
-    -------
-    See also the "Caveats" sections of the
-    :func:`.is_type_isinstanceable` docstring for further discussion,
-    substituting:
-
-    * ``__instancecheck__()`` for ``__subclasscheck__()``.
-    * :func:`isinstance` for :func:`issubclass`.
 
     Parameters
     ----------
@@ -827,6 +706,508 @@ def is_type_issubclassable(
     See Also
     --------
     :func:`.die_unless_type_issubclassable`
+    :func:`.is_type_isinstanceable`
+        Further details.
+    '''
+
+    # Defer to this lower-level general-purpose tester.
+    return _is_type_checkable(
+        cls=cls,
+        is_forwardref_valid=is_forwardref_valid,
+        builtin_tester=issubclass,  # type: ignore[arg-type]
+        builtin_tester_pith=type,
+    )
+
+# ....................{ PRIVATE ~ hints                    }....................
+_NontypeTester = Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+'''
+:pep:`585`-compliant type hint matching both the :func:`.isinstance` and
+:func:`.issubclass` builtins.
+'''
+
+# ....................{ PRIVATE ~ raisers                  }....................
+def _die_if_object_uncheckable(
+    obj: IsBuiltinOrSubclassableTypes,
+    is_forwardref_valid: bool,
+    type_raiser: Callable,
+    type_tester: Callable,
+    builtin_tester: _NontypeTester,
+    builtin_tester_pith: object,
+    exception_cls: TypeException,
+    exception_prefix: str,
+) -> None:
+    '''
+    Raise an exception unless the passed object is **runtime-checkable** (i.e.,
+    valid as the second parameter to either the :func:`isinstance` or
+    :func:`issubclass` builtins) according to the passed object tester and
+    raiser.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be validated.
+    is_forwardref_valid : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable classes *or* a forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
+    type_raiser : Callable
+        Callable raising an exception unless this object is runtime-checkable
+        according to this predicate, which should be either:
+
+        * :func:`.die_unless_type_isinstanceable`.
+        * :func:`.die_unless_type_issubclassable`.
+    type_tester : Callable
+        Callable returning :data:`True` only if this object is a
+        runtime-checkable type according to this predicate, which should be
+        either:
+
+        * :func:`.is_type_isinstanceable`.
+        * :func:`.is_type_issubclassable`.
+    builtin_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+        Callable returning :data:`True` only if this object is runtime-checkable
+        according to this predicate, which should be either:
+
+        * :func:`isinstance`.
+        * :func:`issubclass`.
+    builtin_tester_pith : object
+        Object guaranteed to satisfy the ``builtin_tester`` callable when
+        ``obj`` is **runtime-typecheckable** -- that is, when ``builtin_tester``
+        is called as ``builtin_tester(builtin_tester_pith, obj)``.
+    exception_cls : TypeException
+        Type of exception to be raised in the event of a fatal error.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
+
+    Raises
+    ------
+    exception_cls
+        If this object is *not* runtime-checkable according to the passed
+        object tester and raiser.
+    '''
+    assert callable(type_raiser), f'{repr(type_raiser)} uncallable.'
+    assert callable(builtin_tester), f'{repr(builtin_tester)} uncallable.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.cls.utilclstest import die_unless_type_or_types
+    from beartype._util.hint.pep.proposal.pep484.pep484604union import (
+        is_hint_pep604)
+
+    # If this object is *NOT* a PEP 604-compliant new union...
+    if not is_hint_pep604(obj):
+        # If this object is neither a type *NOR* tuple of types, raise an
+        # exception.
+        die_unless_type_or_types(
+            type_or_types=obj,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
+        # Else, this object is either a type *OR* tuple of types.
+    # Else, this object is a PEP 604-compliant new union.
+    #
+    # In any case, this object is either a type, tuple of types, *OR* a PEP
+    # 604-compliant new union. In all three of these cases, this object *COULD*
+    # now be runtime-checkable. Further detection is required to decide.
+
+    # If this object is a type...
+    if isinstance(obj, type):
+        # If this type is *NOT* runtime-checkable, raise an exception.
+        type_raiser(
+            cls=obj,
+            is_forwardref_valid=is_forwardref_valid,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
+        # Else, this type is runtime-checkable.
+    # Else, this object *MUST* (by process of elimination and validation above)
+    # be either a tuple of types *OR* a PEP 604-compliant new union.
+
+    # Defer to this lower-level general-purpose raiser.
+    return _die_unless_object_builtin_checkable(
+        obj=obj,
+        is_forwardref_valid=is_forwardref_valid,
+        type_tester=type_tester,
+        builtin_tester=builtin_tester,
+        builtin_tester_pith=builtin_tester_pith,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+
+#FIXME: Unit test us up, please. *sigh*
+def _die_unless_object_builtin_checkable(
+    obj: object,
+    is_forwardref_valid: bool,
+    type_tester: Callable,
+    builtin_tester: _NontypeTester,
+    builtin_tester_pith: object,
+    exception_cls: TypeException,
+    exception_prefix: str,
+) -> None:
+    '''
+    Raise an exception unless the passed object is **runtime-checkable** (i.e.,
+    safely passable without raising exceptions when passed as the second
+    parameter) with respect to the passed **builtin tester** (i.e., either the
+    :func:`isinstance` or :func:`issubclass` builtin).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be validated.
+    is_forwardref_valid : bool
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable class *or* forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
+    type_tester : Callable
+        Callable returning :data:`True` only if this object is a
+        runtime-checkable type according to this predicate, which should be
+        either:
+
+        * :func:`.is_type_isinstanceable`.
+        * :func:`.is_type_issubclassable`.
+    builtin_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+        Callable returning :data:`True` only if this object is runtime-checkable
+        according to this predicate, which should be either:
+
+        * :func:`isinstance`.
+        * :func:`issubclass`.
+    builtin_tester_pith : object
+        Object guaranteed to satisfy the ``builtin_tester`` callable when
+        ``obj`` is **runtime-typecheckable** -- that is, when ``builtin_tester``
+        is called as ``builtin_tester(builtin_tester_pith, obj)``.
+    exception_cls : TypeException
+        Type of exception to be raised in the event of a fatal error.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
+
+    Raises
+    ------
+    exception_cls
+        If this object is *not* runtime-checkable according to the passed
+        builtin tester.
+    '''
+    assert callable(type_tester), f'{repr(type_tester)} uncallable.'
+    assert callable(builtin_tester), f'{repr(builtin_tester)} uncallable.'
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with _is_object_builtin_checkable().
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Attempt to pass this object as the second parameter to this builtin tester
+    # to decide whether or not this object is safely runtime-checkable or not.
+    #
+    # Note that this leverages an EAFP (i.e., "It is easier to ask forgiveness
+    # than permission") approach and thus imposes a minor performance penalty,
+    # but that there exists *NO* faster alternative applicable to arbitrary
+    # user-defined objects, whose metaclasses may define an __instancecheck__()
+    # dunder method to raise exceptions and thus prohibit being passed as the
+    # second parameter to this builtin tester, the primary means employed by
+    # @beartype wrapper functions to check arbitrary hints.
+    try:
+        builtin_tester(builtin_tester_pith, obj)  # type: ignore[arg-type]
+    # If doing so raised *ANY* exception, this object is probably (but *NOT*
+    # necessarily) *NOT* runtime-checkable. Disambiguate these two cases and, in
+    # all likelihood, raise a human-readable exception.
+    #
+    # See the docstring for further discussion.
+    except Exception as exception:
+        # If this exception ambiguously fails to indicate non-isinstanceability,
+        # silently reduce to a noop.
+        if _is_exception_ambiguous(exception):
+            return
+        # Else, this exception unambiguously indicates non-isinstanceability.
+        #
+        # If this exception already human-readably describes this
+        # non-isinstanceability, re-raise this exception as is.
+        elif _is_exception_sufficient(exception):
+            raise
+        # Else, this exception fails to human-readably describe this
+        # non-isinstanceability.
+
+        # Validate sanity.
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception class.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+        from beartype._util.text.utiltextlabel import (
+            label_exception_traceback)
+
+        # Human-readable traceback formatted from this exception, indented to
+        # improve readability when embedded below.
+        exception_traceback = label_exception_traceback(exception)
+
+        # Machine-readable name of this builtin tester.
+        builtin_tester_name = builtin_tester.__name__
+
+        # Machine-readable representation of this object.
+        obj_repr = repr(obj)
+
+        #FIXME: Uncomment after we uncover why doing so triggers an infinite
+        #circular exception chain when "hint" is a "GenericAlias". It's clearly
+        #the is_hint_pep544_protocol() call, but why? In any case, the simplest
+        #workaround would just be to inline the logic of
+        #is_hint_pep544_protocol() here directly. Yes, we know. *shrug*
+
+        # # Human-readable exception message to be raised as either...
+        # exception_message = (
+        #     # If this class is a PEP 544-compliant protocol, a message
+        #     # documenting this exact issue and how to resolve it;
+        #     (
+        #         f'{exception_prefix}PEP 544 protocol {hint} '
+        #         f'uncheckable at runtime (i.e., '
+        #         f'not decorated by @typing.runtime_checkable).'
+        #     )
+        #     if is_hint_pep544_protocol(hint) else
+        #     # Else, a fallback message documenting this general issue.
+        #     (
+        #         f'{exception_prefix}type {hint} uncheckable at runtime (i.e., '
+        #         f'not passable as second parameter to isinstance() '
+        #         f'due to raising "{exception}" from metaclass '
+        #         f'__instancecheck__() method).'
+        #     )
+        # )
+
+        # Human-readable substring describing this object.
+        obj_prefix: str = None  # type: ignore[assignment]
+
+        # Human-readable substring identifying the child item of this parent
+        # container responsible for this failure (if any) *OR* the empty string
+        # (e.g., if this object is either not a container *OR* is a container
+        # but no culprit item can be found).
+        obj_item_message = ''
+
+        # If this object is a type, label this object accordingly.
+        if isinstance(obj, type):
+            obj_prefix = 'class '
+        # Else, this object is *NOT* a type. By process of elimination and
+        # validation above, this object *MUST* be either a tuple of types *OR*
+        # PEP 604-compliant new union. In either case, detect the first child
+        # item of this parent container responsible for preventing this entire
+        # container from being runtime-checkable. Specifically...
+        else:
+            # Tuple of all items of this container.
+            obj_items: tuple = None  # type: ignore[assignment]
+
+            # Human-readable label describing the first non-runtime-checkable
+            # child item of this parent container.
+            obj_item_prefix: str = None  # type: ignore[assignment]
+
+            # If this object is a tuple, define these locals accordingly.
+            if isinstance(obj, tuple):
+                obj_prefix = 'tuple union '
+                obj_items = obj
+                obj_item_prefix = 'tuple union item '
+            # Else, this object is a new union. Define these locals accordingly.
+            else:
+                obj_prefix = 'PEP 604 new union '
+                obj_items = get_hint_pep_args(obj)
+                obj_item_prefix = 'new union child '
+
+            # For the 0-based index of each item of this container and that
+            # item...
+            for obj_item_index, obj_item in enumerate(obj_items):
+                # If this item is *NOT* a runtime-checkable type...
+                #
+                # Note that this tester is memoized and thus requires parameters
+                # be only passed positionally.
+                if not type_tester(obj_item, is_forwardref_valid):
+                    # Human-readable substring identifying this child item.
+                    obj_item_message = (
+                        f' {obj_item_prefix}{obj_item_index} '
+                        f'object {repr(obj_item)} uncheckable at runtime'
+                    )
+
+                    # Immediately halt this iteration.
+                    break
+                # Else, this item is runtime-checkable. Continue to the next.
+
+        # Human-readable message to be raised.
+        #
+        # Note that this exception traceback is implicitly indented by the
+        # lower-level function creating this traceback called above.
+        exception_message = (
+            f'{exception_prefix}'
+            f'{obj_prefix}{obj_repr} uncheckable at runtime, as'
+            f'{obj_item_message}:\n'
+            f'    >>> {builtin_tester_name}({builtin_tester_pith}, {obj_repr})\n'
+            f'{exception_traceback}'
+        )
+
+        # Raise this exception chained onto this lower-level exception.
+        raise exception_cls(exception_message) from exception
+
+# ....................{ PRIVATE ~ testers                  }....................
+#FIXME: Unit test us up, please. *sigh*
+def _is_object_checkable(
+    obj: object,
+    is_forwardref_valid: bool,
+    type_tester: Callable,
+    builtin_tester: _NontypeTester,
+    builtin_tester_pith: object,
+) -> TypeIs[IsBuiltinOrSubclassableTypes]:
+    '''
+    :data:`True` only if the passed object is **runtime-checkable** (i.e., valid
+    as the second parameter to either the :func:`isinstance` or
+    :func:`issubclass` builtins) according to the passed tester callables.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), due to all higher-level testers calling
+    this lower-level tester already being memoized.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be validated.
+    is_forwardref_valid : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable class *or* forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
+    type_tester : Callable
+        Callable returning :data:`True` only if this object is a
+        runtime-checkable type according to this predicate, which should be
+        either:
+
+        * :func:`.is_type_isinstanceable`.
+        * :func:`.is_type_issubclassable`.
+    builtin_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+        Callable returning :data:`True` only if this object is a
+        runtime-checkable non-type according to this predicate, which should be
+        either:
+
+        * :func:`isinstance`.
+        * :func:`issubclass`.
+    builtin_tester_pith : object
+        Object guaranteed to satisfy the ``builtin_tester`` callable when
+        ``obj`` is **runtime-typecheckable** -- that is, when ``builtin_tester``
+        is called as ``builtin_tester(builtin_tester_pith, obj)``.
+
+    Raises
+    ------
+    exception_cls
+        If this object is *not* runtime-checkable according to the passed
+        object tester and raiser.
+    '''
+    assert callable(type_tester), f'{repr(type_tester)} uncallable.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.cls.utilclstest import is_type_or_types
+    from beartype._util.hint.pep.proposal.pep484.pep484604union import (
+        is_hint_pep604)
+
+    # If it is *NOT* the case that...
+    if not (
+        # This object is a PEP 604-compliant new union *OR*...
+        #
+        # Note that this test trivially reduces to an efficient one-liner and is
+        # thus intentionally tested first.
+        is_hint_pep604(obj) or
+        # This object is either a type or tuple of types.
+        #
+        # Note that this test is computationally expensive (even despite being
+        # memoized) and is thus intentionally tested last.
+        is_type_or_types(obj)
+    ):
+        return False
+    # Else, this object is either a type, tuple of types, *OR* PEP 604-compliant
+    # new union. In all three of these cases, this object *COULD* now be
+    # runtime-checkable. Further detection is required to decide.
+    #
+    # If this object is a type...
+    elif isinstance(obj, type):
+        # Return true only if this type is runtime-checkable.
+        #
+        # Note that this tester is memoized and thus requires parameters be
+        # only passed positionally.
+        return type_tester(obj, is_forwardref_valid)
+    # Else, this object *MUST* (by process of elimination and validation above)
+    # be either a tuple of types *OR* a PEP 604-compliant new union.
+
+    # Defer to this lower-level general-purpose tester.
+    return _is_object_builtin_checkable(
+        obj=obj,
+        builtin_tester=builtin_tester,
+        builtin_tester_pith=builtin_tester_pith,
+    )
+
+
+#FIXME: Unit test us up, please. *sigh*
+def _is_type_checkable(
+    cls: object,
+    is_forwardref_valid: bool,
+    builtin_tester: _NontypeTester,
+    builtin_tester_pith: object,
+) -> bool:
+    '''
+    :data:`True` only if the passed object is a **runtime-checkable type** (i.e.,
+    type that is safely passable without raising exceptions when passed as the
+    second parameter) with respect to the passed **builtin tester** (i.e.,
+    either the :func:`isinstance` or :func:`issubclass` builtin).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), due to all higher-level testers calling
+    this lower-level tester already being memoized.
+
+    Parameters
+    ----------
+    cls : object
+        Type to be tested.
+    is_forwardref_valid : bool
+        :data:`True` only if this function permits this type to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). If this
+        boolean is:
+
+        * :data:`True`, this type is valid only when this type is either an
+          isinstanceable class *or* forward reference proxy.
+        * :data:`False`, this type is valid only when this type is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
+    builtin_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+        Callable returning :data:`True` only if this type is runtime-checkable
+        according to this predicate, which should be either:
+
+        * :func:`isinstance`.
+        * :func:`issubclass`.
+    builtin_tester_pith : object
+        Object guaranteed to satisfy the ``builtin_tester`` callable when
+        ``cls`` is **runtime-typecheckable** -- that is, when ``builtin_tester``
+        is called as ``builtin_tester(builtin_tester_pith, cls)``.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a runtime-checkable type.
+
+    See Also
+    --------
+    :func:`.die_unless_type_issubclassable`
+    :func:`.is_type_isinstanceable`
         Further details.
     '''
     assert isinstance(is_forwardref_valid, bool), (
@@ -852,210 +1233,80 @@ def is_type_issubclassable(
     # Else, either the caller prefers to disregard this distinction *OR* this
     # class is not a forward reference proxy type.
 
-    #FIXME: *UGH*. DRY violation between this tester and the
-    #is_object_issubclassable(). Consider refactoring out into a new private
-    #_is_object_issubclassable_slow() tester, please. *sigh*
+    # Defer to this lower-level general-purpose tester.
+    return _is_object_builtin_checkable(
+        obj=cls,
+        builtin_tester=builtin_tester,
+        builtin_tester_pith=builtin_tester_pith,
+    )
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with die_unless_type_issubclassable().
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Attempt to pass this class as the second parameter to the issubclass()
-    # builtin to decide whether or not this class is safely usable as a
-    # standard class or not.
-    #
-    # Note that this leverages an EAFP (i.e., "It is easier to ask forgiveness
-    # than permission") approach and thus imposes a minor performance penalty,
-    # but that there exists *NO* faster alternative applicable to arbitrary
-    # user-defined classes, whose metaclasses may define a __subclasscheck__()
-    # dunder method to raise exceptions and thus prohibit being passed as the
-    # second parameter to the issubclass() builtin, the primary means employed
-    # by @beartype wrapper functions to check arbitrary types.
-    try:
-        issubclass(type, cls)  # type: ignore[arg-type]
 
-        # If the prior function call raised *NO* exception, this class is
-        # probably but *NOT* necessarily issubclassable. Return true.
-    # If the prior function call raised *ANY* exception, return true only if
-    # this exception ambiguously suggests that this class could still be
-    # issubclassable.
-    except Exception as exception:
-        return _is_exception_ambiguous(exception)
-
-    # Look. Just do it. *sigh*
-    return True
-
-# ....................{ PRIVATE ~ raisers                  }....................
-def _die_if_object_uncheckable(
-    obj: IsBuiltinOrSubclassableTypes,
-    obj_pith: object,
-    obj_raiser: Callable,
-    obj_tester: Callable[[object, IsBuiltinOrSubclassableTypes], bool],
-    is_forwardref_valid: bool,
-    exception_cls: TypeException,
-    exception_prefix: str,
-) -> None:
+#FIXME: Unit test us up, please. *sigh*
+def _is_object_builtin_checkable(
+    obj: object,
+    builtin_tester: _NontypeTester,
+    builtin_tester_pith: object,
+) -> TypeIs[IsBuiltinOrSubclassableTypes]:
     '''
-    Raise an exception of the passed type unless the passed object is
-    **runtime-checkable** (i.e., valid as the second parameter to either the
-    :func:`isinstance` or :func:`issubclass` builtins) according to the passed
-    object tester and raiser.
+    :data:`True` only if the passed object is **runtime-checkable** (i.e.,
+    safely passable without raising exceptions when passed as the second
+    parameter) with respect to the passed **builtin tester** (i.e., either the
+    :func:`isinstance` or :func:`issubclass` builtin).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), due to all higher-level testers calling
+    this lower-level tester already being memoized.
 
     Parameters
     ----------
     obj : object
         Object to be validated.
-    obj_pith : object
-        Object guaranteed to satisfy the ``obj_tester`` callable when ``obj`` is
-        runtime-typecheckable (i.e., when ``obj_tester`` is called as
-        ``obj_tester(obj_pith, obj)``).
-    obj_raiser : Callable
-        Callable raising an exception unless this object is runtime-checkable
-        according to this predicate, which should be either:
-
-        * :func:`.die_unless_type_isinstanceable`.
-        * :func:`.die_unless_type_issubclassable`.
-    obj_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+    builtin_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
         Callable returning :data:`True` only if this object is runtime-checkable
         according to this predicate, which should be either:
 
         * :func:`isinstance`.
         * :func:`issubclass`.
-    is_forwardref_valid : bool, optional
-        :data:`True` only if this function permits this object to be a
-        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
-
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable classes *or* a forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
-    exception_cls : TypeException
-        Type of exception to be raised.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+    builtin_tester_pith : object
+        Object guaranteed to satisfy the ``builtin_tester`` callable when
+        ``obj`` is **runtime-typecheckable** -- that is, when ``builtin_tester``
+        is called as ``builtin_tester(builtin_tester_pith, obj)``.
 
     Raises
     ------
-    BeartypeDecorHintPep3119Exception
+    exception_cls
         If this object is *not* runtime-checkable according to the passed
         object tester and raiser.
     '''
-    assert callable(obj_raiser), f'{repr(obj_raiser)} uncallable.'
-    assert callable(obj_tester), f'{repr(obj_tester)} uncallable.'
+    assert callable(builtin_tester), f'{repr(builtin_tester)} uncallable.'
 
-    # Avoid circular import dependencies.
-    from beartype._util.cls.utilclstest import die_unless_type_or_types
-    from beartype._util.hint.pep.proposal.pep484.pep484604union import is_hint_pep604
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-
-    # If this object is *NOT* a PEP 604-compliant new union...
-    if not is_hint_pep604(obj):
-        # If this object is neither a class nor tuple of classes, raise an
-        # exception.
-        die_unless_type_or_types(
-            type_or_types=obj,
-            exception_cls=exception_cls,
-            exception_prefix=exception_prefix,
-        )
-        # Else, this object is either a class or tuple of classes.
-    # Else, this object is a PEP 604-compliant new union.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with _die_unless_object_builtin_checkable().
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Attempt to pass this object as the second parameter to this builtin tester
+    # to decide whether or not this object is safely runtime-checkable or not.
     #
-    # In any case, this object *COULD* now be runtime-checkable. To decide
-    # whether this object is runtime-checkable, further handling is warranted.
+    # Note that this leverages an EAFP (i.e., "It is easier to ask forgiveness
+    # than permission") approach and thus imposes a minor performance penalty,
+    # but that there exists *NO* faster alternative applicable to arbitrary
+    # user-defined objects, whose metaclasses may define an __instancecheck__()
+    # dunder method to raise exceptions and thus prohibit being passed as the
+    # second parameter to this builtin tester, the primary means employed by
+    # @beartype wrapper functions to check arbitrary hints.
+    try:
+        builtin_tester(builtin_tester_pith, obj)  # type: ignore[arg-type]
+    # If doing so raised *ANY* exception, return true only if this exception
+    # ambiguously suggests that this object could still be
+    # runtime-checkable.
+    except Exception as exception:
+        return _is_exception_ambiguous(exception)
 
-    #FIXME: *UHHHH... WAT!?* This is totally busted, guys. Since this object is
-    #now a PEP 604-compliant new union, this object clearly is neither a type
-    #nor a tuple of types; it's a union! So, most of the code below no longer
-    #makes any sense whatsoever. Actually, maybe it's just this "if
-    #isinstance(obj, type):" branch that no longer makes sense? Maybe just
-    #remove that branch and quietly pretend this never happened. Note that we
-    #still do require the passed "obj_raiser" parameter, however. I sigh. *sigh*
+    # Return true, as the prior call to this builtin tester raised *NO* exception,
+    # implying this object to probably (but *NOT* necessarily) be
+    # runtime-checkable.
+    return True
 
-    # If this object is a class...
-    if isinstance(obj, type):
-        # If this class is *NOT* runtime-checkable, raise an exception.
-        obj_raiser(
-            cls=obj,
-            is_forwardref_valid=is_forwardref_valid,
-            exception_cls=exception_cls,
-            exception_prefix=exception_prefix,
-        )
-        # Else, this class is runtime-checkable.
-    # Else, this object *MUST* (by process of elimination and validation above)
-    # be either a tuple of classes *OR* a PEP 604-compliant new union. In either
-    # case...
-    else:
-        # Attempt to pass this object as the second parameter to isinstance().
-        try:
-            obj_tester(obj_pith, obj)  # type: ignore[arg-type]
-        # If doing so raises *ANY* exception, this object is *NOT*
-        # runtime-checkable. In this case, raise a human-readable exception.
-        #
-        # See the die_unless_type_isinstanceable() docstring for details.
-        except Exception as exception:
-            assert isinstance(exception_cls, type), (
-                f'{repr(exception_cls)} not exception class.')
-            assert isinstance(exception_prefix, str), (
-                f'{repr(exception_prefix)} not string.')
-
-            # If this exception ambiguously fails to indicate
-            # non-isinstanceability, silently reduce to a noop.
-            if _is_exception_ambiguous(exception):
-                return
-            # Else, this exception unambiguously indicates
-            # non-isinstanceability.
-
-            # Tuple of all items of this iterable object.
-            obj_items: tuple = None  # type: ignore[assignment]
-
-            # Human-readable label describing this object in this exception
-            # message.
-            obj_label: str = None  # type: ignore[assignment]
-
-            # Human-readable label describing the first non-runtime-checkable
-            # item of this object in this exception message.
-            obj_item_label: str = None  # type: ignore[assignment]
-
-            # If this object is a tuple, define these locals accordingly.
-            if isinstance(obj, tuple):
-                obj_items = obj
-                obj_label = 'tuple union'
-                obj_item_label = 'tuple union item'
-            # Else, this object is a new union. Define these locals accordingly.
-            else:
-                obj_items = get_hint_pep_args(obj)
-                obj_label = 'PEP 604 new union'
-                obj_item_label = 'new union child type'
-
-            # Exception message to be raised.
-            exception_message = (
-                f'{exception_prefix} {obj_label} {repr(obj)} '
-                f'uncheckable at runtime'
-            )
-
-            # For the 0-based index of each tuple class and that class...
-            for cls_index, cls in enumerate(obj_items):
-                # If this class is *NOT* runtime-checkable, raise an exception.
-                obj_raiser(
-                    cls=cls,
-                    exception_cls=exception_cls,
-                    exception_prefix=(
-                        f'{exception_message}, as '
-                        f'{obj_item_label} {cls_index} '
-                    ),
-                )
-                # Else, this class is runtime-checkable. Continue to the next.
-
-            # Raise this exception chained onto this lower-level exception.
-            # Although this should *NEVER* happen (as we should have already
-            # raised an exception above), we nonetheless do so for safety.
-            raise exception_cls(f'{exception_message}.') from exception
-
-# ....................{ PRIVATE ~ testers                  }....................
+# ....................{ PRIVATE ~ testers : exception      }....................
 #FIXME: Unit test us up, please.
 def _is_exception_ambiguous(exception: Exception) -> bool:
     '''
@@ -1066,7 +1317,7 @@ def _is_exception_ambiguous(exception: Exception) -> bool:
     whether this exception unambiguously signifies the failure of an associated
     class to be isinstanceable or issubclassable when the metaclass of this
     class defines the ``__instancecheck__()`` or ``__subclasscheck__()`` dunder
-    method raising this exception. Why? Because this metaclass may *not*
+    method raising this exception. Why? Because that metaclass may *not*
     necessarily be fully initialized at the early time that this tester is
     called (typically, at :func:`beartype.beartype` decoration time). When this
     is the case, eagerly passing this class to the :func:`isinstance` or
@@ -1137,7 +1388,7 @@ def _is_exception_sufficient(exception: Exception) -> bool:
 
        # ...is considerably more useful to end users than this insane wrapper.
        beartype.roar.BeartypeDecorHintNonpepException: Die_if_unbearable()
-       <forwardref OfPearl(__name_beartype__='OfPearl',
+       <forwardref OfPearl(__hint_name_beartype__='OfPearl',
        __scope_name_beartype__='beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve')>
        uncheckable at runtime (i.e., not passable as second parameter to
        isinstance(), due to raising "BeartypeCallHintForwardRefException:

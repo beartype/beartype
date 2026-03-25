@@ -375,7 +375,7 @@ class BeartypeForwardScope(LexicalScope):
         .. code-block:: python
 
            tbh = <forwardref__tracebackhide__(
-                     __name_beartype__='__tracebackhide__',
+                     __hint_name_beartype__='__tracebackhide__',
                      __scope_name_beartype__='beartype_test.a00_unit.data.pep.pep563.pep695.data_pep563_pep695'
            )>
 

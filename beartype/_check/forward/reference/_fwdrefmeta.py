@@ -72,7 +72,7 @@ class BeartypeForwardRefMeta(type):
     #FIXME: This is great, but still insufficient. Additionally:
     #* If the caller resides in a "beartype."-prefixed submodule, do what we
     #  currently do.
-    #* Else, immediately resolve the referent by accessing "__type_beartype__"
+    #* Else, immediately resolve the referent by accessing "__resolved_type_beartype__"
     #  and then (as above) proxy the __getattr__() of this referent by calling
     #  getattr() against this referent.
     def __getattr__(  # type: ignore[misc]
@@ -80,7 +80,7 @@ class BeartypeForwardRefMeta(type):
         '''
         **Fully-qualified forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`.BeartypeForwardRefABC.__name_beartype__`
+        metaclass and whose :attr:`.BeartypeForwardRefABC.__hint_name_beartype__`
         class variable is the fully-qualified name of an external class).
 
         This dunder method creates and returns a new forward reference subclass
@@ -232,7 +232,7 @@ class BeartypeForwardRefMeta(type):
         # referent (e.g., by a prior isinstance() or issubclass() check),
         # forward this dunder method call directly to that referent.
         if _is_beartype_ref_proxy_resolved(cls):
-            return getattr(cls.__type_beartype__, hint_name)
+            return getattr(cls.__resolved_type_beartype__, hint_name)
         # Else, this forward reference proxy has yet to be resolved.
         #
         # If a non-existent dunder attribute was requested, assume this
@@ -259,7 +259,7 @@ class BeartypeForwardRefMeta(type):
             # message raised below into:
             #     AttributeError: Forward reference proxy "MuhRef" dunder
             #     attribute "__nomnom_beartype__" not found. Did you mean:
-            #     '__name_beartype__'?
+            #     '__hint_name_beartype__'?
             raise AttributeError(
                 f'Forward reference proxy "{cls.__name__}" '
                 f'dunder attribute "{hint_name}" not found'
@@ -280,7 +280,7 @@ class BeartypeForwardRefMeta(type):
         # concatenated as described above.
         return proxy_hint_pep484_ref_str_subbable(
             scope_name=cls.__scope_name_beartype__,
-            hint_name=f'{cls.__name_beartype__}.{hint_name}',
+            hint_name=f'{cls.__hint_name_beartype__}.{hint_name}',
             exception_prefix=cls.__exception_prefix_beartype__
         )
 
@@ -321,7 +321,7 @@ class BeartypeForwardRefMeta(type):
         else:
             # Append *ONLY* the representations of the relevant strings.
             cls_repr += (
-                  f'name={repr(cls.__name_beartype__)}'
+                  f'name={repr(cls.__hint_name_beartype__)}'
                 f', scope_name={repr(cls.__scope_name_beartype__)}'
             )
 
@@ -370,7 +370,7 @@ class BeartypeForwardRefMeta(type):
         :data:`True` only if the passed object is an instance of the external
         class referenced by the passed **forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`.BeartypeForwardRefABC.__name_beartype__`
+        metaclass and whose :attr:`.BeartypeForwardRefABC.__hint_name_beartype__`
         class variable is the fully-qualified name of that external class).
 
         Parameters
@@ -398,7 +398,7 @@ class BeartypeForwardRefMeta(type):
         :data:`True` only if the passed object is a subclass of the external
         class referenced by the passed **forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`.BeartypeForwardRefABC.__name_beartype__`
+        metaclass and whose :attr:`.BeartypeForwardRefABC.__hint_name_beartype__`
         class variable is the fully-qualified name of that external class).
 
         Parameters
@@ -423,7 +423,7 @@ class BeartypeForwardRefMeta(type):
 
     # ....................{ PROPERTIES                     }....................
     @property
-    def __type_beartype__(cls: _BeartypeForwardRefABC) -> type:  # type: ignore[misc]
+    def __resolved_type_beartype__(cls: _BeartypeForwardRefABC) -> type:  # type: ignore[misc]
         '''
         **Forward referent** (i.e., type hint referenced by this forward
         reference subclass, which is usually but *not* necessarily a class).
@@ -464,7 +464,7 @@ class BeartypeForwardRefMeta(type):
            # If this type hint is actually a @beartype-specific forward
            # reference proxy that only refers to the desired type hint,
            # dereference that proxy to obtain that type hint.
-           type_hint = getattr(type_hint, '__type_beartype__', type_hint)
+           type_hint = getattr(type_hint, '__resolved_type_beartype__', type_hint)
 
         Raises
         ------
@@ -534,16 +534,16 @@ class BeartypeForwardRefMeta(type):
             # Cache this referent for subsequent lookup by this property
             # *BEFORE* validating this referent to be isinstanceable. If this
             # property is validated to *NOT* be isinstanceable, this referent
-            # will be immediately uncached. Of course, this is insane. Ideally,
-            # this referent would be cached only *AFTER* validating this
-            # referent to be isinstanceable. Pragmatically, doing so invites
-            # infinite recursion as follows (in order):
-            # * This __type_beartype__() property getter calls...
+            # will be immediately uncached below. Of course, this is insane.
+            # Ideally, this referent would be cached only *AFTER* validating
+            # this referent to be isinstanceable. Unfortunately, doing so
+            # invites infinite recursion as follows (in order):
+            # * This __resolved_type_beartype__() property getter calls...
             # * die_unless_object_isinstanceable(), which calls...
             # * "isinstance(None, cls)", which calls...
             # * BeartypeForwardRefMeta.__subclasscheck__(), which calls...
-            # * "issubclass(obj, cls.__type_beartype__)", which calls...
-            # * This __type_beartype__() property getter, which calls...
+            # * "issubclass(obj, cls.__resolved_type_beartype__)", which calls...
+            # * This __resolved_type_beartype__() property getter, which calls...
             # * die_unless_object_isinstanceable(). Repeat as needed for pain.
             #
             # Caching this referent first circumvents this recursion by ensuring
@@ -608,7 +608,7 @@ This cache serves a dual purpose. Notably, this cache both enables:
   proxies. This is particularly useful when responding to module reloading,
   which requires that *all* previously cached types be uncached.
 * The
-  :attr:`.BeartypeForwardRefMeta.__type_beartype__` property to internally
+  :attr:`.BeartypeForwardRefMeta.__resolved_type_beartype__` property to internally
   memoize the arbitrary class referred to by this referent. Since the existing
   ``property_cached`` decorator could trivially do so as well, however, this is
   only a negligible side effect.
@@ -701,7 +701,7 @@ def _make_beartype_ref_proxy_exception_prefix(
     if cls.__scope_name_beartype__:
         exception_prefix += f'{cls.__scope_name_beartype__}.'
     exception_prefix += (
-        f'{cls.__name_beartype__}" '
+        f'{cls.__hint_name_beartype__}" '
         f'unresolvable to its target referent, as '
     )
 
@@ -747,9 +747,9 @@ def _resolve_hint_pep484_ref_str(cls: _BeartypeForwardRefABC) -> Hint:
     # Forward referent dynamically imported from this module if this module is
     # both importable and defines this referent *OR* the sentinel placeholder
     # (i.e., if this module is unimportable or fails to define this referent).
-    # print(f'Importing forward ref "{cls.__name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
+    # print(f'Importing forward ref "{cls.__hint_name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
     referent = import_module_attr_or_sentinel(
-        attr_name=cls.__name_beartype__,  # pyright: ignore
+        attr_name=cls.__hint_name_beartype__,  # pyright: ignore
         module_name=cls.__scope_name_beartype__,  # pyright: ignore
         exception_cls=BeartypeCallHintPep484ForwardRefStrException,
         exception_prefix=cls.__exception_prefix_beartype__,  # pyright: ignore
@@ -766,7 +766,7 @@ def _resolve_hint_pep484_ref_str(cls: _BeartypeForwardRefABC) -> Hint:
         # further details.
         if cls.__func_local_parent_codeobj_weakref_beartype__ is None:
             import_module_attr(
-                attr_name=cls.__name_beartype__,  # pyright: ignore
+                attr_name=cls.__hint_name_beartype__,  # pyright: ignore
                 module_name=cls.__scope_name_beartype__,  # pyright: ignore
                 exception_cls=BeartypeCallHintPep484ForwardRefStrException,
                 exception_prefix=_make_beartype_ref_proxy_exception_prefix(cls),

@@ -18,6 +18,7 @@ from beartype._data.typing.datatyping import (
     TypeException,
     TypeOrTupleTypes,
 )
+from beartype._data.typing.datatypingport import TypeIs
 from beartype._data.py.databuiltins import BUILTINS_MODULE_NAME
 
 # ....................{ RAISERS                            }....................
@@ -70,19 +71,19 @@ def die_unless_type_or_types(
     exception_prefix: str = '',
 ) -> None:
     '''
-    Raise an exception of the passed type unless the passed object is either a
-    class *or* tuple of one or more classes.
+    Raise an exception unless the passed object is either a class *or* non-empty
+    tuple of one or more classes.
 
     Parameters
     ----------
     type_or_types : object
         Object to be validated.
-    exception_cls : Type[Exception]
+    exception_cls : Type[Exception], default: _BeartypeUtilTypeException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`._BeartypeUtilTypeException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -134,10 +135,10 @@ def die_unless_type_or_types(
     # Else, this object is either a class *OR* tuple of one or more classes.
 
 # ....................{ TESTERS                            }....................
-def is_type_or_types(type_or_types: object) -> bool:
+def is_type_or_types(type_or_types: object) -> TypeIs[TypeOrTupleTypes]:
     '''
-    :data:`True` only if the passed object is either a class *or* tuple of one
-    or more classes.
+    :data:`True` only if the passed object is either a class *or* non-empty
+    tuple of one or more classes.
 
     Parameters
     ----------
@@ -151,19 +152,32 @@ def is_type_or_types(type_or_types: object) -> bool:
         more classes.
     '''
 
-    # Return true only if either...
-    return (
-        # This object is a class *OR*...
-        isinstance(type_or_types, type) or
-        (
-            # This object is a tuple *AND*...
-            isinstance(type_or_types, tuple) and
-            # This tuple is non-empty *AND*...
-            bool(type_or_types) and
-            # This tuple contains only classes.
-            all(isinstance(cls, type) for cls in type_or_types)
-        )
-    )
+    # If this object is a class, immediately return true.
+    if isinstance(type_or_types, type):
+        return True
+    # Else, this object is *NOT* a class.
+
+    # If...
+    if (
+        # This object is a tuple *AND*...
+        isinstance(type_or_types, tuple) and
+        # This tuple is non-empty...
+        bool(type_or_types)
+    ):
+        # For each item of this tuple...
+        for cls in type_or_types:
+            # If this tuple is *NOT* a class, immediately return false.
+            if not isinstance(cls, type):
+                return False
+            # Else, this tuple is a class. In this case, continue testing.
+
+        # Since prior iteration did *NOT* prematurely return false, all
+        # items of this tuple *MUST* be classes. In this case, return true.
+        return True
+    # Else, this object either is not a tuple *OR* is an empty tuple.
+
+    # Return false as a fallback.
+    return False
 
 # ....................{ TESTERS ~ builtin                  }....................
 def is_type_builtin(cls: type) -> bool:

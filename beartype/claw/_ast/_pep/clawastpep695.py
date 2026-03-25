@@ -241,14 +241,14 @@ class BeartypeNodeTransformerPep695Mixin(object):
         # defining one forward reference proxy for each unquoted relative
         # forward reference in this type alias. Notably, generate this:
         #     for _ in __iter_hint_pep695_forwardref_beartype__({alias_name}):
-        #         globals()[_.__name_beartype__] = _
+        #         globals()[_.__hint_name_beartype__] = _
         #
         # Else, this type alias is *NOT* declared at module scope and is thus
         # declared at a lower scope (e.g., class, callable). In this case,
         # fallback to generating inefficient code globally permissible at all
         # possible scopes. Notably, generate this:
         #     for _ in __iter_hint_pep695_forwardref_beartype__({alias_name}):
-        #         exec(f'{_.__name_beartype__} = _')
+        #         exec(f'{_.__hint_name_beartype__} = _')
 
         # Child nodes both accessing and assigning this type alias as a global
         # or local variable.
@@ -266,12 +266,12 @@ class BeartypeNodeTransformerPep695Mixin(object):
 
         # Child node accessing the unqualified basename of the current forward
         # reference proxy to be defined in the current lexical scope via the
-        # "BeartypeForwardRefABC.__name_beartype__" class variable of this
+        # "BeartypeForwardRefABC.__hint_name_beartype__" class variable of this
         # proxy, which is currently stored in the "_" scratch local variable.
         # Notably, "_" is a subclass of the "BeartypeForwardRefABC" superclass.
         node_forwardref_name_load = make_node_object_attr_load(
             node_obj=node_scratch_var_name_load,
-            attr_name='__name_beartype__',
+            attr_name='__hint_name_beartype__',
             node_sibling=node,
         )
 
@@ -302,7 +302,7 @@ class BeartypeNodeTransformerPep695Mixin(object):
             # the inefficient fallback approach adopted below.
             value=make_node_call(func_name='globals', node_sibling=node),
             # Assign the key of the returned dictionary whose name is given by
-            # the "BeartypeForwardRefABC.__name_beartype__" class variable of
+            # the "BeartypeForwardRefABC.__hint_name_beartype__" class variable of
             # this proxy, stored in the scratch variable.
             slice=node_forwardref_name_load,  # type: ignore[arg-type]
             ctx=NODE_CONTEXT_STORE,

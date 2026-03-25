@@ -68,10 +68,10 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
         f'{PACKAGE_NAME}.{MODULE_BASENAME}')
 
     # Assert that these proxies have the expected hint names.
-    assert FORWARDREF_ABSOLUTE.__name_beartype__ == CLASS_NAME
-    assert FORWARDREF_RELATIVE.__name_beartype__ == CLASS_BASENAME
-    assert FORWARDREF_MODULE_ABSOLUTE.__name_beartype__ == MODULE_NAME
-    assert FORWARDREF_MODULE_CLASS.__name_beartype__ == CLASS_NAME
+    assert FORWARDREF_ABSOLUTE.__hint_name_beartype__ == CLASS_NAME
+    assert FORWARDREF_RELATIVE.__hint_name_beartype__ == CLASS_BASENAME
+    assert FORWARDREF_MODULE_ABSOLUTE.__hint_name_beartype__ == MODULE_NAME
+    assert FORWARDREF_MODULE_CLASS.__hint_name_beartype__ == CLASS_NAME
 
     # Assert that these proxies have the expected scope names.
     assert FORWARDREF_ABSOLUTE.__scope_name_beartype__ == SCOPE_NAME
@@ -94,9 +94,9 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     # ....................{ PASS ~ property                }....................
     # Assert that this property of these forward reference proxies has the
     # expected values.
-    assert FORWARDREF_ABSOLUTE.__type_beartype__ is Class
-    assert FORWARDREF_RELATIVE.__type_beartype__ is Class
-    assert FORWARDREF_MODULE_CLASS.__type_beartype__ is Class
+    assert FORWARDREF_ABSOLUTE.__resolved_type_beartype__ is Class
+    assert FORWARDREF_RELATIVE.__resolved_type_beartype__ is Class
+    assert FORWARDREF_MODULE_CLASS.__resolved_type_beartype__ is Class
 
     # ....................{ PASS ~ repr                    }....................
     # Machine-readable representation of a forward reference proxy.
@@ -109,7 +109,7 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
         # Machine-readable representations of all class variables of all
         # unsubscripted forward reference proxies.
         repr(FORWARDREF_ABSOLUTE.__scope_name_beartype__),
-        repr(FORWARDREF_ABSOLUTE.__name_beartype__),
+        repr(FORWARDREF_ABSOLUTE.__hint_name_beartype__),
     )
 
     # Assert that this representation contains the expected substrings.
