@@ -15,10 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep3119Exception
 from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
 from beartype.typing import Callable
+from beartype._cave._cavefast import Pep3119CheckableTypes
 from beartype._data.cls.datacls import TYPES_EXCEPTION_NAMESPACE
 from beartype._data.typing.datatypingport import TypeIs
 from beartype._data.typing.datatyping import (
-    IsBuiltinOrSubclassableTypes,
+    Pep3119Checkable,
     TypeException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
@@ -26,7 +27,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 # ....................{ RAISERS ~ isinstanceable           }....................
 def die_unless_object_isinstanceable(
     # Mandatory parameters.
-    obj: IsBuiltinOrSubclassableTypes,
+    obj: Pep3119Checkable,
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
@@ -51,7 +52,7 @@ def die_unless_object_isinstanceable(
 
     Parameters
     ----------
-    obj : IsBuiltinOrSubclassableTypes
+    obj : Pep3119Checkable
         Object to be validated.
     is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
@@ -289,7 +290,7 @@ def die_unless_type_isinstanceable(
 # ....................{ RAISERS ~ subclass                 }....................
 def die_unless_object_issubclassable(
     # Mandatory parameters.
-    obj: IsBuiltinOrSubclassableTypes,
+    obj: Pep3119Checkable,
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
@@ -463,6 +464,50 @@ def die_unless_type_issubclassable(
         exception_prefix=exception_prefix,
     )
 
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please. *sigh*
+def is_object_isinstanceorsubclassable_maybe(
+    obj: object) -> TypeIs[Pep3119Checkable]:
+    '''
+    :data:`True` only if the passed object is **possibly runtime-checkable**
+    (i.e., passable as the second parameter to the :func:`isinstance` and
+    :func:`issubclass` builtins, assuming those calls raise *no* exceptions from
+    :pep:`3119`-compliant ``__instancecheck__()`` or ``__subclasscheck__()``
+    dunder methods defined on relevant metaclasses).
+
+    This tester returns :data:`True` only if this object is either:
+
+    * A single type.
+    * A tuple of zero or more types.
+    * A :pep:`604`-compliant **new union** (i.e., two or more types delimited by
+      the ``|`` operator under Python >= 3.10).
+
+    Caveats
+    -------
+    **This low-level tester should always be called before passing arbitrary
+    objects to higher-level testers like** :func:`.is_object_isinstanceable` or
+    :func:`.is_object_issubclassable`. If this tester returns:
+
+    * :data:`False`, those testers are guaranteed to return :data:`False` when
+      passed the same object as well.
+    * :data:`True`, no such guarantee exists. Those testers may either return
+      :data:`True` or :data:`False` when passed the same object, depending on
+      whether that object is genuinely isinstanceable or issubclassable.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be tested.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is possibly runtime-checkable.
+    '''
+
+    # Maximal one-liner. Minimal effort. Truly, these are the days.
+    return isinstance(obj, Pep3119CheckableTypes)
+
 # ....................{ TESTERS ~ isinstanceable           }....................
 @callable_cached
 def is_object_isinstanceable(
@@ -471,7 +516,7 @@ def is_object_isinstanceable(
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
-) -> TypeIs[IsBuiltinOrSubclassableTypes]:
+) -> TypeIs[Pep3119Checkable]:
     '''
     :data:`True` only if the passed object is **isinstanceable** (i.e., valid as
     the second parameter to the :func:`isinstance` builtin).
@@ -480,7 +525,7 @@ def is_object_isinstanceable(
 
     Parameters
     ----------
-    obj : IsBuiltinOrSubclassableTypes
+    obj : Pep3119Checkable
         Object to be tested.
     is_forwardref_valid : bool, default: True
         :data:`True` only if this function permits this object to be a
@@ -607,7 +652,7 @@ def is_object_issubclassable(
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
-) -> TypeIs[IsBuiltinOrSubclassableTypes]:
+) -> TypeIs[Pep3119Checkable]:
     '''
     :data:`True` only if the passed object is **issubclassable** (i.e., valid as
     the second parameter to the :func:`issubclass` builtin).
@@ -616,7 +661,7 @@ def is_object_issubclassable(
 
     Parameters
     ----------
-    obj : IsBuiltinOrSubclassableTypes
+    obj : Pep3119Checkable
         Object to be tested.
     is_forwardref_valid : bool, default: True
         :data:`True` only if this function permits this object to be a
@@ -719,7 +764,7 @@ def is_type_issubclassable(
     )
 
 # ....................{ PRIVATE ~ hints                    }....................
-_NontypeTester = Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+_NontypeTester = Callable[[object, Pep3119Checkable], bool]
 '''
 :pep:`585`-compliant type hint matching both the :func:`.isinstance` and
 :func:`.issubclass` builtins.
@@ -727,7 +772,7 @@ _NontypeTester = Callable[[object, IsBuiltinOrSubclassableTypes], bool]
 
 # ....................{ PRIVATE ~ raisers                  }....................
 def _die_if_object_uncheckable(
-    obj: IsBuiltinOrSubclassableTypes,
+    obj: Pep3119Checkable,
     is_forwardref_valid: bool,
     type_raiser: Callable,
     type_tester: Callable,
@@ -771,7 +816,7 @@ def _die_if_object_uncheckable(
 
         * :func:`.is_type_isinstanceable`.
         * :func:`.is_type_issubclassable`.
-    builtin_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+    builtin_tester : Callable[[object, Pep3119Checkable], bool]
         Callable returning :data:`True` only if this object is runtime-checkable
         according to this predicate, which should be either:
 
@@ -843,7 +888,7 @@ def _die_if_object_uncheckable(
 
 #FIXME: Unit test us up, please. *sigh*
 def _die_unless_object_builtin_checkable(
-    obj: object,
+    obj: Pep3119Checkable,
     is_forwardref_valid: bool,
     type_tester: Callable,
     builtin_tester: _NontypeTester,
@@ -880,7 +925,7 @@ def _die_unless_object_builtin_checkable(
 
         * :func:`.is_type_isinstanceable`.
         * :func:`.is_type_issubclassable`.
-    builtin_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+    builtin_tester : Callable[[object, Pep3119Checkable], bool]
         Callable returning :data:`True` only if this object is runtime-checkable
         according to this predicate, which should be either:
 
@@ -948,54 +993,45 @@ def _die_unless_object_builtin_checkable(
         from beartype._util.hint.pep.utilpepget import get_hint_pep_args
         from beartype._util.text.utiltextlabel import (
             label_exception_traceback)
+        from beartype._util.utilobject import (
+            get_object_type_basename,
+            get_object_type_name,
+        )
+
+        # Unqualified basename of this builtin tester.
+        builtin_tester_basename = builtin_tester.__name__
+
+        # Unqualified basename of the PEP 3119-compliant dunder method of the
+        # metaclass raising this exception corresponding to this builtin tester.
+        metaclass_tester_basename = (
+            '__instancecheck__'
+            if builtin_tester is isinstance else
+            '__subclasscheck__'
+        )
+
+        # Unqualified basename of the type of this exception.
+        exception_type_basename = get_object_type_basename(exception)
 
         # Human-readable traceback formatted from this exception, indented to
         # improve readability when embedded below.
         exception_traceback = label_exception_traceback(exception)
 
-        # Machine-readable name of this builtin tester.
-        builtin_tester_name = builtin_tester.__name__
-
-        # Machine-readable representation of this object.
-        obj_repr = repr(obj)
-
-        #FIXME: Uncomment after we uncover why doing so triggers an infinite
-        #circular exception chain when "hint" is a "GenericAlias". It's clearly
-        #the is_hint_pep544_protocol() call, but why? In any case, the simplest
-        #workaround would just be to inline the logic of
-        #is_hint_pep544_protocol() here directly. Yes, we know. *shrug*
-
-        # # Human-readable exception message to be raised as either...
-        # exception_message = (
-        #     # If this class is a PEP 544-compliant protocol, a message
-        #     # documenting this exact issue and how to resolve it;
-        #     (
-        #         f'{exception_prefix}PEP 544 protocol {hint} '
-        #         f'uncheckable at runtime (i.e., '
-        #         f'not decorated by @typing.runtime_checkable).'
-        #     )
-        #     if is_hint_pep544_protocol(hint) else
-        #     # Else, a fallback message documenting this general issue.
-        #     (
-        #         f'{exception_prefix}type {hint} uncheckable at runtime (i.e., '
-        #         f'not passable as second parameter to isinstance() '
-        #         f'due to raising "{exception}" from metaclass '
-        #         f'__instancecheck__() method).'
-        #     )
-        # )
-
         # Human-readable substring describing this object.
-        obj_prefix: str = None  # type: ignore[assignment]
+        message_prefix: str = None  # type: ignore[assignment]
 
         # Human-readable substring identifying the child item of this parent
         # container responsible for this failure (if any) *OR* the empty string
         # (e.g., if this object is either not a container *OR* is a container
         # but no culprit item can be found).
-        obj_item_message = ''
+        message_clause_prefix = ''
+
+        # PEP 3119-noncompliant object directly responsible for raising this
+        # exception, defaulting to this object itself.
+        obj_culprit = obj
 
         # If this object is a type, label this object accordingly.
         if isinstance(obj, type):
-            obj_prefix = 'class '
+            message_prefix = 'type hint '
         # Else, this object is *NOT* a type. By process of elimination and
         # validation above, this object *MUST* be either a tuple of types *OR*
         # PEP 604-compliant new union. In either case, detect the first child
@@ -1011,12 +1047,12 @@ def _die_unless_object_builtin_checkable(
 
             # If this object is a tuple, define these locals accordingly.
             if isinstance(obj, tuple):
-                obj_prefix = 'tuple union '
+                message_prefix = 'non-PEP tuple union type hint '
                 obj_items = obj
                 obj_item_prefix = 'tuple union item '
             # Else, this object is a new union. Define these locals accordingly.
             else:
-                obj_prefix = 'PEP 604 new union '
+                message_prefix = 'PEP 604 new union type hint '
                 obj_items = get_hint_pep_args(obj)
                 obj_item_prefix = 'new union child '
 
@@ -1028,15 +1064,29 @@ def _die_unless_object_builtin_checkable(
                 # Note that this tester is memoized and thus requires parameters
                 # be only passed positionally.
                 if not type_tester(obj_item, is_forwardref_valid):
+                    # This item is the culprit! Found him, boys.
+                    obj_culprit = obj_item
+
                     # Human-readable substring identifying this child item.
-                    obj_item_message = (
-                        f' {obj_item_prefix}{obj_item_index} '
-                        f'object {repr(obj_item)} uncheckable at runtime'
+                    message_clause_prefix = (
+                        f'{obj_item_prefix}{obj_item_index} '
+                        f'child type hint {repr(obj_item)} '
                     )
 
                     # Immediately halt this iteration.
                     break
                 # Else, this item is runtime-checkable. Continue to the next.
+
+        # Unqualified basename of this culprit.
+        obj_culprit_basename = get_object_type_basename(obj_culprit)
+
+        # Fully-qualified name of the metaclass of this culprit.
+        metaclass_name = get_object_type_name(type(obj_culprit))
+
+        # Fully-qualified name of the PEP 3119-compliant dunder method of the
+        # metaclass of this culprit.
+        metaclass_tester_name = (
+            f'{metaclass_name}.{metaclass_tester_basename}')
 
         # Human-readable message to be raised.
         #
@@ -1044,9 +1094,11 @@ def _die_unless_object_builtin_checkable(
         # lower-level function creating this traceback called above.
         exception_message = (
             f'{exception_prefix}'
-            f'{obj_prefix}{obj_repr} uncheckable at runtime, as'
-            f'{obj_item_message}:\n'
-            f'    >>> {builtin_tester_name}({builtin_tester_pith}, {obj_repr})\n'
+            f'{message_prefix}{repr(obj)} uncheckable at runtime, as '
+            f'{message_clause_prefix}'
+            f'metaclass {metaclass_tester_name}() dunder method raises '
+            f'unexpected "{exception_type_basename}: {exception}":\n'
+            f'    >>> {builtin_tester_basename}({builtin_tester_pith}, {obj_culprit_basename})\n'
             f'{exception_traceback}'
         )
 
@@ -1061,7 +1113,7 @@ def _is_object_checkable(
     type_tester: Callable,
     builtin_tester: _NontypeTester,
     builtin_tester_pith: object,
-) -> TypeIs[IsBuiltinOrSubclassableTypes]:
+) -> TypeIs[Pep3119Checkable]:
     '''
     :data:`True` only if the passed object is **runtime-checkable** (i.e., valid
     as the second parameter to either the :func:`isinstance` or
@@ -1094,7 +1146,7 @@ def _is_object_checkable(
 
         * :func:`.is_type_isinstanceable`.
         * :func:`.is_type_issubclassable`.
-    builtin_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+    builtin_tester : Callable[[object, Pep3119Checkable], bool]
         Callable returning :data:`True` only if this object is a
         runtime-checkable non-type according to this predicate, which should be
         either:
@@ -1161,7 +1213,7 @@ def _is_type_checkable(
     is_forwardref_valid: bool,
     builtin_tester: _NontypeTester,
     builtin_tester_pith: object,
-) -> bool:
+) -> TypeIs[type]:
     '''
     :data:`True` only if the passed object is a **runtime-checkable type** (i.e.,
     type that is safely passable without raising exceptions when passed as the
@@ -1188,7 +1240,7 @@ def _is_type_checkable(
           isinstanceable class. Note that forward reference proxies are
           isinstanceable classes *if and only if* the external classes they
           refer to have already been defined.
-    builtin_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+    builtin_tester : Callable[[object, Pep3119Checkable], bool]
         Callable returning :data:`True` only if this type is runtime-checkable
         according to this predicate, which should be either:
 
@@ -1246,7 +1298,7 @@ def _is_object_builtin_checkable(
     obj: object,
     builtin_tester: _NontypeTester,
     builtin_tester_pith: object,
-) -> TypeIs[IsBuiltinOrSubclassableTypes]:
+) -> TypeIs[Pep3119Checkable]:
     '''
     :data:`True` only if the passed object is **runtime-checkable** (i.e.,
     safely passable without raising exceptions when passed as the second
@@ -1261,7 +1313,7 @@ def _is_object_builtin_checkable(
     ----------
     obj : object
         Object to be validated.
-    builtin_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
+    builtin_tester : Callable[[object, Pep3119Checkable], bool]
         Callable returning :data:`True` only if this object is runtime-checkable
         according to this predicate, which should be either:
 

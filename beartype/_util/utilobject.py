@@ -438,32 +438,11 @@ def get_object_type_unless_type(obj: object) -> type:
     return obj if isinstance(obj, type) else type(obj)
 
 # ....................{ GETTERS ~ type : name              }....................
-def get_object_type_basename(obj: object) -> str:
-    '''
-    **Unqualified name** (i.e., non-``.``-delimited basename) of either the
-    passed object if this object is a class *or* the class of this object
-    otherwise (i.e., if this object is *not* a class).
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-
-    Returns
-    -------
-    str
-        Unqualified name of this class.
-    '''
-
-    # Elegant simplicity diminishes aggressive tendencies.
-    return get_object_type_unless_type(obj).__name__
-
-
 def get_object_type_name(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
-    declaring module) of either passed object if this object is a class *or*
-    the class of this object otherwise (i.e., if this object is *not* a class).
+    declaring module) of either passed object if this object is a type *or*
+    the type of this object otherwise (i.e., if this object is *not* a type).
 
     Parameters
     ----------
@@ -499,3 +478,24 @@ def get_object_type_name(obj: object) -> str:
         # This class basename as is otherwise.
         cls_basename
     )
+
+
+def get_object_type_basename(obj: object) -> str:
+    '''
+    **Unqualified basename** (i.e., non-``.``-delimited trailing component) of
+    either the passed object if this object is a type *or* the type of this
+    object otherwise (i.e., if this object is *not* a type).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    -------
+    str
+        Unqualified basename of this type.
+    '''
+
+    # Elegant simplicity diminishes aggressive tendencies.
+    return get_object_type_unless_type(obj).__name__

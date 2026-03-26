@@ -101,7 +101,7 @@ def deprecate_module_attr(
     # submodules (i.e., those defined on-disk) define this dunder attribute
     # *AND* since this function is only ever called by such submodules, this
     # attribute is effectively guaranteed to exist.
-    MODULE_NAME = attr_nondeprecated_name_to_value['__name__']
+    module_name = attr_nondeprecated_name_to_value['__name__']
 
     # Unqualified basename of the non-deprecated attribute originating this
     # deprecated attribute if this attribute is deprecated *OR* the sentinel
@@ -145,7 +145,7 @@ def deprecate_module_attr(
         if attr_nondeprecated_value is SENTINEL:
             raise ImportError(
                 f'Deprecated attribute '
-                f'"{attr_deprecated_name}" in submodule "{MODULE_NAME}" '
+                f'"{attr_deprecated_name}" in submodule "{module_name}" '
                 f'originates from missing non-deprecated attribute '
                 f'"{attr_nondeprecated_name}" not defined by that submodule.'
             )
@@ -154,8 +154,8 @@ def deprecate_module_attr(
         # Warning message to be emitted below.
         warning_message = (
             f'Deprecated attribute '
-            f'"{attr_deprecated_name}" in submodule "{MODULE_NAME}" '
-            f'scheduled for removal under a future release.'
+            f'"{attr_deprecated_name}" in submodule "{module_name}" '
+            f'scheduled for removal under a future beartype release.'
         )
 
         # If this deprecated attribute originates from a public non-deprecated
@@ -203,4 +203,4 @@ def deprecate_module_attr(
     # Note that Python's non-trivial import machinery silently coerces this
     # "AttributeError" exception into an "ImportError" exception. Just do it!
     raise AttributeError(
-        f"module '{MODULE_NAME}' has no attribute '{attr_deprecated_name}'")
+        f"module '{module_name}' has no attribute '{attr_deprecated_name}'")

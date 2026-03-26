@@ -590,20 +590,6 @@ the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
 
-IsBuiltinOrSubclassableTypes = type | TupleTypes | HintPep604Type
-'''
-PEP-compliant type hint matching any objects passable as the second parameter
-to the :func:`isinstance` and :func:`issubclass` builtins.
-
-Specifically, this hint matches either:
-
-* A single type.
-* A tuple of zero or more types.
-* A :pep:`604`-compliant **new union** (i.e., two or more types delimited by the
-  ``|`` operator under Python >= 3.10).
-'''
-
-
 SetOrTupleTypes = TupleTypes | AbstractSetTypes
 '''
 PEP-compliant type hint matching a set *or* tuple of zero or more types.
@@ -741,6 +727,22 @@ Pep484TowerFloat = float | int
 '''
 :pep:`484`-compliant type hint matching the **implicit floating-point tower**
 (i.e., both floating-point numbers and integers).
+'''
+
+# ....................{ PEP ~ 3119                         }....................
+Pep3119Checkable = type | TupleTypes | HintPep604Type
+'''
+:pep:`604`-compliant type hint matching all :pep:`3119`-compliant **possible
+runtime-checkable objects** (i.e., passable as the second parameter to the
+:func:`isinstance` and :func:`issubclass` builtins, assuming those calls raise
+*no* exceptions from :pep:`3119`-compliant ``__instancecheck__()`` or
+``__subclasscheck__()`` dunder methods defined on relevant metaclasses),
+including:
+
+* A single type.
+* A tuple of zero or more types.
+* A :pep:`604`-compliant **new union** (i.e., two or more types delimited by the
+  ``|`` operator under Python >= 3.10).
 '''
 
 # ....................{ PEP ~ 484 : typevar                }....................

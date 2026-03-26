@@ -168,7 +168,7 @@ def is_hint(hint: object) -> bool:
     '''
     :data:`True` only if the passed object is a **supported type hint** (i.e.,
     object supported by the :func:`beartype.beartype` decorator as a valid type
-    hint annotating callable parameters and return values).
+    hint annotating callable parameters and returns).
 
     This tester is memoized for efficiency.
 

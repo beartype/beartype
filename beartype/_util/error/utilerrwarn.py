@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from typing import Any
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatyping import TypeWarning
 from beartype._util.error.utilerrtest import is_exception_message_str
@@ -26,6 +25,7 @@ from collections.abc import (
     Iterator,
 )
 from contextlib import contextmanager
+from typing import Any
 from warnings import (
     WarningMessage,
     catch_warnings,
@@ -81,9 +81,11 @@ if IS_PYTHON_AT_LEAST_3_12:
         # Mandatory parameters.
         message: str,
 
+        #FIXME: Rename to "warning_cls", please. *sigh*
         # Optional parameters.
         cls: TypeWarning = UserWarning,
     ) -> None:
+
         # The warning you gave us is surely our last!
         warn(message, cls, skip_file_prefixes=_ISSUE_WARNING_IGNORE_DIRNAMES)  # type: ignore[call-overload]
         # warn(message, cls)  # type: ignore[call-overload]
@@ -112,6 +114,7 @@ else:
         # Optional parameters.
         cls: TypeWarning = UserWarning,
     ) -> None:
+
         # Time to cry your tears! Now cry!
         warn(message, cls)
 
@@ -136,8 +139,59 @@ issue_warning.__doc__ = (
     cls: type[Warning], default: UserWarning
         Type of warning to be issued. Defaults to the builtin
         :exc:`.UserWarning` type.
+
+    Warns
+    -----
+    cls
+        Unconditionally.
     '''
 )
+
+# ....................{ WARNERS ~ deprecation              }....................
+#FIXME: Unit test us up, please. *sigh*
+def issue_deprecation(
+    # Mandatory parameters.
+    attr_name_deprecated: str,
+    attr_name_nondeprecated: str,
+
+    # Optional parameters.
+    warning_cls: TypeWarning = DeprecationWarning,
+) -> None:
+    '''
+    Issue (i.e., emit) a non-fatal deprecation warning of the passed type
+    describing the :mod:`beartype`-specific deprecation of the passed deprecated
+    attribute by the passed equivalent non-deprecated attribute.
+
+    Parameters
+    ----------
+    attr_name_deprecated : str
+        Fully-qualified name of the deprecated attribute.
+    attr_name_nondeprecated : str
+        Fully-qualified name of the equivalent non-deprecated attribute.
+    warning_cls: type[Warning], default: DeprecationWarning
+        Type of warning to be issued. Defaults to the builtin
+        :exc:`.DeprecationWarning` type.
+
+    Warns
+    -----
+    warning_cls
+        Unconditionally.
+    '''
+    assert isinstance(attr_name_deprecated, str), (
+        f'{repr(attr_name_deprecated)} not string.')
+    assert isinstance(attr_name_nondeprecated, str), (
+        f'{repr(attr_name_nondeprecated)} not string.')
+
+    # Warning message to be issued below.
+    warning_message = (
+        f'Deprecated attribute "{attr_name_deprecated}" '
+        f'scheduled for removal under a future beartype release. '
+        f'Please globally replace all references to this attribute with its '
+        f'non-deprecated equivalent "{attr_name_nondeprecated}".'
+    )
+
+    # Issue this warning.
+    issue_warning(message=warning_message, cls=warning_cls)
 
 # ....................{ REWARNERS                          }....................
 def reissue_warnings_placeholder(
