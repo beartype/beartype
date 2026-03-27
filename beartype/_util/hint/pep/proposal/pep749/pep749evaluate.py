@@ -248,7 +248,7 @@ def _get_hint_pep749_evaluator_optional_static(  # pyright: ignore
     # Else, this hint defines a static evaluator with this name.
 
     # Return either...
-    return (
+    return (  # pyright: ignore
         # If this evaluator is *NOT* the null value, preserve this evaluator;
         evaluator_value
         if evaluator_value is not evaluator_value_null else

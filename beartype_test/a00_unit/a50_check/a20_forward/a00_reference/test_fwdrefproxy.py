@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **forward reference factory** unit tests.
+Beartype **forward reference proxy factory** unit tests.
 
 This submodule unit tests the
 :func:`beartype._check.forward.reference.fwdrefproxy` submodule.
@@ -47,7 +47,11 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
         PACKAGE_NAME,
         SCOPE_NAME,
     )
-    from pytest import raises
+    from beartype_test._util.pytroar import raises_uncached
+
+    #FIXME: This should be warns_uncached() instead, except that doesn't exist
+    #yet and we're *WAY* too behind on @beartype 0.23.0. Ignore this for now!
+    from pytest import warns
 
     # ....................{ LOCALS                         }....................
     # Arbitrary instance of a subclass of that class.
@@ -92,11 +96,16 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     assert issubclass(Subclass, FORWARDREF_MODULE_CLASS)
 
     # ....................{ PASS ~ property                }....................
-    # Assert that this property of these forward reference proxies has the
-    # expected values.
+    # Assert that this property of these forward reference proxies all evaluates
+    # to the expected types.
     assert FORWARDREF_ABSOLUTE.__resolved_type_beartype__ is Class
     assert FORWARDREF_RELATIVE.__resolved_type_beartype__ is Class
     assert FORWARDREF_MODULE_CLASS.__resolved_type_beartype__ is Class
+
+    # Assert that this property of these forward reference proxies all evaluates
+    # to the same expected types while also issuing non-fatal warnings.
+    with warns(DeprecationWarning):
+        assert FORWARDREF_ABSOLUTE.__type_beartype__ is Class
 
     # ....................{ PASS ~ repr                    }....................
     # Machine-readable representation of a forward reference proxy.
@@ -119,34 +128,34 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     # ....................{ FAIL                           }....................
     # Assert that attempting to access an undefined dunder attribute of a
     # forward reference proxy raises the expected exception.
-    with raises(AttributeError):
+    with raises_uncached(AttributeError):
         FORWARDREF_ABSOLUTE.__the_beating_of_her_heart_was_heard_to_fill__
 
     # Assert that attempting to instantiate a forward reference proxy raises the
     # expected exception.
-    with raises(BeartypeDecorHintForwardRefException):
+    with raises_uncached(BeartypeDecorHintForwardRefException):
         FORWARDREF_ABSOLUTE()
 
     # Assert that attempting to validate a forward reference proxy to a module
     # as either an instance or subclass of a type raises the expected exception.
-    with raises(BeartypeCallHintForwardRefException):
+    with raises_uncached(BeartypeCallHintForwardRefException):
         isinstance(obj_subclass, FORWARDREF_MODULE_ABSOLUTE)
-    with raises(BeartypeCallHintForwardRefException):
+    with raises_uncached(BeartypeCallHintForwardRefException):
         issubclass(Subclass, FORWARDREF_MODULE_ABSOLUTE)
 
     # Assert that attempting to test an arbitrary object as an instance of a
     # circular forward reference proxy raises the expected exception.
-    with raises(BeartypeCallHintForwardRefException):
+    with raises_uncached(BeartypeCallHintForwardRefException):
         isinstance(obj_subclass, FORWARDREF_RELATIVE_CIRCULAR)
 
     # Assert that attempting to test an arbitrary type as a subclass of a
     # circular forward reference proxy raises the expected exception.
-    with raises(BeartypeCallHintForwardRefException):
+    with raises_uncached(BeartypeCallHintForwardRefException):
         issubclass(Subclass, FORWARDREF_RELATIVE_CIRCULAR)
 
     # Assert that attempting to test an undefined *NON-DUNDER* attribute of a
     # forward reference proxy raises the expected exception *AFTER* that same
     # forward reference proxy has already resolved its referent due to a prior
     # call to the isinstance() or issubclass() builtins against this proxy.
-    with raises(AttributeError):
+    with raises_uncached(AttributeError):
         FORWARDREF_MODULE_CLASS.and_buried_from_all_godlike_exercise

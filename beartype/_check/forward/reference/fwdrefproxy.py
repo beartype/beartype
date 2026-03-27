@@ -45,8 +45,8 @@ def proxy_hint_pep484_ref_str_subbable(
     scope_name: str,
 
     # Optional parameters.
-    exception_prefix: Optional[str] = None,
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = None,
+    exception_prefix: Optional[str] = None,
 ) -> type[BeartypeForwardRefSubbableABC]:
     '''
     Create and return a new **subscripted forward reference proxy** (i.e.,
@@ -75,10 +75,6 @@ def proxy_hint_pep484_ref_str_subbable(
     hint_name : str
         Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
         this unresolved type hint to be proxied.
-    exception_prefix : Optional[str], default: None
-        Human-readable substring prefixing raised exception messages if any *or*
-        :data:`None` otherwise, in which case the returned proxy preserves its
-        default non-empty exception prefix.
     func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref, default: None
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
@@ -87,6 +83,10 @@ def proxy_hint_pep484_ref_str_subbable(
         callable *or* :data:`None` otherwise. See also the
         :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details.
+    exception_prefix : Optional[str], default: None
+        Human-readable substring prefixing raised exception messages if any *or*
+        :data:`None` otherwise, in which case the returned proxy preserves its
+        default non-empty exception prefix.
 
     Returns
     -------
@@ -119,9 +119,8 @@ def proxy_hint_pep484_ref_str_subbed(
     # "exception_prefix" parameter, whose value derives from the parent proxy's
     # "__exception_prefix_beartype__" class variable -- which is guaranteed to
     # both exist and be a non-empty string.
-    exception_prefix: str,
-
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref,
+    exception_prefix: str,
     args: tuple,
     kwargs: LexicalScope,
 ) -> type[BeartypeForwardRefSubbedABC]:
@@ -148,8 +147,6 @@ def proxy_hint_pep484_ref_str_subbed(
     hint_name : str
         Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
         this unresolved type hint to be proxied.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
     func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
@@ -158,6 +155,8 @@ def proxy_hint_pep484_ref_str_subbed(
         callable *or* :data:`None` otherwise. See also the
         :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
     args : tuple
         Tuple of all positional arguments subscripting this forward reference.
     kwargs: LexicalScope,
@@ -182,8 +181,8 @@ def proxy_hint_pep484_ref_str_subbed(
         type_bases=BeartypeForwardRefSubbedABC_BASES,
         scope_name=scope_name,
         hint_name=hint_name,
-        exception_prefix=exception_prefix,
         func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
+        exception_prefix=exception_prefix,
     )
 
     # Classify passed parameters with this proxy.
@@ -263,8 +262,8 @@ def _proxy_hint_ref(
     hint_name: str,
 
     # Optional parameters.
-    exception_prefix: Optional[str] = None,
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = None,
+    exception_prefix: Optional[str] = None,
 ) -> BeartypeForwardRef:
     '''
     Create and return a new **forward reference subclass** (i.e., concrete
@@ -344,10 +343,6 @@ def _proxy_hint_ref(
     hint_name : str
         Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of
         this unresolved type hint to be proxied.
-    exception_prefix : Optional[str], default: None
-        Human-readable substring prefixing raised exception messages if any *or*
-        :data:`None` otherwise, in which case the returned proxy preserves its
-        default non-empty exception prefix.
     func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref, default: None
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
@@ -356,6 +351,10 @@ def _proxy_hint_ref(
         callable *or* :data:`None` otherwise. See also the
         :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details. Defaults to :data:`None`.
+    exception_prefix : Optional[str], default: None
+        Human-readable substring prefixing raised exception messages if any *or*
+        :data:`None` otherwise, in which case the returned proxy preserves its
+        default non-empty exception prefix.
 
     Returns
     -------

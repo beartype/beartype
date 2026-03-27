@@ -19,7 +19,7 @@ from beartype._data.typing.datatyping import MappingStrToAny
 #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
 #shallowly type-checking such hints by reduction to untyped dictionaries
 #remains the sanest temporary work-around.
-def reduce_hint_pep589(hint: Hint, exception_prefix: str) -> Hint:
+def reduce_hint_pep589(hint: Hint) -> Hint:
     '''
     Reduce the passed :pep:`589`-compliant **typed dictionary** (i.e.,
     :class:`typing.TypedDict` subclass) to a lower-level type hint currently
@@ -32,8 +32,6 @@ def reduce_hint_pep589(hint: Hint, exception_prefix: str) -> Hint:
     ----------
     hint : Hint
         Typed dictionary to be reduced.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------

@@ -30,7 +30,7 @@ from beartype._util.hint.pep.utilpepget import (
 )
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep544(hint: Hint, exception_prefix: str) -> HintOrSane:
+def reduce_hint_pep544(hint: Hint) -> HintOrSane:
     '''
     Reduce the passed :pep:`544`-compliant **protocol** (i.e., user-defined
     subclass of the :class:`typing.Protocol` abstract base class (ABC)) to the
@@ -56,10 +56,6 @@ def reduce_hint_pep544(hint: Hint, exception_prefix: str) -> HintOrSane:
     ----------
     hint : Hint
         Type hint to be reduced.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
-
-    All remaining passed keyword parameters are silently ignored.
 
     Returns
     -------

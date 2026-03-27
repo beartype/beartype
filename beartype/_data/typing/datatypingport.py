@@ -107,7 +107,11 @@ if TYPE_CHECKING:
     #     https://github.com/python/mypy/issues/19227
     MYPY = False  # <-- don't ask, don't tell
     if MYPY:  # <------ don't see what you don't want to see
-        from beartype.typing import (
+        # Abuse the fact that mypy doesn't seem to care about assertions but
+        # pyright does. @Glinte said this makes sense. Choose to believe him.
+        assert False
+
+        from typing import (
             Any as Hint,
             Generic,
         )

@@ -33,6 +33,10 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import 
     is_hint_pep484585_generic)
 from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
     resolve_hint_pep484749_ref_object)
+from beartype._util.hint.utilhinttest import (
+    die_unless_hint,
+    is_hint,
+)
 from beartype._util.module.utilmodimport import (
     import_module_attr,
     import_module_attr_or_sentinel,
@@ -428,6 +432,7 @@ class BeartypeForwardRefMeta(type):
 
     # ....................{ PROPERTIES                     }....................
     #FIXME: Internally call is_hint() and die_unless_hint(), please. *sigh*
+    #FIXME: Unit test us up, please. *sigh*
     @property
     def __resolved_hint_beartype__(cls: _BeartypeForwardRefABC) -> type:  # type: ignore[misc]
         '''
@@ -475,19 +480,19 @@ class BeartypeForwardRefMeta(type):
            # If this type hint is actually a @beartype-specific forward
            # reference proxy that only refers to the desired type hint,
            # dereference that proxy to obtain that type hint.
-           type_hint = getattr(type_hint, '__resolved_type_beartype__', type_hint)
+           type_hint = getattr(type_hint, '__resolved_hint_beartype__', type_hint)
 
         Raises
         ------
-        BeartypeCallHintPep484ForwardRefStrException
+        BeartypeCallHintForwardRefException
             If either:
 
             * This forward referent is unimportable.
             * This forward referent is importable but either:
 
-              * Not a type.
-              * A type that is this forward reference proxy, implying this proxy
-                circularly proxies itself.
+              * Not a supported type hint.
+              * A supported type hint that is this forward reference proxy,
+                implying this proxy circularly proxies itself.
         '''
 
         # Referent referred to by this forward reference proxy if a prior access
@@ -519,17 +524,17 @@ class BeartypeForwardRefMeta(type):
             else:
                 referent = _resolve_hint_pep484_ref_str(cls)
 
-            # If this referent is this forward reference subclass, then this
-            # subclass circularly proxies itself. Since allowing this edge case
-            # would openly invite infinite recursion, we detect this edge case
-            # and instead raise a human-readable exception.
+            # If this referent is this forward reference proxy, this proxy
+            # circularly proxies itself. Since allowing this edge case would
+            # openly invite infinite recursion, we detect this edge case and
+            # instead raise a human-readable exception.
             if referent is cls:
                 raise BeartypeCallHintForwardRefException(
                     f'{_make_beartype_ref_proxy_exception_prefix(cls)}'
                     f'that target referent circularly '
                     f'(i.e., infinitely recursively) references itself.'
                 )
-            # Else, this referent is *NOT* this forward reference subclass.
+            # Else, this referent is *NOT* this forward reference proxy.
             #
             # If this referent is a subscripted generic (e.g.,
             # "MuhGeneric[int]"), reduce this referent to the child type
@@ -543,40 +548,34 @@ class BeartypeForwardRefMeta(type):
             # Else, this referent is *NOT* a subscripted generic.
 
             # Cache this referent for subsequent lookup by this property
-            # *BEFORE* validating this referent to be isinstanceable. If this
-            # property is validated to *NOT* be isinstanceable, this referent
+            # *BEFORE* validating this referent to be a supported hint. If this
+            # property is validated to *NOT* be a supported hint, this referent
             # will be immediately uncached below. Of course, this is insane.
             # Ideally, this referent would be cached only *AFTER* validating
-            # this referent to be isinstanceable. Unfortunately, doing so
+            # this referent to be a supported hint. Unfortunately, doing so
             # invites infinite recursion as follows (in order):
-            # * This __resolved_type_beartype__() property getter calls...
+            # * This __resolved_hint_beartype__() property getter calls...
+            # * die_unless_hint(), which calls...
             # * die_unless_object_isinstanceable(), which calls...
             # * "isinstance(None, cls)", which calls...
             # * BeartypeForwardRefMeta.__subclasscheck__(), which calls...
-            # * "issubclass(obj, cls.__resolved_type_beartype__)", which calls...
-            # * This __resolved_type_beartype__() property getter, which calls...
-            # * die_unless_object_isinstanceable(). Repeat as needed for pain.
+            # * "issubclass(obj, cls.__resolved_type_beartype__)", which
+            #   calls...
+            # * This __resolved_hint_beartype__() property getter, which
+            #   calls...
+            # * die_unless_hint() yet again. Repeat as needed for pain.
             #
             # Caching this referent first circumvents this recursion by ensuring
             # that all subsequent access of this property after the first access
             # of this property casually returns this referent rather than
-            # repeatedly (thus uselessly) calling the
-            # die_unless_object_isinstanceable() validator.
+            # repeatedly (thus uselessly) calling the die_unless_hint() raiser.
             _forwardref_to_referent[cls] = referent
 
-            # If...
+            # If this referent is *NOT* actually a supported type hint...
+            #
+            # Note that this tester is memoized and thus requires parameters
+            # be only passed positionally.
             if (
-                #FIXME: Preserved for posterity. *lol*
-                # This referent is possibly isinstanceable (i.e., passable as
-                # the second parameter to the isinstance() builtin, assuming
-                # that call raises *NO* exception from a PEP 3119-compliant
-                # __instancecheck__() dunder metaclass method) *AND*...
-
-                # is_object_isinstanceorsubclassable_maybe(referent) and
-                # This referent is *NOT* actually isinstanceable...
-                #
-                # Note that this tester is memoized and thus requires parameters
-                # be only passed positionally.
                 not is_object_isinstanceable(
                     referent,
 
@@ -617,57 +616,32 @@ class BeartypeForwardRefMeta(type):
         **Referent type** (i.e., arbitrary type referred to by the forward
         reference encapsulated by this forward reference proxy after dynamically
         resolving this reference to this referent) if this reference refers to
-        an **isinstanceable type**  .
+        an **isinstanceable type** (i.e., class whose metaclass does *not*
+        define an ``__instancecheck__()`` dunder method raising unexpected
+        exceptions).
 
-        This class property is manually memoized for efficiency. However, note
-        this class property is *not* automatically memoized (e.g., by the
-        ``property_cached`` decorator). Why? Because manual memoization enables
-        other functionality in the beartype codebase to explicitly unmemoize all
-        previously memoized forward referents across all forward reference
-        proxies, effectively forcing all subsequent calls of this property
-        across all forward reference proxies to reimport their forward referents.
-        Why is that desirable? Because other functionality in the beartype
-        codebase detects when the user has manually reloaded user-defined
-        modules defining user-defined types annotating user-defined callables
-        previously decorated by the :mod:`beartype.beartype` decorator. Since
-        reloading those modules redefines those types, all previously cached
-        types (including those memoized by this property) *must* then be assumed
-        to be invalid and thus uncached. In short, manual memoization allows
-        beartype to avoid desynchronization between memoized and actual types.
+        This class property is manually memoized for efficiency.
 
         This class property is officially in the public :mod:`beartype` API and
         guaranteed to be available across *all* current and future
         :mod:`beartype` releases.
 
-        Caveats
-        -------
-        Downstream callers consuming callable type hints modified by a
-        previously applied :mod:`beartype.beartype` decorator may occasionally
-        encounter **forward reference proxies** (i.e., instances of this
-        metaclass). Forward reference proxies are *not* intended to be usable as
-        perfect substitutes for the underlying classes they proxy. Instead,
-        downstream callers are recommended to manually resolve these proxies to
-        the underlying classes they proxy by accessing this property. Consider
-        this trivial one-liner that does so for a type hint ``type_hint``:
-
-        .. code-block:: python
-
-           # If this type hint is actually a @beartype-specific forward
-           # reference proxy that only refers to the desired type hint,
-           # dereference that proxy to obtain that type hint.
-           type_hint = getattr(type_hint, '__resolved_type_beartype__', type_hint)
-
         Raises
         ------
-        BeartypeCallHintPep484ForwardRefStrException
+        BeartypeCallHintForwardRefException
             If either:
 
             * This forward referent is unimportable.
             * This forward referent is importable but either:
 
-              * Not a type.
-              * A type that is this forward reference proxy, implying this proxy
-                circularly proxies itself.
+              * Not an isinstanceable type.
+              * An isinstanceable type that is this forward reference proxy,
+                implying this proxy circularly proxies itself.
+
+        See Also
+        --------
+        :meth:`.__resolved_hint_beartype__`
+            Further details.
         '''
 
         # Referent referred to by this forward reference proxy if a prior access
@@ -792,7 +766,6 @@ class BeartypeForwardRefMeta(type):
 
     #FIXME: Remove this officially deprecated property after a sufficient number
     #@beartype releases following @beartype 0.23.0, please. *sigh*
-    #FIXME: Unit test us up, please. Kinda important. Boring, though! *sigh*
     @property
     def __type_beartype__(cls: _BeartypeForwardRefABC) -> type:  # type: ignore[misc]
 

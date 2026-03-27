@@ -191,8 +191,19 @@ def reduce_hint_pep484_ref(
         # purposes and thus reducible to simple strings here.
         if is_hint_pep484749_ref_object_resolvable(hint):
             # print(f'Proxying PEP 749 {repr(hint)}...')
-            hint_resolved = proxy_hint_pep749_ref_object(
-                hint=hint, exception_prefix=exception_prefix)
+            # Reduce this reference to a beartype-specific forward reference
+            # proxy only thinly wrapping this "annotationlib.ForwardRef" object.
+            #
+            # Note that the decoration-time "exception_prefix" parameter is
+            # intentionally *NOT* passed to this proxy factory. Why? Because
+            # that parameter is usually memoized *ONLY* during decoration (e.g.,
+            # as "EXCEPTION_PLACEHOLDER"), which has *NO* relevance to the
+            # returned proxy intended to be called *AFTER* decoration at wrapper
+            # call-time. Logic elsewhere is expected to subsequently set the
+            # corresponding "__exception_prefix_beartype__" class variable on
+            # this proxy to a non-memoized string by calling the
+            # set_beartype_ref_proxies_exception_prefix() setter.
+            hint_resolved = proxy_hint_pep749_ref_object(hint)
         # Else, either the active Python interpreter targets Python <= 3.13 *OR*
         # the active Python interpreter targets Python >= 3.14 but
         # "hint.__owner__" is empty. In either case, this forward reference
@@ -210,15 +221,15 @@ def reduce_hint_pep484_ref(
             # module! That hint can thus be dynamically imported from that
             # module at some later time (e.g., when the currently decorated
             # callable is called) by a beartype-specific forward reference proxy
-            # directly instantiated now. In this case, reduce this
-            # runtime-unusable PEP 749-compliant object-oriented forward
-            # reference to a runtime-usable forward reference proxy.
+            # directly instantiated now. In this case...
             if hint_module_name:
+                # Reduce this runtime-unusable PEP 749-compliant object-oriented
+                # forward reference to a runtime-usable forward reference proxy.
+                #
+                # Note that the decoration-time "exception_prefix" parameter is
+                # intentionally *NOT* passed to this proxy factory. See above!
                 hint_resolved = proxy_hint_pep484_ref_str_subbable(
-                    scope_name=hint_module_name,
-                    hint_name=hint_type_name,
-                    exception_prefix=exception_prefix,
-                )
+                    scope_name=hint_module_name, hint_name=hint_type_name)
             # Else, this reference was instantiated with *NO* module name. This
             # classname is relative to an unknown module and thus currently
             # ambiguous. This ambiguity can *ONLY* be resolved by dynamically

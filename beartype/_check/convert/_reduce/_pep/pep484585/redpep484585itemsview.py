@@ -18,16 +18,20 @@ from beartype.typing import (
     Collection,
     Tuple,
 )
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.cache.utilcachecall import callable_cached
+# from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
     get_hint_pep484585_args)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_subbed
 from collections.abc import ItemsView as ItemsViewABC
 
 # ....................{ REDUCERS                           }....................
-@callable_cached
-def reduce_hint_pep484585_itemsview(hint: Hint, exception_prefix: str) -> Hint:
+#FIXME: Should probably be cached as described in the docstring below. Sadly, we
+#lack the time and motivation to fix the "DeprecationWarning"-related tests that
+#break as a result of doing so. Guh! It's so sad.
+# @callable_cached
+def reduce_hint_pep484585_itemsview(hint: Hint) -> Hint:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **items view type
     hint** (i.e., of the form ``(collections.abc|typing).ItemsView[{hint_key},
@@ -40,8 +44,6 @@ def reduce_hint_pep484585_itemsview(hint: Hint, exception_prefix: str) -> Hint:
     ----------
     hint : Hint
         Items view type hint to be reduced.
-    exception_prefix : str, optional
-        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -55,7 +57,7 @@ def reduce_hint_pep484585_itemsview(hint: Hint, exception_prefix: str) -> Hint:
 
     # If this hint is a PEP 484-compliant deprecated "typing.ItemsView[...]"
     # type hint, emit a non-fatal deprecation warning.
-    reduce_hint_pep484_deprecated(hint, exception_prefix)
+    reduce_hint_pep484_deprecated(hint)
 
     # Reduced hint to be returned, defaulting to the abstract base class (ABC)
     # of *ALL* items views.
@@ -68,7 +70,7 @@ def reduce_hint_pep484585_itemsview(hint: Hint, exception_prefix: str) -> Hint:
 
         # Child key and value type hints subscripting this parent type hint.
         hint_key, hint_value = get_hint_pep484585_args(  # type: ignore[misc]
-            hint=hint, args_len=2, exception_prefix=exception_prefix)
+            hint=hint, args_len=2, exception_prefix=EXCEPTION_PLACEHOLDER)
 
         # Reduce this hint to a PEP 593-compliant hint annotating...
         hint_reduced = Annotated[

@@ -22,6 +22,7 @@ from beartype._cave._cavefast import (
     ThreadLockNonreentrantType,
     ThreadLockReentrantType,
 )
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.utilobject import is_object_hashable
@@ -31,7 +32,7 @@ from threading import (
 )
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_nonpep(hint: Hint, exception_prefix: str) -> HintOrSane:
+def reduce_hint_nonpep(hint: Hint) -> HintOrSane:
     '''
     Reduce the passed **PEP-noncompliant type hint** (i.e., type hint identified
     by *no* sign, typically but *not* necessarily implying this hint to be an
@@ -55,8 +56,6 @@ def reduce_hint_nonpep(hint: Hint, exception_prefix: str) -> HintOrSane:
     ----------
     hint : Hint
         PEP-noncompliant hint to be reduced.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -103,7 +102,7 @@ def reduce_hint_nonpep(hint: Hint, exception_prefix: str) -> HintOrSane:
     if not isinstance(hint, HintSane):
         # If this hint is unsupported by @beartype (after possibly reducing
         # this hint to a supported hint above), raise an exception.
-        die_unless_hint(hint=hint, exception_prefix=exception_prefix)
+        die_unless_hint(hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
         # Else, this hint is supported by @beartype.
     # Else, this hint was reduced to sanified metadata above. In this case,
     # avoid passing this metadata to the die_unless_hint() raiser above. By

@@ -88,6 +88,15 @@ def callable_cached(func: CallableT) -> CallableT:
     memoize property methods; pragmatically, doing so would be sufficiently
     inefficient as to defeat the intention of memoizing in the first place.
 
+    **This decorator does not memoizes warnings issued by the decorated
+    callable.** This decorator *does* memoize exceptions raised by the decorated
+    callable. Ideally, this decorator would memoize both. Pragmatically, this
+    decorator *must* memoize exceptions. That's non-negotiable. However, this
+    decorator has *no* such compulsion to memoize warnings. Warnings are
+    non-fatal and commonly treated as an ignorable annoying nuisance by users.
+    Although memoizing warnings would be both feasible and trivial, doing so
+    would reduce the efficiency and thus point of this memoization.
+
     Efficiency
     ----------
     For efficiency, consider calling the decorated callable with only:

@@ -18,7 +18,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #    from beartype._util.module.utilmodget import die_unless_module_attr_name
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.clspep3119 import (
@@ -50,17 +49,20 @@ def die_if_hint_nonpep(
     ----------
     hint : object
         Object to be validated.
-    is_forwardref_valid : bool, optional
-        :data:`True` only if this function permits this object to contain
-        forward references. Defaults to :data:`False`. If this boolean is:
+    is_forwardref_valid : bool, default: False
+        :data:`True` only if this object is permitted to either be or contain
+        forward references. If this boolean is:
 
-        * :data:`True`, this object is valid only when containing classes and/or
-          forward references.
-        * :data:`False`, this object is valid only when containing classes.
-    exception_cls : type[Exception]
-        Type of exception to be raised. Defaults to
-        :exc:`.BeartypeDecorHintNonpepException`.
-    exception_prefix : str, optional
+        * :data:`True`, this object is valid only when being or containing
+          classes and/or forward references.
+        * :data:`False`, this object is valid only when being or containing
+          classes.
+
+        Defaults to :data:`False` for safety.
+    exception_cls : type[Exception], default: BeartypeDecorHintNonpepException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintNonpepException`.
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
@@ -135,10 +137,10 @@ def die_unless_hint_nonpep(
         * :data:`True`, this object is valid only when containing classes and/or
           forward references.
         * :data:`False`, this object is valid only when containing classes.
-    exception_cls : type[Exception], optional
-        Type of exception to be raised. Defaults to
-        :exc:`.BeartypeDecorHintNonpepException`.
-    exception_prefix : str, optional
+    exception_cls : type[Exception], default: BeartypeDecorHintNonpepException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintNonpepException`.
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
@@ -169,11 +171,6 @@ def die_unless_hint_nonpep(
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with the is_hint_nonpep() tester below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    assert isinstance(exception_cls, type), (
-        f'{repr(exception_cls)} not type.')
-    assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
-
     # If this object is a type...
     if isinstance(hint, type):
         # If this type is *NOT* PEP-noncompliant (e.g., is either PEP-compliant
@@ -181,8 +178,8 @@ def die_unless_hint_nonpep(
         die_unless_hint_nonpep_type(
             hint=hint,
             is_forwardref_valid=is_forwardref_valid,
-            exception_prefix=exception_prefix,
             exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
         )
         # Else, this type is PEP-noncompliant and thus isinstanceable by
         # definition.
@@ -196,8 +193,8 @@ def die_unless_hint_nonpep(
         die_unless_hint_nonpep_tuple(
             hint=hint,
             is_forwardref_valid=is_forwardref_valid,
-            exception_prefix=exception_prefix,
             exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
         )
     # Else, this object is neither a type *NOR* tuple.
 
@@ -207,8 +204,8 @@ def die_unless_hint_nonpep(
     # Raise a generic exception message as a fallback.
     die_as_hint_unsupported(
         hint=hint,
-        exception_prefix=exception_prefix,
         exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
     )
 
 # ....................{ VALIDATORS ~ kind                  }....................

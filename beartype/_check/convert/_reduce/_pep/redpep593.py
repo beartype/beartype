@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.pep.proposal.pep593 import (
     get_hint_pep593_metahint,
@@ -20,7 +21,7 @@ from beartype._util.hint.pep.proposal.pep593 import (
 )
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep593(hint: Hint, exception_prefix: str) -> Hint:
+def reduce_hint_pep593(hint: Hint) -> Hint:
     '''
     Reduce the passed :pep:`593`-compliant **type metahint** (i.e., subscription
     of the :obj:`typing.Annotated` hint factory) to a lower-level hint if this
@@ -35,8 +36,6 @@ def reduce_hint_pep593(hint: Hint, exception_prefix: str) -> Hint:
     ----------
     hint : Hint
         Type hint to be reduced.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -54,5 +53,6 @@ def reduce_hint_pep593(hint: Hint, exception_prefix: str) -> Hint:
         # Else, this metahint is beartype-agnostic and thus irrelevant to us. In
         # this case, ignore all annotations on this hint by reducing this hint
         # to the lower-level hint it annotates.
-        get_hint_pep593_metahint(hint=hint, exception_prefix=exception_prefix)
+        get_hint_pep593_metahint(
+            hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
     )

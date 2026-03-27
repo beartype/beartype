@@ -70,7 +70,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep646Exception
-from beartype.typing import Optional
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import (
     Hint,
     ListHints,
@@ -89,11 +89,11 @@ from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+from typing import Optional
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
-def reduce_hint_pep646_tuple(
-    hint: Hint, exception_prefix: str, **kwargs) -> Hint:
+def reduce_hint_pep646_tuple(hint: Hint) -> Hint:
     '''
     Reduce the passed :pep:`646`-compliant **tuple hint** (i.e., parent tuple
     hints subscripted by either a :pep:`646`-compliant type variable tuples *or*
@@ -107,10 +107,6 @@ def reduce_hint_pep646_tuple(
     ----------
     hint : object
         :pep:`646`-compliant tuple hint to be reduced.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
-
-    All remaining keyword-only parameters are silently ignored.
 
     Returns
     -------
@@ -244,7 +240,8 @@ def reduce_hint_pep646_tuple(
         # this hint is subscripted by only one PEP 646-noncompliant child hint!
         else:  # pragma: no cover
             raise BeartypeDecorHintPep646Exception(
-                f'{exception_prefix}PEP 646 tuple type hint {repr(hint)} '
+                f'{EXCEPTION_PLACEHOLDER}'
+                f'PEP 646 tuple type hint {repr(hint)} '
                 f'child hint {repr(hint_child)} not PEP 646-compliant '
                 f'(i.e., neither unpacked type variable tuple nor '
                 f'unpacked child tuple type hint).'
@@ -383,7 +380,8 @@ def reduce_hint_pep646_tuple(
                 else:
                     assert hint_child_pep646_index is not None
                     raise BeartypeDecorHintPep646Exception(  # pragma: no cover
-                        f'{exception_prefix}PEP 646 tuple type hint {repr(hint)} '
+                        f'{EXCEPTION_PLACEHOLDER}'
+                        f'PEP 646 tuple type hint {repr(hint)} '
                         f'erroneously subscripted by two (or more) '
                         f'PEP 646 unpacked child hints:\n'
                         f'* PEP 646 unpacked child hint {repr(hint_child_pep646)} '

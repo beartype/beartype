@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep591Exception
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
@@ -21,7 +22,7 @@ from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 #FIXME: Remove *AFTER* deeply type-checking "Final[...]" type hints. For now,
 #shallowly type-checking such hints by reduction to their subscripted arguments
 #remains the sanest temporary work-around.
-def reduce_hint_pep591(hint: Hint, exception_prefix: str) -> Hint:
+def reduce_hint_pep591(hint: Hint) -> Hint:
     '''
     Reduce the passed :pep:`591`-compliant **final type hint** (i.e.,
     subscription of the :obj:`typing.Final` type hint factory) to a lower-level
@@ -89,8 +90,9 @@ def reduce_hint_pep591(hint: Hint, exception_prefix: str) -> Hint:
     #     <class 'float'>).
     else:
         raise BeartypeDecorHintPep591Exception(
-            f'{exception_prefix}PEP 591 type hint {repr(hint)} '
-            f'erroneously subscripted by {hint_args_len} child type hints.'
+            f'{EXCEPTION_PLACEHOLDER}'
+            f'PEP 591 type hint {repr(hint)} erroneously subscripted by '
+            f'{hint_args_len} child type hints.'
         )
 
     # Return this reduced hint.

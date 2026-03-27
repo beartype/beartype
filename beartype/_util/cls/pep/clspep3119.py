@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep3119Exception
 from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
 from beartype.typing import Callable
-from beartype._cave._cavefast import Pep3119CheckableTypes
+# from beartype._cave._cavefast import Pep3119CheckableTypes
 from beartype._data.cls.datacls import TYPES_EXCEPTION_NAMESPACE
 from beartype._data.typing.datatypingport import TypeIs
 from beartype._data.typing.datatyping import (
@@ -54,18 +54,20 @@ def die_unless_object_isinstanceable(
     ----------
     obj : Pep3119Checkable
         Object to be validated.
-    is_forwardref_valid : bool, optional
+    is_forwardref_valid : bool, default: True
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
+        proxying an external type that may currently be undefined). If this
+        boolean is:
 
         * :data:`True`, this object is valid only when this object is either an
-          isinstanceable classes *or* a forward reference proxy.
+          isinstanceable class *or* forward reference proxy.
         * :data:`False`, this object is valid only when this object is an
           isinstanceable class. Note that forward reference proxies are
           isinstanceable classes *if and only if* the external classes they
           refer to have already been defined.
+
+        Defaults to :data:`True`, but it probably shouldn't.
     exception_cls : TypeException, default: BeartypeDecorHintPep3119Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep3119Exception`.
@@ -113,8 +115,7 @@ def die_unless_type_isinstanceable(
     '''
     Raise an exception of the passed type unless the passed object is an
     **isinstanceable class** (i.e., class whose metaclass does *not* define an
-    ``__instancecheck__()`` dunder method that raises a :exc:`TypeError`
-    exception).
+    ``__instancecheck__()`` dunder method raising unexpected exceptions).
 
     Classes that are *not* isinstanceable include most PEP-compliant type hints,
     notably:
@@ -465,48 +466,50 @@ def die_unless_type_issubclassable(
     )
 
 # ....................{ TESTERS                            }....................
+#FIXME: Preserved for posterity. Pretty cool little tester. Nice name, anyway.
+#We just have *NO* pragmatic use for this at the moment. *shrug*
 #FIXME: Unit test us up, please. *sigh*
-def is_object_isinstanceorsubclassable_maybe(
-    obj: object) -> TypeIs[Pep3119Checkable]:
-    '''
-    :data:`True` only if the passed object is **possibly runtime-checkable**
-    (i.e., passable as the second parameter to the :func:`isinstance` and
-    :func:`issubclass` builtins, assuming those calls raise *no* exceptions from
-    :pep:`3119`-compliant ``__instancecheck__()`` or ``__subclasscheck__()``
-    dunder methods defined on relevant metaclasses).
-
-    This tester returns :data:`True` only if this object is either:
-
-    * A single type.
-    * A tuple of zero or more types.
-    * A :pep:`604`-compliant **new union** (i.e., two or more types delimited by
-      the ``|`` operator under Python >= 3.10).
-
-    Caveats
-    -------
-    **This low-level tester should always be called before passing arbitrary
-    objects to higher-level testers like** :func:`.is_object_isinstanceable` or
-    :func:`.is_object_issubclassable`. If this tester returns:
-
-    * :data:`False`, those testers are guaranteed to return :data:`False` when
-      passed the same object as well.
-    * :data:`True`, no such guarantee exists. Those testers may either return
-      :data:`True` or :data:`False` when passed the same object, depending on
-      whether that object is genuinely isinstanceable or issubclassable.
-
-    Parameters
-    ----------
-    obj : object
-        Object to be tested.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is possibly runtime-checkable.
-    '''
-
-    # Maximal one-liner. Minimal effort. Truly, these are the days.
-    return isinstance(obj, Pep3119CheckableTypes)
+# def is_object_isinstanceorsubclassable_maybe(
+#     obj: object) -> TypeIs[Pep3119Checkable]:
+#     '''
+#     :data:`True` only if the passed object is **possibly runtime-checkable**
+#     (i.e., passable as the second parameter to the :func:`isinstance` and
+#     :func:`issubclass` builtins, assuming those calls raise *no* exceptions from
+#     :pep:`3119`-compliant ``__instancecheck__()`` or ``__subclasscheck__()``
+#     dunder methods defined on relevant metaclasses).
+#
+#     This tester returns :data:`True` only if this object is either:
+#
+#     * A single type.
+#     * A tuple of zero or more types.
+#     * A :pep:`604`-compliant **new union** (i.e., two or more types delimited by
+#       the ``|`` operator under Python >= 3.10).
+#
+#     Caveats
+#     -------
+#     **This low-level tester should always be called before passing arbitrary
+#     objects to higher-level testers like** :func:`.is_object_isinstanceable` or
+#     :func:`.is_object_issubclassable`. If this tester returns:
+#
+#     * :data:`False`, those testers are guaranteed to return :data:`False` when
+#       passed the same object as well.
+#     * :data:`True`, no such guarantee exists. Those testers may either return
+#       :data:`True` or :data:`False` when passed the same object, depending on
+#       whether that object is genuinely isinstanceable or issubclassable.
+#
+#     Parameters
+#     ----------
+#     obj : object
+#         Object to be tested.
+#
+#     Returns
+#     -------
+#     bool
+#         :data:`True` only if this object is possibly runtime-checkable.
+#     '''
+#
+#     # Maximal one-liner. Minimal effort. Truly, these are the days.
+#     return isinstance(obj, Pep3119CheckableTypes)
 
 # ....................{ TESTERS ~ isinstanceable           }....................
 @callable_cached

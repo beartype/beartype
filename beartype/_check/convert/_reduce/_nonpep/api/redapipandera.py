@@ -22,12 +22,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintNonpepPanderaException
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ REDUCERS                           }....................
 @callable_cached
-def reduce_hint_pandera(hint: Hint, exception_prefix: str) -> type:
+def reduce_hint_pandera(hint: Hint) -> type:
     '''
     Reduce the passed **PEP-noncompliant Pandera type hint** (i.e.,
     subscription of *any* PEP-noncompliant type hint factory published by the
@@ -144,8 +145,6 @@ def reduce_hint_pandera(hint: Hint, exception_prefix: str) -> type:
     ----------
     hint : Hint
         PEP-noncompliant typed NumPy array to return the data type of.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -172,7 +171,7 @@ def reduce_hint_pandera(hint: Hint, exception_prefix: str) -> type:
         hint=hint,  # pyright: ignore
         module_names=_MODULE_NAMES_DATAFRAME,
         exception_cls=BeartypeDecorHintNonpepPanderaException,
-        exception_prefix=exception_prefix,
+        exception_prefix=EXCEPTION_PLACEHOLDER,
     )
 
 # ....................{ PRIVATE ~ constants                }....................

@@ -22,10 +22,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintNonpepNumpyException
-from beartype.typing import (
-    Annotated,
-    Any,
-)
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.api.external.utilnumpy import (
     get_numpy_dtype_type_abcs,
@@ -34,10 +31,14 @@ from beartype._util.api.external.utilnumpy import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.utilobject import is_object_hashable
+from typing import (
+    Annotated,
+    Any,
+)
 
 # ....................{ REDUCERS                           }....................
 @callable_cached
-def reduce_hint_numpy_ndarray(hint: Hint, exception_prefix: str) -> Hint:
+def reduce_hint_numpy_ndarray(hint: Hint) -> Hint:
     '''
     Reduce the passed **PEP-noncompliant typed NumPy array** (i.e.,
     subscription of the third-party :attr:`numpy.typing.NDArray` type hint
@@ -147,8 +148,10 @@ def reduce_hint_numpy_ndarray(hint: Hint, exception_prefix: str) -> Hint:
     # malformed as a typed NumPy array. In this case, raise an exception.
     if len(hint_args) != 2:
         raise BeartypeDecorHintNonpepNumpyException(
-            f'{exception_prefix}typed NumPy array {repr(hint)} '
-            f'not subscripted by exactly two arguments.'
+            f'{EXCEPTION_PLACEHOLDER}'
+            f'typed NumPy array {repr(hint)} '
+            f'not subscripted by exactly two child type hints '
+            f'(i.e., {len(hint_args)} != 2).'
         )
     # Else, this hint was subscripted by exactly two arguments.
 
@@ -165,7 +168,8 @@ def reduce_hint_numpy_ndarray(hint: Hint, exception_prefix: str) -> Hint:
     # is malformed as a data type subhint. In this case, raise an exception.
     if len(hint_dtype_subhint_args) != 1:
         raise BeartypeDecorHintNonpepNumpyException(
-            f'{exception_prefix}typed NumPy array {repr(hint)} '
+            f'{EXCEPTION_PLACEHOLDER}'
+            f'typed NumPy array {repr(hint)} '
             f'data type subhint {repr(hint_dtype_subhint)} '
             f'not subscripted by exactly one argument.'
         )
@@ -223,8 +227,8 @@ def reduce_hint_numpy_ndarray(hint: Hint, exception_prefix: str) -> Hint:
         # Proper dtype coerced from this possibly non-dtype.
         hint_dtype = make_numpy_dtype(
             dtype=hint_dtype_like,
-            exception_prefix=exception_prefix,
             exception_cls=BeartypeDecorHintNonpepNumpyException,
+            exception_prefix=EXCEPTION_PLACEHOLDER,
         )
 
         # Equivalent nested beartype validator reduced from this hint.

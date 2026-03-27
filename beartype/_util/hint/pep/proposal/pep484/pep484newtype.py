@@ -20,7 +20,12 @@ from beartype._util.cache.utilcachecall import callable_cached
 #FIXME: Unit test us up, please.
 @callable_cached
 def get_hint_pep484_newtype_alias(
-    hint: Hint, exception_prefix: str = '') -> Hint:
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> Hint:
     '''
     Unaliased type hint (i.e., type hint that is *not* a :obj:`typing.NewType`)
     encapsulated by the passed **newtype** (i.e., object created and returned by
@@ -43,7 +48,7 @@ def get_hint_pep484_newtype_alias(
     ----------
     hint : Hint
         Object to be inspected.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 

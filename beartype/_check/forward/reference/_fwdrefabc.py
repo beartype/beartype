@@ -292,6 +292,13 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
         )
 
     # ....................{ PRIVATE ~ testers              }....................
+    #FIXME: [SPEED] *INEFFICIENT*. These have *NO* reason to exist. They just
+    #uselessly introduce yet another layer of call indirection for no good
+    #reason. Instead:
+    #* Inline the body of these testers directly into the corresponding
+    #  __instancecheck__() and __subclasscheck__() dunder methods of our
+    #  metaclass.
+    #* Excise these testers. *sigh*
     @classmethod
     def __is_instance_beartype__(cls, obj: object) -> bool:
         '''
@@ -370,6 +377,15 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
         # Else, the cls.__resolved_type_beartype__() property dynamically resolving the
         # stringified forward reference underlying this proxy succeeded in doing
         # so. Ergo, the class returned by that property is trustworthy.
+
+        # This referent is possibly isinstanceable (i.e., passable as
+        # the second parameter to the isinstance() builtin, assuming
+        # that call raises *NO* exception from a PEP 3119-compliant
+        # __instancecheck__() dunder metaclass method) *AND*...
+        # if isinstance(obj, Pep3119CheckableTypes):
+        #     # Return true only if the passed object is an instance of the external
+        #     # class referenced by this forward reference.
+        #     return isinstance(obj, cls.__resolved_type_beartype__)
 
         # Return true only if the passed object is an instance of the external
         # class referenced by this forward reference.

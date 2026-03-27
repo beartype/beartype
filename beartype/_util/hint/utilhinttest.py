@@ -14,11 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintNonpepException
-from beartype.typing import NoReturn
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (
     TypeException,
-    TypeStack,
+    # TypeStack,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilnonpeptest import (
@@ -34,6 +33,7 @@ from beartype._util.hint.pep.utilpeptest import (
 from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_builtin_subbed)
 from beartype._util.hint.pep.proposal.pep484.pep484604union import is_hint_pep604
+from typing import NoReturn
 
 # ....................{ RAISERS                            }....................
 def die_unless_hint(
@@ -41,6 +41,7 @@ def die_unless_hint(
     hint: Hint,
 
     # Optional parameters.
+    is_forwardref_valid: bool = True,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -72,7 +73,17 @@ def die_unless_hint(
     ----------
     hint : Hint
         Object to be validated.
-    exception_prefix : str, optional
+    is_forwardref_valid : bool, default: True
+        :data:`True` only if this object is permitted to either be or contain
+        forward references. If this boolean is:
+
+        * :data:`True`, this object is valid only when being or containing
+          classes and/or forward references.
+        * :data:`False`, this object is valid only when being or containing
+          classes.
+
+        Defaults to :data:`True`, but it probably shouldn't.
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
@@ -89,7 +100,10 @@ def die_unless_hint(
     '''
 
     # If this object is a supported type hint, reduce to a noop.
-    if is_hint(hint):
+    #
+    # Note that this tester is memoized and thus accepts *ONLY* positional
+    # parameters. It is what it is.
+    if is_hint(hint, is_forwardref_valid):
         return
     # Else, this object is *NOT* a supported type hint. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
@@ -107,7 +121,11 @@ def die_unless_hint(
 
     # If this PEP-noncompliant hint is currently unsupported by @beartype, raise
     # an exception.
-    die_unless_hint_nonpep(hint=hint, exception_prefix=exception_prefix)
+    die_unless_hint_nonpep(
+        hint=hint,
+        is_forwardref_valid=is_forwardref_valid,
+        exception_prefix=exception_prefix,
+    )
 
 
 def die_as_hint_unsupported(
@@ -164,7 +182,13 @@ def die_as_hint_unsupported(
 
 # ....................{ TESTERS                            }....................
 @callable_cached
-def is_hint(hint: object) -> bool:
+def is_hint(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    is_forwardref_valid: bool = True,
+) -> bool:
     '''
     :data:`True` only if the passed object is a **supported type hint** (i.e.,
     object supported by the :func:`beartype.beartype` decorator as a valid type
@@ -176,6 +200,16 @@ def is_hint(hint: object) -> bool:
     ----------
     hint : object
         Object to be validated.
+    is_forwardref_valid : bool, default: True
+        :data:`True` only if this object is permitted to either be or contain
+        forward references. If this boolean is:
+
+        * :data:`True`, this object is valid only when being or containing
+          classes and/or forward references.
+        * :data:`False`, this object is valid only when being or containing
+          classes.
+
+        Defaults to :data:`True`, but it probably shouldn't.
 
     Returns
     -------
@@ -206,7 +240,7 @@ def is_hint(hint: object) -> bool:
         is_hint_pep_supported(hint) if is_hint_pep(hint) else
         # This is a PEP-noncompliant type hint, which by definition is
         # necessarily supported by @beartype.
-        is_hint_nonpep(hint=hint, is_forwardref_valid=True)
+        is_hint_nonpep(hint=hint, is_forwardref_valid=is_forwardref_valid)
     )
 
 

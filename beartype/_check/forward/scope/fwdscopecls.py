@@ -520,10 +520,19 @@ class BeartypeForwardScope(LexicalScope):
         # assumed to be trustworthy. Don't let us down, @beartype! Not again!
 
         # Forward reference proxy to be returned.
+        #
+        # Note that the decoration-time "exception_prefix" parameter is
+        # intentionally *NOT* passed to this proxy factory. Why? Because that
+        # parameter is usually memoized *ONLY* during decoration (e.g., as
+        # "EXCEPTION_PLACEHOLDER"), which has *NO* relevance to the returned
+        # proxy intended to be called *AFTER* decoration at wrapper call-time.
+        # Logic elsewhere is expected to subsequently set the corresponding
+        # "__exception_prefix_beartype__" class variable on this proxy to a
+        # non-memoized string by calling the
+        # set_beartype_ref_proxies_exception_prefix() setter.
         forwardref_subtype = proxy_hint_pep484_ref_str_subbable(
             scope_name=self._scope_name,  # type: ignore[arg-type]
             hint_name=hint_name,
-            exception_prefix=self._exception_prefix,
             func_local_parent_codeobj_weakref=(
                 self._func_local_parent_codeobj_weakref),
         )

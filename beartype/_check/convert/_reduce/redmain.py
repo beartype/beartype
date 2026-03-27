@@ -38,6 +38,7 @@ from beartype._check.metadata.hint.hintsane import (
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
@@ -66,7 +67,7 @@ def reduce_hint(
     is_hint_ignorable_preserved: bool = False,
     pith_name: Optional[str] = None,
     reductions_count: int = 0,
-    exception_prefix: str = '',
+    exception_prefix: str = EXCEPTION_PLACEHOLDER,
 ) -> HintSane:
     '''
     Lower-level type hint reduced (i.e., converted) from the passed higher-level
@@ -180,9 +181,9 @@ def reduce_hint(
         to this function rooted at this function in the current call stack,
         guarding against accidental infinite recursion between lower-level
         reducers and this higher-level function. Defaults to 0.
-    exception_prefix : str, optional
+    exception_prefix : str, default: EXCEPTION_PLACEHOLDER
         Human-readable substring prefixing raised exception messages. Defaults
-        to the empty string.
+        to :data:`.EXCEPTION_PLACEHOLDER`.
 
     Returns
     -------
@@ -449,6 +450,7 @@ def reduce_hint(
     # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by
     # an explanatory prefix.
     except Exception as exception:
+        print(f'!!!! reduce_hint() exception_prefix: {exception_prefix}!!!!')
         reraise_exception_placeholder(
             exception=exception, target_str=exception_prefix)
 
@@ -634,39 +636,11 @@ def _reduce_hint_cached(
     if hint_reducer_cached is not None:
         # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
 
-        #FIXME: [SPEED] Is there any point to passing the "exception_prefix"
-        #parameter? Possibly. Not sure. Isn't this parameter a constant? No?
-        #Does it actually vary with context? Can't recall. Investigate up!
-        #FIXME: The way to validate this would be as follows:
-        #    assert exception_prefix is EXCEPTION_PREFIX
-        #
-        #If that assertion passes, then just use the "EXCEPTION_PREFIX" constant
-        #in *ALL* cached hint reducers in lieu of this inefficient
-        #"exception_prefix" parameter.
-        #
-        #If that assertion fails, then document below why. The world needs to
-        #know the horrible truth! *heh*
-        #FIXME: *OH WE SEE.* We definitely messed this up. Why? Because
-        #"exception_prefix" typically contains the fully-qualified name of the
-        #currently decorated callable, thus effectively *PREVENTING
-        #MEMOIZATION.* We're just uselessly burning cycles here.
-        #
-        #*STOP PASSING "exception_prefix" IMMEDIATELY, PLEASE.* We sigh! *sigh*
-        #Here's the game plan:
-        #* We need to manually go through the "HINT_SIGN_TO_REDUCE_HINT_CACHED"
-        #  dictionary in "_redmap" and, for each such reducer:
-        #  * Remove the "exception_prefix" parameter accepted by that reducer.
-        #  * Replace all instances of "exception_prefix" in the body of that
-        #    reducer with the "EXCEPTION_PLACEHOLDER" constant importable as:
-        #        from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-        #
-        #Trivial, but tedious. Thus, we do nothing for the moment. Ugh!
-
         # Reduce this hint by calling this reducer.
         #
         # Note that parameters are intentionally passed positionally to this
         # possibly memoized callable prohibiting keyword parameters.
-        hint_or_sane = hint_reducer_cached(hint, exception_prefix)
+        hint_or_sane = hint_reducer_cached(hint)
     # Else, *NO* memoized reducer reduces this hint. In this case, preserve this
     # hint as is.
 
