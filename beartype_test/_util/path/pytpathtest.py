@@ -119,6 +119,19 @@ def get_test_func_data_external_pyinstaller_dir() -> Path:
 
 
 @callable_cached
+def get_test_func_data_external_pyright_dir() -> Path:
+    '''
+    :class:`.Path` encapsulating the absolute dirname of the **low-level pyright
+    integration test data directory** (i.e., directory providing sample code
+    used throughout this project's ``pyright``-specific integration tests) if
+    found *or* raise an exception otherwise.
+    '''
+
+    # Triumphant urgency!
+    return DirRelative(get_test_func_data_external_dir(), 'pyright')
+
+
+@callable_cached
 def get_test_func_data_external_sphinx_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **low-level Sphinx

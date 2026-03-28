@@ -4,10 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-**Project-wide functional static type-checker tests.**
+Project-wide **mypy** (i.e., Python's official static type-checker) integration
+tests.
 
-This submodule functionally tests the this project's compliance with
-third-party static type-checkers and hence :pep:`561`.
+This submodule functionally tests the this project's compliance with mypy-based
+static type-checking and hence :pep:`561`.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,10 +20,9 @@ from beartype_test._util.mark.pytskip import (
     skip_if_ci,
     skip_if_pypy,
     skip_unless_package,
-    skip_unless_pathable,
 )
 
-# ....................{ TESTS ~ mypy                       }....................
+# ....................{ TESTS                              }....................
 #FIXME: Consider submitting as a StackOverflow post. Dis iz l33t, yo!
 
 # If the third-party "mypy" package is unavailable, skip this test. Note that:
@@ -141,106 +141,3 @@ def test_pep561_mypy() -> None:
     # forwarding all standard output and error output by this subprocess to the
     # standard output and error file handles of the active Python process.
     run_command_forward_output(command_words=MYPY_ARGS)
-
-# ....................{ TESTS ~ pyright                    }....................
-# If the external third-party "pyright" command is *NOT* pathable (i.e., an
-# executable command residing in the ${PATH} of the local filesystem), skip this
-# test. Note that:
-# * "pyright" is the most popular static type-checker for Python, mostly due to
-#   "pylance" (i.e., the most popular Python language plugin for VSCode, itself
-#   the most popular integrated development environment (IDE)) both bundling
-#   *AND* enabling "pyright" by default.
-# * "pyright" is implemented in pure-TypeScript (i.e., JavaScript augmented with
-#   type hints transpiling down to pure-JavaScript at compilation time).
-# * There exists a largely unrelated "pyright" Python package shim unofficially
-#   published at:
-#    https://github.com/RobertCraigie/pyright-python
-#   Sadly, that package does fundamentally unsafe things like:
-#   * Violating privacy encapsulation of "pytest", repeatedly.
-#   * Performing online "npm"-based auto-installation of the "pyright"
-#     JavaScript package if currently not installed. Currently, there exists
-#     *NO* means of disabling that dubious behavior.
-#   Ergo, we resoundingly ignore that high-level package in favour of the
-#   low-level "pyright" command. Such is quality assurance. It always hurts.
-#
-# Skip this "pyright"-specific functional test unless all of the following
-# apply:
-# * The "pyright" command is in the current "${PATH}".
-# * Tests are *NOT* running remotely under GitHub Actions-based continuous
-#   integration (CI). Since the only sane means of installing "pyright" under
-#   GitHub Actions is via the third-party "jakebailey/pyright-action" action
-#   (which implicitly exercises this package against "pyright"), explicitly
-#   exercising this package against "pyright" yet again would only needlessly
-#   complicate CI workflows and consume excess CI minutes for *NO* gain.
-@skip_unless_pathable('pyright')
-@skip_if_ci()
-def test_pep561_pyright(monkeypatch) -> None:
-    '''
-    Integration test testing this project's compliance with :pep:`561` by
-    externally running :mod:`pyright` (i.e., the most popular third-party static
-    type checker as of this test) against this project's top-level package.
-
-    See Also
-    --------
-    :mod:`pytest_pyright`
-        Third-party :mod:`pytest` plugin automating this integration. Since this
-        integration is trivial *and* since :mod:`beartype` assiduously avoids
-        *all* mandatory dependencies, we perform this integration manually.
-        Moreover, this plugin:
-
-        * Internally violates privacy encapsulation in
-          :mod:`pytest` by widely importing private :mod:`pytest` attributes.
-        * Explicitly admonishes downstream dependencies *not* to depend upon
-          this plugin:
-
-            This project was created for internal use within another project of
-            mine, support will be minimal.
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype.meta import PACKAGE_NAME
-    from beartype._util.py.utilpyversion import get_python_version_major_minor
-    from beartype_test._util.command.pytcmdrun import run_command_forward_output
-    from beartype_test._util.path.pytpathmain import get_main_dir
-
-    # ....................{ COMMAND                        }....................
-    # Tuple of all shell words with which to run the external "pyright" command.
-    PYRIGHT_ARGS = (
-        # Basename of the external "pyright" command to be run.
-        'pyright',
-
-        #FIXME: Note that we *COULD* additionally pass the "--verifytypes"
-        #option, which exposes further "pyright" complaints. Let's avoid doing
-        #so until someone explicitly requests we do so, please. This has dragged
-        #on long enough, people!
-
-        # Major and minor version of the active Python interpreter, ignoring the
-        # patch version of this interpreter.
-        '--pythonversion', get_python_version_major_minor(),
-
-        # Relative basename of this project's top-level package. Ideally, the
-        # absolute dirname of this package would instead be passed as:
-        #     str(get_main_package_dir())
-        #
-        # Doing so succeeds when manually running tests via our top-level
-        # "pytest" script but fails when automatically running tests via the
-        # "tox" command, presumably due to "pyright" failing to recognize that
-        # that dirname encapsulates a Python package. *sigh*
-        PACKAGE_NAME,
-    )
-
-    # Temporarily change to the root directory for this project *BEFORE* running
-    # the "pyright" command. Unlike the "mypy" command, "pyright" fails to
-    # accept an option or argument specifying the target directory containing
-    # the specified package. If this directory is *NOT* changed to here,
-    # "pyright" fails with a fatal error under "tox" resembling:
-    #      File or directory
-    #      "/home/leycec/py/beartype/.tox/py311-coverage/tmp/beartype" does not
-    #      exist.
-    monkeypatch.chdir(str(get_main_dir()))
-
-    # Run this command, raising an exception on subprocess failure while
-    # forwarding all standard output and error output by this subprocess to the
-    # standard output and error file handles of the active Python process.
-    run_command_forward_output(command_words=PYRIGHT_ARGS)
