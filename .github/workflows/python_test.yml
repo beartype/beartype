@@ -431,7 +431,7 @@ jobs:
       #         python3 -m tox finally
       #
       #     - name: 'Publishing test coverage to Codecov...'
-      #       uses: 'codecov/codecov-action@v5'
+      #       uses: 'codecov/codecov-action@v6'
       #       with:
       #         name: "${{ matrix.platform }}-${{ matrix.python-version }}"
       #         token: ${{ secrets.CODECOV_TOKEN }}
@@ -464,7 +464,7 @@ jobs:
       # Instead, we just forcefully embed the commands run by the "finally"
       # environment into the default "tox" environment. It works.
       - name: 'Publishing test coverage to Codecov...'
-        uses: 'codecov/codecov-action@v5'
+        uses: 'codecov/codecov-action@v6'
         with:
           name: "${{ matrix.platform }}-${{ matrix.python-version }}"
           token: ${{ secrets.CODECOV_TOKEN }}

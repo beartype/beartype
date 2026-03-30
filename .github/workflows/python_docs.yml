@@ -91,7 +91,7 @@ jobs:
       - name: "Checking out repository..."
         uses: 'actions/checkout@v6'
       - name: "Preparing GitHub Pages..."
-        uses: 'actions/configure-pages@v5'
+        uses: 'actions/configure-pages@v6'
       - name: "Installing Python..."
         uses: 'actions/setup-python@v6'
         with:
@@ -229,5 +229,5 @@ jobs:
 
     steps:
       - name: "Deploying static site to GitHub Pages..."
-        uses: 'actions/deploy-pages@v4'
+        uses: 'actions/deploy-pages@v5'
         id: deployment
