@@ -30,7 +30,7 @@ def die_unless_object_isinstanceable(
     obj: Pep3119Checkable,
 
     # Optional parameters.
-    is_forwardref_valid: bool = True,
+    is_ref_proxy_valid: bool = False,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -54,10 +54,10 @@ def die_unless_object_isinstanceable(
     ----------
     obj : Pep3119Checkable
         Object to be validated.
-    is_forwardref_valid : bool, default: True
+    is_ref_proxy_valid : bool, default: False
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). If this
+        proxying an external type hint that may currently be undefined). If this
         boolean is:
 
         * :data:`True`, this object is valid only when this object is either an
@@ -67,7 +67,7 @@ def die_unless_object_isinstanceable(
           isinstanceable classes *if and only if* the external classes they
           refer to have already been defined.
 
-        Defaults to :data:`True`, but it probably shouldn't.
+        Defaults to :data:`False`.
     exception_cls : TypeException, default: BeartypeDecorHintPep3119Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep3119Exception`.
@@ -93,7 +93,7 @@ def die_unless_object_isinstanceable(
     # Defer to this lower-level general-purpose raiser.
     _die_if_object_uncheckable(
         obj=obj,
-        is_forwardref_valid=is_forwardref_valid,
+        is_ref_proxy_valid=is_ref_proxy_valid,
         type_raiser=die_unless_type_isinstanceable,
         type_tester=is_type_isinstanceable,
         builtin_tester=isinstance,  # type: ignore[arg-type]
@@ -108,7 +108,7 @@ def die_unless_type_isinstanceable(
     cls: type,
 
     # Optional parameters.
-    is_forwardref_valid: bool = True,
+    is_ref_proxy_valid: bool = False,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -224,18 +224,11 @@ def die_unless_type_isinstanceable(
     ----------
     cls : object
         Object to be validated.
-    is_forwardref_valid : bool, optional
+    is_ref_proxy_valid : bool, default: False
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
-
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable classes *or* a forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
     exception_cls : TypeException, default: BeartypeDecorHintPep3119Exception
         Type of exception to be raised in the event of a fatal error. Defaults to
         :exc:`.BeartypeDecorHintPep3119Exception`.
@@ -271,7 +264,7 @@ def die_unless_type_isinstanceable(
     #   Permission than Foregiveness) principle.
     # * Worst-case behaviour in which the metaclass of this class defines an
     #   inefficient __instancecheck__() method outside our control.
-    if is_type_isinstanceable(cls, is_forwardref_valid):
+    if is_type_isinstanceable(cls, is_ref_proxy_valid):
         return
     # Else, this class is *NOT* isinstanceable. In this case, raise a
     # human-readable exception embedding the original (typically unreadable)
@@ -280,7 +273,7 @@ def die_unless_type_isinstanceable(
     # Defer to this lower-level general-purpose raiser.
     return _die_unless_object_builtin_checkable(
         obj=cls,
-        is_forwardref_valid=is_forwardref_valid,
+        is_ref_proxy_valid=is_ref_proxy_valid,
         type_tester=is_type_isinstanceable,
         builtin_tester=isinstance,  # type: ignore[arg-type]
         builtin_tester_pith=None,
@@ -294,7 +287,7 @@ def die_unless_object_issubclassable(
     obj: Pep3119Checkable,
 
     # Optional parameters.
-    is_forwardref_valid: bool = True,
+    is_ref_proxy_valid: bool = False,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -318,18 +311,11 @@ def die_unless_object_issubclassable(
     ----------
     obj : object
         Object to be validated.
-    is_forwardref_valid : bool, optional
+    is_ref_proxy_valid : bool, default: False
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
-
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable classes *or* a forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
     exception_cls : TypeException, default: BeartypeDecorHintPep3119Exception
         Type of exception to be raised in the event of a fatal error. Defaults to
         :exc:`.BeartypeDecorHintPep3119Exception`.
@@ -350,7 +336,7 @@ def die_unless_object_issubclassable(
     # Defer to this lower-level general-purpose raiser.
     _die_if_object_uncheckable(
         obj=obj,
-        is_forwardref_valid=is_forwardref_valid,
+        is_ref_proxy_valid=is_ref_proxy_valid,
         type_raiser=die_unless_type_issubclassable,
         type_tester=is_type_issubclassable,
         builtin_tester=issubclass,  # type: ignore[arg-type]
@@ -365,7 +351,7 @@ def die_unless_type_issubclassable(
     cls: type,
 
     # Optional parameters.
-    is_forwardref_valid: bool = True,
+    is_ref_proxy_valid: bool = False,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -406,18 +392,11 @@ def die_unless_type_issubclassable(
     ----------
     cls : object
         Object to be validated.
-    is_forwardref_valid : bool, optional
+    is_ref_proxy_valid : bool, default: False
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
-
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable classes *or* a forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
     exception_cls : TypeException, default: BeartypeDecorHintPep3119Exception
         Type of exception to be raised in the event of a fatal error. Defaults to
         :exc:`.BeartypeDecorHintPep3119Exception`.
@@ -448,7 +427,7 @@ def die_unless_type_issubclassable(
     #   Permission than Foregiveness) principle.
     # * Worst-case behaviour in which the metaclass of this class defines an
     #   inefficient __subclasscheck__() method outside our control.
-    if is_type_issubclassable(cls, is_forwardref_valid):
+    if is_type_issubclassable(cls, is_ref_proxy_valid):
         return
     # Else, this class is *NOT* issubclassable. In this case, raise a
     # human-readable exception embedding the original (typically unreadable)
@@ -457,7 +436,7 @@ def die_unless_type_issubclassable(
     # Defer to this lower-level general-purpose raiser.
     return _die_unless_object_builtin_checkable(
         obj=cls,
-        is_forwardref_valid=is_forwardref_valid,
+        is_ref_proxy_valid=is_ref_proxy_valid,
         type_tester=is_type_isinstanceable,
         builtin_tester=issubclass,  # type: ignore[arg-type]
         builtin_tester_pith=type,
@@ -518,7 +497,7 @@ def is_object_isinstanceable(
     obj: object,
 
     # Optional parameters.
-    is_forwardref_valid: bool = True,
+    is_ref_proxy_valid: bool = False,
 ) -> TypeIs[Pep3119Checkable]:
     '''
     :data:`True` only if the passed object is **isinstanceable** (i.e., valid as
@@ -530,26 +509,11 @@ def is_object_isinstanceable(
     ----------
     obj : Pep3119Checkable
         Object to be tested.
-    is_forwardref_valid : bool, default: True
+    is_ref_proxy_valid : bool, default: False
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). If this
-        boolean is:
-
-        * :data:`True`, this object is valid only when this object is either:
-
-          * An isinstanceable type.
-          * A forward reference proxy (regardless of whether this proxy is
-            currently resolvable to an isinstanceable type that has already been
-            externally defined).
-
-        * :data:`False`, this object is valid only when this object is either:
-
-          * An isinstanceable type.
-          * A forward reference proxy that is currently resolvable to an
-            isinstanceable type that has already been externally defined.
-
-        Defaults to :data:`True`, but probably shouldn't.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
 
     Returns
     -------
@@ -570,21 +534,21 @@ def is_object_isinstanceable(
     # Defer to this lower-level general-purpose raiser.
     return _is_object_checkable(
         obj=obj,
-        is_forwardref_valid=is_forwardref_valid,
+        is_ref_proxy_valid=is_ref_proxy_valid,
         type_tester=is_type_isinstanceable,
         builtin_tester=isinstance,  # type: ignore[arg-type]
         builtin_tester_pith=None,
     )
 
 
-#FIXME: Unit test up the "is_forwardref_valid" parameter, please.
+#FIXME: Unit test up the "is_ref_proxy_valid" parameter, please.
 @callable_cached
 def is_type_isinstanceable(
     # Mandatory parameters.
     cls: object,
 
     # Optional parameters.
-    is_forwardref_valid: bool = True,
+    is_ref_proxy_valid: bool = False,
 ) -> TypeIs[type]:
     '''
     :data:`True` only if the passed object is an **isinstanceable type** (i.e.,
@@ -614,18 +578,11 @@ def is_type_isinstanceable(
     ----------
     cls : object
         Object to be tested.
-    is_forwardref_valid : bool, optional
+    is_ref_proxy_valid : bool, default: False
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
-
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable classes *or* a forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
 
     Returns
     -------
@@ -641,7 +598,7 @@ def is_type_isinstanceable(
     # Defer to this lower-level general-purpose tester.
     return _is_type_checkable(
         cls=cls,
-        is_forwardref_valid=is_forwardref_valid,
+        is_ref_proxy_valid=is_ref_proxy_valid,
         builtin_tester=isinstance,  # type: ignore[arg-type]
         builtin_tester_pith=None,
     )
@@ -654,7 +611,7 @@ def is_object_issubclassable(
     obj: object,
 
     # Optional parameters.
-    is_forwardref_valid: bool = True,
+    is_ref_proxy_valid: bool = False,
 ) -> TypeIs[Pep3119Checkable]:
     '''
     :data:`True` only if the passed object is **issubclassable** (i.e., valid as
@@ -666,26 +623,11 @@ def is_object_issubclassable(
     ----------
     obj : Pep3119Checkable
         Object to be tested.
-    is_forwardref_valid : bool, default: True
+    is_ref_proxy_valid : bool, default: False
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). If this
-        boolean is:
-
-        * :data:`True`, this object is valid only when this object is either:
-
-          * An isinstanceable type.
-          * A forward reference proxy (regardless of whether this proxy is
-            currently resolvable to an isinstanceable type that has already been
-            externally defined).
-
-        * :data:`False`, this object is valid only when this object is either:
-
-          * An isinstanceable type.
-          * A forward reference proxy that is currently resolvable to an
-            isinstanceable type that has already been externally defined.
-
-        Defaults to :data:`True`, but probably shouldn't.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
 
     Returns
     -------
@@ -706,21 +648,21 @@ def is_object_issubclassable(
     # Defer to this lower-level general-purpose raiser.
     return _is_object_checkable(
         obj=obj,
-        is_forwardref_valid=is_forwardref_valid,
+        is_ref_proxy_valid=is_ref_proxy_valid,
         type_tester=is_type_isinstanceable,
         builtin_tester=issubclass,  # type: ignore[arg-type]
         builtin_tester_pith=type,
     )
 
 
-#FIXME: Unit test up the "is_forwardref_valid" parameter, please.
+#FIXME: Unit test up the "is_ref_proxy_valid" parameter, please.
 @callable_cached
 def is_type_issubclassable(
     # Mandatory parameters.
     cls: object,
 
     # Optional parameters.
-    is_forwardref_valid: bool = True,
+    is_ref_proxy_valid: bool = False,
 ) -> TypeIs[type]:
     '''
     :data:`True` only if the passed object is an **issubclassable class** (i.e.,
@@ -733,18 +675,11 @@ def is_type_issubclassable(
     ----------
     cls : object
         Object to be tested.
-    is_forwardref_valid : bool, optional
+    is_ref_proxy_valid : bool, default: False
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
-
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable classes *or* a forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
 
     Returns
     -------
@@ -761,7 +696,7 @@ def is_type_issubclassable(
     # Defer to this lower-level general-purpose tester.
     return _is_type_checkable(
         cls=cls,
-        is_forwardref_valid=is_forwardref_valid,
+        is_ref_proxy_valid=is_ref_proxy_valid,
         builtin_tester=issubclass,  # type: ignore[arg-type]
         builtin_tester_pith=type,
     )
@@ -776,7 +711,7 @@ _NontypeTester = Callable[[object, Pep3119Checkable], bool]
 # ....................{ PRIVATE ~ raisers                  }....................
 def _die_if_object_uncheckable(
     obj: Pep3119Checkable,
-    is_forwardref_valid: bool,
+    is_ref_proxy_valid: bool,
     type_raiser: Callable,
     type_tester: Callable,
     builtin_tester: _NontypeTester,
@@ -794,18 +729,11 @@ def _die_if_object_uncheckable(
     ----------
     obj : object
         Object to be validated.
-    is_forwardref_valid : bool, optional
+    is_ref_proxy_valid : bool
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
-
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable classes *or* a forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
     type_raiser : Callable
         Callable raising an exception unless this object is runtime-checkable
         according to this predicate, which should be either:
@@ -869,7 +797,7 @@ def _die_if_object_uncheckable(
         # If this type is *NOT* runtime-checkable, raise an exception.
         type_raiser(
             cls=obj,
-            is_forwardref_valid=is_forwardref_valid,
+            is_ref_proxy_valid=is_ref_proxy_valid,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )
@@ -880,7 +808,7 @@ def _die_if_object_uncheckable(
     # Defer to this lower-level general-purpose raiser.
     return _die_unless_object_builtin_checkable(
         obj=obj,
-        is_forwardref_valid=is_forwardref_valid,
+        is_ref_proxy_valid=is_ref_proxy_valid,
         type_tester=type_tester,
         builtin_tester=builtin_tester,
         builtin_tester_pith=builtin_tester_pith,
@@ -892,7 +820,7 @@ def _die_if_object_uncheckable(
 #FIXME: Unit test us up, please. *sigh*
 def _die_unless_object_builtin_checkable(
     obj: Pep3119Checkable,
-    is_forwardref_valid: bool,
+    is_ref_proxy_valid: bool,
     type_tester: Callable,
     builtin_tester: _NontypeTester,
     builtin_tester_pith: object,
@@ -909,18 +837,11 @@ def _die_unless_object_builtin_checkable(
     ----------
     obj : object
         Object to be validated.
-    is_forwardref_valid : bool
+    is_ref_proxy_valid : bool
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
-
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable class *or* forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
     type_tester : Callable
         Callable returning :data:`True` only if this object is a
         runtime-checkable type according to this predicate, which should be
@@ -1066,7 +987,7 @@ def _die_unless_object_builtin_checkable(
                 #
                 # Note that this tester is memoized and thus requires parameters
                 # be only passed positionally.
-                if not type_tester(obj_item, is_forwardref_valid):
+                if not type_tester(obj_item, is_ref_proxy_valid):
                     # This item is the culprit! Found him, boys.
                     obj_culprit = obj_item
 
@@ -1112,7 +1033,7 @@ def _die_unless_object_builtin_checkable(
 #FIXME: Unit test us up, please. *sigh*
 def _is_object_checkable(
     obj: object,
-    is_forwardref_valid: bool,
+    is_ref_proxy_valid: bool,
     type_tester: Callable,
     builtin_tester: _NontypeTester,
     builtin_tester_pith: object,
@@ -1130,18 +1051,11 @@ def _is_object_checkable(
     ----------
     obj : object
         Object to be validated.
-    is_forwardref_valid : bool, optional
+    is_ref_proxy_valid : bool
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
-
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable class *or* forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
     type_tester : Callable
         Callable returning :data:`True` only if this object is a
         runtime-checkable type according to this predicate, which should be
@@ -1198,7 +1112,7 @@ def _is_object_checkable(
         #
         # Note that this tester is memoized and thus requires parameters be
         # only passed positionally.
-        return type_tester(obj, is_forwardref_valid)
+        return type_tester(obj, is_ref_proxy_valid)
     # Else, this object *MUST* (by process of elimination and validation above)
     # be either a tuple of types *OR* a PEP 604-compliant new union.
 
@@ -1213,7 +1127,7 @@ def _is_object_checkable(
 #FIXME: Unit test us up, please. *sigh*
 def _is_type_checkable(
     cls: object,
-    is_forwardref_valid: bool,
+    is_ref_proxy_valid: bool,
     builtin_tester: _NontypeTester,
     builtin_tester_pith: object,
 ) -> TypeIs[type]:
@@ -1231,18 +1145,11 @@ def _is_type_checkable(
     ----------
     cls : object
         Type to be tested.
-    is_forwardref_valid : bool
-        :data:`True` only if this function permits this type to be a
+    is_ref_proxy_valid : bool
+        :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). If this
-        boolean is:
-
-        * :data:`True`, this type is valid only when this type is either an
-          isinstanceable class *or* forward reference proxy.
-        * :data:`False`, this type is valid only when this type is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
+        proxying an external type hint that may currently be undefined). See the
+        :func:`.die_unless_object_isinstanceable` raiser for further details.
     builtin_tester : Callable[[object, Pep3119Checkable], bool]
         Callable returning :data:`True` only if this type is runtime-checkable
         according to this predicate, which should be either:
@@ -1265,8 +1172,8 @@ def _is_type_checkable(
     :func:`.is_type_isinstanceable`
         Further details.
     '''
-    assert isinstance(is_forwardref_valid, bool), (
-        f'{repr(is_forwardref_valid)} not bool.')
+    assert isinstance(is_ref_proxy_valid, bool), (
+        f'{repr(is_ref_proxy_valid)} not bool.')
 
     # Avoid circular import dependencies.
     from beartype._check.forward.reference.fwdreftest import (
@@ -1283,7 +1190,7 @@ def _is_type_checkable(
     #
     # Note that this test is efficient and thus tested *BEFORE*
     # isinstanceability, which is less efficient.
-    elif is_forwardref_valid and is_beartype_ref_proxy(cls):
+    elif is_ref_proxy_valid and is_beartype_ref_proxy(cls):
         return True
     # Else, either the caller prefers to disregard this distinction *OR* this
     # class is not a forward reference proxy type.

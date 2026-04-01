@@ -382,6 +382,10 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
         # the second parameter to the isinstance() builtin, assuming
         # that call raises *NO* exception from a PEP 3119-compliant
         # __instancecheck__() dunder metaclass method) *AND*...
+        #
+        # Note that this test is intentionally inlined for efficiency. This
+        # dunder method is frequently called during performance-critical
+        # type-checking and thus on our "hot path."
         # if isinstance(obj, Pep3119CheckableTypes):
         #     # Return true only if the passed object is an instance of the external
         #     # class referenced by this forward reference.

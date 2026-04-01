@@ -14,11 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintNonpepException
+from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.typing.datatyping import (
-    TypeException,
-    # TypeStack,
-)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep,
@@ -30,9 +27,10 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
     is_hint_pep_supported,
 )
+from beartype._util.hint.pep.proposal.pep484.pep484604union import (
+    is_hint_pep604)
 from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_builtin_subbed)
-from beartype._util.hint.pep.proposal.pep484.pep484604union import is_hint_pep604
 from typing import NoReturn
 
 # ....................{ RAISERS                            }....................
@@ -41,7 +39,8 @@ def die_unless_hint(
     hint: Hint,
 
     # Optional parameters.
-    is_forwardref_valid: bool = True,
+    is_ref_proxy_valid: bool = False,
+    exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -73,16 +72,15 @@ def die_unless_hint(
     ----------
     hint : Hint
         Object to be validated.
-    is_forwardref_valid : bool, default: True
-        :data:`True` only if this object is permitted to either be or contain
-        forward references. If this boolean is:
-
-        * :data:`True`, this object is valid only when being or containing
-          classes and/or forward references.
-        * :data:`False`, this object is valid only when being or containing
-          classes.
-
-        Defaults to :data:`True`, but it probably shouldn't.
+    is_ref_proxy_valid : bool, default: False
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type hint that may currently be undefined). See the
+        :func:`beartype._util.cls.pep.clspep3119.die_unless_object_isinstanceable`
+        raiser for further details.
+    exception_cls : type[Exception], default: BeartypeDecorHintNonpepException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintNonpepException`.
     exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
@@ -103,7 +101,7 @@ def die_unless_hint(
     #
     # Note that this tester is memoized and thus accepts *ONLY* positional
     # parameters. It is what it is.
-    if is_hint(hint, is_forwardref_valid):
+    if is_hint(hint=hint, is_ref_proxy_valid=is_ref_proxy_valid):
         return
     # Else, this object is *NOT* a supported type hint. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
@@ -112,9 +110,13 @@ def die_unless_hint(
     # BEGIN: Synchronize changes here with is_hint() below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # If this hint is PEP-compliant *AND* currently unsupported by @beartype,
-    # raise an exception.
+    # If this hint is PEP-compliant *AND* currently unsupported by @beartype...
     if is_hint_pep(hint):
+        # Raise an exception.
+        #
+        # Note that the optional "exception_cls" parameter is intentionally left
+        # unpassed to ensure this call raises the expected fine-grained
+        # "BeartypeDecorHintPepUnsupportedException" exception.
         die_if_hint_pep_unsupported(
             hint=hint, exception_prefix=exception_prefix)
     # Else, this hint is PEP-noncompliant. In this case...
@@ -123,7 +125,8 @@ def die_unless_hint(
     # an exception.
     die_unless_hint_nonpep(
         hint=hint,
-        is_forwardref_valid=is_forwardref_valid,
+        is_ref_proxy_valid=is_ref_proxy_valid,
+        exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
 
@@ -187,7 +190,7 @@ def is_hint(
     hint: object,
 
     # Optional parameters.
-    is_forwardref_valid: bool = True,
+    is_ref_proxy_valid: bool = False,
 ) -> bool:
     '''
     :data:`True` only if the passed object is a **supported type hint** (i.e.,
@@ -200,16 +203,12 @@ def is_hint(
     ----------
     hint : object
         Object to be validated.
-    is_forwardref_valid : bool, default: True
-        :data:`True` only if this object is permitted to either be or contain
-        forward references. If this boolean is:
-
-        * :data:`True`, this object is valid only when being or containing
-          classes and/or forward references.
-        * :data:`False`, this object is valid only when being or containing
-          classes.
-
-        Defaults to :data:`True`, but it probably shouldn't.
+    is_ref_proxy_valid : bool, default: False
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type hint that may currently be undefined). See the
+        :func:`beartype._util.cls.pep.clspep3119.die_unless_object_isinstanceable`
+        raiser for further details.
 
     Returns
     -------
@@ -233,14 +232,13 @@ def is_hint(
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint() above.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     # Return true only if...
     return (
         # This is a PEP-compliant type hint supported by @beartype *OR*...
         is_hint_pep_supported(hint) if is_hint_pep(hint) else
         # This is a PEP-noncompliant type hint, which by definition is
-        # necessarily supported by @beartype.
-        is_hint_nonpep(hint=hint, is_forwardref_valid=is_forwardref_valid)
+        # necessarily supported by @beartype. (PEP-noncompliance is what we do.)
+        is_hint_nonpep(hint=hint, is_ref_proxy_valid=is_ref_proxy_valid)
     )
 
 

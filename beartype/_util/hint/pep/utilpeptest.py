@@ -16,14 +16,11 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
 )
-from beartype.typing import (
-    NoReturn,
-)
+from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import (
     Hint,
     TypeIs,
 )
-from beartype._data.typing.datatyping import TypeException
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_SUPPORTED,
     HINT_SIGNS_TYPE_MIMIC,
@@ -32,11 +29,12 @@ from beartype._data.api.standard.datatyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type
+from typing import NoReturn
 
 # ....................{ EXCEPTIONS                         }....................
 def die_if_hint_pep(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPepException,
@@ -52,14 +50,14 @@ def die_if_hint_pep(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be validated.
-    exception_cls : Type[Exception], optional
-        Type of the exception to be raised by this function. Defaults to
+    exception_cls : type[Exception], default: BeartypeDecorHintPepException
+        Type of exception to be raised in the event of a fatal error. Defaults to
         :exc:`.BeartypeDecorHintPepException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -101,10 +99,10 @@ def die_unless_hint_pep(
     ----------
     hint : object
         Object to be validated.
-    exception_cls : Type[Exception], optional
-        Type of the exception to be raised by this function. Defaults to
-        :class:`.BeartypeDecorHintPepException`.
-    exception_prefix : str, optional
+    exception_cls : type[Exception], default: BeartypeDecorHintPepException
+        Type of exception to be raised in the event of a fatal error. Defaults to
+        :exc:`.BeartypeDecorHintPepException`.
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
@@ -130,6 +128,7 @@ def die_if_hint_pep_unsupported(
     hint: object,
 
     # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPepUnsupportedException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -155,17 +154,20 @@ def die_if_hint_pep_unsupported(
     ----------
     hint : object
         Object to be validated.
-    exception_prefix : str, optional
+    exception_cls : type[Exception], default: BeartypeDecorHintPepUnsupportedException
+        Type of exception to be raised in the event of a fatal error. Defaults to
+        :exc:`.BeartypeDecorHintPepUnsupportedException`.
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
     Raises
     ------
-    BeartypeDecorHintPepException
-        If this object is *not* a PEP-compliant type hint.
-    BeartypeDecorHintPepUnsupportedException
+    exception_cls
         If this object is a PEP-compliant type hint but is currently
         unsupported by the :func:`beartype.beartype` decorator.
+    BeartypeDecorHintPepException
+        If this object is *not* a PEP-compliant type hint.
     BeartypeDecorHintPep484Exception
         If this object is the PEP-compliant :attr:`typing.NoReturn` type hint,
         which is contextually valid in only a single use case and thus
@@ -184,7 +186,10 @@ def die_if_hint_pep_unsupported(
     # parameters.
 
     # If this hint is *NOT* PEP-compliant, raise a more readable exception.
-    die_unless_hint_pep(hint=hint, exception_prefix=exception_prefix)
+    die_unless_hint_pep(
+        hint=hint,
+        exception_prefix=exception_prefix,
+    )
     assert isinstance(exception_prefix, str), (
         f'{repr(exception_prefix)} not string.')
     # Else, this hint is PEP-compliant.
@@ -207,7 +212,7 @@ def die_if_hint_pep_unsupported(
     # be in the "HINT_SIGNS_SUPPORTED" set. Regardless of whether it is or not,
     # we raise a similar exception in either case. Ergo, there is *NO* practical
     # benefit to validating that expectation here.
-    raise BeartypeDecorHintPepUnsupportedException(
+    raise exception_cls(
         f'{exception_prefix}type hint {repr(hint)} '
         f'currently unsupported by @beartype.'
     )
