@@ -28,6 +28,7 @@ def test_die_unless_hint(hints_pep_meta) -> None:
         cases in the :mod:`beartype` codebase.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import (
         BeartypeDecorHintNonpepException,
@@ -38,27 +39,34 @@ def test_die_unless_hint(hints_pep_meta) -> None:
         HINTS_NONPEP,
         NOT_HINTS,
     )
-    from pytest import raises
+    from beartype_test._util.pytroar import raises_uncached
 
-    # Assert this function accepts PEP-noncompliant type hints.
-    for nonhint_pep in HINTS_NONPEP:
-        die_unless_hint(nonhint_pep)
-
+    # ....................{ ASSERTS                        }....................
     # Assert this function...
     for hint_pep_meta in hints_pep_meta:
         # Accepts supported PEP-compliant type hints.
+        #
+        # Note that the "is_ref_str_valid" parameter is intentionally enabled
+        # both here and below to support PEP 484-compliant stringified forward
+        # reference type hints.
         if hint_pep_meta.is_supported:
-            die_unless_hint(hint_pep_meta.hint)
+            die_unless_hint(hint=hint_pep_meta.hint, is_ref_str_valid=True)
         # Rejects unsupported PEP-compliant type hints.
         else:
-            with raises(BeartypeDecorHintPepUnsupportedException):
-                die_unless_hint(hint_pep_meta.hint)
+            with raises_uncached(BeartypeDecorHintPepUnsupportedException):
+                die_unless_hint(hint=hint_pep_meta.hint, is_ref_str_valid=True)
 
+    # ....................{ PASS                           }....................
+    # Assert this function accepts PEP-noncompliant type hints.
+    for nonhint_pep in HINTS_NONPEP:
+        die_unless_hint(hint=nonhint_pep, is_ref_str_valid=True)
+
+    # ....................{ FAIL                           }....................
     # Assert this function rejects objects *NOT* supported as either
     # PEP-noncompliant or -compliant type hints.
     for non_hint in NOT_HINTS:
-        with raises(BeartypeDecorHintNonpepException):
-            die_unless_hint(non_hint)
+        with raises_uncached(BeartypeDecorHintNonpepException):
+            die_unless_hint(hint=non_hint, is_ref_str_valid=True)
 
 # ....................{ TESTS ~ tester                     }....................
 def test_is_hint(hints_pep_meta) -> None:
@@ -72,6 +80,7 @@ def test_is_hint(hints_pep_meta) -> None:
         cases in the :mod:`beartype` codebase.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.hint.utilhinttest import is_hint
     from beartype_test.a00_unit.data.hint.data_hint import (
@@ -79,17 +88,27 @@ def test_is_hint(hints_pep_meta) -> None:
         NOT_HINTS,
     )
 
-    # Assert this tester accepts PEP-noncompliant type hints.
-    for nonhint_pep in HINTS_NONPEP:
-        assert is_hint(nonhint_pep) is True
-
+    # ....................{ ASSERTS                        }....................
     # Assert this tester:
     # * Accepts supported PEP-compliant type hints.
     # * Rejects unsupported PEP-compliant type hints.
+    #
+    #
+    # Note that:
+    # * This tester is memoized and thus requires that parameters be only passed
+    #   positionally. It is what it is.
+    # * The "is_ref_str_valid" parameter is intentionally enabled both here and
+    #   below to support PEP 484-compliant stringified forward reference hints.
     for hint_pep_meta in hints_pep_meta:
-        assert is_hint(hint_pep_meta.hint) is hint_pep_meta.is_supported
+        assert is_hint(hint_pep_meta.hint, True) is hint_pep_meta.is_supported
 
+    # ....................{ PASS                           }....................
+    # Assert this tester accepts PEP-noncompliant type hints.
+    for nonhint_pep in HINTS_NONPEP:
+        assert is_hint(nonhint_pep, True) is True
+
+    # ....................{ FAIL                           }....................
     # Assert this tester rejects objects *NOT* supported as either
     # PEP-noncompliant or -compliant type hints.
     for non_hint in NOT_HINTS:
-        assert is_hint(non_hint) is False
+        assert is_hint(non_hint, True) is False

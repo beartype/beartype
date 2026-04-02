@@ -53,7 +53,7 @@ def clear_caches() -> None:
     from beartype._check.code.codescope import _tuple_union_to_tuple_union
     from beartype._check.convert._convcoerce import _hint_repr_to_hint
     from beartype._check.forward.reference._fwdrefmeta import (
-        _forwardref_to_referent)
+        _ref_proxy_to_referent)
     from beartype._check.metadata.hint.hintsane import _HINT_TO_HINTSANE
     from beartype._util.cache.utilcacheobjattr import clear_object_attr_caches
 
@@ -62,6 +62,6 @@ def clear_caches() -> None:
     _HINT_CONF_TO_CHECK_EXPR.clear()
     _HINT_TO_HINTSANE.clear()
     _HINT_TO_WRAPPER.clear()
-    _forwardref_to_referent.clear()
+    _ref_proxy_to_referent.clear()
     _hint_repr_to_hint.clear()
     _tuple_union_to_tuple_union.clear()

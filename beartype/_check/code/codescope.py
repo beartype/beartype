@@ -193,9 +193,9 @@ def add_func_scope_type(
         Local or global scope to add this class to.
     cls : type
         Arbitrary class to be added to this scope.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to a sensible string.
+    exception_prefix : str, default: 'Globally or locally scoped class '
+        Human-readable substring prefixing raised exception messages. Defaults
+        to a sensible string.
 
     Returns
     -------
@@ -216,7 +216,17 @@ def add_func_scope_type(
     '''
 
     # If this object is *NOT* an isinstanceable class, raise an exception.
-    die_unless_type_isinstanceable(cls=cls, exception_prefix=exception_prefix)
+    die_unless_type_isinstanceable(
+        cls=cls,
+        # Permit this type to be a beartype-specific forward reference proxy
+        # (i.e., "_BeartypeForwardRefABC" subtype). Although prohibiting such
+        # proxies from consideration as supported types is typically desirable,
+        # this lower-level adder is passed such proxies produced by the
+        # higher-level reduce_hint_pep484_ref() reducer. Ergo, such proxies are
+        # valid for this specific use case.
+        is_ref_proxy_valid=True,
+        exception_prefix=exception_prefix,
+    )
     # Else, this object is an isinstanceable class.
 
     # Return either...

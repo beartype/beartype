@@ -75,11 +75,17 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     defined by this ABC, the metaclass of this ABC, and concrete subclasses of
     this ABC.
 
-    Technically, this substring is initialized to a reasonable default.
-    Pragmatically, callers are advised to call the
+    Caveats
+    -------
+    **Callers are advised to call the**
     :func:`beartype._check.forward.reference.fwdrefset.set_beartype_ref_proxies_exception_prefix`
-    setter to overwrite this default across multiple forward reference proxies
-    simultaneously with a more contextually specific substring.
+    **setter to overwrite both this and other defaults for this substring across
+    multiple forward reference proxies simultaneously with a more contextually
+    specific substring.** This substring temporarily defaults to a globally
+    reasonable substring until subsequently replaced with yet another temporary
+    default for each concrete subclass by
+    :func:`beartype._check.forward.reference.fwdrefproxy._proxy_hint_ref`.
+    However, both of these defaults are inappropriate for leaking to end users.
     '''
 
     # ....................{ CLASS VARS ~ optional          }....................

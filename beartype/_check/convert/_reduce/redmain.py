@@ -256,7 +256,7 @@ def reduce_hint(
             #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
             # For each lower-level reducer...
             for hint_reducer in _HINT_REDUCERS:
-                # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} via {hint_reducer}...')
+                # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} by {hint_reducer}...')
 
                 # Either:
                 # * If this reducer reduces this hint:
@@ -446,11 +446,22 @@ def reduce_hint(
         # Else, this hint is already sanified type hint metadata. In this case,
         # preserve this metadata as is.
     # ....................{ RETURN                         }....................
-    # If doing so raises *ANY* exception, reraise this exception with each
-    # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by
-    # an explanatory prefix.
+    # If doing so raises *ANY* exception...
     except Exception as exception:
-        print(f'!!!! reduce_hint() exception_prefix: {exception_prefix}!!!!')
+        # print(f'!!!! reduce_hint() exception_prefix: {exception_prefix}!!!!')
+
+        #FIXME: Uncomment to debug issues. Too unsafe to unconditionally enable
+        #for the moment, although that *WOULD* be ideal. *sigh*
+        # # Assert that the passed exception prefix is *NOT* also the placeholder
+        # # already prefixing this exception message.
+        # assert exception_prefix is not EXCEPTION_PLACEHOLDER, (
+        #     f'Exception {repr(exception)} '
+        #     f'target prefix {repr(exception_prefix)} already prefixed by '
+        #     f'source placeholder magic string.'
+        # )
+
+        # Reraise this exception with a new message replacing each placeholder
+        # (i.e., "EXCEPTION_PLACEHOLDER") by a human-readable substring.
         reraise_exception_placeholder(
             exception=exception, target_str=exception_prefix)
 

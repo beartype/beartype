@@ -95,13 +95,12 @@ def find_cause_pep484585_subclass(cause: ViolationCause) -> ViolationCause:
     # validation in all possible cases. Ergo, we do. *shrug*
     die_unless_object_issubclassable(
         obj=hint_child,
-        exception_cls=_BeartypeCallHintPepRaiseException,
-        exception_prefix=cause.exception_prefix,
-
         # If this child hint is still a forward reference, raise an exception.
         # Ideally, the above conditional should already have resolved all
         # forward references.
-        is_forwardref_valid=False,
+        is_ref_proxy_valid=False,
+        exception_cls=_BeartypeCallHintPepRaiseException,
+        exception_prefix=cause.exception_prefix,
     )
     # Else, this child hint is an issubclassable object.
 

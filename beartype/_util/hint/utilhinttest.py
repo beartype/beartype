@@ -39,6 +39,7 @@ def die_unless_hint(
     hint: Hint,
 
     # Optional parameters.
+    is_ref_str_valid: bool = False,
     is_ref_proxy_valid: bool = False,
     exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
@@ -72,6 +73,16 @@ def die_unless_hint(
     ----------
     hint : Hint
         Object to be validated.
+    is_ref_str_valid : bool, default: False
+        :data:`True` only if this function permits this object to contain
+        :pep:`484`-compliant stringified forward references. If this boolean is:
+
+        * :data:`True`, this object is supported *even if* this object is a
+          stringified forward reference.
+        * :data:`False`, this object is supported *unless* this object is a
+          stringified forward reference.
+
+        Defaults to :data:`False` for safety.
     is_ref_proxy_valid : bool, default: False
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
@@ -99,9 +110,9 @@ def die_unless_hint(
 
     # If this object is a supported type hint, reduce to a noop.
     #
-    # Note that this tester is memoized and thus accepts *ONLY* positional
-    # parameters. It is what it is.
-    if is_hint(hint=hint, is_ref_proxy_valid=is_ref_proxy_valid):
+    # Note that this tester is memoized and thus requires that parameters be
+    # only passed positionally. It is what it is.
+    if is_hint(hint, is_ref_str_valid, is_ref_proxy_valid):
         return
     # Else, this object is *NOT* a supported type hint. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
@@ -125,6 +136,7 @@ def die_unless_hint(
     # an exception.
     die_unless_hint_nonpep(
         hint=hint,
+        is_ref_str_valid=is_ref_str_valid,
         is_ref_proxy_valid=is_ref_proxy_valid,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
@@ -190,6 +202,7 @@ def is_hint(
     hint: object,
 
     # Optional parameters.
+    is_ref_str_valid: bool = False,
     is_ref_proxy_valid: bool = False,
 ) -> bool:
     '''
@@ -203,6 +216,16 @@ def is_hint(
     ----------
     hint : object
         Object to be validated.
+    is_ref_str_valid : bool, default: False
+        :data:`True` only if this function permits this object to contain
+        :pep:`484`-compliant stringified forward references. If this boolean is:
+
+        * :data:`True`, this object is supported *even if* this object is a
+          stringified forward reference.
+        * :data:`False`, this object is supported *unless* this object is a
+          stringified forward reference.
+
+        Defaults to :data:`False` for safety.
     is_ref_proxy_valid : bool, default: False
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
@@ -238,7 +261,11 @@ def is_hint(
         is_hint_pep_supported(hint) if is_hint_pep(hint) else
         # This is a PEP-noncompliant type hint, which by definition is
         # necessarily supported by @beartype. (PEP-noncompliance is what we do.)
-        is_hint_nonpep(hint=hint, is_ref_proxy_valid=is_ref_proxy_valid)
+        is_hint_nonpep(
+            hint=hint,
+            is_ref_str_valid=is_ref_str_valid,
+            is_ref_proxy_valid=is_ref_proxy_valid,
+        )
     )
 
 

@@ -39,24 +39,26 @@ def test_die_unless_hint_nonpep(not_hints_nonpep) -> None:
         HINTS_NONPEP,
         NOT_HINTS_UNHASHABLE,
     )
-    from pytest import raises
+    from beartype_test._util.pytroar import raises_uncached
 
     # ....................{ ASSERTS                        }....................
     # Assert this function accepts PEP-noncompliant type hints.
+    #
+    # Note that the "is_ref_str_valid" parameter is intentionally enabled both
+    # here and below to support PEP-noncompliant tuple unions containing one or
+    # more PEP 484-compliant stringified forward reference child type hints.
     for hint_nonpep in HINTS_NONPEP:
-        die_unless_hint_nonpep(hint_nonpep, is_forwardref_valid=True)
+        die_unless_hint_nonpep(hint_nonpep, is_ref_str_valid=True)
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in not_hints_nonpep:
-        with raises(BeartypeDecorHintNonpepException):
-            die_unless_hint_nonpep(
-                not_hint_nonpep, is_forwardref_valid=True)
+        with raises_uncached(BeartypeDecorHintNonpepException):
+            die_unless_hint_nonpep(not_hint_nonpep, is_ref_str_valid=True)
 
     # Assert this function rejects unhashable objects.
     for not_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with raises(BeartypeDecorHintNonpepException):
-            die_unless_hint_nonpep(
-                not_hint_unhashable, is_forwardref_valid=True)
+        with raises_uncached(BeartypeDecorHintNonpepException):
+            die_unless_hint_nonpep(not_hint_unhashable, is_ref_str_valid=True)
 
 # ....................{ TESTS ~ tester                     }....................
 def test_is_hint_nonpep(not_hints_nonpep) -> None:
@@ -82,19 +84,22 @@ def test_is_hint_nonpep(not_hints_nonpep) -> None:
 
     # ....................{ ASSERTS                        }....................
     # Assert this function accepts PEP-noncompliant type hints.
+    #
+    # Note that the "is_ref_str_valid" parameter is intentionally enabled both
+    # here and below to support PEP-noncompliant tuple unions containing one or
+    # more PEP 484-compliant stringified forward reference child type hints.
     for hint_nonpep in HINTS_NONPEP:
-        assert is_hint_nonpep(
-            hint=hint_nonpep, is_forwardref_valid=True) is True
+        assert is_hint_nonpep(hint=hint_nonpep, is_ref_str_valid=True) is True
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in not_hints_nonpep:
         assert is_hint_nonpep(
-            hint=not_hint_nonpep, is_forwardref_valid=True) is False
+            hint=not_hint_nonpep, is_ref_str_valid=True) is False
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
         assert is_hint_nonpep(
-            hint=non_hint_unhashable, is_forwardref_valid=True) is False
+            hint=non_hint_unhashable, is_ref_str_valid=True) is False
 
 
 def test_is_hint_nonpep_tuple(not_hints_nonpep) -> None:
@@ -120,14 +125,18 @@ def test_is_hint_nonpep_tuple(not_hints_nonpep) -> None:
 
     # ....................{ ASSERTS                        }....................
     # Assert this function accepts PEP-noncompliant tuples.
+    #
+    # Note that the "is_ref_str_valid" parameter is intentionally enabled both
+    # here and below to support PEP-noncompliant tuple unions containing one or
+    # more PEP 484-compliant stringified forward reference child type hints.
     for hint_nonpep in HINTS_NONPEP:
-        assert _is_hint_nonpep_tuple(hint_nonpep, True) is isinstance(
+        assert _is_hint_nonpep_tuple(hint_nonpep, True, False) is isinstance(
             hint_nonpep, tuple)
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in not_hints_nonpep:
-        assert _is_hint_nonpep_tuple(not_hint_nonpep, True) is False
+        assert _is_hint_nonpep_tuple(not_hint_nonpep, True, False) is False
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        assert _is_hint_nonpep_tuple(non_hint_unhashable, True) is False
+        assert _is_hint_nonpep_tuple(non_hint_unhashable, True, False) is False

@@ -102,7 +102,17 @@ def reduce_hint_nonpep(hint: Hint) -> HintOrSane:
     if not isinstance(hint, HintSane):
         # If this hint is unsupported by @beartype (after possibly reducing
         # this hint to a supported hint above), raise an exception.
-        die_unless_hint(hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
+        die_unless_hint(
+            hint=hint,
+            # Permit this hint to be a beartype-specific forward reference
+            # proxy (i.e., "_BeartypeForwardRefABC" subtype). Although
+            # prohibiting such proxies from consideration as supported hints is
+            # typically desirable, this lower-level reducer is passed such
+            # proxies produced by the higher-level reduce_hint_pep484_ref()
+            # reducer. Ergo, such proxies are valid for this specific use case.
+            is_ref_proxy_valid=True,
+            exception_prefix=EXCEPTION_PLACEHOLDER,
+        )
         # Else, this hint is supported by @beartype.
     # Else, this hint was reduced to sanified metadata above. In this case,
     # avoid passing this metadata to the die_unless_hint() raiser above. By

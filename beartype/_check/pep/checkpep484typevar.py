@@ -129,7 +129,7 @@ def die_if_hint_pep484_typevar_bound_unbearable(
     # this proxy could be unresolvable at the early time this raiser is called
     # despite otherwise being valid. To avoid raising false positives, this
     # raiser avoids the conundrum entirely by reducing to a noop. *shrug*
-    if not is_hint_nonpep_type(hint=hint, is_forwardref_valid=False):
+    if not is_hint_nonpep_type(hint=hint, is_ref_proxy_valid=False):
         return
     # Else, this hint is an isinstanceable type.
 

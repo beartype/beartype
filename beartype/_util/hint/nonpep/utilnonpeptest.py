@@ -105,7 +105,7 @@ def die_if_hint_nonpep(
                     'isinstanceable type, forward reference, or tuple of '
                     'isinstanceable types and/or forward references).'
                 )
-                if is_forwardref_valid else
+                if is_ref_str_valid else
                 'isinstanceable type or tuple of isinstanceable types).'
             )
         )
@@ -377,13 +377,9 @@ def die_unless_hint_nonpep_tuple(
 
     # If this object is a tuple union, reduce to a noop.
     #
-    # Note that this memoized call is intentionally passed positional rather
-    # than keyword parameters to maximize efficiency.
-    if _is_hint_nonpep_tuple(
-        hint=hint,
-        is_ref_str_valid=is_ref_str_valid,
-        is_ref_proxy_valid=is_ref_proxy_valid,
-    ):
+    # Note that this tester is memoized and thus requires parameters be passed
+    # only intentionally. It is what it is.
+    if _is_hint_nonpep_tuple(hint, is_ref_str_valid, is_ref_proxy_valid):
         return
     # Else, this object is *NOT* a tuple union. In this case, subsequent logic
     # raises an exception specific to the passed parameters.
@@ -524,11 +520,10 @@ def is_hint_nonpep(
         # If this object is a tuple, return true only if this tuple contains
         # only one or more PEP-noncompliant classes (and possibly
         # caller-permitted forward references).
-        _is_hint_nonpep_tuple(
-            hint=hint,
-            is_ref_str_valid=is_ref_str_valid,
-            is_ref_proxy_valid=is_ref_proxy_valid,
-        )
+        #
+        # Note that this tester is memoized and thus requires parameters be
+        # passed only intentionally. It is what it is.
+        _is_hint_nonpep_tuple(hint, is_ref_str_valid, is_ref_proxy_valid)
         if isinstance(hint, tuple) else
         # Else, this object is neither a class nor tuple and thus *CANNOT* be
         # PEP-noncompliant. In this case, fallback to returning false.

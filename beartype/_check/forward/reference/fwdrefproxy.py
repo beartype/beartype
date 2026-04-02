@@ -383,8 +383,11 @@ def _proxy_hint_ref(
     )
 
     # If passed *NO* exception prefix, default this prefix to something sane.
+    # Sadly, real-world tests suggest the only sane default to be the empty
+    # string. Non-empty substrings promote unreadable exception messages.
     if not exception_prefix:
-        exception_prefix = 'Forward reference '
+        exception_prefix = ''
+        # exception_prefix = 'Forward reference '  # <-- *UNSAFE*
     # Else, an exception prefix was passed.
 
     # If this attribute name is *NOT* a syntactically valid Python identifier,

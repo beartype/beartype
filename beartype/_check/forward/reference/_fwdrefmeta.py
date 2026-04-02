@@ -743,7 +743,7 @@ def _is_ref_proxy_resolved(cls: _BeartypeForwardRefABC) -> bool:
 # ....................{ PRIVATE ~ (un|)cachers             }....................
 #FIXME: Unit test us up, please.
 def _cache_ref_proxy_referent(
-    cls: _BeartypeForwardRefABC, referent: Hint) -> bool:
+    cls: _BeartypeForwardRefABC, referent: Hint) -> None:
     '''
     Associate the passed **forward reference proxy** (i.e.,
     :class:`._BeartypeForwardRefABC` object) with the passed **target referent**
@@ -764,7 +764,7 @@ def _cache_ref_proxy_referent(
 
 
 def _uncache_ref_proxy_referent(
-    cls: _BeartypeForwardRefABC, referent: Hint) -> bool:
+    cls: _BeartypeForwardRefABC, referent: Hint) -> None:
     '''
     De-associate the passed **forward reference proxy** (i.e.,
     :class:`._BeartypeForwardRefABC` object) from the passed **target referent**

@@ -105,12 +105,25 @@ def make_hint_pep484585_subclass_check_expr(
 
     # If this child hint is *NOT* an issubclassable object, raise an exception.
     #
-    # Note that the is_object_issubclassable() tester is considerably faster and
-    # thus called before the considerably slower
-    # die_unless_object_issubclassable() raiser.
-    if not is_object_issubclassable(hint_child):  # type: ignore[arg-type]
+    # Note that:
+    # * The is_object_issubclassable() tester is considerably faster and thus
+    #   called before the considerably slower die_unless_object_issubclassable()
+    #   raiser.
+    # * This tester is memoized and thus requires that all parameters be passed
+    #   only positionally. It is what it is.
+    if not is_object_issubclassable(
+        hint_child,  # type: ignore[arg-type]
+        # Permit this hint to be a beartype-specific forward reference
+        # proxy (i.e., "_BeartypeForwardRefABC" subtype). Although
+        # prohibiting such proxies from consideration as supported hints is
+        # typically desirable, this lower-level reducer is passed such
+        # proxies produced by the higher-level reduce_hint_pep484_ref()
+        # reducer. Ergo, such proxies are valid for this specific use case.
+        True,  # <-- "is_ref_proxy_valid=True", effectively *sigh*
+    ):
         die_unless_object_issubclassable(
             obj=hint_child,  # type: ignore[arg-type]
+            is_ref_proxy_valid=True,
             exception_prefix=(
                 f'{EXCEPTION_PLACEHOLDER}'
                 f'PEP 484 or 585 subclass type hint {repr(hint)} '
