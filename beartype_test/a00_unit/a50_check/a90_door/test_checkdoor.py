@@ -364,7 +364,7 @@ def test_door_is_bearable_warnings(hints_meta) -> None:
     # Defer test-specific imports.
     from beartype.door import is_bearable
     from beartype._util.cache.utilcacheclear import clear_caches
-    from pytest import warns
+    from beartype_test._util.error.pyterrwarn import warns_uncached
     from warnings import simplefilter
 
     # ....................{ SETUP                          }....................
@@ -378,11 +378,11 @@ def test_door_is_bearable_warnings(hints_meta) -> None:
     simplefilter('always')
 
     # ..................{ PASS                               }..................
-    # Repeat this test twice, thus asserting that unit test is resilient against
+    # Repeat this test twice, thus asserting that this test is resilient against
     # repeated invocations in the same Python process. Previously, it wasn't.
     # Why? Because this test was accidentally non-idempotent and thus suffered
     # unintended ordering issues with other tests (including itself). Why?
-    # Because *ALL* warnings tested below by this test are emitted under
+    # Because *ALL* warnings tested below by this test were emitted under
     # memoization and thus emitted only once by the first invocation of this
     # test when explicitly called prior to other tests.
     #
@@ -424,7 +424,7 @@ def test_door_is_bearable_warnings(hints_meta) -> None:
 
                 # Call this tester under a context manager asserting this tester
                 # to emit the expected warning.
-                with warns(hint_meta.warning_type):
+                with warns_uncached(hint_meta.warning_type):
                     is_bearable(pith, hint, conf=conf)
                 # print(f'Deprecated type hint {repr(hint)} warned!')
             # Else, this tester is expected to emit *NO* warning for this hint.
