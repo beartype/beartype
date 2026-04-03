@@ -31,7 +31,7 @@ from beartype.roar import (
     BeartypeDecorHintPep749ForwardRefObjectException,
 )
 from beartype_test.a00_unit.data import data_type
-from beartype_test._util.pytroar import raises_uncached
+from beartype_test._util.error.pyterrraise import raises_uncached
 
 # ....................{ GLOBALS                            }....................
 data_type = data_type.Class()

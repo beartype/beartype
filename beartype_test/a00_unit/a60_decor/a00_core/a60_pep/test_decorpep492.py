@@ -36,7 +36,7 @@ async def test_decor_pep492_async_coroutine() -> None:
         BeartypeCallHintParamViolation,
         BeartypeDecorHintPep585Exception,
     )
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
     from collections.abc import Coroutine as Pep585Coroutine
     from inspect import (
         isasyncgenfunction,

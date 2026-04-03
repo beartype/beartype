@@ -632,7 +632,7 @@ def get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     # Ergo, the "typing.Generic" ABC uniquely identifies many but *NOT* all
     # generics. While non-ideal, the failure of PEP 585-compliant generics to
     # subclass a common superclass leaves us with little alternative.
-    if is_hint_pep484585_generic_unsubbed(hint):
+    if is_hint_pep484585_generic_unsubbed(hint):  # pyright: ignore
         return HintSignPep484585GenericUnsubbed
     # Else, this hint is *NOT* a PEP 484- or 585-compliant unsubscripted
     # generic.
@@ -641,7 +641,7 @@ def get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     # object subscripted by one or more child type hints originating from a
     # user-defined class superficially subclassing at least one PEP 484- or
     # 585-compliant type hint), return that sign. See above for commentary.
-    elif is_hint_pep484585_generic_subbed(hint):
+    elif is_hint_pep484585_generic_subbed(hint):  # pyright: ignore
         return HintSignPep484585GenericSubbed
     # Else, this hint is *NOT* a PEP 484- or 585-compliant subscripted generic.
 
@@ -678,7 +678,7 @@ def get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     #   produced by Python itself, the standard library, and well-known
     #   third-party type hint factories), which are all guaranteed to be
     #   consistent with respect to PEP 604.
-    die_if_hint_pep604_inconsistent(hint)
+    die_if_hint_pep604_inconsistent(hint)  # pyright: ignore
     # Else, this hint is consistent with respect to PEP 604-style new unions.
 
     #FIXME: *HMM.* Convoluted disambiguation logic like this no longer seems as
@@ -706,14 +706,14 @@ def get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     # If this hint is an unrecognized subscripted builtin type hint (i.e.,
     # C-based type hint instantiated by subscripting a pure-Python origin class
     # unrecognized by @beartype and thus PEP-noncompliant)...
-    if is_hint_pep585_builtin_subbed(hint):
+    if is_hint_pep585_builtin_subbed(hint):  # pyright: ignore
         # If this hint is a PEP 646-compliant unpacked child tuple hint (i.e.,
         # object created by unpacking a tuple hint inside another tuple hint via
         # the unary unpack operator "*" and thus of the form
         # "tuple[{hint_child_1}, ..., *tuple[{hint_child_child_1}, ...,
         # {hint_child_child_M}], ..., {hint_child_N}]"), return the
         # corresponding sign.
-        if is_hint_pep646_tuple_unpacked_prefix(hint):
+        if is_hint_pep646_tuple_unpacked_prefix(hint):  # pyright: ignore
             return HintSignPep646TupleUnpacked
         # Else, this hint is *NOT* a PEP 646-compliant unpacked child tuple
         # hint.
@@ -722,7 +722,7 @@ def get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
         # object created by subscripting an object created by a statement of the
         # form "type {alias_name}[{type_var}] = {alias_value}" by one or more
         # child type hints), return the corresponding sign.
-        elif is_hint_pep695_subbed(hint):
+        elif is_hint_pep695_subbed(hint):  # pyright: ignore
             return HintSignPep695TypeAliasSubscripted
         # Else, this hint is *NOT* a PEP 695-compliant subscripted type alias.
 

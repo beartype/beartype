@@ -1289,7 +1289,8 @@ if (
 # Else, this submodule is currently being imported at runtime under an active
 # Python interpreter targets that targets at most Python <= 3.13 and thus
 # fails to define the standard PEP 649-compliant "annotationlib.Format" enum. In
-# this case, define a placeholder enum declaring the same members.
+# this case, define a placeholder enum declaring the same members. Doing so
+# simplifies global-scoped logic throughout this codebase. *shrug*
 else:
     # For simplicity, copy-paste the *EXACT SAME* definition of this enum as
     # appears at the head of the standard "annotationlib" module.
@@ -1775,10 +1776,19 @@ pure-Python callables into C-based callables.
 '''
 
 
-CallableOrClassTypes = CallableTypes + (ClassType,)
-'''
-Tuple of all callable types as well as the type of all types.
-'''
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, ignore false positives erroneously reducing these types to the
+# union "object | Any". Why? No idea. Welcome to Mypy Hell. We hope you hate
+# your stay. We did. Misery loves company, everybody! Come! Be miserable...
+if TYPE_CHECKING:
+    CallableOrClassTypes = (FunctionType, ClassType,)
+# Else, this submodule is *NOT* currently being statically type-checked by a
+# pure static type-checker. In this case, define these types properly. *sigh*
+else:
+    CallableOrClassTypes = CallableTypes + (ClassType,)
+    '''
+    Tuple of all callable types as well as the type of all types.
+    '''
 
 
 CallableOrStrTypes = CallableTypes + (StrType,)

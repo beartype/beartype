@@ -39,7 +39,7 @@ def test_die_unless_hint(hints_pep_meta) -> None:
         HINTS_NONPEP,
         NOT_HINTS,
     )
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ....................{ ASSERTS                        }....................
     # Assert this function...

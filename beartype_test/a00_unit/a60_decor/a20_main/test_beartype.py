@@ -63,7 +63,7 @@ def test_beartype(capsys: 'pytest.capsys', iter_hints_piths_meta) -> None:
         # HintPepMetadata,
         PithUnsatisfiedMetadata,
     )
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
     # from pytest import warns
     # from pytest import deprecated_call
     from re import search

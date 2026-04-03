@@ -39,7 +39,7 @@ def test_die_unless_hint_nonpep(not_hints_nonpep) -> None:
         HINTS_NONPEP,
         NOT_HINTS_UNHASHABLE,
     )
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ....................{ ASSERTS                        }....................
     # Assert this function accepts PEP-noncompliant type hints.

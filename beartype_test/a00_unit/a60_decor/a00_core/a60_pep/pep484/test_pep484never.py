@@ -34,7 +34,7 @@ def test_decor_pep484_hint_noreturn() -> None:
         BeartypeCallHintViolation,
         BeartypeDecorHintPep484Exception,
     )
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
     from beartype._util.api.standard.utiltyping import get_typing_attrs
     from typing import Union
 

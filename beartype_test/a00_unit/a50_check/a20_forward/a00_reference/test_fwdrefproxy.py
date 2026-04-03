@@ -47,7 +47,7 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
         PACKAGE_NAME,
         SCOPE_NAME,
     )
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     #FIXME: This should be warns_uncached() instead, except that doesn't exist
     #yet and we're *WAY* too behind on @beartype 0.23.0. Ignore this for now!

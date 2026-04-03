@@ -49,7 +49,7 @@ def test_pep484_ref_decor_data() -> None:
         the_woods_are_lovely,
         winding_among_the_springs,
     )
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ..................{ LOCALS                             }..................
     # Objects passed below to exercise forward references.
@@ -144,7 +144,7 @@ def test_pep484_ref_decor_absolute() -> None:
         BeartypeCallHintForwardRefException,
         BeartypeCallHintParamViolation,
     )
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ..................{ LOCALS                             }..................
     # Dates between which the Sisters of Battle must have been established.
@@ -244,7 +244,7 @@ def test_pep484_ref_decor_relative_type_nested() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ..................{ CLASSES                            }..................
     @beartype
@@ -406,7 +406,7 @@ def test_pep484_ref_decor_fail() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintForwardRefException
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ..................{ CALLABLES                          }..................
     def of_oceans(mountainous_waste: 'ToMutualWar'):
@@ -486,7 +486,7 @@ def test_pep484_ref_call_fail() -> None:
         BeartypeCallHintParamViolation,
     )
     from beartype.typing import Union
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ..................{ LOCALS                             }..................
     # PEP 484-compliant stringified absolute forward reference referring to a

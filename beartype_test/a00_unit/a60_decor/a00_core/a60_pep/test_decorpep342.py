@@ -35,7 +35,7 @@ def test_decor_pep342_sync_generator_checked() -> None:
         BeartypeCallHintParamViolation,
         BeartypeDecorHintPep484585Exception,
     )
-    from beartype_test._util.pytroar import raises_uncached
+    from beartype_test._util.error.pyterrraise import raises_uncached
     from collections.abc import (
         Generator as Pep585Generator,
         Iterable as Pep585Iterable,

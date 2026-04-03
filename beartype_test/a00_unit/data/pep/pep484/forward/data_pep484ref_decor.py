@@ -264,6 +264,7 @@ class BeforeTheHurricane(object):
         # Return a 2-tuple intentionally violating this type variable.
         return ('As one that', 'in a silver vision floats')
 
+
 # Test decorating a user-defined class with the @beartype decorator where:
 # 1. That class defines a method annotated by a self-referential relative
 #    forward reference (i.e., referring to that class currently being defined).
@@ -274,9 +275,9 @@ class BeforeTheHurricane(object):
 #    and that function).
 #
 # For reasons that are *NOT* particularly interesting (and would consume seven
-# volumes of fine print), it has to be 3 iterations. 2 is too few.
+# volumes of fine print), it has to be 3 iterations. 2 is 1 too few.
 #
-# See also this user-reported issue underlying this test case:
+# See also this user-reported issue underlying this wild-eyed test case:
 #     https://github.com/beartype/beartype/issues/365
 for _ in range(3):
     @beartype
