@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`649` **data submodule.**
+Test-wide :pep:`649` **data submodule.**
 
 This submodule exercises :pep:`649` support for unquoted forward references
 inside type hinting contexts implemented in the :func:`beartype.beartype`

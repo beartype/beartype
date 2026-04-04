@@ -38,7 +38,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
         PithUnsatisfiedMetadata,
     )
 
-    from beartype_test.a00_unit.data.pep.data_pep484 import T
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import T
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.

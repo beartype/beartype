@@ -30,11 +30,11 @@ def test_is_forwardref() -> None:
         is_beartype_ref_proxy)
     from beartype_test.a00_unit.data.data_type import Class
     from beartype_test.a00_unit.data.pep.pep484.forward.data_pep484ref_proxy import (
-        FORWARDREF_ABSOLUTE)
+        type_ref_str_proxy_absolute)
 
     # ....................{ ASSERTS                        }....................
     # Assert that this tester accepts a forward reference proxy.
-    assert is_beartype_ref_proxy(FORWARDREF_ABSOLUTE) is True
+    assert is_beartype_ref_proxy(type_ref_str_proxy_absolute) is True
 
     # Assert that this tester rejects an arbitrary class that is *NOT* a forward
     # reference proxy.

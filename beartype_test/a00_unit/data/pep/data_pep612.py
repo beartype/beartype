@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`612` **data submodule.**
+Test-wide :pep:`612` **data submodule.**
 '''
 
 # ....................{ IMPORTS                            }....................

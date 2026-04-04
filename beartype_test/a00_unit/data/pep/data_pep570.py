@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`570` **data submodule.**
+Test-wide :pep:`570` **data submodule.**
 
 This submodule exercises :pep:`570` support for positional-only parameters
 implemented in the :func:`beartype.beartype` decorator by declaring callables
@@ -13,7 +13,7 @@ are intentionally isolated from the main test suite.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Union
+from typing import Union
 
 # ....................{ CALLABLES                          }....................
 def pep570_posonly(

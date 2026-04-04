@@ -627,7 +627,7 @@ def hints_pep544_ignorable_deep() -> list:
 
     # ..................{ IMPORTS                            }..................
     from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype_test.a00_unit.data.pep.data_pep484 import (
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
     )

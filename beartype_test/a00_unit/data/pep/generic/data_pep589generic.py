@@ -16,7 +16,7 @@ from beartype.typing import (
     Generic,
     TypedDict,
 )
-from beartype_test.a00_unit.data.pep.data_pep484 import T
+from beartype_test.a00_unit.data.pep.pep484.data_pep484 import T
 
 # ....................{ PEP 484 ~ usable : T               }....................
 # Generics that are actually instantiable and usable as valid objects.

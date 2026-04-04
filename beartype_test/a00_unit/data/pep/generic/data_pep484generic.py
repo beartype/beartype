@@ -11,9 +11,8 @@ in unit tests requiring non-trivial generics).
 
 # ....................{ IMPORTS                            }....................
 # Defer fixture-specific imports.
-from beartype.typing import Generic
 from beartype_test.a00_unit.data.data_type import Class
-from beartype_test.a00_unit.data.pep.data_pep484 import (
+from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
     S,
     T,
 )
@@ -25,6 +24,7 @@ from collections.abc import (
 # forward-compatible "beartype.typing" subpackage to ensure PEP
 # 484-compliance.
 from typing import (
+    Generic,
     Container as Pep484Container,
     ContextManager as Pep484ContextManager,
     Iterable as Pep484Iterable,

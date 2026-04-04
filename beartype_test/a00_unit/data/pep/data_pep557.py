@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`557` **dataclasses data submodule.**
+Test-wide :pep:`557` **dataclasses data submodule.**
 
 This submodule exercises support for **dataclasses** (i.e., :pep:`557`-compliant
 :func:`dataclasses.dataclass`-decorated classes) implemented in the

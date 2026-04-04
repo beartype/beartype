@@ -101,8 +101,8 @@ def test_add_func_scope_types() -> None:
     from beartype._check.code.codescope import add_func_scope_types
     from beartype._util.utilobject import get_object_type_basename
     from beartype_test.a00_unit.data.pep.pep484.forward.data_pep484ref_proxy import (
-        FORWARDREF_ABSOLUTE,
-        FORWARDREF_RELATIVE,
+        type_ref_str_proxy_absolute,
+        type_ref_str_proxy_relative,
     )
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -185,8 +185,8 @@ def test_add_func_scope_types() -> None:
     # all proxies to reduce the likelihood of raising exceptions during
     # isinstance()-based type checks whose second arguments are such tuples.
     types = (
-        FORWARDREF_ABSOLUTE,
-        FORWARDREF_RELATIVE,
+        type_ref_str_proxy_absolute,
+        type_ref_str_proxy_relative,
         str,
         int,
     )
@@ -195,8 +195,8 @@ def test_add_func_scope_types() -> None:
     added_types = func_scope[types_scope_name]
     assert set(added_types[:2]) == {str, int}
     assert set(added_types[2:]) == {
-        FORWARDREF_ABSOLUTE,
-        FORWARDREF_RELATIVE,
+        type_ref_str_proxy_absolute,
+        type_ref_str_proxy_relative,
     }
 
     # Repeat the same operation but with the "is_unique=False" parameter.
@@ -206,8 +206,8 @@ def test_add_func_scope_types() -> None:
     expected_types = (
         str,
         int,
-        FORWARDREF_ABSOLUTE,
-        FORWARDREF_RELATIVE,
+        type_ref_str_proxy_absolute,
+        type_ref_str_proxy_relative,
     )
     assert added_types == expected_types
 

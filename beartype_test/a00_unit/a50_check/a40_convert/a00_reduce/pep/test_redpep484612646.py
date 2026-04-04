@@ -34,7 +34,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
     from beartype._check.convert._reduce._pep.redpep484612646 import (
         _make_hint_pep484612646_typearg_to_hint)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
-    from beartype_test.a00_unit.data.pep.data_pep484 import (
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
         U,
@@ -285,7 +285,7 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     from beartype._check.metadata.call.callmetaexternal import (
         BEARTYPE_CALL_EXTERNAL_META)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
-    from beartype_test.a00_unit.data.pep.data_pep484 import (
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
     )

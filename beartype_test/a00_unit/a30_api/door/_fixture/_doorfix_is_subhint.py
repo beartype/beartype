@@ -61,7 +61,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
         Pep585SequenceT,
     )
-    from beartype_test.a00_unit.data.pep.data_pep484 import (
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
         T_sequence,

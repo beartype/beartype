@@ -49,7 +49,7 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         Pep484585GenericUUST,
         Pep484585GenericUIntT,
     )
-    from beartype_test.a00_unit.data.pep.data_pep484 import (
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
         U,

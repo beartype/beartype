@@ -8,11 +8,11 @@ Project-wide :pep:`484` **data submodule.**
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
+from collections.abc import Sequence as SequenceABC
+from typing import (
     Any,
     TypeVar,
 )
-from collections.abc import Sequence as SequenceABC
 
 # ....................{ TYPEVARS ~ un(bounded|constrained) }....................
 S = TypeVar('S')

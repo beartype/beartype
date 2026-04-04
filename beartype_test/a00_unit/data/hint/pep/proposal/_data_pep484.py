@@ -125,7 +125,7 @@ def hints_pep484_meta() -> (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
-    from beartype_test.a00_unit.data.pep.data_pep484 import (
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
         T_any,
@@ -3552,7 +3552,7 @@ def hints_pep484_reduction_meta() -> (
     from beartype_test.a00_unit.data.data_type import Class
     from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
         HintReductionValid)
-    from beartype_test.a00_unit.data.pep.data_pep484 import T_str_or_bytes
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import T_str_or_bytes
 
     # List of all PEP-specific type hint reduction metadata to be returned.
     hints_pep_reduction_meta = [
@@ -3666,7 +3666,7 @@ def hints_pep484_ignorable_deep() -> list:
         Optional,
         Union,
     )
-    from beartype_test.a00_unit.data.pep.data_pep484 import (
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
     )
