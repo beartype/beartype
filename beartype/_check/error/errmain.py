@@ -74,18 +74,18 @@ from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseDesynchronizationException,
     _BeartypeCallHintPepRaiseException,
 )
-from beartype.typing import Optional
 from beartype._check.convert.convmain import sanify_hint_any
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.metadata.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
-from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeViolationVerbosity
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.typing.datatypingport import Hint
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import TypeException
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.text.utiltextansi import (
     color_hint,
     strip_str_ansi,
@@ -100,9 +100,9 @@ from beartype._util.text.utiltextprefix import (
     prefix_pith_value,
 )
 from beartype._util.text.utiltextrepr import represent_object
-from beartype._data.kind.datakindiota import SENTINEL
+from typing import Optional
 
-# ....................{ GETTERS                            }....................
+# ....................{ GETTERS ~ violation                }....................
 def get_func_pith_violation(
     # Mandatory parameters.
     call_meta: BeartypeCallDecorMinimalMeta,

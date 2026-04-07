@@ -113,7 +113,7 @@ This snippet expects to be formatted with these named interpolations:
 * ``{arg_random_int}``, whose value is either:
 
   * If type-checking for the current type hint requires a pseudo-random integer,
-    :data:`.CODE_HINT_ROOT_SUFFIX_RANDOM_INT`.
+    :data:`.CODE_GET_VIOLATION_RANDOM_INT`.
   * Else, the empty substring.
 '''
 
@@ -136,7 +136,7 @@ This snippet expects to be formatted with these named interpolations:
 * ``{arg_random_int}``, whose value is either:
 
   * If type-checking for the current type hint requires a pseudo-random integer,
-    :data:`.CODE_HINT_ROOT_SUFFIX_RANDOM_INT`.
+    :data:`.CODE_GET_VIOLATION_RANDOM_INT`.
   * Else, the empty substring.
 '''
 

@@ -12,18 +12,22 @@ passed to those same callables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Pretty awkward subpackage, honestly. Instead, we should:
+#* Rename this existing "beartype._check.signature" subpackage to
+#  "beartype._check.make".
+#* Split up the increasingly verbose "beartype._check.checkmake" submodule into
+#  various new submodules of this new "beartype._check.make" subpackage.
+#* Rename this submodule to "makesig". *lol*
+
 # ....................{ IMPORTS                            }....................
-from beartype._data.code.datacodename import (
-    ARG_NAME_GETRANDBITS,
-)
-from beartype._check.signature._sigsnip import (
+from beartype._data.code.datacodename import ARG_NAME_GETRANDBITS
+from beartype._conf.confmain import BeartypeConf
+from beartype._data.code.func.datacodefuncwrap import (
     CODE_SIGNATURE_SCOPE_ARG_format,
     CODE_INIT_RANDOM_INT,
 )
-from beartype._conf.confmain import BeartypeConf
-from beartype._data.typing.datatyping import (
-    LexicalScope,
-)
+from beartype._data.typing.datatyping import LexicalScope
 from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ MAKERS ~ signature                 }....................

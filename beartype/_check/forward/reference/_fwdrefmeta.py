@@ -477,6 +477,175 @@ class BeartypeForwardRefMeta(type):
         #calling isinstance() directly *IF AND ONLY IF* the following is true:
         #    if not is_hint_pep(resolve)
         #That said, is there any point? Calling is_hint_pep() incurs costs.
+        #FIXME: *OH*. Yeah. This suddenly became *WAY* more expensive due to the
+        #need to try-catch around die_if_unbearable(). Yikes. Definitely
+        #optimize this as soon as we finalize the initial general-purpose
+        #die_if_unbearable()-based approach. *sigh*
+        #FIXME: Actually... I'm genuinely stumped on how to even accomplish an
+        #initial general-purpose die_if_unbearable()-based approach. Firstly,
+        #let's document why we need that: because is_bearable() behaves
+        #pseudo-randomly, we can't simply call die_if_unbearable() separately in
+        #__instancecheck_str__(); doing so would invite pseudorandom
+        #desynchronization between this is_bearable() call below from the
+        #die_if_unbearable() call in __instancecheck_str__().
+        #
+        #One sane approach might be to actually implement an ancient user
+        #request for some means of forcing @beartype to behave
+        #non-pseudo-randomly (e.g., by selecting the first item of each
+        #container rather than pseudo-randomly selecting random items).
+        #Honestly? Not a bad idea. We get to kill two birds with one stone.
+        #That's nice. We also get to *FINALLY* put an end to this insane litany
+        #of forward reference issues once and for all. That's even better.
+        #FIXME: Without doing that, though... there's no sane alternative. We
+        #can't simply do this here:
+        #    try:
+        #        die_if_unbearable(obj, resolved_hint)
+        #    catch BeartypeHintViolation as violation:
+        #        _ref_proxy_to_obj_violation_message[cls] = (
+        #            obj, str(violation))
+        #
+        #Why? Because object is an arbitrary object. If we hold strong
+        #references to that thing, we are blowing everything up.
+        #FIXME: *WAIT*. I guess we *COULD* hold a weak reference instead? Then
+        #__instancecheck_str__() could be implemented to:
+        #* Check whether that weak reference is still alive. It should *ALWAYS*
+        #  be the case that that weak reference is still alive, because the
+        #  current call to this __instancecheck__() dunder method and that
+        #  subsequent call to __instancecheck_str__() should all occur as leaves
+        #  of the same call stack ultimately residing *FAR* underneath a common
+        #  root call residing in a third-party codebase outside the @beartype
+        #  codebase performing a type-check against this object. Clearly, this
+        #  object should thus exist for the entirety of these two calls.
+        #  * Consider beartype type-checking running within an "asyncio"-style
+        #    context loop. Yeah. It's gonna happen. This is almost certainly the
+        #    only real-world use case we need to consider here. What happens
+        #    there? No idea. Pretty sure all objects that need to be alive will
+        #    still be alive, because otherwise "asyncio" just fundamentally
+        #    wouldn't work. Right? Nobody's garbage collecting anything needed
+        #    by a living coroutine (regardless of whether that coroutine is
+        #    currently running or not).
+        #  * That said, "KeyboardInterrupt" does exist. Since
+        #    "KeyboardInterrupt" can disrupt flow control at any time, so can
+        #    other exceptions that interface with low-level signal handlers.
+        #    Still, anything doing that gets what it's asking for -- which is
+        #    broken Python, mostly.
+        #* If that weak reference is still alive, return the "violation_message"
+        #  stored as the second item of that 2-tuple. Trivial.
+        #* Else, raise an exception. There's literally nothing else *SAFE* that
+        #  @beartype can do here. We can't safely call die_if_unbearable()
+        #  again, because non-determinism rears up again. We can only die as
+        #  loudly as possible while complaining: "Somebody did something bad. We
+        #  don't think it was us. It might have been us. If it was us, yell at
+        #  us on the @beartype issue tracker."
+        #FIXME: Don't forget to clear "_ref_proxy_to_obj_violation_message"
+        #in both:
+        #* __instancecheck_str__(). Once __instancecheck_str__() has extracted
+        #  the violation message from "_ref_proxy_to_obj_violation_message"
+        #  unique to the passed object, there's no reason to keep that dangerous
+        #  cached entry around anymore. Why "dangerous"? Space consumption,
+        #  mostly. If we're not careful, the space consumed by that cache could
+        #  rapidly explode out-of-control. Clearing that cache immediately after
+        #  usage is a hard prerequisite, therefore.
+        #* clear_caches(). Just a precaution. Strictly speaking, that should
+        #  *NEVER* be necessary. __instancecheck_str__() should *ALWAYS* be
+        #  called and should *ALWAYS* clear
+        #  "_ref_proxy_to_obj_violation_message". Still, better safe than sorry.
+        #FIXME: Lastly, leave a "FIXME:" preceding this functionality explicitly
+        #and loudly noting that none of this is an ideal solution. The first
+        #approach we mentioned above (i.e., of a new "BeartypeConf" option
+        #enabling users to force @beartype to type-check containers
+        #deterministically by trivially type-checking only the first item) is
+        #dramatically more preferable.
+        #
+        #Well... shucks. Honestly, shouldn't we just do the "dramatically more
+        #preferable" thing rather than the "possibly super-dangerous weird cachy
+        #thing that seems more fragile than our 50 year-old coffee table that's
+        #no longer even brown?" Yeah. We probably should. I guess I'm just kinda
+        #exhausted with how long the @beartype 0.23.0 cycle has gone on. I
+        #definitely wasn't expecting to have to implement *YET ANOTHER*
+        #"BeartypeConf" option this super-late in the cycle.
+        #FIXME: Let's briefly look into the "dramatically more preferable"
+        #thing. If it's super-easy, great. Let's do it. Certainly, defining new
+        #"BeartypeConf" options is super-trivial. No issues there. The issues
+        #lie entirely with code generation. Honestly... that seems ugly, now
+        #that I'm actually thinking about it. Let's look into it, though. Maybe
+        #it's easier than it seems? No idea. The core idea, we think, is that
+        #"VAR_NAME_RANDOM_INT" assigned by the "CODE_INIT_RANDOM_INT" code
+        #snippet would need to have an alternate assignment to some hardcoded
+        #magic integer constant when this new "BeartypeConf" option is passed.
+        #
+        #Note that, although selecting "0" for this constant would be the
+        #obvious approach, we could do a bit better by dynamically selecting a
+        #pseudo-random constant at "BeartypeConf" creation time. Indeed, why not
+        #just let this option be an integer? Then users can define their own
+        #pseudo-random seeds. Seems hot. Why not, you know? A trivial "bool"
+        #gains us nothing here. A less trivial "int" gains us *A LOT* more.
+        #
+        #Moreover, aren't *ALL* @beartype-generated type-checking wrapper
+        #functions already passed a "BeartypeConf" object? Pretty sure they are.
+        #Then no new parameters need be passed to @beartype-generated
+        #type-checking wrappers.
+        #FIXME: *WOOPS*. They're *NOT*, actually. Only *SOME*
+        #@beartype-generated type-checking wrappers receive "ARG_NAME_CONF". Of
+        #course. I should've known better. This is @beartype, after all. *sigh*
+        #
+        #We thus need to:
+        #* Rename the existing "CODE_INIT_RANDOM_INT" snippet to
+        #  "CODE_INIT_RANDOM_INT_UNSEEDED".
+        #* Define a new alternate "CODE_INIT_RANDOM_INT_SEEDED" snippet:
+        #      #FIXME: Revise embedded comment, obviously. *sigh*
+        #      CODE_INIT_RANDOM_INT_SEEDED = 
+        #      f'''
+        #          # Generate and localize a sufficiently large pseudo-random integer for
+        #          # subsequent indexation in type-checking randomly selected container items.
+        #          {VAR_NAME_RANDOM_INT} = {ARG_NAME_CONF}.random_seed'''
+        #      '''
+        #* Wherever we currently embed the "CODE_INIT_RANDOM_INT_UNSEEDED"
+        #  snippet, detect whether "BeartypeConf.random_seed: Optional[int] =
+        #  None" is non-"None" or not.
+        #* If that option is "None":
+        #  * Use the "CODE_INIT_RANDOM_INT_UNSEEDED" snippet.
+        #  * Require that Python's getrandbits() function be passed via the
+        #    "ARG_NAME_GETRANDBITS" option. This kinda sounds icky. We currently
+        #    just assume we need that option, don't we? Where does that happen?
+        #    Ugh...
+        #* If that option is non-"None":
+        #  * Use the "CODE_INIT_RANDOM_INT_SEEDED" snippet.
+        #  * Looks like we only pass the "conf" via the "ARG_NAME_CONF"
+        #    parameter when a raiser function is being generated. This means
+        #    we'll need to additionally ensure that "ARG_NAME_CONF" happens
+        #    whenever "BeartypeConf.random_seed" is non-"None". Super-annoying.
+        #FIXME: Honestly? All of that just looks non-trivial. It's probably not
+        #*TOO* bad, but we're already four months deep into DevHell over here.
+        #Another "This'll only take two weeks!" that inevitably blossoms into
+        #"*UUUGH*. I just broke everything. It's gonna take months to fix... if
+        #that's even still possible." I know Murphy. Curse you, Murphy.
+        #
+        #Because Murphy, we absolutely should *NOT* behave irresponsibly. I
+        #know, I know. The caching-based approach isn't great. But it's not
+        #necessarily awful either. And if it *DOES* turn out to be awful? Like,
+        #release-breaking awful? We can just:
+        #* Stop doing the dumb caching thing.
+        #* Revert back to the trivial code we used to perform here:
+        #      # Avoid circular import dependencies.
+        #      from beartype.door._func.doorfunc import is_bearable
+        #
+        #      # Return true only if the passed object satisfies this hint.
+        #      return is_bearable(obj, resolved_hint)
+        #* Comment out __instancecheck_str__().
+        #* *DONE*. The worst that happens then is weird exception messages for
+        #  the small handful of codebases actually using forward references to
+        #  refer to non-types. That's... basically ignorable, because "small
+        #  handful" currently means "0", because no existing @beartype-based
+        #  codebase does that, because *THEY FUNDAMENTALLY CAN'T*. Phew.
+        #
+        #So. Aversion of worst-case catastrophe is trivial (thanks to above). We
+        #have no more release time to throw at never-ending DevHell. Caching
+        #just needs to be "good enough." Either it is... or it isn't. If it is,
+        #that's great. If it isn't, we just undo it (as detailed above).
+        #
+        #Let's do this, everybody. It's time for @beartype 0.23.0 to excrete
+        #itself out the door. The future waits for no dev! *RAAAR*!
 
         # Avoid circular import dependencies.
         from beartype.door._func.doorfunc import is_bearable
