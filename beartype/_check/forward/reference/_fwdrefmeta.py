@@ -403,6 +403,7 @@ class BeartypeForwardRefMeta(type):
             :data:`True` only if this object satisfies this referent.
         '''
 
+        # ....................{ RESOLVE                    }....................
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize with the __is_subclass_beartype__() method below.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -594,7 +595,7 @@ class BeartypeForwardRefMeta(type):
         #  "CODE_INIT_RANDOM_INT_UNSEEDED".
         #* Define a new alternate "CODE_INIT_RANDOM_INT_SEEDED" snippet:
         #      #FIXME: Revise embedded comment, obviously. *sigh*
-        #      CODE_INIT_RANDOM_INT_SEEDED = 
+        #      CODE_INIT_RANDOM_INT_SEEDED =
         #      f'''
         #          # Generate and localize a sufficiently large pseudo-random integer for
         #          # subsequent indexation in type-checking randomly selected container items.
@@ -646,6 +647,125 @@ class BeartypeForwardRefMeta(type):
         #
         #Let's do this, everybody. It's time for @beartype 0.23.0 to excrete
         #itself out the door. The future waits for no dev! *RAAAR*!
+        #FIXME: *OHISEE.* Caching approach totally falls down, huh? Why. Unions.
+        #It's obvious when you think about it. Consider:
+        #    @beartype
+        #    def not_fun(anti_good: Union['no_idea_bro', list[str]]) -> int:
+        #        return len(anti_good)
+        #    no_idea_bro = list[int]
+        #    for _ in range(99):
+        #        not_fun(['so', 'much', 'badness'])
+        #
+        #Toy example, but demonstrates the core issue. If we go the caching
+        #route, then *EVERY* time this __instancecheck__() returns false we're
+        #necessarily caching strong references to strings. But... since the
+        #forward reference "no_idea_bro" is embedded in a union, that union can
+        #still evaluate to true if though the type hint "list[int]" that forward
+        #reference refers to evaluates to false! In fact, that's exactly what
+        #happens in the above dumb torture test! Every call to that function
+        #causes that union to evaluate to true though the type hint "list[int]"
+        #that forward reference refers to evaluates to false. That's 99 cached
+        #strings that simply uselessly consume space. What's worse, though, is
+        #that those strings will *NEVER* be garbage-collected. That space
+        #consumption is thus permanent and permanently accrues over the lifetime
+        #of the user app. In other words... catastrophe, bro. Pure catastrophe.
+        #
+        #Admittedly, that only happens when users point forward references to
+        #non-types. There are almost 0 users who actually want to do that.
+        #Still, that's totally unacceptable. Would *YOU* use an open-source
+        #package after somebody pointed out a `#FIXME:` like the above lurking
+        #deep within the bowels of that package? Maybe. Yeah. Maybe you would.
+        #
+        #Enough dumb jokes! We're not doing this! No caching. We have no
+        #recourse but to implement this properly via "BeartypeConf.random_seed".
+        #*FINE*. *sigh*
+        #FIXME: *LOL*. `random_seed` was a trash idea. Clearly, I had a
+        #momentary lapse in brainpan function. Non-random seeds only guarantee a
+        #deterministic *SERIES* of otherwise functionally random integers from a
+        #Mersene Twister. Totally useless here. Instead, roll with something
+        #resembling our previously planned API at beartype/beartype#385:
+        #"strategy_O1_check_sequence_index". It's a pretty rough name, though.
+        #Also, fails to apply to a hypothetical O(logn) strategy.
+        #
+        #Look, cats and people. All we need is a simple boolean option like:
+        #    is_random: bool = True
+        #
+        #The semantic meaning of "is_random" is an implementation detail
+        #intentionally hidden from the user, because it conditionally depends on
+        #various things like what "BeartypeConf.strategy" is currently in play.
+        #In practice, nothing is hidden from the user, because the meaning is
+        #basically just: "We deterministically type-check the first item. That's
+        #what we do. That's all we do. Accept this or you get nothing, which is
+        #what you used to get."
+        #
+        #That's it, bro. We clearly should've done that a decade ago. I mean...
+        #some users just hate random, right? We were too obstinate about that
+        #one. Oh, well. You just gotta roll with the `git` punches.
+        #FIXME: tl;dr, because even I no longer have any idea what's going on:
+        #* New `BeartypeConf(is_random: bool = True)" option.
+        #* Implement this option according to the above plan. Sorta. Obviously,
+        #  everything involving the seed no longer applies. The question then
+        #  becomes: what does the "{VAR_NAME_RANDOM_INT}" assignment in
+        #  "CODE_INIT_RANDOM_INT_SEEDED" resemble? Also, terrible name,
+        #  obviously. Rename that. ANNNNNNNNNYWAY. This is the obvious new
+        #  answer:
+        #      #FIXME: Revise embedded comment, obviously. *sigh*
+        #      #FIXME: Rename the existing "CODE_INIT_RANDOM_INT" to
+        #      #"CODE_INIT_RANDOM_INT_NONDETERMINISTIC", obviously.
+        #      CODE_INIT_RANDOM_INT_DETERMINISTIC = (
+        #      f'''
+        #          # Generate and localize a sufficiently large pseudo-random integer for
+        #          # subsequent indexation in type-checking randomly selected container items.
+        #          {VAR_NAME_RANDOM_INT} = 0'''
+        #      ''')
+        #
+        #  Pretty obvious in hindsight, huh? Why does that work? Because this is
+        #  how "VAR_NAME_RANDOM_INT" is used elsewhere. In fact, this is
+        #  basically the *ONE AND ONLY PLACE* that variable is accessed:
+        #      CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR = (
+        #          f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
+        #
+        #  In other words, hard-coding "{VAR_NAME_RANDOM_INT} = 0" forces
+        #  deterministic type-checking of the first item of all containers...
+        #  exactly as desired. *LET'S DO THIS*.
+        #* Define a new "BEARTYPE_CONF_NONRANDOM" global in, say, the existing
+        #  "beartype._conf.confcommon" submodule. "BeartypeConf" objects are
+        #  small enough in size that there's no meaningful hardship here.
+        #* Pass "conf=BEARTYPE_CONF_NONRANDOM" to both:
+        #  * The call to is_bearable() below.
+        #  * The presumably similar call to die_if_unbearable() in the
+        #    __instancecheck_str__() dunder method, which currently doesn't
+        #    exist, but totally would, if any of this existed at the moment,
+        #    which it doesn't. Don't question our exhaustion at 2:37AM.
+
+        # ....................{ ISINSTANCEABLE             }....................
+        # If this hint is isinstanceable (i.e., safely passable directly as the
+        # second parameter to the isinstance() builtin), reduce to an efficient
+        # call to that builtin.
+        #
+        # Note that:
+        # * This is the common case. Technically, PEP 484 (and thus @beartype as
+        #   well) permits forward references to refer to arbitrary type hints.
+        #   Pragmatically, 99% of *ALL* real-world forward references of
+        #   interest to production workflows refer to isinstanceable types.
+        # * This is only an optimization, albeit an extremely critical one.
+        #   @beartype-generated type-checking wrapper code effectively reduces
+        #   to direct invocations of the isinstance() builtin and thus
+        #   transitive indirect invocations of this dunder method implicitly
+        #   called by that builtin under PEP 3119 semantics. This dunder method
+        #   is thus on the hot path for @beartype. If optimization is warranted
+        #   anywhere in the @beartype codebase, it is here.
+        if is_object_isinstanceable(resolved_hint):
+            return isinstance(obj, resolved_hint)
+        # Else, this hint is *NOT* isinstanceable and thus *NOT* safely passable
+        # to the isinstance() builtin.
+
+        # ....................{ NON-ISINSTANCEABLE         }....................
+        # By validation internally performed by the "__resolved_hint_beartype__"
+        # property accessed above, this hint is supported by @beartype and thus
+        # safely passable to the substantially slower (but still as
+        # micro-optimized to the hilt as feasible) @beartype-specific pair of
+        # is_bearable() and die_if_unbearable() functions.
 
         # Avoid circular import dependencies.
         from beartype.door._func.doorfunc import is_bearable
