@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Dict
 from beartype._check.logic.logcls import (
     HintLogicABC,
     HintLogicQuasiiterable,
@@ -25,7 +24,7 @@ from beartype._data.hint.sign.datahintsigncls import HintSign
 
 # ....................{ MAPPINGS                           }....................
 # Initialized by the _init() function defined below.
-HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC: Dict[HintSign, HintLogicABC] = {}
+HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC: dict[HintSign, HintLogicABC] = {}
 '''
 Dictionary mapping from the sign uniquely identifying each applicable kind of
 **standard single-argument container type hint** (i.e., :pep:`484`- or
@@ -34,6 +33,7 @@ exactly one child type hint constraining *all* items contained in that
 container) to the hint sign logic dataclass dynamically generating Python code
 snippets type-checking that kind of type hint.
 '''
+
 
 HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get = (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC.get)

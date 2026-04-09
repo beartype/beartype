@@ -12,6 +12,15 @@ decorated by the :func:`beartype.beartype` decorator).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: *THREAD-SAFETY*! The bodies of all of the following callables need to
+#internally wrap *EVERYTHING* inside a submodule-specific "RLock":
+#* __resolved_hint_beartype__.
+#* __resolved_type_beartype__.
+#* _is_ref_proxy_resolved().
+#
+#Maybe even more? No idea. Subtle race conditions ignite if we fail. *gulp*
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeCallHintForwardRefException,
@@ -722,12 +731,18 @@ class BeartypeForwardRefMeta(type):
         #  Pretty obvious in hindsight, huh? Why does that work? Because this is
         #  how "VAR_NAME_RANDOM_INT" is used elsewhere. In fact, this is
         #  basically the *ONE AND ONLY PLACE* that variable is accessed:
-        #      CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR = (
+        #      CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR = (
         #          f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
         #
         #  In other words, hard-coding "{VAR_NAME_RANDOM_INT} = 0" forces
         #  deterministic type-checking of the first item of all containers...
         #  exactly as desired. *LET'S DO THIS*.
+        #* Actually, no. Don't do that. Sure, it works. But it's inefficient.
+        #  Might as well do this properly the first time. We never want to look
+        #  at any of this again. Right? Right. Instead, we want to avoid using
+        #  "CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR" in the first place if
+        #  "conf.is_random" is false. To do that, we'll need to muck about in
+        #  the actually super-awesome "logcls" API. Sounds fun!
         #* Define a new "BEARTYPE_CONF_NONRANDOM" global in, say, the existing
         #  "beartype._conf.confcommon" submodule. "BeartypeConf" objects are
         #  small enough in size that there's no meaningful hardship here.

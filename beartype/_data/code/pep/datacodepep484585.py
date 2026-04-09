@@ -16,7 +16,48 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.code.datacodename import VAR_NAME_RANDOM_INT
 from beartype._data.typing.datatyping import CallableStrFormat
 
-# ....................{ CODE ~ container : (reiterable|seq)}....................
+# ....................{ CODE ~ container : collection      }....................
+#FIXME: Actually use us up, please.
+CODE_PEP484585_COLLECTION = '''(
+{indent_curr}    # True only if this pith is of this collection type *AND*...
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+{indent_curr}    # True only if either this container is empty *OR*...
+{indent_curr}    (not len({pith_curr_var_name}) or (
+{indent_curr}         # If this collection is a non-empty sequence, localize a
+{indent_curr}         # pseudo-random item of this sequence;
+{indent_curr}         (isinstance({pith_curr_var_name}, {sequence_abc_expr}) and
+{indent_curr}          ({{pith_child_var_name}} := {CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR}) is {{pith_child_var_name}}) or
+{indent_curr}         # Else, this collection *MUST* by elimination be a non-empty,
+{indent_curr}         # Reiterable. Localize the first item of this reiterable.
+{indent_curr}         ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
+{indent_curr}     # True only if this item satisfies this hint.
+{indent_curr}     ) and {hint_child_placeholder}
+{indent_curr}    )
+{indent_curr})'''
+'''
+:pep:`484`- and :pep:`585`-compliant code snippet generically type-checking the
+current pith against a **collection type hint** (i.e., either a
+:pep:`484`-compliant ``typing.Collection[...]`` type hint *or* a
+:pep:`585`-compliant ``collections.abc.Collection[...]`` type hint).
+
+Caveats
+-------
+Note that, in the test implemented in the code above:
+
+.. code-block:: python
+
+    not len({{pith_curr_var_name}}) or ((
+
+...the call to the :func:`len` builtin *cannot* be optimized away to simply:
+
+.. code-block:: python
+
+    not {{pith_curr_var_name}} or ((
+
+See :data:`.CODE_PEP484585_QUASIITERABLE` for further details.
+'''
+
+# ....................{ CODE ~ container : reiterable      }....................
 CODE_PEP484585_REITERABLE_OR_SEQUENCE = '''(
 {indent_curr}    # True only if this pith is of this container type *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
@@ -54,55 +95,6 @@ CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR = (
 first item of the current reiterable pith.
 '''
 
-
-CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR = (
-    f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
-'''
-:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
-value of a randomly indexed item of the current sequence pith.
-'''
-
-# ....................{ CODE ~ container : collection      }....................
-#FIXME: Actually use us up, please.
-CODE_PEP484585_COLLECTION = '''(
-{indent_curr}    # True only if this pith is of this collection type *AND*...
-{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-{indent_curr}    # True only if either this container is empty *OR*...
-{indent_curr}    (not len({pith_curr_var_name}) or (
-{indent_curr}         # If this collection is a non-empty sequence, localize
-{indent_curr}         # a pseudo-random item of this sequence;
-{indent_curr}         (isinstance({pith_curr_var_name}, {sequence_abc_expr}) and
-{indent_curr}          ({{pith_child_var_name}} := {CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}) or
-{indent_curr}         # Else, this collection *MUST* by elimination be a non-empty,
-{indent_curr}         # Reiterable. Localize the first item of this reiterable.
-{indent_curr}         ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
-{indent_curr}     # True only if this item satisfies this hint.
-{indent_curr}     ) and {hint_child_placeholder}
-{indent_curr}    )
-{indent_curr})'''
-'''
-:pep:`484`- and :pep:`585`-compliant code snippet generically type-checking the
-current pith against a **collection type hint** (i.e., either a
-:pep:`484`-compliant ``typing.Collection[...]`` type hint *or* a
-:pep:`585`-compliant ``collections.abc.Collection[...]`` type hint).
-
-Caveats
--------
-Note that, in the test implemented in the code above:
-
-.. code-block:: python
-
-    not len({{pith_curr_var_name}}) or ((
-
-...the call to the :func:`len` builtin *cannot* be optimized away to simply:
-
-.. code-block:: python
-
-    not {{pith_curr_var_name}} or ((
-
-See :data:`.CODE_PEP484585_QUASIITERABLE` for further details.
-'''
-
 # ....................{ CODE ~ container : quasiiterable   }....................
 CODE_PEP484585_QUASIITERABLE = f'''(
 {{indent_curr}}    # True only if this pith is of this iterable type *AND*...
@@ -118,7 +110,7 @@ CODE_PEP484585_QUASIITERABLE = f'''(
 {{indent_curr}}        # pseudo-random item of this sequence;
 {{indent_curr}}        (
 {{indent_curr}}            isinstance({{pith_curr_var_name}}, {{sequence_abc_expr}}) and
-{{indent_curr}}            ({{pith_child_var_name}} := {CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
+{{indent_curr}}            ({{pith_child_var_name}} := {{sequence_pith_child_expr}}) is {{pith_child_var_name}}
 {{indent_curr}}        # Else, this non-empty collection *MUST* be reiterable. In this
 {{indent_curr}}        # case, localize the first item of this reiterable;
 {{indent_curr}}        ) or ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
@@ -129,9 +121,9 @@ CODE_PEP484585_QUASIITERABLE = f'''(
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet generically type-checking the
 current pith against an **quasiiterable type hint** (i.e., either a
-:pep:`484`-compliant ``typing.Iterable[...]`` type hint *or* a
-:pep:`585`-compliant ``collections.abc.Iterable[...]`` type hint matching a
-potentially unsafe container that is *not* guaranteed to be safely reiterable).
+:pep:`484`-compliant ``typing.Iterable[...]`` *or* :pep:`585`-compliant
+``collections.abc.Iterable[...]`` type hint matching a potentially unsafe
+container that is *not* guaranteed to be safely reiterable).
 
 Caveats
 -------
@@ -154,6 +146,25 @@ example is the third-party :class:`tensor.Torch` type, a collection whose
 more values: e.g.,
 
     RuntimeError: Boolean value of Tensor with more than one value is ambiguous
+'''
+
+# ....................{ CODE ~ container : sequence        }....................
+CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR = (
+    f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
+'''
+:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
+value of a randomly indexed item of the current sequence pith, intended to be
+applied when the :attr:`beartype.BeartypeConf.is_random` boolean is enabled.
+'''
+
+
+#FIXME: Actually use us up, please. *sigh*
+CODE_PEP484585_SEQUENCE_NONRANDOM_PITH_CHILD_EXPR = (
+    '''{{pith_curr_var_name}}[0]''')
+'''
+:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
+first item of the current sequence pith, intended to be applied when the
+:attr:`beartype.BeartypeConf.is_random` boolean is disabled.
 '''
 
 # ....................{ CODE ~ generic                     }....................
@@ -426,8 +437,8 @@ CODE_PEP484585_REITERABLE_OR_SEQUENCE_format: CallableStrFormat = (
     CODE_PEP484585_REITERABLE_OR_SEQUENCE.format)
 CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR.format)
-CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR_format: CallableStrFormat = (
-    CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR.format)
+CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR_format: CallableStrFormat = (
+    CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR.format)
 CODE_PEP484585_COLLECTION_format: CallableStrFormat = (
     CODE_PEP484585_COLLECTION.format)
 CODE_PEP484585_QUASIITERABLE_format: CallableStrFormat = (

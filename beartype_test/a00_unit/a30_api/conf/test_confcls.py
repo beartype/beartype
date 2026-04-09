@@ -70,6 +70,7 @@ def test_conf_dataclass() -> None:
         'is_debug',
         'is_pep484_tower',
         'is_pep557_fields',
+        'is_random',
         'strategy',
         'violation_door_type',
         'violation_param_type',
@@ -98,6 +99,7 @@ def test_conf_dataclass() -> None:
         is_debug=True,
         is_pep484_tower=True,
         is_pep557_fields=True,
+        is_random=False,
         strategy=BeartypeStrategy.Ologn,
         violation_door_type=RuntimeError,
         violation_param_type=TypeError,
@@ -136,10 +138,11 @@ def test_conf_dataclass() -> None:
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
-            is_debug=True,
             is_color=True,
+            is_debug=True,
             is_pep484_tower=True,
             is_pep557_fields=True,
+            is_random=False,
             strategy=BeartypeStrategy.On,
             violation_door_type=RuntimeError,
             violation_param_type=TypeError,
@@ -156,10 +159,11 @@ def test_conf_dataclass() -> None:
             violation_param_type=TypeError,
             violation_door_type=RuntimeError,
             strategy=BeartypeStrategy.On,
+            is_random=False,
             is_pep557_fields=True,
             is_pep484_tower=True,
-            is_color=True,
             is_debug=True,
+            is_color=True,
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
@@ -181,6 +185,7 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT.is_debug is False
     assert BEAR_CONF_DEFAULT.is_pep484_tower is False
     assert BEAR_CONF_DEFAULT.is_pep557_fields is False
+    assert BEAR_CONF_DEFAULT.is_random is True
     assert BEAR_CONF_DEFAULT.strategy is BeartypeStrategy.O1
     assert BEAR_CONF_DEFAULT.violation_door_type is (
         BeartypeDoorHintViolation)
@@ -208,6 +213,7 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_NONDEFAULT.is_debug is True
     assert BEAR_CONF_NONDEFAULT.is_pep484_tower is True
     assert BEAR_CONF_NONDEFAULT.is_pep557_fields is True
+    assert BEAR_CONF_NONDEFAULT.is_random is False
     assert BEAR_CONF_NONDEFAULT.strategy is BeartypeStrategy.Ologn
     assert BEAR_CONF_NONDEFAULT.violation_door_type is RuntimeError
     assert BEAR_CONF_NONDEFAULT.violation_param_type is TypeError
@@ -333,6 +339,9 @@ def test_conf_dataclass() -> None:
         BeartypeConf(is_pep557_fields=(
             "Space region'd with life-air; and barren void;"))
     with raises(BeartypeConfParamException):
+        BeartypeConf(is_random=(
+            'Their wisdom long since fled.—Two wings this orb'))
+    with raises(BeartypeConfParamException):
         BeartypeConf(strategy=(
             'By all, but which the wise, and great, and good'))
     with raises(BeartypeConfParamException):
@@ -398,6 +407,10 @@ def test_conf_dataclass() -> None:
         BEAR_CONF_DEFAULT.is_debug = True
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.is_pep484_tower = True
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.is_pep557_fields = True
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.is_random = False
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.strategy = BeartypeStrategy.O0
     with raises(AttributeError):

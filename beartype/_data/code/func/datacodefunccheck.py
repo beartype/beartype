@@ -32,8 +32,8 @@ CODE_CHECKER_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(
 {{code_signature_scope_args}}
 ):'''
 '''
-Code snippet declaring the signature of all type-checking tester functions
-created by the :func:`beartype._data.code.datacodename.make_func_tester` factory.
+Code snippet declaring the signature of all type-checking functions created by
+the :func:`beartype._check.checkmake.make_func_checker` factory.
 
 Note that:
 
@@ -43,8 +43,8 @@ Note that:
 
     * Pointless, as the type-checking functions dynamically created and returned
       by factory functions defined by the "beartype._check.checkmake" submodule
-      are only privately called by the public beartype.door.is_bearable() and
-      beartype.door.die_if_unbearable() runtime type-checkers.
+      are only privately called by the public :func:`beartype.door.is_bearable`
+      and :func:`beartype.door.die_if_unbearable` runtime type-checkers.
     * Harmful, as doing so would prevent this common signature from being
       generically reused as the signature for both raisers and testers.
 

@@ -135,7 +135,7 @@ def die_unless_conf(
         )
     # Else, this object is a configuration.
 
-
+# ....................{ RAISERS                            }....................
 def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     '''
     Raise an exception if one or more configuration parameters in the passed
@@ -153,7 +153,9 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         If one or more configurations parameter in this dictionary are invalid.
     '''
 
-    # ..................{ VALIDATE                           }..................
+    # ..................{ MANUALLY                           }..................
+    # Configuration options to be validated manually.
+
     # If "claw_decor_place_func" is *NOT* an enumeration member, raise
     # an exception.
     if not isinstance(
@@ -221,14 +223,6 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         )
     # Else, "hint_overrides" is a frozen dict.
     #
-    # If "is_pep557_fields" is *NOT* a boolean, raise an exception.
-    elif not isinstance(conf_kwargs['is_pep557_fields'], bool):
-        raise BeartypeConfParamException(
-            f'Beartype configuration parameter "is_pep557_fields" '
-            f'value {repr(conf_kwargs["is_pep557_fields"])} not boolean.'
-        )
-    # Else, "is_pep557_fields" is a boolean.
-    #
     # If "is_color" is *NOT* a tri-state boolean, raise an exception.
     elif not isinstance(conf_kwargs['is_color'], NoneTypeOr[bool]):
         raise BeartypeConfParamException(
@@ -237,22 +231,6 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
             f'(i.e., "True", "False", or "None").'
         )
     # Else, "is_color" is a tri-state boolean.
-    #
-    # If "is_debug" is *NOT* a boolean, raise an exception.
-    elif not isinstance(conf_kwargs['is_debug'], bool):
-        raise BeartypeConfParamException(
-            f'Beartype configuration parameter "is_debug" '
-            f'value {repr(conf_kwargs["is_debug"])} not boolean.'
-        )
-    # Else, "is_debug" is a boolean.
-    #
-    # If "is_pep484_tower" is *NOT* a boolean, raise an exception.
-    elif not isinstance(conf_kwargs['is_pep484_tower'], bool):
-        raise BeartypeConfParamException(
-            f'Beartype configuration parameter "is_pep484_tower" '
-            f'value {repr(conf_kwargs["is_debug"])} not boolean.'
-        )
-    # Else, "is_pep484_tower" is a boolean.
     #
     # If "strategy" is *NOT* an enumeration member, raise an exception.
     elif not isinstance(conf_kwargs['strategy'], BeartypeStrategy):
@@ -291,6 +269,20 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # Else, "warning_cls_on_decorator_exception" is either "None" *OR* a
     # warning category.
 
+    # ..................{ AUTOMATICALLY                      }..................
+    # Configuration options to be validated automatically.
+
+    # For the name of each keyword parameter whose value is expected to be a
+    # boolean...
+    for arg_name_bool in _ARG_NAMES_BOOL:
+        # If the value of this keyword parameter is *NOT* a boolean, raise an
+        # exception.
+        if not isinstance(conf_kwargs[arg_name_bool], bool):
+            raise BeartypeConfParamException(
+                f'Beartype configuration parameter "{arg_name_bool}" '
+                f'value {repr(conf_kwargs[arg_name_bool])} not boolean.'
+            )
+    
     # For the name of each keyword parameter whose value is expected to be an
     # exception subclass...
     for arg_name_exception_subclass in _ARG_NAMES_EXCEPTION_SUBCLASS:
@@ -300,8 +292,8 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
             conf_kwargs[arg_name_exception_subclass], Exception):
             raise BeartypeConfParamException(
                 f'Beartype configuration parameter '
-                f'"{arg_name_exception_subclass}" value '
-                f'{repr(conf_kwargs[arg_name_exception_subclass])} not '
+                f'"{arg_name_exception_subclass}" '
+                f'value {repr(conf_kwargs[arg_name_exception_subclass])} not '
                 f'exception type.'
             )
 
@@ -359,6 +351,19 @@ def sanify_conf_kwargs(conf_kwargs: DictStrToAny) -> None:
     # Else, the PEP 484-compliant implicit numeric tower is disabled.
 
 # ....................{ PRIVATE ~ globals                  }....................
+_ARG_NAMES_BOOL = (
+    'is_debug',
+    'is_pep484_tower',
+    'is_pep557_fields',
+    'is_random',
+)
+'''
+Tuple of the names of all keyword parameters to the
+:meth:`beartype.BeartypeConf.__new__` dunder method whose values are expected to
+be booleans.
+'''
+
+
 _ARG_NAMES_EXCEPTION_SUBCLASS = (
     'violation_door_type',
     'violation_param_type',

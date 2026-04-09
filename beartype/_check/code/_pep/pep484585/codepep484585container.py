@@ -110,15 +110,8 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
             )
         # Else, some hint logic type-checks this sign.
 
-        # Increase the indentation level of code type-checking this pith.
-        hints_meta.indent_level_child += 1
-
         # Python expression deeply type-checking this pith against this hint.
         hint_logic.make_code(
             hints_meta=hints_meta, hint_child_sane=hint_child_sane)
-
-        # Record whether this expression requires a pseudo-random integer.
-        hints_meta.is_var_random_int_needed |= (
-            hint_logic.is_var_random_int_needed)
     # Else, this child hint is ignorable. In this case, fallback to trivial code
     # shallowly type-checking this pith as an instance of this origin type.
