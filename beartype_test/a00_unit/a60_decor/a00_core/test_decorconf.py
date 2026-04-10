@@ -37,7 +37,7 @@ def test_decor_conf() -> None:
         beartype,
     )
     from beartype.roar import BeartypeConfException
-    from pytest import raises
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ....................{ PASS                           }....................
     # Assert that @beartype in configuration mode returns the default private
@@ -69,10 +69,10 @@ def test_decor_conf() -> None:
     # ....................{ FAIL                           }....................
     # Assert that @beartype raises the expected exception when passed a "conf"
     # parameter that is *NOT* a configuration.
-    with raises(BeartypeConfException):
+    with raises_uncached(BeartypeConfException):
         beartype(conf='Within the daedal earth; lightning, and rain,')
 
-
+# ....................{ TESTS ~ bool                       }....................
 def test_decor_conf_is_debug(capsys) -> None:
     '''
     Test the :func:`beartype.beartype` decorator passed the optional ``conf``
@@ -180,8 +180,8 @@ def test_decor_conf_strategy_O0() -> None:
         BeartypeStrategy,
         beartype,
     )
-    from beartype.roar import BeartypeCallHintViolation
-    from pytest import raises
+    from beartype.roar import BeartypeCallHintReturnViolation
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ..................{ LOCALS                             }..................
     # @beartype decorator disabling type-checking.
@@ -259,8 +259,129 @@ def test_decor_conf_strategy_O0() -> None:
     # ..................{ FAIL ~ class                       }..................
     # Assert that calling an invalid method implicitly type-checked by @beartype
     # raises the expected exception.
-    with raises(BeartypeCallHintViolation):
+    with raises_uncached(BeartypeCallHintReturnViolation):
         upon_that_mountain.none_beholds_them_there()
+
+
+def test_decor_conf_strategy_O1_nonrandom() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator passed the optional ``conf``
+    parameter disabling the optional ``is_random`` parameter while still
+    retaining the **default constant-time strategy** (i.e.,
+    :attr:`beartype.BeartypeStrategy.O1`).
+
+    This unit test validates that :mod:`beartype` correctly generates
+    deterministic (rather than non-deterministic) type-checks for this use case.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype import (
+        BeartypeConf,
+        beartype,
+    )
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from collections.abc import Iterable
+
+    # ..................{ CALLABLES                          }..................
+    @beartype(conf=BeartypeConf(is_random=False))
+    def possessed_for_glory(
+        two_fair_argent_wings: list[str],
+        though_a_primeval_god: Iterable[str],
+    ) -> int:
+        '''
+        Arbitrary callable decorated by a :func:`beartype.beartype` decorator
+        enabling deterministic constant-time type-checking accepting both:
+
+        * An arbitrary pure-Python sequence trivially annotated as such.
+        * An arbitrary pure-Python **quasiiterable** (i.e., potentially unsafe
+          container that is *not* guaranteed to be safely reiterable), which are
+          *only* annotatable as either:
+
+          * A deprecated :pep:`484`-compliant ``typing.Iterable[...]`` hint.
+            Feasible, but clearly not a great idea due to deprecation.
+          * A non-deprecated :pep:`585`-compliant
+            ``collections.abc.Iterable[...]`` hint. A significantly better idea.
+
+        :func:`beartype.beartype` currently generates non-deterministic
+        type-checking code *only* for sequence and quasiiterable type hints. The
+        only means of validating that disabling the :attr:`.Beartype.is_random``
+        parameter properly disables non-deterministic type-checking for both is
+        thus to annotate a callable by both.
+        '''
+
+        # Trivialize this one-liner to the max, Captain!
+        return len(two_fair_argent_wings) + len(though_a_primeval_god)
+
+    # ..................{ LOCALS                             }..................
+    # Arbitrary Pure-Python empty sequence.
+    fain_took_throne = []
+
+    # Arbitrary Pure-Python non-empty sequence containing two or more items all
+    # *SATISFYING* the sequence type hints annotating the above callable.
+    the_gods_approach = [
+        "Ever exalted at the God's approach:",
+        'And now, from forth the gloom their plumes immense',
+        'Rose, one by one, till all outspreaded were;',
+    ]
+
+    # Arbitrary Pure-Python non-empty sequence containing two or more items such
+    # that:
+    # * Only the first item *VIOLATES* the sequence type hints annotating the
+    #   above callable.
+    # * All subsequent items *SATISFY* those hints.
+    #
+    # Why such a specific schema? Because the deterministic type-checking
+    # dynamically generated by @beartype when the "is_random" parameter is
+    # disabled (as above) currently type-checks *ONLY* the first item of each
+    # pure-Python non-empty sequence. While end users should consider this an
+    # implementation detail, we are clearly under no such constraints. *wink*
+    the_dazzling_globe = [
+        b"While still the dazzling globe maintain'd eclipse,",
+        "Awaiting for Hyperion's command.",
+        'Fain would he have commanded, fain took throne',
+        'And bid the day begin, if but for change.',
+    ]
+
+    # ..................{ PASS                               }..................
+    # Assert that a callable type-checking pure-Python sequences
+    # deterministically accepts a pure-Python empty sequence as expected.
+    assert possessed_for_glory(
+        fain_took_throne, fain_took_throne) is 0
+
+    # ..................{ FAIL                               }..................
+    # Assert that this same callable rejects any other object by raising the
+    # expected type-checking violation.
+    #
+    # Note that strings are technically collections of strings under Python
+    # semantics (don't ask) and thus a reasonable torture test here.
+    with raises_uncached(BeartypeCallHintParamViolation):
+        possessed_for_glory(
+            "He might not:—No, though a primeval God:",
+            "The sacred seasons might not be disturb'd.",
+        )
+
+    # ..................{ FAIL                               }..................
+    # For a sufficiently large number of iterations, where "sufficiently large"
+    # is arbitrarily chosen so as to (hopefully) expose any accidental
+    # non-determinism when disabling non-deterministic type-checking...
+    for _ in range(42):
+        # Assert that this same callable accepts a valid pure-Python non-empty
+        # sequence as expected.
+        assert possessed_for_glory(
+            the_gods_approach, the_gods_approach) is 6
+
+        # Assert that this same callable rejects an invalid pure-Python
+        # non-empty sequence by raising the expected type-checking violation.
+        with raises_uncached(BeartypeCallHintParamViolation):
+            possessed_for_glory(the_dazzling_globe, the_gods_approach)
+
+        # Assert that this same callable rejects an invalid pure-Python
+        # non-empty quasiiterable by raising the expected type-checking
+        # violation.
+        with raises_uncached(BeartypeCallHintParamViolation):
+            possessed_for_glory(the_gods_approach, the_dazzling_globe)
 
 # ....................{ PRIVATE ~ callables                }....................
 def _earthquake(and_fiery_flood: int, and_hurricane: int) -> bool:
@@ -269,7 +390,7 @@ def _earthquake(and_fiery_flood: int, and_hurricane: int) -> bool:
     decorator.
 
     This callable is intentionally declared at module scope rather than within
-    the unit test(s) referencing this callable below, as the fully-qualified
+    the unit test(s) referencing this callable above, as the fully-qualified
     name of this callable when declared at module scope is considerably more
     reliable than that of a nested closure.
     '''

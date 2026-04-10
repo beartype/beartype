@@ -360,6 +360,13 @@ class HintLogicReiterable(HintLogicABC):
     :class:`collections.abc.Collection` protocol subscripted by exactly one
     child type hint constraining *all* items contained in that reiterable)
     subclass.
+
+    Reiterables constitute all pure-Python collections *except* sequences.
+    Whereas sequences grant efficient random access to *all* sequence items,
+    reiterables grant efficient non-random access to *only* the first reiterable
+    item. Whereas quasiiterables are *not* necessarily (but *might* be) safely
+    reiterable, reiterables are collections and thus guaranteed to be safely
+    reiterable.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -472,8 +479,6 @@ def _get_sequence_pith_child_expr(hints_meta: HintsMeta) -> str:
         pith_curr_var_name=hints_meta.pith_curr_var_name)
 
 # ..................{ PRIVATE ~ getters : cause              }..................
-#FIXME: Shift these into a new private utility class. *shrug*
-
 def _get_cause_enumerator_item_collection(
     cause: ViolationCause) -> EnumeratorItem:
     '''
@@ -566,19 +571,21 @@ def _get_cause_enumerator_item_sequence(
         * ``item`` is that item.
     '''
 
-    assert cause.random_int is not None, (
-        f'Violation cause {repr(cause)} pseudo-random integer is "None".')
+    # 0-based index of the *SAME EXACT ITEM* of this sequence as type-checked in
+    # the body of the parent @beartype-generated wrapper, defaulting to merely
+    # the first item of this sequence.
+    item_index = 0
 
-    # 0-based index of the *SAME EXACT ITEM* as type-checked in the body of the
-    # parent @beartype-generated wrapper, defined as either...
-    item_index = (
-        # If this beartype configuration allows randomized type-checking, the
-        # same pseudo-random item derived from this random integer;
-        cause.random_int % len(cause.pith)
-        if cause.conf.is_random else
-        # Else, the first item. *LOL* <-- killmenowfam
-        0
-    )
+    # If this beartype configuration prefers non-deterministic type-checking...
+    if cause.conf.is_random:
+        assert cause.random_int is not None, (
+            f'Violation cause {repr(cause)} pseudo-random integer is "None".')
+
+        # Prefer the same pseudo-random item derived from the random integer
+        # associated with this cause.
+        item_index = cause.random_int % len(cause.pith)
+    # Else, this beartype configuration prefers deterministic type-checking. In
+    # this case, preserve the default of the first item. *LOL* <-- killmenowfam
 
     # Pseudo-random item with this index in this sequence.
     item = cause.pith[item_index]

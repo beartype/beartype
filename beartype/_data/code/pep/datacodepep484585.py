@@ -160,7 +160,7 @@ applied when the :attr:`beartype.BeartypeConf.is_random` boolean is enabled.
 
 #FIXME: Actually use us up, please. *sigh*
 CODE_PEP484585_SEQUENCE_NONRANDOM_PITH_CHILD_EXPR = (
-    '''{{pith_curr_var_name}}[0]''')
+    '''{pith_curr_var_name}[0]''')
 '''
 :pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
 first item of the current sequence pith, intended to be applied when the
