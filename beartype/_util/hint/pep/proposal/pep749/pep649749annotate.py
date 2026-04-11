@@ -437,7 +437,7 @@ if IS_PYTHON_AT_LEAST_3_14:
     from beartype._util.error.utilerrget import get_name_error_attr_name
     from beartype._util.cache.utilcacheobjattr import (
         ObjectAttrTypes,
-        OBJECT_ATTR_CACHE_LOCK,
+        object_attr_cache_lock,
         get_object_attr_cached_or_sentinel,
         set_object_attr_cached,
     )
@@ -617,7 +617,7 @@ if IS_PYTHON_AT_LEAST_3_14:
 
         # ....................{ PREAMBLE                   }....................
         # Thread-safely...
-        with OBJECT_ATTR_CACHE_LOCK:
+        with object_attr_cache_lock:
             # ....................{ CACHE                  }....................
             # If this hintable is *NOT* actually a hintable, raise an exception.
             # Amusingly, the simplest means of implementing this validation is

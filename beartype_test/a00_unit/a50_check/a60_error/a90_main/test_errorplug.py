@@ -34,7 +34,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     from beartype._check.error.errmain import get_func_pith_violation
     from beartype._check.metadata.call.callmetadecormin import (
         minify_decor_meta_kwargs)
-    from pytest import raises
+    from beartype_test._util.error.pyterrraise import raises_uncached
     from typing import Any
 
     # ..................{ METACLASSES                        }..................
@@ -132,7 +132,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     # call of the function defined above when passed an arbitrary non-string
     # object as the value of the parameter annotated by an arbitrary class whose
     # metaclass correctly defines __instancecheck_str__().
-    with raises(BeartypePlugInstancecheckStrException):
+    with raises_uncached(BeartypePlugInstancecheckStrException):
         get_func_pith_violation(
             pith_name='the_sounds_that',
             pith_value=b"As ocean's moon looks on the moon in heaven.",
@@ -143,7 +143,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     # call of the function defined above when passed an empty string as the
     # value of the parameter annotated by an arbitrary class whose metaclass
     # correctly defines __instancecheck_str__().
-    with raises(BeartypePlugInstancecheckStrException):
+    with raises_uncached(BeartypePlugInstancecheckStrException):
         get_func_pith_violation(
             pith_name='the_sounds_that',
             pith_value='',
@@ -154,7 +154,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     # call of the function defined above when passed a non-empty string as the
     # value of the parameter annotated by an arbitrary class whose metaclass
     # incorrectly defines __instancecheck_str__().
-    with raises(BeartypePlugInstancecheckStrException):
+    with raises_uncached(BeartypePlugInstancecheckStrException):
         get_func_pith_violation(
             pith_name='of_earth',
             pith_value='Gaze on the empty scene as vacantly',

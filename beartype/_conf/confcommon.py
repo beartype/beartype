@@ -30,6 +30,20 @@ This global is intentionally *not* publicized to end users, who can simply
 instantiate ``BeartypeConf()`` to efficiently obtain the same singleton.
 '''
 
+
+BEARTYPE_CONF_NONRANDOM = BeartypeConf(is_random=False)
+'''
+**Deterministic beartype configuration** (i.e., :class:`BeartypeConf` object
+parametrized so as to type-check pure-Python sequences deterministically in
+:math:`O(1)` time, typically by type-checking only the first item of those
+sequences rather than a pseudo-randomly selected item of those sequences),
+globalized to trivially optimize external access to this configuration
+throughout this codebase.
+
+This global is intentionally *not* publicized to end users, who can simply
+instantiate ``BeartypeConf(is_random=False)`` to obtain the same singleton.
+'''
+
 # ....................{ GETTERS                            }....................
 @callable_cached
 def get_beartype_conf_strategy_on() -> BeartypeConf:

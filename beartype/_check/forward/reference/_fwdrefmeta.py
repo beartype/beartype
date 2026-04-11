@@ -13,6 +13,27 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: *RECURSION GUARDS*! Namely, we currently have none. But as the body of
+#__instancecheck_str__() dunder method notes:
+#    Any codebase encouraging forward references to reference one another is a
+#    codebase inviting a cyclic forward reference graph inducing infinite
+#    runtime recursion.
+#
+#We have two and *ONLY* two options here. Either way, we need to at least begin
+#*DETECTING* forward references that refer to other forward references and then
+#either:
+#* Outright prohibit such references by raising an immediate exception. This is
+#  almost certainly what we should at least initially do.
+#* Permit such references but only under the caveat that their forward reference
+#  graph contains *NO* cycles. This is obviously quite a bit more work, as we'll
+#  need to properly track this graph with a full-blown recursion guard. Data
+#  structures and caching woes abound.
+#
+#Doing nothing is fine for the moment. Why? This is all edge-case extreme abuse
+#misuse cases, anyway. The number of codebases that will even use forward
+#references to refer to full-blown type hints (rather than simple types) is
+#already vanishingly small. Ergo, our shrug is both smug and convenient. *shrug*
+
 #FIXME: *THREAD-SAFETY*! The bodies of all of the following callables need to
 #internally wrap *EVERYTHING* inside a submodule-specific "RLock":
 #* __resolved_hint_beartype__.
@@ -26,13 +47,13 @@ from beartype.roar import (
     BeartypeCallHintForwardRefException,
     BeartypeCallHintPep484ForwardRefStrException,
 )
+from beartype._conf.confcommon import BEARTYPE_CONF_NONRANDOM
 from beartype._data.cls.dataclsany import BeartypeAny
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_isinstanceable,
     is_object_isinstanceable,
-    # is_object_isinstanceorsubclassable_maybe,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrwarn import issue_deprecation
@@ -382,7 +403,7 @@ class BeartypeForwardRefMeta(type):
         # Return this representation.
         return cls_repr
 
-    # ....................{ DUNDERS ~ pep : 3119           }....................
+    # ....................{ DUNDERS ~ pep : 3119 : instance}....................
     def __instancecheck__(cls: _BeartypeForwardRefABC, obj: object) -> bool:  # type: ignore[misc]
         '''
         :data:`True` only if the passed object satisfies the target referent
@@ -483,276 +504,6 @@ class BeartypeForwardRefMeta(type):
             return cls.__hint_name_beartype__ == obj.__class__.__name__
         # Else, that property succeeded. Ergo, this hint is trustworthy.
 
-        #FIXME: [SPEED] It's possible this can be optimized by preferentially
-        #calling isinstance() directly *IF AND ONLY IF* the following is true:
-        #    if not is_hint_pep(resolve)
-        #That said, is there any point? Calling is_hint_pep() incurs costs.
-        #FIXME: *OH*. Yeah. This suddenly became *WAY* more expensive due to the
-        #need to try-catch around die_if_unbearable(). Yikes. Definitely
-        #optimize this as soon as we finalize the initial general-purpose
-        #die_if_unbearable()-based approach. *sigh*
-        #FIXME: Actually... I'm genuinely stumped on how to even accomplish an
-        #initial general-purpose die_if_unbearable()-based approach. Firstly,
-        #let's document why we need that: because is_bearable() behaves
-        #pseudo-randomly, we can't simply call die_if_unbearable() separately in
-        #__instancecheck_str__(); doing so would invite pseudorandom
-        #desynchronization between this is_bearable() call below from the
-        #die_if_unbearable() call in __instancecheck_str__().
-        #
-        #One sane approach might be to actually implement an ancient user
-        #request for some means of forcing @beartype to behave
-        #non-pseudo-randomly (e.g., by selecting the first item of each
-        #container rather than pseudo-randomly selecting random items).
-        #Honestly? Not a bad idea. We get to kill two birds with one stone.
-        #That's nice. We also get to *FINALLY* put an end to this insane litany
-        #of forward reference issues once and for all. That's even better.
-        #FIXME: Without doing that, though... there's no sane alternative. We
-        #can't simply do this here:
-        #    try:
-        #        die_if_unbearable(obj, resolved_hint)
-        #    catch BeartypeHintViolation as violation:
-        #        _ref_proxy_to_obj_violation_message[cls] = (
-        #            obj, str(violation))
-        #
-        #Why? Because object is an arbitrary object. If we hold strong
-        #references to that thing, we are blowing everything up.
-        #FIXME: *WAIT*. I guess we *COULD* hold a weak reference instead? Then
-        #__instancecheck_str__() could be implemented to:
-        #* Check whether that weak reference is still alive. It should *ALWAYS*
-        #  be the case that that weak reference is still alive, because the
-        #  current call to this __instancecheck__() dunder method and that
-        #  subsequent call to __instancecheck_str__() should all occur as leaves
-        #  of the same call stack ultimately residing *FAR* underneath a common
-        #  root call residing in a third-party codebase outside the @beartype
-        #  codebase performing a type-check against this object. Clearly, this
-        #  object should thus exist for the entirety of these two calls.
-        #  * Consider beartype type-checking running within an "asyncio"-style
-        #    context loop. Yeah. It's gonna happen. This is almost certainly the
-        #    only real-world use case we need to consider here. What happens
-        #    there? No idea. Pretty sure all objects that need to be alive will
-        #    still be alive, because otherwise "asyncio" just fundamentally
-        #    wouldn't work. Right? Nobody's garbage collecting anything needed
-        #    by a living coroutine (regardless of whether that coroutine is
-        #    currently running or not).
-        #  * That said, "KeyboardInterrupt" does exist. Since
-        #    "KeyboardInterrupt" can disrupt flow control at any time, so can
-        #    other exceptions that interface with low-level signal handlers.
-        #    Still, anything doing that gets what it's asking for -- which is
-        #    broken Python, mostly.
-        #* If that weak reference is still alive, return the "violation_message"
-        #  stored as the second item of that 2-tuple. Trivial.
-        #* Else, raise an exception. There's literally nothing else *SAFE* that
-        #  @beartype can do here. We can't safely call die_if_unbearable()
-        #  again, because non-determinism rears up again. We can only die as
-        #  loudly as possible while complaining: "Somebody did something bad. We
-        #  don't think it was us. It might have been us. If it was us, yell at
-        #  us on the @beartype issue tracker."
-        #FIXME: Don't forget to clear "_ref_proxy_to_obj_violation_message"
-        #in both:
-        #* __instancecheck_str__(). Once __instancecheck_str__() has extracted
-        #  the violation message from "_ref_proxy_to_obj_violation_message"
-        #  unique to the passed object, there's no reason to keep that dangerous
-        #  cached entry around anymore. Why "dangerous"? Space consumption,
-        #  mostly. If we're not careful, the space consumed by that cache could
-        #  rapidly explode out-of-control. Clearing that cache immediately after
-        #  usage is a hard prerequisite, therefore.
-        #* clear_caches(). Just a precaution. Strictly speaking, that should
-        #  *NEVER* be necessary. __instancecheck_str__() should *ALWAYS* be
-        #  called and should *ALWAYS* clear
-        #  "_ref_proxy_to_obj_violation_message". Still, better safe than sorry.
-        #FIXME: Lastly, leave a "FIXME:" preceding this functionality explicitly
-        #and loudly noting that none of this is an ideal solution. The first
-        #approach we mentioned above (i.e., of a new "BeartypeConf" option
-        #enabling users to force @beartype to type-check containers
-        #deterministically by trivially type-checking only the first item) is
-        #dramatically more preferable.
-        #
-        #Well... shucks. Honestly, shouldn't we just do the "dramatically more
-        #preferable" thing rather than the "possibly super-dangerous weird cachy
-        #thing that seems more fragile than our 50 year-old coffee table that's
-        #no longer even brown?" Yeah. We probably should. I guess I'm just kinda
-        #exhausted with how long the @beartype 0.23.0 cycle has gone on. I
-        #definitely wasn't expecting to have to implement *YET ANOTHER*
-        #"BeartypeConf" option this super-late in the cycle.
-        #FIXME: Let's briefly look into the "dramatically more preferable"
-        #thing. If it's super-easy, great. Let's do it. Certainly, defining new
-        #"BeartypeConf" options is super-trivial. No issues there. The issues
-        #lie entirely with code generation. Honestly... that seems ugly, now
-        #that I'm actually thinking about it. Let's look into it, though. Maybe
-        #it's easier than it seems? No idea. The core idea, we think, is that
-        #"VAR_NAME_RANDOM_INT" assigned by the "CODE_INIT_RANDOM_INT" code
-        #snippet would need to have an alternate assignment to some hardcoded
-        #magic integer constant when this new "BeartypeConf" option is passed.
-        #
-        #Note that, although selecting "0" for this constant would be the
-        #obvious approach, we could do a bit better by dynamically selecting a
-        #pseudo-random constant at "BeartypeConf" creation time. Indeed, why not
-        #just let this option be an integer? Then users can define their own
-        #pseudo-random seeds. Seems hot. Why not, you know? A trivial "bool"
-        #gains us nothing here. A less trivial "int" gains us *A LOT* more.
-        #
-        #Moreover, aren't *ALL* @beartype-generated type-checking wrapper
-        #functions already passed a "BeartypeConf" object? Pretty sure they are.
-        #Then no new parameters need be passed to @beartype-generated
-        #type-checking wrappers.
-        #FIXME: *WOOPS*. They're *NOT*, actually. Only *SOME*
-        #@beartype-generated type-checking wrappers receive "ARG_NAME_CONF". Of
-        #course. I should've known better. This is @beartype, after all. *sigh*
-        #
-        #We thus need to:
-        #* Rename the existing "CODE_INIT_RANDOM_INT" snippet to
-        #  "CODE_INIT_RANDOM_INT_UNSEEDED".
-        #* Define a new alternate "CODE_INIT_RANDOM_INT_SEEDED" snippet:
-        #      #FIXME: Revise embedded comment, obviously. *sigh*
-        #      CODE_INIT_RANDOM_INT_SEEDED =
-        #      f'''
-        #          # Generate and localize a sufficiently large pseudo-random integer for
-        #          # subsequent indexation in type-checking randomly selected container items.
-        #          {VAR_NAME_RANDOM_INT} = {ARG_NAME_CONF}.random_seed'''
-        #      '''
-        #* Wherever we currently embed the "CODE_INIT_RANDOM_INT_UNSEEDED"
-        #  snippet, detect whether "BeartypeConf.random_seed: Optional[int] =
-        #  None" is non-"None" or not.
-        #* If that option is "None":
-        #  * Use the "CODE_INIT_RANDOM_INT_UNSEEDED" snippet.
-        #  * Require that Python's getrandbits() function be passed via the
-        #    "ARG_NAME_GETRANDBITS" option. This kinda sounds icky. We currently
-        #    just assume we need that option, don't we? Where does that happen?
-        #    Ugh...
-        #* If that option is non-"None":
-        #  * Use the "CODE_INIT_RANDOM_INT_SEEDED" snippet.
-        #  * Looks like we only pass the "conf" via the "ARG_NAME_CONF"
-        #    parameter when a raiser function is being generated. This means
-        #    we'll need to additionally ensure that "ARG_NAME_CONF" happens
-        #    whenever "BeartypeConf.random_seed" is non-"None". Super-annoying.
-        #FIXME: Honestly? All of that just looks non-trivial. It's probably not
-        #*TOO* bad, but we're already four months deep into DevHell over here.
-        #Another "This'll only take two weeks!" that inevitably blossoms into
-        #"*UUUGH*. I just broke everything. It's gonna take months to fix... if
-        #that's even still possible." I know Murphy. Curse you, Murphy.
-        #
-        #Because Murphy, we absolutely should *NOT* behave irresponsibly. I
-        #know, I know. The caching-based approach isn't great. But it's not
-        #necessarily awful either. And if it *DOES* turn out to be awful? Like,
-        #release-breaking awful? We can just:
-        #* Stop doing the dumb caching thing.
-        #* Revert back to the trivial code we used to perform here:
-        #      # Avoid circular import dependencies.
-        #      from beartype.door._func.doorfunc import is_bearable
-        #
-        #      # Return true only if the passed object satisfies this hint.
-        #      return is_bearable(obj, resolved_hint)
-        #* Comment out __instancecheck_str__().
-        #* *DONE*. The worst that happens then is weird exception messages for
-        #  the small handful of codebases actually using forward references to
-        #  refer to non-types. That's... basically ignorable, because "small
-        #  handful" currently means "0", because no existing @beartype-based
-        #  codebase does that, because *THEY FUNDAMENTALLY CAN'T*. Phew.
-        #
-        #So. Aversion of worst-case catastrophe is trivial (thanks to above). We
-        #have no more release time to throw at never-ending DevHell. Caching
-        #just needs to be "good enough." Either it is... or it isn't. If it is,
-        #that's great. If it isn't, we just undo it (as detailed above).
-        #
-        #Let's do this, everybody. It's time for @beartype 0.23.0 to excrete
-        #itself out the door. The future waits for no dev! *RAAAR*!
-        #FIXME: *OHISEE.* Caching approach totally falls down, huh? Why. Unions.
-        #It's obvious when you think about it. Consider:
-        #    @beartype
-        #    def not_fun(anti_good: Union['no_idea_bro', list[str]]) -> int:
-        #        return len(anti_good)
-        #    no_idea_bro = list[int]
-        #    for _ in range(99):
-        #        not_fun(['so', 'much', 'badness'])
-        #
-        #Toy example, but demonstrates the core issue. If we go the caching
-        #route, then *EVERY* time this __instancecheck__() returns false we're
-        #necessarily caching strong references to strings. But... since the
-        #forward reference "no_idea_bro" is embedded in a union, that union can
-        #still evaluate to true if though the type hint "list[int]" that forward
-        #reference refers to evaluates to false! In fact, that's exactly what
-        #happens in the above dumb torture test! Every call to that function
-        #causes that union to evaluate to true though the type hint "list[int]"
-        #that forward reference refers to evaluates to false. That's 99 cached
-        #strings that simply uselessly consume space. What's worse, though, is
-        #that those strings will *NEVER* be garbage-collected. That space
-        #consumption is thus permanent and permanently accrues over the lifetime
-        #of the user app. In other words... catastrophe, bro. Pure catastrophe.
-        #
-        #Admittedly, that only happens when users point forward references to
-        #non-types. There are almost 0 users who actually want to do that.
-        #Still, that's totally unacceptable. Would *YOU* use an open-source
-        #package after somebody pointed out a `#FIXME:` like the above lurking
-        #deep within the bowels of that package? Maybe. Yeah. Maybe you would.
-        #
-        #Enough dumb jokes! We're not doing this! No caching. We have no
-        #recourse but to implement this properly via "BeartypeConf.random_seed".
-        #*FINE*. *sigh*
-        #FIXME: *LOL*. `random_seed` was a trash idea. Clearly, I had a
-        #momentary lapse in brainpan function. Non-random seeds only guarantee a
-        #deterministic *SERIES* of otherwise functionally random integers from a
-        #Mersene Twister. Totally useless here. Instead, roll with something
-        #resembling our previously planned API at beartype/beartype#385:
-        #"strategy_O1_check_sequence_index". It's a pretty rough name, though.
-        #Also, fails to apply to a hypothetical O(logn) strategy.
-        #
-        #Look, cats and people. All we need is a simple boolean option like:
-        #    is_random: bool = True
-        #
-        #The semantic meaning of "is_random" is an implementation detail
-        #intentionally hidden from the user, because it conditionally depends on
-        #various things like what "BeartypeConf.strategy" is currently in play.
-        #In practice, nothing is hidden from the user, because the meaning is
-        #basically just: "We deterministically type-check the first item. That's
-        #what we do. That's all we do. Accept this or you get nothing, which is
-        #what you used to get."
-        #
-        #That's it, bro. We clearly should've done that a decade ago. I mean...
-        #some users just hate random, right? We were too obstinate about that
-        #one. Oh, well. You just gotta roll with the `git` punches.
-        #FIXME: tl;dr, because even I no longer have any idea what's going on:
-        #* New `BeartypeConf(is_random: bool = True)" option.
-        #* Implement this option according to the above plan. Sorta. Obviously,
-        #  everything involving the seed no longer applies. The question then
-        #  becomes: what does the "{VAR_NAME_RANDOM_INT}" assignment in
-        #  "CODE_INIT_RANDOM_INT_SEEDED" resemble? Also, terrible name,
-        #  obviously. Rename that. ANNNNNNNNNYWAY. This is the obvious new
-        #  answer:
-        #      #FIXME: Revise embedded comment, obviously. *sigh*
-        #      #FIXME: Rename the existing "CODE_INIT_RANDOM_INT" to
-        #      #"CODE_INIT_RANDOM_INT_NONDETERMINISTIC", obviously.
-        #      CODE_INIT_RANDOM_INT_DETERMINISTIC = (
-        #      f'''
-        #          # Generate and localize a sufficiently large pseudo-random integer for
-        #          # subsequent indexation in type-checking randomly selected container items.
-        #          {VAR_NAME_RANDOM_INT} = 0'''
-        #      ''')
-        #
-        #  Pretty obvious in hindsight, huh? Why does that work? Because this is
-        #  how "VAR_NAME_RANDOM_INT" is used elsewhere. In fact, this is
-        #  basically the *ONE AND ONLY PLACE* that variable is accessed:
-        #      CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR = (
-        #          f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
-        #
-        #  In other words, hard-coding "{VAR_NAME_RANDOM_INT} = 0" forces
-        #  deterministic type-checking of the first item of all containers...
-        #  exactly as desired. *LET'S DO THIS*.
-        #* Actually, no. Don't do that. Sure, it works. But it's inefficient.
-        #  Might as well do this properly the first time. We never want to look
-        #  at any of this again. Right? Right. Instead, we want to avoid using
-        #  "CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR" in the first place if
-        #  "conf.is_random" is false. To do that, we'll need to muck about in
-        #  the actually super-awesome "logcls" API. Sounds fun!
-        #* Define a new "BEARTYPE_CONF_NONRANDOM" global in, say, the existing
-        #  "beartype._conf.confcommon" submodule. "BeartypeConf" objects are
-        #  small enough in size that there's no meaningful hardship here.
-        #* Pass "conf=BEARTYPE_CONF_NONRANDOM" to both:
-        #  * The call to is_bearable() below.
-        #  * The presumably similar call to die_if_unbearable() in the
-        #    __instancecheck_str__() dunder method, which currently doesn't
-        #    exist, but totally would, if any of this existed at the moment,
-        #    which it doesn't. Don't question our exhaustion at 2:37AM.
-
         # ....................{ ISINSTANCEABLE             }....................
         # If this hint is isinstanceable (i.e., safely passable directly as the
         # second parameter to the isinstance() builtin), reduce to an efficient
@@ -786,9 +537,139 @@ class BeartypeForwardRefMeta(type):
         from beartype.door._func.doorfunc import is_bearable
 
         # Return true only if the passed object satisfies this hint.
-        return is_bearable(obj, resolved_hint)
+        return is_bearable(
+            obj=obj,
+            hint=resolved_hint,
+
+            # Force this object to be type-checked deterministically (e.g., by
+            # only type-checking the first items of pure-Python sequences). By
+            # default, beartype type-checks objects non-deterministically (e.g.,
+            # by type-checking randomly selected items of these sequences). This
+            # default behaviour reduces the statistical likelihood of false
+            # negatives (e.g., this is_bearable() call returning true when it
+            # should instead return false). That's good. Unfortunately, this
+            # default behaviour is non-deterministic and thus unstable across
+            # repeated calls to related type-checking functionality requiring
+            # stable type-checking decisions. That's bad.
+            #
+            # Does the latter use case actually arise here? It does. If this
+            # is_bearable() call indicates this object to violate this hint by
+            # returning false from this __instancecheck__() dunder method, the
+            # higher-level "beartype._check.error" error handler then
+            # subsequently handles this violation by calling the
+            # beartype-specific __instancecheck_str__() dunder method defined
+            # below to generate a human-readable exception message. Predictably,
+            # that __instancecheck_str__() dunder method does so by effectively
+            # (though not actually) calling the die_if_unbearable() raiser. You
+            # see the issue, we trust. Since both this is_bearable() call *AND*
+            # that die_if_unbearable() call behave non-deterministically by
+            # default, the consequence is a catastrophic desynchronization
+            # between the two for the common use case in which this object
+            # either is *OR* contains one or more pure-Python non-empty
+            # sequences (which is where beartype's non-deterministic
+            # type-checking behaviour arises). Forcing deterministic
+            # type-checking behaviour trivially avoids such desynchronization,
+            # albeit at a non-negligible cost of increasing the statistical
+            # likelihood of false negatives from this first is_bearable() call.
+            # That's not great, obviously, but that's still significantly better
+            # than catastrophic desynchronization. It's in the name. It's
+            # catastrophic. Can't get much worse than a catastrophe.
+            conf=BEARTYPE_CONF_NONRANDOM,
+        )
 
 
+    #FIXME: Uncomment *AFTER* this dunder method actually behaves as expected.
+    #We're currently getting false positives from closure references, probably
+    #because "BeartypeAny" is a weirdo thing nobody understands. Ahh! Ahhhhhhh!
+    # def __instancecheck_str__(cls, obj: object) -> str:
+    def __instancecheck_strOHGODS__(cls, obj: object) -> str:
+        '''
+        Human-readable substring to be embedded in the message of a
+        :exc:`beartype.roar.BeartypeCallHintViolation` describing why the object
+        currently being type-checked violates the type hint referred to by this
+        :mod:`beartype`-specific forward reference proxy, in response to a prior
+        call to the sibling :meth:`.__instancecheck__` dunder method passed the
+        passed object returning :data:`False`.
+
+        This :mod:`beartype`-specific dunder method is internally called by the
+        higher-level :mod:`beartype._check.error` subpackage when handling
+        type-checking violations indicated by the sibling :pep:`3119`-compliant
+        :meth:`.__instancecheck__` dunder method defined above returning
+        :data:`False`. The workflow is non-trivial. The
+        :func:`beartype.beartype` decorator dynamically generates type-checking
+        wrapper functions whose bodies detect and handle type-checking
+        violations by calling a violation handler defined by the private
+        :mod:`beartype._check.error` subpackage. That handler then raises a
+        human-readable exception message describing why the object currently
+        being type-checked violates the type hint referred to by this
+        :mod:`beartype`-specific forward reference proxy. How? By internally
+        calling this :mod:`beartype`-specific dunder method defined on *all*
+        such proxies, of course. Truly, *what could be simpler!?*
+
+        Parameters
+        ----------
+        cls : Type[BeartypeForwardRefABC]
+            Forward reference proxy the :meth:`.__instancecheck__` dunder method
+            previously detected the passed object as violating the type hint
+            referred to by this proxy.
+        obj: object
+            That object.
+
+        Returns
+        -------
+        str
+            Human-readable substring to be embedded in the message of a
+            :exc:`beartype.roar.BeartypeCallHintViolation` exception.
+        '''
+
+        # Avoid circular import dependencies.
+        from beartype._check.error.errmain import get_hint_object_violation
+        from beartype._check.metadata.call.callmetaexternal import (
+            BEARTYPE_CALL_EXTERNAL_META)
+
+        # Human-readable type-checking violation exception detailing the failure
+        # of this object to satisfy the target referent type hint referred to by
+        # this forward reference proxy under the same beartype configuration
+        # employed by the is_bearable() call performed by the sibling
+        # __instancecheck__() dunder method.
+        check_violation = get_hint_object_violation(
+            # Beartype external call metadata singleton, required to
+            # transparently resolve the extreme edge case (and possibly even
+            # PEP-noncompliant abuse or misuse) in which this beartype-specific
+            # forward reference proxy refers to a type hint that itself either
+            # is or contains one or more:
+            # * PEP 484-compliant stringified forward reference type hints.
+            # * PEP 749-compliant objectified forward reference type hints.
+            #
+            # Ideally, that should *NEVER* occur. Any codebase encouraging
+            # forward references to reference one another is a codebase inviting
+            # a cyclic forward reference graph inducing infinite recursion.
+            #
+            # Pragmatically, that will *DEFINITELY* occur. When that does, we
+            # transparently enable those forward references to themselves be
+            # resolved into their target referent type hints through this
+            # singleton, which performs call stack introspection up the call
+            # stack as a means of resolving those forward references.
+            #
+            # Note that explicitly passing this singleton here preserves
+            # synchronization with the is_bearable() call performed by the
+            # sibling __instancecheck__() dunder method, which implicitly
+            # leverages this exact same singleton for the same purpose.
+            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            hint=cls.__resolved_hint_beartype__,
+            obj=obj,
+            # See the is_bearable() call performed by the sibling
+            # __instancecheck__() dunder method for further details.
+            conf=BEARTYPE_CONF_NONRANDOM,
+            # Nonsense required by the get_hint_object_violation() API. Our
+            # younger self thought he was doing a good thing. YOUNGER SELF!!!!!!
+            exception_prefix='',
+        )
+
+        # Return this violation exception's human-readable message.
+        return str(check_violation)
+
+    # ....................{ DUNDERS ~ pep : 3119 : subclass}....................
     def __subclasscheck__(cls: _BeartypeForwardRefABC, obj: object) -> bool:  # type: ignore[misc]
         '''
         :data:`True` only if the passed object is a subclass of the target

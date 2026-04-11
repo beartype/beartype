@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCacheObjectAttributeException
-from beartype.typing import Dict
 from beartype._cave._cavefast import (
     FunctionType,
     ModuleType,
@@ -42,7 +41,7 @@ arbitrary attributes may be safely cached, equivalent to objects accepted by the
 '''
 
 # ....................{ GLOBALS                            }....................
-OBJECT_ATTR_CACHE_LOCK = RLock()
+object_attr_cache_lock = RLock()
 '''
 **Reentrant object attribute cache thread lock** (i.e., low-level thread locking
 mechanism implemented as a highly efficient C extension, defined as a global for
@@ -67,7 +66,7 @@ def clear_object_attr_caches() -> None:
     '''
 
     # Thread-safely...
-    with OBJECT_ATTR_CACHE_LOCK:
+    with object_attr_cache_lock:
         # Clear all private caches defined below.
         _MODULE_NAME_TO_ATTR_NAME_TO_VALUE.clear()
 
@@ -143,7 +142,7 @@ def get_object_attr_cached_or_sentinel(
     '''
 
     # Thread-safely...
-    with OBJECT_ATTR_CACHE_LOCK:
+    with object_attr_cache_lock:
         # Value of the attribute to be returned if previously cached on this
         # object *OR* the sentinel placeholder otherwise.
         attr_value: object = SENTINEL
@@ -292,7 +291,7 @@ def get_type_attr_cached_or_sentinel(
     assert isinstance(is_dirty, bool), f'{repr(is_dirty)} not boolean.'
 
     # Thread-safely...
-    with OBJECT_ATTR_CACHE_LOCK:
+    with object_attr_cache_lock:
         # __sizeof__() dunder method currently declared by this class, which the
         # set_type_attr_cached() setter has possibly wrapped with a pure-Python
         # __sizeof__() dunder method. Why? Tangential reasons that are obscure,
@@ -455,7 +454,7 @@ def set_object_attr_cached(
     '''
 
     # Thread-safely...
-    with OBJECT_ATTR_CACHE_LOCK:
+    with object_attr_cache_lock:
         # If this object is a pure-Python function...
         #
         # Note that most objects of interest are pure-Python functions. This
@@ -563,7 +562,7 @@ def set_type_attr_cached(
     assert isinstance(attr_name, str), f'{repr(attr_name)} not string.'
 
     # Thread-safely...
-    with OBJECT_ATTR_CACHE_LOCK:
+    with object_attr_cache_lock:
         # __sizeof__() dunder method currently declared by this class. See the
         # get_type_attr_cached_or_sentinel() getter for details.
         cls_sizeof_old = cls.__sizeof__
@@ -656,7 +655,7 @@ def set_type_attr_cached(
         attr_name_to_value[attr_name] = attr_value  # type: ignore[index, assignment]
 
 # ....................{ PRIVATE ~ globals                  }....................
-_MODULE_NAME_TO_ATTR_NAME_TO_VALUE: Dict[str, Dict[str, object]] = {}
+_MODULE_NAME_TO_ATTR_NAME_TO_VALUE: dict[str, dict[str, object]] = {}
 '''
 Dictionary mapping from the fully-qualified name of each module associated with
 one or more memoized module attributes to a nested dictionary mapping from the
