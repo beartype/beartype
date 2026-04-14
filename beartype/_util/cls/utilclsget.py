@@ -94,9 +94,9 @@ def get_type_locals(cls: type) -> LexicalScope:
     This getter currently reduces to a trivial one-liner returning
     ``cls.__dict__`` and has thus been defined mostly just for orthogonality
     with the comparable
-    :func:`beartype._util.func.utilfuncscope.get_func_locals_frame` getter. That said,
-    :pep:`563` suggests this non-trivial heuristic for computing the local scope
-    of a given class:
+    :func:`beartype._util.func.utilfuncscope.get_func_locals_frame` getter. That
+    said, :pep:`563` suggests this non-trivial heuristic for computing the local
+    scope of a given class:
 
         For classes, localns can be composed by chaining vars of the given class
         and its base classes (in the method resolution order). Since slots can

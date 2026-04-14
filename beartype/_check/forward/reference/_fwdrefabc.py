@@ -15,12 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import HintPep484749RefObjectType
-from beartype._data.cls.dataclsany import BeartypeAny
+from beartype._check.forward.reference._fwdrefmeta import BeartypeForwardRefMeta
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
     LexicalScope,
 )
-from beartype._check.forward.reference._fwdrefmeta import BeartypeForwardRefMeta
 from typing import (
     NoReturn,
     Optional,

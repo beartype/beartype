@@ -56,8 +56,9 @@ class NewTypeTypeHint(ClassTypeHint):
             #
             # Note that this would typically be non-ideal due to explosive space
             # and time consumption. Thankfully, however, "TypeHint" wrappers are
-            # cached; the "_TypeHintMetaclass" metaclass guarantees this __init__()
-            # method to be called exactly once for each "NewType" type hint.
+            # cached; the "_TypeHintMetaclass" metaclass guarantees this
+            # __init__() method to be called exactly once for each "NewType"
+            # type hint.
             self._origin = make_type(
                 type_name=hint_name,
                 type_bases=(hint_embedded,),  # type: ignore[arg-type]

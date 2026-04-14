@@ -435,7 +435,8 @@ class BeartypeForwardRefMeta(type):
 
         # ....................{ RESOLVE                    }....................
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with the __is_subclass_beartype__() method below.
+        # CAUTION: Synchronize with the __is_subclass_beartype__() and
+        # __instancecheck_str__() dunder methods defined below.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # @beartype-supported type hint referred to by the PEP-compliant forward
         # reference encapsulated by this proxy.
@@ -622,11 +623,143 @@ class BeartypeForwardRefMeta(type):
             :exc:`beartype.roar.BeartypeCallHintViolation` exception.
         '''
 
+        # ....................{ IMPORTS                    }....................
         # Avoid circular import dependencies.
         from beartype._check.error.errmain import get_hint_object_violation
         from beartype._check.metadata.call.callmetaexternal import (
             BEARTYPE_CALL_EXTERNAL_META)
 
+        # ....................{ RESOLVE                    }....................
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize with the __is_subclass_beartype__() and
+        # __instancecheck_str__() dunder methods defined below.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # @beartype-supported type hint referred to by the PEP-compliant forward
+        # reference encapsulated by this proxy.
+        #
+        # Note that this beartype-specific __instancecheck_str__() dunder method
+        # should *ONLY* be called when the __instancecheck__() dunder method
+        # defined above was already implicitly called by an isinstance() call in
+        # the body of a beartype-generated type-checking wrapper function, in
+        # which case that prior __instancecheck__() call is guaranteed to have
+        # already successfully resolved this forward reference to this type hint
+        # by accessing this property (*WITHOUT* that property internally raising
+        # an exception). In short, this access should trivially reduce to an
+        # efficient O(1)-style cached property lookup.
+        resolved_hint = cls.__resolved_hint_beartype__
+
+        #FIXME: *WAIT*. Oh. Yeah. Now *THIS* is a cool idea. Rather than
+        #continuing with this "BeartypeAny" madness (which is clearly descending
+        #to devhell incarnate), we instead:
+        #* Refactor the "__resolved_hint_beartype__" property as follows:
+        #  * Instead of resolving closure-local types to "BeartypeAny", we:
+        #    * *DYNAMICALLY GENERATE* a new fake type whose implementation
+        #      resembles:
+        #          #FIXME: Docstring us properly, please. *sigh*
+        #          class _BeartypePep484RefStrRelativeNestedTypeMetaclass(type):
+        #              '''
+        #              ...who even knows anymore!?
+        #              '''
+        #
+        #              def __instancecheck__(nested_type, obj: object) -> bool:
+        #                  return nested_type.__name__ == obj.__class__.__name__
+        #
+        #              #FIXME: *DEFINITELY WARRANTS UNIT TESTING*. Not even sure
+        #              #how to do that in a type hinting context.
+        #              #"type['WhoseWoodsTheseAreIThinkIKnow']"-style type hints
+        #              #should do it, I suppose. If that fails, maybe just write
+        #              #low-level unit tests specific to this metaclass?
+        #              #Actually, both sound like good ideas. This is fragile
+        #              #madness. *TEST, TEST, & MORE TEST*.
+        #              def __subclasscheck__(nested_type, other_type: type) -> bool:
+        #                  # Raise the standard "TypeError" exception if the
+        #                  # passed "other_type" isn't actually a type.
+        #                  issubclass(other_type, type)
+        #
+        #                  return any(
+        #                      nested_type.__name__ == other_supertype.__name__
+        #                      for other_supertype in other_type.__mro__
+        #                  )
+        #
+        #
+        #          #FIXME: Docstring us properly, please. *sigh*
+        #          class _BeartypePep484RefStrRelativeNestedType(
+        #              object,
+        #              metaclass=_BeartypePep484RefStrRelativeNestedTypeMetaclass,
+        #          ):
+        #              '''
+        #              ...who even knows anymore!?
+        #              '''
+        #
+        #              pass
+        #
+        #
+        #          _BeartypePep484RefStrRelativeNestedType_BASES = (
+        #              _BeartypePep484RefStrRelativeNestedType,)
+        #          '''
+        #          1-tuple containing *only* the :class:`._BeartypePep484RefStrRelativeNestedType`
+        #          superclass to reduce space and time consumption.
+        #          '''
+        #
+        #
+        #          resolved_hint = make_type(
+        #              type_name=cls.__hint_name_beartype__,
+        #              #FIXME: Not *QUITE* right, but whatevahs. Close enough.
+        #              #Why? Because this scope name could contain odd
+        #              #placeholders like ".<locals>." preventing the resulting
+        #              #"type_module_name" from serving as a valid Python
+        #              #identifier. The solution would be to strip the prefix of
+        #              #"cls.__scope_name_beartype__" preceding the first
+        #              #".<" substring in this scope name. *WHATEVAHS*!
+        #              type_module_name=cls.__scope_name_beartype__,
+        #              type_bases=_BeartypePep484RefStrRelativeNestedType_BASES,
+        #          )
+        #    * Return that fake type instead.
+        #* Remove *ALL* "BeartypeAny" logic from this submodule. Guess we don't
+        #  need that anymore, huh? *GOOD*. That was always a hack head-scratcher
+        #  that required far too much explanation everywhere.
+
+        # If the cls.__resolved_hint_beartype__() property dynamically resolving
+        # the PEP 484-compliant stringified forward reference underlying this
+        # proxy (if any) failed to do so by falling back to the
+        # beartype-specific private "BeartypeAny" type, do *NOT* simply call the
+        # general-purpose get_hint_object_violation() getter below to generate a
+        # general-purpose violation message. Why? Because the "BeartypeAny"
+        # metaclass unconditionally returns true for all possible objects,
+        # guaranteeing that the passed object satisfies this hint. However, that
+        # getter is intended to be called *ONLY* when the passed object violates
+        # this hint! Naively passing this hint to that getter would force that
+        # getter to raise an unreadable
+        # "_BeartypeCallHintPepRaiseDesynchronizationException" exception, with
+        # predictably disastrous consequences for everyone. Instead, this
+        # __instancecheck_str__() call justifiably assumes that the prior
+        # __instancecheck__() call (see above) returned false due to this
+        # __instancecheck__() single-line test returning false:
+        #     return cls.__hint_name_beartype__ == obj.__class__.__name__
+        #
+        # That being the case, the violation message to be returned is simply a
+        # human-readable substring codesplaining the unqualified basename of the
+        # type referred to by this forward reference fails to match that of the
+        # type of the passed object. Typing this was shockingly harder than
+        # implementing this. Some Mondays do be like that.
+        #
+        # Technically, we *COULD* manually cobble this violation message
+        # together (e.g., with a hardcoded f-string). Pragmatically, doing so is
+        # complicated by such non-trivial string munging concerns as
+        # user-configurable coloring and safe (i.e., recursion-resistant)
+        # production of the machine-readable representation of the passed
+        # object. It's preferable to defer to the get_hint_object_violation()
+        # getter called below by locally replacing this semantically and
+        # syntactically useless "BeartypeAny" type hint placeholder with an
+        # alternative type hint that *CAN* be safely passed to
+        # get_hint_object_violation().
+        # if resolved_hint is BeartypeAny:
+        #     return (
+        #         f'cls.__hint_name_beartype__ == obj.__class__.__name__'
+        #     )
+        # Else, that property succeeded. Ergo, this hint is trustworthy.
+
+        # ....................{ MESSAGE                    }....................
         # Human-readable type-checking violation exception detailing the failure
         # of this object to satisfy the target referent type hint referred to by
         # this forward reference proxy under the same beartype configuration
@@ -656,7 +789,7 @@ class BeartypeForwardRefMeta(type):
             # sibling __instancecheck__() dunder method, which implicitly
             # leverages this exact same singleton for the same purpose.
             call_meta=BEARTYPE_CALL_EXTERNAL_META,
-            hint=cls.__resolved_hint_beartype__,
+            hint=resolved_hint,
             obj=obj,
             # See the is_bearable() call performed by the sibling
             # __instancecheck__() dunder method for further details.
@@ -1191,8 +1324,6 @@ def _make_ref_proxy_exception_prefix(cls: _BeartypeForwardRefABC) -> str:
     # Return this prefix.
     return exception_prefix
 
-# ....................{ PRIVATE ~ uncachers                }....................
-
 # ....................{ PRIVATE ~ resolvers                }....................
 #FIXME: Unit test us up, please. *sigh*
 def _resolve_hint_pep484_ref_str(cls: _BeartypeForwardRefABC) -> Hint:
@@ -1285,15 +1416,17 @@ def _resolve_hint_pep484_ref_str(cls: _BeartypeForwardRefABC) -> Hint:
         #* If this reference remains unresolvable at that point,
         #  fallback to silently ignoring this reference as we do below.
 
-        # Indirectly notify the beartype-specific parent
-        # __is_instance_beartype__() and __is_subclass_beartype__() dunder
-        # methods called by the beartype-agnostic parent parent
-        # __instancecheck__() and __subclasscheck__() dunder methods this
-        # reference *CANNOT* be resolved to its referent. How? By pretending to
-        # resolve this reference to an arbitrary private type isolated to the
-        # beartype codebase. This type is private and thus guaranteed to *NEVER*
-        # be ambiguously used as a type hint referred to by stringified forward
-        # references in third-party packages.
+        # Indirectly notify parent dunder methods invoking this property that
+        # this reference *CANNOT* be resolved to its referent. How? By
+        # pretending to resolve this reference to an arbitrary private type
+        # isolated to the beartype codebase. This type is private and thus
+        # guaranteed to *NEVER* be ambiguously used as a type hint referred to
+        # by stringified forward references in third-party packages.
+        #
+        # Parent dunder methods invoking this property include:
+        # * PEP 3119-compliant __instancecheck__() dunder method.
+        # * PEP 3119-compliant __subclasscheck__() dunder method.
+        # * Beartype-specific __instancecheck_str__() dunder method.
         #
         # Pretending to resolve this reference to this type is a crude
         # unreadable alternative to internally setting a hypothetical
@@ -1308,9 +1441,8 @@ def _resolve_hint_pep484_ref_str(cls: _BeartypeForwardRefABC) -> Hint:
         # unexpected issues in the unlikely event of Murphy and Her Dumb Law.
         # Since "BeartypeAny" is semantically analogous to the ignorable root
         # "object" superclass, resolving to "BeartypeAny" here implies that
-        # erroneously implemented __is_instance_beartype__() and
-        # __is_subclass_beartype__() dunder methods would fallback to silently
-        # ignoring the passed objects without complaint.
+        # buggy __instancecheck__() and __subclasscheck__() dunder methods would
+        # fallback to silently ignoring the passed objects.
         referent = BeartypeAny
     # Else, this module is both importable and defines this referent.
 
