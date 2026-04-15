@@ -70,7 +70,7 @@ from typing import (
 #FIXME: Doesn't seem to help. mypy 0.19.0 appears to busted, sadly. We sigh.
 # # If a static type-checker is type-checking us, import circular imports. Ugh!
 # if TYPE_CHECKING:
-#     from beartype._check.forward.reference._fwdrefabc import (
+#     from beartype._check.forward.reference._cls.fwdrefabc import (
 #         BeartypeForwardRefABC)
 # # Else, Python is running us. Bless ye, Python. Bless ye.
 
@@ -299,7 +299,7 @@ objects underlying pure-Python callables) *or* the :data:`None` singleton.
 This hint specifically matches the value of:
 
 * The low-level
-  :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
+  :attr:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
   class variable.
 * All optional ``func_local_parent_codeobj_weakref`` parameters accepted by
   higher-level functions distributed throughout the codebase.

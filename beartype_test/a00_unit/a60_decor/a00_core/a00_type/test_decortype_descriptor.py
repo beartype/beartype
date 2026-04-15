@@ -498,7 +498,7 @@ def test_decor_type_descriptor_custom_pep487() -> None:
     * A method annotated by a stringified forward reference to a currently
       undefined type, which :func:`beartype.beartype` then internally coerces
       into a **forward reference proxy** (i.e.,
-      :class:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC`
+      :class:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC`
       subclass) encapsulating that undefined type.
 
     For obscure reasons that are difficult to fully explain within the expected

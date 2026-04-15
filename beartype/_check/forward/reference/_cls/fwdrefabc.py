@@ -15,7 +15,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import HintPep484749RefObjectType
-from beartype._check.forward.reference._fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.forward.reference._cls.fwdrefmeta import (
+    BeartypeForwardRefMeta)
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
     LexicalScope,
@@ -386,7 +387,7 @@ class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
             kwargs=kwargs,
         )
 
-# ....................{ PRIVATE ~ tuples                   }....................
+# ....................{ TUPLES                             }....................
 BeartypeForwardRefSubbableABC_BASES = (BeartypeForwardRefSubbableABC,)
 '''
 1-tuple containing *only* the :class:`.BeartypeForwardRefSubbableABC`

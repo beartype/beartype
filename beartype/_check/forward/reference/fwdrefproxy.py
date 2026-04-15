@@ -20,7 +20,7 @@ from beartype._cave._cavefast import (
     WeakrefCallableType,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.forward.reference._fwdrefabc import (
+from beartype._check.forward.reference._cls.fwdrefabc import (
     BeartypeForwardRefSubbableABC,
     BeartypeForwardRefSubbableABC_BASES,
     BeartypeForwardRefSubbedABC,
@@ -56,7 +56,7 @@ def proxy_hint_pep484_ref_str_subbable(
     permissive manner permitting this hint to be subscripted by any arbitrary
     child type hints).
 
-    This getter is intentionally *not* memoized (e.g., by the
+    This proxier is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator). Why? Because callers typically subsequently
     overwrite the ``__exception_prefix_beartype__`` class variable of returned
     proxies with strings contextually depending on the currently decorated
@@ -64,6 +64,9 @@ def proxy_hint_pep484_ref_str_subbable(
 
     Parameters
     ----------
+    hint_name : str
+        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
+        this unresolved type hint to be proxied.
     scope_name : str
         Possibly ignored fully-qualified name of the lexical scope in which this
         unresolved type hint was originally declared. For example:
@@ -72,16 +75,13 @@ def proxy_hint_pep484_ref_str_subbable(
           resolve a global class or callable against this scope).
         * ``"some_package.some_module.SomeClass"`` for a class scope (e.g.,
           to resolve a nested class or callable against this scope).
-    hint_name : str
-        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
-        this unresolved type hint to be proxied.
     func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref, default: None
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
         locally decorated callable if this forward reference proxy subtype
         proxies a stringified forward reference annotating a locally decorated
         callable *or* :data:`None` otherwise. See also the
-        :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
+        :attr:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details.
     exception_prefix : Optional[str], default: None
         Human-readable substring prefixing raised exception messages if any *or*
@@ -132,7 +132,7 @@ def proxy_hint_pep484_ref_str_subbed(
     strict manner prohibiting this hint from being re-subscripted by any further
     child type hints).
 
-    This getter is intentionally *not* memoized (e.g., by the
+    This proxier is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator). Why? Because callers typically subsequently
     overwrite the ``__exception_prefix_beartype__`` class variable of returned
     proxies with strings contextually depending on the currently decorated
@@ -153,7 +153,7 @@ def proxy_hint_pep484_ref_str_subbed(
         locally decorated callable if this forward reference proxy subtype
         proxies a stringified forward reference annotating a locally decorated
         callable *or* :data:`None` otherwise. See also the
-        :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
+        :attr:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details.
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
@@ -210,7 +210,7 @@ def proxy_hint_pep749_ref_object(
     referent target type hint that typically has yet to be defined in the
     current lexical scope).
 
-    This getter is intentionally *not* memoized (e.g., by the
+    This proxier is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator). Why? Because callers typically subsequently
     overwrite the ``__exception_prefix_beartype__`` class variable of returned
     proxies with strings contextually depending on the currently decorated
@@ -349,7 +349,7 @@ def _proxy_hint_ref(
         locally decorated callable if this forward reference proxy subtype
         proxies a stringified forward reference annotating a locally decorated
         callable *or* :data:`None` otherwise. See also the
-        :attr:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
+        :attr:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details. Defaults to :data:`None`.
     exception_prefix : Optional[str], default: None
         Human-readable substring prefixing raised exception messages if any *or*

@@ -32,9 +32,9 @@ def clear_caches() -> None:
       :data:`beartype._util.hint.pep.proposal.pep749.pep649749annotate._MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS`
       dictionary).
     * All **forward reference proxy caches** (i.e., private
-      :data:`beartype._check.forward.reference._fwdrefmeta._ref_proxy_to_resolved_hint`
+      :data:`beartype._check.forward.reference._cls.fwdrefmeta._ref_proxy_to_resolved_hint`
       and
-      :data:`beartype._check.forward.reference._fwdrefmeta._ref_proxy_to_resolved_type`
+      :data:`beartype._check.forward.reference._cls.fwdrefmeta._ref_proxy_to_resolved_type`
       dictionaries).
     * The **sanified type hint metadata cache** (i.e., private
       :data:`beartype._check.metadata.hint.hintsane._HINT_TO_HINTSANE`
@@ -64,7 +64,7 @@ def clear_caches() -> None:
     from beartype._check.code.codemain import _HINT_CONF_TO_CHECK_EXPR
     from beartype._check.code.codescope import _tuple_union_to_tuple_union
     from beartype._check.convert._convcoerce import _hint_repr_to_hint
-    from beartype._check.forward.reference._fwdrefmeta import (
+    from beartype._check.forward.reference._cls.fwdrefmeta import (
         _ref_proxy_to_resolved_hint,
         _ref_proxy_to_resolved_type,
     )

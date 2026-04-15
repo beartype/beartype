@@ -30,7 +30,8 @@ version: 2
 # List of all packaging ecosystems to be automatically bumped by Dependabot.
 updates:
   # ....................{ GITHUB ACTIONS                   }....................
-  # GitHub Actions.
+  # GitHub Actions-driven workflows defined as YAML-formatted files in the
+  # GitHub-specific ".github/workflows/" subdirectory of this repository.
   - package-ecosystem: 'github-actions'
 
     # Find the ".github/workflows/" subdirectory relative to the top-level
@@ -50,8 +51,18 @@ updates:
           - '*'
 
   # ....................{ PYTHON                           }....................
-  # Python.
+  # Python-specific PEP 621-compliant "pyproject.toml" file residing in the root
+  # directory of this repository.
   - package-ecosystem: 'pip'
+
+    # Prevent dependabot from unnecessarily bumping the versions of any optional
+    # or mandatory dependencies specified in this "pyproject.toml" file *EXCEPT*
+    # those explicitly required for security.
+    #
+    # Note that, while obscure, this syntax is actually the official means of
+    # configuring this common preference. See also this official documentation:
+    #     https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configuring-dependabot-security-updates#overriding-the-default-behavior-with-a-configuration-file
+    open-pull-requests-limit: 0
 
     # Find the root "pyproject.toml" file relative to the top-level directory of
     # this repository, Dependabot.

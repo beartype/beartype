@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._check.forward.reference.fwdreftyping import BeartypeForwardRef
-from beartype._check.forward.reference._fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.forward.reference._cls.fwdrefmeta import BeartypeForwardRefMeta
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import TypeIs
 

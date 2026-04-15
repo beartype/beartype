@@ -186,7 +186,7 @@ class BeartypeNodeTransformerPep695Mixin(object):
         Add new sibling nodes following the passed **type alias statement**
         (i.e., node signifying the definition of a :pep:`695`-compliant ``type``
         alias) iteratively defining one **forward reference proxy** (i.e.,
-        :class:`beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC`
+        :class:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC`
         subclass) for each unquoted relative forward reference in this
         statement.
 

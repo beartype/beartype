@@ -311,7 +311,7 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
 
             # Clear *ALL* type-checking caches. Notably:
             # * The forward reference referee cache (i.e., private
-            #   "beartype._check.forward.reference._fwdrefmeta._forwardref_to_referent"
+            #   "beartype._check.forward.reference._cls.fwdrefmeta._forwardref_to_referent"
             #   dictionary) is problematic, due to mapping from forward
             #   reference proxies (which are themselves classes) to arbitrary
             #   (and thus usually user-defined) classes -- one or more of which

@@ -77,7 +77,7 @@ from typing import Optional
 
 # ....................{ PRIVATE ~ hints                    }....................
 _BeartypeForwardRefABC = type[
-    'beartype._check.forward.reference._fwdrefabc.BeartypeForwardRefABC']   # type: ignore[name-defined]
+    'beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC']   # type: ignore[name-defined]
 '''
 :pep:`585`-compliant type hint matching all instances of this forward reference
 metaclass.
@@ -653,55 +653,6 @@ class BeartypeForwardRefMeta(type):
         #to devhell incarnate), we instead:
         #* Refactor the "__resolved_hint_beartype__" property as follows:
         #  * Instead of resolving closure-local types to "BeartypeAny", we:
-        #    * *DYNAMICALLY GENERATE* a new fake type whose implementation
-        #      resembles:
-        #          #FIXME: Docstring us properly, please. *sigh*
-        #          class _BeartypePep484RefStrRelativeNestedTypeMetaclass(type):
-        #              '''
-        #              ...who even knows anymore!?
-        #              '''
-        #
-        #              def __instancecheck__(nested_type, obj: object) -> bool:
-        #                  return nested_type.__name__ == obj.__class__.__name__
-        #
-        #              #FIXME: *DEFINITELY WARRANTS UNIT TESTING*. Not even sure
-        #              #how to do that in a type hinting context.
-        #              #"type['WhoseWoodsTheseAreIThinkIKnow']"-style type hints
-        #              #should do it, I suppose. If that fails, maybe just write
-        #              #low-level unit tests specific to this metaclass?
-        #              #Actually, both sound like good ideas. This is fragile
-        #              #madness. *TEST, TEST, & MORE TEST*.
-        #              def __subclasscheck__(nested_type, other_type: type) -> bool:
-        #                  # Raise the standard "TypeError" exception if the
-        #                  # passed "other_type" isn't actually a type.
-        #                  issubclass(other_type, type)
-        #
-        #                  return any(
-        #                      nested_type.__name__ == other_supertype.__name__
-        #                      for other_supertype in other_type.__mro__
-        #                  )
-        #
-        #
-        #          #FIXME: Docstring us properly, please. *sigh*
-        #          class _BeartypePep484RefStrRelativeNestedType(
-        #              object,
-        #              metaclass=_BeartypePep484RefStrRelativeNestedTypeMetaclass,
-        #          ):
-        #              '''
-        #              ...who even knows anymore!?
-        #              '''
-        #
-        #              pass
-        #
-        #
-        #          _BeartypePep484RefStrRelativeNestedType_BASES = (
-        #              _BeartypePep484RefStrRelativeNestedType,)
-        #          '''
-        #          1-tuple containing *only* the :class:`._BeartypePep484RefStrRelativeNestedType`
-        #          superclass to reduce space and time consumption.
-        #          '''
-        #
-        #
         #          resolved_hint = make_type(
         #              type_name=cls.__hint_name_beartype__,
         #              #FIXME: Not *QUITE* right, but whatevahs. Close enough.
