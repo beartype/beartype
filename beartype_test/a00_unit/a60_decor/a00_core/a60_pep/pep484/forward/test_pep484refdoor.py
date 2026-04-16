@@ -50,7 +50,7 @@ def test_pep484_ref_door() -> None:
         is_bearable,
     )
     from beartype.roar import BeartypeDoorHintViolation
-    from pytest import raises
+    from beartype_test._util.error.pyterrraise import raises_uncached
     from typing import Union
 
     # ..................{ HINTS                              }..................
@@ -121,7 +121,7 @@ def test_pep484_ref_door() -> None:
     # been defined) *WITHOUT* raising unexpected exceptions.
     assert is_bearable(to_the_circling_air, to_the_ocean_waves) is False
     assert a_mist_arose.is_bearable(to_the_circling_air) is False
-    with raises(BeartypeDoorHintViolation):
+    with raises_uncached(BeartypeDoorHintViolation):
         die_if_unbearable(to_the_circling_air, to_the_ocean_waves)
-    with raises(BeartypeDoorHintViolation):
+    with raises_uncached(BeartypeDoorHintViolation):
         a_mist_arose.die_if_unbearable(to_the_circling_air)

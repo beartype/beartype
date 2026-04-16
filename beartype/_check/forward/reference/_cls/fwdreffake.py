@@ -23,7 +23,7 @@ from beartype._util.cls.utilclsmake import make_type
 # ....................{ PROXIERS                           }....................
 @callable_cached
 def proxy_hint_pep484_ref_str_nested(
-    hint_name: str, scope_name: str) -> type['_BeartypeForwardRefFakeABC']:
+    scope_name: str, hint_name: str) -> type['_BeartypeForwardRefFakeABC']:
     '''
     Create and return a new **forward reference fake proxy** (i.e., concrete
     :class:`._BeartypeForwardRefFakeABC` subclass) pretending to proxy calls to
@@ -182,7 +182,28 @@ class _BeartypeForwardRefFakeMeta(type):
     could countenance).
     '''
 
-    #FIXME: Docstring us properly, please. *sigh*
+    # ....................{ DUNDERS                        }....................
+    @callable_cached
+    def __repr__(cls: type['_BeartypeForwardRefFakeABC']) -> str:  # type: ignore[misc]
+        '''
+        Machine-readable string representing this forward reference fake proxy.
+
+        This dunder method is memoized for efficiency.
+        '''
+
+        # Return the machine-readable representation of this fake proxy.
+        #
+        # Note that this representation is intentionally prefixed by the
+        # @beartype-specific substring "<forwardreffake ", resembling the
+        # representation of classes (e.g., "<class 'bool'>"). Why? Because
+        # various other @beartype submodules ignore objects whose
+        # representations are prefixed by the "<" character, which are usefully
+        # treated as having a standard representation that is ignorable for most
+        # intents and purposes. This includes:
+        #   * The die_if_hint_pep604_inconsistent() raiser.
+        return f'<forwardreffake {cls.__module__}.{cls.__name__}>'
+
+    # ....................{ DUNDERS ~ pep : 3119           }....................
     def __instancecheck__(  # type: ignore[misc]
         fake_proxy: type['_BeartypeForwardRefFakeABC'], obj: object) -> bool:  # pyright: ignore
         '''
@@ -193,6 +214,10 @@ class _BeartypeForwardRefFakeMeta(type):
         encapsulating that prior call) referred to by the :pep:`484`-compliant
         stringified relative forward reference type hint proxied by the passed
         forward reference fake proxy.
+
+        The :func:`isinstance` builtin implicitly calls this
+        :pep:`3119`-compliant metaclass dunder method when passed a forward
+        reference fake proxy as its second parameter.
 
         Parameters
         ----------
@@ -213,21 +238,33 @@ class _BeartypeForwardRefFakeMeta(type):
         return _is_fake_proxy_superclass(fake_proxy, obj.__class__)
 
 
-    #FIXME: *DEFINITELY WARRANTS UNIT TESTING*. Not even sure how to do that in
-    #a type hinting context. "type['WhoseWoodsTheseAreIThinkIKnow']"-style type
-    #hints should do it, I suppose. If that fails, maybe just write low-level
-    #unit tests specific to this metaclass? Actually, both sound like good
-    #ideas. This is fragile madness. *TEST, TEST, & MORE TEST*.
     def __subclasscheck__(  # type: ignore[misc]
         fake_proxy: type['_BeartypeForwardRefFakeABC'], subclass: type) -> bool:  # pyright: ignore
+        '''
+        :data:`True` only if the passed type superficially appears to be a
+        subclass of the **nested type** (i.e., low-level class whose declaration
+        is confined to the body of a previously called higher-level callable and
+        thus inaccessible to the current call stack lacking a stack frame
+        encapsulating that prior call) referred to by the :pep:`484`-compliant
+        stringified relative forward reference type hint proxied by the passed
+        forward reference fake proxy.
 
-        # If this user-defined type is *NOT* a type, raise the standard
-        # "TypeError" exception expected to be raised by the issubclass()
-        # builtin in this common edge case. To do so trivially, we intentionally
-        # masquerade as the root "object" superclass. *shrug*
-        #
-        # Weird Python is worky Python. It do be like that.
-        issubclass(subclass, object)  # type: ignore[arg-type]
+        The :func:`issubclass` builtin implicitly calls this
+        :pep:`3119`-compliant metaclass dunder method when passed a forward
+        reference fake proxy as its second parameter.
+
+        Parameters
+        ----------
+        fake_proxy : type['_BeartypeForwardRefFakeABC']
+            Fake proxy to pretend to proxy this :func:`issubclass` check for.
+        subclass : object
+            User-defined type to pretend to test this fake proxy against.
+
+        Raises
+        ------
+        TypeError
+            If this user-defined type is *not* actually a type.
+        '''
 
         # Return true only if this user-defined type is a subclass of the nested
         # type referred to by the PEP 484-compliant stringified relative forward
@@ -271,17 +308,39 @@ def _is_fake_proxy_superclass(
     fake_proxy : type[_BeartypeForwardRefFakeABC]
         Forward reference fake proxy to test this subclass against.
     subclass : type
-        User-defined class to be tested as a superclass of this fake proxy.
+        User-defined type to be tested as a superclass of this fake proxy.
 
     Returns
     -------
     bool
         :data:`True` only if this fake proxy pretends to be a superclass of this
         user-defined class.
+
+    Raises
+    ------
+    TypeError
+        If this user-defined type is *not* actually a type.
     '''
-    assert isinstance(fake_proxy, _BeartypeForwardRefFakeABC), (
+
+    # Note that this test *CANNOT* be written as:
+    #     isinstance(fake_proxy, _BeartypeForwardRefFakeABC)
+    #
+    # Why? Because doing so would ignite infinite recursion by implicitly
+    # calling the _BeartypeForwardRefFakeMeta.__instancecheck__() dunder method,
+    # which directly calls this lower-level tester. Metaclasses do be like that.
+    # print(f'fake_proxy: {repr(fake_proxy}); class: {repr(fake_proxy.__class__)}')
+    assert fake_proxy.__class__ is _BeartypeForwardRefFakeMeta, (
         f'{repr(fake_proxy)} not forward reference fake proxy.')
-    assert isinstance(subclass, type), f'{repr(subclass)} not type.'
+
+    # If this type is *NOT* a type, raise the standard "TypeError" exception
+    # expected to be raised by the issubclass() builtin in this common edge
+    # case. issubclass() implicitly calls the
+    # _BeartypeForwardRefFakeMeta.__subclasscheck__() dunder method, which
+    # directly calls this lower-level tester. To do so trivially, we
+    # intentionally masquerade as the root "object" superclass.
+    #
+    # Weird Python is worky Python. Metaclasses do still be like that.
+    issubclass(subclass, object)  # type: ignore[arg-type]
 
     # Unqualified basename of this fake proxy, localized purely as a negligible
     # microoptimization. It's best not to ask questions. You're thinking them,
