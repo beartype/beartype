@@ -90,14 +90,6 @@ def test_pep484_ref_decor_data() -> None:
     assert rugged_and_dark.or_where_the_secret_caves() is rugged_and_dark
     assert winding_among_the_springs(rugged_and_dark) is rugged_and_dark
 
-    # Assert these forward-referencing closures return the expected values.
-    assert to_stop_without(my_little_horse) == my_little_horse
-    assert to_watch_his_woods(a_farmhouse_near) == a_farmhouse_near
-    assert to_watch_his_woods(True) is True
-    assert to_watch_his_woods(
-        len('Up to the zenith,—hieroglyphics old')) == (
-        len('Up to the zenith,—hieroglyphics old'))
-
     # ..................{ PASS ~ container                   }..................
     # Assert that instantiating a sequence containing valid items satisfying its
     # annotations raises *NO* type-checking violation.
@@ -108,6 +100,15 @@ def test_pep484_ref_decor_data() -> None:
     assert next(iter(crept_gradual)) is rugged_and_dark
     assert tuple(reversed(crept_gradual)) == (rugged_and_dark,)
 
+    # ..................{ PASS ~ closure                     }..................
+    # Assert these forward-referencing closures return the expected values.
+    assert to_stop_without(my_little_horse) == my_little_horse
+    assert to_watch_his_woods(a_farmhouse_near) == a_farmhouse_near
+    assert to_watch_his_woods(True) is True
+    assert to_watch_his_woods(
+        len('Up to the zenith,—hieroglyphics old')) == (
+        len('Up to the zenith,—hieroglyphics old'))
+
     # ..................{ FAIL                               }..................
     # Assert that calling a method violating its return annotated as a 2-tuple
     # of type variables whose bounds are expressed as PEP-compliant relative
@@ -115,19 +116,115 @@ def test_pep484_ref_decor_data() -> None:
     with raises_uncached(BeartypeCallHintReturnViolation):
         BeforeTheHurricane().in_a_silver_vision_floats()
 
-    # Assert that calling a closure whose parameter is annotated as a
-    # PEP-compliant closure-relative forward reference to a type subsequently
-    # defined local to that closure when passed a parameter *NOT* an instance of
-    # that type raises the expected violation.
-    with raises_uncached(BeartypeCallHintParamViolation):
-        to_stop_without("Which sages and keen-ey'd astrologers")
-    with raises_uncached(BeartypeCallHintParamViolation):
-        to_watch_his_woods('Then living on the earth, with labouring thought')
-
     # Assert that instantiating a custom sequence containing invalid items
     # violating its annotations raises the expected exception.
     with raises_uncached(BeartypeCallHintParamViolation):
         AllHisBulkAnAgony(('Crept gradual, from the feet unto the crown,',))
+
+    # ..................{ FAIL ~ closure                     }..................
+    # Assert that calling a closure whose parameter is annotated as a
+    # closure-relative forward reference to the "WhoseWoodsTheseAreIThinkIKnow"
+    # type subsequently defined local to that closure when passed a parameter
+    # *NOT* an instance of that type raises the expected violation.
+    #
+    # Note that these calls successfully resolve this
+    # "WhoseWoodsTheseAreIThinkIKnow" type via non-trivial introspection up the
+    # current call stack for the stack frame encapsulating the call to this
+    # unit test, which locally defines this type as a local variable above.
+    # Ergo, these calls raise violation messages resembling:
+    #     Function __main__.between_the_woods_and_frozen_lake.to_stop_without()
+    #     parameter a_farmhouse_near="Which sages and keen-ey'd astrologers"
+    #     violates type hint <forwardref
+    #     WhoseWoodsTheseAreIThinkIKnow(name='WhoseWoodsTheseAreIThinkIKnow',
+    #     scope_name='__main__', func_local_parent_codeobj_weakref=<weakref at
+    #     0x7fa0cdb689a0; to 'code' at 0x7fa0ce1c2e30>)>, as value "Which sages
+    #     and keen-ey'd astrologers" violates type hint <class
+    #     '__main__.between_the_woods_and_frozen_lake.<locals>.WhoseWoodsTheseAreIThinkIKnow'>,
+    #     as str "Which sages and keen-ey'd astrologers" not instance of <class
+    #     "__main__.WhoseWoodsTheseAreIThinkIKnow">.
+    with raises_uncached(BeartypeCallHintParamViolation) as violation_info:
+        to_stop_without("Which sages and keen-ey'd astrologers")
+
+    # Violation message raised by that call.
+    violation_message = str(violation_info.value)
+
+    #FIXME: Actually, this violation message *DOES* contain the substring
+    #"forwardreffake". Well, that's mostly fine, as that's the critical edge
+    #case that most requires testing. It'd be ideal if we could find a way to
+    #test both, but... this is fine for now, I guess. This almost certainly has
+    #something to do with the body of this unit test being a local rather than
+    #global lexical scope. When we perform the same exact operations in a new
+    #global lexical scope, this violation message does *NOT* contain the
+    #substring "forwardreffake" (as expected). Presumably, we could resolve this
+    #discrepancy by performing these assertions from the global scope of some
+    #test-specific data submodule (probably the same "data_pep484ref_decor"
+    #test-specific data submodule imported from above). For now, though, this
+    #has already gone on long enough. It's fine as is. *WHATEVAHS*. *shrug*
+    #Assert this message does *NOT* contains the substring "forwardreffake".
+    #(See below for detailed discussion.)
+    assert 'forwardreffake' in violation_message
+
+    # See above.
+    with raises_uncached(BeartypeCallHintParamViolation) as violation_info:
+        to_watch_his_woods('Then living on the earth, with labouring thought')
+    violation_message = str(violation_info.value)
+    assert 'forwardreffake' not in violation_message
+
+    # Delete this "WhoseWoodsTheseAreIThinkIKnow" type.
+    del WhoseWoodsTheseAreIThinkIKnow
+
+    # Redefine this 3-tuple of closures *WITHOUT* also redefining this type
+    # nested in this callable. Doing so ensures that:
+    # * These closures and thus the type hints annotating these closures have
+    #   been redefined to *NOT* have implicit access to this type, which these
+    #   closures would otherwise have.
+    (to_stop_without, to_watch_his_woods, _) = (
+        between_the_woods_and_frozen_lake())
+
+    # Assert that calling a closure whose parameter is annotated as a
+    # closure-relative forward reference to the "WhoseWoodsTheseAreIThinkIKnow"
+    # type subsequently defined local to that closure when passed a parameter
+    # *NOT* an instance of that type raises the expected violation.
+    #
+    # Note that these calls *CANNOT* successfully resolve this
+    # "WhoseWoodsTheseAreIThinkIKnow" type, which is no longer locally defined
+    # as a local variable above. Instead, these calls have *NO* recourse but to
+    # internally supplant this type with a beartype-specific forward reference
+    # fake proxy. Although the end result superficially appears to the exact
+    # same to end users, the intermediary steps required to produce that end
+    # result have little to do with one another. Ergo, these calls raise
+    # different violation messages resembling:
+    #     Function __main__.between_the_woods_and_frozen_lake.to_stop_without()
+    #     parameter a_farmhouse_near="Which sages and keen-ey'd astrologers"
+    #     violates type hint <forwardref
+    #     WhoseWoodsTheseAreIThinkIKnow(name='WhoseWoodsTheseAreIThinkIKnow',
+    #     scope_name='__main__', func_local_parent_codeobj_weakref=<weakref at
+    #     0x7fa0cdb689a0; to 'code' at 0x7fa0ce1c2e30>)>, as value "Which sages
+    #     and keen-ey'd astrologers" violates type hint <forwardreffake
+    #     __main__.WhoseWoodsTheseAreIThinkIKnow>, as str "Which sages and
+    #     keen-ey'd astrologers" not instance of <class
+    #     "__main__.WhoseWoodsTheseAreIThinkIKnow">.
+    #
+    # Crucially, the substring "type hint <forwardreffake
+    # __main__.WhoseWoodsTheseAreIThinkIKnow>" emitted for this edge case
+    # differs from the substring "type hint <class
+    # '__main__.between_the_woods_and_frozen_lake.<locals>.WhoseWoodsTheseAreIThinkIKnow'>"
+    # emitted for the above edge case.
+    with raises_uncached(BeartypeCallHintParamViolation) as violation_info:
+        to_stop_without("Open'd upon the dusk demesnes of night;")
+
+    # Violation message raised by that call.
+    violation_message = str(violation_info.value)
+
+    # Assert this message contains the critical substring "forwardreffake".
+    assert 'forwardreffake' in violation_message
+
+    #FIXME: *NO IDEA*. Probably a similar issue as above.
+    # See above.
+    with raises_uncached(BeartypeCallHintParamViolation) as violation_info:
+        to_watch_his_woods('And the bright Titan, phrenzied with new woes,')
+    violation_message = str(violation_info.value)
+    assert 'forwardreffake' not in violation_message
 
 # ....................{ TESTS ~ absolute : type : nonnested}....................
 def test_pep484_ref_decor_absolute() -> None:

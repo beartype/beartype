@@ -59,7 +59,10 @@ from beartype._check.metadata.hint.hintsane import (
     TupleHintSane,
 )
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.typing.datatyping import HintSignOrNoneOrSentinel
+from beartype._data.typing.datatyping import (
+    HintSignOrNoneOrSentinel,
+    TypeException,
+)
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsignset import (
@@ -85,10 +88,9 @@ from typing import (
 # ....................{ CLASSES                            }....................
 class ViolationCause(object):
     '''
-    **Type-checking violation cause finder** (i.e., object recursively
-    fabricating the human-readable string describing the failure of the pith
-    associated with this finder to satisfy this PEP-compliant type hint also
-    associated with this finder).
+    **Type-checking violation cause** (i.e., object recursively fabricating the
+    human-readable string describing the failure of the pith associated with
+    this cause to satisfy the type hint associated with this cause).
 
     Attributes
     ----------
@@ -110,6 +112,8 @@ class ViolationCause(object):
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
         current decoration of the decorated callable or class).
+    exception_cls : type[Exception]
+        Type of violation to be raised.
     exception_prefix : str
         Human-readable label describing the parameter or return value from
         which this object originates, typically embedded in exceptions raised
@@ -170,13 +174,14 @@ class ViolationCause(object):
         'cause_indent',
         'cause_str_or_none',
         'conf',
+        'exception_cls',
+        'exception_prefix',
         'hint',
         'hint_sane',
         'hint_sign',
         'pith',
         'pith_name',
         'random_int',
-        'exception_prefix',
         '_hint_childs_sane',
     )
 
@@ -187,13 +192,14 @@ class ViolationCause(object):
         cause_indent: str
         cause_str_or_none: Optional[str]
         conf: BeartypeConf
+        exception_cls: TypeException
+        exception_prefix: str
         hint: Hint
         hint_sane: HintSane
         hint_sign: Optional[HintSign]
         pith: Any
         pith_name: Optional[str]
         random_int: Optional[int]
-        exception_prefix: str
         _hint_childs_sane: Union[Iota, TupleHintSane]
 
     # ..................{ CLASS VARIABLES ~ set              }..................
@@ -201,6 +207,7 @@ class ViolationCause(object):
         'call_meta',
         'cause_indent',
         'conf',
+        'exception_cls',
         'exception_prefix',
         'hint_sane',
         'pith',
@@ -242,6 +249,7 @@ class ViolationCause(object):
         pith: Any,
         pith_name: Optional[str],
         random_int: Optional[int],
+        exception_cls: TypeException,
         exception_prefix: str,
 
         # Optional parameters.
@@ -317,6 +325,10 @@ class ViolationCause(object):
             f'{repr(pith_name)} not string or "None".')
         assert isinstance(random_int, NoneTypeOr[int]), (
             f'{repr(random_int)} not integer or "None".')
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not type.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception type.')
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
@@ -334,6 +346,7 @@ class ViolationCause(object):
         self.cause_indent = cause_indent
         self.cause_str_or_none = cause_str_or_none
         self.conf = conf
+        self.exception_cls = exception_cls
         self.exception_prefix = exception_prefix
         self.hint_sane = hint_sane
         self.hint_sign = hint_sign  # pyright: ignore
@@ -367,6 +380,7 @@ class ViolationCause(object):
             f'pith={repr(self.pith)}, '
             f'pith_name={repr(self.pith_name)}, '
             f'random_int={repr(self.random_int)}, '
+            f'exception_cls={repr(self.exception_cls)}, '
             f'exception_prefix={repr(self.exception_prefix)}, '
             f')'
         )
@@ -479,7 +493,7 @@ class ViolationCause(object):
         satisfy the corresponding hint transitively nested in the hint passed to
         that function.
 
-        For example, consider the type hint ``List[Union[int, str]]`` describing
+        For example, consider the type hint ``list[Union[int, str]]`` describing
         a list whose items are either integers or strings and the list
         ``list(range(256)) + [False,]`` consisting of the integers 0 through 255
         followed by boolean :data:`False`. Since that list is a sequence, the

@@ -562,7 +562,8 @@ class BeartypeForwardRefMeta(type):
 
         # ....................{ IMPORTS                    }....................
         # Avoid circular import dependencies.
-        from beartype._check.error.errmain import get_hint_object_violation
+        from beartype._check.error.errmain import (
+            get_hint_object_violation_message)
         from beartype._check.metadata.call.callmetaexternal import (
             BEARTYPE_CALL_EXTERNAL_META)
 
@@ -582,12 +583,17 @@ class BeartypeForwardRefMeta(type):
         resolved_hint = cls.__resolved_hint_beartype__
 
         # ....................{ MESSAGE                    }....................
-        # Human-readable type-checking violation exception detailing the failure
-        # of this object to satisfy the target referent type hint referred to by
-        # this forward reference proxy under the same beartype configuration
-        # employed by the is_bearable() call performed by the sibling
+        # Type-checking violation message describing the failure of this object
+        # to satisfy the target referent type hint referred to by this forward
+        # reference proxy under the same beartype configuration employed by the
+        # sibling is_bearable() call performed by the sibling
         # __instancecheck__() dunder method.
-        violation = get_hint_object_violation(
+        #
+        # Note that the *ONLY* legitimate caller of this beartype-specific
+        # dunder method is the "beartype._check.error" subpackage, which embeds
+        # this message as a substring of a larger message of a subsequently
+        # raised larger-scale violation exception.
+        violation_message = get_hint_object_violation_message(
             # Beartype external call metadata singleton, required to
             # transparently resolve the extreme edge case (and possibly even
             # PEP-noncompliant abuse or misuse) in which this beartype-specific
@@ -611,24 +617,14 @@ class BeartypeForwardRefMeta(type):
             # sibling __instancecheck__() dunder method, which implicitly
             # leverages this exact same singleton for the same purpose.
             call_meta=BEARTYPE_CALL_EXTERNAL_META,
-            hint=resolved_hint,
-            obj=obj,
             # See the is_bearable() call performed by the sibling
             # __instancecheck__() dunder method for further details.
             conf=BEARTYPE_CONF_NONRANDOM,
-            # Nonsense required by the get_hint_object_violation() API. Our
-            # younger self thought he was doing a good thing. YOUNGER SELF!!!!!!
-            exception_prefix='',
+            hint=resolved_hint,
+            obj=obj,
         )
 
-        # Human-readable message raised by this violation. The *ONLY* legitimate
-        # caller of this beartype-specific dunder method is the
-        # "beartype._check.error" subpackage, which embeds this message as a
-        # substring of a larger message of a subsequently raised larger-scale
-        # violation exception. To improve the readability of the resulting
-        # message, the first character of this message is lower-cased.
-        violation_message = lowercase_str_char_first(str(violation))
-
+        # ....................{ RETURN                     }....................
         # Return this message.
         return violation_message
 

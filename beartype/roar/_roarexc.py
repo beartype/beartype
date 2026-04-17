@@ -99,6 +99,10 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
         ):
             # Then uppercase only this character for readability.
             message = f'{message[0].upper()}{message[1:]}'
+        # Else, either this message is either empty or consists of only one
+        # character *OR* this message contains at least two characters and the
+        # first character of this message is already uppercase. In either case,
+        # preserve this message as is.
 
         # Defer to the superclass constructor.
         super().__init__(message, *args, **kwargs)
