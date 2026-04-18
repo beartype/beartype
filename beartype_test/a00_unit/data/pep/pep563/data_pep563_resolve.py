@@ -22,10 +22,10 @@ point of this submodule is to explicitly call and thus exercise that resolver!
 from __future__ import annotations
 from beartype.door import die_if_unbearable
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype.typing import Generic
 from beartype._data.typing.datatyping import T
 from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
     get_hintable_pep649749_annotations)
+from typing import Generic
 
 # ....................{ CLASSES                            }....................
 class ToAvariceOrPride(Generic[T]):

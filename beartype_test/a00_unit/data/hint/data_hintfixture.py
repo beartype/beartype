@@ -43,31 +43,6 @@ def hints_ignorable(
 
 # ....................{ FIXTURES ~ hints : meta            }....................
 @fixture(scope='session')
-def hints_meta(hints_pep_meta, hints_nonpep_meta) -> (
-    'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]'):
-    '''
-    Session-scoped fixture yielding a tuple of **PEP-agnostic type hint
-    metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata`
-    instances, each describing a sample type hint exercising an edge case in the
-    :mod:`beartype` codebase -- including both PEP-compliant and -noncompliant
-    type hints).
-
-    Parameters
-    ----------
-    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
-        Tuple of PEP-compliant type hint metadata describing PEP-compliant type
-        hints exercising edge cases in the :mod:`beartype` codebase.
-    hints_nonpep_meta : Tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]
-        Tuple of PEP-noncompliant type hint metadata describing PEP-noncompliant
-        type hints exercising edge cases in the :mod:`beartype` codebase.
-    '''
-
-    # One world. One-liner. Let's get together and code alright.
-    yield hints_pep_meta + hints_nonpep_meta
-
-
-@fixture(scope='session')
 def hints_reduction_meta() -> (
     'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]'):
     '''
@@ -110,12 +85,50 @@ def hints_reduction_meta() -> (
     # Yield a tuple coerced from this list.
     yield tuple(_hints_reduction_meta)
 
+# ....................{ FIXTURES ~ hints : meta : pith     }....................
+@fixture(scope='session')
+def hints_piths_meta(hints_piths_pep_meta, hints_piths_nonpep_meta) -> (
+    'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]'):
+    '''
+    Session-scoped fixture yielding a tuple of **PEP-agnostic type hint
+    metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata`
+    instances, each describing a sample type hint exercising an edge case in the
+    :mod:`beartype` codebase paired with a tuple of zero or more related objects
+    either satisfying or violating this hint -- including both PEP-compliant and
+    -noncompliant type hints).
+
+    Caveats
+    -------
+    **Unit tests themselves should strongly prefer the higher-level**
+    :func:`.iter_hints_piths_meta` **fixture instead.** This lower-level fixture
+    is intended to be directly required only by that higher-level fixture, which
+    trivializes the non-trivial
+    :attr:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata.piths_meta`
+    instance variable defined by each item yielded by this fixture. That
+    instance variable is sufficiently non-trivial to safely use by downstream
+    unit tests that it's effectively unsafe by definition.
+
+    Parameters
+    ----------
+    hints_piths_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+        Tuple of PEP-compliant type hint metadata describing PEP-compliant type
+        hints exercising edge cases in the :mod:`beartype` codebase.
+    hints_piths_nonpep_meta : Tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]
+        Tuple of PEP-noncompliant type hint metadata describing PEP-noncompliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
+    '''
+
+    # One world. One-liner. Let's get together and code alright.
+    yield hints_piths_pep_meta + hints_piths_nonpep_meta
+
+
 
 @fixture(scope='session')
-def iter_hints_piths_meta(hints_meta) -> (
+def iter_hints_piths_meta(hints_piths_meta) -> (
     'collections.abc.Callable[[], collections.abc.Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]'):
     '''
-    Session-scoped fixture yielding a **PEP-agnostic type hint-pith metadata
+    Session-scoped fixture yielding a **PEP-agnostic hint-pith metadata
     generator** (i.e., factory function creating and returning a generator
     iteratively yielding
     :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata`
@@ -126,19 +139,43 @@ def iter_hints_piths_meta(hints_meta) -> (
 
     Caveats
     -------
-    This fixture *cannot* be directly iterated. Instead, this fixture must be
+    **This fixture cannot be directly iterated.** Instead, this fixture must be
     first called and then iterated by callers. Why? Because
     :mod:`pytest.fixture`. By design, pytest ignores all ``yield`` statements in
     a fixture except the first. Ergo, the only means of defining a fixture
     generator is to define a fixture returning a generator closure. See also
-    `this relevant StackOverflow answer <answer_>`__.
+    `this relevant StackOverflow answer <answer_>`__. Blame pytest. *We do.*
 
+    **This fixture intentionally yields each metadata instance (and thus each
+    unique hint and pith combination) twice.** Why? To validate that:
+
+    * Memoization behaves as expected across repeated @beartype decorations on
+      different callables annotated by the same hints.
+    * Downstream unit tests requiring this fixture are resilient against
+      repeated invocations in the same Python process. Previously, they weren't.
+      Why? Because various tests were accidentally non-idempotent and thus
+      suffered `unintended ordering issues with other tests <issue_>`__. That
+      includes themselves when run repeatedly in the same Python process, which
+      this test suite does *not* do but which third-party packager ecosystems
+      outside @beartype control (e.g., the Arch Linux User Repository (AUR)) do
+      do. Why? Because most warnings tested by downstream unit tests are issued
+      under memoization and thus issued only once by the first invocation of
+      those tests when explicitly called *before* other tests. Crucially,
+      however, note that tests attempting to deterministically validate that the
+      expected warnings are issued by the expected hints *must* explicitly call
+      the low-level :func:`.beartype._util.cache.utilcacheclear.clear_caches`
+      function for each metadata instance yielded by this generator closure.
+      Doing so clears warning memoization that would otherwise obstruct
+      deterministic validation of warning issuance.
+    
     .. _answer:
        https://stackoverflow.com/a/66397211/2809027
+    .. _issue:
+       https://github.com/beartype/beartype/issues/631
 
     Parameters
     ----------
-    hints_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]
+    hints_piths_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]
         List of PEP-agnostic type hint metadata describing sample PEP-agnostic
         type hints exercising edge cases in the :mod:`beartype` codebase.
 
@@ -162,7 +199,7 @@ def iter_hints_piths_meta(hints_meta) -> (
     RANGE_2 = (None, None,)
 
     # ....................{ CLOSURE                        }....................
-    def hints_piths_meta() -> 'Iterable[HintPithMetadata]':
+    def _iter_hints_piths_meta_closure() -> 'Iterable[HintPithMetadata]':
         '''
         **PEP-agnostic type hint-pith metadata generator** (i.e., factory
         function creating and returning a generator iteratively yielding
@@ -173,7 +210,7 @@ def iter_hints_piths_meta(hints_meta) -> (
         '''
 
         # For each predefined type hint and associated metadata...
-        for hint_meta in hints_meta:
+        for hint_meta in hints_piths_meta:
             # print(f'Type-checking type hint {repr(hint_meta.hint)}...')
 
             # If this hint is currently unsupported, continue to the next.
@@ -181,9 +218,7 @@ def iter_hints_piths_meta(hints_meta) -> (
                 continue
             # Else, this hint is currently supported.
 
-            # Repeat the following logic twice. Why? To exercise memoization
-            # across repeated @beartype decorations on different callables
-            # annotated by the same hints.
+            # Repeat the following logic twice. See the docstring caveats.
             for _ in RANGE_2:
                 # For each pith either satisfying or violating this hint...
                 for pith_meta in hint_meta.piths_meta:
@@ -250,7 +285,7 @@ def iter_hints_piths_meta(hints_meta) -> (
 
     # ....................{ YIELD                          }....................
     # Yield this closure.
-    yield hints_piths_meta
+    yield _iter_hints_piths_meta_closure
 
 # ....................{ FIXTURES ~ hints : non-pep         }....................
 @fixture(scope='session')

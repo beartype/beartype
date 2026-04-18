@@ -17,7 +17,7 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ tester                     }....................
-def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
+def test_is_hint_pep585_builtin(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_builtin_subbed`
@@ -25,7 +25,7 @@ def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     '''
@@ -35,12 +35,12 @@ def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
         is_hint_pep585_builtin_subbed)
 
     # Assert this tester accepts only PEP 585-compliant type hints.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         assert is_hint_pep585_builtin_subbed(hint_pep_meta.hint) is (
             hint_pep_meta.is_pep585_builtin_subbed)
 
 
-def test_is_hint_pep585_generic(hints_pep_meta) -> None:
+def test_is_hint_pep585_generic(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_generic`
@@ -48,7 +48,7 @@ def test_is_hint_pep585_generic(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     '''
@@ -58,12 +58,12 @@ def test_is_hint_pep585_generic(hints_pep_meta) -> None:
         is_hint_pep585_generic)
 
     # Assert this tester accepts only PEP 585-compliant generics.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         assert is_hint_pep585_generic(hint_pep_meta.hint) is (
             hint_pep_meta.is_pep585_generic)
 
 # ....................{ TESTS ~ getter                     }....................
-def test_get_hint_pep585_generic_typeargs_packed(hints_pep_meta) -> None:
+def test_get_hint_pep585_generic_typeargs_packed(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep585.get_hint_pep585_generic_typeargs_packed`
@@ -71,7 +71,7 @@ def test_get_hint_pep585_generic_typeargs_packed(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     '''
@@ -87,7 +87,7 @@ def test_get_hint_pep585_generic_typeargs_packed(hints_pep_meta) -> None:
 
     # ....................{ ASSERTS                        }....................
     # For each PEP-compliant test hint...
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # If this hint is a PEP 585-compliant generic...
         if hint_pep_meta.is_pep585_generic:
             # Tuple of all type variables discovered by this getter.

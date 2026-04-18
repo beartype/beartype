@@ -42,7 +42,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
+    hints_piths_pep_meta = []
 
     # ..................{ FACTORIES                          }..................
     # For each PEP-specific type hint factory importable from each currently
@@ -111,7 +111,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
 
         # ..................{ LISTS                          }..................
         # Add PEP-specific type hint metadata to this list.
-        hints_pep_meta.extend((
+        hints_piths_pep_meta.extend((
             # ................{ TYPEDDICT                      }................
             # Empty typed dictionary. Look, this is ridiculous. What can you do?
             HintPepMetadata(
@@ -331,7 +331,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
                 Pep589484TypedDictT)
 
             # Add version-specific type hint metadata to this list.
-            hints_pep_meta.extend((
+            hints_piths_pep_meta.extend((
                 # ................{ GENERICS                   }................
                 # Non-empty totalizing unsubscripted typed dictionary generic
                 # parametrized by one type variable.
@@ -431,4 +431,4 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta

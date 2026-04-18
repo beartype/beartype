@@ -18,7 +18,7 @@ This submodule unit tests the public API of the private
 # from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ attr                       }....................
-def test_get_hint_pep_args(hints_pep_meta) -> None:
+def test_get_hint_pep_args(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_args`
@@ -26,7 +26,7 @@ def test_get_hint_pep_args(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -53,7 +53,7 @@ def test_get_hint_pep_args(hints_pep_meta) -> None:
 
     # ....................{ PASS                           }....................
     # For each PEP-compliant hint, assert this getter returns...
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # Localize this hint to simplify debugging.
         hint = hint_pep_meta.hint
 
@@ -92,14 +92,14 @@ def test_get_hint_pep_args(hints_pep_meta) -> None:
         get_hint_pep_args(TheWholeMammothBrood)
 
 
-def test_get_hint_pep_typeargs_packed(hints_pep_meta) -> None:
+def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
     '''
     Test the :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typeargs_packed`
     getter.
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -124,7 +124,7 @@ def test_get_hint_pep_typeargs_packed(hints_pep_meta) -> None:
 
     # ....................{ PASS                           }....................
     # For each PEP-compliant test hint...
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # Tuple of all packed type parameters discovered by this getter.
         hint_typeargs_packed = get_hint_pep_typeargs_packed(hint_pep_meta.hint)
         assert isinstance(hint_typeargs_packed, tuple)
@@ -163,7 +163,7 @@ def test_get_hint_pep_typeargs_packed(hints_pep_meta) -> None:
         get_hint_pep_typeargs_packed(HisSovereigntyAndRuleAndMajesty)
 
 # ....................{ TESTS ~ origin : type              }....................
-def test_get_hint_pep_type_isinstanceable(hints_pep_meta) -> None:
+def test_get_hint_pep_type_isinstanceable(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_origin_type_isinstanceable`
@@ -171,7 +171,7 @@ def test_get_hint_pep_type_isinstanceable(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -184,7 +184,7 @@ def test_get_hint_pep_type_isinstanceable(hints_pep_meta) -> None:
     from pytest import raises
 
     # Assert this getter...
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # Returns the expected type origin for all PEP-compliant type hints
         # originating from an origin type.
         if hint_pep_meta.isinstanceable_type is not None:
@@ -202,7 +202,7 @@ def test_get_hint_pep_type_isinstanceable(hints_pep_meta) -> None:
             get_hint_pep_origin_type_isinstanceable(not_hint_pep)
 
 
-def test_get_hint_pep_type_isinstanceable_or_none(hints_pep_meta) -> None:
+def test_get_hint_pep_type_isinstanceable_or_none(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_origin_type_isinstanceable_or_none`
@@ -210,7 +210,7 @@ def test_get_hint_pep_type_isinstanceable_or_none(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -222,7 +222,7 @@ def test_get_hint_pep_type_isinstanceable_or_none(hints_pep_meta) -> None:
 
     # Assert this getter returns the expected type origin for all PEP-compliant
     # type hints.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         assert get_hint_pep_origin_type_isinstanceable_or_none(
             hint_pep_meta.hint) is hint_pep_meta.isinstanceable_type
 

@@ -35,14 +35,14 @@ def hints_pep586_meta() -> 'list[HintPepMetadata]':
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
+    hints_piths_pep_meta = []
 
     # ..................{ FACTORIES                          }..................
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module...
     for Literal in get_typing_attrs('Literal'):
         # Add PEP 586-specific test type hints to this tuple global.
-        hints_pep_meta.extend((
+        hints_piths_pep_meta.extend((
             # ..............{ LITERALS                           }..............
             # Literal "None" singleton. Look, this is ridiculous. What you do?
             HintPepMetadata(
@@ -357,4 +357,4 @@ def hints_pep586_meta() -> 'list[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta

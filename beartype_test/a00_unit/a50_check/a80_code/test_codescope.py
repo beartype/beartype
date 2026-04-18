@@ -339,30 +339,30 @@ def test_add_func_scope_types() -> None:
 #         '''
 #
 #         # Type-checking metadata queue to be returned.
-#         hints_meta = HintsMeta()
+#         hints_piths_meta = HintsMeta()
 #
 #         # Initialize this queue by the passed parameters.
-#         hints_meta.func_wrapper_locals = func_wrapper_locals
-#         hints_meta.hint_refs_type_basename = hint_refs_type_basename
+#         hints_piths_meta.func_wrapper_locals = func_wrapper_locals
+#         hints_piths_meta.hint_refs_type_basename = hint_refs_type_basename
 #
 #         # Return this queue.
-#         return hints_meta
+#         return hints_piths_meta
 #
 #     # ....................{ PASS                           }....................
 #     # For each absolute forward reference...
 #     for forwardref_qualified in FORWARDREFS_QUALIFIED:
 #         # Type-checking metadata queue storing this reference.
-#         hints_meta = _make_hints_meta(
+#         hints_piths_meta = _make_hints_meta(
 #             func_wrapper_locals=func_wrapper_locals,
 #             hint_refs_type_basename=hint_refs_type_basename,
 #         )
 #
 #         # Express a fully-qualified forward reference to a non-existing class.
 #         forwardref_expr = express_hints_meta_scope_type_ref(
-#             hints_meta=hints_meta, hint=forwardref_qualified)
+#             hints_piths_meta=hints_piths_meta, hint=forwardref_qualified)
 #
 #         # Assert this set remains empty.
-#         assert hints_meta.hint_refs_type_basename is None
+#         assert hints_piths_meta.hint_refs_type_basename is None
 #
 #         # Forward reference proxy added to this scope by the above call.
 #         forwardref = func_wrapper_locals[forwardref_expr]
@@ -372,7 +372,7 @@ def test_add_func_scope_types() -> None:
 #
 #         # Assert this function rexpresses the same forward reference.
 #         forwardref_expr_again = express_hints_meta_scope_type_ref(
-#             hints_meta=_make_hints_meta(
+#             hints_piths_meta=_make_hints_meta(
 #                 func_wrapper_locals=func_wrapper_locals,
 #                 hint_refs_type_basename=hint_refs_type_basename,
 #             ),
@@ -383,24 +383,24 @@ def test_add_func_scope_types() -> None:
 #     # For each relative forward reference...
 #     for forwardref_unqualified in FORWARDREFS_UNQUALIFIED:
 #         # Type-checking metadata queue storing this reference.
-#         hints_meta = _make_hints_meta(
+#         hints_piths_meta = _make_hints_meta(
 #             func_wrapper_locals=func_wrapper_locals,
 #             hint_refs_type_basename=hint_refs_type_basename,
 #         )
 #
 #         # Express an unqualified forward reference to a non-existing class.
 #         forwardref_expr = express_hints_meta_scope_type_ref(
-#             hints_meta=hints_meta, hint=forwardref_unqualified)
+#             hints_piths_meta=hints_piths_meta, hint=forwardref_unqualified)
 #
 #         # Assert this expression references this class.
 #         assert CLASSNAME_UNQUALIFIED in forwardref_expr
 #
 #         # Assert this set now contains only this classname.
-#         assert hints_meta.hint_refs_type_basename == {CLASSNAME_UNQUALIFIED,}
+#         assert hints_piths_meta.hint_refs_type_basename == {CLASSNAME_UNQUALIFIED,}
 #
 #         # Assert this function rexpresses the same forward reference.
 #         forwardref_expr_again = express_hints_meta_scope_type_ref(
-#             hints_meta=_make_hints_meta(
+#             hints_piths_meta=_make_hints_meta(
 #                 func_wrapper_locals=func_wrapper_locals,
 #                 hint_refs_type_basename=hint_refs_type_basename,
 #             ),
@@ -413,7 +413,7 @@ def test_add_func_scope_types() -> None:
 #     # that are *NOT* forward references.
 #     with raises(BeartypeDecorHintForwardRefException):
 #         express_hints_meta_scope_type_ref(
-#             hints_meta=_make_hints_meta(
+#             hints_piths_meta=_make_hints_meta(
 #                 hint_refs_type_basename=hint_refs_type_basename,
 #                 func_wrapper_locals=func_wrapper_locals,
 #             ),

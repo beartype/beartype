@@ -34,13 +34,13 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
+    hints_piths_pep_meta = []
 
     # ..................{ UNSUPPORTED                        }..................
     # If beartype does *NOT* deeply support "numpy.typing.NDArray" type hints
     # under the active Python interpreter, return the empty list.
     if not is_package_numpy():
-        return hints_pep_meta
+        return hints_piths_pep_meta
     # Else, beartype deeply supports "numpy.typing.NDArray" type hints under
     # the active Python interpreter.
 
@@ -86,7 +86,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
 
     # ..................{ LISTS                              }..................
     # Add PEP-specific type hint metadata to this list.
-    hints_pep_meta.extend((
+    hints_piths_pep_meta.extend((
         # ................{ NUMPY ~ array                      }................
         # Untyped unsubscripted NumPy array.
         HintPepMetadata(
@@ -271,4 +271,4 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta

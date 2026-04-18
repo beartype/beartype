@@ -189,25 +189,24 @@ class HintNonpepMetadata(object):
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for this type hint).
-    is_ignorable : bool
+    is_ignorable : bool, default: False
         :data:`True` only if this hint is safely ignorable by the
         :func:`beartype.beartype` decorator. Defaults to :data:`False`.
-    is_needs_cls_stack : bool
+    is_needs_cls_stack : bool, default: False
         :data:`True` only if this hint is **type stack-dependent** (i.e., if
         :mod:`beartype` requires the tuple of all classes lexically declaring
         the class variables or methods annotated by this hint to generate code
         type-checking this hint). Defaults to :data:`False`.
-    is_supported : bool
+    is_supported : bool, default: True
         :data:`True` only if this hint is currently supported by
-        the :func:`beartype.beartype` decorator. Defaults to :data:`False`.
-    piths_meta : Iterable[PithSatisfiedMetadata]
+        the :func:`beartype.beartype` decorator. Defaults to :data:`True`.
+    piths_meta : Iterable[PithSatisfiedMetadata], default: ()
         Iterable of zero or more **(un)satisfied metadata objects** (i.e.,
-        :class:`PithSatisfiedMetadata` and
-        :class:`PithUnsatisfiedMetadata` instances), each describing an
-        arbitrary object either satisfying or violating this hint when passed as
-        a parameter *or* returned as a value annotated by this hint. Defaults to
-        the empty tuple.
-    warning_type : Optional[Type[Warning]]
+        :class:`PithSatisfiedMetadata` and :class:`PithUnsatisfiedMetadata`
+        instances), each describing an arbitrary object either satisfying or
+        violating this hint when either passed as a parameter or returned as a
+        value annotated by this hint. Defaults to the empty tuple.
+    warning_type : Optional[Type[Warning]], default: None
         Either:
 
         * If the :func:`beartype.beartype` decorator unconditionally emits a
@@ -340,15 +339,15 @@ class HintPepMetadata(HintNonpepMetadata):
 
         * If this hint is subscripted, :attr:`isinstanceable_type`.
         * Else, :data:`None`.
-    typehint_cls : Optional[Type[beartype.door.TypeHint]]
-        Concrete :class:`beartype.door.TypeHint` subclass responsible for
-        handling this hint if any *or* :data:`None` otherwise (e.g., if the
-        :mod:`beartype.door` submodule has yet to support this hint).
     typeargs_packed : Tuple[TypeVar, ...], optional
         Tuple of the zero or more :pep:`484`-compliant **type variables** (i.e.,
         :class:`typing.TypeVar` objects) parametrizing this hint. Defaults to
         the empty tuple, implying this hint to be parametrized by *no* type
         variables.
+    typehint_cls : Optional[Type[beartype.door.TypeHint]]
+        Concrete :class:`beartype.door.TypeHint` subclass responsible for
+        handling this hint if any *or* :data:`None` otherwise (e.g., if the
+        :mod:`beartype.door` submodule has yet to support this hint).
 
     All remaining keyword arguments are passed as is to the superclass
     :meth:`HintNonpepMetadata.__init__` method.
@@ -371,23 +370,24 @@ class HintPepMetadata(HintNonpepMetadata):
         is_typing: Optional[bool] = None,
         isinstanceable_type: Optional[type] = None,
         generic_type: Optional[type] = None,
-        typehint_cls: Optional[type['beartype.door.TypeHint']] = None,
         typeargs_packed: 'TuplePep484612646TypeArgsPacked' = (),
+        typehint_cls: Optional[type['beartype.door.TypeHint']] = None,
         **kwargs
     ) -> None:
 
         # Defer test-specific imports.
+        from beartype.door import TypeHint
         from beartype._data.hint.sign.datahintsigncls import HintSign
         from beartype._util.hint.utilhintget import get_hint_repr
         from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
             is_hint_pep484612646_typearg_packed)
-        from beartype.door import TypeHint
 
         # Validate passed non-variadic parameters.
         assert isinstance(pep_sign, HintSign), f'{repr(pep_sign)} not sign.'
         assert isinstance(isinstanceable_type, _NoneTypeOrType), (
             f'{repr(isinstanceable_type)} neither class nor "None".')
-        assert isinstance(typeargs_packed, tuple), f'{repr(typeargs_packed)} not tuple.'
+        assert isinstance(typeargs_packed, tuple), (
+            f'{repr(typeargs_packed)} not tuple.')
         assert all(
             is_hint_pep484612646_typearg_packed(typevar)
             for typevar in typeargs_packed

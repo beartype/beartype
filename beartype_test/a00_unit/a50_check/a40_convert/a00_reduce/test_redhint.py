@@ -89,7 +89,7 @@ def test_reduce_hint(
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by this test. Urgh!
 @ignore_warnings(DeprecationWarning)
-def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
+def test_reduce_hint_ignorable(hints_piths_pep_meta, hints_ignorable) -> None:
     '''
     Test the private
     :func:`beartype._check.convert._reduce.redmain.reduce_hint` reducer with
@@ -97,7 +97,7 @@ def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         Tuple of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     hints_ignorable : frozenset
@@ -124,7 +124,7 @@ def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
     # Assert this tester:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # True only if this hint reduces to the ignorable "Any" singleton.
         is_hint_ignorable = (
             reduce_hint_any(hint_pep_meta.hint) is

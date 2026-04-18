@@ -18,7 +18,7 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
+def test_get_hint_pep484585_callable_params_and_return(hints_piths_pep_meta) -> None:
     '''
     Test both the ``get_hint_pep484585_callable_params`` and
     ``get_hint_pep484585_callable_return`` getters declared by the
@@ -30,7 +30,7 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -64,7 +64,7 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
     # globally defined type hints.
 
     # Assert these getters...
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # Return zero or more arguments for PEP-compliant callable type hints.
         if hint_pep_meta.pep_sign is HintSignCallable:
             hint_callable_params = get_hint_pep484585_callable_params(

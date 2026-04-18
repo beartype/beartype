@@ -347,13 +347,13 @@ def test_door_typehint_len():
 #FIXME: Implement this up, please. We'll want to pay particular attention to
 #edge cases in those "TypeHint" implementations overriding the _make_args()
 #superclass method. In all likelihood, this will warrant yet another fixture.
-# def test_door_typehint_args(hints_pep_meta, hints_ignorable) -> None:
+# def test_door_typehint_args(hints_piths_pep_meta, hints_ignorable) -> None:
 #     '''
 #     Test the read-only :meth:`beartype.door.TypeHint.args` property.
 #
 #     Parameters
 #     ----------
-#     hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+#     hints_piths_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
 #         Tuple of type hint metadata describing sample type hints exercising edge
 #         cases in the :mod:`beartype` codebase.
 #     hints_ignorable : frozenset
@@ -368,7 +368,7 @@ def test_door_typehint_len():
 #     # Assert this method:
 #     # * Accepts unignorable PEP-compliant type hints.
 #     # * Rejects ignorable PEP-compliant type hints.
-#     for hint_pep_meta in hints_pep_meta:
+#     for hint_pep_meta in hints_piths_pep_meta:
 #         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
 #         #all currently unsupported type hints. Most of these will be
 #         #"BeartypeDoorNonpepException", but there are some covariant type hints
@@ -382,13 +382,13 @@ def test_door_typehint_len():
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by this test. Urgh!
 @ignore_warnings(DeprecationWarning)
-def test_door_typehint_is_ignorable(hints_pep_meta, hints_ignorable) -> None:
+def test_door_typehint_is_ignorable(hints_piths_pep_meta, hints_ignorable) -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.is_ignorable` property.
 
     Parameters
     ----------
-    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         Tuple of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     hints_ignorable : frozenset
@@ -417,7 +417,7 @@ def test_door_typehint_is_ignorable(hints_pep_meta, hints_ignorable) -> None:
     # Assert this property:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # Hint to be tested.
         hint = hint_pep_meta.hint
 

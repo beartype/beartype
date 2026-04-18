@@ -143,7 +143,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ LISTS                              }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = [
+    hints_piths_pep_meta = [
         # ................{ CALLABLE                           }................
         # Callable accepting no parameters and returning a string.
         HintPepMetadata(
@@ -2837,7 +2837,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
 
         # ..................{ LISTS                          }..................
         # Add PEP-specific type hint metadata to this list.
-        hints_pep_meta.extend((
+        hints_piths_pep_meta.extend((
             # ................{ BYTESTRING                     }................
             # Byte string of integer constants satisfying the builtin "int"
             # type. However, note that:
@@ -2893,4 +2893,4 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta

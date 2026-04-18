@@ -17,13 +17,13 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ raiser                     }....................
-def test_die_unless_hint(hints_pep_meta) -> None:
+def test_die_unless_hint(hints_piths_pep_meta) -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.die_unless_hint` raiser.
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     '''
@@ -43,7 +43,7 @@ def test_die_unless_hint(hints_pep_meta) -> None:
 
     # ....................{ ASSERTS                        }....................
     # Assert this function...
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # Accepts supported PEP-compliant type hints.
         #
         # Note that the "is_ref_str_valid" parameter is intentionally enabled
@@ -69,13 +69,13 @@ def test_die_unless_hint(hints_pep_meta) -> None:
             die_unless_hint(hint=non_hint, is_ref_str_valid=True)
 
 # ....................{ TESTS ~ tester                     }....................
-def test_is_hint(hints_pep_meta) -> None:
+def test_is_hint(hints_piths_pep_meta) -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.is_hint` tester.
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     '''
@@ -99,7 +99,7 @@ def test_is_hint(hints_pep_meta) -> None:
     #   positionally. It is what it is.
     # * The "is_ref_str_valid" parameter is intentionally enabled both here and
     #   below to support PEP 484-compliant stringified forward reference hints.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         assert is_hint(hint_pep_meta.hint, True) is hint_pep_meta.is_supported
 
     # ....................{ PASS                           }....................

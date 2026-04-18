@@ -226,8 +226,8 @@ def test_pep484_ref_decor_data() -> None:
     violation_message = str(violation_info.value)
     assert 'forwardreffake' not in violation_message
 
-# ....................{ TESTS ~ absolute : type : nonnested}....................
-def test_pep484_ref_decor_absolute() -> None:
+# ....................{ TESTS ~ absolute : non-nested      }....................
+def test_pep484_ref_decor_absolute_type_nonnested() -> None:
     '''
     Test :func:`beartype.beartype`-decorated callables accepting one or more
     parameters annotated by :pep:`484`-compliant stringified absolute forward
@@ -329,7 +329,7 @@ def test_pep484_ref_decor_absolute() -> None:
     with raises_uncached(BeartypeCallHintForwardRefException):
         navigator('Homo navigo', 'Kartr Hollis')
 
-# ....................{ TESTS ~ relative : type : nested   }....................
+# ....................{ TESTS ~ relative : nested          }....................
 def test_pep484_ref_decor_relative_type_nested() -> None:
     '''
     Test :func:`beartype.beartype`-decorated callables accepting one or more

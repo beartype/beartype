@@ -38,11 +38,11 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-noncompliant type hint metadata to be returned.
-    hints_nonpep_meta = []
+    hints_piths_nonpep_meta = []
 
     # ..................{ LISTS                              }..................
     # Add beartype-specific PEP-noncompliant test type hints to this list.
-    hints_nonpep_meta.extend((
+    hints_piths_nonpep_meta.extend((
         # ................{ TUPLE UNION                        }................
         # Beartype-specific tuple unions (i.e., tuples containing one or more
         # isinstanceable classes).
@@ -131,7 +131,7 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
     #
     #     # ................{ TUPLES                             }................
     #     # Add PEP 593-specific test type hints to this tuple global.
-    #     hints_nonpep_meta.extend((
+    #     hints_piths_nonpep_meta.extend((
     #         # ..............{ ANNOTATED ~ beartype : is : plugin }..............
     #         # Note that beartype's plugin API straddles the fine line between
     #         # PEP-compliant and PEP-noncompliant type hints. Superficially, most
@@ -175,4 +175,4 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-noncompliant type hint metadata.
-    return hints_nonpep_meta
+    return hints_piths_nonpep_meta

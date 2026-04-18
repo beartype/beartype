@@ -38,7 +38,7 @@ def hints_nonpep_api_threading_meta() -> (
 
     # ..................{ LISTS                              }..................
     # List of all PEP-noncompliant type hint metadata to be returned.
-    hints_nonpep_meta = [
+    hints_piths_nonpep_meta = [
         # "threading.Lock" attribute, which:
         # * Under Python >= 3.13 is a valid type and thus valid type hint.
         # * Under Python <= 3.12 is a factory function and thus invalid type
@@ -72,4 +72,4 @@ def hints_nonpep_api_threading_meta() -> (
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-noncompliant type hint metadata.
-    return hints_nonpep_meta
+    return hints_piths_nonpep_meta

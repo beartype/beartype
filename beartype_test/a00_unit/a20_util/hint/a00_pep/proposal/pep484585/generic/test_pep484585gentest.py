@@ -18,7 +18,7 @@ submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ testers                    }....................
-def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
+def test_is_hint_pep484585_generic(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic`
@@ -26,7 +26,7 @@ def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -40,7 +40,7 @@ def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
     # Assert this tester:
     # * Accepts generic PEP 484-compliant generics.
     # * Rejects concrete PEP-compliant type hints.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         assert is_hint_pep484585_generic(hint_pep_meta.hint) is (
             hint_pep_meta.pep_sign in HINT_SIGNS_GENERIC)
 
@@ -49,7 +49,7 @@ def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
         assert is_hint_pep484585_generic(not_hint_pep) is False
 
 
-def test_is_hint_pep484585_generic_unsubbed(hints_pep_meta) -> None:
+def test_is_hint_pep484585_generic_unsubbed(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_unsubbed`
@@ -57,7 +57,7 @@ def test_is_hint_pep484585_generic_unsubbed(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -72,7 +72,7 @@ def test_is_hint_pep484585_generic_unsubbed(hints_pep_meta) -> None:
     # Assert this tester:
     # * Accepts generic PEP 484-compliant generics.
     # * Rejects concrete PEP-compliant type hints.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # print(f'hint_pep_meta: {repr(hint_pep_meta)}')
         assert is_hint_pep484585_generic_unsubbed(hint_pep_meta.hint) is (
             hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubbed)
@@ -82,7 +82,7 @@ def test_is_hint_pep484585_generic_unsubbed(hints_pep_meta) -> None:
         assert is_hint_pep484585_generic_unsubbed(not_hint_pep) is False
 
 
-def test_is_hint_pep484585_generic_subbed(hints_pep_meta) -> None:
+def test_is_hint_pep484585_generic_subbed(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_subbed`
@@ -90,7 +90,7 @@ def test_is_hint_pep484585_generic_subbed(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -105,7 +105,7 @@ def test_is_hint_pep484585_generic_subbed(hints_pep_meta) -> None:
     # Assert this tester:
     # * Accepts generic PEP 484-compliant generics.
     # * Rejects concrete PEP-compliant type hints.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # print(f'hint_pep_meta: {repr(hint_pep_meta)}')
         assert is_hint_pep484585_generic_subbed(hint_pep_meta.hint) is (
             hint_pep_meta.pep_sign is HintSignPep484585GenericSubbed)
@@ -115,7 +115,7 @@ def test_is_hint_pep484585_generic_subbed(hints_pep_meta) -> None:
         assert is_hint_pep484585_generic_subbed(not_hint_pep) is False
 
 # ....................{ TESTS ~ testers : user             }....................
-def test_is_hint_pep484585_generic_user(hints_pep_meta) -> None:
+def test_is_hint_pep484585_generic_user(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_user`
@@ -123,7 +123,7 @@ def test_is_hint_pep484585_generic_user(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -162,7 +162,7 @@ def test_is_hint_pep484585_generic_user(hints_pep_meta) -> None:
         assert is_hint_pep484585_generic_user(generic_nonuser) is False
 
     # Assert this tester accepts all user-defined generics.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         generic_user = hint_pep_meta.hint
         assert is_hint_pep484585_generic_user(generic_user) is (
                is_hint_pep484585_generic(generic_user))

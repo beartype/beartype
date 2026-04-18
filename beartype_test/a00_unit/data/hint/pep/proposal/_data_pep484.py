@@ -212,7 +212,7 @@ def hints_pep484_meta() -> (
 
     # ..................{ LISTS                              }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = [
+    hints_piths_pep_meta = [
         # ................{ UNSUBSCRIPTED                      }................
         # Note that the PEP 484-compliant unsubscripted "NoReturn" type hint is
         # permissible *ONLY* as a return annotation and *MUST* thus be
@@ -1288,7 +1288,7 @@ def hints_pep484_meta() -> (
         HintPepMetadata(
             hint=Pep484ListUnsubscripted[str],
             pep_sign=HintSignPep484585GenericSubbed,
-            # warning_type=BeartypeDecorHintPep585DeprecationWarning,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484ListUnsubscripted,
             is_type_typing=False,
             piths_meta=(
@@ -3495,7 +3495,7 @@ def hints_pep484_meta() -> (
 
         # ..................{ LISTS                          }..................
         # Add Python <= 3.11-specific type hint metadata to this list.
-        hints_pep_meta.append(
+        hints_piths_pep_meta.append(
             # ................{ UNSUBSCRIPTED                  }................
             # Unsubscripted "ByteString" singleton. Bizarrely, note that:
             # * "collections.abc.ByteString" is subscriptable under PEP 585.
@@ -3527,7 +3527,7 @@ def hints_pep484_meta() -> (
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta
 
 
 def hints_pep484_reduction_meta() -> (

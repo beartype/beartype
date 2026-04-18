@@ -22,12 +22,12 @@ def hints_pep646_meta() -> (
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
+    hints_piths_pep_meta = []
 
     # If the active Python interpreter targets Python < 3.11, this interpreter
     # fails to support PEP 646. In this case, return the empty list.
     if not IS_PYTHON_AT_LEAST_3_11:
-        return hints_pep_meta
+        return hints_piths_pep_meta
     # Else, the active Python interpreter targets Python >= 3.11 and thus
     # supports PEP 646.
 
@@ -74,7 +74,7 @@ def hints_pep646_meta() -> (
 
     # ..................{ LISTS                              }..................
     # Add PEP 646-specific test type hints to this list.
-    hints_pep_meta.extend((
+    hints_piths_pep_meta.extend((
         # ................{ UNPACKED ~ tuple                   }................
         # PEP 646-compliant unpacked child tuple type hints in both:
         # * Sugar-free "*"-prefixed flavour.
@@ -251,7 +251,7 @@ def hints_pep646_meta() -> (
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta
 
 
 def hints_pep646_reduction_meta() -> (

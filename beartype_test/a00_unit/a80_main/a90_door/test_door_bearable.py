@@ -170,11 +170,12 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
                 typehint.die_if_unbearable(pith, conf=conf)
 
 # ....................{ TESTS ~ testers                    }....................
-# See above for @ignore_warnings() discussion.
-@ignore_warnings(DeprecationWarning)
 def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
     '''
     Test the :class:`beartype.door.is_bearable` tester function.
+
+    This test also validates that this tester issues expected non-fatal warnings
+    when passed various problematic (e.g., deprecated) type hints.
 
     Parameters
     ----------
@@ -190,27 +191,31 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype.door import is_bearable
+    from beartype._util.cache.utilcacheclear import clear_caches
     from beartype.roar import (
         BeartypeConfException,
         BeartypeDecorHintNonpepException,
     )
     from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
         PithUnsatisfiedMetadata)
-    from pytest import raises
-    # from pytest import raises, warns
-    # from warnings import simplefilter
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from beartype_test._util.error.pyterrwarn import warns_uncached
+    from warnings import (
+        catch_warnings,
+        simplefilter,
+    )
 
     # ....................{ SETUP                          }....................
-    # # Force pytest to temporarily allow deprecation warnings to be caught by the
-    # # warns() context manager for the duration of this test. By default, pytest
-    # # simply "passes through" all deprecation warnings for subsequent reporting
-    # # if tests otherwise successfully pass. Deprecation warnings include:
-    # # * "DeprecationWarning".
-    # # * "FutureWarning".
-    # # * "PendingDeprecationWarning".
-    # simplefilter('always')
+    # Force pytest to temporarily allow deprecation warnings to be caught by the
+    # warns() context manager for the duration of this test. By default, pytest
+    # simply "passes through" all deprecation warnings for subsequent reporting
+    # if tests otherwise successfully pass. Deprecation warnings include:
+    # * "DeprecationWarning".
+    # * "FutureWarning".
+    # * "PendingDeprecationWarning".
+    simplefilter('always')
 
-    # ..................{ PASS ~ ignorable                   }..................
+    # ....................{ PASS ~ ignorable               }....................
     # Arbitrary object to be tested below.
     pith = 'The breath and blood of distant lands, for ever'
 
@@ -219,9 +224,14 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
         # Assert this tester returns true when passed this object and this hint.
         assert is_bearable(pith, hint_ignorable) is True
 
-    # ..................{ PASS ~ unignorable                 }..................
+    # ....................{ PASS ~ unignorable             }....................
     # For each predefined unignorable type hint and associated metadata...
     for hint_pith_meta in iter_hints_piths_meta():
+        # Preserve test idempotence by explicitly clearing *ALL* internal caches
+        # leveraged throughout the main @beartype codebase. Doing so effectively
+        # resets this codebase back to its initial state.
+        clear_caches()
+
         # Metadata describing this hint.
         hint_meta = hint_pith_meta.hint_meta
 
@@ -239,32 +249,34 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
             hint_pith_meta.pith_meta, PithUnsatisfiedMetadata)
 
         # True only if this pith actually did satisfy this hint.
-        is_bearable_returned = is_bearable(pith, hint, conf=conf)
+        is_bearable_returned: bool = None  # type: ignore[assignment]
 
-        #FIXME: See test_beartype() for details, please.
-        # is_bearable_returned = None  # type: ignore[assignment]
-        #
-        # # If this tester is expected to emit a warning for this hint...
-        # if hint_meta.warning_type is not None:
-        #     # Decorate that function under a context manager asserting this
-        #     # decoration to emit the expected warning.
-        #     with warns(hint_meta.warning_type):
-        #         # Boolean returned by this tester when passed these arguments.
-        #         is_bearable_returned = is_bearable(pith, hint, conf=conf)
-        # # Else, this tester is expected to emit *NO* warning for this hint. In
-        # # this case...
-        # else:
-        #     # Boolean returned by this tester when passed these arguments.
-        #     is_bearable_returned = is_bearable(pith, hint, conf=conf)
+        # If this tester is expected to emit a warning for this hint...
+        if hint_meta.warning_type is not None:
+            # Assert this tester to emit the expected warning when...
+            with warns_uncached(hint_meta.warning_type):
+                # Boolean returned by this tester when passed these parameters.
+                is_bearable_returned = is_bearable(pith, hint, conf=conf)
+        # Else, this tester is expected to emit *NO* warning for this hint. In
+        # this case...
+        else:
+            # With a context manager "catching" *ALL* non-fatal warnings emitted
+            # during this logic for subsequent "playback" below...
+            with catch_warnings(record=True) as warnings_issued:
+                # Boolean returned by this tester when passed these parameters.
+                is_bearable_returned = is_bearable(pith, hint, conf=conf)
 
-        # Assert that this tester returns the expected boolean when passed this
-        # pith and hint.
+            # Assert that *NO* warnings were issued by this tester above.
+            assert not warnings_issued
+
+        # Assert that this tester returns the expected boolean when passed these
+        # parameters.
         assert is_bearable_returned is is_bearable_expected
 
-    # ..................{ FAIL ~ args                        }..................
+    # ....................{ FAIL ~ args                    }....................
     # Assert this tester raises the expected exception when passed an invalid
     # object as the type hint.
-    with raises(BeartypeDecorHintNonpepException):
+    with raises_uncached(BeartypeDecorHintNonpepException):
         is_bearable(
             obj='Holds every future leaf and flower; the bound',
             hint=b'With which from that detested trance they leap;',
@@ -272,7 +284,7 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
 
     # Assert this tester raises the expected exception when passed an invalid
     # object as the beartype configuration.
-    with raises(BeartypeConfException):
+    with raises_uncached(BeartypeConfException):
         is_bearable(
             obj='The torpor of the year when feeble dreams',
             hint=str,
@@ -331,104 +343,3 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
             # pith and hint.
             assert TypeHint(hint).is_bearable(pith, conf=conf) is (
                 is_bearable_expected)
-
-
-#FIXME: Refactor this test to use the higher-level safer "iter_hints_piths_meta"
-#closure iterator fixture. The lower-level "hints_meta" fixture currently used
-#by this test is too unsafe to be meaningfully useful. It's also harder. *shrug*
-def test_door_is_bearable_warnings(hints_meta) -> None:
-    '''
-    Test the :class:`beartype.door.is_bearable` tester function with respect
-    to non-fatal warnings emitted by that tester when passed various problematic
-    (e.g., deprecated) type hints.
-
-    Note that this test *cannot* be folded into the comparable
-    :func:`.test_door_is_bearable` test. Why? Because that test (and almost all
-    other tests testing type hints) iterates over type hints by calling the
-    session-scoped ``iter_hints_piths_meta()`` closure iterator. For unknown
-    reasons, :mod:`pytest` fails to capture deprecation warnings emitted from
-    that iterator. This is almost certainly a :mod:`pytest` issue. However,
-    reporting this issue would require reducing this issue to a minimal
-    reproducible working example -- which appears to be infeasible. In short,
-    this test manually iterates over type hints as an acceptable (albeit
-    annoying) alternative that allows deprecation warnings to be captured.
-
-    Parameters
-    ----------
-    hints_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]
-        List of PEP-agnostic type hint metadata describing sample PEP-agnostic
-        type hints exercising edge cases in the :mod:`beartype` codebase.
-    '''
-
-    # ..................{ IMPORTS                            }..................
-    # Defer test-specific imports.
-    from beartype.door import is_bearable
-    from beartype._util.cache.utilcacheclear import clear_caches
-    from beartype_test._util.error.pyterrwarn import warns_uncached
-    from warnings import simplefilter
-
-    # ....................{ SETUP                          }....................
-    # Force pytest to temporarily allow deprecation warnings to be caught by the
-    # warns() context manager for the duration of this test. By default, pytest
-    # simply "passes through" all deprecation warnings for subsequent reporting
-    # if tests otherwise successfully pass. Deprecation warnings include:
-    # * "DeprecationWarning".
-    # * "FutureWarning".
-    # * "PendingDeprecationWarning".
-    simplefilter('always')
-
-    # ..................{ PASS                               }..................
-    # Repeat this test twice, thus asserting that this test is resilient against
-    # repeated invocations in the same Python process. Previously, it wasn't.
-    # Why? Because this test was accidentally non-idempotent and thus suffered
-    # unintended ordering issues with other tests (including itself). Why?
-    # Because *ALL* warnings tested below by this test were emitted under
-    # memoization and thus emitted only once by the first invocation of this
-    # test when explicitly called prior to other tests.
-    #
-    # See also this issue resolved by this test repetition:
-    #     https://github.com/beartype/beartype/issues/631
-    for _ in range(2):
-        # Preserve test idempotence by explicitly clearing *ALL* internal caches
-        # leveraged throughout the main @beartype codebase. Doing so effectively
-        # resets this codebase back to its initial state.
-        clear_caches()
-
-        # For each predefined type hint and associated metadata...
-        for hint_meta in hints_meta:
-            # If it is *NOT* the case that...
-            if not (
-                # This hint is currently supported *AND*...
-                hint_meta.is_supported and
-                # This is type-checkable against at least one object.
-                hint_meta.piths_meta
-            # Then this hint is ignorable. Silently continue to the next.
-            ):
-                continue
-            # Else, this hint is currently supported.
-
-            # Type hint to be type-checked.
-            hint = hint_meta.hint
-
-            # Beartype dataclass configuring this type-check.
-            conf = hint_meta.conf
-
-            # Object to be type-checked against this hint, arbitrarily selected
-            # from the iterable of all such objects supplied with this hint. By
-            # the above validation, this is guaranteed to be non-empty.
-            pith = hint_meta.piths_meta[0]
-
-            # If this tester is expected to emit a warning for this hint...
-            if hint_meta.warning_type is not None:
-                # print(f'hint_meta: {hint_meta}\n')
-
-                # Call this tester under a context manager asserting this tester
-                # to emit the expected warning.
-                with warns_uncached(hint_meta.warning_type):
-                    is_bearable(pith, hint, conf=conf)
-                # print(f'Deprecated type hint {repr(hint)} warned!')
-            # Else, this tester is expected to emit *NO* warning for this hint.
-            # In this case, call this tester outside of such a context manager.
-            else:
-                is_bearable(pith, hint, conf=conf)
-            # is_bearable(pith, hint, conf=conf)

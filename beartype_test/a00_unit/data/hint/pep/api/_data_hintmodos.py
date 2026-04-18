@@ -77,7 +77,7 @@ def hints_pep_meta_os() -> 'List[HintPepMetadata]':
 
     # ..................{ LISTS                              }..................
     # List of all module-specific type hint metadata to be returned.
-    hints_pep_meta = [
+    hints_piths_pep_meta = [
         # ................{ PATHLIKE                           }................
         # Object whose __fspath__() dunder method returns a string.
         HintPepMetadata(
@@ -157,4 +157,4 @@ def hints_pep_meta_os() -> 'List[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta

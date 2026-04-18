@@ -40,7 +40,7 @@ def hints_pep649_meta() -> 'list[HintPepMetadata]':
 
     # ..................{ LISTS                              }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = [
+    hints_piths_pep_meta = [
         # ................{ FORWARDREF                         }................
         # Forward references defined below are *ONLY* intended to shallowly
         # exercise support for types of forward references across the codebase;
@@ -87,4 +87,4 @@ def hints_pep649_meta() -> 'list[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta

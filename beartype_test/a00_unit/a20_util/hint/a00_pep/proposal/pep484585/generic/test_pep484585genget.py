@@ -226,7 +226,7 @@ def test_get_hint_pep484585_generic_base_extrinsic_sign_or_none() -> None:
             hint_base) is hint_extrinsic_sign
 
 
-def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:
+def test_get_hint_pep484585_generic_bases_unerased(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_bases_unerased`
@@ -234,7 +234,7 @@ def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -249,7 +249,7 @@ def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:
     from pytest import raises
 
     # For each PEP-compliant hint to be tested...
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         # If this is a generic hint, assert that this getter returns the
         # expected unerased pseudo-superclasses of this generic.
         if hint_pep_meta.pep_sign in HINT_SIGNS_GENERIC:
@@ -348,7 +348,7 @@ def test_get_hint_pep484585_generic_base_in_module_first() -> None:
             )
 
 # ....................{ TESTS ~ type                       }....................
-def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
+def test_get_hint_pep484585_generic_type_or_none(hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_type_or_none`
@@ -356,7 +356,7 @@ def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -371,7 +371,7 @@ def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
     # well, there's little benefit and significant costs to doing so. Instead,
     # we assert this getter only returns the expected type origin for a small
     # subset of type hints.
-    for hint_pep_meta in hints_pep_meta:
+    for hint_pep_meta in hints_piths_pep_meta:
         if hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubbed:
             assert get_hint_pep484585_generic_type_or_none(
                 hint_pep_meta.hint) is hint_pep_meta.generic_type

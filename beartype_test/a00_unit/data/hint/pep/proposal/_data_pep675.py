@@ -30,7 +30,7 @@ def hints_pep675_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
+    hints_piths_pep_meta = []
 
     # ..................{ FACTORIES                          }..................
     # For each PEP-specific type hint factory importable from each currently
@@ -38,7 +38,7 @@ def hints_pep675_meta() -> 'List[HintPepMetadata]':
     for LiteralString in get_typing_attrs('LiteralString'):
         # ..................{ LISTS                          }..................
         # Add PEP-specific type hint metadata to this list.
-        hints_pep_meta.extend((
+        hints_piths_pep_meta.extend((
             # ................{ PEP 675                        }................
             # Literal string type hint.
             HintPepMetadata(
@@ -85,4 +85,4 @@ def hints_pep675_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta

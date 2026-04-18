@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **type-checking expression snippet class unit tests.**
+Beartype **type-checking expression snippet class** unit tests.
 
 This submodule unit tests the public API of the public
 :mod:`beartype._check.code.snip.codesnipcls.PITH_INDEX_TO_VAR_NAME` submodule.

@@ -75,7 +75,7 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
 
     # ..................{ LISTS                              }..................
     # List of all module-specific type hint metadata to be returned.
-    hints_pep_meta = [
+    hints_piths_pep_meta = [
         # ................{ REF                                }................
         # Weak reference to *ANY* arbitrary object.
         HintPepMetadata(
@@ -119,4 +119,4 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta

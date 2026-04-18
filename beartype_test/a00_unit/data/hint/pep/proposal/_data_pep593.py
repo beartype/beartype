@@ -137,7 +137,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
+    hints_piths_pep_meta = []
 
     # ..................{ FACTORIES                          }..................
     # For each PEP-specific type hint factory importable from each currently
@@ -183,7 +183,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
 
         # ................{ TUPLES                             }................
         # Add PEP 593-specific test type hints to this tuple global.
-        hints_pep_meta.extend((
+        hints_piths_pep_meta.extend((
             # ..............{ ANNOTATED                          }..............
             # Annotated of an arbitrary isinstanceable type annotated by an
             # arbitrary hashable object.
@@ -727,7 +727,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta
 
 
 def hints_pep593_reduction_meta() -> (

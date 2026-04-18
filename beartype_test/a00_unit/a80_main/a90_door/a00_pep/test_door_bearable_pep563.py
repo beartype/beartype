@@ -19,9 +19,11 @@ subpackage.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # .....................{ TESTS                             }....................
-def test_resolve_pep563() -> None:
+def test_door_die_if_unbearable_peps_resolve_pep563() -> None:
     '''
-    Test the :func:`beartype.peps.resolve_pep563` resolver.
+    Test the :func:`beartype.peps.resolve_pep563` resolver, which implicitly
+    requires the :func:`beartype.door.die_if_unbearable` type-checker and is
+    thus confined to this :mod:`beartype.door`-specific test submodule.
     '''
 
     # .....................{ IMPORTS                       }....................
@@ -37,7 +39,7 @@ def test_resolve_pep563() -> None:
         FrequentWith,
         their_starry_domes,
     )
-    from pytest import raises
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # .....................{ LOCALS                        }....................
     # Arbitrary instance of the generic accepted by the function called below.
@@ -50,12 +52,12 @@ def test_resolve_pep563() -> None:
     # .....................{ FAIL                          }....................
     # Assert that this function raises the expected exceptions *BEFORE*
     # resolving all PEP 563-postponed type hints annotating these callables.
-    with raises(BeartypeDecorHintForwardRefException):
+    with raises_uncached(BeartypeDecorHintForwardRefException):
         their_starry_domes(numberless_and_immeasurable_halls)
-    with raises(BeartypeDecorHintForwardRefException):
+    with raises_uncached(BeartypeDecorHintForwardRefException):
         and_thrones_radiant_with_chrysolite.until_the_doves(
             numberless_and_immeasurable_halls)
-    with raises(BeartypeCallHintForwardRefException):
+    with raises_uncached(BeartypeCallHintForwardRefException):
         and_thrones_radiant_with_chrysolite.crystal_column(
             'Nor had that scene of ampler majesty')
 
@@ -76,11 +78,11 @@ def test_resolve_pep563() -> None:
     # .....................{ FAIL ~ more                   }....................
     # Assert that this resolver raises the expected exception when passed an
     # uncallable object.
-    with raises(BeartypePep563Exception):
+    with raises_uncached(BeartypePep563Exception):
         resolve_pep563('Mont Blanc yet gleams on high:—the power is there,')
 
     # Assert that this method unsuccessfully raises the excepted exception, due
     # to being annotated by a missing forward reference.
-    with raises(BeartypeCallHintForwardRefException):
+    with raises_uncached(BeartypeCallHintForwardRefException):
         and_thrones_radiant_with_chrysolite.crystal_column(
             'Than gems or gold, the varying roof of heaven')

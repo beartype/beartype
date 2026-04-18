@@ -92,7 +92,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ TUPLES                             }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = [
+    hints_piths_pep_meta = [
         # ................{ NEW UNION                          }................
         # Union of one non-"typing" type and an originative "typing" type,
         # exercising a prominent edge case when raising human-readable
@@ -763,7 +763,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta
 
 
 def hints_pep604_ignorable_deep() -> list:

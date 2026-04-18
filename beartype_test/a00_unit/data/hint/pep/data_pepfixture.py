@@ -16,7 +16,7 @@ from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
-def hints_pep_meta() -> (
+def hints_piths_pep_meta() -> (
     'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]'):
     '''
     Session-scoped fixture yielding a tuple of **PEP-compliant type hint
@@ -84,7 +84,7 @@ def hints_pep_meta() -> (
 
 
 @fixture(scope='session')
-def hints_pep_hashable(hints_pep_meta) -> frozenset:
+def hints_pep_hashable(hints_piths_pep_meta) -> frozenset:
     '''
     Session-scoped fixture yielding a frozen set of **hashable PEP-compliant
     non-class type hints** (i.e., PEP-compliant type hints that are *not*
@@ -98,7 +98,7 @@ def hints_pep_hashable(hints_pep_meta) -> frozenset:
 
     Parameters
     ----------
-    hints_pep_meta : Tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : Tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
         Tuple of PEP-compliant type hint metadata describing PEP-compliant type
         hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -109,7 +109,7 @@ def hints_pep_hashable(hints_pep_meta) -> frozenset:
     # Yield this frozen set.
     yield frozenset(
         hint_meta.hint
-        for hint_meta in hints_pep_meta
+        for hint_meta in hints_piths_pep_meta
         if is_object_hashable(hint_meta.hint)
     )
 

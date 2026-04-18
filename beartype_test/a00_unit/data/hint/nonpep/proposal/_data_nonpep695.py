@@ -34,12 +34,12 @@ def hints_nonpep695_meta() -> (
     )
 
     # List of all PEP-noncompliant type hint metadata to be returned.
-    hints_nonpep_meta = []
+    hints_piths_nonpep_meta = []
 
     # If the active Python interpreter targets Python < 3.12, this interpreter
     # fails to support PEP 695. In this case, return the empty list.
     if not IS_PYTHON_AT_LEAST_3_12:
-        return hints_nonpep_meta
+        return hints_piths_nonpep_meta
     # Else, the active Python interpreter targets Python >= 3.12 and thus
     # supports PEP 695.
 
@@ -51,7 +51,7 @@ def hints_nonpep695_meta() -> (
 
     # Add PEP 695-specific (albeit technically PEP-noncompliant from the
     # beartype perspective) test type hints to this list.
-    hints_nonpep_meta.extend((
+    hints_piths_nonpep_meta.extend((
         # Unsubscripted "typing.TypeAliasType" type of *ALL* PEP 695-compliant
         # type aliases. This type is a valid type and thus a valid hint, despite
         # defining a PEP-noncompliant "__parameters__" dunder attribute.
@@ -84,4 +84,4 @@ def hints_nonpep695_meta() -> (
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-noncompliant type hint metadata.
-    return hints_nonpep_meta
+    return hints_piths_nonpep_meta

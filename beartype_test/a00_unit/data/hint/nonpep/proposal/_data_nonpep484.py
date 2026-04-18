@@ -51,7 +51,7 @@ def hints_nonpep484_meta() -> 'List[HintNonpepMetadata]':
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-noncompliant type hint metadata to be returned.
-    hints_nonpep_meta = []
+    hints_piths_nonpep_meta = []
 
     #FIXME: *WOOPS.* We should have read the standards a bit closer. Neither
     #"typing.NamedTuple" or "typing.TypedDict" are intended for direct use as
@@ -72,7 +72,7 @@ def hints_nonpep484_meta() -> 'List[HintNonpepMetadata]':
     # ..................{ LISTS                              }..................
     # Add PEP 484-specific (albeit technically PEP-noncompliant from the
     # beartype perspective) test type hints to this list.
-    hints_nonpep_meta.extend((
+    hints_piths_nonpep_meta.extend((
         # ................{ NAMEDTUPLE                         }................
         # "NamedTuple" instances transparently reduce to standard tuples and
         # *MUST* thus be handled as non-"typing" type hints.
@@ -418,4 +418,4 @@ def hints_nonpep484_meta() -> 'List[HintNonpepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-noncompliant type hint metadata.
-    return hints_nonpep_meta
+    return hints_piths_nonpep_meta

@@ -49,7 +49,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
+    hints_piths_pep_meta = []
 
     # Absolute filename of this data submodule, to be subsequently opened for
     # cross-platform IO testing purposes.
@@ -197,7 +197,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
 
         # ................{ LISTS                              }................
         # Add PEP-specific type hint metadata to this list.
-        hints_pep_meta.extend((
+        hints_piths_pep_meta.extend((
             # ..............{ PROTOCOLS ~ user                   }..............
             # Despite appearances, protocols implicitly subclass
             # "typing.Generic" and thus do *NOT* transparently reduce to
@@ -290,7 +290,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for BinaryIO in get_typing_attrs('BinaryIO'):
-        hints_pep_meta.append(
+        hints_piths_pep_meta.append(
             # ..............{ GENERICS ~ io : unsubscripted      }..............
             # Unsubscripted "BinaryIO" abstract base class (ABC).
             HintPepMetadata(
@@ -305,7 +305,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for TextIO in get_typing_attrs('TextIO'):
-        hints_pep_meta.append(
+        hints_piths_pep_meta.append(
             # ..............{ GENERICS ~ io : unsubscripted      }..............
             # Unsubscripted "TextIO" abstract base class (ABC).
             HintPepMetadata(
@@ -330,7 +330,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for IO in get_typing_attrs('IO'):
-        hints_pep_meta.extend((
+        hints_piths_pep_meta.extend((
             # ..............{ GENERICS ~ io : unsubscripted      }..............
             # Unsubscripted "IO" abstract base class (ABC).
             HintPepMetadata(
@@ -417,7 +417,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for SupportsAbs in get_typing_attrs('SupportsAbs'):
-        hints_pep_meta.append(
+        hints_piths_pep_meta.append(
             # ..............{ PROTOCOLS ~ supports               }..............
             # Unsubscripted "SupportsAbs" abstract base class (ABC).
             HintPepMetadata(
@@ -444,7 +444,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for SupportsBytes in get_typing_attrs('SupportsBytes'):
-        hints_pep_meta.append(
+        hints_piths_pep_meta.append(
             # ..............{ PROTOCOLS ~ supports               }..............
             # Unsubscripted "SupportsBytes" abstract base class (ABC).
             HintPepMetadata(
@@ -491,7 +491,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for SupportsFloat in get_typing_attrs('SupportsFloat'):
-        hints_pep_meta.append(
+        hints_piths_pep_meta.append(
             # ..............{ PROTOCOLS ~ supports               }..............
             # Unsubscripted "SupportsFloat" abstract base class (ABC).
             HintPepMetadata(
@@ -511,7 +511,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for SupportsIndex in get_typing_attrs('SupportsIndex'):
-        hints_pep_meta.append(
+        hints_piths_pep_meta.append(
             # ..............{ PROTOCOLS ~ supports               }..............
             # Unsubscripted "SupportsIndex" abstract base class (ABC) first
             # introduced by Python 3.8.0.
@@ -532,7 +532,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for SupportsInt in get_typing_attrs('SupportsInt'):
-        hints_pep_meta.append(
+        hints_piths_pep_meta.append(
             # ..............{ PROTOCOLS ~ supports               }..............
             # Unsubscripted "SupportsInt" abstract base class (ABC).
             HintPepMetadata(
@@ -555,7 +555,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for SupportsRound in get_typing_attrs('SupportsRound'):
-        hints_pep_meta.append(
+        hints_piths_pep_meta.append(
             # ..............{ PROTOCOLS ~ supports               }..............
             # Unsubscripted "SupportsRound" abstract base class (ABC).
             HintPepMetadata(
@@ -577,7 +577,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
-    return hints_pep_meta
+    return hints_piths_pep_meta
 
 
 def hints_pep544_ignorable_shallow() -> list:
