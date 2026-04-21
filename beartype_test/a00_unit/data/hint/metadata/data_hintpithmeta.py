@@ -202,7 +202,7 @@ class HintNonpepMetadata(object):
         the :func:`beartype.beartype` decorator. Defaults to :data:`True`.
     piths_meta : Iterable[PithSatisfiedMetadata], default: ()
         Iterable of zero or more **(un)satisfied metadata objects** (i.e.,
-        :class:`PithSatisfiedMetadata` and :class:`PithUnsatisfiedMetadata`
+        :class:`.PithSatisfiedMetadata` and :class:`.PithUnsatisfiedMetadata`
         instances), each describing an arbitrary object either satisfying or
         violating this hint when either passed as a parameter or returned as a
         value annotated by this hint. Defaults to the empty tuple.
@@ -526,8 +526,9 @@ class HintPepMetadata(HintNonpepMetadata):
 class HintPithMetadata(object):
     '''
     Dataclass encapsulating all relevant type hint- and pith-specific metadata
-    iteratively yielded by each iteration of the :func:`.iter_hints_piths_meta`
-    generator.
+    iteratively yielded by each iteration of the
+    :func:`beartype_test.a00_unit.data.hint.data_hintfixture.iter_hints_piths_meta`
+    fixture generator.
 
     Attributes
     ----------

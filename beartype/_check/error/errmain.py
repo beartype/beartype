@@ -92,7 +92,7 @@ from beartype._util.text.utiltextansi import (
 )
 from beartype._util.text.utiltextmunge import (
     suffix_str_unless_suffixed,
-    # uppercase_str_char_first,
+    uppercase_str_char_first,
 )
 from beartype._util.text.utiltextprefix import (
     prefix_callable_return_value,
@@ -361,6 +361,26 @@ def get_hint_object_violation(
     # called above has already internally validated this instance variable to be
     # a non-empty string.
     violation_message: str = violation_cause.cause_str_or_none  # type: ignore[assignment]
+
+    # Uppercase the first character of this violation message for readability.
+    #
+    # Note that:
+    # * Technically, the BeartypeException.__init__() constructor already
+    #   guarantees the first character of *ALL* beartype-specific exceptions
+    #   (including this one) to be uppercased. However, this type of exception
+    #   is user-configurable and thus *NOT* guaranteed to be a subclass of the
+    #   "BeartypeException" superclass. Failing to uppercase this message here
+    #   would thus raise less readable exceptions for users explicitly
+    #   configuring this type of exception.
+    # * This same logic is confined to this higher-level getter rather than
+    #   centralized in the lower-level _find_hint_object_violation_cause()
+    #   finder called above. Why? Because the sibling
+    #   get_hint_object_violation_message() getter *ALSO* defers to that
+    #   lower-level finder. Unlike this getter, that sibling getter preserves
+    #   the exact violation message (rather than munging this message as here).
+    #   Why? Because that sibling getter is called to embed this message in
+    #   larger violation messages. Preserving case is thus paramount.
+    violation_message = uppercase_str_char_first(violation_message)
 
     # ....................{ CULPRITS                       }....................
     # List of the one or more culprits responsible for this violation,

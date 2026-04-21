@@ -5,7 +5,7 @@
 
 '''
 Beartype **import hook unit test fixtures** (i.e., :mod:`pytest`-specific
-context managers passed as parameters to unit tests exercising the
+context managers passed as parameters to unit tests validating the
 :mod:`beartype.claw` subpackage).
 '''
 
@@ -44,9 +44,9 @@ def clean_claws_unit() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny
     # Note that we intentionally avoid importing any subsubpackages (e.g.,
     # "beartype_test.a00_unit.data.claw.intraprocess.hookable_package.beartype_this_package")
     # above. Why? Because doing so would implicitly install the exact beartype
-    # import hook which calling unit tests are attempting to subsequently
-    # exercise and which *MUST* be confined to a context manager for test
-    # idempotency.
+    # import hook which:
+    # * Downstream unit tests are attempting to subsequently validate.
+    # * *MUST* be confined to a context manager for test idempotency.
     from beartype_test.a00_unit.data import claw
     from beartype_test._util.data.pytdataclean import (
         data_claw_subpackage_cleaned)

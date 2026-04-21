@@ -73,7 +73,6 @@ from beartype._util.module.utilmodimport import (
     import_module_attr_or_sentinel,
 )
 from beartype._util.text.utiltextidentifier import is_dunder
-from beartype._util.text.utiltextmunge import lowercase_str_char_first
 from beartype._util.utilobject import get_object_name
 from typing import Optional
 
@@ -1177,68 +1176,160 @@ def _resolve_hint_pep484_ref_str(cls: _BeartypeForwardRefABC) -> Hint:
         exception_prefix=cls.__exception_prefix_beartype__,  # pyright: ignore
     )
 
-    # If this module is unimportable *OR* fails to define this referent...
-    if referent is SENTINEL:
-        # If this proxy does *NOT* proxy a PEP 484-compliant stringified forward
-        # reference type hint annotating a locally decorated callable...
-        #
-        # See the "__func_local_parent_codeobj_weakref_beartype__" docstring for
-        # further details.
-        if cls.__func_local_parent_codeobj_weakref_beartype__ is None:
-            # Raise a human-readable exception describing this failure by
-            # instead deferring to the mandatory variant of the import function
-            # called above.
-            import_module_attr(
-                attr_name=cls.__hint_name_beartype__,  # pyright: ignore
-                module_name=cls.__scope_name_beartype__,  # pyright: ignore
-                exception_cls=BeartypeCallHintPep484ForwardRefStrException,
-                exception_prefix=_make_ref_proxy_exception_prefix(cls),
-            )
+    # If this module is importable and defines this referent, return this
+    # referent as is immediately.
+    if referent is not SENTINEL:
+        return referent
+    # Else, this module is unimportable *OR* fails to define this referent.
 
-            # Validate sanity by ensuring that the prior call raised the
-            # expected exception.
-            assert False  # pragma: no cover
-        # Else, this proxy proxies a PEP 484-compliant stringified forward
-        # reference type hint annotating a locally decorated callable. In this
-        # case, avoid emitting false positives.
+    # If this proxy does *NOT* proxy a PEP 484-compliant stringified forward
+    # reference type hint annotating a locally decorated callable, this forward
+    # reference type hint annotated a globally decorated callable. Ergo, the
+    # target referent referred to by this forward reference *SHOULD* have also
+    # been accessible from the global scope of this module. It wasn't! In this
+    # case...
+    #
+    # See the "__func_local_parent_codeobj_weakref_beartype__" docstring for
+    # further details.
+    if cls.__func_local_parent_codeobj_weakref_beartype__ is None:
+        # Raise a human-readable exception describing this failure by instead
+        # deferring to the mandatory variant of the import function above.
+        import_module_attr(
+            attr_name=cls.__hint_name_beartype__,  # pyright: ignore
+            module_name=cls.__scope_name_beartype__,  # pyright: ignore
+            exception_cls=BeartypeCallHintPep484ForwardRefStrException,
+            exception_prefix=_make_ref_proxy_exception_prefix(cls),
+        )
 
-        #FIXME: *NON-IDEAL*. Ideally, we would now disambiguate between the two
-        #edge cases documented by the
-        #"__func_local_parent_codeobj_weakref_beartype__" docstring. However,
-        #doing so (probably) requires us to implement some new functionality we
-        #don't currently have and is thus somewhat non-trivial. For the moment,
-        #avoid doing so until somebody strenuously complains about this. *lol* -> *sigh*
-        #
-        #Specifically, we want to do this:
-        #* Introspect up the call stack for the first stack frame whose code
-        #  object is the same code object weakly referred to by this
-        #  "__func_local_parent_codeobj_weakref_beartype__" class variable.
-        #* Dynamically resolving this reference against the global and local
-        #  scope of that stack frame.
-        #* If this reference remains unresolvable at that point, fallback to
-        #  silently ignoring this reference as we do below.
+        # Assert that the prior call raised the expected exception. Sanity test!
+        assert False  # pragma: no cover
+    # Else, this proxy proxies a PEP 484-compliant stringified relative forward
+    # reference type hint annotating a locally decorated callable. In this case,
+    # avoid emitting false positives by erroneously assuming that the target
+    # referent referred to by this forward reference *SHOULD* have also been
+    # accessible from the global scope of this module. On the contrary, this
+    # referent is likely to *ONLY* be accessible from the local scope of the
+    # body of that locally decorated callable.
+    #
+    # There now exist two main edge cases. That locally decorated callable is
+    # currently being called from either:
+    # * The same local scope defining that callable. In this case, this forward
+    #   reference can be safely resolved by introspecting up the call stack for
+    #   the stack frame encapsulating that local scope.
+    # * A different scope (either global or local) from the same local scope
+    #   defining that callable. Two more edge cases arise here. Either:
+    #   * That different scope is a child local scope induced by a call to
+    #     another callable called from the local scope of the body of that
+    #     locally decorated callable. This outlier edge case occurs when that
+    #     locally decorated callable passes itself (e.g., as a callback) to
+    #     another subsidiary callable called from within itself. In this case,
+    #     this forward reference can yet again be safely resolved by
+    #     introspecting up the call stack for the stack frame encapsulating that
+    #     local scope.
+    #   * That different scope is either a global scope *OR* a child local scope
+    #     *NOT* induced by such a call (as detailed above). In this considerably
+    #     more common case, this forward reference *CANNOT* be safely resolved
+    #     by introspecting up the call stack for the stack frame encapsulating
+    #     that local scope. Instead, the best that @beartype (or *ANY* runtime
+    #     type-checker for that matter) can do here is to "pretend" to resolve
+    #     this forward reference to a fake proxy type.
 
-        # Pretend to resolve this reference to a beartype-specific forward
-        # reference fake proxy, a dynamically generated type pretending to proxy
-        # calls to the following callables when passed this proxy as:
-        # * The second parameter to the issubclass() builtin, internally called
-        #   by the PEP 3119-compliant __subclasscheck__() dunder method, itself
-        #   implicitly called by an issubclass() call in the body of a
-        #   @beartype-generated type-checking wrapper function.
-        # * The second parameter to our is_bearable() tester, internally called
-        #   by the PEP 3119-compliant __instancecheck__() dunder method, itself
-        #   implicitly called by an isinstance() call in the body of a
-        #   @beartype-generated type-checking wrapper function.
-        # * The second parameter to our get_hint_object_violation() getter,
-        #   internally called by the beartype-specific __instancecheck_str__()
-        #   dunder method, explicitly called by the "beartype._check.error"
-        #   subpackage to raise human-readable type-checking violations.
-        #
-        # Note that this factory is memoized and thus requires that all
-        # parameters only be passed positionally.
-        referent = proxy_hint_pep484_ref_str_nested(
-            cls.__scope_name_beartype__, cls.__hint_name_beartype__)  # pyright: ignore
-    # Else, this module is both importable and defines this referent.
+    #FIXME: *LOL*. Looks we're implementing our "*NON-IDEAL*" FIXME already,
+    #huh? Oh, well. We'd might as well do this properly for @beartype 0.23.0
+    #Let's *NEVER* think about any of this again. Note that we *CANNOT* do this
+    #by simply deferring to our existing
+    #resolve_hint_pep484_ref_str_caller_external() implementation. That
+    #function inappropriately fails to search for the desired code object
+    #"__func_local_parent_codeobj_weakref_beartype__". As a first step to
+    #getting where we want to go, let's:
+    #* Generalize the existing find_frame_caller_external() finder to accept a
+    #  new optional "frame_codeobj: Optional[CallableCodeObjectType] = None"
+    #  parameter. The implementation should vaguely resemble:
+    #* *WAIT*. We actually need to define a new
+    #  find_frame_with_codeobj_or_none() finder. Why? Because the "_or_none"
+    #  part. The existing find_frame_caller_external() finder isn't appropriate
+    #  for that. Okay. No worries. Let's do this! The implementation of
+    #  find_frame_with_codeobj_or_none() vaguely resembles that of
+    #  find_frame_caller_external(), modified to:
+    #      for frame_curr in iter_frames(
+    #          # 0-based index of the first non-ignored frame following the last
+    #          # ignored frame, ignoring an additional frame embodying the current call
+    #          # to this getter.
+    #          ignore_frames=ignore_frames + 1,
+    #          **kwargs
+    #      ):
+    #          #FIXME: Probably we want to detect module boundaries and, when detected,
+    #          #raise an exception. See the similar get_func_locals_frame() getter.
+    #
+    #          # Code object underlying the pure-Python scope executing this frame if
+    #          # that scope is pure-Python *OR* "None" (e.g., if that scope is
+    #          # C-based).
+    #          frame_curr_codeobj = get_frame_code_object_or_none(frame_curr)
+    #
+    #          # If that scope is the passed scope, return this frame as is.
+    #          if frame_curr_codeobj is frame_codeobj:
+    #              return frame_curr
+    #          # Else, that scope is *NOT* the passed scope. In this case, continue
+    #          # searching up the call stack from the desired frame.
+    #* Resolve the weak reference
+    #  "cls.__func_local_parent_codeobj_weakref_beartype__" here.
+    #* If that weak reference is still alive:
+    #  * Call find_frame_with_codeobj_or_none() here, passed its referent.
+    #  * If that finder returns a non-"None" frame:
+    #    * Call get_frame_locals(), passed that frame.
+    #    * Attempt to get "cls.hint_name" from the resulting dictionary.
+    #    * If non-"None", return the associated value.
+    #    * Else call get_frame_globals(). Repeat logic and shrug.
+    #    * You know, it'd be nice to define yet another new
+    #      get_frame_globals_locals() getter compositing both globals and locals
+    #      into one unified dictionary. Each get_frame_locals() and
+    #      get_frame_globals() call is already expensive, because those calls
+    #      currently coerce non-dicts into dicts. Might as well go the distance
+    #      and union these two non-dicts together into a unified dict. \o/
+    #* If all else fails, fallback to the current fake proxy approach. *shrug*
+
+    # Attempt to resolve all edge cases (described above) in which this forward
+    # reference *CAN* be safely resolved by introspecting up the call stack for
+    # the stack frame encapsulating the local scope of the body of the
+    # locally @beartype-decorated callable annotated by the PEP 484-compliant
+    # stringified relative forward reference type hint proxied by this proxy.
+
+    #FIXME: *NON-IDEAL*. Ideally, we would now disambiguate between the two
+    #edge cases documented by the
+    #"__func_local_parent_codeobj_weakref_beartype__" docstring. However,
+    #doing so (probably) requires us to implement some new functionality we
+    #don't currently have and is thus somewhat non-trivial. For the moment,
+    #avoid doing so until somebody strenuously complains about this. *lol* -> *sigh*
+    #
+    #Specifically, we want to do this:
+    #* Introspect up the call stack for the first stack frame whose code
+    #  object is the same code object weakly referred to by this
+    #  "__func_local_parent_codeobj_weakref_beartype__" class variable.
+    #* Dynamically resolving this reference against the global and local
+    #  scope of that stack frame.
+    #* If this reference remains unresolvable at that point, fallback to
+    #  silently ignoring this reference as we do below.
+
+    # Pretend to resolve this reference to a beartype-specific forward reference
+    # fake proxy, a dynamically generated type pretending to proxy calls to the
+    # following callables when passed this proxy as:
+    # * The second parameter to the issubclass() builtin, internally called by
+    #   the PEP 3119-compliant __subclasscheck__() dunder method, itself
+    #   implicitly called by an issubclass() call in the body of a
+    #   @beartype-generated type-checking wrapper function.
+    # * The second parameter to our is_bearable() tester, internally called by
+    #   the PEP 3119-compliant __instancecheck__() dunder method, itself
+    #   implicitly called by an isinstance() call in the body of a
+    #   @beartype-generated type-checking wrapper function.
+    # * The second parameter to our get_hint_object_violation() getter,
+    #   internally called by the beartype-specific __instancecheck_str__()
+    #   dunder method, explicitly called by the "beartype._check.error"
+    #   subpackage to raise human-readable type-checking violations.
+    #
+    # Note that this factory is memoized and thus requires that all parameters
+    # only be passed positionally.
+    referent = proxy_hint_pep484_ref_str_nested(
+        cls.__scope_name_beartype__, cls.__hint_name_beartype__)  # pyright: ignore
 
     # Return this referent.
     return referent

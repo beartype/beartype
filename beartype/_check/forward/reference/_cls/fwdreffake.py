@@ -12,10 +12,6 @@ of which no living Pythonista could countenance).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: *UNIT TEST EVERYTHING* before we actually use this anywhere. Fairly
-#hardcore subtle stuff going on here. *shrug*
-
 # ....................{ IMPORTS                            }....................
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclsmake import make_type

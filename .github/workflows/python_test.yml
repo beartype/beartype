@@ -443,9 +443,8 @@ jobs:
       #oddball ".coverage.*" files between jobs. That's pretty much all we need,
       #right? Contemplate at a later date, please.
 
-      # Note that we would ideally run the "tox"-specific "finally"
-      # environment defined by our top-level "tox.ini" configuration, which
-      # (in order):
+      # Note that we would ideally run the "tox"-specific "finally" environment
+      # defined by our top-level "tox.ini" configuration, which (in order):
       # * Combines *ALL* Coverage.py-specific ".coverage.*" files emitted by
       #   test-specific "tox" environments previously run by the "tests" job
       #   above into a single ".coverage" file.

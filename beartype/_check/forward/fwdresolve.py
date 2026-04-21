@@ -21,6 +21,7 @@ from beartype._check.forward.scope.fwdscopemake import (
     make_scope_forward_decor_meta)
 from beartype._check.metadata.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     LexicalScope,
@@ -44,9 +45,9 @@ from beartype._util.utilobject import (
 def resolve_hint_pep484_ref_str_caller_external(
     # Mandatory parameters.
     hint: str,
-    conf: BeartypeConf,
 
     # Optional parameters.
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_cls: TypeException = (
         BeartypeDecorHintPep484ForwardRefStrException),
     exception_prefix: str = '',
@@ -68,9 +69,13 @@ def resolve_hint_pep484_ref_str_caller_external(
     ----------
     hint : str
         Stringified forward reference type hint to be resolved.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., dataclass encapsulating all flags,
-        options, settings, and other metadata configuring this resolution).
+    conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
+        **Beartype configuration** (i.e., dataclass encapsulating all options
+        configuring this resolution). For callers for whom passing this
+        configuration is non-trivial, note that this configuration currently
+        only governs superficial options (e.g., color in raised exception
+        messages) and is thus mostly ignorable. Defaults to the default
+        beartype configuration as a reasonable fallback.
     exception_cls : Type[Exception], default: BeartypeDecorHintPep484ForwardRefStrException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep484ForwardRefStrException`.
@@ -474,9 +479,12 @@ def _resolve_hint_pep484_ref_str(
     hint : str
         Stringified forward reference type hint to be resolved.
     conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all flags, options, settings, and other metadata configuring that
-        that type-checking call).
+        **Beartype configuration** (i.e., dataclass encapsulating all options
+        configuring this resolution). For callers for whom passing this
+        configuration is non-trivial, note that this configuration currently
+        only governs superficial options (e.g., color in raised exception
+        messages) and is thus mostly ignorable. The default configuration
+        suffices as a reasonable fallback.
     scope_forward : LexicalScope
         **Forward scope** (i.e., dictionary mapping from the names to values of
         all attributes accessible to the lexical scope of the passed decorated
