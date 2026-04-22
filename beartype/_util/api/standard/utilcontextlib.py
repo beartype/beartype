@@ -16,8 +16,8 @@ from beartype.typing import (
     Optional,
 )
 from beartype._util.func.utilfunccodeobj import (
-    get_code_object_basename,
-    get_func_code_object_or_none,
+    get_codeobject_basename,
+    get_func_codeobject_or_none,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_10
 from collections.abc import Callable
@@ -107,7 +107,7 @@ def get_func_contextlib_contextmanager_or_none(func: Any) -> Optional[Callable]:
     # Code object underlying that callable as is (rather than possibly unwrapped
     # to another code object entirely) if that callable is pure-Python *OR*
     # "None" otherwise (i.e., if that callable is C-based).
-    func_codeobj = get_func_code_object_or_none(func)
+    func_codeobj = get_func_codeobject_or_none(func)
 
     # If that callable is C-based, immediately return "None".
     if func_codeobj is None:
@@ -120,7 +120,7 @@ def get_func_contextlib_contextmanager_or_none(func: Any) -> Optional[Callable]:
         CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME_TO_DECORATOR)
 
     # Unqualified basename of this code object.
-    func_codeobj_name = get_code_object_basename(func_codeobj)
+    func_codeobj_name = get_codeobject_basename(func_codeobj)
 
     # Either:
     # * If the fully-qualified name of this code object is that of an isomorphic

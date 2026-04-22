@@ -125,18 +125,35 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
     C-based **weak reference proxy** (i.e., :class:`weakref.ref` object) weakly
     referring to the C-based code object underlying the lexical scope of the
-    parent module, type, or callable whose body locally defines the **locally
-    decorated callable** (i.e., :func:`beartype.beartype`-decorated pure-Python
-    callable locally defined inside another pure-Python callable) if this
-    forward reference proxy subtype proxies a :pep:`484`-compliant stringified
-    forward reference type hint annotating a locally decorated callable *or*
+    parent type or callable whose body locally defines the **locally decorated
+    callable** (i.e., :func:`beartype.beartype`-decorated pure-Python callable
+    locally defined inside another pure-Python callable) if this forward
+    reference proxy subtype proxies a :pep:`484`-compliant stringified forward
+    reference type hint annotating a locally decorated callable *or*
     :data:`None` otherwise (i.e., if that hint annotates either no decorated
     callable *or* a globally decorated callable).
 
+    Caveats
+    -------
+    This weak reference proxy intentionally proxies a **stack frame code
+    object** (i.e., the
+    :attr:`beartype._cave._cavefast.CallableCodeObjectType.f_code` instance
+    variable providing the lower-level code object underlying a higher-level
+    stack frame) rather than a stack frame itself. Why? Because CPython
+    currently prohibits weak references to stack frames: e.g.,
+
+    .. code-block:: python
+
+       >>> import sys, weakref
+       >>> weakref.ref(sys._getframe())
+       TypeError: cannot create weak reference to 'frame' object
+
+    Motivation
+    ----------
     This class variable enables this subtype to conditionally resolve an
-    otherwise unresolvable edge case. Generally speaking, there exist three
-    different kinds of stringified forward references (in increasing order of
-    resolution time and triviality):
+    otherwise unresolvable edge case. Generally speaking, there exist four
+    different kinds of stringified forward references (in decreasing order of
+    resolution triviality and thus efficiency as well):
 
     * **References trivially resolveable at early decoration time.** In this
       case, *no* forward reference proxy subtype is required at all. Instead,

@@ -37,7 +37,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
 from beartype._data.typing.datatyping import Codeobjable
-from beartype._util.func.utilfunccodeobj import get_func_code_object_or_none
+from beartype._util.func.utilfunccodeobj import get_func_codeobject_or_none
 from linecache import cache as linecache_cache
 
 # ....................{ TESTERS                            }....................
@@ -80,7 +80,7 @@ def get_func_filename_or_none(func: Codeobjable, **kwargs) -> Optional[str]:
         Codeobjable to be inspected.
 
     All remaining keyword parameters are passed as is to the
-    :func:`beartype._util.func.utilfunccodeobj.get_func_code_object` getter.
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
 
     Returns
     -------
@@ -93,7 +93,7 @@ def get_func_filename_or_none(func: Codeobjable, **kwargs) -> Optional[str]:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunccodeobj import get_code_object_filename
+    from beartype._util.func.utilfunccodeobj import get_codeobject_filename
 
     # Code object underlying the passed callable if that callable is pure-Python
     # *OR* "None" otherwise (i.e., if that callable is C-based).
@@ -122,7 +122,7 @@ def get_func_filename_or_none(func: Codeobjable, **kwargs) -> Optional[str]:
     # approach would unconditionally return the C-specific placeholder string
     # for all callables -- including those originally declared as pure-Python in
     # a Python module. So it goes.
-    func_codeobj = get_func_code_object_or_none(func, **kwargs)
+    func_codeobj = get_func_codeobject_or_none(func, **kwargs)
 
     # If the passed callable has *NO* code object and is thus *NOT* pure-Python,
     # that callable was *NOT* defined by a pure-Python source code file. In this
@@ -139,7 +139,7 @@ def get_func_filename_or_none(func: Codeobjable, **kwargs) -> Optional[str]:
     # Why? Because PyPy yet again. For inexplicable reasons, PyPy provides
     # *ALL* C-based builtins (e.g., len()) with code objects failing to provide
     # this metadata. Yes, this is awful. Yes, this is the Python ecosystem.
-    func_filename = get_code_object_filename(func_codeobj)
+    func_filename = get_codeobject_filename(func_codeobj)
 
     # If either this code object does not provide this filename *OR*...
     if not func_filename or (

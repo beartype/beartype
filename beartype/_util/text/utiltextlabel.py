@@ -343,7 +343,7 @@ def label_callable(
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncarglen import (
         get_func_args_flexible_len)
-    from beartype._util.func.utilfunccodeobj import get_func_code_object
+    from beartype._util.func.utilfunccodeobj import get_func_codeobject
     from beartype._util.func.utilfunctest import is_func_lambda
     from beartype._util.text.utiltextansi import color_attr_name
 
@@ -367,7 +367,7 @@ def label_callable(
     # uniquely identifying this lambda from various code object metadata.
     if is_func_lambda(func):
         # Code object underlying this lambda.
-        func_codeobj = get_func_code_object(func)
+        func_codeobj = get_func_codeobject(func)
 
         # Substring preceding the string to be returned.
         func_label_prefix = (

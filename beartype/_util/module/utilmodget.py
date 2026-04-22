@@ -160,14 +160,14 @@ def get_object_module_line_number_begin(obj: object) -> int:
     # Else, this object is *NOT* a class.
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunccodeobj import get_func_code_object_or_none
+    from beartype._util.func.utilfunccodeobj import get_func_codeobject_or_none
 
     # Code object underlying this object if this object is a pure-Python
     # callable *OR* "None" otherwise.
     #
     # Note this is the canonical means of deciding whether an arbitrary object
     # is a pure-Python callable, as our is_func_codeobjable() function demonstrates.
-    func_codeobj = get_func_code_object_or_none(obj)
+    func_codeobj = get_func_codeobject_or_none(obj)
 
     # If this object is a pure-Python callable, return the line number of the
     # first line declaring this object in its underlying source code file.

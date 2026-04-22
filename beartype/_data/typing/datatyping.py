@@ -277,7 +277,7 @@ Codeobjable = Callable | CodeType | FrameType | GeneratorType
 '''
 PEP-compliant type hint matching a **codeobjable** (i.e., pure-Python object
 directly associated with a code object and thus safely passable as the first
-parameter to the :func:`beartype._util.func.utilfunccodeobj.get_func_code_object`
+parameter to the :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject`
 getter retrieving the code object associated with this codeobjable).
 
 Specifically, this hint matches:

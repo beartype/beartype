@@ -97,8 +97,8 @@ def test_decor_conf_is_debug(capsys) -> None:
         beartype,
     )
     from beartype._util.func.utilfunccodeobj import (
-        get_func_code_object,
-        get_code_object_filename,
+        get_func_codeobject,
+        get_codeobject_filename,
     )
     from linecache import cache as linecache_cache
 
@@ -136,7 +136,7 @@ def test_decor_conf_is_debug(capsys) -> None:
     # Absolute filename of the fake file declaring the earthquake_beartyped()
     # function.
     earthquake_beartyped_filename = (
-        get_code_object_filename(get_func_code_object(earthquake_beartyped)))
+        get_codeobject_filename(get_func_codeobject(earthquake_beartyped)))
 
     # Assert that the standard "linecache" module cached metadata describing the
     # earthquake_beartyped() function.

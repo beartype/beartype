@@ -53,8 +53,8 @@ def test_get_func_filename_or_none() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.func.utilfunccodeobj import (
-        get_func_code_object,
-        get_code_object_filename,
+        get_func_codeobject,
+        get_codeobject_filename,
     )
     from beartype._util.func.utilfuncfile import get_func_filename_or_none
     from beartype._util.func.utilfuncmake import make_func
@@ -94,7 +94,7 @@ def test_get_func_filename_or_none() -> None:
     # standard "linecache" module.
     assert get_func_filename_or_none(
         like_snakes_that_watch_their_prey) == (
-        get_code_object_filename(get_func_code_object(
+        get_codeobject_filename(get_func_codeobject(
             like_snakes_that_watch_their_prey)))
 
     # Assert this getter returns "None" when passed a pure-Python callable

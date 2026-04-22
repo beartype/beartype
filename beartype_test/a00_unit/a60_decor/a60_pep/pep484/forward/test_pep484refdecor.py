@@ -578,12 +578,9 @@ def test_pep484_ref_call_fail() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype.roar import (
-        BeartypeCallHintForwardRefException,
-        BeartypeCallHintParamViolation,
-    )
-    from beartype.typing import Union
+    from beartype.roar import BeartypeCallHintPep484ForwardRefStrException
     from beartype_test._util.error.pyterrraise import raises_uncached
+    from typing import Union
 
     # ..................{ LOCALS                             }..................
     # PEP 484-compliant stringified absolute forward reference referring to a
@@ -656,11 +653,11 @@ def test_pep484_ref_call_fail() -> None:
 
     # ..................{ FAIL                               }..................
     # Assert that calling these callables raise the expected exceptions.
-    with raises_uncached(BeartypeCallHintForwardRefException):
+    with raises_uncached(BeartypeCallHintPep484ForwardRefStrException):
         the_road('Two roads diverged in a wood, and I—')
-    with raises_uncached(BeartypeCallHintForwardRefException):
+    with raises_uncached(BeartypeCallHintPep484ForwardRefStrException):
         in_leaves_no_step('I took the one less traveled by,')
-    with raises_uncached(BeartypeCallHintParamViolation):
+    with raises_uncached(BeartypeCallHintPep484ForwardRefStrException):
         yet_knowing_how_way('And that has made all the difference.')
-    with raises_uncached(BeartypeCallHintParamViolation):
+    with raises_uncached(BeartypeCallHintPep484ForwardRefStrException):
         somewhere_ages('I doubted if I should ever come back.')

@@ -29,7 +29,7 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._util.cls.utilclsget import get_type_locals
-from beartype._util.func.utilfunccodeobj import get_func_code_object
+from beartype._util.func.utilfunccodeobj import get_func_codeobject
 from beartype._util.func.utilfuncframe import (
     GET_FRAME_CALLER_PARENT,
     find_frame_caller_external,
@@ -40,7 +40,7 @@ from beartype._util.func.utilfuncframe import (
 )
 from beartype._util.func.utilfuncscope import (
     get_func_globals,
-    get_func_locals_frame,
+    find_func_locals_frame,
 )
 from beartype._util.hint.pep.proposal.pep695 import (
     add_func_scope_hint_pep695_parameterizable_typeparams,
@@ -279,7 +279,7 @@ def make_scope_forward_decor_meta(
         # Attempt to...
         try:
             # Local scope and associated stack frame of the decorated callable.
-            func_locals, func_locals_frame = get_func_locals_frame(
+            func_locals, func_locals_frame = find_func_locals_frame(
                 func=func,
 
                 # Ignore all lexical scopes in the fully-qualified name of the
@@ -288,7 +288,7 @@ def make_scope_forward_decor_meta(
                 # (including that class). Why? Because these classes are *ALL*
                 # currently being decorated and thus have yet to be encapsulated
                 # by new stack frames on the call stack. If these lexical scopes
-                # are *NOT* ignored, this call to get_func_locals_frame() will
+                # are *NOT* ignored, this call to find_func_locals_frame() will
                 # fail to find the parent lexical scope of the decorated
                 # callable and then raise an unexpected exception.
                 #
@@ -303,7 +303,7 @@ def make_scope_forward_decor_meta(
                 #
                 # When @beartype finally recurses into decorating the nested
                 # muh_package.Outer.Middle.Inner.muh_method() method, this call
-                # to get_func_locals_frame() if *NOT* passed this parameter would
+                # to find_func_locals_frame() if *NOT* passed this parameter would
                 # naively assume that the parent lexical scope of the current
                 # muh_method() method on the call stack is named "Inner".
                 # Instead, the parent lexical scope of that method on the call
@@ -457,7 +457,7 @@ def make_scope_forward_decor_meta(
     if func_locals_frame is not None:
         # Weak reference to the code object of that parent callable or type.
         func_local_parent_codeobj_weakref = WeakrefCallableType(
-            get_func_code_object(func_locals_frame))
+            get_func_codeobject(func_locals_frame))
 
         # Either:
         # * If the decorated callable is locally declared by a parent callable

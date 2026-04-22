@@ -147,7 +147,7 @@ def get_func_functools_partial_args_flexible_len(
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
         :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
-        Defaults to :data:`True` for safety. See :func:`.get_func_code_object` for
+        Defaults to :data:`True` for safety. See :func:`.get_func_codeobject` for
         further commentary.
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults

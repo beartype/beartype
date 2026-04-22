@@ -26,7 +26,7 @@ def test_get_frame_or_none() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallFrameException
-    from beartype._util.func.utilfunccodeobj import get_func_code_object
+    from beartype._util.func.utilfunccodeobj import get_func_codeobject
     from beartype._util.func.utilfuncframe import get_frame_or_none
     from pytest import raises
     from sys import maxsize
@@ -59,23 +59,23 @@ def test_get_frame_or_none() -> None:
         # parameters.
         seemd_strangled_frame = get_frame_or_none()
         assert (
-            get_func_code_object(seemd_strangled_frame) is
-            get_func_code_object(seemd_strangled)
+            get_func_codeobject(seemd_strangled_frame) is
+            get_func_codeobject(seemd_strangled)
         )
 
         # Assert this getter returns the current stack frame when passed 0.
         in_my_nervous_grasp_frame = get_frame_or_none(0)
         assert (
-            get_func_code_object(in_my_nervous_grasp_frame) is
-            get_func_code_object(in_my_nervous_grasp)
+            get_func_codeobject(in_my_nervous_grasp_frame) is
+            get_func_codeobject(in_my_nervous_grasp)
         )
 
         # Assert this getter returns the parent parent stack frame when passed
         # 2.
         while_fate_frame = get_frame_or_none(2)
         assert (
-            get_func_code_object(while_fate_frame) is
-            get_func_code_object(while_fate)
+            get_func_codeobject(while_fate_frame) is
+            get_func_codeobject(while_fate)
         )
 
     # ....................{ PASS                           }....................
@@ -170,7 +170,7 @@ def test_iter_frames() -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.func.utilfunccodeobj import get_func_code_object
+    from beartype._util.func.utilfunccodeobj import get_func_codeobject
     from beartype._util.func.utilfuncframe import iter_frames
 
     # For each stack frame on the current call stack iterated by this
@@ -178,7 +178,7 @@ def test_iter_frames() -> None:
     for frame in iter_frames():
         # Code object underlying the pure-Python function encapsulated by this
         # stack frame.
-        frame_codeobj = get_func_code_object(frame)
+        frame_codeobj = get_func_codeobject(frame)
 
         # Unqualified name of this function.
         frame_name = frame_codeobj.co_name

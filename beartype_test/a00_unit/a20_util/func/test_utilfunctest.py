@@ -173,7 +173,7 @@ def test_is_func_sync_generator() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
-    from beartype._util.func.utilfunccodeobj import get_func_code_object
+    from beartype._util.func.utilfunccodeobj import get_func_codeobject
     from beartype._util.func.utilfunctest import is_func_sync_generator
     from beartype_test.a00_unit.data.data_type import (
         async_coroutine,
@@ -187,7 +187,7 @@ def test_is_func_sync_generator() -> None:
 
     # ....................{ LOCALS                         }....................
     # Code object of an arbitrary pure-Python synchronous generator factory.
-    sync_generator_factory_codeobj = get_func_code_object(sync_generator_factory)
+    sync_generator_factory_codeobj = get_func_codeobject(sync_generator_factory)
 
     # ....................{ PASS                           }....................
     # Assert this tester accepts pure-Python synchronous generator factories.

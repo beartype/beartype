@@ -43,8 +43,8 @@ def test_make_func(capsys) -> None:
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype.typing import Optional
     from beartype._util.func.utilfunccodeobj import (
-        get_func_code_object,
-        get_code_object_filename,
+        get_func_codeobject,
+        get_codeobject_filename,
     )
     from beartype._util.func.utilfuncmake import make_func
     from linecache import cache as linecache_cache
@@ -141,7 +141,7 @@ def to_strive_to_seek_to_find(and_not_to_yield: str) -> str:
     assert 'return and_not_to_yield' in standard_captured.out
 
     # Assert the prior make_func() call cached the expected definition.
-    func_filename = get_code_object_filename(get_func_code_object(
+    func_filename = get_codeobject_filename(get_func_codeobject(
         to_strive_to_seek_to_find))
     func_cache = linecache_cache.get(func_filename)
     assert isinstance(func_cache, tuple)

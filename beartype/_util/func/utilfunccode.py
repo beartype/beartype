@@ -64,7 +64,7 @@ from beartype.typing import (
 )
 from beartype._data.typing.datatyping import TypeWarning
 from beartype._util.error.utilerrwarn import issue_warning
-from beartype._util.func.utilfunccodeobj import get_func_code_object
+from beartype._util.func.utilfunccodeobj import get_func_codeobject
 from collections.abc import Callable
 from inspect import (
     findsource,
@@ -377,7 +377,7 @@ def get_func_code_or_none(
             # If that lambda is defined by a file...
             if lambda_file_code:
                 # Code object underlying this lambda.
-                func_codeobj = get_func_code_object(func)
+                func_codeobj = get_func_codeobject(func)
 
                 # If this file exceeds a sane maximum file size, emit a
                 # non-fatal warning and safely ignore this file.

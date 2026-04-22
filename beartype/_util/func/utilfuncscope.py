@@ -123,8 +123,8 @@ def get_func_globals(
     # (and thus different global scopes) by different module authors.
     return func_globals
 
-# ....................{ GETTERS ~ locals                   }....................
-def get_func_locals_frame(
+# ....................{ FINDERS                            }....................
+def find_func_locals_frame(
     # Mandatory parameters.
     func: Callable,
 
@@ -287,8 +287,8 @@ def get_func_locals_frame(
     # ..................{ IMPORTS                            }..................
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunccodeobj import (
-        get_code_object_basename_last,
-        get_func_code_object,
+        get_codeobject_basename_last,
+        get_func_codeobject,
     )
     from beartype._util.func.utilfuncframe import (
         get_frame_locals,
@@ -319,12 +319,12 @@ def get_func_locals_frame(
 
     # If either...
     if (
-        # The passed callable is dynamically declared in-memory...
+        # The passed callable is dynamically declared in-memory *OR*...
         func_module_name is None or
-        # The passed callable is module-scoped rather than nested *OR*...
+        # The passed callable is module-scoped (rather than nested)...
         not is_func_nested(func)
-    # Then silently reduce to a noop by treating this nested callable as
-    # module-scoped by preserving "func_locals" as the empty dictionary.
+    # Then silently reduce to a noop by treating this possibly nested callable
+    # as module-scoped by preserving "func_locals" as the empty dictionary.
     ):
         return _GET_FUNC_LOCALS_FRAME_NONE
     # Else, all of the following constraints hold:
@@ -500,27 +500,28 @@ def get_func_locals_frame(
         **kwargs
     ):
         # If this frame encapsulates the execution of the top-most global
-        # lexical scope of a pure-Python module, this search has just crossed a
-        # module declaration boundary and is thus no longer searching within the
-        # module declaring this nested callable and has thus failed to find the
-        # lexical scope of the parent declaring this nested callable. Why?
-        # Because this scope *MUST* necessarily be in the same module as that of
-        # this nested callable. In this case, raise an exception.
+        # lexical scope of a pure-Python module, this search is on the cusp of
+        # crossing a module declaration boundary and thus no longer searching
+        # within the module declaring this nested callable. This search has thus
+        # failed to find the lexical scope of the parent declaring this nested
+        # callable. Why? Because this scope *MUST* necessarily reside in the
+        # same module as that of this nested callable. In this case, raise an
+        # exception.
         if is_frame_module(func_frame):
             raise _BeartypeUtilCallableScopeNotFoundException(
                 f'{func_name_qualified}() parent lexical scope '
                 f'"{func_scope_name}" not found on call stack.'
             )
-        # Else, this frame does *NOT* encapsulates the execution of the top-most
+        # Else, this frame does *NOT* encapsulate the execution of the top-most
         # global lexical scope of a pure-Python module. Instead, this frame
         # *MUST* necessarily encapsulate the body of a class or callable.
 
         # Code object underlying this frame's scope.
-        func_frame_codeobj = get_func_code_object(func_frame)
+        func_frame_codeobj = get_func_codeobject(func_frame)
 
         # Last "."-delimited component of the unqualified basename of this
         # scope.
-        func_frame_name = get_code_object_basename_last(func_frame_codeobj)
+        func_frame_name = get_codeobject_basename_last(func_frame_codeobj)
 
         # Fully-qualified name of the module defining this scope if any *OR*
         # "None" otherwise (i.e., if this scope is defined outside a module).
@@ -707,6 +708,6 @@ _GET_FUNC_LOCALS_FRAME_NONE: tuple[FrozenDictStrToAny, None] = (  # type: ignore
     FROZENDICT_EMPTY, None)
 '''
 2-tuple ``(scope_local, scope_frame)`` to be returned from the
-:func:`.get_func_locals_frame` getter for the common case that the passed
+:func:`.find_func_locals_frame` getter for the common case that the passed
 callable is a global function directly declared by a module.
 '''

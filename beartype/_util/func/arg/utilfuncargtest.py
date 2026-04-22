@@ -183,7 +183,7 @@ def is_func_argless(
         Defaults to :data:`False` to avoid confusion with decorator wrappers,
         which almost always accept variadic arguments despite the callable they
         wrap *not* accepting such arguments. See also
-        :func:`beartype._util.func.utilfunccodeobj.get_func_code_object`.
+        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject`.
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
@@ -221,7 +221,7 @@ def is_func_arg_nonvariadic(*args, **kwargs) -> bool:
     Parameters
     ----------
     All parameters are passed as is to the lower-level
-    :func:`beartype._util.func.utilfunccodeobj.get_func_code_object` getter.
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
 
     Returns
     -------
@@ -247,7 +247,7 @@ def is_func_arg_variadic(*args, **kwargs) -> bool:
     Parameters
     ----------
     All parameters are passed as is to the lower-level
-    :func:`beartype._util.func.utilfunccodeobj.get_func_code_object` getter.
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
 
     Returns
     -------
@@ -281,7 +281,7 @@ def is_func_arg_variadic_positional(*args, **kwargs) -> bool:
     Parameters
     ----------
     All parameters are passed as is to the lower-level
-    :func:`beartype._util.func.utilfunccodeobj.get_func_code_object` getter.
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
 
     Returns
     -------
@@ -310,7 +310,7 @@ def is_func_arg_variadic_keyword(*args, **kwargs) -> bool:
     Parameters
     ----------
     All parameters are passed as is to the lower-level
-    :func:`beartype._util.func.utilfunccodeobj.get_func_code_object` getter.
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
 
     Returns
     -------
@@ -342,7 +342,7 @@ def is_func_arg_name(arg_name: str, *args, **kwargs) -> bool:
         Name of the argument to be searched for.
 
     All remaining parameters are passed as is to the lower-level
-    :func:`beartype._util.func.utilfunccodeobj.get_func_code_object` getter.
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
 
     Returns
     -------
@@ -395,7 +395,7 @@ def is_func_arg_name_variadic_positional(
         Name of the argument to be searched for.
 
     All remaining parameters are passed as is to the lower-level
-    :func:`beartype._util.func.utilfunccodeobj.get_func_code_object` getter.
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
 
     Returns
     -------
@@ -454,7 +454,7 @@ def is_func_arg_name_variadic_keyword(
         Name of the argument to be searched for.
 
     All remaining parameters are passed as is to the lower-level
-    :func:`beartype._util.func.utilfunccodeobj.get_func_code_object` getter.
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
 
     Returns
     -------
