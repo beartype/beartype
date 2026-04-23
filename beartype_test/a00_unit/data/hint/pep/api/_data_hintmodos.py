@@ -22,26 +22,27 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 def hints_pep_meta_os() -> 'List[HintPepMetadata]':
     '''
     List of :mod:`os`-specific **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific sample :mod:`os`-specific type hints with
     metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer version-specific imports.
-    from beartype.typing import (
-        Any,
-        AnyStr,
-    )
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep585BuiltinSubscriptedUnknown)
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
     from os import PathLike
     from pathlib import Path
+    from typing import (
+        Any,
+        AnyStr,
+    )
 
     # ..................{ CLASSES                            }..................
     class PathBytes(object):  # <-- get it? "Path" bytes? BITES? *har har*

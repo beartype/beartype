@@ -28,7 +28,7 @@ def test_door_die_if_unbearable(iter_hints_piths_meta) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
@@ -44,7 +44,7 @@ def test_door_die_if_unbearable(iter_hints_piths_meta) -> None:
         BeartypeDoorHintViolation,
     )
     from beartype._util.text.utiltextrepr import represent_object
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithUnsatisfiedMetadata)
     from pytest import raises
 
@@ -121,7 +121,7 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
@@ -135,7 +135,7 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
         BeartypeDoorHintViolation,
         BeartypeDoorNonpepException,
     )
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithUnsatisfiedMetadata)
     from contextlib import suppress
     from pytest import raises
@@ -179,7 +179,7 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
@@ -196,7 +196,7 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
         BeartypeConfException,
         BeartypeDecorHintNonpepException,
     )
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithUnsatisfiedMetadata)
     from beartype_test._util.error.pyterrraise import raises_uncached
     from beartype_test._util.error.pyterrwarn import warns_uncached
@@ -305,7 +305,7 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
@@ -316,7 +316,7 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
     # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorNonpepException
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithUnsatisfiedMetadata)
     from contextlib import suppress
 

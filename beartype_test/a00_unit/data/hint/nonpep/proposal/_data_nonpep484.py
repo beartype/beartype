@@ -17,10 +17,10 @@ PEP-noncompliant type hints include:
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_nonpep484_meta() -> 'List[HintNonpepMetadata]':
+def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
     '''
     List of :pep:`484`-sorta-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintNonpepMetadata`
     instances describing test-specific :pep:`484`-sorta-compliant sample type
     hints with metadata generically leveraged by various PEP-agnostic unit
     tests).
@@ -30,9 +30,6 @@ def hints_nonpep484_meta() -> 'List[HintNonpepMetadata]':
     # Defer fixture-specific imports.
     import sys
     from beartype import BeartypeConf
-    from beartype.typing import (
-        NamedTuple,
-    )
     from beartype._cave._cavefast import (
         EllipsisType,
         FunctionType,
@@ -43,11 +40,13 @@ def hints_nonpep484_meta() -> 'List[HintNonpepMetadata]':
         NotImplementedType,
     )
     from beartype_test.a00_unit.data.data_type import Class
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintNonpepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintNonpepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
+    from typing import NamedTuple
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-noncompliant type hint metadata to be returned.

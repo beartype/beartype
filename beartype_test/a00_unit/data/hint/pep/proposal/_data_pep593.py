@@ -8,23 +8,17 @@ Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
 # ....................{ FIXTURES ~ meta                    }....................
-def hints_pep593_meta() -> 'List[HintPepMetadata]':
+def hints_pep593_meta() -> 'list[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`593`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`593`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype.typing import (
-        List,
-        Sequence,
-        TypeVar,
-        Union,
-    )
     from beartype.vale import (
         Is,
         IsAttr,
@@ -43,12 +37,18 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         Subclass,
         SubclassSubclass,
     )
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
+    from collections.abc import Sequence
     from functools import partial
+    from typing import (
+        TypeVar,
+        Union,
+    )
 
     # ..................{ CLASSES                            }..................
     class TruthSeeker(object):
@@ -202,7 +202,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
 
             # Annotated of an arbitrary nested type hint.
             HintPepMetadata(
-                hint=Annotated[List[str], int],
+                hint=Annotated[list[str], int],
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # List of string constants.
@@ -477,10 +477,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             # List of annotateds of isinstanceable types annotated by one
             # beartype validator defined as a lambda function.
             HintPepMetadata(
-                hint=List[AnnotatedStrIsLength],
+                hint=list[AnnotatedStrIsLength],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
-                is_pep585_builtin_subbed=List is list,
+                is_pep585_builtin_subbed=True,
                 piths_meta=(
                     # List of string constants satisfying this validator.
                     PithSatisfiedMetadata([
@@ -509,10 +509,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             # a type variable bounded by a beartype validator defined as a
             # lambda function.
             HintPepMetadata(
-                hint=List[List[T_IsIntNonZero]],
+                hint=list[list[T_IsIntNonZero]],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
-                is_pep585_builtin_subbed=List is list,
+                is_pep585_builtin_subbed=True,
                 typeargs_packed=(T_IsIntNonZero,),
                 piths_meta=(
                     # List of lists of non-zero integer constants.
@@ -535,10 +535,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             # a type variable bounded by two beartype validators, one defined as
             # a lambda function and one not.
             HintPepMetadata(
-                hint=List[List[T_IsIntNonZero]],
+                hint=list[list[T_IsIntNonZero]],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
-                is_pep585_builtin_subbed=List is list,
+                is_pep585_builtin_subbed=True,
                 typeargs_packed=(T_IsIntNonZero,),
                 piths_meta=(
                     # List of lists of non-zero integer constants.
@@ -561,10 +561,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             # annotated by a type variable bounded by a union of beartype
             # validators defined as lambda functions.
             HintPepMetadata(
-                hint=List[List[T_IsNumberNonNegativeOrStrNonEmpty]],
+                hint=list[list[T_IsNumberNonNegativeOrStrNonEmpty]],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
-                is_pep585_builtin_subbed=List is list,
+                is_pep585_builtin_subbed=True,
                 typeargs_packed=(T_IsNumberNonNegativeOrStrNonEmpty,),
                 piths_meta=(
                     # List of lists of positive number constants.
@@ -610,7 +610,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             # Annotated of an isinstanceable type annotated by one beartype
             # equality validator.
             HintPepMetadata(
-                hint=Annotated[List[str], IsEqual[AMPLY_IMPISH]],
+                hint=Annotated[list[str], IsEqual[AMPLY_IMPISH]],
                 pep_sign=HintSignAnnotated,
                 piths_meta=(
                     # Exact object subscripting this validator.

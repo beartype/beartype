@@ -16,7 +16,7 @@ Project-wide :pep:`544`-compliant **type hint test data.**
 def hints_pep544_meta() -> 'List[HintPepMetadata]':
     '''
     List of :pep:`544`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`544`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -27,11 +27,6 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         ABC,
         abstractmethod,
     )
-    from beartype.typing import (
-        Any,
-        AnyStr,
-        runtime_checkable,
-    )
     from beartype._data.typing.datatyping import T
     from beartype._data.hint.sign.datahintsigns import (
         HintSignBinaryIO,
@@ -40,12 +35,18 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         HintSignTextIO,
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
     from pathlib import Path
+    from typing import (
+        Any,
+        AnyStr,
+        runtime_checkable,
+    )
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.

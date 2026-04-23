@@ -9,10 +9,10 @@ Project-wide :pep:`646`-compliant **type hint test data.**
 
 # ....................{ FIXTURES ~ meta                    }....................
 def hints_pep646_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]'):
+    'list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]'):
     '''
     List of :pep:`646`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`646`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -33,7 +33,6 @@ def hints_pep646_meta() -> (
 
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
-    from beartype.typing import NewType
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep484585GenericSubbed,
         HintSignPep646TupleFixedVariadic,
@@ -46,8 +45,9 @@ def hints_pep646_meta() -> (
         # make_hint_pep646_typevartuple_unpacked_prefix,
         # make_hint_pep646_typevartuple_unpacked_subbed,
     )
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
@@ -66,6 +66,7 @@ def hints_pep646_meta() -> (
         tuple_variadic_strs_unpacked_prefix,
         tuple_variadic_strs_unpacked_subbed,
     )
+    from typing import NewType
 
     # ..................{ LOCALS                             }..................
     # PEP 484-compliant aliases defined by PEP 646's "Summary Examples" section.

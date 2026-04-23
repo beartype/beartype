@@ -8,10 +8,10 @@ Project-wide :pep:`696`-compliant **type hint test data.**
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep696_meta() -> 'List[HintPepMetadata]':
+def hints_pep696_meta() -> 'list[HintPepMetadata]':
     '''
     List of :pep:`696`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`696`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -32,20 +32,18 @@ def hints_pep696_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
-    from beartype.typing import (
-        List,
-        TypeVar,
-    )
     from beartype.door import TypeVarTypeHint
     from beartype._data.hint.sign.datahintsigns import HintSignTypeVar
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
+    from typing import TypeVar
 
     # ..................{ LOCALS                             }..................
-    T_list_str = TypeVar('T_list_str', default=List[str])
+    T_list_str = TypeVar('T_list_str', default=list[str])
     '''
     '''
 

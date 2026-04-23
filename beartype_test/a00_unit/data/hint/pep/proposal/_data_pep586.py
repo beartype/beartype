@@ -12,14 +12,13 @@ def hints_pep586_meta() -> 'list[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`586`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`586`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype.typing import List
     from beartype._data.hint.sign.datahintsigns import (
         HintSignList,
         HintSignLiteral,
@@ -27,8 +26,9 @@ def hints_pep586_meta() -> 'list[HintPepMetadata]':
     from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
         MasterlessDecreeVenomlessWhich)
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
@@ -248,7 +248,7 @@ def hints_pep586_meta() -> 'list[HintPepMetadata]':
             # ..............{ LITERALS ~ nested                  }..............
             # List of literal arbitrary Unicode strings.
             HintPepMetadata(
-                hint=List[Literal[
+                hint=list[Literal[
                     'ç‐omically gnomical whitebellied burden’s empathy of']],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,

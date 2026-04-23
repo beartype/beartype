@@ -12,25 +12,17 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`585`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`585`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
-    # ..................{ IMPORTS ~ early                    }..................
-    # Defer early-time imports.
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_11
-
-    # ..................{ IMPORTS ~ version                  }..................
-    # Defer version-specific imports.
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
     import re
     from beartype import (
         BeartypeConf,
         FrozenDict,
-    )
-    from beartype.typing import (
-        Any,
-        Union,
     )
     from beartype._cave._cavefast import IntType
     from beartype._data.hint.sign.datahintsigns import (
@@ -64,6 +56,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         HintSignType,
         HintSignValuesView,
     )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_11
     from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
         Pep585ContextManagerTSequenceT,
         Pep585IterableTContainerT,
@@ -73,8 +66,8 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         Pep585ListStr,
         Pep585ListT,
         # Pep585ListRootU,
-        Pep585ListStemT,
-        Pep585ListLeafS,
+        # Pep585ListStemT,
+        # Pep585ListLeafS,
         T_Pep585ListT,
     )
     from beartype_test.a00_unit.data.data_type import (
@@ -89,8 +82,9 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         default_dict_str_to_str,
         sync_generator,
     )
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
@@ -124,6 +118,10 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
     from re import (
         Match,
         Pattern,
+    )
+    from typing import (
+        Any,
+        Union,
     )
 
     # ..................{ LOCALS                             }..................

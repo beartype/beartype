@@ -26,7 +26,7 @@ def test_is_hint_pep484585_generic(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -57,7 +57,7 @@ def test_is_hint_pep484585_generic_unsubbed(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -90,7 +90,7 @@ def test_is_hint_pep484585_generic_subbed(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -123,7 +123,7 @@ def test_is_hint_pep484585_generic_user(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''

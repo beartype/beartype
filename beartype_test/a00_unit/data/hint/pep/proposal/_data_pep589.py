@@ -8,22 +8,17 @@ Project-wide :pep:`589`-compliant **type hint test data.**
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep589_meta() -> 'List[HintPepMetadata]':
+def hints_pep589_meta() -> 'list[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`589`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`589`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype.typing import (
-        List,
-        Type,
-        Union,
-    )
     from beartype._data.hint.sign.datahintsigns import (
         HintSignList,
         HintSignPep484585GenericSubbed,
@@ -32,13 +27,14 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
-
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import T
+    from typing import Union
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.
@@ -76,7 +72,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
             # Arbitrary key whose value is annotated to be a PEP-compliant union of
             # either a subclass of an issubclassable type or a PEP-noncompliant
             # instance of an isinstanceable type.
-            I_gaze_on_thee: Union[bytes, Type[Exception]]
+            I_gaze_on_thee: Union[bytes, type[Exception]]
 
 
         #FIXME: Note that even this fails to suffice, thanks to *CRAY-CRAY*
@@ -107,7 +103,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
             # Arbitrary key whose value is annotated to be a PEP-compliant union
             # of either a subclass of an issubclassable type or a
             # PEP-noncompliant instance of an isinstanceable type.
-            separate_fantasy: Union[Type[Exception], bytes]
+            separate_fantasy: Union[type[Exception], bytes]
 
         # ..................{ LISTS                          }..................
         # Add PEP-specific type hint metadata to this list.
@@ -252,7 +248,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
             # ................{ LISTS ~ nested                 }................
             # List of non-empty totalizing typed dictionaries.
             HintPepMetadata(
-                hint=List[DizzyRavine],
+                hint=list[DizzyRavine],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
                 piths_meta=(

@@ -17,11 +17,11 @@ from pytest import fixture
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
 def hints_piths_pep_meta() -> (
-    'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]'):
+    'tuple[beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta.HintPepMetadata]'):
     '''
     Session-scoped fixture yielding a tuple of **PEP-compliant type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta.HintPepMetadata`
     instances, each describing a sample PEP-compliant type hint exercising an
     edge case in the :mod:`beartype` codebase).
 
@@ -36,7 +36,7 @@ def hints_piths_pep_meta() -> (
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
         HintPepMetadata)
     from beartype_test._util.kind.pytkindmake import make_container_from_funcs
 
@@ -98,7 +98,7 @@ def hints_pep_hashable(hints_piths_pep_meta) -> frozenset:
 
     Parameters
     ----------
-    hints_piths_pep_meta : Tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : Tuple[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
         Tuple of PEP-compliant type hint metadata describing PEP-compliant type
         hints exercising edge cases in the :mod:`beartype` codebase.
     '''

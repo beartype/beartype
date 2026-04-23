@@ -19,25 +19,26 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
+def hints_pep_meta_weakref() -> 'list[HintPepMetadata]':
     '''
     List of :mod:`weakref`-specific **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific sample :mod:`weakref`-specific type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer version-specific imports.
-    from beartype.typing import Any
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep585BuiltinSubscriptedUnknown)
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
     from gc import collect
+    from typing import Any
     from weakref import ref
 
     # ..................{ CLASSES                            }..................

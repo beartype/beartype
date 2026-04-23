@@ -23,7 +23,7 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
     '''
     List of **NumPy type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific sample NumPy type hints with metadata
     generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -56,8 +56,9 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintSignPep484585TupleFixed,
     )
     from beartype._util.api.standard.utiltyping import import_typing_attr
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )

@@ -97,7 +97,7 @@ def test_reduce_hint_ignorable(hints_piths_pep_meta, hints_ignorable) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
         Tuple of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     hints_ignorable : frozenset

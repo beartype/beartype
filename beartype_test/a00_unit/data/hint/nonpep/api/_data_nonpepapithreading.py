@@ -15,10 +15,10 @@ PEP-noncompliant type hints include:
 
 # ....................{ FIXTURES                           }....................
 def hints_nonpep_api_threading_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata]'):
+    'list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintNonpepMetadata]'):
     '''
     List of PEP-noncompliant :mod:`threading` **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintNonpepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintNonpepMetadata`
     instances describing test-specific sample type hints originating in the
     standard :mod:`threading` module with metadata generically leveraged by
     various PEP-agnostic unit tests).
@@ -26,8 +26,9 @@ def hints_nonpep_api_threading_meta() -> (
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintNonpepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintNonpepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )

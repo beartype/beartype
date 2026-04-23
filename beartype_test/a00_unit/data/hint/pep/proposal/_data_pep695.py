@@ -8,10 +8,10 @@ Project-wide :pep:`695`-compliant **type hint test data.**
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep695_meta() -> 'List[HintPepMetadata]':
+def hints_pep695_meta() -> 'list[HintPepMetadata]':
     '''
     List of :pep:`695`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`695`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -36,8 +36,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         BeartypeConf,
         FrozenDict,
     )
-    from beartype.typing import Any
-    from beartype._cave._cavefast import HintPep695TypeAlias
+    # from beartype._cave._cavefast import HintPep695TypeAlias
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep695TypeAliasSubscripted,
         HintSignPep695TypeAliasUnsubscripted,
@@ -67,11 +66,13 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         Pep585IterableTContainerT,
         Pep585IterableTupleSTContainerTupleST,
     )
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
+    from typing import Any
 
     # ..................{ LISTS                              }..................
     # Add PEP 695-specific test type hints to this list.

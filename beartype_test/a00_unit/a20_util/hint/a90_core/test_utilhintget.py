@@ -23,7 +23,7 @@ def test_get_hint_repr(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
         List of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     '''

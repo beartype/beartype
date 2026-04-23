@@ -13,22 +13,23 @@ cases in unit tests requiring these fixtures).
 def hints_pep649_meta() -> 'list[HintPepMetadata]':
     '''
     List of :pep:`649`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`649`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype.typing import ForwardRef
     from beartype._data.hint.sign.datahintsigns import HintSignForwardRef
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_13
     from beartype_test.a00_unit.data.data_type import Subclass
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
+    from typing import ForwardRef
 
     # ....................{ CONSTANTS ~ forwardref         }....................
     # Fully-qualified classname of an arbitrary class guaranteed to be

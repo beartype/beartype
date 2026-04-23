@@ -17,11 +17,11 @@ centralization now performed by CPython itself.
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep604_meta() -> 'List[HintPepMetadata]':
+def hints_pep604_meta() -> 'list[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`604`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
     instances describing test-specific :pep:`604`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -29,9 +29,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
     from beartype import BeartypeConf
-    from beartype.door import (
-        UnionTypeHint,
-    )
+    from beartype.door import UnionTypeHint
     from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
     from beartype._data.hint.sign.datahintsigns import (
         HintSignList,
@@ -41,8 +39,9 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         HintSignUnion,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
-    from beartype_test.a00_unit.data.hint.metadata.data_hintpithmeta import (
-        HintPepMetadata,
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
