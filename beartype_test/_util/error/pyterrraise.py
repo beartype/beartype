@@ -19,7 +19,8 @@ from contextlib import contextmanager
 
 # ....................{ CONTEXTS                           }....................
 @contextmanager
-def raises_uncached(exception_cls: 'type[Exception]') -> 'ExceptionInfo':
+def raises_uncached(exception_cls: 'type[Exception]') -> (
+    'pytest.nodes.ExceptionInfo'):
     '''
     Context manager validating that the caller-defined body run by this manager
     raises an **unmemoized exception** (i.e., whose message previously

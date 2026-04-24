@@ -188,6 +188,7 @@ def proxy_hint_pep484_ref_str_subbed(
     # Classify passed parameters with this proxy.
     ref_proxy.__args_beartype__ = args  # pyright: ignore
     ref_proxy.__kwargs_beartype__ = kwargs  # pyright: ignore
+    # print(f'Forward reference proxy to subscripted generic: {repr(ref_proxy)}')
 
     # Return this proxy.
     return ref_proxy

@@ -26,45 +26,6 @@ from beartype_test._util.mark.pytskip import skip
 #FIXME: Looks like user-defined generics are the current pain point. Our forward
 #reference resolution mechanism is probably stripping their subscription and
 #just reducing them to their raw type. Blah! Blah, we say!
-#FIXME: *OH*. Right. Yeah. That's totally it. We were really trying to cut
-#corners with this one:
-#        # If this referent is a subscripted generic (e.g., "MuhGeneric[int]")...
-#        if is_hint_pep484585_generic(referent):  # pyright: ignore
-#            # Reduce this referent to the child type subscripting this generic
-#            # (e.g., "int" in the prior example). Why? Because subscripted
-#            # generics are neither isinstanceable *NOR* issubclassable: e.g.,
-#            #     >>> MuhGeneric[T]: ...
-#            #     >>> issubclass(type, MuhGeneric)
-#            #     TypeError: issubclass() argument 2 cannot be a
-#            #     parameterized generic
-#            referent = get_hint_pep484585_generic_type(
-#                hint=referent,  # pyright: ignore
-#                exception_cls=BeartypeCallHintForwardRefException,
-#                exception_prefix=cls.__exception_prefix_beartype__,
-#            )
-#
-#            # Re-cache this referent under this preferable reduction.
-#            _cache_ref_proxy_referent(cls=cls, referent=referent)
-#        # Else, this referent is *NOT* a subscripted generic.
-#
-#That's demonstrably awful. Specifically, this part:
-#            # Re-cache this referent under this preferable reduction.
-#            _cache_ref_proxy_referent(cls=cls, referent=referent)
-#
-#What a double facepalm. Instead, we clearly need to:
-#* Rename, for disambiguity:
-#  * _cache_ref_proxy_referent() to _cache_ref_proxy_referent_hint().
-#  * _uncache_ref_proxy_referent() to _uncache_ref_proxy_referent_hint().
-#* Define a pair of new _cache_ref_proxy_referent_type() and
-#  _uncache_ref_proxy_referent_type() functions.
-#* *LOL*. "__resolved_type_beartype__" is totally busted. It should instead be:
-#  * Locally defining a new "referent_type" local variable.
-#  * Calling _cache_ref_proxy_referent_type() and
-#    _uncache_ref_proxy_referent_type() (rather than
-#    _cache_ref_proxy_referent_hint() and
-#    _uncache_ref_proxy_referent_hint()).
-#  * Unconditionally calling _cache_ref_proxy_referent_type() outside any "if"
-#    statement or other block.
 
 @skip('Currently brokey.')
 @ignore_warnings(DeprecationWarning)

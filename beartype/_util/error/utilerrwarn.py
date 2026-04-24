@@ -212,7 +212,8 @@ def reissue_warnings_placeholder(
     Parameters
     ----------
     warnings : Iterable[WarningMessage]
-        Iterable of zero or more warnings to be reissued, typically produced by
+        Iterable of zero or more **warning objects** (i.e.,
+        :class:`warnings.WarningMessage` instances), typically produced by
         an external call to the standard
         ``warnings.catch_warnings(record=True)`` context manager.
     target_str : str

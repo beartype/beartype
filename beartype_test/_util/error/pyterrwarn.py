@@ -19,7 +19,8 @@ from contextlib import contextmanager
 
 # ....................{ CONTEXTS                           }....................
 @contextmanager
-def warns_uncached(warning_cls: 'type[Warning]') -> 'ExceptionInfo':
+def warns_uncached(warning_cls: 'type[Warning]') -> (
+    'collections.abc.Iterable[warnings.WarningMessage]'):
     '''
     Context manager validating that the caller-defined body run by this manager
     issues an **unmemoized warning** (i.e., whose message previously containing
@@ -34,16 +35,11 @@ def warns_uncached(warning_cls: 'type[Warning]') -> 'ExceptionInfo':
     warning_cls : str
         Type of cached warning expected to be issued by that body.
 
-    Returns
+    Yields
     -------
-    :class:`pytest.nodes.ExceptionInfo`
-        :mod:`pytest`-specific object collecting metadata on the cached warning
-        of this type issued by that body.
-
-    See Also
-    --------
-    https://docs.pytest.org/en/stable/reference.html#pytest._code.ExceptionInfo
-        Official :class:`pytest.nodes.ExceptionInfo` documentation.
+    collections.abc.Iterable[warnings.WarningMessage]
+        Iterable of zero or more **warning objects** (i.e.,
+        :class:`warnings.WarningMessage` instances).
     '''
 
     # Defer test-specific imports.

@@ -254,20 +254,25 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
         # If this tester is expected to emit a warning for this hint...
         if hint_meta.warning_type is not None:
             # Assert this tester to emit the expected warning when...
-            with warns_uncached(hint_meta.warning_type):
+            with warns_uncached(hint_meta.warning_type) as warning_info:
                 # Boolean returned by this tester when passed these parameters.
                 is_bearable_returned = is_bearable(pith, hint, conf=conf)
+
+            #FIXME: Uncomment *AFTER* we properly define the "warnings_len"
+            #instance variable for all relevant test-specific type hints. *sigh*
+            # # Assert that this tester issued the expected number of warnings.
+            # assert len(warning_info) == hint_meta.warnings_len
         # Else, this tester is expected to emit *NO* warning for this hint. In
         # this case...
         else:
             # With a context manager "catching" *ALL* non-fatal warnings emitted
             # during this logic for subsequent "playback" below...
-            with catch_warnings(record=True) as warnings_issued:
+            with catch_warnings(record=True) as warning_info:
                 # Boolean returned by this tester when passed these parameters.
                 is_bearable_returned = is_bearable(pith, hint, conf=conf)
 
             # Assert that *NO* warnings were issued by this tester above.
-            assert not warnings_issued
+            assert not warning_info
 
         # Assert that this tester returns the expected boolean when passed these
         # parameters.

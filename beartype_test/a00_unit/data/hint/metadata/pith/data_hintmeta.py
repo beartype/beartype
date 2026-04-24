@@ -64,13 +64,23 @@ class HintNonpepMetadata(object):
         instances), each describing an arbitrary object either satisfying or
         violating this hint when either passed as a parameter or returned as a
         value annotated by this hint. Defaults to the empty tuple.
-    warning_type : Optional[Type[Warning]], default: None
+    warning_type : Optional[type[Warning]], default: None
         Either:
 
-        * If the :func:`beartype.beartype` decorator unconditionally emits a
+        * If the :func:`beartype.beartype` decorator unconditionally issues a
           non-fatal warning when this type hint annotates *any* parameter or
           return of *any* callable, the type of that warning.
         * Else, :data:`None`.
+
+        Defaults to :data:`None`.
+    warnings_len: int, default: None
+        Total number of non-fatal warnings unconditionally issued by the
+        :func:`beartype.beartype` decorator unconditionally when this type hint
+        annotates *any* parameter or return of *any* callable. Defaults to
+        either:
+
+        * If :attr:`.warning_type` is :data:`None`, 0.
+        * Else, 1.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -88,9 +98,11 @@ class HintNonpepMetadata(object):
         is_supported: bool = True,
         piths_meta: Iterable[PithSatisfiedMetadata] = (),
         warning_type: Optional[type[Warning]] = None,
+        warnings_len: Optional[int] = None,
     ) -> None:
 
-        # Validate passed non-variadic parameters.
+        # Validate all passed parameters *EXCEPT* those with non-trivial
+        # defaults handled below.
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not configuration.')
         assert isinstance(is_ignorable, bool), (
@@ -111,6 +123,18 @@ class HintNonpepMetadata(object):
         assert isinstance(warning_type, _NoneTypeOrType), (
             f'{repr(warning_type)} neither class nor "None".')
 
+        # Conditionally default all unpassed parameters.
+        #
+        # Default this parameter to either:
+        # * If *NO* warning type is passed, 0.
+        # * Else, 1.
+        if warnings_len is None:
+            warnings_len = 0 if warning_type is None else 1
+
+        # Defer validating parameters with non-trivial defaults handled above.
+        assert isinstance(warnings_len, int), (
+            f'{repr(warnings_len)} not integer.')
+
         # Classify all passed parameters.
         self.hint = hint
         self.conf = conf
@@ -119,6 +143,7 @@ class HintNonpepMetadata(object):
         self.is_supported = is_supported
         self.piths_meta = piths_meta
         self.warning_type = warning_type
+        self.warnings_len = warnings_len
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
@@ -240,7 +265,8 @@ class HintPepMetadata(HintNonpepMetadata):
         from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
             is_hint_pep484612646_typearg_packed)
 
-        # Validate passed non-variadic parameters.
+        # Validate all passed parameters *EXCEPT* those with non-trivial
+        # defaults handled below.
         assert isinstance(pep_sign, HintSign), f'{repr(pep_sign)} not sign.'
         assert isinstance(isinstanceable_type, _NoneTypeOrType), (
             f'{repr(isinstanceable_type)} neither class nor "None".')
@@ -249,8 +275,7 @@ class HintPepMetadata(HintNonpepMetadata):
         assert all(
             is_hint_pep484612646_typearg_packed(typevar)
             for typevar in typeargs_packed
-        ), (
-            f'{repr(typeargs_packed)} not tuple of type variables.')
+        ), f'{repr(typeargs_packed)} not tuple of type variables.'
 
         # Initialize our superclass with all remaining variadic parameters.
         super().__init__(**kwargs)
@@ -301,10 +326,8 @@ class HintPepMetadata(HintNonpepMetadata):
         if generic_type is None:
             generic_type = isinstanceable_type if is_args else None
 
-        # Defer validating parameters defaulting to "None" until *AFTER*
-        # initializing these parameters above.
-        assert isinstance(is_args, bool), (
-            f'{repr(is_args)} not bool.')
+        # Defer validating parameters with non-trivial defaults handled above.
+        assert isinstance(is_args, bool), f'{repr(is_args)} not bool.'
         assert isinstance(is_pep585_builtin_subbed, bool), (
             f'{repr(is_pep585_builtin_subbed)} not bool.')
         assert isinstance(is_pep585_generic, bool), (
