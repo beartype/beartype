@@ -45,12 +45,16 @@ description = """\
     Unbearably fast near-real-time pure-Python runtime-static type-checker.\
     """
 
+# SPDX-compliant license expression describing project licensing. Urgh. No one
+# has any idea what SPDX means (and neither do I). Bike-shedding: "Begone!"
+license = "MIT"
+
 # Relative filename of the top-level file describing project licensing.
 #
 # Note that PEP 621 prohibits this table (i.e., dictionary) from defining both
 # the "file" and "text" keys (e.g., 'text = "MIT"'). While defining both would
 # certainly be preferable, the "file" key takes precedence over the "text" key.
-license = { file = "LICENSE" }
+license-files = ["LICENSE"]
 
 # Relative filename of the top-level file describing this project. Read it and
 # then weep as your eyes bleed! \o/
