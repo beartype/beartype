@@ -11,12 +11,19 @@ This submodule unit tests the subset of the public API of the public
 :mod:`beartype.door` subpackage that pertains to type-checking.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Generalize *ALL* test_*_die_if_unbearable() tests to leverage the new
+#raises_expected_violation_if_any() context manager to reliably test that the
+#expected violation either is or is not raised. See similar logic in the sibling
+#"test_beartype" submodule, please. *sigh*
+
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytmark import ignore_warnings
+from beartype_test._util.mark.pytskip import skip
 
 # ....................{ TESTS ~ raisers                    }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
@@ -170,12 +177,11 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
                 typehint.die_if_unbearable(pith, conf=conf)
 
 # ....................{ TESTS ~ testers                    }....................
+# See above for @ignore_warnings() discussion.
+@ignore_warnings(DeprecationWarning)
 def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
     '''
     Test the :class:`beartype.door.is_bearable` tester function.
-
-    This test also validates that this tester issues expected non-fatal warnings
-    when passed various problematic (e.g., deprecated) type hints.
 
     Parameters
     ----------
@@ -191,7 +197,6 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype.door import is_bearable
-    from beartype._util.cache.utilcacheclear import clear_caches
     from beartype.roar import (
         BeartypeConfException,
         BeartypeDecorHintNonpepException,
@@ -199,21 +204,6 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
     from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithUnsatisfiedMetadata)
     from beartype_test._util.error.pyterrraise import raises_uncached
-    from beartype_test._util.error.pyterrwarn import warns_uncached
-    from warnings import (
-        catch_warnings,
-        simplefilter,
-    )
-
-    # ....................{ SETUP                          }....................
-    # Force pytest to temporarily allow deprecation warnings to be caught by the
-    # warns() context manager for the duration of this test. By default, pytest
-    # simply "passes through" all deprecation warnings for subsequent reporting
-    # if tests otherwise successfully pass. Deprecation warnings include:
-    # * "DeprecationWarning".
-    # * "FutureWarning".
-    # * "PendingDeprecationWarning".
-    simplefilter('always')
 
     # ....................{ PASS ~ ignorable               }....................
     # Arbitrary object to be tested below.
@@ -227,52 +217,16 @@ def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
     # ....................{ PASS ~ unignorable             }....................
     # For each predefined unignorable type hint and associated metadata...
     for hint_pith_meta in iter_hints_piths_meta():
-        # Preserve test idempotence by explicitly clearing *ALL* internal caches
-        # leveraged throughout the main @beartype codebase. Doing so effectively
-        # resets this codebase back to its initial state.
-        clear_caches()
-
         # Metadata describing this hint.
         hint_meta = hint_pith_meta.hint_meta
-
-        # Type hint to be type-checked.
-        hint = hint_meta.hint
-
-        # Beartype dataclass configuring this type-check.
-        conf = hint_meta.conf
-
-        # Object to type-check against this type hint.
-        pith = hint_pith_meta.pith
 
         # True only if this pith is expected to satisfy this hint.
         is_bearable_expected = not isinstance(
             hint_pith_meta.pith_meta, PithUnsatisfiedMetadata)
 
         # True only if this pith actually did satisfy this hint.
-        is_bearable_returned: bool = None  # type: ignore[assignment]
-
-        # If this tester is expected to emit a warning for this hint...
-        if hint_meta.warning_type is not None:
-            # Assert this tester to emit the expected warning when...
-            with warns_uncached(hint_meta.warning_type) as warning_info:
-                # Boolean returned by this tester when passed these parameters.
-                is_bearable_returned = is_bearable(pith, hint, conf=conf)
-
-            #FIXME: Uncomment *AFTER* we properly define the "warnings_len"
-            #instance variable for all relevant test-specific type hints. *sigh*
-            # # Assert that this tester issued the expected number of warnings.
-            # assert len(warning_info) == hint_meta.warnings_len
-        # Else, this tester is expected to emit *NO* warning for this hint. In
-        # this case...
-        else:
-            # With a context manager "catching" *ALL* non-fatal warnings emitted
-            # during this logic for subsequent "playback" below...
-            with catch_warnings(record=True) as warning_info:
-                # Boolean returned by this tester when passed these parameters.
-                is_bearable_returned = is_bearable(pith, hint, conf=conf)
-
-            # Assert that *NO* warnings were issued by this tester above.
-            assert not warning_info
+        is_bearable_returned = is_bearable(
+            hint_pith_meta.pith, hint_meta.hint, conf=hint_meta.conf)
 
         # Assert that this tester returns the expected boolean when passed these
         # parameters.
@@ -348,3 +302,77 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
             # pith and hint.
             assert TypeHint(hint).is_bearable(pith, conf=conf) is (
                 is_bearable_expected)
+
+# ....................{ TESTS ~ warnings                   }....................
+#FIXME: Remove when worky, obviously. *sigh*
+@skip('Currently brokey.')
+def test_door_die_if_unbearable_warnings(iter_hints_piths_meta) -> None:
+    '''
+    Test the :class:`beartype.door.die_if_unbearable` raiser function with
+    respect to non-fatal warnings issued when calling that raiser function.
+
+    Parameters
+    ----------
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPithMetadata]]
+        Factory function creating and returning a generator iteratively yielding
+        ``HintPithMetadata`` instances, each describing a sample type hint
+        exercising an edge case in the :mod:`beartype` codebase paired with a
+        related object either satisfying or violating that hint.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype.door import die_if_unbearable
+    from beartype.roar import BeartypeDoorHintViolation
+    from contextlib import suppress
+
+    # ....................{ ASSERTS                        }....................
+    # For each predefined unignorable type hint and associated metadata...
+    for hint_pith_meta in iter_hints_piths_meta():
+        # Metadata describing this hint.
+        hint_meta = hint_pith_meta.hint_meta
+
+        # #FIXME: Uncomment to improve debuggability.
+        # pith = hint_pith_meta.pith
+        # hint = hint_meta.hint
+        # conf = hint_meta.conf
+
+        # Assert that this raiser when passed these parameters either issues
+        # *OR* does not issue the expected warning(s).
+        with hint_pith_meta.warns_warnings_expected():
+            # Ignore *ANY* "beartype.door"-specific violation raised by this
+            # raiser, which is irrelevant to testing warnings.
+            with suppress(BeartypeDoorHintViolation):
+                die_if_unbearable(
+                    hint_pith_meta.pith, hint_meta.hint, conf=hint_meta.conf)
+
+
+def test_door_is_bearable_warnings(iter_hints_piths_meta) -> None:
+    '''
+    Test the :class:`beartype.door.is_bearable` tester function with respect to
+    non-fatal warnings issued when calling that tester function.
+
+    Parameters
+    ----------
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPithMetadata]]
+        Factory function creating and returning a generator iteratively yielding
+        ``HintPithMetadata`` instances, each describing a sample type hint
+        exercising an edge case in the :mod:`beartype` codebase paired with a
+        related object either satisfying or violating that hint.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype.door import is_bearable
+
+    # ....................{ ASSERTS                        }....................
+    # For each predefined unignorable type hint and associated metadata...
+    for hint_pith_meta in iter_hints_piths_meta():
+        # Metadata describing this hint.
+        hint_meta = hint_pith_meta.hint_meta
+
+        # Assert that this tester when passed these parameters either issues
+        # *OR* does not issue the expected warning(s).
+        with hint_pith_meta.warns_warnings_expected():
+            is_bearable(
+                hint_pith_meta.pith, hint_meta.hint, conf=hint_meta.conf)

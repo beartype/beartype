@@ -84,24 +84,106 @@ class HintPithMetadata(object):
 
     # ..................{ CHECKERS                           }..................
     @contextmanager
-    def beartyped_func_checking(
-        self, beartyped_func: 'collections.abc.Callable[[object], object]',
-    ) -> 'collections.abc.Iterable':
+    def warns_warnings_expected(self) -> 'collections.abc.Iterable':
         '''
-        Context manager asserting that the passed
-        :func:`beartype.beartype`-decorated type-checking wrapper function
-        constrained to trivially accept an arbitrary object and return that same
-        object such that both that parameter and return are annotated by the
-        type hint encapsulated by this metadata type-checks as expected when
-        passed the pith encapsulated by this metadata.
+        Context manager asserting that an arbitrary :mod:`beartype`
+        **type-checker** (i.e., either a call to the
+        :func:`beartype.door.die_if_unbearable` or
+        :func:`beartype.door.is_bearable` statement-level type-checkers *or* a
+        decoration of an arbitrary callable or type by the
+        :func:`beartype.beartype` decorator) performed by the caller in the body
+        of this context manager either does or does not issue the expected
+        warnings.
 
-        This context manager expects the caller to explicitly call this same
-        function in the body of this context manager. Why? Lexical scope.
-        Although awkward, this approach trivially enables callers to control the
-        scope under which this function is called (e.g., to validate that
-        :pep:`484`-compliant stringified relative type hints are resolved as
-        expected against some previously undefined type hint confined to this
-        same scope).
+        Caveats
+        -------
+        This context manager should be called *only* from warnings-specific
+        tests intentionally isolated from all other warnings-agnostic tests.
+        Testing that a type-checker issues the expected warnings when confronted
+        with a given type hint in a robust, portable, and idempotent manner
+        necessarily requires clearing *all* :mod:`beartype`-specific caches on
+        each test iteration. Clearing those caches effectively undoes *all*
+        memoization previously performed by that type-checker, preventing the
+        parent test from testing that that memoization behaves as expected.
+        Testing that memoization behaves as expected is critical, however!
+        Warnings-agnostic tests are thus implicitly responsible for testing that
+        memoization behaves as expected, which then precludes those tests from
+        also clearing caches and thus testing warnings. QA: it do be like that.
+        '''
+
+        # ..................{ IMPORTS                            }..................
+        # Defer test-specific imports.
+        from beartype._util.cache.utilcacheclear import clear_caches
+        from beartype_test._util.error.pyterrwarn import warns_uncached
+        from warnings import (
+            catch_warnings,
+            simplefilter,
+        )
+
+        # ....................{ SETUP                      }....................
+        # Force pytest to temporarily allow deprecation warnings to be caught by
+        # the warns() context manager for the duration of this test. By default,
+        # pytest simply "passes through" all deprecation warnings for subsequent
+        # reporting if tests otherwise successfully pass. Deprecation warnings
+        # include:
+        # * "DeprecationWarning".
+        # * "FutureWarning".
+        # * "PendingDeprecationWarning".
+        simplefilter('always')
+
+        # Preserve test idempotence by explicitly clearing *ALL* internal caches
+        # leveraged throughout the main @beartype codebase. Doing so effectively
+        # resets this codebase back to its initial state.
+        clear_caches()
+
+        # ....................{ LOCALS                     }....................
+        # Type of warning expected to be issued by any type-checker when
+        # confronted with this hint if any *OR* "None" otherwise.
+        warning_type = self.hint_meta.warning_type
+
+        # ....................{ ASSERTS                    }....................
+        # If the type-checker performed by the caller in the body of this
+        # context manager is expected to issue one or more warnings when
+        # confronted with this hint...
+        if warning_type is not None:
+            # Assert that that type-checker issues one or more warnings of the
+            # expected type when type-checking this pith against this hint.
+            with warns_uncached(warning_type) as warning_info:
+                yield
+
+            #FIXME: Uncomment *AFTER* we properly define the "warnings_len"
+            #instance variable for all relevant test-specific type hints. *sigh*
+            # # Assert that this tester issued the expected number of warnings.
+            # assert len(warning_info) == hint_meta.warnings_len
+        # Else, that type-checker is expected to issue *NO* warnings when
+        # confronted by this hint. In this case...
+        else:
+            # With a context manager catching *ALL* unexpected warnings issued
+            # by that type-checker, defer to that type-checker.
+            with catch_warnings(record=True) as warning_info:
+                yield
+
+            # Assert that *NO* warnings were issued by that type-checker above.
+            assert not warning_info
+
+
+    @contextmanager
+    def raises_violation_expected_if_any(self) -> 'collections.abc.Iterable':
+        '''
+        Context manager asserting that an arbitrary :mod:`beartype`
+        **violation-raising type-checking call** (i.e., call to either the
+        :func:`beartype.door.die_if_unbearable` statement-level type-checker or
+        a :func:`beartype.beartype`-decorated type-checking wrapper function)
+        performed by the caller in the body of this context manager either does
+        or does not raise the expected :mod:`beartype` **violation** (i.e.,
+        :exc:`beartype.roar.BeartypeCallHintViolation` exception).
+
+        This context manager requires the caller to explicitly perform this call
+        in the body of this context manager. Why? Lexical scope. While awkward,
+        this approach trivially enables callers to control the scope under which
+        this call is performed (e.g., to validate that :pep:`484`-compliant
+        stringified relative type hints are resolved as expected against some
+        previously undefined type hint confined to this same scope).
 
         Parameters
         ----------
@@ -124,12 +206,19 @@ class HintPithMetadata(object):
         pith_meta = self.pith_meta
         # print(f'Type-checking PEP type hint {repr(hint_meta.hint)}...')
 
+        # ....................{ SATISFY                    }....................
+        # If this pith satisfies this hint, defer to caller logic asserting that
+        # the type-checking call performed by the caller successfully
+        # type-checks this pith against this hint *WITHOUT* raising exceptions.
+        if not isinstance(pith_meta, PithUnsatisfiedMetadata):
+            yield
         # ....................{ VIOLATE                    }....................
-        # If this pith violates this hint...
-        if isinstance(pith_meta, PithUnsatisfiedMetadata):
+        # Else, this pith violates this hint. In this case...
+        else:
             # ....................{ EXCEPTION ~ type       }....................
-            # Assert this wrapper function raises the expected exception when
-            # type-checking this pith against this hint.
+            # Assert that the type-checking call performed by the caller
+            # raises a violation of the expected type when type-checking this
+            # pith against this hint.
             with raises_uncached(BeartypeCallHintViolation) as exception_info:
                 yield
 
@@ -220,9 +309,3 @@ class HintPithMetadata(object):
                 pith_meta.exception_str_not_match_regexes):
                 assert search(
                     exception_str_not_match_regex, exception_str) is None
-        # ....................{ SATISFY                    }....................
-        # Else, this pith satisfies this hint. In this case...
-        else:
-            # Assert this wrapper function successfully type-checks this pith
-            # against this hint *WITHOUT* modifying this pith.
-            yield

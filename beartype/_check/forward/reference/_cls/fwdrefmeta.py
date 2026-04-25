@@ -506,6 +506,25 @@ class BeartypeForwardRefMeta(type):
             obj=obj,
             hint=resolved_hint,
 
+            #FIXME: *DEFINITELY INSUFFICIENT.* It's essential that we respect
+            #the user configuration by instead:
+            #* Defining a new "_BeartypeForwardRefABC.__conf_beartype__" class
+            #  variable.
+            #* Adding a new *MANDATORY* "conf" parameter to *ALL* proxy_*()
+            #  functions defined by the "fwdrefproxy" submodule.
+            #* Pass that parameter in all calls to those functions.
+            #* Generalize _proxy_hint_ref() to assign "__conf_beartype__" like
+            #  so:
+            #      # New keyword dictionary permuted from this input.
+            #      conf_nonrandom_kwargs = conf.kwargs.copy()
+            #      conf_nonrandom_kwargs['is_debug'] = True
+
+            #      # New beartype configuration initialized by this dictionary.
+            #      conf_nonrandom = BeartypeConf(**conf_nonrandom_kwargs)
+            #
+            #      ref_proxy.__conf_beartype__ = conf_nonrandom
+            #* Pass "cls.__conf_beartype__" below. Phew!
+
             # Force this object to be type-checked deterministically (e.g., by
             # only type-checking the first items of pure-Python sequences). By
             # default, beartype type-checks objects non-deterministically (e.g.,

@@ -87,9 +87,9 @@ def test_beartype_pep484_ref_str(iter_hints_piths_meta) -> None:
         # non-type hints at late call time (rather than early decoration time).
         hint = hint_meta.hint
 
-        # Assert that this function type-checks the pith associated with this
-        # metadata against this hint as expected.
-        with hint_pith_meta.beartyped_func_checking(beartyped_func):
+        # Assert that that function type-checks this pith against this hint in a
+        # manner either raising *OR* not raising the expected violation.
+        with hint_pith_meta.raises_violation_expected_if_any():
             assert beartyped_func(pith) is pith
 
         # Prevent this hint from being erroneously resolved as the target
