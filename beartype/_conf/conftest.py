@@ -313,12 +313,14 @@ def issue_warning_deprecated_option(
         Name of the corresponding non-deprecated "new" configuration option
         *not* passed by the caller.
     '''
-    assert isinstance(option_name_old, str)
-    assert isinstance(option_name_new, str)
+    assert isinstance(option_name_old, str), (
+        f'{repr(option_name_old)} not string.')
+    assert isinstance(option_name_new, str), (
+        f'{repr(option_name_new)} not string.')
 
     # Issue this non-fatal deprecation warning.
     issue_warning(
-        cls=DeprecationWarning,
+        warning_cls=DeprecationWarning,
         message=(
             f'Beartype configuration option "{option_name_old}" '
             f'deprecated by new option "{option_name_new}", '

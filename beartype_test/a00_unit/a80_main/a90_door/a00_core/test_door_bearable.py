@@ -23,7 +23,7 @@ This submodule unit tests the subset of the public API of the public
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytmark import ignore_warnings
-from beartype_test._util.mark.pytskip import skip
+# from beartype_test._util.mark.pytskip import skip
 
 # ....................{ TESTS ~ raisers                    }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
@@ -304,8 +304,6 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
                 is_bearable_expected)
 
 # ....................{ TESTS ~ warnings                   }....................
-#FIXME: Remove when worky, obviously. *sigh*
-@skip('Currently brokey.')
 def test_door_die_if_unbearable_warnings(iter_hints_piths_meta) -> None:
     '''
     Test the :class:`beartype.door.die_if_unbearable` raiser function with

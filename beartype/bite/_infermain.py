@@ -163,7 +163,7 @@ def infer_hint(
     if id(obj) in __beartype_obj_ids_seen__:
         # Emit a non-fatal warning informing the caller.
         issue_warning(
-            cls=BeartypeDoorInferHintRecursionWarning,
+            warning_cls=BeartypeDoorInferHintRecursionWarning,
             message=(
                 f'Container recursion detected; short-circuiting for safety. '
                 f'Container {represent_object(obj)} self-referentially '

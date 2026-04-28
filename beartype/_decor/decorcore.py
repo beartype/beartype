@@ -213,9 +213,9 @@ def _beartype_object_nonfatal(
     # into a non-fatal warning for nebulous safety.
     except Exception:
         # Category of warning to be emitted.
-        warning_category: TypeWarning = conf.warning_cls_on_decorator_exception  # type: ignore[assignment]
-        assert is_type_subclass(warning_category, Warning), (
-            f'{repr(warning_category)} not warning category.')
+        warning_cls: TypeWarning = conf.warning_cls_on_decorator_exception  # type: ignore[assignment]
+        assert is_type_subclass(warning_cls, Warning), (
+            f'{repr(warning_cls)} not warning category.')
 
         # Original lower-level error message to be embedded in the higher-level
         # warning message to be emitted below.
@@ -263,7 +263,7 @@ def _beartype_object_nonfatal(
         warning_message = f'{warning_message_prefix}{error_message}'
 
         # Emit this message under this category.
-        issue_warning(cls=warning_category, message=warning_message)
+        issue_warning(warning_cls=warning_cls, message=warning_message)
 
     # Return this object unmodified, as @beartype failed to successfully wrap
     # this object with a type-checking class or callable. So it goes, fam.

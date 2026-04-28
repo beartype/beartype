@@ -116,7 +116,7 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: 
             # Warn the caller that @beartype non-fatally resolved this conflict
             # by ignoring this parameter in favour of this environment variable.
             issue_warning(
-                cls=BeartypeConfShellVarWarning,
+                warning_cls=BeartypeConfShellVarWarning,
                 message=(
                     f'Beartype configuration parameter "is_color" '
                     f'value {repr(is_color)} ignored in favour of '

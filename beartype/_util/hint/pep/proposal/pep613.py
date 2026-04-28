@@ -69,7 +69,7 @@ def reduce_hint_pep613(hint: object, exception_prefix: str, **kwargs) -> object:
 
     # Emit a non-fatal deprecation warning.
     issue_warning(
-        cls=BeartypeDecorHintPep613DeprecationWarning,
+        warning_cls=BeartypeDecorHintPep613DeprecationWarning,
         message=(
             f'{exception_prefix}PEP 613 type hint {repr(hint)} '
             f'deprecated by PEP 695. Consider either:\n'

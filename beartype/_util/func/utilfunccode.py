@@ -145,7 +145,7 @@ def get_func_code_lines_or_none(
             # Reduce this fatal error to a non-fatal warning embedding a full
             # exception traceback as a formatted string.
             issue_warning(
-                cls=warning_cls,
+                warning_cls=warning_cls,
                 message=f'{label_callable(func)} not parsable:\n{format_exc()}',
             )
     # Else, the passed callable only exists in-memory.
@@ -247,7 +247,7 @@ def get_func_file_code_lines_or_none(
             # Reduce this fatal error to a non-fatal warning embedding a full
             # exception traceback as a formatted string.
             issue_warning(
-                cls=warning_cls,
+                warning_cls=warning_cls,
                 message=f'{label_callable(func)} not parsable:\n{format_exc()}',
             )
     # Else, the passed callable only exists in-memory.
@@ -383,7 +383,7 @@ def get_func_code_or_none(
                 # non-fatal warning and safely ignore this file.
                 if len(lambda_file_code) >= _LAMBDA_CODE_FILESIZE_MAX:
                     issue_warning(
-                        cls=warning_cls,
+                        warning_cls=warning_cls,
                         message=(
                             f'{label_callable(func)} not parsable, '
                             f'as file size exceeds safe maximum '
@@ -425,7 +425,7 @@ def get_func_code_or_none(
 
                             # Emit this warning.
                             issue_warning(
-                                cls=warning_cls,
+                                warning_cls=warning_cls,
                                 message=(
                                     f'{label_callable(func)} ambiguous, '
                                     f'as that line defines '
@@ -451,7 +451,7 @@ def get_func_code_or_none(
                     # we don't. See above.
                     else:
                         issue_warning(
-                            cls=warning_cls,
+                            warning_cls=warning_cls,
                             message=f'{label_callable(func)} not found.',
                         )
             # Else, that lambda is dynamically defined in-memory.
@@ -467,7 +467,7 @@ def get_func_code_or_none(
         #     result with RecursionError.
         except Exception:
             issue_warning(
-                cls=warning_cls,
+                warning_cls=warning_cls,
                 message=(
                     f'{label_callable(func)} not parsable:\n'
                     f'{format_exc()}'

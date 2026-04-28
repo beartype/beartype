@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatyping import TypeWarning
 from beartype._util.error.utilerrtest import is_exception_message_str
@@ -25,7 +26,10 @@ from collections.abc import (
     Iterator,
 )
 from contextlib import contextmanager
-from typing import Any
+from typing import (
+    Any,
+    Optional,
+)
 from warnings import (
     WarningMessage,
     catch_warnings,
@@ -37,10 +41,26 @@ from warnings import (
 # ....................{ CONTEXTS                           }....................
 #FIXME: Unit test us up, please.
 @contextmanager
-def warnings_ignored() -> Iterator[None]:
+def warnings_ignored(
+    # Optional parameters.
+    warning_cls: Optional[TypeWarning] = None,
+) -> Iterator[None]:
     '''
-    Context manager temporarily ignoring *all* warnings transitively emitted
-    within the body of this context.
+    Context manager temporarily ignoring *all* warnings (of either the passed
+    type if passed *or* any type otherwise) transitively issued within the body
+    of this context.
+
+    Parameters
+    ----------
+    warning_cls: Optional[type[Warning]], default: None
+        Type of warnings to be ignored if ignoring some type of warnings *or*
+        :data:`None` otherwise. Specifically:
+
+        * If :data:`None`, *all* warnings regardless of type will be ignored.
+        * Else, *only* warnings of this specific type (or a subclass of this
+          type) will be ignored.
+
+        Defaults to :data:`None`.
 
     Yields
     ------
@@ -52,18 +72,38 @@ def warnings_ignored() -> Iterator[None]:
     https://stackoverflow.com/a/14463362/2809027
         StackOverflow answer strongly inspiring this implementation.
     '''
+    assert isinstance(warning_cls, NoneTypeOr[type]), (
+        f'{repr(warning_cls)} neither warning type nor "None".')
 
     # If the active Python interpreter targets Python > 3.11, prefer an
     # efficient one-liner yielding the desired outcome. Get it? Yielding? ...heh
     if IS_PYTHON_AT_LEAST_3_11:
-        with catch_warnings(action='ignore'):  # type: ignore[call-overload]
-            yield
+        # If ignoring *ALL* warnings (regardless of type), do so.
+        if warning_cls is None:
+            with catch_warnings(action='ignore'):  # type: ignore[call-overload]
+                yield
+        # Else, ignore *ONLY* warnings of this specific type.
+        else:
+            assert issubclass(warning_cls, Warning), (
+                f'{repr(warning_cls)} not warning type.')
+            with catch_warnings(  # type: ignore[call-overload]
+                action='ignore', category=warning_cls):
+                yield
     # Else, the active Python interpreter targets Python <= 3.10. In this case,
     # fallback to an inefficient generator yielding the same outcome.
     else:
-        with catch_warnings():
-            simplefilter('ignore')
-            yield
+        # If ignoring *ALL* warnings (regardless of type), do so.
+        if warning_cls is None:
+            with catch_warnings():
+                simplefilter('ignore')
+                yield
+        # Else, ignore *ONLY* warnings of this specific type.
+        else:
+            assert issubclass(warning_cls, Warning), (
+                f'{repr(warning_cls)} not warning type.')
+            with catch_warnings():
+                simplefilter('ignore', category=warning_cls)
+                yield
 
 # ....................{ WARNERS                            }....................
 # If the active Python interpreter targets Python >= 3.12, the standard
@@ -81,14 +121,16 @@ if IS_PYTHON_AT_LEAST_3_12:
         # Mandatory parameters.
         message: str,
 
-        #FIXME: Rename to "warning_cls", please. *sigh*
         # Optional parameters.
-        cls: TypeWarning = UserWarning,
+        warning_cls: TypeWarning = UserWarning,
     ) -> None:
 
         # The warning you gave us is surely our last!
-        warn(message, cls, skip_file_prefixes=_ISSUE_WARNING_IGNORE_DIRNAMES)  # type: ignore[call-overload]
-        # warn(message, cls)  # type: ignore[call-overload]
+        warn(  # type: ignore[call-overload]
+            message,
+            warning_cls,
+            skip_file_prefixes=_ISSUE_WARNING_IGNORE_DIRNAMES,
+        )
 
     # ....................{ PRIVATE ~ globals              }....................
     _ISSUE_WARNING_IGNORE_DIRNAMES = (dirname(beartype.__file__),)
@@ -112,11 +154,11 @@ else:
         message: str,
 
         # Optional parameters.
-        cls: TypeWarning = UserWarning,
+        warning_cls: TypeWarning = UserWarning,
     ) -> None:
 
         # Time to cry your tears! Now cry!
-        warn(message, cls)
+        warn(message, warning_cls)
 
 
 issue_warning.__doc__ = (
@@ -136,7 +178,7 @@ issue_warning.__doc__ = (
     ----------
     message: str
         Human-readable warning message to be issued.
-    cls: type[Warning], default: UserWarning
+    warning_cls: type[Warning], default: UserWarning
         Type of warning to be issued. Defaults to the builtin
         :exc:`.UserWarning` type.
 
@@ -191,7 +233,7 @@ def issue_deprecation(
     )
 
     # Issue this warning.
-    issue_warning(message=warning_message, cls=warning_cls)
+    issue_warning(message=warning_message, warning_cls=warning_cls)
 
 # ....................{ REWARNERS                          }....................
 def reissue_warnings_placeholder(

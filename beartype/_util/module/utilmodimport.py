@@ -181,7 +181,7 @@ def import_module_or_none(
 
         # First emit a warning with the same message and then return "None".
         issue_warning(
-            cls=BeartypeModuleUnimportableWarning,
+            warning_cls=BeartypeModuleUnimportableWarning,
             message=(
                 f'Ignoring module "{module_name}" importation exception:'
                 f'\n\t{exception.__class__.__name__}: {exception}'

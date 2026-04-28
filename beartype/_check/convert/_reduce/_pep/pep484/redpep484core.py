@@ -137,8 +137,8 @@ def reduce_hint_pep484_deprecated(
 
         # Emit this message as a PEP 585-specific deprecation warning.
         issue_warning(
+            warning_cls=BeartypeDecorHintPep585DeprecationWarning,
             message=warning_message,
-            cls=BeartypeDecorHintPep585DeprecationWarning,
         )
     # Else, this hint is *NOT* deprecated. In this case, reduce to a noop.
 

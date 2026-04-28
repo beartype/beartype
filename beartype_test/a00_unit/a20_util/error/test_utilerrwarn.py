@@ -67,18 +67,18 @@ def test_reissue_warnings_placeholder() -> None:
 
         # Issue an arbitrary warning message containing one source substring.
         issue_warning(
-            cls=TheSkyWarning,
+            warning_cls=TheSkyWarning,
             message=f'{TEST_SOURCE_STR}The sky',
         )
 
         # Issue an arbitrary warning message containing *NO* source substring.
         issue_warning(
-            cls=ThePoetWarning,
+            warning_cls=ThePoetWarning,
             message='the Poet kept mute conference',
         )
 
         # Issue an empty warning message.
-        issue_warning(cls=TheSkyWarning, message='')
+        issue_warning(warning_cls=TheSkyWarning, message='')
 
         # Issue a non-string warning message. While an unlikely edge case, the
         # standard low-level warnings.warn() function permissively permits this.
@@ -88,7 +88,7 @@ def test_reissue_warnings_placeholder() -> None:
         #     >>> warn(0xCAFE, UserWarning)
         #     UserWarning: 51966
         #       warn(0xCAFE, UserWarning)
-        issue_warning(cls=ThePoetWarning, message=0xBEEFDEAD)
+        issue_warning(warning_cls=ThePoetWarning, message=0xBEEFDEAD)
 
 
     def portend_while_daylight() -> None:

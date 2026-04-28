@@ -220,7 +220,7 @@ def is_module(
     # exception into a non-fatal warning.
     if not is_ignore_import_exception:
         issue_warning(
-            cls=BeartypeModuleUnimportableWarning,
+            warning_cls=BeartypeModuleUnimportableWarning,
             message=(
                 f'Ignoring module "{module_name}" importation exception:'
                 f'\n\t{import_exception.__class__.__name__}: {import_exception}'

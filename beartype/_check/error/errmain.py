@@ -70,6 +70,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
+from beartype.roar import BeartypeWarning
 from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseDesynchronizationException,
     _BeartypeCallHintPepRaiseException,
@@ -86,6 +87,7 @@ from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
+from beartype._util.error.utilerrwarn import warnings_ignored
 from beartype._util.text.utiltextansi import (
     color_hint,
     strip_str_ansi,
@@ -341,18 +343,36 @@ def get_hint_object_violation(
     '''
 
     # ....................{ CAUSE                          }....................
-    # Type-checking violation cause (i.e., object providing various metadata
-    # describing the failure of the passed object to satisfy the passed type
-    # hint under the passed beartype configuration).
-    violation_cause = _find_hint_object_violation_cause(
-        call_meta=call_meta,
-        conf=conf,
-        hint=hint,
-        obj=obj,
-        pith_name=pith_name,
-        random_int=random_int,
-        exception_prefix=exception_prefix,
-    )
+    # While temporarily ignoring *ALL* beartype-specific warnings...
+    #
+    # Note that beartype-specific warnings are intentionally ignored here to
+    # prevent these warnings from being inappropriate issued twice.
+    # Specifically:
+    # * If this getter is called from within the body of a @beartype-decorated
+    #   type-checking wrapper function, the @beartype decorator has already
+    #   issued *ALL* of these same warnings at early decoration time. Repeatedly
+    #   re-issuing these warnings again at later call time when any call fails a
+    #   type-check would be of no be benefit and of demonstrable harm.
+    # * If this getter is called from within the body of an internally memoized
+    #   type-checking function dynamically generated and cached by the
+    #   die_if_unbearable() statement-level type-checker, the first call to that
+    #   type-checker passed some type hint has already issued *ALL* of these
+    #   same warnings for that unique hint. Repeatedly re-issuing these warnings
+    #   again on each subsequent call to that type-checker passed the same hint
+    #   when failing a type-check would be of no be benefit and, again, of harm.
+    with warnings_ignored(warning_cls=BeartypeWarning):
+        # Type-checking violation cause (i.e., object providing various metadata
+        # describing the failure of the passed object to satisfy the passed type
+        # hint under the passed beartype configuration).
+        violation_cause = _find_hint_object_violation_cause(
+            call_meta=call_meta,
+            conf=conf,
+            hint=hint,
+            obj=obj,
+            pith_name=pith_name,
+            random_int=random_int,
+            exception_prefix=exception_prefix,
+        )
 
     # Human-readable string describing the failure of this object to satisfy
     # this hint under this configuration.
