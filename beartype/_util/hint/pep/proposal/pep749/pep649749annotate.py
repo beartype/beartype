@@ -20,7 +20,6 @@ from beartype.roar import (
     BeartypeDecorHintPep649Exception,
     BeartypeDecorHintPep749ForwardRefObjectException,
 )
-from beartype.typing import Optional
 from beartype._cave._cavefast import HintPep749RefFormat  # type: ignore[attr-defined]
 from beartype._data.kind.datakindiota import (
     SENTINEL,
@@ -37,7 +36,10 @@ from beartype._util.text.utiltextlabel import (
     label_exception_traceback,
     label_object,
 )
-from typing import Union
+from typing import (
+    Optional,
+    Union,
+)
 
 # ....................{ HINTS                              }....................
 HintOrPep649749HintableAnnotationsOrSentinel = Union[
@@ -648,8 +650,7 @@ if IS_PYTHON_AT_LEAST_3_14:
                     attr_value=annotations,
                 )
             # Else, this hintable is neither a pure-Python function, type, *NOR*
-            # module, implying this hintable does *NOT* support caching of
-            # arbitrary attributes.
+            # module and thus fails to support caching of arbitrary attributes.
 
             # ....................{ LOCALS                 }....................
             # Existing __annotate__() dunder method set on this hintable if any
@@ -668,15 +669,14 @@ if IS_PYTHON_AT_LEAST_3_14:
             #   subscripted by *NO* unquoted forward references, "None".
             hintable_annotations_old_name_error: Optional[Exception] = None
 
-            # Attempt to...
+            # Attempt to access the existing "__annotations__" dunder dictionary
+            # previously cached with this hintable under the non-default "VALUE"
+            # format if this hintable is annotated by type hints transitively
+            # subscripted by no unquoted forward references *OR* implicitly
+            # raise the "NameError" exception otherwise (i.e., if this hintable
+            # is annotated by type hints transitively subscripted by one or more
+            # unquoted forward references).
             try:
-                # Existing "__annotations__" dunder dictionary set on this
-                # hintable cached according to the non-default "VALUE" format if
-                # this hintable is annotated by type hints transitively
-                # subscripted by *NO* unquoted forward references *OR*
-                # implicitly raise the "NameError" exception otherwise (i.e., if
-                # this hintable is annotated by type hints transitively
-                # subscripted by one or more unquoted forward references).
                 hintable.__annotations__
             # If accessing this dictionary above raised a "NameError" exception,
             # this hintable is annotated by type hints transitively subscripted
@@ -686,13 +686,33 @@ if IS_PYTHON_AT_LEAST_3_14:
                 hintable_annotations_old_name_error = exception
 
             # ....................{ CLOSURE                }....................
+            # Note that the docstring of this callable *CANNOT* be formatted as
+            # an f-string dynamically embedding the passed hintable: e.g., 
+            #     def __annotate_beartype__(
+            #         hint_format: HintPep749RefFormat) -> (
+            #             Pep649749HintableAnnotations):
+            #         f'''
+            #         Hintable {repr(hintable)} :pep:`649`- and :pep:`749`-compliant
+            #         ...
+            #         '''
+            #
+            # Why? Who knows, honestly. The above approach succeeds for the
+            # standard "Format.VALUE" and "Format.FORWARDREF" formats while
+            # inexplicably failing for the "Format.STRING" format with a
+            # super-odd exception from the "annotationlib" module resembling:
+            #     TypeError: Cannot stringify annotation containing string
+            #     formatting
+            #
+            # In all likelihood, this is an outstanding bug in the
+            # "annotationlib" module. Since there's little to nothing we can do
+            # about that, we abide by this artificial constraint (and grumble).
             def __annotate_beartype__(
                 hint_format: HintPep749RefFormat) -> (
                     Pep649749HintableAnnotations):
-                f'''
-                Hintable {repr(hintable)} :pep:`649`- and :pep:`749`-compliant
-                ``__annotate__()`` dunder method, modifying the user-defined
-                ``__annotations__`` dunder dictionary for this hintable with
+                '''
+                :pep:`649`- and :pep:`749`-compliant ``__annotate__()`` dunder
+                method that effectively monkey-patches the user-defined
+                ``__annotations__`` dunder dictionary of the parent object with
                 :mod:`beartype`-specific improvements.
 
                 These improvements include:
@@ -776,13 +796,13 @@ if IS_PYTHON_AT_LEAST_3_14:
                 #
                 # There now exist two possible cases:
                 # * The caller passed "FORWARDREF" and this dictionary complies
-                #   with the "FORWARDREF" format. *WONDERFUL!*
+                #   with the "FORWARDREF" format. *WONDERFUL*!
                 # * The caller passed "FORWARDREF" and this dictionary only
                 #   complies with the "VALUE" format, which implies this
                 #   dictionary contains *NO* unquoted forward references. Since
                 #   the "FORWARDREF" format simply reduces to "VALUE" if a
                 #   dictionary contains *NO* unquoted forward references, this
-                #   case is still *WONDERFUL!*
+                #   case is still wonderful. *WONDERFUL*!
                 if hint_format == HintPep749RefFormat.FORWARDREF:  # <-- "==", *NOT* "is"!
                     return annotations
                 # Else, the caller did *NOT* request the "FORWARDREF" format.
@@ -811,11 +831,46 @@ if IS_PYTHON_AT_LEAST_3_14:
                     return annotations
                 # Else, the caller did *NOT* request the "VALUE" format.
                 #
-                # If an existing __annotate__() dunder method was previously
-                # defined on this hintable...
+                # If the caller requested the "VALUE_WITH_FAKE_GLOBALS" format
+                # private to the standard "annotationlib" module, raise a
+                # standard "NotImplementedError" exception as explicitly
+                # required by PEP 749 under this edge case:
+                #       Users who manually write annotate functions should raise
+                #       NotImplementedError if the VALUE_WITH_FAKE_GLOBALS
+                #       format is requested, so the standard library will not
+                #       call the manually written annotate function with “fake
+                #       globals”, which could have unpredictable results.
+                #
+                # Note that this edge case must be explicitly handled *BEFORE*
+                # deferring to an existing __annotate__() dunder method already
+                # defined on this hintable. If defined, that method is outside
+                # our explicit control and thus *CANNOT* be trusted to properly
+                # handle this edge case. Indeed, @beartype previously trusted
+                # that method to do so. For unknown reasons (that probably
+                # reduce to a CPython bug), deferring to the default C-based
+                # __annotate__() dunder methods defined on functions for this
+                # edge case causes the standard
+                # annotationlib.call_annotate_function() to raise the following
+                # non-human-readable (and almost certainly incorrect) exception
+                # when passed the "Format.STRING" format:
+                #     ValueError: not enough values to unpack (expected 2, got 1)
+                elif hint_format == HintPep749RefFormat.VALUE_WITH_FAKE_GLOBALS:
+                    raise NotImplementedError()
+                # Else, the caller did *NOT* request the
+                # "VALUE_WITH_FAKE_GLOBALS" format.
+                #
+                # If this hintable already defined an existing __annotate__()
+                # dunder method, defer to that method by...
                 elif hintable_annotate_old is not None:
                     # print(f'Caller requested odd format {hint_format}...')
-                    return hintable_annotate_old(hint_format)
+
+                    # New "__annotations__" dunder dictionary coerced to the
+                    # passed format by that prior __annotate__() dunder method.
+                    annotations_formatted = hintable_annotate_old(hint_format)
+                    # print(f'Format {hint_format} annotations: {repr(annotations_formatted)}')
+
+                    # Return this new "__annotations__" dunder dictionary.
+                    return annotations_formatted
                 # Else, *NO* existing __annotate__() dunder method was
                 # previously defined on this hintable. This beartype-specific
                 # implementation of that method *MUST* now either:
@@ -840,9 +895,9 @@ if IS_PYTHON_AT_LEAST_3_14:
                 # * PEP 649 itself encourages user-defined __annotate__()
                 #   implementations to raise bare "NotImplementedError"
                 #   exceptions lacking messages. Indeed, the
-                #   call_annotate_function() and get_annotations() functions
-                #   trivially catch these exceptions and ignore associated
-                #   messages.
+                #   standard call_annotate_function() and get_annotations()
+                #   functions defined by the "annotationlib" module trivially
+                #   catch these exceptions and ignore any associated messages.
                 # * PEP 749 explicitly instructs user-defined __annotate__()
                 #   implementations to raise "NotImplementedError" exceptions
                 #   when passed the private ".VALUE_WITH_FAKE_GLOBALS" format:
@@ -884,6 +939,8 @@ if IS_PYTHON_AT_LEAST_3_14:
             # Detecting this edge case is non-trivial and most easily deferred
             # to this late time. While non-ideal, simplicity >>>> idealism here.
             except AttributeError as exception:
+                # print(f'{hintable}.__annotate__() not settable: {repr(AttributeError)}')
+
                 # Lower-level presumably pure-Python callable wrapped by this
                 # higher-level presumably C-based decorator object if this
                 # decorator object wraps such a callable *OR* "None" otherwise
@@ -1027,6 +1084,7 @@ if IS_PYTHON_AT_LEAST_3_14:
                     # * This iteration-based assignment is an inefficient O(n)
                     #   operation (for "n" the number of attributes annotated on
                     #   this hintable) and thus intentionally performed last.
+                    # print('Doing suspicious stuff. *sigh*')
                     for attr_name, attr_hint in annotations.items():
                         hintable.__annotations__[attr_name] = attr_hint
 

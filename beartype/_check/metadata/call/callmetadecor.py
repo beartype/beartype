@@ -757,7 +757,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         decorated callable to the possibly mutated type hint dictionary
         associated with that callable if the latter is **dirty** (i.e., modified
         from the original type hint dictionary annotating the decorated callable
-        by a prior call to the :meth:`set_func_pith_hint` setter).
+        by a prior call to the :meth:`.set_func_pith_hint` setter).
         '''
 
         # If the type hint dictionary associated with the decorated callable is

@@ -146,11 +146,12 @@ def sanify_hint_root_func(
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )
+    # print(f'Coerced hint {repr(hint)} -> {repr(hint_coerced)}!')
 
     # If this possibly PEP-noncompliant hint was actually coerced into a
     # PEP-compliant hint...
     if hint_coerced is not hint:
-        # Note this coercion.
+        # Preserve this coercion.
         hint = hint_coerced
 
         # Safely set the hint annotating the parameter or return with the passed

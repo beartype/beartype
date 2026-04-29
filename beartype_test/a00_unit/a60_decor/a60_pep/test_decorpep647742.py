@@ -33,16 +33,12 @@ def test_decor_pep647() -> None:
         BeartypeCallHintReturnViolation,
         BeartypeDecorHintPep647Exception,
     )
-    from beartype.typing import (
-        List,
-        TypeGuard,
-        Tuple,
-    )
-    from pytest import raises
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from typing import TypeGuard
 
     # ....................{ FUNCTIONS                      }....................
     @beartype
-    def is_typeguard_slow(lst: List[object]) -> TypeGuard[List[str]]:
+    def is_typeguard_slow(lst: list[object]) -> TypeGuard[list[str]]:
         '''
         :pep:`647`-compliant type guard returning :data:`True` only if the
         passed list contains only string items via the standard linear runtime
@@ -55,7 +51,7 @@ def test_decor_pep647() -> None:
 
 
     @beartype
-    def is_typeguard_bad(tup: Tuple[object, ...]) -> TypeGuard[Tuple[int, ...]]:
+    def is_typeguard_bad(tup: tuple[object, ...]) -> TypeGuard[tuple[int, ...]]:
         '''
         :pep:`647`-compliant type guard erroneously (presumably, accidentally)
         violating :pep:`647` by returning a non-boolean object.
@@ -77,14 +73,14 @@ def test_decor_pep647() -> None:
     # Assert that @beartype raises the expected exception when decorating a
     # callable accepting one or more parameters erroneously annotated by a PEP
     # 647-compliant type guard.
-    with raises(BeartypeDecorHintPep647Exception):
+    with raises_uncached(BeartypeDecorHintPep647Exception):
         @beartype
         def the_blue_mediterranean(where_he_lay: TypeGuard[str]) -> bool:
             return where_he_lay
 
     # Assert that @beartype raises the expected violation when calling a
     # callable erroneously violating a PEP 647-compliant type guard.
-    with raises(BeartypeCallHintReturnViolation):
+    with raises_uncached(BeartypeCallHintReturnViolation):
         is_typeguard_bad(('Beside a', 'pumice isle', 'in', "Baiae's bay,",))
 
 
@@ -103,16 +99,12 @@ def test_decor_pep742() -> None:
         BeartypeCallHintReturnViolation,
         BeartypeDecorHintPep742Exception,
     )
-    from beartype.typing import (
-        List,
-        TypeIs,
-        Tuple,
-    )
-    from pytest import raises
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from typing import TypeIs
 
     # ....................{ FUNCTIONS                      }....................
     @beartype
-    def is_typeguard_slow(lst: List[object]) -> TypeIs[List[str]]:
+    def is_typeguard_slow(lst: list[object]) -> TypeIs[list[str]]:
         '''
         :pep:`742`-compliant type guard returning :data:`True` only if the
         passed list contains only string items via the standard linear runtime
@@ -125,7 +117,7 @@ def test_decor_pep742() -> None:
 
 
     @beartype
-    def is_typeguard_bad(tup: Tuple[object, ...]) -> TypeIs[Tuple[int, ...]]:
+    def is_typeguard_bad(tup: tuple[object, ...]) -> TypeIs[tuple[int, ...]]:
         '''
         :pep:`742`-compliant type guard erroneously (presumably, accidentally)
         violating :pep:`742` by returning a non-boolean object.
@@ -147,14 +139,14 @@ def test_decor_pep742() -> None:
     # Assert that @beartype raises the expected exception when decorating a
     # callable accepting one or more parameters erroneously annotated by a PEP
     # 742-compliant type guard.
-    with raises(BeartypeDecorHintPep742Exception):
+    with raises_uncached(BeartypeDecorHintPep742Exception):
         @beartype
         def he_hath_prepared(prowling_around_the_world: TypeIs[str]) -> bool:
             return prowling_around_the_world
 
     # Assert that @beartype raises the expected violation when calling a
     # callable erroneously violating a PEP 742-compliant type guard.
-    with raises(BeartypeCallHintReturnViolation):
+    with raises_uncached(BeartypeCallHintReturnViolation):
         is_typeguard_bad((
             'Go', 'to', 'their', 'graves', 'like', 'flowers',
             'or', 'creeping', 'worms,'
