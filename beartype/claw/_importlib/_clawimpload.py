@@ -21,7 +21,6 @@ from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined
     cache_from_source_original,
 )
 from beartype.roar import BeartypeClawImportAstException
-from beartype.typing import Optional
 from beartype._conf.confmain import BeartypeConf
 from beartype._util.ast.utilastget import get_node_repr_indented
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_15
@@ -31,7 +30,9 @@ from importlib import (  # type: ignore[attr-defined]
 )
 from importlib.machinery import SourceFileLoader
 from importlib.util import decode_source
+from re import compile as re_compile
 from types import CodeType
+from typing import Optional
 
 # ....................{ CLASSES                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -314,10 +315,131 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             Code object underlying that module.
         '''
 
+        # ..................{ NOOP ~ core                    }..................
+        #FIXME: Technically, Python provides an import lock which *SHOULD*
+        #render this otherwise unsafe global both thread- and "asyncio"-safe.
+        #Let's pretend this is actually safe until someone calls us out! \o/
+        #FIXME: See below. Ugh.
+
+        # # Globals to be locally redefined below.
+        # global _is_importing_beartype
+
+        # If that module resides in a fundamentally problematic package (e.g.,
+        # the beartype codebase itself), preserve that module as is by simply
+        # deferring to the superclass method *WITHOUT* monkey-patching
+        # cache_from_source().
+        #
+        # Ideally, this should *NOT* be required. Why? Because the
+        # get_package_conf_or_none() getter called below is already hard-wired
+        # to return "None" and thus preserve that module as is when the passed
+        # module resides in the beartype codebase.
+        #
+        # Pragmatically, this is *ABSOLUTELY* required. Why? The quasi-standard
+        # "coverage" package and all downstream packages layered on top of that
+        # package (e.g., "pytest-cov"). For unknown reasons that neither I nor
+        # "coverage" maintainers will ever be able to clearly articulate,
+        # "coverage" fails with unreadable exceptions when beartype fails to
+        # perform this "if" conditional -- which beartype once did, which is why
+        # beartype no longer does. Oddly, these failures occur *ONLY* when
+        # instructing "coverage" to measure coverage for a specific submodule of
+        # a third-party package whose top-level "{package}.__init__" submodule
+        # registers a "beartype.claw" import hook. These failures resemble:
+        #     $ coverage run --source "{package}.{submodule}" -m pytest tests
+        #     Traceback (most recent call last):
+        #       File "/home/leycec/py/pyenv/versions/3.15.0a5/bin/coverage", line 7, in <module>
+        #         sys.exit(main())
+        #                  ~~~~^^
+        #       File "/home/leycec/py/pyenv/versions/3.15.0a5/lib/python3.15/site-packages/coverage/cmdline.py", line 1163, in main
+        #         status = CoverageScript().command_line(argv)
+        #       File "/home/leycec/py/pyenv/versions/3.15.0a5/lib/python3.15/site-packages/coverage/cmdline.py", line 853, in command_line
+        #         return self.do_run(options, args)
+        #                ~~~~~~~~~~~^^^^^^^^^^^^^^^
+        #       File "/home/leycec/py/pyenv/versions/3.15.0a5/lib/python3.15/site-packages/coverage/cmdline.py", line 1042, in do_run
+        #         runner.run()
+        #         ~~~~~~~~~~^^
+        #       File "/home/leycec/py/pyenv/versions/3.15.0a5/lib/python3.15/site-packages/coverage/execfile.py", line 174, in run
+        #         self._prepare2()
+        #         ~~~~~~~~~~~~~~^^
+        #       File "/home/leycec/py/pyenv/versions/3.15.0a5/lib/python3.15/site-packages/coverage/execfile.py", line 139, in _prepare2
+        #         pathname, self.package, self.spec = find_module(self.modulename)
+        #                                             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+        #       File "/home/leycec/py/pyenv/versions/3.15.0a5/lib/python3.15/site-packages/coverage/execfile.py", line 58, in find_module
+        #         spec = importlib.util.find_spec(mod_main)
+        #       File "<frozen importlib.util>", line 90, in find_spec
+        #       File "/home/leycec/py/beartype/beartype/claw/_importlib/_clawimpload.py", line 322, in get_code
+        #         from beartype.claw._clawstate import claw_state
+        #       File "/home/leycec/py/beartype/beartype/claw/_importlib/_clawimpload.py", line 322, in get_code
+        #         from beartype.claw._clawstate import claw_state
+        #       File "/home/leycec/py/beartype/beartype/claw/_importlib/_clawimpload.py", line 322, in get_code
+        #         from beartype.claw._clawstate import claw_state
+        #       [Previous line repeated 1 more time]
+        #     ImportError: cannot import name 'claw_state' from partially
+        #     initialized module 'beartype.claw._clawstate' (most likely due to
+        #     a circular import)
+        #     (/home/leycec/py/beartype/beartype/claw/_clawstate.py)
+        #
+        # What is clear is that this "if" conditional resolves that issue.
+        # Therefore, understanding is irrelevant. All that matters is resolving
+        # inscrutable issues, even in the absence of understanding. I sigh.
+        #
+        # Note that this "if" conditional *MUST* be performed prior to importing
+        # *ANYTHING* below. Importing *ANYTHING* before this "if" conditional
+        # triggers the above "coverage" failure, which rather defeats the point.
+        #
+        # Specifically, if either...
+
+        #FIXME: Uncomment after we resolve this bizarre "linecache" issue under
+        #Python 3.15 that we just hit. wat the heck is goin on boyz
+        # if (
+        #     #FIXME: Replace with this regex-based version: *sigh*
+        #     #    if _BLACKLIST_PACKAGE_NAMES_REGEX.match(fullname) is not None:
+        #     # That module resides in the beartype codebase itself *OR*...
+        #     fullname.startswith('beartype.') or
+        #     fullname.startswith('importlib.') or
+        #     fullname == 'email' or
+        #     fullname == 'numbers'
+        #
+        #     #FIXME: See below. Ugh.
+        #     # # That module is imported by some parent (presumably recursive) call
+        #     # # to this method on the current call stack, which imported from some
+        #     # # module residing in the beartype codebase itself...
+        #     # _is_importing_beartype
+        # ):
+        # # Then the current call to this method is importing either a beartype
+        # # module *OR* some first- or third-party module transitively imported
+        # # from a beartype module. In either case, this import *CANNOT* be safely
+        # # subjected to type-checking (regardless of whether some user has
+        # # registered a "beartype.claw" import hook requesting we do so).
+        # # Attempting to do so would invite obscure import cycles as above.
+        #     return super().get_code(fullname)
+
+            #FIXME: Wild. We expected this to work. Instead, "pytest-cov" raises
+            #warnings suggesting this totally doesn't work. *shrug*
+            # # Prevent recursive calls to this method from type-checking *ANY*
+            # # imports transitively originating from this problematic import
+            # # until this import has been fully successfully resolved.
+            # _is_importing_beartype = True
+            #
+            # # Attempt to resolve this import by deferring to our superclass
+            # # *WITHOUT* type-checking this import.
+            # try:
+            #     return super().get_code(fullname)
+            # finally:
+            #     #FIXME: Inefficient. Localize a boolean above, please. *shrug*
+            #     if fullname.startswith('beartype.'):
+            #         _is_importing_beartype = False
+            #     pass
+
+            # Attempt to resolve this import by deferring to our superclass
+            # *WITHOUT* type-checking this import.
+        # Else, that module does *NOT* reside in the beartype codebase.
+
+        # ..................{ IMPORTS                        }..................
         # Avoid circular import dependencies.
         from beartype.claw._clawstate import claw_state
         from beartype.claw._package.clawpkgtrie import get_package_conf_or_none
 
+        # ..................{ NOOP ~ more                    }..................
         # Beartype configuration with which to type-check that module if that
         # module is hooked under its fully-qualified name *OR* "None" otherwise
         # (i.e., if that module is unhooked).
@@ -364,6 +486,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # well as a potentially risky monkey-patch) and is thus performed *ONLY*
         # when absolutely necessary.
 
+        # ..................{ TYPE-CHECK                     }..................
         # Classify local attributes as instance variables for subsequent
         # reference in the lower-level source_to_code() method transitively
         # called by this higher-level method.
@@ -373,7 +496,9 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Expose this configuration to the "beartype.claw._ast" subpackage.
         claw_state.module_name_to_beartype_conf[fullname] = conf
 
-        # Temporarily monkey-patch away the cache_from_source() function.
+        # Temporarily monkey-patch away the cache_from_source() function with a
+        # beartype-specific replacement transforming that module with
+        # beartype-specific type-checking.
         #
         # Note that @agronholm (Alex Grönholm) claims that "the import lock
         # should make this monkey patch safe." We're trusting you here, man!
@@ -550,3 +675,59 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # Return this code object.
         return module_codeobj
+
+# ....................{ PRIVATE ~ globals                  }....................
+_is_importing_beartype = False
+'''
+:data:`True` only if either the current call to the
+:func:`.BeartypeSourceFileLoader.get_code` method *or* some parent (presumably
+recursive) call to that method on the current call stack is currently importing
+from the :mod:`beartype` codebase.
+'''
+
+#FIXME: Preserved in the likelihood we'll need to resurrect this. *sigh*
+# _BLACKLIST_PACKAGE_NAMES_REGEX: str = None  # type: ignore[assignment]
+# '''
+# Compiled regular expression matching the the fully-qualified names of all
+# top-level packages to be blacklisted by the
+# :func:`.BeartypeSourceFileLoader.get_code` method.
+#
+# See commentary inside that method for exhaustive (and exhausting) details.
+# '''
+#
+# # ....................{ PRIVATE ~ initializers             }....................
+# def _init() -> None:
+#     '''
+#     Initialize this submodule.
+#     '''
+#
+#     # Enable this global to be locally initialized below.
+#     global _BLACKLIST_PACKAGE_NAMES_REGEX
+#
+#     # Frozen set of the fully-qualified names of all top-level packages to be
+#     # blacklisted by the BeartypeSourceFileLoader.get_code() method.
+#     #
+#     # Note that this set is defined in an ad-hoc brute-force manner by simply
+#     # iteratively adding package names to this set until all tests pass. Yes,
+#     # this is absurd. Yes, this is "importlib" Hell. Welcome to Python, son.
+#     _BLACKLIST_PACKAGE_NAMES = frozenset((
+#         'beartype',
+#         'email',
+#         'importlib',
+#         'numbers',
+#     ))
+#
+#     # "|"-delimited string of these names.
+#     _BLACKLIST_PACKAGE_NAMES_ORED = r'|'.join(_BLACKLIST_PACKAGE_NAMES)
+#
+#     # Compiled regular expression matching any string starting with these names
+#     # and either:
+#     # * Immediately terminating *OR*...
+#     # * Followed by a "." delimiter (effectively also terminating that name)
+#     #   followed by one or more arbitrary characters.
+#     _BLACKLIST_PACKAGE_NAMES_REGEX = re_compile(
+#         rf'^({_BLACKLIST_PACKAGE_NAMES_ORED})(?:\..+)?$')
+#
+#
+# # Initialize this submodule.
+# _init()
