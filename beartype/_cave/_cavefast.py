@@ -1555,7 +1555,7 @@ See Also
 # nature of Python's regular expression support, this type is *NOT* publicly
 # exposed. While the private "re._pattern_type" attribute does technically
 # provide this type, it does so in a private and hence non-portable manner.
-RegexCompiledType: type = _re.Pattern
+RegexCompiledType = _re.Pattern
 '''
 Type of all **compiled regular expressions** (i.e., objects created and
 returned by the stdlib :func:`re.compile` function).
@@ -1567,7 +1567,7 @@ returned by the stdlib :func:`re.compile` function).
 # type is *NOT* directly importable. Although this type's classname is
 # published to be "_sre.SRE_Match", the "_sre" C extension provides no such
 # type for pure-Python importation. So it goes.
-RegexMatchType: type = _re.Match
+RegexMatchType = _re.Match
 '''
 Type of all **regular expression match objects** (i.e., objects returned by the
 :func:`re.match` function).

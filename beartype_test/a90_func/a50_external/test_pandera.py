@@ -4,11 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator PEP-noncompliant Pandera type hint unit tests.**
+Third-party **Pandera** integration tests.
 
-This submodule unit tests the :func:`beartype.beartype` decorator with respect
-to **PEP-noncompliant Pandera type hints** (i.e., :mod:`pandera.typing`-specific
-annotations *not* compliant with annotation-centric PEPs).
+This submodule functionally tests the :func:`beartype.beartype` decorator with
+respect to **PEP-noncompliant third-party Pandera type hints** (i.e.,
+:mod:`pandera.typing`-specific annotations that violate annotation-centric PEPs
+despite being super-useful, which is why :mod:`beartype` supports them).
 '''
 
 # ....................{ IMPORTS                            }....................

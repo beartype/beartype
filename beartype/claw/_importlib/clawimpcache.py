@@ -13,9 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.claw.dataclawmagic import OPTIMIZATION_MARKER_BEARTYPE
 from beartype.roar import BeartypeClawImportConfException
-from beartype.typing import Dict
 from beartype._conf.confmain import BeartypeConf
 from pprint import pformat
 
@@ -26,7 +24,7 @@ from pprint import pformat
 from importlib.util import cache_from_source as cache_from_source_original
 
 # ....................{ SUBCLASSES                         }....................
-class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
+class ModuleNameToBeartypeConf(dict[str, 'BeartypeConf']):
     '''
     Non-thread-safe **hooked module beartype configuration cache** (i.e.,
     dictionary mapping from the fully-qualified name of each previously imported
@@ -73,7 +71,7 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
     '''
 
     # ....................{ DUNDERS                        }....................
-    def __getitem__(self, module_name: str) -> 'BeartypeConf':
+    def __getitem__(self, module_name: str) -> BeartypeConf:
         '''
         Return the previously instantiated beartype configuration associated
         with the module with the passed name.
@@ -86,7 +84,7 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
 
         Returns
         -------
-        beartype.BeartypeConf
+        BeartypeConf
             Beartype configuration associated with this module.
 
         Raises
@@ -215,6 +213,9 @@ def cache_from_source_beartype(*args, **kwargs) -> str:
     ``{optimization}`` is the original ``optimization`` parameter passed to this
     function call.
     '''
+
+    # Avoid circular import dependencies.
+    from beartype._data.claw.dataclawmagic import OPTIMIZATION_MARKER_BEARTYPE
 
     # Original optimization parameter passed to this function call if any *OR*
     # the empty string otherwise.

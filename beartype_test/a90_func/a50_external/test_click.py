@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide Click integration tests.
+Third-party **Click** integration tests.
 
 This submodule functionally tests the :mod:`beartype` package against the
 third-party :mod:`click` package.

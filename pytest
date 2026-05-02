@@ -25,16 +25,19 @@
 set -e
 
 # ....................{ ARRAYS                             }....................
-# Array of all shell words with which to invoke Python. Dismantled, this is:
-# * "-X dev", enabling the Python Development Mode (PDM). See also commentary
-#   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
-# PYTHON_ARGS=( command python3 -X dev )
-# PYTHON_ARGS=( command python3.10 -X dev )
-# PYTHON_ARGS=( command python3.11 -X dev )
-# PYTHON_ARGS=( command python3.12 -X dev )
-# PYTHON_ARGS=( command python3.13 -X dev )
-# PYTHON_ARGS=( command python3.14 -X dev )
-PYTHON_ARGS=( command python3.15 -X dev )
+# Array of all shell words with which to invoke Python.
+#
+# Note that we intentionally do *NOT* enable the Python Development Mode (PDM)
+# by passing "-X dev" in the "${PYTHON_ARGS}" arrays defined below. Ideally, we
+# *WOULD* enable the PDM. Sadly, doing so induces non-trivial test suite
+# failures under Python >= 3.15. See also "tox.ini" for further details.
+# PYTHON_ARGS=( command python3 )
+# PYTHON_ARGS=( command python3.10 )
+# PYTHON_ARGS=( command python3.11 )
+# PYTHON_ARGS=( command python3.12 )
+# PYTHON_ARGS=( command python3.13 )
+# PYTHON_ARGS=( command python3.14 )
+PYTHON_ARGS=( command python3.15 )
 # PYTHON_ARGS=( command pypy3.11 -X dev )
 
 # Array of all shell words to be passed to "python3" below.

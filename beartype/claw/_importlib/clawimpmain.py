@@ -84,9 +84,9 @@ def add_beartype_pathhook() -> None:
     #
     # Note that we intentionally ignore mypy complaints here. Why? Because mypy
     # erroneously believes this method accepts 2-tuples whose first items are
-    # loader *INSTANCES* (e.g., "Tuple[Loader, List[str]]"). In fact, this
+    # loader *INSTANCES* (e.g., "tuple[Loader, list[str]]"). In fact, this
     # method accepts 2-tuples whose first items are loader *TYPES* (e.g.,
-    # "Tuple[Type[Loader], List[str]]"). This is why we can't have nice things.
+    # "tuple[type[Loader], list[str]]"). This is why we can't have nice things.
     loader_factory = FileFinder.path_hook(*_LOADERS_DETAILS)  # type: ignore[arg-type]
 
     # Monkey-patch an arbitrary beartype-specific instance variable into this

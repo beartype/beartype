@@ -21,6 +21,7 @@ from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined
     cache_from_source_original,
 )
 from beartype.roar import BeartypeClawImportAstException
+from beartype._cave._cavefast import RegexCompiledType
 from beartype._conf.confmain import BeartypeConf
 from beartype._util.ast.utilastget import get_node_repr_indented
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_15
@@ -167,7 +168,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         Initialize this beartype source file loader.
 
         All passed parameters are passed as is to the superclass method, which
-        then calls our lower-level :meth:`source_to_code` subclass method
+        then calls our lower-level :meth:`.source_to_code` subclass method
         overridden below.
         '''
 
@@ -180,11 +181,11 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
     # ..................{ LOADER API                         }..................
     # The importlib._bootstrap_external.*Loader API declares the low-level
-    # exec_module() method, which accepts an "importlib._bootstrap.ModuleSpec"
-    # instance created and returned by a prior call to the higher-level
-    # find_spec() method documented above; the exec_module() method then uses
-    # that module spec to create and return a fully imported module object
-    # (i.e., "types.ModuleType" instance). To do so:
+    # exec_module() method, which accepts a module spec (i.e.,
+    # "importlib._bootstrap.ModuleSpec" object created and returned by a prior
+    # call to the higher-level find_spec() method documented above) to create
+    # and return a fully imported module object (i.e., "types.ModuleType"
+    # object). To do so:
     # * The default exec_module() implementation internally calls the
     #   lower-level get_code() method returning an in-memory Python code object
     #   deserialized from the on-disk or in-memory bytes underlying that module.
@@ -316,14 +317,6 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         '''
 
         # ..................{ NOOP ~ core                    }..................
-        #FIXME: Technically, Python provides an import lock which *SHOULD*
-        #render this otherwise unsafe global both thread- and "asyncio"-safe.
-        #Let's pretend this is actually safe until someone calls us out! \o/
-        #FIXME: See below. Ugh.
-
-        # # Globals to be locally redefined below.
-        # global _is_importing_beartype
-
         # If that module resides in a fundamentally problematic package (e.g.,
         # the beartype codebase itself), preserve that module as is by simply
         # deferring to the superclass method *WITHOUT* monkey-patching
@@ -385,54 +378,9 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Note that this "if" conditional *MUST* be performed prior to importing
         # *ANYTHING* below. Importing *ANYTHING* before this "if" conditional
         # triggers the above "coverage" failure, which rather defeats the point.
-        #
-        # Specifically, if either...
-
-        #FIXME: Uncomment after we resolve this bizarre "linecache" issue under
-        #Python 3.15 that we just hit. wat the heck is goin on boyz
-        # if (
-        #     #FIXME: Replace with this regex-based version: *sigh*
-        #     #    if _BLACKLIST_PACKAGE_NAMES_REGEX.match(fullname) is not None:
-        #     # That module resides in the beartype codebase itself *OR*...
-        #     fullname.startswith('beartype.') or
-        #     fullname.startswith('importlib.') or
-        #     fullname == 'email' or
-        #     fullname == 'numbers'
-        #
-        #     #FIXME: See below. Ugh.
-        #     # # That module is imported by some parent (presumably recursive) call
-        #     # # to this method on the current call stack, which imported from some
-        #     # # module residing in the beartype codebase itself...
-        #     # _is_importing_beartype
-        # ):
-        # # Then the current call to this method is importing either a beartype
-        # # module *OR* some first- or third-party module transitively imported
-        # # from a beartype module. In either case, this import *CANNOT* be safely
-        # # subjected to type-checking (regardless of whether some user has
-        # # registered a "beartype.claw" import hook requesting we do so).
-        # # Attempting to do so would invite obscure import cycles as above.
-        #     return super().get_code(fullname)
-
-            #FIXME: Wild. We expected this to work. Instead, "pytest-cov" raises
-            #warnings suggesting this totally doesn't work. *shrug*
-            # # Prevent recursive calls to this method from type-checking *ANY*
-            # # imports transitively originating from this problematic import
-            # # until this import has been fully successfully resolved.
-            # _is_importing_beartype = True
-            #
-            # # Attempt to resolve this import by deferring to our superclass
-            # # *WITHOUT* type-checking this import.
-            # try:
-            #     return super().get_code(fullname)
-            # finally:
-            #     #FIXME: Inefficient. Localize a boolean above, please. *shrug*
-            #     if fullname.startswith('beartype.'):
-            #         _is_importing_beartype = False
-            #     pass
-
-            # Attempt to resolve this import by deferring to our superclass
-            # *WITHOUT* type-checking this import.
-        # Else, that module does *NOT* reside in the beartype codebase.
+        if _BLACKLIST_PACKAGE_NAMES_REGEX.match(fullname) is not None:
+            return super().get_code(fullname)
+        # Else, that module does *NOT* reside in a problematic package.
 
         # ..................{ IMPORTS                        }..................
         # Avoid circular import dependencies.
@@ -444,31 +392,6 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # module is hooked under its fully-qualified name *OR* "None" otherwise
         # (i.e., if that module is unhooked).
         conf = get_package_conf_or_none(fullname)
-
-        #FIXME: Preserved because the above will inevitably break. *sigh*
-        # # Beartype configuration with which to type-check that module if that
-        # # module is hooked *OR* "None" otherwise (i.e., if that module is
-        # # unhooked), defined as either...
-        # conf = (
-        #     #FIXME: *EXCISE*. The same logic is now redundantly performed by the
-        #     #BeartypeClawState._reinit_safe() method.
-        #     # If that module is either the top-level "beartype" package *OR* a
-        #     # subpackage or submodule of that package, "None". This effectively
-        #     # silently ignores this dangerous attempt to recursively type-check
-        #     # the "beartype" package by the @beartype.beartype decorator. See
-        #     # the method docstring for further commentary.
-        #     None
-        #     if (
-        #         fullname == 'beartype' or
-        #         fullname.startswith('beartype.')
-        #     ) else
-        #     # Else, that module is neither our top-level "beartype" package
-        #     # *NOR* a subpackage or submodule of that package. In this case, the
-        #     # beartype configuration with which to type-check that module if
-        #     # that module is hooked under its fully-qualified name *OR*
-        #     # "None" otherwise (i.e., if that module is unhooked).
-        #     get_package_conf_or_none(fullname)
-        # )
         # print(f'Imported module "{fullname}" package "{package_name}" conf: {repr(self._module_conf)}')
 
         # If that module is unhooked, preserve that module as is by simply
@@ -677,57 +600,122 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         return module_codeobj
 
 # ....................{ PRIVATE ~ globals                  }....................
-_is_importing_beartype = False
+#FIXME: Preserved in the likelihood we'll need to resurrect this. *sigh*
+_BLACKLIST_PACKAGE_NAMES_REGEX: RegexCompiledType = None  # type: ignore[assignment]
 '''
-:data:`True` only if either the current call to the
-:func:`.BeartypeSourceFileLoader.get_code` method *or* some parent (presumably
-recursive) call to that method on the current call stack is currently importing
-from the :mod:`beartype` codebase.
+Compiled regular expression matching the the fully-qualified names of all
+top-level packages to be blacklisted by the
+:func:`.BeartypeSourceFileLoader.get_code` method.
+
+See commentary inside that method for exhaustive (and exhausting) details.
 '''
 
-#FIXME: Preserved in the likelihood we'll need to resurrect this. *sigh*
-# _BLACKLIST_PACKAGE_NAMES_REGEX: str = None  # type: ignore[assignment]
-# '''
-# Compiled regular expression matching the the fully-qualified names of all
-# top-level packages to be blacklisted by the
-# :func:`.BeartypeSourceFileLoader.get_code` method.
-#
-# See commentary inside that method for exhaustive (and exhausting) details.
-# '''
-#
-# # ....................{ PRIVATE ~ initializers             }....................
-# def _init() -> None:
-#     '''
-#     Initialize this submodule.
-#     '''
-#
-#     # Enable this global to be locally initialized below.
-#     global _BLACKLIST_PACKAGE_NAMES_REGEX
-#
-#     # Frozen set of the fully-qualified names of all top-level packages to be
-#     # blacklisted by the BeartypeSourceFileLoader.get_code() method.
-#     #
-#     # Note that this set is defined in an ad-hoc brute-force manner by simply
-#     # iteratively adding package names to this set until all tests pass. Yes,
-#     # this is absurd. Yes, this is "importlib" Hell. Welcome to Python, son.
-#     _BLACKLIST_PACKAGE_NAMES = frozenset((
-#         'beartype',
-#         'email',
-#         'importlib',
-#         'numbers',
-#     ))
-#
-#     # "|"-delimited string of these names.
-#     _BLACKLIST_PACKAGE_NAMES_ORED = r'|'.join(_BLACKLIST_PACKAGE_NAMES)
-#
-#     # Compiled regular expression matching any string starting with these names
-#     # and either:
-#     # * Immediately terminating *OR*...
-#     # * Followed by a "." delimiter (effectively also terminating that name)
-#     #   followed by one or more arbitrary characters.
-#     _BLACKLIST_PACKAGE_NAMES_REGEX = re_compile(
-#         rf'^({_BLACKLIST_PACKAGE_NAMES_ORED})(?:\..+)?$')
-#
-#
-# # Initialize this submodule.
-# _init()
+# ....................{ PRIVATE ~ initializers             }....................
+def _init() -> None:
+    '''
+    Initialize this submodule.
+    '''
+
+    # Enable this global to be locally initialized below.
+    global _BLACKLIST_PACKAGE_NAMES_REGEX
+
+    # Frozen set of the fully-qualified names of all top-level packages to be
+    # blacklisted by the BeartypeSourceFileLoader.get_code() method.
+    #
+    # Note that:
+    # * This set is defined in an ad-hoc brute-force manner by simply
+    #   iteratively adding package names to this set until all tests pass. Yes,
+    #   this is absurd. Yes, this is "importlib" Hell. Welcome to Python, son.
+    # * If you are reading this, you are wondering exactly how we decided what
+    #   package names to even add to this set. The answer is that we manually
+    #   inspected circular "ImportError" exceptions raised by the
+    #   Coverage.py-specific integration test for suspicious imports of *ANY*
+    #   packages residing outside the beartype codebase. For example, a cautious
+    #   inspection of the following traceback would note the ultra-suspicious
+    #   "import email" import statement, suggesting that the standard "email"
+    #   package also needs to be added to this set: e.g.,
+    #       Traceback (most recent call last):
+    #         File "<frozen runpy>", line 196, in _run_module_as_main
+    #         File "<frozen runpy>", line 87, in _run_code
+    #         File "/home/leycec/py/pyenv/versions/3.15.0a8/lib/python3.15/site-packages/coverage/__main__.py", line 12, in <module>
+    #           sys.exit(main())
+    #                    ~~~~^^
+    #         File "/home/leycec/py/pyenv/versions/3.15.0a8/lib/python3.15/site-packages/coverage/cmdline.py", line 1163, in main
+    #           status = CoverageScript().command_line(argv)
+    #         File "/home/leycec/py/pyenv/versions/3.15.0a8/lib/python3.15/site-packages/coverage/cmdline.py", line 853, in command_line
+    #           return self.do_run(options, args)
+    #                  ~~~~~~~~~~~^^^^^^^^^^^^^^^
+    #         File "/home/leycec/py/pyenv/versions/3.15.0a8/lib/python3.15/site-packages/coverage/cmdline.py", line 1042, in do_run
+    #           runner.run()
+    #           ~~~~~~~~~~^^
+    #         File "/home/leycec/py/pyenv/versions/3.15.0a8/lib/python3.15/site-packages/coverage/execfile.py", line 174, in run
+    #           self._prepare2()
+    #           ~~~~~~~~~~~~~~^^
+    #         File "/home/leycec/py/pyenv/versions/3.15.0a8/lib/python3.15/site-packages/coverage/execfile.py", line 139, in _prepare2
+    #           pathname, self.package, self.spec = find_module(self.modulename)
+    #                                               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+    #         File "/home/leycec/py/pyenv/versions/3.15.0a8/lib/python3.15/site-packages/coverage/execfile.py", line 58, in find_module
+    #           spec = importlib.util.find_spec(mod_main)
+    #         File "<frozen importlib.util>", line 90, in find_spec
+    #         File "/home/leycec/py/beartype/beartype/claw/_importlib/_clawimpload.py", line 394, in get_code
+    #           from beartype.claw._clawstate import claw_state
+    #         File "/home/leycec/py/beartype/beartype/__init__.py", line 150, in <module>
+    #           _init()
+    #           ~~~~~^^
+    #         File "/home/leycec/py/beartype/beartype/__init__.py", line 71, in _init
+    #           from beartype.meta import (
+    #           ...<4 lines>...
+    #           )
+    #         File "/home/leycec/py/beartype/beartype/meta.py", line 35, in <module>
+    #           from importlib.metadata import metadata as _get_package_metadata
+    #         File "/home/leycec/py/pyenv/versions/3.15.0a8/lib/python3.15/importlib/metadata/__init__.py", line 14, in <module>
+    #           import email  # <-- *THIS IS ULTRA-SUSPICIOUS IMPORT OF DOOMGUY*
+    #         File "/home/leycec/py/beartype/beartype/claw/_importlib/_clawimpload.py", line 394, in get_code
+    #           from beartype.claw._clawstate import claw_state
+    #         File "/home/leycec/py/beartype/beartype/claw/__init__.py", line 210, in <module>
+    #           from beartype.claw._clawmain import (
+    #           ...<4 lines>...
+    #           )
+    #         File "/home/leycec/py/beartype/beartype/claw/_clawmain.py", line 24, in <module>
+    #           from beartype.claw._package.clawpkgmain import hook_packages
+    #         File "/home/leycec/py/beartype/beartype/claw/_package/clawpkgmain.py", line 16, in <module>
+    #           from beartype.claw._package.clawpkgtrie import (
+    #           ...<5 lines>...
+    #           )
+    #         File "/home/leycec/py/beartype/beartype/claw/_package/clawpkgtrie.py", line 17, in <module>
+    #           from beartype.claw._importlib.clawimpmain import remove_beartype_pathhook
+    #         File "/home/leycec/py/beartype/beartype/claw/_importlib/clawimpmain.py", line 18, in <module>
+    #           from beartype.claw._importlib._clawimpload import BeartypeSourceFileLoader
+    #         File "/home/leycec/py/beartype/beartype/claw/_importlib/_clawimpload.py", line 18, in <module>
+    #           from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
+    #         File "/home/leycec/py/beartype/beartype/claw/_ast/clawastmain.py", line 21, in <module>
+    #           from beartype.claw._ast._kind.clawastassign import (
+    #               BeartypeNodeTransformerAssignMixin)
+    #         File "/home/leycec/py/beartype/beartype/claw/_ast/_kind/clawastassign.py", line 24, in <module>
+    #           from beartype._data.claw.dataclawmagic import BEARTYPE_RAISER_FUNC_NAME
+    #         File "/home/leycec/py/beartype/beartype/_data/claw/dataclawmagic.py", line 14, in <module>
+    #           from beartype.meta import (
+    #           ...<2 lines>...
+    #           )
+    #       ImportError: cannot import name 'NAME' from partially initialized module 'beartype.meta' (most likely due to a circular import) (/home/leycec/py/beartype/beartype/meta.py)
+    _BLACKLIST_PACKAGE_NAMES = frozenset((
+        'beartype',
+        'email',
+        'importlib',
+        'numbers',
+    ))
+
+    # "|"-delimited string of these names.
+    _BLACKLIST_PACKAGE_NAMES_ORED = r'|'.join(_BLACKLIST_PACKAGE_NAMES)
+
+    # Compiled regular expression matching any string starting with these names
+    # and either:
+    # * Immediately terminating *OR*...
+    # * Followed by a "." delimiter (effectively also terminating that name)
+    #   followed by one or more arbitrary characters.
+    _BLACKLIST_PACKAGE_NAMES_REGEX = re_compile(
+        rf'^({_BLACKLIST_PACKAGE_NAMES_ORED})(?:\..+)?$')
+
+
+# Initialize this submodule.
+_init()
