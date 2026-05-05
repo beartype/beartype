@@ -14,4 +14,5 @@ support third-party packages registering a similar hook.
 from beartype.claw import beartype_this_package
 
 # ....................{ HOOKS                              }....................
+# Register the standard "beartype.claw" import hook. ARE YOU NOT ENTERTAINED!?
 beartype_this_package()

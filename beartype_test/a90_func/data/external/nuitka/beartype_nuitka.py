@@ -7,7 +7,7 @@
 **Nuitka-specific functional test script** (i.e., script intended to be
 compiled by the third-party :mod:`nuitka` compiler).
 
-This script exercises the expected relationship between the
+This script validates the expected relationship between the
 :mod:`beartype.beartype` decorator and the :mod:`nuitka` compiler by ensuring
 :mod:`nuitka` successfully compiles scripts leveraging that decorator.
 '''
@@ -15,11 +15,11 @@ This script exercises the expected relationship between the
 # ....................{ IMPORTS                            }....................
 from beartype import beartype
 from beartype.door import TypeHint
-from beartype.typing import Tuple, Union
+from typing import Union
 
 # ....................{ FUNCTIONS                          }....................
 @beartype
-def make_type_hints() -> Tuple[TypeHint, ...]:
+def make_type_hints() -> tuple[TypeHint, ...]:
     '''
     Non-empty tuple containing one or more :class:`beartype.door.TypeHint`
     instances, exercising that :mod:`nuitka` supports those instances.

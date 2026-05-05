@@ -80,6 +80,19 @@ def get_test_func_data_external_dir() -> Path:
 
 
 @callable_cached
+def get_test_func_data_external_coverage_dir() -> Path:
+    '''
+    :class:`.Path` encapsulating the absolute dirname of the **low-level
+    Coverage.py integration test data directory** (i.e., directory providing
+    sample code used throughout this project's :mod:`coverage`-specific
+    integration tests) if found *or* raise an exception otherwise.
+    '''
+
+    # Dunderheaded redundancy, Thunder Red!
+    return DirRelative(get_test_func_data_external_dir(), 'coverage')
+
+
+@callable_cached
 def get_test_func_data_external_nuitka_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **low-level nuitka

@@ -15,13 +15,9 @@ third-party :mod:`coverage` package.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_unless_package, skip
+from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                              }....................
-#FIXME: Locally validate that temporarily undoing our
-#"_BLACKLIST_PACKAGE_NAMES_REGEX"-specific "if" conditional successfully
-#triggers a failure from this test, please. Yah! Punch it up!
-@skip('Currently brokey.')
 @skip_unless_package('coverage')
 def test_coverage_beartype_claw(
     monkeypatch: 'pytest.MonkeyPatch', tmp_path: 'pathlib.Path') -> None:
@@ -55,12 +51,12 @@ def test_coverage_beartype_claw(
         get_interpreter_command_words)
     from beartype_test._util.command.pytcmdrun import (
         run_command_forward_output)
-    from beartype_test._util.path.pytpathmain import get_main_dir
     from beartype_test._util.path.pytpathtest import (
         get_test_func_data_external_coverage_dir)
 
     # ....................{ CONSTANTS                      }....................
-    # Tuple of all shell words with which to run the external "coverage" command.
+    # Tuple of all shell words with which to run the external "coverage"
+    # command.
     COVERAGE_ARGS = get_interpreter_command_words() + (
         # Fully-qualified name of the "coverage" package to be run.
         '-m', 'coverage',
@@ -77,7 +73,7 @@ def test_coverage_beartype_claw(
         # induce Coverage.py import cycles.
         #
         # Don't blame us. We voted for Beardos.
-        'source', '-m', 'dismal_rack_of_clouds.and_all_along',
+        '--source', 'dismal_rack_of_clouds.and_all_along',
 
         # Instruct Coverage.py to run "pytest" against the "pytest"-based test
         # suite also bundled with this package.
@@ -85,37 +81,24 @@ def test_coverage_beartype_claw(
     )
 
     # ....................{ LOCALS                         }....................
-    # Path object encapsulating the absolute dirname of the top-level directory
-    # providing the entirety of beartype.
-    beartype_dir_src = get_main_dir()
-
-    # Path object encapsulating the absolute dirname of this same directory
-    # symbolically linked into this temporary directory under the dirname
-    # referenced by the "pyproject.toml" file for this Poetry project:
-    #     # In that "pyproject.toml" file:
-    #     beartype = {path = "../beartype", develop = true}
-    beartype_dir_trg = tmp_path / 'beartype'
-
     # Path object encapsulating the absolute dirname of the test-specific data
-    # directory containing an empty Poetry-managed project whose
-    # "pyproject.toml" file requires "beartype" as a Poetry-specific mandatory
+    # directory containing an empty Coverage.py-managed project whose
+    # "pyproject.toml" file requires "beartype" as a Coverage.py-specific mandatory
     # runtime dependency.
     project_dir_src = get_test_func_data_external_coverage_dir()
 
-    # Path object encapsulating the absolute dirname of this same Poetry project
-    # copied into this temporary directory. Although a symbolic link *MIGHT*
-    # suffice as well, we lack faith in Coverage.py. In all likelihood,
+    # Path object encapsulating the absolute dirname of this same Coverage.py
+    # project copied into this temporary directory. Although a symbolic link
+    # *MIGHT* suffice as well, we lack faith in Coverage.py. In all likelihood,
     # Coverage.py expects to be able to modify the contents of this directory.
     project_dir_trg = tmp_path / 'coverage'
 
     # ....................{ PATHS                          }....................
-    # Symbolically link the beartype directory into this temporary directory.
-    beartype_dir_trg.symlink_to(beartype_dir_src, target_is_directory=True)
-
-    # Recursively copy this Poetry project into this temporary directory.
+    # Recursively copy this Coverage.py project into this temporary directory.
     copy_dir(src_dirname=project_dir_src, trg_dirname=project_dir_trg)
 
-    # Change the current working directory (CWD) to that of this Poetry project.
+    # Change the current working directory (CWD) to that of this Coverage.py
+    # project.
     monkeypatch.chdir(project_dir_trg)
 
     # ....................{ COMMANDS                       }....................
