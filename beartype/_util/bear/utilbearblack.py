@@ -177,7 +177,7 @@ def is_object_blacklisted(obj: object) -> bool:
     # fully-qualified name of the top-level root package directly defining the
     # passed object is known to be blacklisted. This heuristic is less
     # efficient, as stripping this package name from this module name
-    # constitutes a string-munging operation.
+    # constitutes a string-munging operation [read: *SLOW*].
 
     # Fully-qualified name of the package or module defining this object if any
     # *OR* "None" otherwise (e.g., if this object is defined in-memory).
@@ -205,5 +205,6 @@ def is_object_blacklisted(obj: object) -> bool:
     # Else, this package is *NOT* globally beartype-blacklisted. However, this
     # object could still be specifically beartype-blacklisted. Continue testing!
 
+    # ....................{ FALLBACK                       }....................
     # Return false as a feeble fallback.
     return False

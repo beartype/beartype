@@ -199,7 +199,7 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
         #
         # Note that list unpacking is substantially more efficient than
         # manually indexing list items. The former requires only a single Python
-        # statement, whereas the latter requires "n" Python statements.
+        # statement, whereas the latter requires "n" Python statements. *shrug*
         (
             arg_kind,
             arg_name,
@@ -208,13 +208,13 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
 
         # If...
         if (
-            # The set of the names of all keywordable parameters must be decided
-            # to type-check the decorated callable *AND*...
+            # The set of the names of all keywordable parameters is needed to
+            # type-check the decorated callable *AND*...
             args_name_keywordable is not None and
             # This parameter is keywordable...
             arg_kind in _ARG_KINDS_KEYWORD
         ):
-            # Add the name of this parameter to that set.
+            # Add the name of this parameter to this set.
             args_name_keywordable.add(arg_name)
         # Else, this parameter *CANNOT* be passed by keyword.
 
@@ -227,6 +227,35 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
         hint_insane = decor_meta.func_annotations_get(  # type: ignore[assignment]
             arg_name, SENTINEL)
 
+        #FIXME: Probably inject code detecting and handling our Poor Man's
+        #Type-checking Solution to #636 here. Basically:
+        #* Define a new "BLACKLIST_FUNC_NAME_TO_ARG_INDEX"
+        #  "FrozenDict" global in the "beartype._data" subpackage somewhere,
+        #  mapping from the name of each possibly problematic dunder method
+        #  to the 0-based index of each possibly problematic annotated
+        #  parameter passed to that dunder method, blacklisted due to
+        #  possibly causing @beartype to erroneously generate infinitely
+        #  recursive type-checking code.
+        #* Perform the following lookup into that dictionary above *BEFORE*
+        #  this "for" loop:
+        #      #FIXME: [SPEED] Define a new
+        #      #"BLACKLIST_FUNC_NAME_TO_ARG_INDEX_get" global for speed.
+        #      arg_index_blacklisted = BLACKLIST_FUNC_NAME_TO_ARG_INDEX.get(
+        #          decor_meta.func_wrapper_name)
+        #* Generalize this "if" conditional here to resemble:
+        #      # If either...
+        #      if (
+        #          # This parameter is unannotated *OR*....
+        #          hint_insane is SENTINEL or
+        #          #FIXME: Comment us up, please. *sigh*
+        #          arg_index == arg_index_blacklisted
+        #      ):
+        #      # Then continue to the next parameter.
+        #          continue
+        #      # Else, either this parameter is annotated *OR*....
+        #
+        #Pretty sure that's all that's needed. Maybe? Pretend this makes sense.
+
         # If this parameter is unannotated, continue to the next parameter.
         if hint_insane is SENTINEL:
             continue
@@ -234,17 +263,17 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
 
         # Attempt to...
         try:
-            # With a context manager "catching" *ALL* non-fatal warnings emitted
+            # If this parameter's name is reserved for use by the @beartype
+            # decorator, raise an exception.
+            if arg_name.startswith('__bear'):
+                raise BeartypeDecorParamNameException(
+                    f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.')
+            # Else, this parameter's name is *NOT* reserved for use by the
+            # @beartype decorator.
+
+            # With a context manager "catching" *ALL* non-fatal warnings issued
             # during this logic for subsequent "playback" below...
             with catch_warnings(record=True) as warnings_issued:
-                # If this parameter's name is reserved for use by the @beartype
-                # decorator, raise an exception.
-                if arg_name.startswith('__bear'):
-                    raise BeartypeDecorParamNameException(
-                        f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.')
-                # Else, this parameter's name is *NOT* reserved for use by the
-                # @beartype decorator.
-
                 # Sane hint sanified from this possibly insane parameter hint if
                 # sanifying this hint generated no supplementary metadata *OR*
                 # that metadata otherwise. Additionally, if this hint is

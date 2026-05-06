@@ -390,7 +390,8 @@ def beartype_func(
 
     # If the callable to be unwrapped is unbeartypeable (i.e., if this decorator
     # should preserve that callable as is rather than wrap that callable with
-    # type-checking), silently reduce to the identity decorator.
+    # type-checking), silently reduce to the identity decorator by preserving
+    # this non-type-checked callable as is.
     #
     # Note that this conditional implicitly handles the prior conditional! Ergo,
     # this conditional intentionally appears *AFTER* the prior conditional. :O
