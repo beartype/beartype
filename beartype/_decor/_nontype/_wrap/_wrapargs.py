@@ -229,13 +229,6 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
 
         #FIXME: Probably inject code detecting and handling our Poor Man's
         #Type-checking Solution to #636 here. Basically:
-        #* Define a new "BLACKLIST_FUNC_NAME_TO_ARG_INDEX"
-        #  "FrozenDict" global in the "beartype._data" subpackage somewhere,
-        #  mapping from the name of each possibly problematic dunder method
-        #  to the 0-based index of each possibly problematic annotated
-        #  parameter passed to that dunder method, blacklisted due to
-        #  possibly causing @beartype to erroneously generate infinitely
-        #  recursive type-checking code.
         #* Perform the following lookup into that dictionary above *BEFORE*
         #  this "for" loop:
         #      #FIXME: [SPEED] Define a new
@@ -255,6 +248,8 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
         #      # Else, either this parameter is annotated *OR*....
         #
         #Pretty sure that's all that's needed. Maybe? Pretend this makes sense.
+        #FIXME: Actually, ignore the above. A bit overkill, frankly. It's far
+        #easier to just leverage the existing reducer API. Let's go, yo! \o/
 
         # If this parameter is unannotated, continue to the next parameter.
         if hint_insane is SENTINEL:

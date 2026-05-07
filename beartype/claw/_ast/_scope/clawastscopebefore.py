@@ -20,7 +20,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.conf.dataconfplace import (
+from beartype._data.shame.datashamedecor import (
     DECOR_HOSTILE_ATTR_NAME_TRIE,
     BeartypeDecorPlaceTrie,
     BeartypeDecorPlaceSubtrie,

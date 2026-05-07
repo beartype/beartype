@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **import hook magic** (i.e., global constants widely leveraged
+**Beartype import hook magic** (i.e., global constants widely leveraged
 throughout submodules of the :mod:`beartype.claw` subpackage).
 
 This private submodule is *not* intended for importation by downstream callers.

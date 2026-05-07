@@ -24,14 +24,13 @@ from beartype.claw._package.clawpkgtrie import (
     PackagesTrieWhitelist,
     PackageBasenameToTrieBlacklist,
 )
-from beartype._data.conf.dataconfblack import (
-    BLACKLIST_PACKAGE_NAMES)
-from beartype.typing import (
+from beartype._data.shame.module.datashamemod import BLACKLIST_PACKAGE_NAMES
+from beartype._data.typing.datatyping import ImportPathHook
+from threading import RLock
+from typing import (
     TYPE_CHECKING,
     Optional,
 )
-from beartype._data.typing.datatyping import ImportPathHook
-from threading import RLock
 
 # ....................{ CLASSES                            }....................
 class BeartypeClawState(object):

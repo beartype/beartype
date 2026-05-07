@@ -351,41 +351,6 @@ CollectionStrs = Collection[str]
 PEP-compliant type hint matching *any* collection of zero or more strings.
 '''
 
-# ....................{ DICT                               }....................
-DictTypeToAny = dict[type, Any]
-'''
-PEP-compliant type hint matching a dictionary mapping from types to arbitrary
-objects.
-'''
-
-# ....................{ DICT ~ str                         }....................
-DictStrToAny = dict[str, Any]
-'''
-:pep:`585`-compliant type hint matching a dictionary mapping from strings to
-arbitrary objects.
-'''
-
-
-LexicalScope = DictStrToAny
-'''
-:pep:`585`-compliant type hint matching a **lexical scope** (i.e., dictionary
-mapping from the relative unqualified name to value of each locally or globally
-scoped attribute accessible to a callable or class).
-'''
-
-
-DictStrToType = dict[str, type]
-'''
-PEP-compliant type hint matching a dictionary mapping from strings to types.
-'''
-
-
-DictStrToFrozenSetStrs = dict[str, frozenset[str]]
-'''
-PEP-compliant type hint matching a dictionary mapping from strings to frozen
-sets of strings.
-'''
-
 # ....................{ CHAINMAP                           }....................
 ChainMapStrToAny = ChainMap[str, Any]
 '''
@@ -481,6 +446,41 @@ PEP-compliant type hint matching *any* frozen set of zero or more strings.
 FrozenSetTypes = frozenset[type]
 '''
 PEP-compliant type hint matching *any* frozen set of zero or more types.
+'''
+
+# ....................{ DICT                               }....................
+DictTypeToAny = dict[type, Any]
+'''
+PEP-compliant type hint matching a dictionary mapping from types to arbitrary
+objects.
+'''
+
+# ....................{ DICT ~ str                         }....................
+DictStrToAny = dict[str, Any]
+'''
+:pep:`585`-compliant type hint matching a dictionary mapping from strings to
+arbitrary objects.
+'''
+
+
+LexicalScope = DictStrToAny
+'''
+:pep:`585`-compliant type hint matching a **lexical scope** (i.e., dictionary
+mapping from the relative unqualified name to value of each locally or globally
+scoped attribute accessible to a callable or class).
+'''
+
+
+DictStrToType = dict[str, type]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to types.
+'''
+
+
+DictStrToFrozenSetStrs = dict[str, FrozenSetStrs]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to frozen
+sets of strings.
 '''
 
 # ....................{ SIGN                               }....................

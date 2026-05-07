@@ -4,20 +4,30 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **decorator position globals** (i.e., global constants defining the
-initial user-configurable contents of the beforelist automating decorator
-positioning for :mod:`beartype.claw` import hooks).
+**Shameful decorator blacklist globals** (i.e., immutable data structures
+defining the initial user-configurable contents of blacklists preventing
+problematic third-party decorators known to be hostile to runtime type-checking
+in general and :mod:`beartype` specifically from being inappropriately
+type-checked by :mod:`beartype`).
 
-:mod:`beartype.claw` import hooks initialize user-configurable beforelists via
-these globals of third-party decorators well-known to be **decorator-hostile**
-(i.e., decorators hostile to other decorators by prematurely terminating
-decorator chaining, such that *no* decorators may appear above these decorators
-in any chain of one or more decorators).
+This private submodule principally defines **beartype decorator position
+beforelists** (i.e., immutable data structures automating decorator positioning
+for :mod:`beartype.claw` import hooks). :mod:`beartype.claw` import hooks
+initialize user-configurable beforelists via these globals of third-party
+decorators well-known to be **decorator-hostile** (i.e., decorators hostile to
+other decorators by prematurely terminating decorator chaining, such that *no*
+decorators may appear above these decorators in any chain of one or more
+decorators).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: [CONF] Actually do allow users to configure the beforelist by defining a
+#new "BeartypeConf.decor_hostile_attr_name_trie" option (or something) whose
+#default value is the "DECOR_HOSTILE_ATTR_NAME_TRIE" data structure defined
+#below. Currently, the codebase just uses that data structure directly. *shrug*
+
 #FIXME: Conditionally add the FastMCP-specific entry to the
 #"DECOR_HOSTILE_ATTR_NAME_TRIE" data structure *ONLY* if the current FastMCP
 #version is older than <= 2.14.3. Newer FastMCP versions guarantee decorator
@@ -25,22 +35,19 @@ This private submodule is *not* intended for importation by downstream callers.
 #    https://github.com/jlowin/fastmcp/pull/2856
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Dict,
-    Optional,
-)
 from beartype._conf.decorplace.confplacetrie import (
     BeartypeDecorPlacePackagesTrie,
     BeartypeDecorPlacePackageTrie,
     BeartypeDecorPlaceTypeTrie,
 )
+from typing import Optional
 
 # ....................{ HINTS                              }....................
 #FIXME: Actually define these hints as proper type aliases *AFTER* we drop
 #support for Python 3.11, please: e.g.,
 #   type _ClawBeforelist = Dict[str, Union[FrozenSet[str], _ClawBeforelist]]
 
-BeartypeDecorPlaceSubtrie = Optional[Dict[str, 'BeartypeDecorPlaceSubtrie']]
+BeartypeDecorPlaceSubtrie = Optional[dict[str, 'BeartypeDecorPlaceSubtrie']]
 '''
 PEP-compliant recursive alias matching a **beforelist subtrie** (i.e.,
 corresponding value of some key-value pair signifying a child node of a parent
@@ -55,7 +62,7 @@ beforelist (sub)trie), constrained to be either:
 '''
 
 
-BeartypeDecorPlaceTrie = Dict[str, Dict[str, BeartypeDecorPlaceSubtrie]]
+BeartypeDecorPlaceTrie = dict[str, dict[str, BeartypeDecorPlaceSubtrie]]
 '''
 PEP-compliant recursive alias matching a **beforelist trie** (i.e., recursive
 tree structure whose nodes are the unqualified basenames of problematic

@@ -49,7 +49,7 @@ def test_claw_intraprocess_decorator_hostile() -> None:
         BeartypeDecorPlacePackageTrie,
         BeartypeDecorPlaceTypeTrie,
     )
-    from beartype._data.conf import dataconfplace
+    from beartype._data.shame import datashamedecor
     from beartype_test.a00_unit.data.func.data_decor import decorator_hostile
     from pytest import raises
 
@@ -66,7 +66,7 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     #   unit testing.
     # * This monkey-patch is intentionally isolated to this test-specific
     #   subprocess and thus implicitly safe.
-    dataconfplace.DECOR_HOSTILE_ATTR_NAME_TRIE |= (
+    datashamedecor.DECOR_HOSTILE_ATTR_NAME_TRIE |= (
         BeartypeDecorPlacePackagesTrie({
             'beartype_test': BeartypeDecorPlacePackageTrie({
                 'a00_unit': BeartypeDecorPlacePackageTrie({
@@ -86,7 +86,7 @@ def test_claw_intraprocess_decorator_hostile() -> None:
             })
         })
     )
-    # print(dataconfplace.DECOR_HOSTILE_ATTR_NAME_TRIE)
+    # print(datashamedecor.DECOR_HOSTILE_ATTR_NAME_TRIE)
 
     # With a submodule-specific thread-safe reentrant lock, reset our import
     # hook state back to its initial defaults to respect the above monkey-patch.

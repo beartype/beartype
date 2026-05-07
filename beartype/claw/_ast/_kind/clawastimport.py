@@ -50,7 +50,7 @@ from beartype._conf.decorplace.confplacetrie import (
     BeartypeDecorPlaceTypeTrie,
 )
 from beartype._data.api.standard.dataast import NODE_CONTEXT_LOAD
-from beartype._data.conf.dataconfplace import BeartypeDecorPlaceSubtrie
+from beartype._data.shame.datashamedecor import BeartypeDecorPlaceSubtrie
 from beartype._data.claw.dataclawmagic import BEARTYPE_DECORATOR_FUNC_NAME
 from beartype._data.kind.datakindiota import (
     SENTINEL,

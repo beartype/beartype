@@ -14,9 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.conf.dataconfblack import (
+from beartype._data.shame.module.datashamemod import BLACKLIST_PACKAGE_NAMES
+from beartype._data.shame.module.datashamemodtype import (
     BLACKLIST_MODULE_NAME_TO_TYPE_NAMES,
-    BLACKLIST_PACKAGE_NAMES,
     BLACKLIST_TYPE_MRO_ROOT_MODULE_NAME_TO_TYPE_NAMES,
 )
 from beartype._util.cache.utilcachecall import callable_cached

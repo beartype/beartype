@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **third-party module globals** (i.e., global constants broadly
+**Beartype import hook blacklists** (i.e., global constants broadly
 concerning various third-party modules and packages rather than one specific
 third-party module or package).
 
@@ -17,9 +17,9 @@ from beartype._cave._cavefast import RegexCompiledType
 # ....................{ GLOBALS                            }....................
 BLACKLIST_PACKAGE_NAMES_REGEX: RegexCompiledType = None  # type: ignore[assignment]
 '''
-Compiled regular expression matching the the fully-qualified names of all
-top-level packages to be blacklisted by the
-:func:`.BeartypeSourceFileLoader.get_code` method.
+Compiled regular expression matching the fully-qualified names of all top-level
+packages to be blacklisted by the :func:`.BeartypeSourceFileLoader.get_code`
+method.
 
 See commentary inside that method for exhaustive (and exhausting) details.
 '''
