@@ -30,6 +30,32 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import sys as _sys
+from beartype._metaverse import (
+    AUTHORS as AUTHORS,
+    COPYRIGHT as COPYRIGHT,
+    NAME as NAME,
+    LICENSE as LICENSE,
+    PACKAGE_NAME as PACKAGE_NAME,
+    PACKAGE_TEST_NAME as PACKAGE_TEST_NAME,
+    SPHINX_THEME_NAME as SPHINX_THEME_NAME,
+    URL_BLUESKY as URL_BLUESKY,
+    URL_CONDA as URL_CONDA,
+    URL_LIBRARIES as URL_LIBRARIES,
+    URL_PYPI as URL_PYPI,
+    URL_RTD as URL_RTD,
+    URL_ZULIP as URL_ZULIP,
+    URL_HOMEPAGE as URL_HOMEPAGE,
+    URL_PEP585_DEPRECATIONS as URL_PEP585_DEPRECATIONS,
+    URL_REPO_ORG_NAME as URL_REPO_ORG_NAME,
+    URL_REPO_BASENAME as URL_REPO_BASENAME,
+    URL_REPO as URL_REPO,
+    URL_DOWNLOAD as URL_DOWNLOAD,
+    URL_FORUMS as URL_FORUMS,
+    URL_ISSUES as URL_ISSUES,
+    URL_RELEASES as URL_RELEASES,
+    VERSION as VERSION,
+    VERSION_PARTS as VERSION_PARTS,
+)
 from beartype._util.text.utiltextversion import (
     convert_str_version_to_tuple as _convert_str_version_to_tuple)
 from importlib.metadata import metadata as _get_package_metadata
@@ -37,23 +63,6 @@ from typing import (
     TYPE_CHECKING,  # <-- *MUST* be import as "TYPE_CHECKING" or mypy ignores it
     Optional as _Optional,
 )
-
-# ....................{ METADATA                           }....................
-NAME = 'beartype'
-'''
-Human-readable package name.
-'''
-
-
-# Ideally, this metadata would be parsed from the "_package_metadata" dictionary
-# introspected below. Sadly, this metadata has yet to be standardized. The
-# closest approximation is the "_package_metadata['License']" key, which
-# provides the contents of the top-level "LICENSE" file rather than the name of
-# the license licensing this package. It is what it is. It is sucky. *sigh*
-LICENSE = 'MIT'
-'''
-Human-readable name of the license this package is licensed under.
-'''
 
 # ....................{ METADATA                           }....................
 # If performing static type-checking, define a fake "_package_metadata"
@@ -86,18 +95,6 @@ else:
     except Exception:
         from collections import defaultdict as _defaultdict
         _package_metadata = _defaultdict(lambda: None)
-
-# ....................{ METADATA ~ package                 }....................
-PACKAGE_NAME = NAME
-'''
-Fully-qualified name of the top-level Python package containing this submodule.
-'''
-
-
-PACKAGE_TEST_NAME = f'{PACKAGE_NAME}_test'
-'''
-Fully-qualified name of the top-level Python package testing this project.
-'''
 
 # ....................{ PYTHON ~ version                   }....................
 def _convert_requires_python_to_version_min(requires_python: str) -> str:
@@ -205,18 +202,6 @@ tuple of integers if this package distribution provides this metadata *or*
 metadata).
 '''
 
-# ....................{ METADATA ~ version                 }....................
-VERSION = '0.23.0'
-'''
-Human-readable package version as a ``.``-delimited string.
-'''
-
-
-VERSION_PARTS = _convert_str_version_to_tuple(VERSION)
-'''
-Machine-readable package version as a tuple of integers.
-'''
-
 # ....................{ METADATA ~ synopsis                }....................
 SYNOPSIS: _Optional[str] = _package_metadata['Summary']
 '''
@@ -232,198 +217,78 @@ Email address of the principal corresponding author (i.e., the principal author
 responding to public correspondence).
 '''
 
+# ....................{ PRIVATE ~ callables                }....................
+def _init() -> None:
+    '''
+    Initialize this submodule.
 
-AUTHORS = 'Cecil Curry, et al.'
-'''
-Human-readable list of all principal authors of this package as a
-comma-delimited string.
+    This initializer validates that the active Python interpreter satisfies the
+    minimum Python version required by this project, as published by the
+    ``requires-python`` key of the top-level ``pyproject.toml`` file.
+    '''
 
-For brevity, this string *only* lists authors explicitly assigned copyrights.
-For the list of all contributors regardless of copyright assignment or
-attribution, see the `contributors graph`_ for this project.
+    # Defer function-specific imports for safety.
+    from sys import version_info
 
-.. _contributors graph:
-   https://github.com/beartype/beartype/graphs/contributors
-'''
+    # If this physical distribution installed with this package defines the
+    # "Requires-Python" key underlying the "PYTHON_VERSION_MIN" string constant,
+    # validate the version of the active Python interpreter *BEFORE* subsequent
+    # logic possibly depending on this version. Specifically...
+    if PYTHON_VERSION_MIN is not None:
+        # Machine-readable current version of the active Python interpreter as a
+        # tuple of integers.
+        _PYTHON_VERSION_PARTS = version_info[:3]
 
+        # If the active Python interpreter fails to satisfy minimum
+        # requirements, raise an exception. Note that the "sys" module
+        # publicizes three version-related constants for this purpose:
+        # * "hexversion", an integer intended to be specified in an obscure
+        #   (albeit both efficient and dependable) hexadecimal format: e.g.,
+        #    >>> sys.hexversion
+        #    33883376
+        #    >>> '%x' % sys.hexversion
+        #    '20504f0'
+        # * "version", a human-readable string: e.g.,
+        #    >>> sys.version
+        #    2.5.2 (r252:60911, Jul 31 2008, 17:28:52)
+        #    [GCC 4.2.3 (Ubuntu 4.2.3-2ubuntu7)]
+        # * "version_info", a tuple of three or more integers *OR* strings: e.g.,
+        #    >>> sys.version_info
+        #    (2, 5, 2, 'final', 0)
+        #
+        # For sanity, this package will *NEVER* conditionally depend upon the
+        # string-formatted release type of the current Python version exposed
+        # via the fourth element of the "version_info" tuple. Since the first
+        # three elements of that tuple are guaranteed to be integers *AND* since
+        # a comparable 3-tuple of integers is declared above, comparing the
+        # former and latter yield the simplest and most reliable Python version
+        # test.
+        if _PYTHON_VERSION_PARTS < PYTHON_VERSION_MIN_PARTS:  # type: ignore[operator]
+            # Human-readable current version of Python. Ideally, "sys.version"
+            # would be used here; sadly, that string embeds significantly more
+            # than merely a version and hence is inapplicable: e.g.,
+            #     >>> import sys
+            #     >>> sys.version
+            #     '3.6.5 (default, Oct 28 2018, 19:51:39) \n[GCC 7.3.0]'
+            _PYTHON_VERSION = '.'.join(
+                str(version_part) for version_part in _PYTHON_VERSION_PARTS)
 
-COPYRIGHT = '2014-2026 Beartype authors'
-'''
-Legally binding copyright line excluding the license-specific prefix (e.g.,
-``"Copyright (c)"``).
-
-For brevity, this string *only* lists authors explicitly assigned copyrights.
-For the list of all contributors regardless of copyright assignment or
-attribution, see the `contributors graph`_ for this project.
-
-.. _contributors graph:
-   https://github.com/beartype/beartype/graphs/contributors
-'''
-
-# ....................{ METADATA ~ urls                    }....................
-# Although feasible, parsing URLs from "_package_metadata" is non-trivial.
-# Rather than break our body over something nobody cares about, violate the DRY
-# (Don't Repeat Yourself) principle by repeating various URLs already specified
-# in our top-level "pyproject.toml" file.
-
-URL_BLUESKY = 'https://leycec.bsky.social'
-'''
-URL of this project's entry on **Bluesky** (i.e., popular third-party social
-media site, leveraged by project maintainers to publicly announce new releases
-and associated news).
-'''
-
-
-URL_CONDA = f'https://anaconda.org/conda-forge/{PACKAGE_NAME}'
-'''
-URL of this project's entry on **Anaconda** (i.e., alternate third-party Python
-package repository utilized by the Anaconda Python distribution).
-'''
-
-
-URL_LIBRARIES = f'https://libraries.io/pypi/{PACKAGE_NAME}'
-'''
-URL of this project's entry on **Libraries.io** (i.e., third-party open-source
-package registrar associated with the Tidelift open-source funding agency).
-'''
-
-
-URL_PYPI = f'https://pypi.org/project/{PACKAGE_NAME}'
-'''
-URL of this project's entry on **PyPI** (i.e., official Python package
-repository, also colloquially known as the "cheeseshop").
-'''
-
-
-URL_RTD = f'https://readthedocs.org/projects/{PACKAGE_NAME}'
-'''
-URL of this project's entry on **ReadTheDocs (RTD)** (i.e., popular Python
-documentation host, shockingly hosting this project's documentation).
-'''
-
-
-URL_ZULIP = 'https://beartype.zulipchat.com'
-'''
-URL of this project's entry on **Zulip** (i.e., popular third-party real-time
-chat site, leveraged by project maintainers to publicly communicate with the
-project userbase).
-'''
-
-# ....................{ METADATA ~ urls : docs             }....................
-URL_HOMEPAGE = f'https://{PACKAGE_NAME}.readthedocs.io'
-'''
-URL of this project's homepage.
-'''
+            # Die ignominiously.
+            raise RuntimeError(
+                f'Beartype requires at least Python {PYTHON_VERSION_MIN}, but '
+                f'the active interpreter only targets Python {_PYTHON_VERSION}. '
+                f'We feel unbearable sadness for you.'
+            )
+        # Else, the active Python interpreter satisfies minimum requirements.
+    # Else, this physical distribution installed with this package fails to
+    # define the "Requires-Python" key underlying the "PYTHON_VERSION_MIN"
+    # string constant.
+    #
+    # Note that this edge case occurs in common use cases that compile,
+    # transpile, or freeze this package. While non-ideal, assume that the user
+    # knows what the user is doing by assuming the active Python satisfies
+    # minimum requirements. Userbase: if you break it, you bought it.
 
 
-URL_PEP585_DEPRECATIONS = (
-    f'{URL_HOMEPAGE}/en/latest/api_roar/#pep-585-deprecations')
-'''
-URL documenting :pep:`585` deprecations of :pep:`484` type hints.
-'''
-
-# ....................{ METADATA ~ urls : repo             }....................
-URL_REPO_ORG_NAME = PACKAGE_NAME
-'''
-Name of the **organization** (i.e., parent group or user principally responsible
-for maintaining this project, indicated as the second-to-last trailing
-subdirectory component) of the URL of this project's git repository.
-'''
-
-
-URL_REPO_BASENAME = PACKAGE_NAME
-'''
-**Basename** (i.e., trailing subdirectory component) of the URL of this
-project's git repository.
-'''
-
-
-URL_REPO = f'https://github.com/{URL_REPO_ORG_NAME}/{URL_REPO_BASENAME}'
-'''
-URL of this project's git repository.
-'''
-
-
-URL_DOWNLOAD = f'{URL_REPO}/archive/{VERSION}.tar.gz'
-'''
-URL of the source tarball for the current version of this project.
-
-This URL assumes a tag whose name is ``v{VERSION}`` where ``{VERSION}`` is the
-human-readable current version of this project (e.g., ``v0.4.0``) to exist.
-Typically, no such tag exists for live versions of this project -- which
-have yet to be stabilized and hence tagged. Hence, this URL is typically valid
-*only* for previously released (rather than live) versions of this project.
-'''
-
-
-URL_FORUMS = f'{URL_REPO}/discussions'
-'''
-URL of this project's user forums.
-'''
-
-
-URL_ISSUES = f'{URL_REPO}/issues'
-'''
-URL of this project's issue tracker.
-'''
-
-
-URL_RELEASES = f'{URL_REPO}/releases'
-'''
-URL of this project's release list.
-'''
-
-# ....................{ METADATA ~ dependency : names      }....................
-#FIXME: Switch! So, "pydata-sphinx-theme" is ostensibly *MOSTLY* great. However,
-#there are numerous obvious eccentricities in "pydata-sphinx-theme" that we
-#strongly disagree with -- especially that theme's oddball division in TOC
-#heading levels between the top and left sidebars.
-#
-#Enter "sphinx-book-theme", stage left. "sphinx-book-theme" is based on
-#"pydata-sphinx-theme", but entirely dispenses with all of the obvious
-#eccentricities that hamper usage of "pydata-sphinx-theme". We no longer have
-#adequate time to maintain custom documentation CSS against the moving target
-#that is "pydata-sphinx-theme". Ergo, we should instead let "sphinx-book-theme"
-#do all of that heavy lifting for us. Doing so will enable us to:
-#* Lift the horrifying constraint above on a maximum Sphinx version. *gulp*
-#* Substantially simplify our Sphinx configuration. Notably, the entire fragile
-#  "doc/src/_templates/" subdirectory should be *ENTIRELY* excised away.
-#
-#Please transition to "sphinx-book-theme" as time permits.
-
-# Note that documentation-time functionality in the Sphinx-specific
-# "doc/src/conf.py" script imports this private string global. *shrug*
-SPHINX_THEME_NAME = 'pydata-sphinx-theme'
-'''
-Name of the third-party Sphinx extension providing the custom HTML theme
-preferred by this documentation.
-
-See Also
---------
-pyproject.toml
-    Further discussion in the ``doc-rtd`` key of our top-level
-    ``pyproject.toml`` file.
-'''
-
-# ....................{ METADATA ~ dependency : versions   }....................
-# Note that test-time functionality imports this private string global. *shrug*
-_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY = '1.21.0'
-'''
-Minimum optional version of NumPy recommended for use with this project.
-
-NumPy >= 1.21.0 first introduced the third-party PEP-noncompliant
-:attr:`numpy.typing.NDArray` type hint supported by the
-:func:`beartype.beartype` decorator.
-'''
-
-
-# Note that test-time functionality imports this private string global. *shrug*
-_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS = '3.10.0.0'
-'''
-Minimum optional version of the third-party :mod:`typing_extensions` package
-recommended for use with this project.
-
-:mod:`typing_extensions` >= 3.10.0.0 backports all :mod:`typing` attributes
-unavailable under older Python interpreters supported by the
-:func:`beartype.beartype` decorator.
-'''
+# Initialize this submodule.
+_init()

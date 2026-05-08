@@ -69,7 +69,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  "utiltextansi" submodule as well, please.
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_ISSUES
+from beartype._metaverse import URL_ISSUES
 from beartype.roar import BeartypeWarning
 from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseDesynchronizationException,

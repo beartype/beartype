@@ -53,7 +53,6 @@ from collections.abc import (
     Mapping,
     Set,
 )
-from importlib.abc import PathEntryFinder
 from pathlib import Path
 from types import (
     CodeType,
@@ -678,16 +677,6 @@ resolution can only find the parent callable lexically containing that nested
 class hierarchy on the current call stack (if any) by leveraging the total
 number of classes lexically nesting the currently decorated class as input
 metadata, as trivially provided by the length of this tuple.
-'''
-
-# ....................{ API ~ importlib                    }....................
-# Type hints specific to the standard "importlib" package.
-
-ImportPathHook = Callable[[str], PathEntryFinder]
-'''
-PEP-compliant type hint matching an **import path hook** (i.e., factory closure
-creating and returning a new :class:`importlib.abc.PathEntryFinder` instance
-creating and leveraging a new :class:`importlib.machinery.FileLoader` instance).
 '''
 
 # ....................{ API ~ pathlib                      }....................

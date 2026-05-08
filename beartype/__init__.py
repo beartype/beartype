@@ -26,11 +26,19 @@ constants are commonly inspected (and thus expected) by external automation.
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# ....................{ IMPORTS ~ early                    }....................
+# Note that the *ONLY* submodule safely importable from at this early time is
+# the safe private "beartype._metaverse" submodule. All other modules and
+# packages (including both standard Python modules and packages as well as the
+# public "beartype.meta" submodule) should be assumed to be unsafe. See the
+# private "formeibeartype._metaverse" submodule for further commentary.
+from beartype._metaverse import (
+    VERSION as _VERSION,
+    VERSION_PARTS as _VERSION_PARTS,
+)
+
 # ....................{ GLOBALS                            }....................
-# Initialized below by the _init() function. As a temporary fallback, this
-# global is initialized to a placeholder tuple of integers to satisfy static
-# type-checkers (e.g., mypy, pyright).
-__version__ = '0.1.0'
+__version__ = _VERSION
 '''
 Human-readable package version as a ``.``-delimited string.
 
@@ -49,10 +57,7 @@ pyproject.toml
 '''
 
 
-# Initialized below by the _init() function. As a temporary fallback, this
-# global is initialized to a placeholder tuple of integers to satisfy static
-# type-checkers (e.g., mypy, pyright).
-__version_info__ = (0, 1, 0)
+__version_info__ = _VERSION_PARTS
 '''
 Machine-readable package version as a tuple of integers.
 
@@ -61,95 +66,7 @@ For :pep:`8` compliance, this specifier has the canonical name
 ``VERSION_PARTS``).
 '''
 
-# ....................{ PRIVATE ~ callables                }....................
-def _init() -> None:
-    '''
-    Initialize this submodule and thus this package.
-    '''
-
-    # Defer function-specific imports for safety.
-    from beartype.meta import (
-        VERSION,
-        VERSION_PARTS,
-        PYTHON_VERSION_MIN,
-        PYTHON_VERSION_MIN_PARTS,
-    )
-    from sys import version_info
-
-    # Global variables to be redefined below.
-    global \
-        __version__, \
-        __version_info__
-
-    # Alias PEP 8-compliant string globals defined by this submodule to PEP
-    # 8-noncompliant string globals defined elsewhere.
-    __version__      = VERSION
-    __version_info__ = VERSION_PARTS  # type: ignore[assignment]
-
-    # If this physical distribution installed with this package defines the
-    # "Requires-Python" key underlying the "PYTHON_VERSION_MIN" string constant,
-    # validate the version of the active Python interpreter *BEFORE* subsequent
-    # logic possibly depending on this version. Specifically...
-    if PYTHON_VERSION_MIN is not None:
-        # Machine-readable current version of the active Python interpreter as a
-        # tuple of integers.
-        _PYTHON_VERSION_PARTS = version_info[:3]
-
-        # If the active Python interpreter fails to satisfy minimum
-        # requirements, raise an exception. Note that the "sys" module
-        # publicizes three version-related constants for this purpose:
-        # * "hexversion", an integer intended to be specified in an obscure
-        #   (albeit both efficient and dependable) hexadecimal format: e.g.,
-        #    >>> sys.hexversion
-        #    33883376
-        #    >>> '%x' % sys.hexversion
-        #    '20504f0'
-        # * "version", a human-readable string: e.g.,
-        #    >>> sys.version
-        #    2.5.2 (r252:60911, Jul 31 2008, 17:28:52)
-        #    [GCC 4.2.3 (Ubuntu 4.2.3-2ubuntu7)]
-        # * "version_info", a tuple of three or more integers *OR* strings: e.g.,
-        #    >>> sys.version_info
-        #    (2, 5, 2, 'final', 0)
-        #
-        # For sanity, this package will *NEVER* conditionally depend upon the
-        # string-formatted release type of the current Python version exposed
-        # via the fourth element of the "version_info" tuple. Since the first
-        # three elements of that tuple are guaranteed to be integers *AND* since
-        # a comparable 3-tuple of integers is declared above, comparing the
-        # former and latter yield the simplest and most reliable Python version
-        # test.
-        if _PYTHON_VERSION_PARTS < PYTHON_VERSION_MIN_PARTS:  # type: ignore[operator]
-            # Human-readable current version of Python. Ideally, "sys.version"
-            # would be used here; sadly, that string embeds significantly more
-            # than merely a version and hence is inapplicable: e.g.,
-            #     >>> import sys
-            #     >>> sys.version
-            #     '3.6.5 (default, Oct 28 2018, 19:51:39) \n[GCC 7.3.0]'
-            _PYTHON_VERSION = '.'.join(
-                str(version_part) for version_part in _PYTHON_VERSION_PARTS)
-
-            # Die ignominiously.
-            raise RuntimeError(
-                f'Beartype requires at least Python {PYTHON_VERSION_MIN}, but '
-                f'the active interpreter only targets Python {_PYTHON_VERSION}. '
-                f'We feel unbearable sadness for you.'
-            )
-        # Else, the active Python interpreter satisfies minimum requirements.
-    # Else, this physical distribution installed with this package fails to
-    # define the "Requires-Python" key underlying the "PYTHON_VERSION_MIN"
-    # string constant.
-    #
-    # Note that this edge case occurs in common use cases that compile,
-    # transpile, or freeze this package. While non-ideal, assume that the user
-    # knows what the user is doing by assuming the active Python satisfies
-    # minimum requirements. Userbase: if you break it, you bought it.
-
-
-# Initialize this submodule and thus this package.
-_init()
-
-# ....................{ IMPORTS ~ non-meta                 }....................
+# ....................{ IMPORTS ~ late                     }....................
 # Import from the "beartype" codebase *AFTER* initializing this submodule above,
 # thus validating the active Python interpreter to satisfy requirements.
 

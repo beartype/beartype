@@ -662,7 +662,7 @@ build-backend = "hatchling.build"
 # Relative filename of the Python submodule defining either a PEP 8-compliant
 # "__version__" dunder global *OR* a PEP-noncompliant "VERSION" global, which
 # Hatch then statically parses to obtain the current version of this project.
-path = "beartype/meta.py"
+path = "beartype/_metaverse.py"
 
 # ....................{ NON-PEP ~ hatch : path             }....................
 # PEP-noncompliant section declaring Hatch-specific build settings. Note that:

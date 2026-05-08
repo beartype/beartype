@@ -16,11 +16,8 @@ submodule and then call that callable.
 # ....................{ IMPORTS                            }....................
 from __future__ import annotations
 from beartype import beartype
-from beartype.typing import (
-    List,
-    Union,
-)
-from beartype._cave._cavefast import IntType
+from typing import Union
+from beartype.cave import IntType
 from beartype_test.a00_unit.data.func.data_decor import decorator
 from collections.abc import Callable
 
@@ -160,7 +157,7 @@ def get_minecraft_end_txt_closure(player_name: str) -> Callable:
     # PEP-compliant type hints accessible only as local variables to the
     # following closure, exercising a significant edge case in PEP 563 support.
     StringLike = Union[str, int, bytes]
-    ListOfStrings = List[str]
+    ListOfStrings = list[str]
 
     # Intentionally delimited by one layer of decoration to exercise edges.
     @decorator
@@ -200,7 +197,7 @@ def get_minecraft_end_txt_closure_factory(player_name: str) -> Callable:
     # following closure, exercising a significant edge case in PEP 563 support.
     IntLike = Union[float, int]
     ReturnType = Callable
-    InnerReturnType = List[str]
+    InnerReturnType = list[str]
 
     # Intentionally delimited by two layers of decoration to exercise edges.
     @decorator

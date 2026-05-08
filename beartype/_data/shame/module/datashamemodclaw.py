@@ -15,10 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._cave._cavefast import RegexCompiledType
 
 # ....................{ GLOBALS                            }....................
-BLACKLIST_PACKAGE_NAMES_REGEX: RegexCompiledType = None  # type: ignore[assignment]
+BLACKLIST_CLAW_PACKAGE_NAMES_REGEX: RegexCompiledType = None  # type: ignore[assignment]
 '''
 Compiled regular expression matching the fully-qualified names of all top-level
-packages to be blacklisted by the :func:`.BeartypeSourceFileLoader.get_code`
+packages to be blacklisted by the
+:meth:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader.get_code`
 method.
 
 See commentary inside that method for exhaustive (and exhausting) details.
@@ -34,7 +35,7 @@ def _init() -> None:
     from re import compile as re_compile
 
     # Enable this global to be locally initialized below.
-    global BLACKLIST_PACKAGE_NAMES_REGEX
+    global BLACKLIST_CLAW_PACKAGE_NAMES_REGEX
 
     # Frozen set of the fully-qualified names of all top-level packages to be
     # blacklisted by the BeartypeSourceFileLoader.get_code() method.
@@ -115,31 +116,25 @@ def _init() -> None:
     #           ...<2 lines>...
     #           )
     #       ImportError: cannot import name 'NAME' from partially initialized module 'beartype.meta' (most likely due to a circular import) (/home/leycec/py/beartype/beartype/meta.py)
-    _BLACKLIST_PACKAGE_NAMES = frozenset((
+    _BLACKLIST_CLAW_PACKAGE_NAMES = frozenset((
         'beartype',
-        'calendar',
-        'csv',
-        'email',
         'importlib',
         'numbers',
-        'quopri',
         'shutil',
         'tempfile',
-        'time',
-        'uu',
-        'zipfile',
     ))
 
     # "|"-delimited string of these names.
-    _BLACKLIST_PACKAGE_NAMES_ORED = r'|'.join(_BLACKLIST_PACKAGE_NAMES)
+    _BLACKLIST_CLAW_PACKAGE_NAMES_ORED = r'|'.join(
+        _BLACKLIST_CLAW_PACKAGE_NAMES)
 
     # Compiled regular expression matching any string starting with these names
     # and either:
     # * Immediately terminating *OR*...
     # * Followed by a "." delimiter (effectively also terminating that name)
     #   followed by one or more arbitrary characters.
-    BLACKLIST_PACKAGE_NAMES_REGEX = re_compile(
-        rf'^({_BLACKLIST_PACKAGE_NAMES_ORED})(?:\..+)?$')
+    BLACKLIST_CLAW_PACKAGE_NAMES_REGEX = re_compile(
+        rf'^({_BLACKLIST_CLAW_PACKAGE_NAMES_ORED})(?:\..+)?$')
 
 
 # Initialize this submodule.

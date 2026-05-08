@@ -12,10 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
+from beartype._metaverse import URL_ISSUES
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep,

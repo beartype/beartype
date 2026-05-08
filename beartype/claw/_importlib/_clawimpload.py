@@ -22,7 +22,7 @@ from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined
 )
 from beartype.roar import BeartypeClawImportAstException
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.claw.dataclawblack import BLACKLIST_PACKAGE_NAMES_REGEX
+from beartype._data.shame.module.datashamemodclaw import BLACKLIST_CLAW_PACKAGE_NAMES_REGEX
 from beartype._util.ast.utilastget import get_node_repr_indented
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_15
 from beartype._util.text.utiltextlabel import label_exception_message
@@ -380,7 +380,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         #   triggers the above "coverage" failure, which defeats the point.
         # * There appear to exist *NO* working alternatives to a "regex"-based
         #   recursion guard like this. Hard-coding a finite set of problematic
-        #   package and module names into the "BLACKLIST_PACKAGE_NAMES_REGEX"
+        #   package and module names into the "BLACKLIST_CLAW_PACKAGE_NAMES_REGEX"
         #   global is clearly fragile and liable to break under future CPython
         #   versions. Ideally, we would instead dynamically detect "importlib"
         #   recursion with logic resembling:
@@ -432,7 +432,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # fatally break Python by invite "RecursionLimit" exceptions induced by
         # exhausting the stack during import handling. In other words, there is
         # likely to *NO* valid alternative to the current approach. *shrug*
-        if BLACKLIST_PACKAGE_NAMES_REGEX.match(fullname) is not None:
+        if BLACKLIST_CLAW_PACKAGE_NAMES_REGEX.match(fullname) is not None:
             return super().get_code(fullname)
         # Else, that module does *NOT* reside in a problematic package.
 

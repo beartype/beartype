@@ -11,13 +11,20 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import (
-    NAME,
-    VERSION,
-)
+# Note that attempting to import the equivalent global constants from the
+# "beartype.meta" submodule is known to unsafely induce infinite recursion
+# during "importlib" machinery handling performed by the
+# beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader.get_code()
+# method. Therefore, rather than importing:
+# * The unsafe "beartype.meta.NAME" global constant here, we instead manually
+#   embed the literal substring "beartype" into global constants defined below.
+# * The unsafe "beartype.meta.VERSION" global constant here, we instead import
+#   the safe "beartype._metaverse.VERSION" global constant known *NOT* to induce
+#   such recursion.
+from beartype._metaverse import VERSION
 
 # ....................{ STRINGS                            }....................
-OPTIMIZATION_MARKER_BEARTYPE = f'{NAME}{VERSION.replace(".", "v")}'
+OPTIMIZATION_MARKER_BEARTYPE = f'beartype{VERSION.replace(".", "v")}'
 '''
 **Beartype optimization marker** (i.e., placeholder substring suffixing the
 ``optimization`` parameter passed to the magical hidden

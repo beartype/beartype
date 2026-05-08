@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_ISSUES
+from beartype._metaverse import URL_ISSUES
 from beartype.roar import BeartypeDecorHintRecursionException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert._reduce._redmap import (

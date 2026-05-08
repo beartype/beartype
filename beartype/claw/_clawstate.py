@@ -25,12 +25,21 @@ from beartype.claw._package.clawpkgtrie import (
     PackageBasenameToTrieBlacklist,
 )
 from beartype._data.shame.module.datashamemod import BLACKLIST_PACKAGE_NAMES
-from beartype._data.typing.datatyping import ImportPathHook
+from collections.abc import Callable
+from importlib.abc import PathEntryFinder
 from threading import RLock
 from typing import (
     TYPE_CHECKING,
     Optional,
 )
+
+# ....................{ PRIVATE ~ hints                    }....................
+_ImportPathHook = Callable[[str], PathEntryFinder]
+'''
+PEP-compliant type hint matching an **import path hook** (i.e., factory closure
+creating and returning a new :class:`importlib.abc.PathEntryFinder` instance
+creating and leveraging a new :class:`importlib.machinery.FileLoader` instance).
+'''
 
 # ....................{ CLASSES                            }....................
 class BeartypeClawState(object):
@@ -42,7 +51,7 @@ class BeartypeClawState(object):
 
     Attributes
     ----------
-    beartype_pathhook : Optional[ImportPathHook]
+    beartype_pathhook : Optional[_ImportPathHook]
         Either:
 
         * If the
@@ -105,7 +114,7 @@ class BeartypeClawState(object):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        beartype_pathhook: Optional[ImportPathHook]
+        beartype_pathhook: Optional[_ImportPathHook]
         module_name_to_beartype_conf: ModuleNameToBeartypeConf
         node_scope_beforelist_global: BeartypeNodeScopeBeforelist
         packages_trie_blacklist: PackagesTrieBlacklist
@@ -116,7 +125,7 @@ class BeartypeClawState(object):
 
         # Nullify the proper subset of instance variables requiring
         # nullification *BEFORE* reinitializing this singleton.
-        self.beartype_pathhook: Optional[ImportPathHook] = None
+        self.beartype_pathhook: Optional[_ImportPathHook] = None
 
         # Reinitialize this singleton safely.
         self._reinit_safe()

@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
-# from beartype.typing import Dict
 from beartype._cave._cavefast import NumberType
 from beartype._data.typing.datatyping import TypeWarning
 from beartype._data.kind.datakindtext import CHARS_PUNCTUATION

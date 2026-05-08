@@ -97,9 +97,9 @@ from beartype.meta import (
     URL_ZULIP,
     VERSION,
 )
-from beartype.typing import Optional
 from beartype._util.module.utilmodimport import import_module_attr
 from beartype._util.module.utilmodtest import is_module
+from typing import Optional
 # from warnings import warn
 
 # ....................{ PRIVATE ~ path : more              }....................

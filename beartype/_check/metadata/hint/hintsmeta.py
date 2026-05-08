@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_ISSUES
+from beartype._metaverse import URL_ISSUES
 from beartype.roar import BeartypeDecorHintRecursionException
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convmain import sanify_hint_child

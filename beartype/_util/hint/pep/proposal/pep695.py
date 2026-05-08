@@ -102,7 +102,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #adopted the quick-and-dirty approach of raising exceptions instead. Yikes!
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintPep695Exception
 from beartype._cave._cavefast import (
     # HintGenericSubscriptedType,
@@ -124,6 +123,7 @@ from beartype._data.typing.datatypingport import (
     Hint,
     TypeIs,
 )
+from beartype._metaverse import URL_ISSUES
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
     release_instance,
