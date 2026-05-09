@@ -16,7 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._metaverse import URL_ISSUES
 from beartype.roar import BeartypeDecorHintRecursionException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert._reduce._redmap import (
@@ -46,6 +45,7 @@ from beartype._data.typing.datatyping import (
     DictStrToAny,
     HintSignOrNoneOrSentinel,
 )
+from beartype._metaverse import URL_ISSUES
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none

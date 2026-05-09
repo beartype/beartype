@@ -11,23 +11,77 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Callable,
-    List,
-    Optional,
-)
 # from beartype._cave._cavefast import MethodBoundInstanceDunderCType
 from beartype._data.func.datafunc import OBJECT_SLOT_WRAPPERS
 from beartype._data.typing.datatyping import DictStrToAny
+from collections.abc import Callable
 from inspect import getattr_static
+from typing import Optional
 
 # ....................{ GETTERS                            }....................
+def get_object_methods_name_to_value_explicit(
+    # Mandatory parameters.
+    obj: object,
+
+    # Optional parameters.
+    obj_dir: Optional[list[str]] = None,
+) -> DictStrToAny:
+    '''
+    Dictionary mapping from the name to **explicit value** (i.e., value
+    retrieved *without* implicitly calling the :func:`property`-decorated method
+    implementing this attribute if this attribute is a property) of each method
+    bound to the passed object.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be introspected.
+    obj_dir : Optional[List[str]]
+        See also the :func:`.get_object_attrs_name_to_value_explicit` getter.
+
+    Caveats
+    -------
+    **This getter intentionally returns unbound pure-Python method functions
+    rather than bound C-based method descriptors.** In theory, the latter
+    approach would be marginally more useful. In practice, the standard
+    :func:`.getattr_static` getter underlying this getter only supports the
+    former approach. It is what it is.
+
+    **This getter intentionally omits uncallable methods.** This includes most
+    C-based method descriptors, most of which are uncallable depending on the
+    version of the active Python interpreter. This *particularly* includes all
+    C-based slot wrappers implicitly inherited by all classes from the root
+    :class:`object` superclass (e.g., the :meth:`object.__str__` dunder method).
+    The default implementations of slot wrappers have no intrinsic value in any
+    meaningful context and only serve to obfuscate *actual* methods of
+    general-purpose interest to most callers.
+
+    Returns
+    -------
+    DictStrToAny
+        Dictionary mapping from the name to explicit value of each methods bound
+        to the passed object.
+
+    Methods
+    -------
+    :func:`.get_object_attrs_name_to_value_explicit`
+        Further details.
+    '''
+
+    # This is why we predicate, folks.
+    return get_object_attrs_name_to_value_explicit(
+        obj=obj,
+        obj_dir=obj_dir,
+        predicate=_is_object_attr_callable_not_object_slot_wrapper,
+    )
+
+
 def get_object_attrs_name_to_value_explicit(
     # Mandatory parameters.
     obj: object,
 
     # Optional parameters.
-    obj_dir: Optional[List[str]] = None,
+    obj_dir: Optional[list[str]] = None,
     predicate: Optional[Callable[[str, object], bool]] = None
 ) -> DictStrToAny:
     '''
@@ -71,7 +125,7 @@ def get_object_attrs_name_to_value_explicit(
     ----------
     obj : object
         Object to be introspected.
-    obj_dir : Optional[List[str]]
+    obj_dir : Optional[list[str]]
         Either:
 
         * List of the names of all relevant attributes bound to this object.
@@ -182,63 +236,6 @@ def get_object_attrs_name_to_value_explicit(
 
     # Return this dictionary.
     return attrs_name_to_value_explicit
-
-
-def get_object_methods_name_to_value_explicit(
-    # Mandatory parameters.
-    obj: object,
-
-    # Optional parameters.
-    obj_dir: Optional[List[str]] = None,
-) -> DictStrToAny:
-    '''
-    Dictionary mapping from the name to **explicit value** (i.e., value
-    retrieved *without* implicitly calling the :func:`property`-decorated method
-    implementing this attribute if this attribute is a property) of each method
-    bound to the passed object.
-
-    Parameters
-    ----------
-    obj : object
-        Object to be introspected.
-    obj_dir : Optional[List[str]]
-        See also the :func:`.get_object_attrs_name_to_value_explicit` getter.
-
-    Caveats
-    -------
-    **This getter intentionally returns unbound pure-Python method functions
-    rather than bound C-based method descriptors.** In theory, the latter
-    approach would be marginally more useful. In practice, the standard
-    :func:`.getattr_static` getter underlying this getter only supports the
-    former approach. It is what it is.
-
-    **This getter intentionally omits uncallable methods.** This includes most
-    C-based method descriptors, most of which are uncallable depending on the
-    version of the active Python interpreter. This *particularly* includes all
-    C-based slot wrappers implicitly inherited by all classes from the root
-    :class:`object` superclass (e.g., the :meth:`object.__str__` dunder method).
-    The default implementations of slot wrappers have no intrinsic value in any
-    meaningful context and only serve to obfuscate *actual* methods of
-    general-purpose interest to most callers.
-
-    Returns
-    -------
-    DictStrToAny
-        Dictionary mapping from the name to explicit value of each methods bound
-        to the passed object.
-
-    Methods
-    -------
-    :func:`.get_object_attrs_name_to_value_explicit`
-        Further details.
-    '''
-
-    # This is why we predicate, folks.
-    return get_object_attrs_name_to_value_explicit(
-        obj=obj,
-        obj_dir=obj_dir,
-        predicate=_is_object_attr_callable_not_object_slot_wrapper,
-    )
 
 # ....................{ PRIVATE ~ testers                  }....................
 def _is_object_attr_callable_not_object_slot_wrapper(
