@@ -56,7 +56,8 @@ def reduce_hint_pep484585_generic_subbed(
        def noop(param_hint_ignorable: Generic[T]) -> T: pass
 
     This reducer is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as reducers cannot be memoized.
+    ``@callable_cached`` decorator), as this reducer accepts one or more
+    unmemoizable parameters (e.g., ``call_meta``).
 
     Parameters
     ----------
@@ -95,10 +96,12 @@ def reduce_hint_pep484585_generic_subbed(
           :class:`.HintSane` object) describing this reduction.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._check.convert._reduce._pep.redpep484612646 import (
         reduce_hint_pep484612646_subbed_typeargs_to_hints)
 
+    # ....................{ NOOP                           }....................
     # If this subscripted generic is the "typing.Generic" superclass directly
     # parametrized by one or more type variables (e.g., "typing.Generic[T]"),
     # this generic is ignorable. In this case, reduce this ignorable generic to
@@ -120,6 +123,7 @@ def reduce_hint_pep484585_generic_subbed(
     # ignorable and unignorable protocols is "Protocol" rather than "Generic".
     # Ergo, this generic could still be an ignorable protocol.
 
+    # ....................{ PEP (484|585) ~ io             }....................
     # Useful PEP 544-compliant unsubscripted protocol possibly reduced from this
     # useless PEP 484- or 585-compliant subscripted IO generic if this hint is a
     # subscripted IO generic *OR* this hint as is otherwise.
@@ -136,6 +140,7 @@ def reduce_hint_pep484585_generic_subbed(
     # Else, this hint was *NOT* reduced to an unsubscripted generic from this
     # subscripted IO generic (i.e., "hint_reduced is hint").
 
+    # ....................{ UNSUBSCRIBE                    }....................
     # Reduce this subscripted generic to:
     # * The semantically useful unsubscripted generic originating this
     #   semantically useless subscripted generic.
@@ -151,11 +156,16 @@ def reduce_hint_pep484585_generic_subbed(
     )
     # print(f'[reduce_hint_pep484585_generic_subbed] ...to unsubscripted generic {repr(hint_reduced)}.')
 
+    # ....................{ RETURN                         }....................
     # Return this reduced hint.
     return hint_reduced
 
 
-def reduce_hint_pep484585_generic_unsubbed(hint: Hint) -> HintOrSane:
+def reduce_hint_pep484585_generic_unsubbed(
+    call_meta: BeartypeCallMetaABC,
+    hint: Hint,
+    **kwargs,
+) -> HintOrSane:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **unsubscripted
     generic** (i.e., type originally subclassing at least one unsubscripted
@@ -163,12 +173,19 @@ def reduce_hint_pep484585_generic_unsubbed(hint: Hint) -> HintOrSane:
     type hint better supported by :mod:`beartype` if necessary.
 
     This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as reducers cannot be memoized.
+    ``@callable_cached`` decorator), as this reducer accepts one or more
+    unmemoizable parameters (e.g., ``call_meta``).
 
     Parameters
     ----------
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     hint : Hint
         Subscripted generic to be reduced.
+
+    All remaining passed keyword parameters are silently ignored.
 
     Returns
     -------
@@ -181,6 +198,12 @@ def reduce_hint_pep484585_generic_unsubbed(hint: Hint) -> HintOrSane:
           hint.
     '''
 
+    # ....................{ IMPORTS                        }....................
+    # Avoid circular import dependencies.
+    from beartype._check.convert._reduce._nonpep.rednonpeptype import (
+        reduce_hint_nonpep)
+
+    # ....................{ NOOP                           }....................
     # If this unsubscripted generic is the "typing.Generic" superclass, this
     # generic is ignorable. In this case, reduce this ignorable generic to the
     # ignorable singleton.
@@ -200,11 +223,31 @@ def reduce_hint_pep484585_generic_unsubbed(hint: Hint) -> HintOrSane:
     # ignorable and unignorable protocols is "Protocol" rather than "Generic".
     # Ergo, this generic could still be an ignorable protocol.
 
+    # ....................{ PEP (484|585) ~ io             }....................
     # Hint possibly reduced from this useless unsubscripted IO generic if this
     # hint is an unsubscripted IO generic *OR* this hint as is otherwise.
     hint_reduced = _reduce_hint_pep484585_generic_io(
         hint, EXCEPTION_PLACEHOLDER)
 
+    # If this hint was reduced to an unsubscripted generic from this subscripted
+    # IO generic, return this reduced hint.
+    if hint_reduced is not hint:
+        return hint_reduced
+    # Else, this hint was *NOT* reduced to an unsubscripted generic from this
+    # subscripted IO generic (i.e., "hint_reduced is hint").
+
+    # ....................{ NON-PEP                        }....................
+    # Hint possibly reduced from this unsubscripted generic if reducible (for
+    # whatever reason) as a PEP-noncompliant isinstanceable type *OR* this hint
+    # as is otherwise. While rare, this edge case constitutes a valid reduction.
+    # Valid reasons for performing this reduction include:
+    # * The currently decorated unsubscripted generic defines a problematic
+    #   dunder method (e.g., __getitem__()) annotated by this same generic known
+    #   to induce infinitely recursive type-checking under various edge cases,
+    #   trivially resolved by ignoring this same generic *ONLY* in this case.
+    hint_reduced = reduce_hint_nonpep(call_meta=call_meta, hint=hint, **kwargs)
+
+    # ....................{ RETURN                         }....................
     # Return this possibly reduced hint.
     return hint_reduced
 

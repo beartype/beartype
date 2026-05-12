@@ -11,15 +11,6 @@ snippets type-checking arbitrary objects against union type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Validate that PEP 695-compliant type aliases aliasing recursive unions
-#behave as expected: e.g.,
-#    type recursive_union = int | recursive_union
-#FIXME: Likewise, note that our current *EXTREMELY* non-trivial handling of
-#"hint_overrides"-based recursive unions below could probably benefit from being
-#refactored into the same approach used to handle PEP 695-based recursive
-#unions. The approach below is wild -- and not the good kind of "wild," either.
-
 # ....................{ IMPORTS                            }....................
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
@@ -59,15 +50,15 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
     :data:`None` otherwise (i.e., if this union is ignorable).
 
     This factory is intentionally *not* memoized (e.g., by the
-    :func:`.callable_cached` decorator), due to accepting **context-sensitive
+    ``@callable_cached`` decorator), due to accepting **context-sensitive
     parameters** (i.e., whose values contextually depend on context unique to
     the code being generated for the currently decorated callable) such as
-    ``pith_curr_assign_expr``.
+    ``hints_meta.pith_curr_assign_expr``.
 
     Caveats
     -------
     Unions are non-physical abstractions of physical types and thus *not*
-    themselves subject to type-checking; only the subscripted arguments of
+    themselves subject to type-checking; only the child type hints subscripting
     unions are type-checked. This differs from :mod:`typing` pseudo-containers
     like ``List[int]``, in which both the parent :obj:`typing.List` and child
     :class:`int` types represent physical types to be type-checked. Ergo, unions
@@ -349,8 +340,10 @@ def _get_hint_pep484604_union_args_flattened(
          type Level3 = Level2 | float
 
     This getter is intentionally *not* memoized (e.g., by the
-    :func:`.callable_cached` decorator), as the only function calling this
-    getter *is* itself memoized.
+    ``@callable_cached`` decorator), due to accepting **context-sensitive
+    parameters** (i.e., whose values contextually depend on context unique to
+    the code being generated for the currently decorated callable) such as
+    ``hints_meta.pith_curr_assign_expr``.
 
     Caveats
     -------
@@ -547,8 +540,8 @@ def _get_hint_pep484604_union_args_flattened(
         #   Thankfully, this edge case as well is implicitly handled by the
         #   hints_meta.sanify_hint_child() method called below, which
         #   transitively calls the reduce_hint() function, which detects
-        #   recursion in a non-overridden hint and explicitly returns
-        #   "HINT_SANE_IGNORABLE" rather than recursing infinitely into that hint.
+        #   recursion in a non-overridden hint and returns "HINT_SANE_IGNORABLE"
+        #   rather than recursing infinitely into that hint.
         # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
         hint_child_sane = hints_meta.sanify_hint_child(
             hint_child_insane=hint_child_insane,
@@ -581,10 +574,11 @@ def _get_hint_pep484604_union_args_flattened(
         # child hints subscripting this child union onto this parent union.
         #
         # Note that this edge case currently *ONLY* arises when this child hint
-        # has been expanded by the above call to the sanify_hint_child()
-        # function from a non-union (e.g., "float") into a union (e.g., "float |
-        # int"). The standard PEP 484-compliant "typing.Union" type hint factory
-        # already implicitly flattens nested unions: e.g.,
+        # has been expanded by the above call to the
+        # hints_meta.sanify_hint_child() method from a non-union (e.g., "float")
+        # into a union (e.g., "float | int"). Why? Because the standard PEP
+        # 484-compliant "typing.Union" type hint factory already implicitly
+        # flattens nested unions: e.g.,
         #     >>> from typing import Union
         #     >>> Union[float, Union[int, str]]
         #     typing.Union[float, int, str]

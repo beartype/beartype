@@ -315,7 +315,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             Code object underlying that module.
         '''
 
-        # ..................{ RECURSION GUARD                }..................
+        # ..................{ RECURSE                        }..................
         # If that module resides in a fundamentally problematic package (e.g.,
         # the beartype codebase itself), preserve that module as is by simply
         # deferring to the superclass method *WITHOUT* monkey-patching

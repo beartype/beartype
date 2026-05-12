@@ -27,9 +27,9 @@ def test_decor_pep591() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
-    from beartype.typing import Final
     from dataclasses import dataclass
     from pytest import raises
+    from typing import Final
 
     # ..................{ LOCALS                             }..................
     @beartype

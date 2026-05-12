@@ -172,15 +172,6 @@ callable reducing those higher- to lower-level hints).
 # ....................{ MAPPINGS ~ cached                  }....................
 HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # ..................{ NON-PEP                            }..................
-    # If this hint is identified by *NO* sign, this hint is either:
-    # * A valid PEP-noncompliant isinstanceable type, in which case this reducer
-    #   preserves this type as is.
-    # * A valid PEP-compliant hint unrecognized by beartype, in which case
-    #   this reducer raises an exception.
-    # * An invalid and thus PEP-noncompliant hint, in which case this reducer
-    #   raises an exception.
-    None: reduce_hint_nonpep,
-
     # Reduce PEP-noncompliant "typing.Never" singleton to the PEP 484-compliant
     # "typing.NoReturn" singleton.
     HintSignNever: reduce_hint_pep484_never,
@@ -271,12 +262,6 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # If this hint is a PEP 484- or 585-compliant items view type hint, reduce
     # this hint to a more trivially consumable PEP 593-compliant type hint.
     HintSignItemsView: reduce_hint_pep484585_itemsview,
-
-    # If this hint is a PEP 484-compliant IO generic base class, reduce this
-    # functionally useless hint to the corresponding functionally useful
-    # beartype-specific PEP 544-compliant protocol implementing this hint.
-    HintSignPep484585GenericUnsubbed: (
-        reduce_hint_pep484585_generic_unsubbed),
 
     # ..................{ PEP 544                            }..................
     # Ignore *ALL* PEP 544-compliant "typing.Protocol[...]" subscriptions.
@@ -477,6 +462,20 @@ Note that:
 
 # ....................{ MAPPINGS ~ uncached                }....................
 HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
+    # ..................{ NON-PEP                            }..................
+    # If this hint is identified by *NO* sign, this hint is either:
+    # * A valid PEP-noncompliant isinstanceable type, in which case this reducer
+    #   preserves this type as is.
+    # * A valid PEP-compliant hint unrecognized by beartype, in which case
+    #   this reducer raises an exception.
+    # * An invalid and thus PEP-noncompliant hint, in which case this reducer
+    #   raises an exception.
+    #
+    # Tragically, the practical realities of hint reduction have complicated
+    # this reducer to the point where it now requires non-trivial decoration
+    # context that precludes caching. It is what it is. *sigh*
+    None: reduce_hint_nonpep,
+
     # ..................{ PEP 484                            }..................
     # Reduce PEP 484-compliant forward references to the objects these
     # references refer to only if those objects are efficiently accessible at
@@ -499,6 +498,12 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # * Map the child hint subscripting this subscripted generic to the PEP
     #   484-compliant type variable parametrizing that unsubscripted generic.
     HintSignPep484585GenericSubbed: reduce_hint_pep484585_generic_subbed,
+
+    # If this hint is a PEP 484-compliant IO generic base class, reduce this
+    # functionally useless hint to the corresponding functionally useful
+    # beartype-specific PEP 544-compliant protocol implementing this hint.
+    HintSignPep484585GenericUnsubbed: (
+        reduce_hint_pep484585_generic_unsubbed),
 
     # If this hint is a PEP 484- or 585-compliant subclass hint subscripted
     # by an ignorable child hint (e.g., "object", "typing.Any"), silently

@@ -106,7 +106,7 @@ def reduce_hint(
 
         * If this hint annotates a parameter of some callable, that parameter's
           **kind** (i.e., :class:`.ArgKind` enumeration member conveying the
-          syntactic class of that parameter, constraining how the callable
+          syntactic class of that parameter constraining how the callable
           declaring that parameter requires that parameter to be passed).
         * Else, :data:`None`.
 
@@ -145,7 +145,7 @@ def reduce_hint(
           :pep:`589`-compliant :class:`typing.TypedDict` superclass), which are
           identifiable as both generics *and* typed dictionaries.
 
-        Defaults to the sentinel.
+        Defaults to the sentinel placeholder.
     is_hint_ignorable_preserved : bool, default: False
         Either:
 
@@ -166,7 +166,7 @@ def reduce_hint(
         this distinction and are thus incapable of handling ignorable hints
         reduced to unique :data:`.HintSane` objects *not* equal to the standard
         :data:`.HINT_SANE_IGNORABLE` singleton. Most callers only expect the
-        :data:`.HINT_SANE_IGNORABLE` singleton.
+        :data:`.HINT_SANE_IGNORABLE` singleton. Look. It's complicated.
     pith_name : Optional[str], default: None
         Either:
 

@@ -154,7 +154,7 @@ def reduce_hint_pep484_ref(
     # If this hint is a PEP 484- and 749-compliant object-oriented forward
     # reference (rather than a stringified forward reference)...
     if isinstance(hint, HintPep484749RefObjectType):
-        # print(f'Reducing PEP 749 {repr(hint)}...')
+        # print(f'Reducing PEP 749 "ForwardRef" hint {repr(hint)}...')
 
         # If this reference is a PEP 749-compliant "annotationlib.ForwardRef"
         # object encapsulating *ALL* metadata needed to dynamically resolve the
@@ -285,6 +285,7 @@ def reduce_hint_pep484_ref(
         # across all forward references.
         is_check_expr_cacheable=False,
     )
+    # print(f'Reducing forward ref hint {repr(hint)} to non-forward ref hint {repr(hint_resolved)}...')
 
     # Return this metadata.
     return hint_sane

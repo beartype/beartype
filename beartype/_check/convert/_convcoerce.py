@@ -144,9 +144,10 @@ def coerce_func_hint_root(
     # refers *BEFORE* performing any subsequent logic with this hint -- *ALL* of
     # which assumes this hint to be a non-string hint.
     if isinstance(hint, str):
-        # print(f'Resolving {repr(decor_meta)} string hint {repr(hint)}...')
+        # print(f'Coercing forward ref hint {repr(hint)} to...')
         hint = resolve_hint_pep484_ref_str_decor_meta(
             hint=hint, decor_meta=decor_meta, exception_prefix=exception_prefix)  # pyright: ignore
+        # print(f'...non-forward ref hint {repr(hint)}!')
     # Else, this hint is *NOT* stringified.
     #
     # In either case, this hint is guaranteed to now be a non-string hint.

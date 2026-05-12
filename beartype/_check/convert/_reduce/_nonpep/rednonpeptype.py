@@ -22,7 +22,9 @@ from beartype._cave._cavefast import (
     ThreadLockNonreentrantType,
     ThreadLockReentrantType,
 )
+from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.shame.datashamefunc import BLACKLIST_METHOD_NAMES_HINT_SELF
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.utilobject import is_object_hashable
@@ -32,7 +34,11 @@ from threading import (
 )
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_nonpep(hint: Hint) -> HintOrSane:
+def reduce_hint_nonpep(
+    call_meta: BeartypeCallMetaABC,
+    hint: Hint,
+    **kwargs,
+) -> HintOrSane:
     '''
     Reduce the passed **PEP-noncompliant type hint** (i.e., type hint identified
     by *no* sign, typically but *not* necessarily implying this hint to be an
@@ -49,13 +55,19 @@ def reduce_hint_nonpep(hint: Hint) -> HintOrSane:
       :exc:`.BeartypeDecorHintNonpepException` exception.
 
     This reducer is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as the implementation trivially reduces to a
-    one-liner.
+    ``@callable_cached`` decorator), as this reducer accepts one or more
+    unmemoizable parameters (e.g., ``call_meta``).
 
     Parameters
     ----------
+    call_meta : BeartypeCallMetaABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     hint : Hint
         PEP-noncompliant hint to be reduced.
+
+    All remaining keyword-only parameters are silently ignored.
 
     Returns
     -------
@@ -82,6 +94,74 @@ def reduce_hint_nonpep(hint: Hint) -> HintOrSane:
         * Supported PEP-noncompliant type hint.
     '''
 
+    # ....................{ RECURSE                        }....................
+    # If...
+    #
+    # See the "BLACKLIST_METHOD_NAMES_HINT_SELF" definition for further details.
+    if (
+        # One or more types are currently being decorated by @beartype *AND*...
+        call_meta.cls_stack and
+        # A method of the most deeply nested such type is also currently being
+        # decorated by @beartype...
+        call_meta.func is not None
+    ):
+    # Then there exists a negligible (albeit non-zero) probability that blindly
+    # generating code type-checking this hint *COULD* accidentally ignite
+    # infinite recursion while executing that type-checking code in the first
+    # subsequent call of that method. In this case...
+        # Currently decorated type (i.e., most deeply lexically nested type
+        # currently being decorated by @beartype).
+        decor_type = call_meta.cls_stack[-1]
+
+        # Unqualified basename of that method.
+        decor_type_method_name = call_meta.func.__name__
+        # print(f'Testing type {repr(decor_type)} dunder method {repr(call_meta.func)}...')
+        # print(f'...hint {repr(hint)}...')
+
+        # If...
+        if (
+            # This hint is the currently decorated type *AND*...
+            hint is decor_type and
+            # The unqualified basename of that method is one well-known to
+            # ignite infinite recursion in type-checking...
+            decor_type_method_name in BLACKLIST_METHOD_NAMES_HINT_SELF
+        ):
+        # Then blindly generating code type-checking this hint *COULD*
+        # accidentally ignite infinite recursion while executing that
+        # type-checking code in the first subsequent call of that method. In
+        # this case...
+        #
+        # Note that even these conditions evaluating to true are insufficient to
+        # guarantee such recursion. While these conditions could be further
+        # tightened to guarantee such recursion in theory, doing so is highly
+        # non-trivial (perhaps even infeasible) in practice. Indeed, the exact
+        # conditions that guarantee such recursion are unknown. For example:
+        # * If the currently decorated type is a sequence (i.e., satisfying the
+        #   "collections.abc.Sequence" protocol) *AND* the currently decorated
+        #   method is the __getitem__() dunder method, then allowing that type
+        #   to transitively annotate that method is guaranteed to ignite such
+        #   recursion. That's known now. That isn't the issue. The issue is
+        #   whether any other non-sequence types *ALSO* ignite such recursion.
+        #   That's unknown. Although we (by which we mean "our userbase") could
+        #   chance it, the negligible gain of type-checking self-hints of
+        #   __getitem__() dunder methods of non-sequence types hardly seems
+        #   worth the significant pain of infinitely recursive type-checking.
+            # print(f'Ignoring type {repr(decor_type)} dunder method {repr(call_meta.func)}...')
+            # print(f'...recursive hint {repr(hint)}!')
+
+            # Superficially guard against such recursion by reducing this
+            # problematic hint to the ignorable "HINT_SANE_IGNORABLE" singleton.
+            return HINT_SANE_IGNORABLE
+        # Else, either this hint is not the currently decorated type *OR* the
+        # unqualified basename of that method is not one well-known to ignite
+        # infinite recursion in type-checking. In any case, this hint *CANNOT*
+        # ignite such recursion and is thus preserved.
+    # Else, either no types are currently being decorated by @beartype *OR* one
+    # or more types are currently being decorated by @beartype but no method of
+    # the most deeply nested such type is also currently being decorated. In any
+    # case, this hint *CANNOT* ignite such recursion and is thus preserved.
+
+    # ....................{ REDUCE                         }....................
     # If this hint is hashable...
     if is_object_hashable(hint):
         # Either:
@@ -92,12 +172,13 @@ def reduce_hint_nonpep(hint: Hint) -> HintOrSane:
         hint_reduced = _HINT_NONPEP_SINGLETON_TO_REDUCTION.get(hint)
         # print(f'Reduced non-PEP hint {repr(hint)} to {repr(hint_reduced)}...')
 
-        # If this hint is reducible, replace this hint by that reduction.
+        # If this hint is reducible, reduce this hint to this reduction.
         if hint_reduced is not None:
             hint = hint_reduced  # pyright: ignore
         # Else, this hint is irreducible. In this case, preserve this hint.
     # Else, this hint is unhashable. In this case, preserve this hint as is.
 
+    # ....................{ VALIDATE                       }....................
     # If this hint was *NOT* reduced to sanified metadata above...
     if not isinstance(hint, HintSane):
         # If this hint is unsupported by @beartype (after possibly reducing
@@ -120,6 +201,7 @@ def reduce_hint_nonpep(hint: Hint) -> HintOrSane:
     # @beartype. More importantly, that raiser justifiably fails to recognize
     # "HintSane" instances as supported PEP-compliant type hints.
 
+    # ....................{ RETURN                         }....................
     # Return this possibly hint reduced hint.
     return hint
 

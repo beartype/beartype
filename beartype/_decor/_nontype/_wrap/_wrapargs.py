@@ -258,6 +258,9 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
 
         # Attempt to...
         try:
+            # print(f'Generating code type-checking {decor_meta.func_wrapper_name}() parameter "{arg_name}"...')
+            # print(f'...unreduced hint {repr(hint_insane)}!')
+
             # If this parameter's name is reserved for use by the @beartype
             # decorator, raise an exception.
             if arg_name.startswith('__bear'):
@@ -340,6 +343,8 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                     )
                 # Else, this kind of parameter is supported. Ergo, this code is
                 # non-"None".
+                # print(f'Generating code type-checking {decor_meta.func_wrapper_name}() parameter "{arg_name}"...')
+                # print(f'...reduced hint {repr(hint_sane.hint)}!')
 
                 # Code snippet type-checking any parameter with arbitrary name.
                 #
@@ -376,6 +381,9 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                         decor_meta=decor_meta, arg_name=arg_name),
                 )
             # Else, *NO* warnings were issued.
+
+            # print(f'Generated code type-checking {decor_meta.func_wrapper_name}() parameter "{arg_name}"...')
+            # print(f'...unreduced hint {repr(hint_insane)}!')
         # If any exception was raised, reraise this exception with each
         # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
         # replaced by a human-readable description of this callable and

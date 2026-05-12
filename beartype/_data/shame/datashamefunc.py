@@ -22,7 +22,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.typing.datatyping import FrozenSetStrs
 
 # ....................{ DICTS                              }....................
-BLACKLIST_FUNC_NAMES_HINT_SELF: FrozenSetStrs = frozenset((
+BLACKLIST_METHOD_NAMES_HINT_SELF: FrozenSetStrs = frozenset((
     # ....................{ DUNDERS ~ recursion guard      }....................
     # These PEP-compliant dunder methods are well-known to erroneously induce
     # infinitely recursive type-checking when *ANY* parameter or return is
