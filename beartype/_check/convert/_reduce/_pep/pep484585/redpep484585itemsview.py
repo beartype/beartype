@@ -18,7 +18,7 @@ from beartype.typing import (
     Collection,
     Tuple,
 )
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
 # from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.pep484585args import (

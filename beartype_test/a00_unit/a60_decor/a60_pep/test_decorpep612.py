@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator** :pep:`612`-compliant :obj:`typing.Self` **unit tests**.
+**Beartype decorator** :pep:`612`-compliant :obj:`typing.ParamSpec` **unit
+tests**.
 
 This submodule unit tests :pep:`612` support implemented in the
 :func:`beartype.beartype` decorator.
@@ -34,12 +35,9 @@ def test_decor_pep612() -> None:
         is_bearable,
     )
     from beartype.roar import BeartypeDecorHintPep612Exception
-    from beartype.typing import (
-        ParamSpec,
-        Tuple,
-    )
     from beartype._data.typing.datatyping import DictStrToAny
     from pytest import raises
+    from typing import ParamSpec
 
     # ....................{ LOCALs                         }....................
     # Arbitrary parameter specification.
@@ -50,7 +48,7 @@ def test_decor_pep612() -> None:
     def as_shapes(
         *in_the_weird_clouds: P.args,
         **soft_mossy_lawns: P.kwargs,
-    ) -> Tuple[tuple, DictStrToAny]:
+    ) -> tuple[tuple, DictStrToAny]:
         '''
         Arbitrary callable accepting both variadic positional and keyword
         parameters correctly annotated by :pep:`612`-compliant parameter

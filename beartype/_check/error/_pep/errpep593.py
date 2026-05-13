@@ -19,7 +19,7 @@ from beartype._util.hint.pep.proposal.pep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )
-from beartype._data.code.datacodeindent import CODE_INDENT_1
+from beartype._data.check.code.datacodeindent import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ FINDERS                            }....................

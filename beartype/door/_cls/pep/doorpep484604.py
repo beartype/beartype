@@ -33,6 +33,8 @@ class UnionTypeHint(TypeHint):
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_subhint(self, other: TypeHint) -> bool:
 
+        #FIXME: [SPEED] *INEFFICIENT.* The all() and any() builtins have been
+        #profiled to be almost twice as slow as equivalent manual iteration!
         # Return true only if *EVERY* child type hint of this union is a subhint
         # of at least one other child type hint of the passed other union.
         #

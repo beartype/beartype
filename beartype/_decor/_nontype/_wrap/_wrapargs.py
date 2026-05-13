@@ -31,12 +31,12 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
-from beartype._data.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
-from beartype._data.code.func.datacodefuncwrap import (
+from beartype._data.check.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
+from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_INIT_ARGS_LEN,
     ARG_KIND_TO_CODE_LOCALIZE,
 )
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint

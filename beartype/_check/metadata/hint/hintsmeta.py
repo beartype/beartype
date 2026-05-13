@@ -21,8 +21,8 @@ from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintmeta import HintMeta
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
-from beartype._data.error.dataerrmagic import (
+from beartype._data.check.code.datacodeindent import INDENT_LEVEL_TO_CODE
+from beartype._data.check.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (

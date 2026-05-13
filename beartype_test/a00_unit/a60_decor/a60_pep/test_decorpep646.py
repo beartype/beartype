@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator** :pep:`646`-compliant :obj:`typing.Self` **unit tests**.
+**Beartype decorator** :pep:`646`-compliant :obj:`typing.Unpack` **unit tests**.
 
 This submodule unit tests :pep:`646` support implemented in the
 :func:`beartype.beartype` decorator.

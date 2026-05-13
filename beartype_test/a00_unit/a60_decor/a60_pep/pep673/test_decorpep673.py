@@ -37,12 +37,8 @@ def test_decor_pep673() -> None:
         BeartypeCallHintReturnViolation,
         BeartypeDecorHintPep673Exception,
     )
-    from beartype.typing import (
-        List,
-        Self,
-        Type,
-    )
-    from pytest import raises
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from typing import Self
 
     # ....................{ CLASSES                        }....................
     @beartype
@@ -52,7 +48,7 @@ def test_decor_pep673() -> None:
         '''
 
         # ...................{ INITIALIZERS                }....................
-        def __new__(cls: Type[Self]) -> Self:
+        def __new__(cls: type[Self]) -> Self:
             '''
             Arbitrary initializer annotated by one or more :pep:`673`-compliant
             self type hints exercising various edge cases.
@@ -95,7 +91,7 @@ def test_decor_pep673() -> None:
                 other if isinstance(other, GoodClassIsGood) else NotImplemented)
 
         # ...................{ METHODS                     }....................
-        def wonderful_method_is_wonderful(self: Self, count: int) -> List[Self]:
+        def wonderful_method_is_wonderful(self: Self, count: int) -> list[Self]:
             '''
             Arbitrary method annotated by one or more :pep:`673`-compliant self
             type hints, guaranteed to *not* violate runtime type-checking.
@@ -122,7 +118,7 @@ def test_decor_pep673() -> None:
     # PEP 673-compliant self type hint returns the expected object.
     assert super_happy_fun_instance + super_sad_unfun_instance is (
         super_sad_unfun_instance)
-    with raises(TypeError):
+    with raises_uncached(TypeError):
         super_happy_fun_instance + 'Do not taunt Super Happy Fun Instance.'
 
     # Assert that a method of a @beartype-decorated class satisfying a PEP
@@ -136,7 +132,7 @@ def test_decor_pep673() -> None:
     # Assert that @beartype raises the expected violation when calling a method
     # of a @beartype-decorated class erroneously violating a PEP 673-compliant
     # self type hint.
-    with raises(BeartypeCallHintReturnViolation):
+    with raises_uncached(BeartypeCallHintReturnViolation):
         super_happy_fun_instance.horrible_method_is_horrible()
 
     # ....................{ FAIL                           }....................
@@ -144,11 +140,11 @@ def test_decor_pep673() -> None:
     # non-class objects accepting one or more parameters erroneously annotated
     # by a PEP 673-compliant self type hint. Self type hints are valid *ONLY*
     # inside classes decorated by @beartype.
-    with raises(BeartypeDecorHintPep673Exception):
+    with raises_uncached(BeartypeDecorHintPep673Exception):
         @beartype
         def terribad_function_is_terribad(self: Self) -> Self:
             return self
-    with raises(BeartypeDecorHintPep673Exception):
+    with raises_uncached(BeartypeDecorHintPep673Exception):
         class BadClassIsBad(object):
             @beartype
             def awful_method_is_awful(self: Self) -> Self:
@@ -156,9 +152,9 @@ def test_decor_pep673() -> None:
 
     # Assert that statement-level runtime type-checkers raise the expected
     # exceptions when passed PEP 673-compliant self type hints.
-    with raises(BeartypeDecorHintPep673Exception):
+    with raises_uncached(BeartypeDecorHintPep673Exception):
         die_if_unbearable(
             'So sweet, the sense faints picturing them! Thou', Self)
-    with raises(BeartypeDecorHintPep673Exception):
+    with raises_uncached(BeartypeDecorHintPep673Exception):
         is_bearable(
             "For whose path the Atlantic's level powers", Self)

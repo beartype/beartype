@@ -47,8 +47,6 @@ from beartype.roar import (
     BeartypeCallHintForwardRefException,
     BeartypeCallHintPep484ForwardRefStrException,
 )
-from beartype._check.forward.reference._cls.fwdreffake import (
-    proxy_hint_pep484_ref_str_nested)
 from beartype._conf.confcommon import BEARTYPE_CONF_NONRANDOM
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import TypeException
@@ -1437,6 +1435,10 @@ def _resolve_hint_pep484_ref_str(
     # Else, that parent type or callable is dead.
 
     # ....................{ PHASE ~ fake                   }....................
+    # Avoid circular import dependencies.
+    from beartype._check.forward.reference.fwdrefproxy import (
+        proxy_hint_pep484_ref_str_fake)
+
     # Pretend to resolve this reference to a beartype-specific forward reference
     # fake proxy, a dynamically generated type pretending to proxy calls to the
     # following callables when passed this proxy as:
@@ -1455,7 +1457,7 @@ def _resolve_hint_pep484_ref_str(
     #
     # Note that this factory is memoized and thus requires that all parameters
     # only be passed positionally.
-    referent_hint = proxy_hint_pep484_ref_str_nested(
+    referent_hint = proxy_hint_pep484_ref_str_fake(
         referent_module_name, referent_basename)
 
     # Return this fake type proxy as a last-ditch act of foolhardy bravado.

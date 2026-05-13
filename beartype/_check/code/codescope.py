@@ -17,7 +17,7 @@ from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.reference.fwdreftest import is_beartype_ref_proxy
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
-from beartype._data.error.dataerrmagic import (
+from beartype._data.check.error.dataerrmagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
 from beartype._data.typing.datatyping import (
     LexicalScope,

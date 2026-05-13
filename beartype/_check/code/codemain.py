@@ -40,7 +40,7 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
 )
-from beartype._data.code.datacodename import (
+from beartype._data.check.code.datacodename import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
 )
@@ -64,11 +64,11 @@ from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._check.metadata.scope.checkexprscope import BeartypeCheckExprScope
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.code.datacodelen import (
+from beartype._data.check.code.datacodelen import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,
 )
-from beartype._data.code.pep.datacodepep484585 import (
+from beartype._data.check.code.pep.datacodepep484585 import (
     CODE_PEP484585_MAPPING_format,
     CODE_PEP484585_MAPPING_KEY_ONLY_format,
     CODE_PEP484585_MAPPING_KEY_VALUE_format,
@@ -83,18 +83,18 @@ from beartype._data.code.pep.datacodepep484585 import (
     CODE_PEP484585_TUPLE_FIXED_PREFIX,
     CODE_PEP484585_TUPLE_FIXED_SUFFIX,
 )
-from beartype._data.code.pep.datacodepep586 import (
+from beartype._data.check.code.pep.datacodepep586 import (
     CODE_PEP586_LITERAL_format,
     CODE_PEP586_PREFIX_format,
     CODE_PEP586_SUFFIX,
 )
-from beartype._data.code.pep.datacodepep593 import (
+from beartype._data.check.code.pep.datacodepep593 import (
     CODE_PEP593_VALIDATOR_IS_format,
     CODE_PEP593_VALIDATOR_METAHINT_format,
     CODE_PEP593_VALIDATOR_PREFIX,
     CODE_PEP593_VALIDATOR_SUFFIX_format,
 )
-from beartype._data.error.dataerrmagic import (
+from beartype._data.check.error.dataerrmagic import (
     EXCEPTION_PREFIX,
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT,

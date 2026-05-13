@@ -25,7 +25,7 @@ def warns_uncached(warning_cls: 'type[Warning]') -> (
     Context manager validating that the caller-defined body run by this manager
     issues an **unmemoized warning** (i.e., whose message previously containing
     one or more instances of the magic
-    :data:`beartype._data.error.dataerrmagic.EXCEPTION_PLACEHOLDER` substring
+    :data:`beartype._data.check.error.dataerrmagic.EXCEPTION_PLACEHOLDER` substring
     since replaced by the
     :func:`beartype._util.error.utilerrwarn.rewarn_warning_placeholder`
     function) of the passed type.
@@ -43,7 +43,7 @@ def warns_uncached(warning_cls: 'type[Warning]') -> (
     '''
 
     # Defer test-specific imports.
-    from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+    from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
     from pytest import warns
 
     # Within a "pytest"-specific context manager validating this contextual

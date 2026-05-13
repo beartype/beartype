@@ -39,7 +39,7 @@ from beartype._check.metadata.hint.hintsane import (
 from beartype._check.signature.sigmake import make_func_signature
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.conftest import die_unless_conf
-from beartype._data.code.datacodename import (
+from beartype._data.check.code.datacodename import (
     ARG_NAME_CALL_META,
     ARG_NAME_CONF,
     ARG_NAME_EXCEPTION_PREFIX,
@@ -49,7 +49,7 @@ from beartype._data.code.datacodename import (
     ARG_NAME_WARN,
     FUNC_CHECKER_NAME_PREFIX,
 )
-from beartype._data.code.func.datacodefunccheck import (
+from beartype._data.check.code.func.datacodefunccheck import (
     CODE_CHECKER_SIGNATURE,
     CODE_GET_FUNC_PITH_VIOLATION,
     CODE_GET_HINT_OBJECT_VIOLATION,
@@ -60,7 +60,7 @@ from beartype._data.code.func.datacodefunccheck import (
     CODE_TESTER_CHECK_PREFIX,
     CODE_WARN_VIOLATION,
 )
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,

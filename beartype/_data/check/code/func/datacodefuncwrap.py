@@ -14,15 +14,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.code.datacodename import (
+from beartype._data.check.code.datacodename import (
     ARG_NAME_ARGS_NAME_KEYWORDABLE,
     ARG_NAME_FUNC,
     ARG_NAME_GET_VIOLATION,
     VAR_NAME_ARGS_LEN,
     VAR_NAME_PITH_ROOT,
 )
-from beartype._data.code.datacodeindent import CODE_INDENT_1
-from beartype._data.code.datacodename import (
+from beartype._data.check.code.datacodeindent import CODE_INDENT_1
+from beartype._data.check.code.datacodename import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_RANDOM_INT,
 )

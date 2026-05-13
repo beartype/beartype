@@ -20,7 +20,7 @@ This submodule unit tests the
 def test_proxy_hint_pep484_ref_str_nested() -> None:
     '''
     Test the
-    :func:`beartype._check.forward.reference._cls.fwdreffake.proxy_hint_pep484_ref_str_nested`
+    :func:`beartype._check.forward.reference.fwdrefproxy.proxy_hint_pep484_ref_str_fake`
     factory.
     '''
 
@@ -36,8 +36,8 @@ def test_proxy_hint_pep484_ref_str_nested() -> None:
         Subclass as ThoseSilverWings,
         SubclassSubclass as OperationsOfTheDawn,
     )
-    from beartype._check.forward.reference._cls.fwdreffake import (
-        proxy_hint_pep484_ref_str_nested)
+    from beartype._check.forward.reference.fwdrefproxy import (
+        proxy_hint_pep484_ref_str_fake)
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -46,7 +46,7 @@ def test_proxy_hint_pep484_ref_str_nested() -> None:
     #
     # Note that this factory is memoized and thus requires that all parameters
     # only be passed positionally.
-    Subclass_proxy = proxy_hint_pep484_ref_str_nested(
+    Subclass_proxy = proxy_hint_pep484_ref_str_fake(
         'beartype_test.a00_unit.data.data_type', 'Subclass')
 
     # Arbitrary instance of that type, intentionally accessed under a unique
@@ -106,5 +106,4 @@ def test_proxy_hint_pep484_ref_str_nested() -> None:
     # Assert that the issubclass() builtin when passed an arbitrary non-type
     # object and a fake proxy (in that order) raises the expected exception.
     with raises(TypeError):
-        issubclass(
-            'Therefore the operations of the dawn', Subclass_proxy)
+        issubclass('Therefore the operations of the dawn', Subclass_proxy)

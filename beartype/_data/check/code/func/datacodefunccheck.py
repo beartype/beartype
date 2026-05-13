@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.code.datacodename import (
+from beartype._data.check.code.datacodename import (
     ARG_NAME_CALL_META,
     ARG_NAME_CONF,
     ARG_NAME_EXCEPTION_PREFIX,

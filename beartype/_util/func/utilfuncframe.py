@@ -18,7 +18,7 @@ from beartype._cave._cavefast import (
     CallableCodeObjectType,
     CallableFrameType,
 )
-# from beartype._data.code.datacodename import ARG_NAME_FUNC
+# from beartype._data.check.code.datacodename import ARG_NAME_FUNC
 from beartype._data.func.datafunccodeobj import (
     CODE_OBJECT_BASENAME_MODULE_OR_EVAL,
     CODE_OBJECT_FILENAME_EVAL,

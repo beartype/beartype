@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 #FIXME: Refactor the gutted remainder of this submodule into new submodules
-#residing in the new "beartype._data.code.pep" subpackage, please. *sigh*
+#residing in the new "beartype._data.check.code.pep" subpackage, please. *sigh*
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.typing.datatyping import CallableStrFormat

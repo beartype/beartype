@@ -19,16 +19,16 @@ from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.metadata.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.code.func.datacodefuncwrap import (
+from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_NORMAL_RETURN_CHECKED,
     CODE_NORMAL_RETURN_UNCHECKED_SYNC,
     CODE_NORMAL_RETURN_UNCHECKED_ASYNC,
 )
-from beartype._data.code.pep.datacodepep342 import (
+from beartype._data.check.code.pep.datacodepep342 import (
     CODE_PEP342_RETURN_CHECKED,
     CODE_PEP342_RETURN_UNCHECKED,
 )
-from beartype._data.code.pep.datacodepep525 import (
+from beartype._data.check.code.pep.datacodepep525 import (
     CODE_PEP525_RETURN_CHECKED,
     CODE_PEP525_RETURN_UNCHECKED,
 )

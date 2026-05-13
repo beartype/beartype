@@ -19,13 +19,13 @@ This submodule unit tests the public API of the public
 # ....................{ TESTS                              }....................
 def test_data_indent_level_to_code() -> None:
     '''
-    Test the :obj:`beartype._data.code.datacodeindent.INDENT_LEVEL_TO_CODE`
+    Test the :obj:`beartype._data.check.code.datacodeindent.INDENT_LEVEL_TO_CODE`
     dictionary singleton.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
+    from beartype._data.check.code.datacodeindent import INDENT_LEVEL_TO_CODE
     from pytest import raises
 
     # ....................{ PASS                           }....................

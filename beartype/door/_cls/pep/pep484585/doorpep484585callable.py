@@ -261,6 +261,9 @@ class CallableTypeHint(TypeHint):
             return False
         # Else, that branch is a callable type hint.
 
+        #FIXME: [SPEED] *INEFFICIENT.* The any() builtin has been profiled to be
+        #almost twice as slow as equivalent manual iteration! The zip() builtin
+        #is likely to fare no better. Iterate manually, please. *sigh*
         #FIXME: Internally comment us up, please.
         elif not branch.is_params_ignorable and (
             (

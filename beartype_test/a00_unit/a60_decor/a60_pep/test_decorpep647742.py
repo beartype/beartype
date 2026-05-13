@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator** :pep:`647`- or :pep:`742`-compliant **unit tests**.
+**Beartype decorator** :pep:`647`-compliant :obj:`typing.TypeGuard` and
+:pep:`742`-compliant :obj:`typing.TypeIs` **unit tests**.
 
 This submodule unit tests both :pep:`647` and :pep:`742` support implemented in
 the :func:`beartype.beartype` decorator.

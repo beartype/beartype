@@ -21,9 +21,9 @@ This private submodule is *not* intended for importation by downstream callers.
 #* Rename this submodule to "makesig". *lol*
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.code.datacodename import ARG_NAME_GETRANDBITS
+from beartype._data.check.code.datacodename import ARG_NAME_GETRANDBITS
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.code.func.datacodefuncwrap import (
+from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_SIGNATURE_SCOPE_ARG_format,
     CODE_INIT_RANDOM_INT,
 )

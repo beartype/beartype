@@ -11,10 +11,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.forward.reference._cls.fwdrefabc import BeartypeForwardRefABC
-# from beartype._check.forward.reference._cls.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.forward.reference._cls.fwdrefabc import (
+    BeartypeForwardRefABC)
+from beartype._check.forward.reference._cls.fwdreffake import (
+    BeartypeForwardRefFakeABC)
 
-# ....................{ TESTERS                            }....................
+# ....................{ HINTS ~ type                       }....................
 #FIXME: Replace all unsafe external references to the private
 #"BeartypeForwardRefMeta" type with safe references to this type hint instead.
 BeartypeForwardRef = type[BeartypeForwardRefABC]
@@ -26,6 +28,17 @@ in the lexical scope of the external caller).
 '''
 
 
+BeartypeForwardRefFake = type[BeartypeForwardRefFakeABC]
+'''
+:pep:`585`-compliant type hint matching a :mod:`beartype`-specific **forward
+reference fake proxy** (i.e., class whose metaclass pretends to proxy calls to
+the :func:`isinstance` and :func:`issubclass` builtins against some externally
+defined type when passed that proxy as their second parameters, typically due to
+the inaccessibility of that type in the lexical scope in which that proxy is
+accessed).
+'''
+
+# ....................{ HINTS ~ tuple                      }....................
 TupleBeartypeForwardRefs = tuple[BeartypeForwardRef, ...]
 '''
 :pep:`585`-compliant type hint matching a tuple of zero or more

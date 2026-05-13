@@ -59,7 +59,7 @@ class HintMeta(object):
         **Indentation level** (i.e., 1-based positive integer providing the
         level of indentation appropriate for this hint).
         Indexing the
-        :obj:`beartype._data.code.datacodeindent.INDENT_LEVEL_TO_CODE`
+        :obj:`beartype._data.check.code.datacodeindent.INDENT_LEVEL_TO_CODE`
         dictionary singleton by this integer efficiently yields the current
         **indendation string** suitable for prefixing each line of code
         type-checking the current pith against this hint.

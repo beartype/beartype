@@ -23,9 +23,9 @@ from beartype._check.metadata.call.callmetadecor import (
     prefix_decor_meta_callable_return,
 )
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._data.code.func.datacodefuncwrap import CODE_CALL_CHECKED_format
-from beartype._data.code.pep.datacodepep484 import PEP484_CODE_CHECK_NORETURN
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.check.code.func.datacodefuncwrap import CODE_CALL_CHECKED_format
+from beartype._data.check.code.pep.datacodepep484 import PEP484_CODE_CHECK_NORETURN
+from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import LexicalScope

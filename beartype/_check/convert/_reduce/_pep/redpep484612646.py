@@ -64,7 +64,7 @@ from beartype._check.metadata.hint.hintsane import (
 )
 from beartype._check.pep.checkpep484typevar import (
     die_if_hint_pep484_typevar_bound_unbearable)
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsigns import (
     HintSignTypeVar,

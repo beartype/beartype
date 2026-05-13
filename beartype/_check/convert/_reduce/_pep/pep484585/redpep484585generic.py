@@ -19,7 +19,7 @@ from beartype._check.metadata.hint.hintsane import (
     HintOrSane,
     HintSane,
 )
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._util.hint.pep.proposal.pep544 import is_hint_pep484_generic_io
 from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
 from typing import (

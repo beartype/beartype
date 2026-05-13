@@ -25,7 +25,7 @@ def raises_uncached(exception_cls: 'type[Exception]') -> (
     Context manager validating that the caller-defined body run by this manager
     raises an **unmemoized exception** (i.e., whose message previously
     containing one or more instances of the magic
-    :data:`beartype._data.error.dataerrmagic.EXCEPTION_PLACEHOLDER` substring
+    :data:`beartype._data.check.error.dataerrmagic.EXCEPTION_PLACEHOLDER` substring
     since replaced by the
     :func:`beartype._util.error.utilerrraise.reraise_exception_placeholder`
     function) of the passed type.
@@ -48,7 +48,7 @@ def raises_uncached(exception_cls: 'type[Exception]') -> (
     '''
 
     # Defer test-specific imports.
-    from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+    from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
     from pytest import raises
 
     # Within a "pytest"-specific context manager validating this contextual

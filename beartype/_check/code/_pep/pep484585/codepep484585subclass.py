@@ -16,9 +16,9 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
-from beartype._data.code.pep.datacodepep484585 import (
+from beartype._data.check.code.pep.datacodepep484585 import (
     CODE_PEP484585_SUBCLASS_format)
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.sign.datahintsigns import HintSignUnion
 from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_issubclassable,

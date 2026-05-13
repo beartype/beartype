@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.code.datacodename import (
+from beartype._data.check.code.datacodename import (
     ARG_NAME_FUNC,
     VAR_NAME_PITH_ROOT,
 )

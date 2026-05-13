@@ -16,12 +16,12 @@ from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.pep.checkpep484585generic import (
     get_hint_pep484585_generic_unsubbed_bases_unerased)
-from beartype._data.code.pep.datacodepep484585 import (
+from beartype._data.check.code.pep.datacodepep484585 import (
     CODE_PEP484585_GENERIC_CHILD_format,
     CODE_PEP484585_GENERIC_PREFIX,
     CODE_PEP484585_GENERIC_SUFFIX,
 )
-from beartype._data.code.datacodelen import LINE_RSTRIP_INDEX_AND
+from beartype._data.check.code.datacodelen import LINE_RSTRIP_INDEX_AND
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type_isinstanceable)
 

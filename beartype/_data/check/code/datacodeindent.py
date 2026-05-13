@@ -86,7 +86,7 @@ Examples
 --------
 .. code-block:: pycon
 
-   >>> from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
+   >>> from beartype._data.check.code.datacodeindent import INDENT_LEVEL_TO_CODE
    >>> INDENT_LEVEL_TO_CODE[1]
    '    '
    >>> INDENT_LEVEL_TO_CODE[2]

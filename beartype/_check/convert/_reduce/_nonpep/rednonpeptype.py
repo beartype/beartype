@@ -13,6 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._check.forward.reference.fwdrefproxy import (
+    proxy_hint_pep484_ref_str_fake)
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,
@@ -23,10 +25,11 @@ from beartype._cave._cavefast import (
     ThreadLockReentrantType,
 )
 from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.shame.datashamefunc import BLACKLIST_METHOD_NAMES_HINT_SELF
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.utilhinttest import die_unless_hint
+from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import is_object_hashable
 from threading import (
     Lock,
@@ -149,9 +152,23 @@ def reduce_hint_nonpep(
             # print(f'Ignoring type {repr(decor_type)} dunder method {repr(call_meta.func)}...')
             # print(f'...recursive hint {repr(hint)}!')
 
-            # Superficially guard against such recursion by reducing this
-            # problematic hint to the ignorable "HINT_SANE_IGNORABLE" singleton.
-            return HINT_SANE_IGNORABLE
+            # Fully-qualified name of the module declaring the currently
+            # decorated type.
+            hint_module_name = get_object_module_name_or_none(hint)
+
+            # Superficially guard against such recursion by pretending to reduce
+            # the currently decorated type to a beartype-specific forward
+            # reference fake proxy, a dynamically generated type pretending to
+            # proxy calls to the isbuiltin() and issubclass() builtins against
+            # this type when passed this proxy as their second parameters.
+            #
+            # Note that this factory is memoized and thus requires that all
+            # parameters only be passed positionally.
+            hint = proxy_hint_pep484_ref_str_fake(
+                hint_module_name, hint.__name__)  # pyright: ignore
+
+            # Reduce the currently decorated type to this fake proxy! \o/
+            return hint
         # Else, either this hint is not the currently decorated type *OR* the
         # unqualified basename of that method is not one well-known to ignite
         # infinite recursion in type-checking. In any case, this hint *CANNOT*
@@ -186,7 +203,7 @@ def reduce_hint_nonpep(
         die_unless_hint(
             hint=hint,
             # Permit this hint to be a beartype-specific forward reference
-            # proxy (i.e., "_BeartypeForwardRefABC" subtype). Although
+            # proxy (i.e., "BeartypeForwardRefABC" subtype). Although
             # prohibiting such proxies from consideration as supported hints is
             # typically desirable, this lower-level reducer is passed such
             # proxies produced by the higher-level reduce_hint_pep484_ref()

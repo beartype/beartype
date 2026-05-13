@@ -19,7 +19,7 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.datahintrepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED)
 from beartype._data.typing.datatypingport import Hint
