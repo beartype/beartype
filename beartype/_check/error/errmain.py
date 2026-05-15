@@ -76,9 +76,9 @@ from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseException,
 )
 from beartype._check.convert.convmain import sanify_hint_any
-from beartype._check.error.errcause import ViolationCause
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.call.callmetadecormin import (
+from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeViolationVerbosity

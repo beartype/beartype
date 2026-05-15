@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import TYPE_CHECKING
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     LexicalScope,
@@ -38,7 +38,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
     This type-checking-time dataclass is effectively the proper subset of the
     comparable -- but *much* more complex in both space, time, and code
     complexity -- **decoration call metadata dataclass** (i.e.,
-    :class:`beartype._check.metadata.call.callmetadecor.BeartypeCallDecorMeta`).
+    :class:`beartype._check.cls.call.callmetadecor.BeartypeCallDecorMeta`).
     Theoretically, this type-checking-time dataclass is thus redundant; the
     existing decoration call metadata dataclass could simply be used in lieu of
     this type-checking-time dataclass. Pragmatically, this type-checking-time
@@ -112,7 +112,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
         -------
         **Avoid instantiating this low-level dataclass directly.** Instead,
         instantiate this dataclass by calling the higher-level
-        :meth:`beartype._check.metadata.call.callmetadecor.BeartypeCallDecorMeta.minify`
+        :meth:`beartype._check.cls.call.callmetadecor.BeartypeCallDecorMeta.minify`
         method. Doing so reduces existing instances of the parent dataclass to
         instances of this child dataclass.
 
@@ -191,7 +191,7 @@ def minify_decor_meta_kwargs(**kwargs) -> BeartypeCallDecorMinimalMeta:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._check.metadata.call.callmetadecor import new_decor_meta
+    from beartype._check.cls.call.callmetadecor import new_decor_meta
 
     # With maximal metadata initialized by these parameters...
     with new_decor_meta(**kwargs) as decor_meta:  # type: ignore[var-annotated]

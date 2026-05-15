@@ -34,13 +34,13 @@ def test_decor_pep557() -> None:
         BeartypeCallHintPep557FieldViolation,
         BeartypeCallHintParamViolation,
     )
+    from beartype_test._util.error.pyterrraise import raises_uncached
     from dataclasses import (
         FrozenInstanceError,
         InitVar,
         dataclass,
         field,
     )
-    from pytest import raises
     from typing import (
         ClassVar,
         Optional,
@@ -211,16 +211,16 @@ def test_decor_pep557() -> None:
         # ..................{ ASSERTS ~ fields : set         }..................
         # Assert that attempting to set these fields to new values violating the
         # hints annotating these fields raises the expected exception.
-        with raises(BeartypeCallHintPep557FieldViolation):
+        with raises_uncached(BeartypeCallHintPep557FieldViolation):
             great_mountain.that_man_may_be = (
                 b'Somewhere between the throne, and where I sit')
-        with raises(BeartypeCallHintPep557FieldViolation):
+        with raises_uncached(BeartypeCallHintPep557FieldViolation):
             great_mountain.glowed_through = (
                 "Glow'd through, and wrought upon the muffling dark")
-        with raises(BeartypeCallHintPep557FieldViolation):
+        with raises_uncached(BeartypeCallHintPep557FieldViolation):
             great_mountain.sweet_shaped_lightnings = (
                 'Sweet-shaped lightnings from the nadir deep')
-        with raises(BeartypeCallHintPep557FieldViolation):
+        with raises_uncached(BeartypeCallHintPep557FieldViolation):
             great_mountain.thou_hast_a_voice = (
                 'Here on this spot of earth. Search, Thea, search!')
 
@@ -229,14 +229,14 @@ def test_decor_pep557() -> None:
             # Assert that this dataclass prohibits callers from modifying *ANY*
             # attributes (including both instance and class variables) by
             # raising the expected exception on attempting to do so.
-            with raises(FrozenInstanceError):
+            with raises_uncached(FrozenInstanceError):
                 great_mountain.that_man_may_be = (
                     'With backward footing through the shade a space:')
-            with raises(FrozenInstanceError):
+            with raises_uncached(FrozenInstanceError):
                 great_mountain.glowed_through = and_wrought_upon
-            with raises(FrozenInstanceError):
+            with raises_uncached(FrozenInstanceError):
                 great_mountain.sweet_shaped_lightnings = from_the_nadir_deep
-            with raises(FrozenInstanceError):
+            with raises_uncached(FrozenInstanceError):
                 great_mountain.thou_hast_a_voice = len(
                     "He follow'd, and she turn'd to lead the way")
         # Else, this dataclass is *NOT* frozen. In this case...
@@ -275,7 +275,7 @@ def test_decor_pep557() -> None:
         # with a parameter violating the corresponding hint annotating the
         # initialization-only parameter of the same name raises the expected
         # exception.
-        with raises(BeartypeCallHintParamViolation):
+        with raises_uncached(BeartypeCallHintParamViolation):
             SoSolemnSoSerene(but_for_such_faith=0xBEEFBABE)
 
         # ..................{ ASSERTS ~ ClassVar             }..................
@@ -288,7 +288,7 @@ def test_decor_pep557() -> None:
             # Assert that this dataclass prohibits callers from modifying *ANY*
             # attributes (including both instance and class variables) by
             # raising the expected exception on doing so.
-            with raises(FrozenInstanceError):
+            with raises_uncached(FrozenInstanceError):
                 great_mountain.with_nature_reconciled = (
                     'Thus brief; then with beseeching eyes she went')
         # Else, this dataclass is *NOT* frozen.
@@ -297,7 +297,7 @@ def test_decor_pep557() -> None:
         elif IS_DATACLASS_SLOTTED:
             # Assert that this dataclass prohibits callers from modifying *ONLY*
             # class attributes by raising the expected exception on doing so.
-            with raises(AttributeError):
+            with raises_uncached(AttributeError):
                 great_mountain.with_nature_reconciled = (
                     'Meanwhile in other realms big tears were shed,')
         # In this case...

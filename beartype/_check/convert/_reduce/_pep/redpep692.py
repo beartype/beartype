@@ -23,7 +23,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep692Exception
 from beartype.typing import Optional
-from beartype._check.metadata.hint.hintsane import (
+from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )

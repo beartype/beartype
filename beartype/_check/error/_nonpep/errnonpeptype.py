@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypePlugInstancecheckStrException
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import Optional
-from beartype._check.error.errcause import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
 from beartype._data.typing.datatyping import TupleTypes
 from beartype._util.cls.pep.clspep3119 import die_unless_type_isinstanceable
 from beartype._util.func.arg.utilfuncargtest import (

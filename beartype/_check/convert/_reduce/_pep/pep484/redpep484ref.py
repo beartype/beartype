@@ -86,8 +86,8 @@ from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable,
     proxy_hint_pep749_ref_object,
 )
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.hint.hintsane import (
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.hint.hintsane import (
     HintOrSane,
     HintSane,
 )

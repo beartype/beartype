@@ -13,8 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._check.error.errcause import ViolationCause
-from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._data.typing.datatyping import TypeOrTupleTypes
 from beartype._data.hint.sign.datahintsigns import (
     HintSignType,

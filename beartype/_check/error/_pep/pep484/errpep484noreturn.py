@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.sign.datahintsigns import HintSignNoReturn
-from beartype._check.error.errcause import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
 from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextlabel import label_callable
 from beartype._util.text.utiltextrepr import represent_pith

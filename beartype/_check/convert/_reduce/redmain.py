@@ -26,10 +26,10 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.call.callmetaexternal import (
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
-from beartype._check.metadata.hint.hintsane import (
+from beartype._check.cls.hint.hintsane import (
     HINT_IGNORABLE,
     HINT_SANE_IGNORABLE,
     HintOrSane,
@@ -123,9 +123,9 @@ def reduce_hint(
         * Else, the passed hint is a **child** of some parent hint. In this
           case, the **sanified parent type hint metadata** (i.e., immutable and
           thus hashable object encapsulating *all* metadata previously returned
-          by :mod:`beartype._check.convert.convmain` sanifiers after
-          sanitizing the possibly PEP-noncompliant parent hint of this child
-          hint into a fully PEP-compliant parent hint).
+          by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
+          the possibly PEP-noncompliant parent hint of this child hint into a
+          fully PEP-compliant parent hint).
 
         Defaults to :data:`None`.
     hint_sign_seed :  HintSignOrNoneOrSentinel, default: SENTINEL

@@ -4,10 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype type-checking error cause sleuth** (i.e., object recursively
-fabricating the human-readable string describing the failure of the pith
-associated with this object to satisfy this PEP-compliant type hint also
-associated with this object) classes.
+Beartype **type-checking error cause sleuth type hierarchy** (i.e., types whose
+instances recursively fabricate human-readable strings describing failures of
+currently type-checked objects to satisfy type hints annotating those objects).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -47,13 +46,19 @@ This private submodule is *not* intended for importation by downstream callers.
 #above isn't *QUITE* right. It's pretty nice -- but we can do better. See the
 #following comment at #235 for that better:
 #    https://github.com/beartype/beartype/issues/235#issuecomment-1707127231
+#FIXME: *LOL*. Guess we're not doing any of that for the moment, huh? We just
+#went ahead and started merging "ViolationCause" with "HintsMeta". Well, that's
+#fine. As long as we start streamlining this class with *SOMETHING* else, it
+#doesn't particularly matter what that *SOMETHING* else even is. There's a good
+#deal more of commonality to be refactored out, of course. Still, this is an
+#excellent start, anyway. Great job for finally doing something, us! \o/
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convmain import sanify_hint_child
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.hint.hintsane import (
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
     TupleHintSane,
@@ -85,7 +90,9 @@ from typing import (
     Union,
 )
 
-# ....................{ CLASSES                            }....................
+# ....................{ SUBCLASSES                         }....................
+#FIXME: Subclass "HintTreeABC", please. *sigh*
+#FIXME: Rename this subclass to "HintTreeError", please.
 class ViolationCause(object):
     '''
     **Type-checking violation cause** (i.e., object recursively fabricating the

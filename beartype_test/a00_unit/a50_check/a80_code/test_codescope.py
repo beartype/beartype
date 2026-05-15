@@ -273,7 +273,7 @@ def test_add_func_scope_types() -> None:
 #     from beartype.roar import BeartypeDecorHintForwardRefException
 #     from beartype._check.code.codescope import (
 #         express_hints_meta_scope_type_ref)
-#     from beartype._check.metadata.hint.hintsmeta import HintsMeta
+#     from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
 #     from beartype._data.typing.datatyping import LexicalScope
 #     from pytest import raises
 #     from typing import (

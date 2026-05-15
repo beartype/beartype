@@ -44,8 +44,8 @@ from beartype._data.check.code.datacodename import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
 )
-from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._check.metadata.hint.hintsmeta import HintsMeta
+from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.code._pep.codepep484604 import (
     make_hint_pep484604_check_expr)
@@ -60,9 +60,9 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.hint.hintsane import HintSane
-from beartype._check.metadata.scope.checkexprscope import BeartypeCheckExprScope
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.hint.hintsane import HintSane
+from beartype._check.cls.scope.checkexprscope import BeartypeCheckExprScope
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.datacodelen import (
     LINE_RSTRIP_INDEX_AND,

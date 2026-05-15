@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._metaverse import URL_PEP585_DEPRECATIONS
 from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
 from beartype._cave._cavefast import NoneType
-from beartype._check.metadata.hint.hintsane import (
+from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )

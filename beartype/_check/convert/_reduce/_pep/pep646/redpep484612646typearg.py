@@ -22,8 +22,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #    class Foo(Generic[Ts, P]): ...  # Valid
 #
 #Brutal. Welp. Let's implement that if somebody actually complains about that,
-#please. Doing so will warrant renaming this reducer to "redpep484612646" and
-#generalizing everything below. Pretty annoying, but... what can you do? *sigh*
+#please. Doing so will require generalizing everything below. Pretty annoying,
+#but... what can you do? *sigh*
 
 #FIXME: [PEP 696] Handle "PEP 696 – Type Defaults for Type Parameters" under
 #Python >= 3.13:
@@ -55,8 +55,8 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.hint.hintsane import (
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HINT_SANE_RECURSIVE,
     HintOrSane,
@@ -196,10 +196,10 @@ def reduce_hint_pep484612646_typearg(
 
     # If...
     if (
-        # This type parameter is not a root hint and thus has a parent hint
-        # *AND*...
+        # This type parameter is not a root hint and is thus a child hint
+        # subscripting a parent hint *AND*...
         hint_parent_sane is not None and
-        # A parent hint of this type parameter maps one or more type
+        # That parent hint of this type parameter maps one or more type
         # parameters...
         hint_parent_sane.typearg_to_hint
     ):

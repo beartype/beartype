@@ -38,7 +38,7 @@ def test_reduce_hint(
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype._check.convert._reduce.redmain import reduce_hint
-    from beartype._check.metadata.call.callmetadecor import new_decor_meta
+    from beartype._check.cls.call.callmetadecor import new_decor_meta
     from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
         HintReductionInvalid,
         HintReductionValid,
@@ -105,7 +105,7 @@ def test_reduce_hint_ignorable(hints_piths_pep_meta, hints_ignorable) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
+    from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
     from beartype._check.convert._reduce.redmain import (
         reduce_hint_any)
     from beartype_test.a00_unit.data.hint.data_hint import (

@@ -21,7 +21,7 @@ from beartype._cave._cavefast import (
     WeakrefCallableType,
 )
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
-from beartype._check.metadata.call.callmetadecormin import (
+from beartype._check.cls.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import (
@@ -328,7 +328,7 @@ def make_scope_forward_decor_meta(
                 # Note that, for safety, we currently avoid ignoring additional
                 # frames that we could technically ignore. These include:
                 # * The call to the parent
-                #   beartype._check.metadata.call.callmetadecor.BeartypeCallDecorMeta.reinit()
+                #   beartype._check.cls.call.callmetadecor.BeartypeCallDecorMeta.reinit()
                 #   method.
                 # * The call to the parent @beartype.beartype() decorator.
                 #

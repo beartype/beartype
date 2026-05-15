@@ -26,10 +26,10 @@ def test_make_check_expr() -> None:
     # Defer test-specific imports.
     from beartype._check.code.codemain import make_check_expr
     from beartype._check.convert.convmain import sanify_hint_any
-    from beartype._check.metadata.hint.hintsane import HintSane
-    from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-    from beartype._check.metadata.call.callmetadecor import new_decor_meta
-    from beartype._check.metadata.call.callmetaexternal import (
+    from beartype._check.cls.hint.hintsane import HintSane
+    from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+    from beartype._check.cls.call.callmetadecor import new_decor_meta
+    from beartype._check.cls.call.callmetaexternal import (
         BEARTYPE_CALL_EXTERNAL_META)
     from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
     from beartype._data.typing.datatypingport import Hint

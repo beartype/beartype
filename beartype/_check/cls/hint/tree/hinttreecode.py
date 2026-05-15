@@ -4,22 +4,21 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **type-checking code container classes** (i.e., low-level classes
-storing metadata describing the breadth-first search (BFS) dynamically
-generating pure-Python code snippets type-checking arbitrary objects against
-PEP-compliant type hints).
+Beartype **type-checking code container type hierarchy** (i.e., types storing
+metadata describing the breadth-first search (BFS) dynamically generating
+pure-Python code snippets type-checking arbitrary objects against type hints
+annotating those objects).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._metaverse import URL_ISSUES
 from beartype.roar import BeartypeDecorHintRecursionException
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convmain import sanify_hint_child
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.hint.hintmeta import HintMeta
-from beartype._check.metadata.hint.hintsane import HintSane
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.hint.hintmeta import HintMeta
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.check.error.dataerrmagic import (
@@ -30,6 +29,7 @@ from beartype._data.typing.datatyping import (
     LexicalScope,
 )
 from beartype._data.kind.datakindiota import SENTINEL
+from beartype._metaverse import URL_ISSUES
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     FixedList,
@@ -42,6 +42,29 @@ from typing import (
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
+#FIXME: Subclass "HintTreeABC" rather than "FixedList". The latter was always an
+#awkward design choice that was going to eat our faces. And... here we are.
+#Faces being eaten. To do so:
+#* *FIRSTLY*, commit at this point. We want to be able to revert this if things
+#  go south. Done? Great. Then:
+#  * Globally search and replace "hints_meta" with "hint_tree", please.
+#* Rename this subclass to "HintTreeCode".
+#* Define this new slotted instance variable of this subclass:
+#      if TYPE_CHECKING:
+#          hints_meta: FixedList
+#  We trust you now understand why we performed the above global
+#  search-and-replacement first, yeah? No? You got nuthin'? *sigh*
+#* Grepping the codebase for 'hints.*meta.*\[', it looks like the only place we
+#  ever index instances of this type as a list is, uh... once. WAT!? Yeah. This
+#  line in "codemain":
+#        hints_meta[hints_meta_index_curr] = None
+#  That's it. Sheer nonsense! Oh, right. There are also two usages of
+#  "self[index]" dispersed in this submodule. That's fine. Only three total.
+#  Phew!
+#* Refactor each of the above lines (in order) to instead read:
+#        hint_tree.hints_meta[hints_meta_index_curr] = None
+#        self.hints_meta[*WHATEVAHS*]
+#* Subclass "HintTreeABC" rather than "FixedList".
 class HintsMeta(FixedList):
     '''
     **Type hint type-checking metadata queue** (i.e., low-level fixed list of
@@ -166,7 +189,7 @@ class HintsMeta(FixedList):
         :func:`beartype._check.code.codemain.make_check_expr` code factory
         *after* visiting all type hints in this queue. This high-level boolean
         effectively composes (combines) each low-level
-        :attr:`beartype._check.metadata.hint.hintsane.HintSane.is_check_expr_cacheable`
+        :attr:`beartype._check.cls.hint.hintsane.HintSane.is_check_expr_cacheable`
         boolean across *all* child hints transitively subscripting the root hint
         of this queue. See also that instance variable for further details.
     is_var_random_int_needed : bool
@@ -685,7 +708,7 @@ class HintsMeta(FixedList):
             Either:
 
             * If this child hint is ignorable,
-              :obj:`beartype._check.metadata.hint.hintsane.HINT_SANE_IGNORABLE`.
+              :obj:`beartype._check.cls.hint.hintsane.HINT_SANE_IGNORABLE`.
             * Else if this unignorable child hint is reducible to another hint,
               metadata encapsulating this reduction.
             * Else, this unignorable child hint is irreducible. In this case,

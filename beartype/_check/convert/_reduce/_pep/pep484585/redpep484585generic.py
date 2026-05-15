@@ -13,8 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.typing.datatypingport import Hint
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.hint.hintsane import (
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,
     HintSane,
@@ -98,7 +98,7 @@ def reduce_hint_pep484585_generic_subbed(
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._check.convert._reduce._pep.redpep484612646 import (
+    from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
         reduce_hint_pep484612646_subbed_typeargs_to_hints)
 
     # ....................{ NOOP                           }....................

@@ -7,7 +7,7 @@
 **Beartype type-check call metadata dataclass** unit tests.
 
 This submodule unit tests the
-:func:`beartype._check.metadata.call.callmetadecormin` submodule.
+:func:`beartype._check.cls.call.callmetadecormin` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,16 +20,16 @@ This submodule unit tests the
 def test_callmetadecormin() -> None:
     '''
     Test the
-    :func:`beartype._check.metadata.call.callmetadecormin.BeartypeCallDecorMinimalMeta`
+    :func:`beartype._check.cls.call.callmetadecormin.BeartypeCallDecorMinimalMeta`
     dataclass.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import BeartypeConf
-    from beartype._check.metadata.call.callmetadecor import (
+    from beartype._check.cls.call.callmetadecor import (
         BeartypeCallDecorMeta)
-    from beartype._check.metadata.call.callmetadecormin import (
+    from beartype._check.cls.call.callmetadecormin import (
         BeartypeCallDecorMinimalMeta)
     from beartype_test.a00_unit.data.data_type import (
         Class,

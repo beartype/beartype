@@ -12,6 +12,17 @@ readily consumable by :mod:`beartype`).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Iteratively flatten *ALL* nested "Annotated[...]" child hints until no
+#such hints remain to be flattened: e.g.,
+#    # Flatten this non-flat structure...
+#    Annotated[Annotated[Annotated[int, float], str], bool]
+#
+#    # ...into this flat structure.
+#    Annotated[int, float, str, bool]
+#
+#Don't bother until someone loudly complains, of course. We do nothing loudly!
+
 # ....................{ IMPORTS                            }....................
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
@@ -21,12 +32,16 @@ from beartype._util.hint.pep.proposal.pep593 import (
 )
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep593(hint: Hint) -> Hint:
+def reduce_hint_pep593_annotated(hint: Hint) -> Hint:
     '''
     Reduce the passed :pep:`593`-compliant **type metahint** (i.e., subscription
-    of the :obj:`typing.Annotated` hint factory) to a lower-level hint if this
-    metahint contains *no* **beartype validators** (i.e., subscriptions of
-    :mod:`beartype.vale` factories).
+    of the :obj:`typing.Annotated` hint factory) to a lower-level type hint more
+    readily digestible by :mod:`beartype`.
+
+    This reducer reduces this metahint to the first child type hint subscripting
+    this metahint if this metahint is subscripted by *no* **beartype
+    validators** (i.e., :mod:`beartype.vale` objects), in which case *all* child
+    type hints following the first are safely ignorable by :mod:`beartype`.
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as the implementation trivially reduces to a

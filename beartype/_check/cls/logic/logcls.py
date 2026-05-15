@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **hint logic class hierarchy** (i.e., dataclasses encapsulating
+Beartype **type hint logic class hierarchy** (i.e., dataclasses encapsulating
 all low-level Python code snippets and associated metadata required to
 dynamically generate high-level Python code snippets fully type-checking various
 kinds of type hints uniquely identified by common signs).
@@ -19,9 +19,9 @@ from abc import (
 )
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
-from beartype._check.metadata.hint.hintsmeta import HintsMeta
-from beartype._check.error.errcause import ViolationCause
-from beartype._check.metadata.hint.hintsane import HintSane
+from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
+from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.typing.datatyping import (
     EnumeratorItem,

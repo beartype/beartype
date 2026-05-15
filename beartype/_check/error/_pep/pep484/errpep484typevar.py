@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # from beartype.typing import Optional
 # from beartype._data.typing.datatypingport import Hint
 # from beartype._data.hint.sign.datahintsigns import HintSignTypeVar
-# from beartype._check.error.errcause import ViolationCause
+# from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
 # from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
 #     get_hint_pep484_typevar_bounded_constraints_or_none)
 #

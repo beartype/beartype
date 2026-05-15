@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.logic.logcls import (
+from beartype._check.cls.logic.logcls import (
     HintLogicABC,
     HintLogicQuasiiterable,
     HintLogicReiterable,

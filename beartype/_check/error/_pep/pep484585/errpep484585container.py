@@ -15,12 +15,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._check.logic.logmap import (
+from beartype._check.cls.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
-from beartype._check.error.errcause import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
 from beartype._check.error._nonpep.errnonpeptype import (
     find_cause_type_instance_origin)
-from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._data.hint.sign.datahintsigns import HintSignPep484585TupleFixed
 from beartype._data.hint.sign.datahintsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)

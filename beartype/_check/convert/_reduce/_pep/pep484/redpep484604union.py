@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.metadata.hint.hintsane import (
+from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HINT_SANE_RECURSIVE,
     HintOrSane,
@@ -27,14 +27,14 @@ from beartype._util.hint.pep.proposal.pep484.pep484604union import make_hint_pep
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
 # ....................{ TESTERS                            }....................
-def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
-    HintOrSane):
+def reduce_hint_pep484604_union(
+    hint: Hint, exception_prefix: str, **kwargs) -> HintOrSane:
     '''
     Reduce the passed :pep:`484`- or :pep:`604`-compliant union to the ignorable
-    :data:`.HINT_SANE_IGNORABLE` singleton if this union is subscripted by one or
-    more **ignorable child hints** (i.e., hints that themselves reduce to the
-    ignorable :data:`.HINT_SANE_IGNORABLE` singleton) *or* preserve this union as is
-    otherwise (i.e., if this union is subscripted by *no* ignorable child
+    :data:`.HINT_SANE_IGNORABLE` singleton if this union is subscripted by one
+    or more **ignorable child hints** (i.e., hints that themselves reduce to the
+    ignorable :data:`.HINT_SANE_IGNORABLE` singleton) *or* preserve this union
+    as is otherwise (i.e., if this union is subscripted by *no* ignorable child
     hints).
 
     This reducer is intentionally *not* memoized (e.g., by the

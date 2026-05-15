@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.reference.fwdreftest import is_beartype_ref_proxy
-from beartype._check.metadata.hint.hintsmeta import HintsMeta
+from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
 from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
 from beartype._data.check.error.dataerrmagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)

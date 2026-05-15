@@ -26,8 +26,8 @@ from beartype._check.convert._reduce._pep.pep484.redpep484core import (
 )
 from beartype._check.convert._reduce._pep.pep484.redpep484ref import (
     reduce_hint_pep484_ref)
-from beartype._check.convert._reduce._pep.redpep484612646 import (
-    reduce_hint_pep484612646_typearg)
+from beartype._check.convert._reduce._pep.pep484.redpep484604union import (
+    reduce_hint_pep484604_union)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
     reduce_hint_pep484585_generic_subbed,
     reduce_hint_pep484585_generic_unsubbed,
@@ -36,8 +36,10 @@ from beartype._check.convert._reduce._pep.pep484585.redpep484585itemsview import
     reduce_hint_pep484585_itemsview)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585type import (
     reduce_hint_pep484585_type)
-from beartype._check.convert._reduce._pep.redpep484604 import (
-    reduce_hint_pep484604)
+from beartype._check.convert._reduce._pep.pep646.redpep646tuple import (
+    reduce_hint_pep646_tuple)
+from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
+    reduce_hint_pep484612646_typearg)
 from beartype._check.convert._reduce._pep.redpep544 import reduce_hint_pep544
 from beartype._check.convert._reduce._pep.redpep557 import (
     reduce_hint_pep557_initvar)
@@ -45,9 +47,8 @@ from beartype._check.convert._reduce._pep.redpep585 import (
     reduce_hint_pep585_builtin_subbed_unknown)
 from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
 from beartype._check.convert._reduce._pep.redpep591 import reduce_hint_pep591
-from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
-from beartype._check.convert._reduce._pep.redpep646 import (
-    reduce_hint_pep646_tuple)
+from beartype._check.convert._reduce._pep.redpep593 import (
+    reduce_hint_pep593_annotated)
 from beartype._check.convert._reduce._pep.redpep647742 import (
     reduce_hint_pep647742)
 from beartype._check.convert._reduce._pep.redpep673 import reduce_hint_pep673
@@ -386,7 +387,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # If this hint is a PEP 593-compliant beartype-agnostic type metahint,
     # ignore all annotations on this hint by reducing this hint to the
     # lower-level hint it annotates.
-    HintSignAnnotated: reduce_hint_pep593,
+    HintSignAnnotated: reduce_hint_pep593_annotated,
 
     # ..................{ PEP 646                            }..................
     #FIXME: Remove *AFTER* deeply type-checking PEP 646-compliant tuple hints.
@@ -523,8 +524,8 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # Since one or more of these child hints may require an uncached reduction
     # in the worst case, reducing unions *ALSO* requires an uncached reduction
     # in the worst case. This is that case.
-    HintSignOptional: reduce_hint_pep484604,
-    HintSignUnion:    reduce_hint_pep484604,
+    HintSignOptional: reduce_hint_pep484604_union,
+    HintSignUnion:    reduce_hint_pep484604_union,
 
     # ..................{ PEP 612                            }..................
     #FIXME: Ideally, PEP 612-compliant type hints like "*args: P.args" and

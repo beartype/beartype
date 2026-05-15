@@ -32,7 +32,7 @@ from beartype.typing import (
     overload,
 )
 from beartype._check.convert.convmain import sanify_hint_any
-from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.typing.datatypingport import T_Hint

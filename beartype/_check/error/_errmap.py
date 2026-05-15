@@ -17,7 +17,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._data.hint.sign.datahintsigncls import HintSign
-from beartype._check.error.errcause import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
 
 # ....................{ GLOBALS                            }....................
 # Initialized with automated inspection below in the _init() function.

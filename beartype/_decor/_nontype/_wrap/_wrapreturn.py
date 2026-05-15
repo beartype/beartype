@@ -18,11 +18,11 @@ from beartype._check.checkmake import (
     make_code_raiser_func_pep484_noreturn_check,
 )
 from beartype._check.convert.convmain import sanify_hint_root_func
-from beartype._check.metadata.call.callmetadecor import (
+from beartype._check.cls.call.callmetadecor import (
     BeartypeCallDecorMeta,
     prefix_decor_meta_callable_return,
 )
-from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._data.check.code.func.datacodefuncwrap import CODE_CALL_CHECKED_format
 from beartype._data.check.code.pep.datacodepep484 import PEP484_CODE_CHECK_NORETURN
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER

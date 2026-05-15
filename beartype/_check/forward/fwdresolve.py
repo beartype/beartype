@@ -19,7 +19,7 @@ from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
 from beartype._check.forward.scope.fwdscopemake import (
     make_scope_forward_decor_meta)
-from beartype._check.metadata.call.callmetadecormin import (
+from beartype._check.cls.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf

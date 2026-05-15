@@ -37,7 +37,7 @@ def clear_caches() -> None:
       :data:`beartype._check.forward.reference._cls.fwdrefmeta._ref_proxy_to_resolved_type`
       dictionaries).
     * The **sanified type hint metadata cache** (i.e., private
-      :data:`beartype._check.metadata.hint.hintsane._HINT_TO_HINTSANE`
+      :data:`beartype._check.cls.hint.hintsane._HINT_TO_HINTSANE`
       dictionary).
     * The **tuple union cache** (i.e., private
       :data:`beartype._check.code.codescope._tuple_union_to_tuple_union`
@@ -68,7 +68,7 @@ def clear_caches() -> None:
         _ref_proxy_to_resolved_hint,
         _ref_proxy_to_resolved_type,
     )
-    from beartype._check.metadata.hint.hintsane import _HINT_TO_HINTSANE
+    from beartype._check.cls.hint.hintsane import _HINT_TO_HINTSANE
     from beartype._util.cache.utilcacheobjattr import clear_object_attr_caches
 
     # Clear all relevant caches used throughout this subpackage.

@@ -19,10 +19,10 @@ from beartype._check.convert._convcoerce import (
     coerce_hint_root,
 )
 from beartype._check.convert._reduce.redmain import reduce_hint
-from beartype._check.metadata.hint.hintsane import HintSane
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.call.callmetadecor import BeartypeCallDecorMeta
-from beartype._check.metadata.call.callmetaexternal import (
+from beartype._check.cls.hint.hintsane import HintSane
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetadecor import BeartypeCallDecorMeta
+from beartype._check.cls.call.callmetaexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT

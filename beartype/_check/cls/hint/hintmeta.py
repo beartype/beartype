@@ -13,15 +13,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
+from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.code.snip.codesnipcls import HINT_INDEX_TO_HINT_PLACEHOLDER
+from beartype._check.cls.hint.hintsane import HintSane
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.kind.datakindiota import SENTINEL
+from typing import (
     TYPE_CHECKING,
     Optional,
 )
-from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.code.snip.codesnipcls import HINT_INDEX_TO_HINT_PLACEHOLDER
-from beartype._check.metadata.hint.hintsane import HintSane
-from beartype._data.hint.sign.datahintsigncls import HintSign
-from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ DATACLASSES                        }....................
 #FIXME: Unit test us up, please.

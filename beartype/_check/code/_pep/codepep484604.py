@@ -13,8 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
-from beartype._check.metadata.hint.hintsmeta import HintsMeta
-from beartype._check.metadata.hint.hintsane import (
+from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
+from beartype._check.cls.hint.hintsane import (
     HINT_IGNORABLE,
     HintSane,
     DictHintSaneToAny,

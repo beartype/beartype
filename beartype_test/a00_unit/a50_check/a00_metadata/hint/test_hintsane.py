@@ -6,7 +6,7 @@
 '''
 **Beartype sanified type hint metadata dataclass** unit tests.
 
-This submodule unit tests the :func:`beartype._check.metadata.hint.hintsane`
+This submodule unit tests the :func:`beartype._check.cls.hint.hintsane`
 submodule.
 '''
 
@@ -20,12 +20,12 @@ submodule.
 def test_hintsane() -> None:
     '''
     Test the
-    :func:`beartype._check.metadata.hint.hintsane.HintSane` dataclass.
+    :func:`beartype._check.cls.hint.hintsane.HintSane` dataclass.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._check.metadata.hint.hintsane import (
+    from beartype._check.cls.hint.hintsane import (
         HINT_SANE_IGNORABLE,
         HINT_SANE_RECURSIVE,
         HintSane,

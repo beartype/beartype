@@ -8,7 +8,7 @@ Beartype :pep:`484`-, :pep:`612`-, or :pep:`646`-compliant **type parameter
 reduction** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._check.convert._reduce._pep.redpep484612646` submodule.
+:mod:`beartype._check.convert._reduce._pep.pep646.redpep484612646typearg` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,7 +21,7 @@ This submodule unit tests the public API of the private
 def test_make_hint_pep484612646_typearg_to_hint() -> None:
     '''
     Test the private
-    :func:`beartype._check.convert._reduce._pep.redpep484612646._make_hint_pep484612646_typearg_to_hint`
+    :func:`beartype._check.convert._reduce._pep.pep646.redpep484612646typearg._make_hint_pep484612646_typearg_to_hint`
     factory function.
     '''
 
@@ -31,7 +31,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         BeartypeDecorHintPep484612646Exception,
         BeartypeDecorHintPep484TypeVarViolation,
     )
-    from beartype._check.convert._reduce._pep.redpep484612646 import (
+    from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
         _make_hint_pep484612646_typearg_to_hint)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
@@ -272,7 +272,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
 def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     '''
     Test the private
-    :mod:`beartype._check.convert._reduce._pep.redpep484612646.reduce_hint_pep484612646_subbed_typeargs_to_hints`
+    :mod:`beartype._check.convert._reduce._pep.pep646.redpep484612646typearg.reduce_hint_pep484612646_subbed_typeargs_to_hints`
     reducer.
     '''
 
@@ -280,9 +280,9 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484612646Exception
     from beartype.typing import Generic
-    from beartype._check.convert._reduce._pep.redpep484612646 import (
+    from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
         reduce_hint_pep484612646_subbed_typeargs_to_hints)
-    from beartype._check.metadata.call.callmetaexternal import (
+    from beartype._check.cls.call.callmetaexternal import (
         BEARTYPE_CALL_EXTERNAL_META)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (

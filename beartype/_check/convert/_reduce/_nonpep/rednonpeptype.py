@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_fake)
-from beartype._check.metadata.hint.hintsane import (
+from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,
     HintSane,
@@ -24,7 +24,7 @@ from beartype._cave._cavefast import (
     ThreadLockNonreentrantType,
     ThreadLockReentrantType,
 )
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.shame.datashamefunc import BLACKLIST_METHOD_NAMES_HINT_SELF
 from beartype._data.typing.datatypingport import Hint

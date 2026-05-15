@@ -14,9 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPepException
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
-from beartype._check.metadata.hint.hintsmeta import HintsMeta
-from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._check.logic.logmap import (
+from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
+from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
 from beartype._data.hint.sign.datahintsigns import HintSignTuple
 from beartype._util.hint.pep.proposal.pep484585.pep484585args import (

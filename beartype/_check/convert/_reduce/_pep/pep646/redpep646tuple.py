@@ -95,10 +95,10 @@ from typing import Optional
 #FIXME: Unit test us up, please.
 def reduce_hint_pep646_tuple(hint: Hint) -> Hint:
     '''
-    Reduce the passed :pep:`646`-compliant **tuple hint** (i.e., parent tuple
-    hints subscripted by either a :pep:`646`-compliant type variable tuples *or*
-    :pep:`646`-compliant unpacked child tuple hint) to a lower-level type hint
-    currently supported by :mod:`beartype`.
+    Reduce the passed :pep:`646`-compliant **tuple type hint** (i.e., parent
+    tuple type hint subscripted by either a :pep:`646`-compliant type variable
+    tuple *or* :pep:`646`-compliant unpacked child tuple type hint) to a
+    lower-level type hint currently supported by :mod:`beartype`.
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as reducers cannot be memoized.

@@ -4,16 +4,16 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype :pep:`593`-compliant **type hint violation describers** (i.e.,
+Beartype :pep:`593`-compliant **type metahint violation describers** (i.e.,
 functions returning human-readable strings explaining violations of
-:pep:`593`-compliant :obj:`typing.Annotated` type hints).
+:pep:`593`-compliant :obj:`typing.Annotated` type metahints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._check.error.errcause import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
 from beartype._data.hint.sign.datahintsigns import HintSignAnnotated
 from beartype._util.hint.pep.proposal.pep593 import (
     get_hint_pep593_metadata,

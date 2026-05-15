@@ -32,7 +32,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     from beartype import BeartypeConf
     from beartype.roar import BeartypePlugInstancecheckStrException
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.metadata.call.callmetadecormin import (
+    from beartype._check.cls.call.callmetadecormin import (
         minify_decor_meta_kwargs)
     from beartype_test._util.error.pyterrraise import raises_uncached
     from typing import Any

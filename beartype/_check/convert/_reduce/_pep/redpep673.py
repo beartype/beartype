@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep673Exception
-from beartype._check.metadata.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.metadata.hint.hintsane import HintSane
+from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._data.typing.datatypingport import Hint
 
 # ....................{ REDUCERS                           }....................

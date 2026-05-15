@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
-from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._check.metadata.hint.hintsmeta import HintsMeta
+from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
 from beartype._data.check.code.pep.datacodepep484585 import (
     CODE_PEP484585_SUBCLASS_format)
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
@@ -61,6 +61,10 @@ def make_hint_pep484585_subclass_check_expr(
     hint = hint_sane.hint
 
     # ....................{ CHILD                          }....................
+    #FIXME: DRY violation. This non-trivial logic is duplicated between this and
+    #the comparable "errpep484585subclass" submodule. Unfortunately, resolving
+    #this requires first implementing our "HintTreeABC" refactoring. *sigh*
+
     # Possibly ignorable insane child hint subscripting this parent sanified
     # subclass hint, guaranteed to be the *ONLY* child hint subscripting this
     # subclass hint.
@@ -96,6 +100,11 @@ def make_hint_pep484585_subclass_check_expr(
     # Sign identifying this child hint.
     hint_child_sign = get_hint_pep_sign_or_none(hint_child)
 
+    #FIXME: Also support "typing.Annotated[...]", please. Fascinating edge case.
+    #Note that we'll need to roll out similar support in "beartype._check.error"
+    #as well, of course. Also, new unit tests probably necessitating new sample
+    #type hints in "beartype_test.a00_unit.data.hint.pep". We sigh! *sigh*
+
     # If this child hint is a union of superclasses, reduce this union to a
     # tuple of superclasses. Only the latter is safely passable as the second
     # parameter to the issubclass() builtin under all supported Python versions.
@@ -104,21 +113,19 @@ def make_hint_pep484585_subclass_check_expr(
     # Else, this child hint is *NOT* a union.
 
     # If this child hint is *NOT* an issubclassable object, raise an exception.
-    #
     # Note that:
-    # * The is_object_issubclassable() tester is considerably faster and thus
-    #   called before the considerably slower die_unless_object_issubclassable()
-    #   raiser.
+    # * The is_object_issubclassable() tester is faster and thus called before
+    #   the slower die_unless_object_issubclassable() raiser.
     # * This tester is memoized and thus requires that all parameters be passed
     #   only positionally. It is what it is.
     if not is_object_issubclassable(
         hint_child,  # type: ignore[arg-type]
-        # Permit this hint to be a beartype-specific forward reference
-        # proxy (i.e., "_BeartypeForwardRefABC" subtype). Although
-        # prohibiting such proxies from consideration as supported hints is
-        # typically desirable, this lower-level reducer is passed such
-        # proxies produced by the higher-level reduce_hint_pep484_ref()
-        # reducer. Ergo, such proxies are valid for this specific use case.
+        # Permit this hint to be a beartype-specific forward reference proxy
+        # (i.e., "_BeartypeForwardRefABC" subtype). Although prohibiting such
+        # proxies from consideration as supported hints is typically desirable,
+        # this lower-level reducer is passed such proxies produced by the
+        # higher-level reduce_hint_pep484_ref() reducer. Such proxies are thus
+        # valid for this specific use case.
         True,  # <-- "is_ref_proxy_valid=True", effectively *sigh*
     ):
         die_unless_object_issubclassable(

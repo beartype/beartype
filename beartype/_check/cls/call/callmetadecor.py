@@ -16,7 +16,7 @@ from beartype.roar import BeartypeDecorWrappeeException
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
-from beartype._check.metadata.call.callmetadecormin import (
+from beartype._check.cls.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.func.datacodefuncwrap import (
