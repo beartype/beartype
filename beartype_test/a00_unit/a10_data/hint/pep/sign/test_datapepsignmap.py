@@ -64,7 +64,7 @@ def test_hint_sign_origin_isinstanceable_to_args_len_range() -> None:
         # according to this dictionary.
         #
         # Note that the "stop" instance variable defined by "range" objects is
-        # exclusive rather than inclusive. Substracting 1 from that yields the
+        # exclusive rather than inclusive. Subtracting 1 from that yields the
         # inclusive maximum of this range.
         ARGS_LEN_MAX_BELIEF = args_len_range.stop - 1
 

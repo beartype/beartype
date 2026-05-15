@@ -134,7 +134,7 @@ def hints_pep593_meta() -> 'list[HintPepMetadata]':
     # Instance of this class *NOT* satisfying this validator.
     SORDIDLY_FLABBY_WRMCASTINGS = CathecticallyEnsconceYouIn()
     SORDIDLY_FLABBY_WRMCASTINGS.this_mobbed_triste_of = [
-        'An atomical caroller', 'carousing Thanatos', '(nucl‐eating',]
+        'An atomic caroller', 'carousing Thanatos', '(nucl‐eating',]
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.

@@ -111,7 +111,7 @@ Beartype Decorator API
    * `Callable mode <callable mode_>`__,  ``@beartype`` should usually be listed
      *last*.
 
-   It's not our fault. Surely documentation would never decieve you.
+   It's not our fault. Surely documentation would never deceive you.
 
 .. _callable mode:
 

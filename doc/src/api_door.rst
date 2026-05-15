@@ -594,7 +594,7 @@ Object-oriented API
    design, is *mostly* unusable at runtime) with an object-oriented Pythonic API
    designed explicitly for runtime use.
 
-   :class:`TypeHint` wrappers are instantiated in the standard way. Appearences
+   :class:`TypeHint` wrappers are instantiated in the standard way. Appearances
    can be deceiving, however. In truth, :class:`TypeHint` is actually an
    abstract base class (ABC) that magically employs exploitative metaclass
    trickery to instantiate a concrete subclass of itself appropriate for this

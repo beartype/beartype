@@ -84,7 +84,7 @@ class SubscriptedTypeHint(TypeHint):
             # Minimum and maximum number of arguments accepted by this factory.
             #
             # Note that the "stop" instance variable defined by "range" objects
-            # is exclusive rather than inclusive. Substracting 1 from that
+            # is exclusive rather than inclusive. Subtracting 1 from that
             # yields the inclusive maximum of this range.
             ARGS_LEN_MIN = args_len_range.start
             ARGS_LEN_MAX = args_len_range.stop - 1

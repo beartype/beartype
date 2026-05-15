@@ -23,7 +23,7 @@
 # This test suite also conditionally statically type-checks this project's
 # codebase as a functional test when the "mypy" package is importable. While
 # useful as a sanity check, this script is typically preferable from the
-# human-readable persective as its output is significantly more readable than
+# human-readable perspective as its output is significantly more readable than
 # that captured by that functional test.
 
 # ....................{ PREAMBLE                           }....................

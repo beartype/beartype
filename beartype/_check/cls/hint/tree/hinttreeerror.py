@@ -392,7 +392,7 @@ class ViolationCause(object):
             f')'
         )
 
-    # ..................{ PROERTIES                          }..................
+    # ..................{ PROPERTIES                          }..................
     #FIXME: This should almost certainly be cached via @property_cached. Doing
     #so simplifies all of that awkward "SENTINEL" caching logic below. *shrug*
     @property

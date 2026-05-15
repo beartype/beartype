@@ -231,7 +231,7 @@ pay:
 
    @fastest_decorator
    def main_decorated(arg01: str="__undefined__", arg02: int=0) -> tuple:
-       """Proof of concept code implenting bear-typed args"""
+       """Proof of concept code implementing bear-typed args"""
        assert isinstance(arg01, str)
        assert isinstance(arg02, int)
 
@@ -240,7 +240,7 @@ pay:
        return ("bear_bar", str_len,)
 
    def main_undecorated(arg01="__undefined__", arg02=0):
-       """Proof of concept code implenting duck-typed args"""
+       """Proof of concept code implementing duck-typed args"""
        assert isinstance(arg01, str)
        assert isinstance(arg02, int)
 

@@ -125,7 +125,7 @@ def get_typehint_subclass(hint: Hint) -> type[TypeHint]:
 
     # If it is *NOT* the case that either...
     elif not (
-        # This hint is unsubscriptable (i.e., permissable as a valid hint even
+        # This hint is unsubscriptable (i.e., permissible as a valid hint even
         # when unsubscripted by child hints) and thus *NOT* safely reducible to
         # the "ClassTypeHint" subclass even when unsubscripted *OR*...
         hint_sign in HINT_SIGNS_UNSUBSCRIPTABLE or

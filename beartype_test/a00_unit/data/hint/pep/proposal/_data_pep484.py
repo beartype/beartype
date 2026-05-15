@@ -3648,7 +3648,7 @@ def hints_pep484_ignorable_shallow() -> list:
         # "beartype.cave.AnyType" and hence "object" types. Since PEP 484
         # stipulates that *ANY* unsubscripted subscriptable PEP-compliant
         # singleton including "typing.Generic" semantically expands to that
-        # singelton subscripted by an implicit "Any" argument, "Generic"
+        # singleton subscripted by an implicit "Any" argument, "Generic"
         # semantically expands to the implicit "Generic[Any]" singleton.
         Generic,
     ]

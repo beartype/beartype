@@ -302,7 +302,7 @@ def code_check_args(decor_meta: BeartypeCallDecorMeta) -> str:
                 #    @dataclass
                 #    class A:
                 #        test_dict: Dict[str, str] = field(default_factory=dict)
-                #FIXME: Once this has been repaired, please reenable:
+                #FIXME: Once this has been repaired, please re-enable:
                 #* The "test_decor_arg_kind_flex_optional" unit test.
 
                 # # If this parameter is optional *AND* the default value of this

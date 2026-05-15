@@ -53,7 +53,7 @@ class KeyPool(object):
     _pool_item_id_to_is_acquired : dict
         Dictionary mapping from the unique object identifier of a **pool item**
         (i.e., arbitrary object cached under a pool of the :attr:`_key_to_pool`
-        ditionary) to a boolean that is either:
+        dictionary) to a boolean that is either:
 
         * :data:`True` if that item is currently **acquired** (i.e., most
           recently returned by a call to the :meth:`acquire` method).

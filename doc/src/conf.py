@@ -486,15 +486,15 @@ intersphinx_mapping = {
 # 'sphinx.ext.napoleon'-specific settings. See also:
 #     https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
 
-# Force Napolean to *ONLY* parse docstrings in the NumPy format used by this
-# project. By default, Napolean attempts and often fails to permissively parse
+# Force Napoleon to *ONLY* parse docstrings in the NumPy format used by this
+# project. By default, Napoleon attempts and often fails to permissively parse
 # docstrings in both Google and NumPy formats.
 napoleon_numpy_docstring = True
 napoleon_google_docstring = False
 
 # List of the names of all non-standard section headers (i.e., headers *NOT*
 # already supported out-of-the-box by Napoleon) embedded in docstrings
-# throughout this project. By default, Napolean silently ignores *ALL* content
+# throughout this project. By default, Napoleon silently ignores *ALL* content
 # in non-standard section headers.
 #
 # See also:

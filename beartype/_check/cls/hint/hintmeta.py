@@ -61,7 +61,7 @@ class HintMeta(object):
         Indexing the
         :obj:`beartype._data.check.code.datacodeindent.INDENT_LEVEL_TO_CODE`
         dictionary singleton by this integer efficiently yields the current
-        **indendation string** suitable for prefixing each line of code
+        **indentation string** suitable for prefixing each line of code
         type-checking the current pith against this hint.
     pith_expr : str
         **Pith expression** (i.e., Python code snippet evaluating to the value

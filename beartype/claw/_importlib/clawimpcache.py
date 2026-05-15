@@ -101,7 +101,7 @@ class ModuleNameToBeartypeConf(dict[str, 'BeartypeConf']):
         except KeyError as exception:  # pragma: no cover
             #FIXME: Also, consider dropping the parallel
             #"BeartypeSourceFileLoader._main_module_name" attribute.
-            #Does this nonsense supercede that nonsense? Probably. Which leads
+            #Does this nonsense supersede that nonsense? Probably. Which leads
             #us directly to...
 
             # If the module to be inspected is the "__main__" pseudo-module

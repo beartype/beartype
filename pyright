@@ -23,7 +23,7 @@
 # This test suite also conditionally statically type-checks this project's
 # codebase as a functional test when the "pyright" command is in the current
 # ${PATH} shell environment variable. While useful as a sanity check, this
-# script is typically preferable from the human-readable persective as its
+# script is typically preferable from the human-readable perspective as its
 # output is significantly more readable than that captured by that test.
 
 # ....................{ PREAMBLE                           }....................

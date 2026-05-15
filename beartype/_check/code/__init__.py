@@ -707,7 +707,7 @@
 #  https://www.python.org/dev/peps/pep-0612
 
 #FIXME: [O(n)] Ah-ha! We now know how to implement O(log n) and O(n)
-#type-checking in a scaleable manner that preserves @beartype's strong
+#type-checking in a scalable manner that preserves @beartype's strong
 #performance guarantees. How? With a timed deadline cutoff. Specifically:
 #* Define a new "BeartypeConf.check_time_max_multiplier" instance variable,
 #  which we've already conveniently documented.

@@ -181,7 +181,7 @@ async def test_decor_pep525_async_generator_api() -> None:
     factories continue to comply with :pep:`525` semantics, despite the
     syntactic lack of a ``async yield from`` expression comparable to the
     existing :pep:`380`-compliant ``yield from`` expression. Specifically, this
-    unit test validates comformance with:
+    unit test validates conformance with:
 
     * :meth:`types.AsyncGeneratorType.aclose` semantics.
     * :meth:`types.AsyncGeneratorType.asend` semantics.
