@@ -798,27 +798,12 @@ skip = '.git,.git-meta,.gitignore,.gitattributes,*.svg,*.css,*.min.*,*-min.*,bui
 check-hidden = true
 # Protect URLs from spelling "fixes" (e.g., links containing literal typos).
 ignore-regex = 'https?://\S+'
-# Words flagged by codespell that are intentional in this codebase:
-#  * "alot", "gud", "welp", "noice", "doin": deliberate informal author voice in
-#    comments and docstrings (e.g., "Thanks alot, CPython.", "*TOTALLY NOT GUD*",
-#    "Well, isn't that noice").
-#  * "alph", "covert", "fane", "gird", "panting", "raison", "sate", "tread":
-#    real (often archaic or domain) English words appearing in poetic test
-#    fixtures and quotations (Coleridge's "Alph, the sacred river", Shelley,
-#    Yeats, "raison d'etre", "Tread softly", etc.).
-#  * "asend": Python ``AsyncGenerator.asend()`` method name.
-#  * "childs": established variable-name convention in this codebase
-#    (e.g., ``hint_childs``, ``hint_pep585_childs``).
-#  * "ist": appears inside regex character classes like ``[Ll]ist``.
-#  * "mis", "ons", "thi", "worl", "wrapp": appear as deliberately partial /
-#    parenthesised tokens in source/test text (``(mis)used``, ``offs and ons``,
-#    ``"...thi..."`` cut-off, ``wrapp[ee|er]`` placeholder, etc.).
-#  * "ore": appears in poetic test data ("Silver, ore, and almost dazedly"); the
-#    one real typo of "ore"/"one" was fixed manually in the same commit series.
-#  * "wont": archaic English adjective meaning "habitually accustomed", used in
-#    the Keats "Hyperion" test fixture line "Then, as was wont, his
-#    palace-door flew ope". Critically, this *cannot* be auto-"fixed" to
-#    "won't" because that breaks the single-quoted Python string literal.
-#  * "unsecure": appears in a commented-out poetic test fixture quoting Keats
-#    ("yet unsecure:"); preserve original wording.
+# Intentional terms codespell flags: informal author voice (alot, gud, welp,
+# noice, doin); archaic/poetic words in Coleridge/Shelley/Keats/Yeats fixtures
+# (alph, covert, fane, gird, panting, raison, sate, tread, wont, unsecure);
+# the Python AsyncGenerator.asend method; the hint_childs naming convention;
+# the regex char class [Ll]ist; partial/parenthesised tokens like (mis)used,
+# "offs and ons", "...thi...", wrapp[ee|er]; "ore" in test poetry.
+# NB: "wont" must stay ignored - auto-"fix" to "won't" breaks the single-quoted
+# Python string literal in the Keats "Hyperion" test fixture.
 ignore-words-list = 'alot,alph,asend,childs,covert,doin,fane,gird,gud,ist,mis,noice,ons,ore,panting,raison,sate,thi,tread,unsecure,welp,wont,worl,wrapp'
