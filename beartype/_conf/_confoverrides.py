@@ -36,7 +36,7 @@ def sanify_conf_kwargs_is_pep484_tower(conf_kwargs: DictStrToAny) -> None:
 
     # ....................{ LOCALS                         }....................
     # PEP 484-compliant implicit tower type hint overrides (i.e., "FrozenDict"
-    # instance lossily convering integers to floating-point numbers *AND* both
+    # instance lossily converting integers to floating-point numbers *AND* both
     # integers and floating-point numbers to complex numbers).
     HINT_OVERRIDES_PEP484_TOWER = _hint_overrides_pep484_tower()
 

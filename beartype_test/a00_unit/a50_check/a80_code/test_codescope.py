@@ -40,7 +40,7 @@ def test_add_func_scope_type() -> None:
     TYPES_NONBUILTIN = (
         # Adding a non-builtin type.
         RegexCompiledType,
-        # Readding that same type.
+        # Re-adding that same type.
         RegexCompiledType,
         # Adding the type of the "None" singleton (despite technically being
         # listed as belonging to the "builtin" module) under a unique name
@@ -127,7 +127,7 @@ def test_add_func_scope_types() -> None:
         types=types, func_scope=func_scope)
     assert set(types) == set(func_scope[types_scope_name])
 
-    # Assert this function readds the same tuple as well.
+    # Assert this function re-adds the same tuple as well.
     types_scope_name_again = add_func_scope_types(
         types=types, func_scope=func_scope)
     assert types_scope_name == types_scope_name_again

@@ -141,7 +141,7 @@ def long_past_their_woodland_days():
 #
 #     # Arbitrary callable *NOT* decorated by @wraps.
 #     def the_journey_begins_with_curiosity() -> str:
-#         return 'And envolves into soul-felt questions'
+#         return 'And evolves into soul-felt questions'
 #
 #     # Arbitrary callable decorated by @wraps.
 #     @wraps(the_journey_begins_with_curiosity)

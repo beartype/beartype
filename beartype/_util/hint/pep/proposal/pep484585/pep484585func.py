@@ -61,7 +61,7 @@ def reduce_hint_pep484585_func_return(
         Dictionary mapping from the name of each annotated parameter
         semantically (but possibly *not* physically in the edge case in which
         the passed callable to be type-checked differs from the callable
-        defining the type hints to type-check that callable wit ) accepted by
+        defining the type hints to type-check that callable with) accepted by
         that callable to the type hint annotating that parameter.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
