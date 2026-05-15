@@ -162,8 +162,8 @@ class _UnbufferedOutputStream(object):
         self.stream.write(data)
         self.stream.flush()
 
-    def writelines(self, data) -> None:
-        self.stream.writelines(data)
+    def writelines(self, data_lines) -> None:
+        self.stream.writelines(data_lines)
         self.stream.flush()
 
     def __getattr__(self, attr: str) -> object:
