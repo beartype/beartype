@@ -791,3 +791,10 @@ stubPath = ""
 # release of Python but *NOT* any existing release of Python. Examples include:
 # * PEP 747-compliant "typing.TypeForm[...]" type hints under Python >= 3.14.
 enableExperimentalFeatures = true
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git,.gitignore,.gitattributes,*.svg'
+check-hidden = true
+# ignore-regex = ''
+# ignore-words-list = ''
