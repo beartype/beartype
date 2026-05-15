@@ -77,7 +77,7 @@ def his_palace_door_flew_ope() -> int:
       chains of multiple decorator-hostile decorators.
     '''
 
-    return 'Then, as was won't, his palace-door flew ope'
+    return 'Then, as was wont, his palace-door flew ope'
 
 
 @beartype_test.a00_unit.data.func.data_decor.decorator_hostile

@@ -815,4 +815,10 @@ ignore-regex = 'https?://\S+'
 #    ``"...thi..."`` cut-off, ``wrapp[ee|er]`` placeholder, etc.).
 #  * "ore": appears in poetic test data ("Silver, ore, and almost dazedly"); the
 #    one real typo of "ore"/"one" was fixed manually in the same commit series.
-ignore-words-list = 'alot,alph,asend,childs,covert,doin,fane,gird,gud,ist,mis,noice,ons,ore,panting,raison,sate,thi,tread,welp,worl,wrapp'
+#  * "wont": archaic English adjective meaning "habitually accustomed", used in
+#    the Keats "Hyperion" test fixture line "Then, as was wont, his
+#    palace-door flew ope". Critically, this *cannot* be auto-"fixed" to
+#    "won't" because that breaks the single-quoted Python string literal.
+#  * "unsecure": appears in a commented-out poetic test fixture quoting Keats
+#    ("yet unsecure:"); preserve original wording.
+ignore-words-list = 'alot,alph,asend,childs,covert,doin,fane,gird,gud,ist,mis,noice,ons,ore,panting,raison,sate,thi,tread,unsecure,welp,wont,worl,wrapp'

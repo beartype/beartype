@@ -739,7 +739,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         #             'Blazing Hyperion on', 'his orbed fire',))),
         #         # Subclass-specific generic list of integer constants.
         #         PithUnsatisfiedMetadata(Pep585ListStemT((
-        #             len("From man to the sun's God;"), len('yet insecure:'),))),
+        #             len("From man to the sun's God;"), len('yet unsecure:'),))),
         #         # String constant.
         #         PithUnsatisfiedMetadata(
         #             "Still sat, still snuff'd the incense, teeming up"),
