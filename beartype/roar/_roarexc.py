@@ -383,7 +383,7 @@ class BeartypeHintViolation(BeartypeException):
         Since these culprits may be garbage-collected at any time thereafter,
         this property *cannot* be guaranteed to refer to these culprits outside
         that block. If this property is accessed from *any* other context and
-        ore or more of these culprits have already been garbage-collected, the
+        one or more of these culprits have already been garbage-collected, the
         corresponding item(s) of this property are only the machine-readable
         representations of those culprits rather than those actual culprits.
 

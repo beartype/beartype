@@ -104,7 +104,7 @@ def test_get_hint_pep484749_ref_names() -> None:
             THUS_TREACHEROUSLY, owner=BeartypeDecorHintForwardRefException)
 
         # Assert this getter canonicalizes this relative forward reference
-        # against the fully-qualified name of the module defining the arbritrary
+        # against the fully-qualified name of the module defining the arbitrary
         # type passed as the value of the "owner" parameter above.
         assert get_hint_pep484749_ref_names(HIEROGLYPHICS_OLD) == (
             'beartype.roar._roarexc', THUS_TREACHEROUSLY)

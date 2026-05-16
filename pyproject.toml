@@ -397,7 +397,7 @@ test-tox = [
     # ....................{ ETC                            }....................
     # Miscellaneous optional test-time dependencies.
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* nuitka and all reverse
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* nuitka and all reverse
     #dependencies thereof officially ship Python 3.14 wheels.
     # Required by optional nuitka-specific integration tests if the current
     # platform is a Linux distribution.
@@ -430,7 +430,7 @@ test-tox = [
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* Numba supports Python 3.15.
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* Numba supports Python 3.15.
     # Required by optional numba-specific integration tests.
     "numba; python_version < '3.15.0'",
 
@@ -442,7 +442,7 @@ test-tox = [
     # improve the likelihood of success on both local and remote workflows,
     # these dependencies are intentionally confined to Linux.
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* PyTorch supports Python
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* PyTorch supports Python
     #3.14.
     # Required by optional PyTorch-specific integration tests if the current
     # platform is a Linux distribution.
@@ -451,7 +451,7 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : jax      }....................
     # JAX-specific optional test-time dependencies.
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* JAX is readily installable
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* JAX is readily installable
     #under Python 3.15. JAX requires so many mandatory dependencies that this
     #may take some time indeed. For example, JAX transitively requires SciPy,
     #which currently fails to ship Python 3.15 wheels and, moreover, is not even
@@ -473,7 +473,7 @@ test-tox = [
     # Required by optional JAX- and Equinox-specific integration tests.
     "jaxtyping; sys_platform == 'linux'",
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* JAX is readily installable
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* JAX is readily installable
     #under Python 3.15. See above for further commentary.
     # Required by optional Equinox-specific integration tests. Note that Equinox
     # requires JAX.
@@ -482,7 +482,7 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : numpy    }....................
     # NumPy-specific optional test-time dependencies.
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* NumPy supports Python 3.15.
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* NumPy supports Python 3.15.
     #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
     #explicitly supporting PyPy.
@@ -515,7 +515,7 @@ test-tox = [
        platform_python_implementation != 'PyPy'\
     """,
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* explicitly supported.
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* explicitly supported.
     #See above for further commentary.
     # Required by optional LangChain-specific integration tests. Note that
     # LangChain requires both NumPy and Pydantic.
@@ -528,7 +528,7 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : dataframe}....................
     # DataFrame (e.g., Pandas, Polars)-specific optional test-time dependencies.
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* explicitly supported.
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* explicitly supported.
     # Required by optional Pandera-specific integration tests. Note that:
     # * Pandera requires Pydantic and Pandas.
     # * The @beartype test suite requires pandera >= 0.26.0. Prior pandera
@@ -536,11 +536,11 @@ test-tox = [
     #   and now support a wide variety of DataFrame-like APIs, including Polars.
     "pandera >= 0.26.0; python_version < '3.15.0'",
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* explicitly supported.
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* explicitly supported.
     # Required by optional Pandera- and Polars-specific integration tests.
     "polars; python_version < '3.15.0'",
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* explicitly supported
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* explicitly supported
     # Required by optional xarray-specific integration tests. Note that xarray
     # requires Pandas.
     "xarray; python_version < '3.15.0'",
@@ -548,7 +548,7 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : pydantic }....................
     # Pydantic-specific optional test-time dependencies.
 
-    #FIXME: Reenable Python >= 3.15 support *AFTER* explicitly supported.
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* explicitly supported.
     # Required by optional FastMCP-specific integration tests. Note that FastMCP
     # requires Pydantic.
     "fastmcp; python_version < '3.15.0'",
@@ -791,3 +791,19 @@ stubPath = ""
 # release of Python but *NOT* any existing release of Python. Examples include:
 # * PEP 747-compliant "typing.TypeForm[...]" type hints under Python >= 3.14.
 enableExperimentalFeatures = true
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git,.git-meta,.gitignore,.gitattributes,*.svg,*.css,*.min.*,*-min.*,build,dist,.venv,.tox,.npm,.cache'
+check-hidden = true
+# Protect URLs from spelling "fixes" (e.g., links containing literal typos).
+ignore-regex = 'https?://\S+'
+# Intentional terms codespell flags: informal author voice (alot, gud, welp,
+# noice, doin); archaic/poetic words in Coleridge/Shelley/Keats/Yeats fixtures
+# (alph, covert, fane, gird, panting, raison, sate, tread, wont, unsecure);
+# the Python AsyncGenerator.asend method; the hint_childs naming convention;
+# the regex char class [Ll]ist; partial/parenthesised tokens like (mis)used,
+# "offs and ons", "...thi...", wrapp[ee|er]; "ore" in test poetry.
+# NB: "wont" must stay ignored - auto-"fix" to "won't" breaks the single-quoted
+# Python string literal in the Keats "Hyperion" test fixture.
+ignore-words-list = 'alot,alph,asend,childs,covert,doin,fane,gird,gud,ist,mis,noice,ons,ore,panting,raison,sate,thi,tread,unsecure,welp,wont,worl,wrapp'

@@ -656,7 +656,7 @@ def make_code_raiser_func_pep484_noreturn_check(
     # Code snippet type-checking the root pith against the root hint.
     func_code = f'{code_get_violation}{code_handle_violation}'
 
-    #FIXME: Pretty sure this should be safely cachable across calls to this
+    #FIXME: Pretty sure this should be safely cacheable across calls to this
     #factory function. Not *ENTIRELY* sure, though. Grep through the
     #_make_code_raiser_violation() factory and see what happens to "func_scope".
     # Coerce this currently mutable non-frozen dictionary into an immutable

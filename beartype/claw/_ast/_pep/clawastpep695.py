@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [PEP 749] PEP 749 under Python >= 3.14 now supercedes the following
+#FIXME: [PEP 749] PEP 749 under Python >= 3.14 now supersedes the following
 #"FIXME:", which is great, because we never reported that to CPython devs.
 #Specifically, if the active Python interpreter targets Python >= 3.14:
 #* Actually implement PEP 749 support for type aliases. To do so:

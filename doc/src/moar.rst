@@ -53,7 +53,7 @@ decorators, function calls, and import hooks) include:
 +-----------------+---------+---------------+---------------------------+
 
 .. [#speed]
-   The *time multliplier* column approximates **how much slower on average
+   The *time multiplier* column approximates **how much slower on average
    than** beartype **that checker is** as :ref:`timed by our profile suite
    <math:time>`. A time multiplier of:
 

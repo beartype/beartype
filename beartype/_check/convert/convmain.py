@@ -299,7 +299,7 @@ def sanify_hint_root_statement(
         exception_prefix=exception_prefix,
     )
 
-    # Return this metadat.
+    # Return this metadata.
     return hint_sane
 
 # ....................{ SANIFIERS ~ any                    }....................

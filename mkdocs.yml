@@ -145,7 +145,7 @@ plugins:
             docstring_section_style: spacy
 
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # CAUTION: Synchronize this list with the corresponing "doc-ghp:"
+            # CAUTION: Synchronize this list with the corresponding "doc-ghp:"
             # extra in our top-level "pyproject.toml" configuration.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # List of one or more third-party "mkdocstrings-python" extensions

@@ -176,7 +176,7 @@ def test_sphinx_docs_these(make_app, tmp_path) -> None:
         # Although technically arbitrary, this is the typical default mode.
         '-b', 'html',
 
-        #FIXME: Reenable once working. Sadly, Sphinx is currently emitting
+        #FIXME: Re-enable once working. Sadly, Sphinx is currently emitting
         #warnings we have *NO* idea how to reasonably resolve. *sigh*
         # # Treat non-fatal warnings as fatal errors. This is *CRITICAL.* By
         # # default, Sphinx insanely emits non-fatal warnings for fatal "autodoc"

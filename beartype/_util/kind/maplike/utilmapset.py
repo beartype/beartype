@@ -258,7 +258,7 @@ def remove_mapping_keys(mapping: MutableMapping, keys: Set) -> None:
         #   prefer this least fragile approach.
         # * This is the standard idiom for efficiently removing key-value pairs
         #   where this key is *NOT* guaranteed to exist in this mapping.
-        #   Simplicity and speed supercedes readability, sadly.
+        #   Simplicity and speed supersedes readability, sadly.
         mapping_pop(key_remove, None)
 
 

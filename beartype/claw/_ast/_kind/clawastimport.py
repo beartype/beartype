@@ -1314,7 +1314,7 @@ class BeartypeNodeTransformerImportMixin(object):
         #
         # Sometimes, doing nothing at all is the best thing you can do.
         if not self._attr_basenames:
-            # print(f'Trivially ignoring friendly attribute "{unparse(node)}" (due to unparseable basenames)!')
+            # print(f'Trivially ignoring friendly attribute "{unparse(node)}" (due to unparsable basenames)!')
             # print(f'AST node structure:\n{get_node_repr_indented(node)}')
             return False
         # Else, this list is non-empty, implying the prior getter succeeded in

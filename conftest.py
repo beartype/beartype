@@ -33,7 +33,7 @@ from typing import Optional
 # ....................{ HOOKS ~ ini                        }....................
 def pytest_configure(config: 'pytest.Config') -> None:
     '''
-    Hook programmatically configuring both the ``pytest`` comand-line interface
+    Hook programmatically configuring both the ``pytest`` command-line interface
     (CLI) *and* top-level ``"pytest.ini"`` file.
     '''
 
@@ -162,8 +162,8 @@ class _UnbufferedOutputStream(object):
         self.stream.write(data)
         self.stream.flush()
 
-    def writelines(self, datas) -> None:
-        self.stream.writelines(datas)
+    def writelines(self, data_lines) -> None:
+        self.stream.writelines(data_lines)
         self.stream.flush()
 
     def __getattr__(self, attr: str) -> object:

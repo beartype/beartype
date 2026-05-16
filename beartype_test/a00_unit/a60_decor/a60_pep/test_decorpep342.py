@@ -136,7 +136,7 @@ def test_decor_pep342_sync_generator_api() -> None:
     factories continue to comply with :pep:`342` semantics, despite the
     syntactic lack of a ``async yield from`` expression comparable to the
     existing :pep:`380`-compliant ``yield from`` expression. Specifically, this
-    unit test validates comformance with:
+    unit test validates conformance with:
 
     * :meth:`types.GeneratorType.close` semantics.
     * :meth:`types.GeneratorType.send` semantics.
@@ -305,7 +305,7 @@ def test_decor_pep342_sync_generator_api() -> None:
         assert next(am_i_too_to_fall) == 2
         assert next(am_i_too_to_fall) == 3
 
-        # ....................{ ASSERTS ~ non-empty : retur}....................
+        # ....................{ ASSERTS ~ non-empty : return}....................
         # Validate that a @beartype-decorated non-empty synchronous generator
         # factory preserves PEP 580-compliant "return" semantics.
 
