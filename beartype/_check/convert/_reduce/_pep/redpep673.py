@@ -15,14 +15,19 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep673Exception
 from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
-from beartype._check.cls.hint.hintsane import HintSane
+from beartype._check.cls.hint.hintsane import (
+    HintSane,
+    make_hint_sane,
+)
 from beartype._data.typing.datatypingport import Hint
+from typing import Optional
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
 def reduce_hint_pep673(
-    hint: Hint,
     call_meta: BeartypeCallMetaABC,
+    hint: Hint,
+    hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
     **kwargs
 ) -> HintSane:
@@ -39,16 +44,27 @@ def reduce_hint_pep673(
 
     Parameters
     ----------
-    hint : object
-        Self type hint to be reduced.
     call_meta : BeartypeCallMetaABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
+    hint : object
+        Self type hint to be reduced.
+    hint_parent_sane : Optional[HintSane]
+        Either:
+
+        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
+          of child hints), :data:`None`.
+        * Else, the passed hint is a **child** of some parent hint. In this
+          case, the **sanified parent type hint metadata** (i.e., immutable and
+          thus hashable object encapsulating *all* metadata previously returned
+          by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
+          the possibly PEP-noncompliant parent hint of this child hint into a
+          fully PEP-compliant parent hint).
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
-    All remaining passed arguments are silently ignored.
+    All remaining passed keyword-only parameters are silently ignored.
 
     Returns
     -------
@@ -110,8 +126,9 @@ def reduce_hint_pep673(
     # Sanified hint metadata encapsulating the currently decorated class (i.e.,
     # the most deeply nested class on this type stack, signifying the class
     # currently being decorated by @beartype.beartype).
-    hint_sane = HintSane(
+    hint_sane = make_hint_sane(  # type: ignore[assignment]
         hint=cls_stack[-1],
+        hint_parent_sane=hint_parent_sane,
         # Type-checking code dynamically generated for each "typing.Self" type
         # hint is contextually relative to the currently decorated class and
         # thus *CANNOT* be cached across all "typing.Self" type hints.

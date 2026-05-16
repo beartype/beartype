@@ -12,11 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
-from beartype.typing import (
-    TYPE_CHECKING,
-    Any,
-    Union,
-)
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.typing.datatypingport import (
     Hint,
     Pep484612646TypeArgUnpackedToHint,
@@ -27,9 +23,15 @@ from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.utilobject import is_object_hashable
 from beartype._util.utilobjmake import permute_object
 from collections.abc import Iterable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Optional,
+    Union,
+)
 
 # ....................{ HINTS                              }....................
-# Note that this hint is intentionally defined here rather than in the 
+# Note that this hint is intentionally defined here rather than in the
 # "beartype._util.kind.maplike.utilmapfrozen" submodule imported from above,
 # which would otherwise be preferable. Why? To avoid circular imports. "Ugh!"
 FrozenDictHintToInt = FrozenDict[Hint, int]
@@ -37,6 +39,64 @@ FrozenDictHintToInt = FrozenDict[Hint, int]
 PEP-compliant type hint matching any dictionary itself mapping from
 PEP-compliant type hints to integers.
 '''
+
+# ....................{ FACTORIES                          }....................
+#FIXME: Unit test us up, please.
+def make_hint_sane(
+    hint_parent_sane: Optional['HintSane'], **kwargs) -> 'HintSane':
+    '''
+    **Sanified type hint metadata** (i.e., immutable and thus hashable object
+    encapsulating *all* metadata returned by some
+    :mod:`beartype._check.convert.convmain` sanifier after sanitizing a possibly
+    PEP-noncompliant hint into a fully PEP-compliant hint), initialized by all
+    passed keyword parameters as possibly sanified child type hint metadata of
+    the passed sanified parent type hint metadata (if any).
+
+    This factory propagates (cascades) all previously sanified metadata
+    associated with this parent hint (e.g., type variable lookup tables) down
+    onto this child hint and is thus preferable to directly (and usually
+    unsafely) instantiating the lower-level :class:`.HintSane` type.
+
+    Parameters
+    ----------
+    hint_parent_sane : Optional[HintSane]
+        Either:
+
+        * If this recursable hint is a root type hint, :data:`None`.
+        * Else, **sanified parent type hint metadata** (i.e., immutable and thus
+          hashable object encapsulating *all* metadata previously returned by
+          :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
+          the possibly PEP-noncompliant parent hint of this recursable hint into
+          a fully PEP-compliant parent hint).
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :meth:`.HintSane.__init__` initializer.
+
+    Returns
+    -------
+    HintSane
+        Sanified type hint metadata initialized by all passed keyword parameters
+        *except* the ``hint_parent_sane`` parameter, which this factory function
+        internally uses to decide how to instantiate this metadata.
+    '''
+    assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
+        f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
+
+    # Return either...
+    return (
+        # If this hint has *NO* parent, this is a root hint. In this case, the
+        # lower-level "HintSane" type directly instantiated by these parameters;
+        HintSane(**kwargs)
+        if hint_parent_sane is None else
+        # Else, this hint has a parent and is thus a child hint. In this case,
+        # the lower-level "HintSane" type defined as the composite of (in
+        # order):
+        # * *ALL* previously sanified metadata associated with this parent hint
+        #   (e.g., type variable lookup table).
+        # * *ALL* remaining passed keyword parameters, thus silently overriding
+        #   parent-specific metadata where the two collide.
+        hint_parent_sane.permute_sane(**kwargs)
+    )
 
 # ....................{ METACLASSES                        }....................
 #FIXME: Unit test us up, please.
@@ -160,6 +220,12 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
 
     Caveats
     -------
+    **Callers should avoid instantiating this class directly,** which fails to
+    propagate sanified type hint metadata from parent to child type hints
+    through the tree of type hints rooted at the current root type hint. For
+    safety, this class is *only* safe instantiable by calling the higher-level
+    :func:`.make_hint_sane` factory function, which correctly propagates.
+
     **Callers should avoid modifying this metadata.** For efficiency, this class
     does *not* explicitly prohibit modification of this metadata. Nonetheless,
     this class is implemented under the assumption that callers *never* modify
@@ -227,6 +293,34 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
              # subscripted by this non-standard "str" type here.
              @beartype
              def muh_insane_func(muh_insane_arg: 'list[str]') -> None: pass
+    is_hint_parent_pep484585_subclass : bool
+        :data:`True` only if some transitive parent type hint of the current
+        type hint is a **subclass type hint** (i.e., either :pep:`484`-compliant
+        ``typing.Type[...]`` *or* :pep:`585`-compliant ``type[...]`` type hint).
+        Since most typing standards ultimately reduce to a series of
+        :func:`isinstance`-based runtime type-checks, most type hints could be
+        considered **instance type hints.** Subclass type hints are an obvious
+        exception, instead reducing to a series of :func:`issubclass`-based
+        runtime type-checks. Type hint reducers returning type hints unsuitable
+        for being passed as the second parameter to the :func:`issubclass`
+        builtin are encouraged to test this boolean and, when :data:`True`,
+        conditionally transform the passed input hint into an output hint
+        suitable for being passed as that parameter. Examples include:
+
+        * :pep:`593`-compliant **metahints** (i.e., type hints of the form
+          ``typing.Annotated[hint, obj_1, ..., obj_2]``). *All* arbitrary
+          objects following the first child type hint subscripting a metahint
+          are irrelevant to a transitive parent subclass type hint and should
+          thus be stripped by the :pep:`593`-specific reducer. For example,
+          subclass type hints of the forms:
+
+          * ``typing.Type[typing.Annotated[cls, ...]]`` *or*
+            ``type[typing.Annotated[cls, ...]]`` should be reduced to
+            ``typing.Type[type]`` *or* ``type[type]``.
+          * ``typing.Type[typing.Union[cls1, typing.Annotated[cls2, ...]]]``
+            *or* ``type[typing.Union[cls1, typing.Annotated[cls2, ...]]]``
+            should be reduced to ``typing.Type[typing.Union[cls1, cls2]]`` *or*
+            ``type[typing.Union[cls1, cls2]]``.
     typearg_to_hint : Pep484612646TypeArgUnpackedToHint
         **Type parameter lookup table** (i.e., immutable dictionary mapping from
         the **type parameter** (i.e., :pep:`484`-compliant type variable or
@@ -274,6 +368,7 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
         'hint',
         'hint_recursable_to_depth',
         'is_check_expr_cacheable',
+        'is_hint_parent_pep484585_subclass',
         'typearg_to_hint',
         '_hash',
     )
@@ -285,6 +380,7 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
         hint: Hint
         hint_recursable_to_depth: FrozenDictHintToInt
         is_check_expr_cacheable: bool
+        is_hint_parent_pep484585_subclass: bool
         typearg_to_hint: Pep484612646TypeArgUnpackedToHint
         _hash: int
 
@@ -296,7 +392,7 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
         if not var_name.startswith('_')
     ))
     '''
-    Frozen set of the names of all parameters accepted by the :meth:`init`
+    Frozen set of the names of all parameters accepted by the :meth:`.init`
     method, defined as the frozen set comprehension of all public slotted
     instance variables of this class.
 
@@ -314,6 +410,7 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
         *,
         hint_recursable_to_depth: FrozenDictHintToInt = FROZENDICT_EMPTY,
         is_check_expr_cacheable: bool = True,
+        is_hint_parent_pep484585_subclass: bool = False,
         is_unmemoized: bool = False,
         typearg_to_hint: Pep484612646TypeArgUnpackedToHint = FROZENDICT_EMPTY,
     ) -> None:
@@ -322,24 +419,6 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
 
         Parameters
         ----------
-        hint : Hint
-            Type hint sanified (i.e., sanitized) from a possibly insane type
-            hint into a hopefully sane type hint by a **sanifier** (i.e.,
-            :mod:`beartype._check.convert.convmain` function).
-        hint_recursable_to_depth : FrozenDictHintToInt, default: FROZENDICT_EMPTY
-            Recursion guard implemented as a frozen dictionary mapping from each
-            transitive recursable parent hint to that parent hint's recursion
-            depth. Defaults to the empty frozen dictionary. See also the class
-            docstring.
-        is_check_expr_cacheable : bool, default: True
-            :data:`True` only if the pure-Python expression dynamically
-            generated to type-check this sanified type hint is cacheable.
-            Defaults to :data:`True`. See also the class docstring.
-        typearg_to_hint : Pep484612646TypeArgUnpackedToHint, default: FROZENDICT_EMPTY
-            Type variable lookup table originally parametrizing the origins of
-            all transitive parent hints of this hint if any to the corresponding
-            child hints subscripting those parent hints). Defaults to the empty
-            frozen dictionary. See also the class docstring.
         is_unmemoized : bool, default: False
             Mostly ignorable placeholder keyword-only parameter whose only
             reason for existence is to enable callers to explicitly unmemoize
@@ -348,12 +427,16 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
             instantiations of this type when one or more keyword parameters are
             passed! Technically, this is a keyword parameter. It is so dumb.
 
-        See the class docstring for further details.
+        See the class docstring for details on all remaining keyword parameters.
         '''
         assert isinstance(hint_recursable_to_depth, FrozenDict), (
             f'{repr(hint_recursable_to_depth)} not frozen dictionary.')
         assert isinstance(is_check_expr_cacheable, bool), (
             f'{repr(is_check_expr_cacheable)} not boolean.')
+        assert isinstance(is_hint_parent_pep484585_subclass, bool), (
+            f'{repr(is_hint_parent_pep484585_subclass)} not boolean.')
+        assert isinstance(is_unmemoized, bool), (
+            f'{repr(is_unmemoized)} not boolean.')
         assert isinstance(typearg_to_hint, FrozenDict), (
             f'{repr(typearg_to_hint)} not frozen dictionary.')
 
@@ -361,6 +444,8 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
         self.hint = hint
         self.hint_recursable_to_depth = hint_recursable_to_depth
         self.is_check_expr_cacheable = is_check_expr_cacheable
+        self.is_hint_parent_pep484585_subclass = (
+            is_hint_parent_pep484585_subclass)
         self.typearg_to_hint = typearg_to_hint
 
         # Hash identifying this object, precomputed for efficiency.
@@ -368,6 +453,7 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
             hint,
             hint_recursable_to_depth,
             is_check_expr_cacheable,
+            is_hint_parent_pep484585_subclass,
             typearg_to_hint,
         ))
 
@@ -426,6 +512,8 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
                     other.hint_recursable_to_depth) and
                 self.is_check_expr_cacheable is (
                     other.is_check_expr_cacheable) and
+                self.is_hint_parent_pep484585_subclass is (
+                    other.is_hint_parent_pep484585_subclass) and
                 self.typearg_to_hint == other.typearg_to_hint
             )
             if isinstance(other, HintSane) else
@@ -459,6 +547,7 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
             f'hint={repr(self.hint)}, '
             f'hint_recursable_to_depth={repr(self.hint_recursable_to_depth)}, '
             f'is_check_expr_cacheable={repr(self.is_check_expr_cacheable)}, '
+            f'is_hint_parent_pep484585_subclass={repr(self.is_hint_parent_pep484585_subclass)}, '
             f'typearg_to_hint={repr(self.typearg_to_hint)}'
             f')'
         )

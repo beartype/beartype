@@ -90,6 +90,7 @@ from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.cls.hint.hintsane import (
     HintOrSane,
     HintSane,
+    make_hint_sane,
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import HintPep484749Ref
@@ -98,6 +99,7 @@ from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
     get_hint_pep484749_ref_names,
     is_hint_pep484749_ref_object_resolvable,
 )
+from typing import Optional
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
@@ -105,6 +107,7 @@ def reduce_hint_pep484_ref(
     call_meta: BeartypeCallMetaABC,
     conf: BeartypeConf,
     hint: HintPep484749Ref,
+    hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
     **kwargs
 ) -> HintOrSane:
@@ -131,10 +134,21 @@ def reduce_hint_pep484_ref(
         all settings configuring type-checking for the passed object).
     hint : Hint
         Forward reference type hint to be reduced.
+    hint_parent_sane : Optional[HintSane]
+        Either:
+
+        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
+          of child hints), :data:`None`.
+        * Else, the passed hint is a **child** of some parent hint. In this
+          case, the **sanified parent type hint metadata** (i.e., immutable and
+          thus hashable object encapsulating *all* metadata previously returned
+          by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
+          the possibly PEP-noncompliant parent hint of this child hint into a
+          fully PEP-compliant parent hint).
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
-    All remaining passed arguments are silently ignored.
+    All remaining passed keyword-only parameters are silently ignored.
 
     Returns
     -------
@@ -277,8 +291,9 @@ def reduce_hint_pep484_ref(
     # ....................{ RETURN                         }....................
     # Sanified hint metadata encapsulating the non-string type hint to which
     # this forward reference dynamically resolves.
-    hint_sane = HintSane(  # type: ignore[assignment]
+    hint_sane = make_hint_sane(  # type: ignore[assignment]
         hint=hint_resolved,
+        hint_parent_sane=hint_parent_sane,
         # Type-checking code dynamically generated for a forward reference is
         # contextually relative to the local and global scope of the currently
         # type-checked callable, type, or statement and thus *CANNOT* be cached
