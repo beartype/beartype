@@ -472,15 +472,18 @@ def _get_hint_pep484604_union_args_flattened(
         # ....................{ SANIFY                     }....................
         # Currently unflattened transitive child hint to be flattened defined as
         # the 2-tuple (hint_child_insane, hint_parent_sane), where:
-        # * "hint_child_insane" is an transitive child hint of this union that
+        # * "hint_child_insane" is a transitive child hint of this union that
         #   has yet to be sanified and thus possibly expanded into a nested
         #   union hint requiring flattening into this root union hint.
         # * "hint_parent_sane" is sanified metadata encapsulating the direct
-        #   parent hint of "hint_child_insane". In theory, this should *ALWAYS*
-        #   be a union hint -- either this root union hint *OR* a nested union
-        #   hint sanified by a prior iteration of this loop below.
+        #   parent hint of "hint_child_insane". Theoretically, this direct
+        #   parent hint should *ALWAYS* be a union hint, defined as either:
+        #   * This root union hint *OR*...
+        #   * A nested union hint sanified by some prior iteration of this loop
+        #     below.
         hint_child_insane, hint_parent_sane = (
             hint_childs_insane_unflattened.pop())
+        # print(f'Sanifying union {union_hint} child hint {hint_child_insane} with parent {hint_parent_sane}...')
 
         # Metadata encapsulating the sanification of the currently unflattened
         # transitive child hint to be flattened.

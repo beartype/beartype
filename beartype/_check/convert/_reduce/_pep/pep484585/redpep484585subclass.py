@@ -13,19 +13,25 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.hint.hintsane import (
+    HintSane,
+    make_hint_sane,
+)
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
-    get_hint_pep484585_arg)
-
-# PEP 484-specific type hint factories intentionally imported as such.
 from typing import (
+    Optional,
+
+    # PEP 484-specific type hint factories intentionally imported as such.
     Type as typing_Type,
 )
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep484585_type(
-    hint: Hint, exception_prefix: str, **kwargs) -> Hint:
+def reduce_hint_pep484585_subclass(
+    hint: Hint,
+    hint_parent_sane: Optional[HintSane],
+    exception_prefix: str,
+    **kwargs
+) -> HintSane:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **subclass hint**
     (i.e., hint constraining objects to subclass that superclass) to the
@@ -40,16 +46,28 @@ def reduce_hint_pep484585_type(
     ----------
     hint : Hint
         Subclass type hint to be reduced.
+    hint_parent_sane : Optional[HintSane]
+        Either:
+
+        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
+          of child hints), :data:`None`.
+        * Else, the passed hint is a **child** of some parent hint. In this
+          case, the **sanified parent type hint metadata** (i.e., immutable and
+          thus hashable object encapsulating *all* metadata previously returned
+          by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
+          the possibly PEP-noncompliant parent hint of this child hint into a
+          fully PEP-compliant parent hint).
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
 
-    All remaining passed keyword parameters are silently ignored.
+    All remaining passed keyword-only parameters are silently ignored.
 
     Returns
     -------
-    Hint
-        Lower-level hint reduced from this subclass hint.
+    HintSane
+        Sanified hint metadata encapsulating the possibly lower-level hint
+        reduced from this subclass hint.
 
     Raises
     ------
@@ -58,17 +76,18 @@ def reduce_hint_pep484585_type(
         hint.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._check.convert._reduce._pep.pep484.redpep484core import (
         reduce_hint_pep484_deprecated)
-    from beartype._check.convert._reduce.redmain import reduce_hint_child
 
+    # ....................{ PEP 484                        }....................
     # If this is a PEP 484-compliant subclass hint, this hint has been
     # deprecated by PEP 585. In this case, issue a non-fatal warning.
     reduce_hint_pep484_deprecated(hint, exception_prefix)
 
-    # If this hint is the unsubscripted PEP 484-compliant subclass type hint,
-    # immediately reduce this hint to the "type" superclass.
+    # If this hint is the unsubscripted PEP 484-compliant subclass hint, reduce
+    # this hint to the "type" superclass.
     #
     # Note that this is *NOT* merely a nonsensical optimization. The
     # implementation of the unsubscripted PEP 484-compliant subclass type hint
@@ -82,38 +101,22 @@ def reduce_hint_pep484585_type(
         # print(f'Reducing subclass hint {hint} to "type"...')
         hint = type  # pyright: ignore
     # Else, this hint is *NOT* the unsubscripted PEP 484-compliant subclass
-    # type hint. In this case...
-    else:
-        # Superclass subscripting this hint.
-        #
-        # Note that we intentionally do *NOT* call the high-level
-        # get_hint_pep484585_type_superclass() getter here, as the
-        # validation performed by that function would raise exceptions for
-        # various child type hints that are otherwise permissible (e.g.,
-        # "typing.Any").
-        hint_child = get_hint_pep484585_arg(
-            hint=hint, exception_prefix=exception_prefix)
+    # hint. In this case, preserve this hint as is.
 
-        # Lower-level child hint reduced from this higher-level child hint.
-        hint_child_reduced = reduce_hint_child(hint_child, kwargs)
+    # ....................{ SANIFY                         }....................
+    # Sanified hint metadata encapsulating this possibly reduced hint.
+    hint_sane = make_hint_sane(  # type: ignore[assignment]
+        hint=hint,
+        hint_parent_sane=hint_parent_sane,
+        # Notify subsequent hint reductions reducing child hints transitively
+        # subscripting this parent subclass hint that those child hints
+        # transitively subscripting a parent subclass hint. Why? Because such
+        # child hints *MUST* be reduced in a subclass-specific manner (e.g.,
+        # reducing the child hint "Annotated[cls, ...]" subscripting the
+        # parent subclass hint "type[Annotated[cls, ...]]" to "type[cls]").
+        is_hint_parent_pep484585_subclass=True,
+    )
 
-        # If this child hint is ignorable, reduce this subclass hint to merely
-        # the "type" superclass.
-        if hint_child_reduced is HINT_SANE_IGNORABLE:
-            # print(f'Reducing subclass hint {hint} to "type"...')
-            hint = type  # pyright: ignore
-        # Else, this child hint is unignorable. Preserve this hint as is.
-
-        #FIXME: [SPEED] Consider uncommenting this optimization at a later date.
-        #Doing so is complicated by the fact that it's currently insufficient;
-        #we'd also need to consider the case in which "hint_child_reduced" is
-        #metadata encapsulating a child hint reduction. *sigh*
-        # # If this child hint was reduced to a different hint, preserve this
-        # # reduction by re-subscripting this type hint factory by this reduction.
-        # elif hint_child_reduced is not hint_child:
-        #     hint = type[hint_child_reduced]
-        # # Else, this child hint is irreducible. In this case, preserve this
-        # # hint as is.
-
-    # Return this possibly reduced hint.
-    return hint
+    # ....................{ RETURN                         }....................
+    # Return this metadata.
+    return hint_sane

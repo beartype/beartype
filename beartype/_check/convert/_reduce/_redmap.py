@@ -34,8 +34,8 @@ from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
 )
 from beartype._check.convert._reduce._pep.pep484585.redpep484585itemsview import (
     reduce_hint_pep484585_itemsview)
-from beartype._check.convert._reduce._pep.pep484585.redpep484585type import (
-    reduce_hint_pep484585_type)
+from beartype._check.convert._reduce._pep.pep484585.redpep484585subclass import (
+    reduce_hint_pep484585_subclass)
 from beartype._check.convert._reduce._pep.pep646.redpep646tuple import (
     reduce_hint_pep646_tuple)
 from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
@@ -210,7 +210,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #   * "HintSignItemsView", instead mapped to the more specific
     #     reduce_hint_pep484585_itemsview() reducer below.
     #   * "HintSignType", instead mapped to the more specific
-    #     reduce_hint_pep484585_type() reducer below.
+    #     reduce_hint_pep484585_subclass() reducer below.
     # * "HintSignByteString" is intentionally omitted entirely, as the standard
     #   "collections.abc" and "typing" modules themselves now explicitly emit
     #   "DeprecationWarning" warnings on the first import of "ByteString".
@@ -383,12 +383,6 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # "typing.Final[int]" to merely "int").
     HintSignFinal: reduce_hint_pep591,
 
-    # ..................{ PEP 593                            }..................
-    # If this hint is a PEP 593-compliant beartype-agnostic type metahint,
-    # ignore all annotations on this hint by reducing this hint to the
-    # lower-level hint it annotates.
-    HintSignAnnotated: reduce_hint_pep593_annotated,
-
     # ..................{ PEP 646                            }..................
     #FIXME: Remove *AFTER* deeply type-checking PEP 646-compliant tuple hints.
 
@@ -506,15 +500,15 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     HintSignPep484585GenericUnsubbed: (
         reduce_hint_pep484585_generic_unsubbed),
 
-    # If this hint is a PEP 484- or 585-compliant subclass hint subscripted
-    # by an ignorable child hint (e.g., "object", "typing.Any"), silently
-    # ignore this child hint by reducing this hint to the "type" superclass.
-    #
-    # Note that doing so requires recursively reducing this child hint first.
-    # Since this child hints may require an uncached reduction in the worst
-    # case, reducing subclass hints *ALSO* requires an uncached reduction in the
-    # worst case. This is that case.
-    HintSignType: reduce_hint_pep484585_type,
+    # If this hint is a PEP 484- or 585-compliant subclass hint, notify
+    # subsequent hint reductions reducing all child hints transitively
+    # subscripting this parent subclass hint that those child hints transitively
+    # subscripting a parent subclass hint. Why? Because child hints transitively
+    # subscripting a parent subclass hint *MUST* be reduced in a
+    # subclass-specific manner (e.g., reducing the child hint
+    # "Annotated[cls, ...]" subscripting the parent subclass hint
+    # "type[Annotated[cls, ...]]" to merely "type[cls]").
+    HintSignType: reduce_hint_pep484585_subclass,
 
     # ..................{ PEP (484|604)                      }..................
     # Reduce PEP 484- and 604-compliant unions subscripted by one or more
@@ -526,6 +520,12 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # in the worst case. This is that case.
     HintSignOptional: reduce_hint_pep484604_union,
     HintSignUnion:    reduce_hint_pep484604_union,
+
+    # ..................{ PEP 593                            }..................
+    # If this hint is a PEP 593-compliant beartype-agnostic type metahint,
+    # ignore all annotations on this hint by reducing this hint to the
+    # lower-level hint it annotates.
+    HintSignAnnotated: reduce_hint_pep593_annotated,
 
     # ..................{ PEP 612                            }..................
     #FIXME: Ideally, PEP 612-compliant type hints like "*args: P.args" and

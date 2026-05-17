@@ -23,12 +23,18 @@ from beartype._data.typing.datatypingport import (
     ListHints,
     TupleHints,
 )
-from beartype._util.hint.pep.proposal.pep484.pep484604union import make_hint_pep484604_union
+from beartype._util.hint.pep.proposal.pep484.pep484604union import (
+    make_hint_pep484604_union)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from typing import Optional
 
 # ....................{ TESTERS                            }....................
 def reduce_hint_pep484604_union(
-    hint: Hint, exception_prefix: str, **kwargs) -> HintOrSane:
+    hint: Hint,
+    hint_parent_sane: Optional[HintSane],
+    exception_prefix: str,
+    **kwargs
+) -> HintOrSane:
     '''
     Reduce the passed :pep:`484`- or :pep:`604`-compliant union to the ignorable
     :data:`.HINT_SANE_IGNORABLE` singleton if this union is subscripted by one
@@ -59,21 +65,32 @@ def reduce_hint_pep484604_union(
 
     Why? Because unions are only as narrow as their widest child type hints.
     Shallowly ignorable hints are ignorable exactly because they are the widest
-    possible hints (e.g., :class:`object`, :data:`.HINT_SANE_IGNORABLE`), which are
-    so wide as to constrain nothing and convey no meaningful semantics. A union
-    of one or more shallowly ignorable child hints is thus the widest possible
-    union, which is so wide as to constrain nothing and convey no meaningful
-    semantics. There exist a countably infinite number of possible unions
-    subscripted by one or more ignorable child hints. Ergo, these subscriptions
-    *cannot* be explicitly listed in the
-    :data:`beartype._data.hint.datahintrepr.HINTS_REPR_IGNORABLE_SHALLOW`
-    set. Instead, these subscriptions are dynamically detected by this tester at
+    possible hints (e.g., :class:`object`, :data:`.HINT_SANE_IGNORABLE`), which
+    are so wide as to constrain nothing and convey no meaningful semantics. A
+    union of one or more shallowly ignorable child hints is thus the widest
+    possible union, which is so wide as to constrain nothing and convey no
+    meaningful semantics. There exist a countably infinite number of possible
+    unions subscripted by one or more ignorable child hints. Ergo, these
+    subscriptions *cannot* be explicitly listed in the
+    :data:`beartype._data.hint.datahintrepr.HINTS_REPR_IGNORABLE_SHALLOW` set.
+    Instead, these subscriptions are dynamically detected by this tester at
     runtime and thus referred to as **deeply ignorable unions.**
 
     Parameters
     ----------
     hint : HintPep695TypeAlias
         Union hint to be reduced.
+    hint_parent_sane : Optional[HintSane]
+        Either:
+
+        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
+          of child hints), :data:`None`.
+        * Else, the passed hint is a **child** of some parent hint. In this
+          case, the **sanified parent type hint metadata** (i.e., immutable and
+          thus hashable object encapsulating *all* metadata previously returned
+          by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
+          the possibly PEP-noncompliant parent hint of this child hint into a
+          fully PEP-compliant parent hint).
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
@@ -147,9 +164,8 @@ def reduce_hint_pep484604_union(
         return HINT_SANE_IGNORABLE
     # Else, this union is subscripted by one or more child hints.
 
-    # Assert this union to be subscripted by two or more child hints.
-    #
-    # Note this should *ALWAYS* be the case, as:
+    # Assert this union to be subscripted by two or more child hints. Note that
+    # this should *ALWAYS* be the case, as:
     # * The "typing" module explicitly prohibits empty union subscription: e.g.,
     #       >>> typing.Union[]
     #       SyntaxError: invalid syntax
@@ -172,6 +188,7 @@ def reduce_hint_pep484604_union(
     # this union.
     hint_childs_new_list: ListHints = []
 
+    # ....................{ KEYWORDS                       }....................
     # Instruct the higher-level reduce_hint_child() reducer called below to
     # preserve ignorable hints reduced to a unique "HintSane" object *NOT* equal
     # to the standard "HINT_SANE_IGNORABLE" singleton but instead encapsulating
@@ -186,6 +203,10 @@ def reduce_hint_pep484604_union(
     # "HINT_SANE_IGNORABLE" singleton. Though *USUALLY* desirable, that
     # reduction destroys this unique metadata required by this decision.
     kwargs['is_hint_ignorable_preserved'] = True
+
+    # Propagate all explicitly passed keyword parameters to reduce_hint_child().
+    kwargs['hint_parent_sane'] = hint_parent_sane
+    kwargs['exception_prefix'] = exception_prefix
 
     # ....................{ REDUCE                         }....................
     # Note that the low-level C-based "types.UnionType" class underlying PEP
@@ -211,14 +232,15 @@ def reduce_hint_pep484604_union(
     while hint_childs_index < hint_childs_len:
         # Currently visited child hint of this union.
         hint_child_insane = hint_childs_old[hint_childs_index]
-        # print(f'Recursively reducing {hint} child {hint_child}...')
         # print(f'hints_overridden: {kwargs["hints_overridden"]}')
 
         # Sane child hint sanified from this possibly insane child hint if
         # sanifying this child hint did not generate supplementary metadata *OR*
         # that metadata otherwise (i.e., if sanifying this child hint generated
         # supplementary metadata).
-        hint_child_sane = reduce_hint_child(hint_child_insane, kwargs)
+        # print(f'Reducing union {hint} insane child {hint_child_insane} with {kwargs}...')
+        hint_child_sane = reduce_hint_child(hint=hint_child_insane, **kwargs)
+        # print(f'...to sane child {hint_child_sane}!')
 
         # If this child hint is ignorable, reduce this entire union to the
         # "HINT_SANE_IGNORABLE" singleton. Why? By set logic, a union
@@ -264,17 +286,57 @@ def reduce_hint_pep484604_union(
             pass
         # Else, this child hint is non-recursive.
         #
-        # If metadata encapsulates the reduction of this child hint, reduce this
-        # metadata to this possibly insane child hint. While non-ideal, the
-        # remainder of the codebase is currently unequipped to handle unions of
-        # PEP-noncompliant "HintSane" objects. However, even if the remainder of
-        # the codebase were refactored to handle such unions, there is *NO*
-        # guarantee that Python itself would allow this abuse of unions.
-        # Technically, both PEP 484- and 604-compliant unions prohibit
-        # PEP-noncompliant child hints. Even if Python currently allowed this,
-        # there is *NO* guarantee that future releases of Python would do so.
+        # If metadata encapsulates the reduction of this child hint...
         elif isinstance(hint_child_sane, HintSane):
-            hint_childs_new_list.append(hint_child_insane)
+            # If either...
+            if (
+                # This union has no parent and is thus a root hint *OR*...
+                hint_parent_sane is None or
+                # This union has a parent and is thus a child hint *AND* this
+                # child hint does *NOT* transitively subscript a PEP 484- or
+                # 585-compliant parent subclass hint...
+                not hint_parent_sane.is_hint_parent_pep484585_subclass
+            ):
+            # Then reduce this metadata to this possibly insane child hint.
+            # Doing so effectively forces the current breadth-first search (BFS)
+            # calling this reducer to subsequently re-reduce this possibly
+            # insane child hint against this same sanified parent hint metadata
+            # when subsequently visiting this child hint. Although non-ideal,
+            # this codebase is currently unequipped to handle unions of
+            # PEP-noncompliant "HintSane" objects. Even if this codebase were
+            # refactored to handle such unions, there is *NO* guarantee that
+            # Python itself would allow this abuse of unions. Technically, both
+            # PEP 484- and 604-compliant unions prohibit PEP-noncompliant child
+            # hints. Even if Python currently allowed this, there is *NO*
+            # guarantee that future releases of Python would do so.
+                hint_childs_new_list.append(hint_child_insane)
+            # Else, this union is a child hint transitively subscripting a PEP
+            # 484- or 585-compliant parent subclass hint (e.g., hint subtree
+            # resembling "type[Union[...]]"). Ergo, the caller is either the
+            # make_hint_pep484585_subclass_check_expr() factory function
+            # dynamically generating code type-checking that subclass hint *OR*
+            # the corresponding error-handling logic. In either case, that
+            # subclass hint is subscriptable *ONLY* by a single child hint whose
+            # type-checking code is trivially guaranteed to reduce to a single
+            # call of the issubclass() builtin. Ergo, the caller need *NOT*
+            # perform a breadth-first search (BFS) visiting all child hints
+            # transitively subscripting that subclass hint. The sole reason to
+            # perform a BFS is to dynamically generate type-checking code
+            # performing an arbitrary number of arbitrarily complex tests.
+            #
+            # Instead, that caller *ONLY* needs to decide the second parameter
+            # to be passed to that single issubclass() call by reducing *ONLY*:
+            # * That single child hint (i.e., this union being currently
+            #   reduced) subscripting that subclass hint.
+            # * All child child hints subscripting this union (i.e., this union
+            #   child hint that was just reduced above).
+            #
+            # Note that doing so effectively discards the sanified metadata
+            # encapsulating the reduction of this union child hint, preventing
+            # the current breadth-first search (BFS) from properly visiting and
+            # reducing this union child hint. As detailed above, this is fine.
+            else:
+                hint_childs_new_list.append(hint_child_sane.hint)
         # Else, *NO* metadata encapsulates the reduction of this child hint.
         #
         # In this case, preserve this child hint as is.
@@ -288,6 +350,7 @@ def reduce_hint_pep484604_union(
     # Tuple of all sanified child hints to be returned as the reduced members of
     # this union, coerced from this list.
     hint_childs_new: TupleHints = tuple(hint_childs_new_list)
+    # print(f'Reducing union {hint} to {hint_childs_new}...')
 
     # Possibly reduced union reconstituted from the passed union, defined as
     # either...

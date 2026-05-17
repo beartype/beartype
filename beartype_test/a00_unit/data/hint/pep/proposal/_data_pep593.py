@@ -19,6 +19,8 @@ def hints_pep593_meta() -> 'list[HintPepMetadata]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
+    from beartype.door import UnionTypeHint
+    from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
     from beartype.vale import (
         Is,
         IsAttr,
@@ -29,6 +31,7 @@ def hints_pep593_meta() -> 'list[HintPepMetadata]':
     from beartype._data.hint.sign.datahintsigns import (
         HintSignAnnotated,
         HintSignList,
+        HintSignType,
         HintSignUnion,
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
@@ -46,7 +49,7 @@ def hints_pep593_meta() -> 'list[HintPepMetadata]':
     from collections.abc import Sequence
     from functools import partial
     from typing import (
-        # Type,
+        Type,
         TypeVar,
         Union,
     )
@@ -580,34 +583,74 @@ def hints_pep593_meta() -> 'list[HintPepMetadata]':
             ),
 
             # ..............{ PEP (484|585) ~ subclass           }..............
-            # PEP 585-compliant list of metahints of isinstanceable types
-            # annotated by one beartype validator defined as a lambda function.
+            # PEP 484-compliant subclass hint subscripted by a PEP 593-compliant
+            # metahint of an isinstanceable type annotated by one beartype
+            # validator defined as a lambda function. Although odd, this
+            # exercises a rare edge case that arises in the intersection between
+            # PEP 484- or 585-compliant parent subclass hints and PEP
+            # 593-compliant child hints annotated by beartype validators.
             HintPepMetadata(
-                hint=list[AnnotatedStrIsLength],
-                pep_sign=HintSignList,
-                isinstanceable_type=list,
+                hint=Type[AnnotatedStrIsLength],
+                pep_sign=HintSignType,
+                warning_type=BeartypeDecorHintPep585DeprecationWarning,
+                isinstanceable_type=type,
+                piths_meta=(
+                    # String type.
+                    PithSatisfiedMetadata(str),
+                    # Integer type.
+                    PithUnsatisfiedMetadata(int),
+                    # String constant.
+                    PithUnsatisfiedMetadata(
+                        "Thus whisper'd low and solemn in his ear"),
+                ),
+            ),
+
+            # PEP 585-compliant subclass hint subscripted by a PEP 593-compliant
+            # metahint of an isinstanceable type annotated by one beartype
+            # validator defined as a lambda function. Although odd, this
+            # exercises a rare edge case that arises in the intersection between
+            # PEP 484- or 585-compliant parent subclass hints and PEP
+            # 593-compliant child hints annotated by beartype validators.
+            HintPepMetadata(
+                hint=type[AnnotatedStrIsLength],
+                pep_sign=HintSignType,
+                isinstanceable_type=type,
                 is_pep585_builtin_subbed=True,
                 piths_meta=(
-                    # List of string constants satisfying this validator.
-                    PithSatisfiedMetadata([
-                        'An‐atomically Island‐stranded, adrift land)',
-                        'That You randily are That worm‐tossed crabapple of',
-                    ]),
-                    # String constant *NOT* an instance of the expected type.
+                    # String type.
+                    PithSatisfiedMetadata(str),
+                    # Integer type.
+                    PithUnsatisfiedMetadata(int),
+                    # String constant.
                     PithUnsatisfiedMetadata(
-                        pith="Our Sturm‐sapped disorder's convolution of",
-                        # Match that the exception message raised for this
-                        # object embeds the code for this validator's lambda
-                        # function.
-                        exception_str_match_regexes=(
-                            r'Is\[.*\blen\(text\)\s*>\s*30\b.*\]',),
-                    ),
-                    # List of string constants violating this validator.
-                    PithUnsatisfiedMetadata([
-                        'Volubly liable,',
-                        'Drang‐rang aloofment –',
-                        'ruthlessly',
-                    ]),
+                        '"O brightest of my children dear, earth-born'),
+                ),
+            ),
+
+            # PEP 585-compliant subclass hint subscripted by a PEP 484-compliant
+            # union subscripted by one or more arbitrary child hints as well as
+            # a PEP 593-compliant metahint of an isinstanceable type annotated
+            # by one beartype validator defined as a lambda function. Although
+            # odd, this exercises a rare edge case that arises in the
+            # intersection between PEP 484- and 604-compliant union hints, PEP
+            # 484- or 585-compliant parent subclass hints, *AND* PEP
+            # 593-compliant child hints annotated by beartype validators. Look.
+            # This horrifies us as well.
+            HintPepMetadata(
+                hint=type[Union[bytes, AnnotatedStrIsLength]],
+                pep_sign=HintSignType,
+                isinstanceable_type=type,
+                is_pep585_builtin_subbed=True,
+                piths_meta=(
+                    # Bytes type.
+                    PithSatisfiedMetadata(bytes),
+                    # String type.
+                    PithSatisfiedMetadata(str),
+                    # Integer type.
+                    PithUnsatisfiedMetadata(int),
+                    # String constant.
+                    PithUnsatisfiedMetadata(
+                        'And sky-engendered, Son of Mysteries'),
                 ),
             ),
 

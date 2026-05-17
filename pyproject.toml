@@ -785,7 +785,7 @@ check-hidden = true
 ignore-regex = 'https?://\S+'
 
 # Comma-delimited list of all words otherwise incorrectly spell-checked as
-# mispelled to be explicitly marked as well-spelled. This includes:
+# misspelled to be explicitly marked as well-spelled. This includes:
 # * Informal author voice (e.g., "alot", "gud", "welp", "noice", "doin").
 # * Archaic/poetic words in Coleridge/Shelley/Keats/Yeats fixtures (e.g.,
 #   "alph", "covert", "fane", "gird", "panting", "raison", "sate", "tread",

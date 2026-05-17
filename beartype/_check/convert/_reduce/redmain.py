@@ -41,10 +41,7 @@ from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.typing.datatyping import (
-    DictStrToAny,
-    HintSignOrNoneOrSentinel,
-)
+from beartype._data.typing.datatyping import HintSignOrNoneOrSentinel
 from beartype._metaverse import URL_ISSUES
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.func.arg.utilfuncargiter import ArgKind
@@ -235,7 +232,7 @@ def reduce_hint(
     hint_or_sane_curr: HintOrSane = hint
 
     # Previously reduced instance of either this hint *OR* metadata
-    # encapsulating this hint, initialized to this unreduced hint.
+    # encapsulating this hint, also initialized to this unreduced hint.
     hint_or_sane_prev: HintOrSane = hint
 
     # Delete the passed "hint" parameter for safety. Permitting this parameter
@@ -257,6 +254,7 @@ def reduce_hint(
             # For each lower-level reducer...
             for hint_reducer in _HINT_REDUCERS:
                 # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} by {hint_reducer}...')
+                # print(f'[reduce_hint] ...after prior reduction to {hint_or_sane_prev}...')
 
                 # Either:
                 # * If this reducer reduces this hint:
@@ -278,11 +276,11 @@ def reduce_hint(
                 )
                 # print(f'[reduce_hint] Reduced to {hint_or_sane_curr}!')
 
-                # If this reduced hint is *NOT* this unreduced hint, this
-                # reducer reduced this hint. Halt reducing by these lower-level
-                # reducers, enabling the outer loop to decide whether to
-                # continue reducing.
-                if hint_or_sane_curr is not hint_curr:
+                # If this input unreduced hint differs from this output reduced
+                # hint (metadata), the above reduction reduced this hint. Cease
+                # any further such low-level reductions, enabling the outer loop
+                # to decide whether to continue reducing.
+                if hint_curr is not hint_or_sane_curr:
                     # If this hint reduces to the ignorable
                     # "HINT_SANE_IGNORABLE" metadata singleton, then halt
                     # reducing immediately.
@@ -293,10 +291,10 @@ def reduce_hint(
                     # through the "_HINT_REDUCERS" tuple. This test elides that
                     # iteration.
                     if hint_or_sane_curr is HINT_SANE_IGNORABLE:
-                        # print(f'[reduce_hint] Ignorably reduced!')
+                        # print('[reduce_hint] Ignorably reduced!')
                         return HINT_SANE_IGNORABLE
                     # Else, this hint is currently unignorable.
-                    # print(f'[reduce_hint] Incrementally reduced!')
+                    # print('[reduce_hint] Incrementally reduced!\n')
 
                     # Halt reducing immediately.
                     break
@@ -305,9 +303,9 @@ def reduce_hint(
                 # next reducer.
             # If the above iteration failed to "break", then this unreduced hint
             # remains unmodified across all lower-level reducers. This implies
-            # this hint to now be irreducible. Halt reducing immediately.
+            # this hint to now be irreducible. Halt reducing entirely.
             else:
-                # print(f'[reduce_hint] Irreducible!')
+                # print('[reduce_hint] Irreducible!\n')
                 break
             # Else, the above iteration hit a "break". This hint was reduced by
             # a lower-level reducer above, implying that this hint *COULD* still
@@ -316,8 +314,25 @@ def reduce_hint(
             # ....................{ RESPONSE               }....................
             # Respond to the lower-level reduction performed above.
 
+            # If this currently reduced hint is exactly the previously reduced
+            # hint, then *NO* reducers successfully reduced this hint. This
+            # implies this hint to now be irreducible. Halt reducing entirely.
+            #
+            # Note that the above "else:" block of the above "for" loop is
+            # responsible for halting *MOST* reductions. This "if" block is
+            # responsible for halting almost *NO* reductions. Nonetheless, this
+            # is a rare (but valid) edge case that arises when a reducer
+            # unconditionally creates and returns the same unmemoized sanified
+            # hint metadata when passed the same hint. Examples include:
+            # * reduce_hint_pep484585_subclass().
+            if hint_or_sane_curr == hint_or_sane_prev:
+                # print('[reduce_hint] Irreducibly preserved!\n')
+                break
+            # Else, this currently reduced hint differs from the previously
+            # reduced hint. This is *ALMOST* always the case.
+            #
             # If reducing this hint generated supplementary metadata...
-            if isinstance(hint_or_sane_curr, HintSane):
+            elif isinstance(hint_or_sane_curr, HintSane):
                 # Extract the currently reduced hint from this metadata.
                 hint_curr = hint_or_sane_curr.hint
 
@@ -372,17 +387,6 @@ def reduce_hint(
             # hint. In this case, record this currently reduced hint.
             else:
                 hint_curr = hint_or_sane_curr
-
-            #FIXME: Should probably be performed above the prior "if" conditional.
-            #FIXME: Currently unused, but useful. Could be required at some point.
-            # If this currently reduced hint is exactly the previously reduced hint,
-            # the above reducers failed to reduce this hint. Halt reducing entirely.
-            #
-            # Note that this is a rare (albeit valid) edge case that arises for
-            # reducers that unconditionally create and return new... The above
-            # "else:" block of the above "for hint_reducer in _HINT_REDUCERS:" loop
-            # if hint_or_sane_curr == hint_or_sane_prev:
-            #     break
 
             # ....................{ RECURSE                }....................
             # Guard against infinite recursion in lower-level reductions with
@@ -469,7 +473,7 @@ def reduce_hint(
     return hint_or_sane_curr
 
 # ....................{ REDUCERS ~ higher-level            }....................
-def reduce_hint_child(hint: Hint, kwargs: DictStrToAny) -> HintSane:
+def reduce_hint_child(**kwargs) -> HintSane:
     '''
     Lower-level child type hint reduced (i.e., converted) from the passed
     higher-level child type hint if reducible *or* this child type hint as is
@@ -481,19 +485,14 @@ def reduce_hint_child(hint: Hint, kwargs: DictStrToAny) -> HintSane:
 
     Parameters
     ----------
-    hint : Hint
-        Child type hint to be reduced.
-    kwargs : DictStrToAny
-        Keyword parameters to be passed after being unpacked to the lower-level
-        :func:`.reduce_hint` reducer. For safety, this reducer silently ignores
-        keyword parameters inapplicable to child hints. This includes:
+    All keyword parameters are passed to the lower-level :func:`.reduce_hint`
+    reducer. For safety, this reducer silently ignores keyword parameters
+    inapplicable to child hints. This includes:
 
-        * ``arg_kind``, applicable *only* to root hints directly annotating
-          callable parameters.
-        * ``decor_meta``, applicable *only* to root hints directly annotating
-          callable parameters or returns.
-        * ``pith_name``, applicable *only* to root hints directly annotating
-          callable parameters or returns.
+    * ``arg_kind``, applicable *only* to root hints directly annotating callable
+      parameters.
+    * ``pith_name``, applicable *only* to root hints directly annotating
+      callable parameters or returns.
 
     Returns
     -------
@@ -507,7 +506,7 @@ def reduce_hint_child(hint: Hint, kwargs: DictStrToAny) -> HintSane:
           encapsulating this hint unmodified.
     '''
 
-    #FIXME: This is stupidly slow. There has *GOT* to be a saner (and, more
+    #FIXME: [SPEED] *STUPIDLY SLOW*. There has *GOT* to be a saner (and, more
     #importantly, more efficient) means of accomplishing the same ends.
     # Remove all unsafe keyword parameters (i.e., parameters that are
     # inapplicable to child hints and thus *NOT* safely passable to the
@@ -515,7 +514,7 @@ def reduce_hint_child(hint: Hint, kwargs: DictStrToAny) -> HintSane:
     remove_mapping_keys(kwargs, _REDUCE_HINT_CHILD_ARG_NAMES_UNSAFE)
 
     # Return this child hint possibly reduced to a lower-level hint.
-    return reduce_hint(hint=hint, **kwargs)
+    return reduce_hint(**kwargs)
 
 
 def reduce_hint_any(
@@ -926,11 +925,6 @@ _REDUCE_HINT_CHILD_ARG_NAMES_UNSAFE = frozenset((
     # Applicable *ONLY* to root hints directly annotating callable parameters
     # or returns.
     'pith_name',
-
-    #FIXME: Actually, this should probably be omitted now. Forward reference
-    #reduction requires this to efficiently reduce *ALL* forward references,
-    #regardless of whether those are root or child forward references.
-    'decor_meta',
 ))
 '''
 Frozen set of the names of all **unsafe child type hint reducer keyword

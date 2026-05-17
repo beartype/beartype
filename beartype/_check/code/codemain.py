@@ -47,7 +47,7 @@ from beartype._data.check.code.datacodename import (
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
-from beartype._check.code._pep.codepep484604 import (
+from beartype._check.code._pep.pep484.codepep484604union import (
     make_hint_pep484604_check_expr)
 from beartype._check.code._pep.pep484585.codepep484585container import (
     make_hint_pep484585_container_check_expr)
