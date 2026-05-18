@@ -281,6 +281,12 @@ theme:
   #     https://squidfunk.github.io/mkdocs-material
   name: material
 
+  # Relative dirname of the theme overrides subdirectory, used to
+  # inject site-wide content (e.g., the announcement banner in
+  # "main.html"). See also:
+  #     https://squidfunk.github.io/mkdocs-material/customization/#extending-the-theme
+  custom_dir: overrides
+
   # Hopefully, material is smart enough to set <link ...
   # type="image/svg+xml"> correctly? Nope. It's not. We checked. Oh
   # well. It should still be okay, though? See:
