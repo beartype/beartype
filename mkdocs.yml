@@ -348,7 +348,7 @@ nav:
   # - "tl;dr": tldr.md
   # - ELI5: eli5.md
   # - API: api.md
-  # - Features: pep.md
+  - Features: pep.md
   # - Code: code.md
   # - Math: math.md
   - FAQ: faq.md
