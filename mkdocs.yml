@@ -314,21 +314,28 @@ theme:
   # Theme-specific color scheme(s). See also:
   #     https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors
   palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:  # indicates the next setting
+        icon: material/brightness-auto
+        name: Switch to dark mode
     # Palette toggle for dark mode.
     #
     # Note that "slate" is Material's name for its default dark mode. *sigh*
-    - scheme: slate
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
       toggle:
-        icon: material/weather-night
+        icon: material/weather-night  # or material/brightness-4 for consistency
         name: Switch to light mode
 
     # Palette toggle for light mode.
     #
     # Note that "default" is Material's name for its default light mode. I know.
-    - scheme: default
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
       toggle:
         icon: material/brightness-7
-        name: Switch to dark mode
+        name: Switch to system preference
 
 # ....................{ NAVIGATION                          }...................
 # Site-wide navigation tree. When defined, MkDocs uses this explicitly rather
