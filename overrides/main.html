@@ -1,0 +1,19 @@
+<!--
+------------------( LICENSE                                  )------------------
+Copyright (c) 2014-2026 Beartype authors.
+See "LICENSE" for further details.
+
+------------------( SYNOPSIS                                 )------------------
+MkDocs Material theme override injecting a site-wide announcement banner.
+Mirrors the "rst_prolog" tip admonition from the legacy Sphinx configuration.
+-->
+{% extends "base.html" %}
+
+{% block announce %}
+  💗 <strong>Upbear us</strong> at
+  <a href="https://github.com/sponsors/leycec">GitHub Sponsors</a> and
+  <a href="https://www.sonarsource.com/products/sonarqube/advanced-security">SonarQube Advanced Security (Tidelift)</a>.
+  <strong>Follow us</strong> <a href="https://leycec.bsky.social">on Bluesky</a>.
+  <strong>Friendzone us</strong> <a href="https://beartype.zulipchat.com">at Zulip</a>.
+  Your generous support is our quality assurance. 💗
+{% endblock %}
