@@ -70,6 +70,30 @@ site_dir: '_site'
 # List of all JavaScript-specific files required by this site. See also:
 #    https://www.mkdocs.org/user-guide/configuration/#markdown_extensions
 markdown_extensions:
+  # Standard Python-Markdown extensions. See also:
+  #     https://python-markdown.github.io/extensions
+
+  # Admonition blocks (e.g., "!!! note", "!!! warning"). See also:
+  #     https://squidfunk.github.io/mkdocs-material/reference/admonitions
+  - admonition
+
+  # HTML attribute injection via "{: .class #id }" syntax. Required by several
+  # Material features (e.g., image alignment, button styling). See also:
+  #     https://squidfunk.github.io/mkdocs-material/reference/images
+  - attr_list
+
+  # Footnote support via "[^1]" / "[^1]: ..." syntax. See also:
+  #     https://python-markdown.github.io/extensions/footnotes
+  - footnotes
+
+  # GFM-style pipe tables (required since Python-Markdown doesn't enable them
+  # by default). See also:
+  #     https://python-markdown.github.io/extensions/tables
+  - tables
+
+  # PyMdown Extensions. See also:
+  #     https://facelessuser.github.io/pymdown-extensions
+
   # MathJax Markdown extension, enabling MathJax-rendered math to be embedded in
   # Markdown with standard math syntax (e.g., LaTeX).
   #
@@ -80,6 +104,11 @@ markdown_extensions:
   #   https://squidfunk.github.io/mkdocs-material/reference/math
   - pymdownx.arithmatex:
      generic: true
+
+  # Fenced code blocks with language labels and (optionally) embedded diagrams.
+  # Required for admonition blocks to nest fenced code inside them. See also:
+  #     https://facelessuser.github.io/pymdown-extensions/extensions/superfences
+  - pymdownx.superfences
 
 
 # List of all JavaScript-specific files required by this site. See also:
@@ -300,3 +329,20 @@ theme:
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
+
+# ....................{ NAVIGATION                          }...................
+# Site-wide navigation tree. When defined, MkDocs uses this explicitly rather
+# than auto-discovering pages from the "docs/" subtree. See also:
+#     https://www.mkdocs.org/user-guide/configuration/#nav
+nav:
+  - Welcome: index.md
+  #FIXME: Uncomment each entry as the corresponding RST file is converted.
+  # - Install: install.md
+  # - "tl;dr": tldr.md
+  # - ELI5: eli5.md
+  # - API: api.md
+  # - FAQ: faq.md
+  # - Features: pep.md
+  # - Code: code.md
+  # - Math: math.md
+  - "See Also": moar.md
