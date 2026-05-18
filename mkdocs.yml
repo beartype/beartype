@@ -350,7 +350,7 @@ theme:
 nav:
   - Welcome: index.md
   #FIXME: Uncomment each entry as the corresponding RST file is converted.
-  # - Install: install.md
+  - Install: install.md
   # - "tl;dr": tldr.md
   # - ELI5: eli5.md
   # - API: api.md
