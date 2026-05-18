@@ -13,4 +13,4 @@ title: Welcome
   }
 </style>
 
-![Beartype greets you with an open paw](https://raw.githubusercontent.com/beartype/beartype-assets/refs/heads/main/banner/logo.png)
+![Beartype greets you with an open paw](https://raw.githubusercontent.com/beartype/beartype-assets/refs/heads/main/banner/logo.svg)

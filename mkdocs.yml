@@ -50,7 +50,7 @@ site_author: "Beartype"
 # third-party theme configured below.
 copyright: "Copyright (c) 2014-2026 Beartype authors."
 
-# URL of the repository documented by this site. 
+# URL of the repository documented by this site.
 repo_url: https://github.com/beartype/beartype
 
 # ....................{ PATHS                               }...................
@@ -252,11 +252,17 @@ theme:
   #     https://squidfunk.github.io/mkdocs-material
   name: material
 
-  #FIXME: Uncomment this after we actually define a favicon. Shouldn't be
-  #terribly arduous. We just need to do it. Also, this should ideally be
-  #specified as a remote URL if it's anything over 50k or so. I'd rather not
-  #bloat the repo any more than we must. *sigh*
-  # favicon: images/favicon.ico
+  # Hopefully, material is smart enough to set <link ...
+  # type="image/svg+xml"> correctly? Nope. It's not. We checked. Oh
+  # well. It should still be okay, though? See:
+  #   - https://squidfunk.github.io/mkdocs-material/setup/changing-the-logo-and-icons/
+  #   - https://gerfficient.com/en/home/svg-favicons (see the Icon section about type=...")
+  # FIXME: Specified as a remote URL because...erm...we're not sure
+  # anymore. In the first attempt to create an .ico, it ended more
+  # being more than 50k (lots of different sizes in that thar icon, I
+  # tellya) and we wanted to avoid repo bloat. But now, it's a svelte
+  # 8k .svg. Maybe we should just copy it here?
+  favicon: https://raw.githubusercontent.com/beartype/beartype-assets/main/favicon.svg
 
   #FIXME: No idea. Should work, but let's at least comment this up. *sigh*
   icon:

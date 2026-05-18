@@ -364,7 +364,7 @@ by starlight, we all howl to commit by dawn.
 |beartype-stars|
 
 .. # ------------------( IMAGES                              )------------------
-.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
+.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.svg
    :target: https://github.com/beartype/beartype
    :alt: beartype —[ the bare-metal type-checker ]—
 .. |beartype-contributors| image:: https://contrib.rocks/image?repo=beartype/beartype
