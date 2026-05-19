@@ -356,6 +356,6 @@ nav:
   # - API: api.md
   - Features: pep.md
   # - Code: code.md
-  # - Math: math.md
+  - Math: math.md
   - FAQ: faq.md
   - "See Also": moar.md
