@@ -59,7 +59,7 @@ Beartype makes type-checking painless, portable, and purportedly fun. Just:
 
 > Decorate functions and methods [annotated by standard type hints](#standard-hints) with the `beartype.beartype` decorator, which wraps those functions and methods in performant type-checking dynamically generated on-the-fly.
 >
-> When [standard type hints](#standard-hints) fail to support your use case, annotate functions and methods with [beartype-specific validator type hints](vale.md) instead. Validators enforce runtime constraints on the internal structure and contents of parameters and returns via simple caller-defined lambda functions and declarative expressions – all seamlessly composable with [standard type hints](#standard-hints) in an [expressive domain-specific language (DSL)](vale.md#vale-syntax) designed just for you.
+> When [standard type hints](#standard-hints) fail to support your use case, annotate functions and methods with [beartype-specific validator type hints](api_vale.md) instead. Validators enforce runtime constraints on the internal structure and contents of parameters and returns via simple caller-defined lambda functions and declarative expressions – all seamlessly composable with [standard type hints](#standard-hints) in an [expressive domain-specific language (DSL)](api_vale.md#validator-syntax) designed just for you.
 
 "Embrace the bear," says the bear peering over your shoulder as you read this.
 

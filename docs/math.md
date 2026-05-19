@@ -13,8 +13,8 @@ Math(s) time, people. <sup>it's happening.</sup>
 
 ## Beartype Timings
 
-> [!NOTE]
-> [Additional timings performed by an unbiased third party employed by Cisco Systems support the claims below](https://github.com/beartype/beartype/issues/58#issuecomment-940100279). Notably, beartype is substantially faster than [pydantic](https://docs.pydantic.dev) – the most popular competing runtime type-checker – by **several orders of magnitude.** Yes, [pydantic](https://docs.pydantic.dev) was Cythonized to native machine code in those timings. Believe!
+!!! note
+    [Additional timings performed by an unbiased third party employed by Cisco Systems support the claims below](https://github.com/beartype/beartype/issues/58#issuecomment-940100279). Notably, beartype is substantially faster than [pydantic](https://docs.pydantic.dev) – the most popular competing runtime type-checker – by **several orders of magnitude.** Yes, [pydantic](https://docs.pydantic.dev) was Cythonized to native machine code in those timings. Believe!
 
 Let's profile beartype against other runtime type-checkers with [a battery of surely fair, impartial, and unbiased use cases](https://github.com/beartype/beartype/blob/main/bin/profile.bash):
 
@@ -77,8 +77,8 @@ decoration + calls [beartype ]: 1 loop, best of 1: 81.2 msec per loop
 decoration + calls [typeguard]: 1 loop, best of 1: 17.3 sec per loop
 ```
 
-> [!NOTE]
-> \* `sec` = seconds. \* `msec` = milliseconds = 10<sup>-3</sup> seconds. \* `usec` = microseconds = 10<sup>-6</sup> seconds. \* `nsec` = nanoseconds = 10<sup>-9</sup> seconds.
+!!! note
+    \* `sec` = seconds. \* `msec` = milliseconds = 10<sup>-3</sup> seconds. \* `usec` = microseconds = 10<sup>-6</sup> seconds. \* `nsec` = nanoseconds = 10<sup>-9</sup> seconds.
 
 ### Timings Overview
 

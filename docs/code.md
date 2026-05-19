@@ -12,7 +12,6 @@ beartype.
 
 Let's take a deep dive into the deep end of runtime type-checking – the beartype way.
 
-
 ## Beartype Code Generation: It's All for You
 
 Beartype dynamically generates type-checking code unique to each class and callable decorated by the `beartype.beartype` decorator. Let's bearsplain why the code `beartype.beartype` generates for real-world use cases is the fastest possible code type-checking those cases.
@@ -530,8 +529,8 @@ Let's take this from the top.
 
 ## Moar Depth
 
-> [!CAUTION]
-> **This section is badly outdated.** It's bad. *Real* bad. If you'd like us to revise this to actually reflect reality, just [drop us a line at our issue tracker](https://github.com/beartype/beartype/issues). [@leycec](https://github.com/leycec) promises satisfaction.
+!!! warning
+    **This section is badly outdated.** It's bad. *Real* bad. If you'd like us to revise this to actually reflect reality, just [drop us a line at our issue tracker](https://github.com/beartype/beartype/issues). [@leycec](https://github.com/leycec) promises satisfaction.
 
 So, you want to help beartype deeply type-check even *more* type hints than she already does? Let us help you help us, because you are awesome.
 
