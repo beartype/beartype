@@ -352,7 +352,7 @@ nav:
   #FIXME: Uncomment each entry as the corresponding RST file is converted.
   - Install: install.md
   - "tl;dr": tldr.md
-  # - ELI5: eli5.md
+  - ELI5: eli5.md
   # - API: api.md
   - Features: pep.md
   # - Code: code.md
