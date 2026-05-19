@@ -8,9 +8,8 @@ Root Markdown document transitively referencing all other child Markdown
 documents for this project.
 -->
 
----
-title: Welcome
----
+# Welcome
+
 <!-- Hide the title defined above in favour of the banner displayed below while
      still listing this title in the site-wide navigation block to the left.
      Note that this is an obscure MkDocs kludge first publicized here:
