@@ -627,7 +627,7 @@ Beartype generates fundamentally different type-checking code for these types, c
 >
 > Prefer this variant when validating the exact data type of an array:
 >
-> ``` python
+> ```python
 > # Import the requisite machinery.
 > from beartype import beartype
 > from numpy import dtype
@@ -646,7 +646,7 @@ Beartype generates fundamentally different type-checking code for these types, c
 >
 > Prefer this variant when validating the exact scalar precision of an array:
 >
-> ``` python
+> ```python
 > # Import the requisite machinery.
 > from beartype import beartype
 > from numpy import float64
@@ -670,7 +670,7 @@ Beartype generates fundamentally different type-checking code for these types, c
 >
 > Prefer this variant when validating only the *kind* of scalars (without reference to exact precision) in an array:
 >
-> ``` python
+> ```python
 > # Import the requisite machinery.
 > from beartype import beartype
 > from numpy import floating
