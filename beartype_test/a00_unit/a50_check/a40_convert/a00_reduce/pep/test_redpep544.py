@@ -28,34 +28,10 @@ def test_reduce_hint_pep484_generic_io_to_pep544_protocol() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep544Exception
-    from beartype.typing import Union
-    from beartype._check.convert._reduce.redmain import (
-        reduce_hint_any)
     from beartype._check.convert._reduce._pep.redpep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol)
-    from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
-    from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
     from pytest import raises
-    from typing import Protocol
-
-    # ....................{ PASS                           }....................
-    # For each PEP 484-compliant "typing" IO generic base class...
-    for pep484_generic_io in TYPES_PEP484_GENERIC_IO:
-        # Metadata encapsulating the equivalent PEP 544-compliant protocol
-        # reduced from this generic.
-        pep544_protocol_io_sane = reduce_hint_any(pep484_generic_io)
-
-        # This protocol.
-        pep544_protocol_io = pep544_protocol_io_sane.hint
-
-        # Assert this protocol is either...
-        assert (
-            # A PEP 593-compliant type metahint generalizing a protocol
-            # *OR*...
-            is_hint_pep593(pep544_protocol_io) or
-            # A PEP 544-compliant protocol.
-            issubclass(pep544_protocol_io, Protocol)
-        )
+    from typing import Union
 
     # ....................{ FAIL                           }....................
     # Assert this function rejects standard type hints in either case.

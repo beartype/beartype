@@ -27,7 +27,6 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         ABC,
         abstractmethod,
     )
-    from beartype._data.typing.datatyping import T
     from beartype._data.hint.sign.datahintsigns import (
         HintSignBinaryIO,
         HintSignPep484585GenericSubbed,
@@ -41,6 +40,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import T
     from pathlib import Path
     from typing import (
         Any,
@@ -73,23 +73,24 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         return open(SUBMODULE_FILENAME, 'rb')
 
 
-    # List of one or more "PithUnsatisfiedMetadata" instances validating
+    # Tuple of one or more "PithUnsatisfiedMetadata" instances validating
     # objects *NOT* satisfied by either "typing.BinaryIO" *OR*
-    # "typing.IO[bytes]". This list conditionally depends on the active Python
-    # interpreter and thus *CANNOT* be defined as a standard tuple.
-    binaryio_piths_meta = [
+    # "typing.IO[bytes]".
+    BINARYIO_PITHS_META = (
         # Open read-only binary file handle to this submodule.
         PithSatisfiedMetadata(pith=open_file_binary, is_pith_factory=True),
         # Bytestring constant.
         PithUnsatisfiedMetadata(b"Of a thieved imagination's reveries"),
-        # "PithUnsatisfiedMetadata" instance validating open
-        # read-only text file handles to violate both "typing.BinaryIO" *AND*
-        # "typing.IO[bytes]" type hints. This validation requires beartype
-        # validators, as the only means of differentiating objects satisfying
-        # the "typing.BinaryIO" protocol from those satisfying the "typing.IO"
-        # protocol is with an inverted instance check. Cue beartype validators.
+        # "PithUnsatisfiedMetadata" instance validating that open read-only text
+        # file handles violate both "typing.BinaryIO" *AND* "typing.IO[bytes]"
+        # type hints. This validation requires dynamism and thus either
+        # beartype-specific validators *OR* beartype-agnostic PEP 3119-compliant
+        # metaclasses defining the __instancecheck__() dunder method, as the
+        # only means of differentiating objects satisfying the "typing.BinaryIO"
+        # protocol from those satisfying the "typing.IO" protocol is with an
+        # inverted instance check. Guess which beartype now prefers? *sigh*
         PithUnsatisfiedMetadata(pith=open_file_text, is_pith_factory=True),
-    ]
+    )
 
     # ..................{ PROTOCOLS ~ structural             }..................
     class ProtocolCustomStructural(object):
@@ -298,7 +299,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 hint=BinaryIO,
                 pep_sign=HintSignBinaryIO,
                 generic_type=BinaryIO,
-                piths_meta=binaryio_piths_meta,
+                piths_meta=BINARYIO_PITHS_META,
             )
         )
 
@@ -374,7 +375,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 hint=IO[bytes],
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
-                piths_meta=binaryio_piths_meta,
+                piths_meta=BINARYIO_PITHS_META,
             ),
             HintPepMetadata(
                 hint=IO[str],
