@@ -355,7 +355,7 @@ nav:
   - ELI5: eli5.md
   # - API: api.md
   - Features: pep.md
-  # - Code: code.md
+  - Code: code.md
   - Math: math.md
   - FAQ: faq.md
   - "See Also": moar.md
