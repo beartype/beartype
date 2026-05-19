@@ -693,8 +693,8 @@ Beartype fully supports `647`-compliant [type narrowing](https://mypy.readthedoc
 
 The procedural `beartype.door.is_bearable` function narrows the type of the passed object (which can be *anything*) to the passed type hint (which can be *any* type). Both guarantee runtime performance on the order of less than 1µs (i.e., less than one millionth of a second), preserving runtime performance and money bags.
 
-> [!NOTE]
-> Sadly, the object-oriented `beartype.door.TypeHint.is_bearable` method does *not* support [type narrowing](https://mypy.readthedocs.io/en/stable/type_narrowing.html). Only `beartype.door.is_bearable` supports [type narrowing](https://mypy.readthedocs.io/en/stable/type_narrowing.html). Why? Deficiencies in `647` beyond the control of `beartype`. It's not our fault. Would [@leycec](https://github.com/leycec) lie publicly in online documentation just to make his questionable coding style superficially look better!?! Surely! `</shifty_goggle_eyes>`
+!!! note
+    Sadly, the object-oriented `beartype.door.TypeHint.is_bearable` method does *not* support [type narrowing](https://mypy.readthedocs.io/en/stable/type_narrowing.html). Only `beartype.door.is_bearable` supports [type narrowing](https://mypy.readthedocs.io/en/stable/type_narrowing.html). Why? Deficiencies in `647` beyond the control of `beartype`. It's not our fault. Would [@leycec](https://github.com/leycec) lie publicly in online documentation just to make his questionable coding style superficially look better!?! Surely! `</shifty_goggle_eyes>`
 
 Calling `beartype.door.is_bearable` in your code enables beartype to symbiotically eliminate false positives from static type-checkers checking that code, reducing static type-checker chum that went rotten decades ago:
 
