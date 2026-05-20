@@ -413,6 +413,8 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                     PithUnsatisfiedMetadata('Starkness'),
                 ),
             ),
+
+            # ................{ SUBCLASS                       }................
         ))
 
     # ..................{ FACTORIES ~ SupportsAbs            }..................

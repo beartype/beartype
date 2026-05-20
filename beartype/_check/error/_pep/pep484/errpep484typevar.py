@@ -16,12 +16,12 @@ This private submodule is *not* intended for importation by downstream callers.
 # from beartype.typing import Optional
 # from beartype._data.typing.datatypingport import Hint
 # from beartype._data.hint.sign.datahintsigns import HintSignTypeVar
-# from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+# from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 # from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
 #     get_hint_pep484_typevar_bounded_constraints_or_none)
 #
 # # ....................{ GETTERS                            }....................
-# def find_cause_pep484_typevar(cause: ViolationCause) -> ViolationCause:
+# def find_cause_pep484_typevar(cause: HintTreeError) -> HintTreeError:
 #     '''
 #     Output cause describing describing the failure of the decorated callable to
 #     *not* return a value in violation of the passed **type variable** (i.e.,
@@ -29,15 +29,15 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #     Parameters
 #     ----------
-#     cause : ViolationCause
+#     cause : HintTreeError
 #         Input cause providing this data.
 #
 #     Returns
 #     -------
-#     ViolationCause
+#     HintTreeError
 #         Output cause type-checking this data.
 #     '''
-#     assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+#     assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
 #     assert cause.hint_sign is HintSignTypeVar, (
 #         f'{repr(cause.hint)} not "HintSignTypeVar".')
 #

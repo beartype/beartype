@@ -79,6 +79,10 @@ def make_hint_pep484585_subclass_check_expr(
     # be explicitly handled below.
     hint_child_sane = hints_meta.sanify_hint_child(hint_child_insane)
 
+    #FIXME: Additionally, if "hint_child_sane.hint is type", then this sanified
+    #child hint is *ALSO* ignorable. Why? Because *ALL* types necessarily
+    #subclass the root "type" superclass. Ergo, the type hint "type[type]" is
+    #semantically equivalent to "type[Any]" and thus ignorable.
     # If this sanified child hint is ignorable...
     if hint_child_sane is HINT_SANE_IGNORABLE:
         # Python expression evaluating to the origin type of this hint (i.e.,

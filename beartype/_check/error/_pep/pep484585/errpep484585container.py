@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._check.cls.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
-from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.error._nonpep.errnonpeptype import (
     find_cause_type_instance_origin)
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
@@ -35,7 +35,7 @@ from collections.abc import Collection
 
 # ....................{ FINDERS                            }....................
 def find_cause_pep484585_container_args_1(
-    cause: ViolationCause) -> ViolationCause:
+    cause: HintTreeError) -> HintTreeError:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the **single-argument container type hint**
@@ -45,15 +45,15 @@ def find_cause_pep484585_container_args_1(
 
     Parameters
     ----------
-    cause : ViolationCause
+    cause : HintTreeError
         Input violation cause finder to be inspected.
 
     Returns
     -------
-    ViolationCause
+    HintTreeError
         Output violation cause finder type-checking this input.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
     assert cause.hint_sign in HINT_SIGNS_CONTAINER_ARGS_1, (
         f'{repr(cause.hint)} not 1-argument container type hint.')
 
@@ -166,7 +166,7 @@ def find_cause_pep484585_container_args_1(
     return cause
 
 
-def find_cause_pep484585_tuple_fixed(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484585_tuple_fixed(cause: HintTreeError) -> HintTreeError:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the **fixed-length tuple hint** (i.e., PEP-compliant
@@ -175,15 +175,15 @@ def find_cause_pep484585_tuple_fixed(cause: ViolationCause) -> ViolationCause:
 
     Parameters
     ----------
-    cause : ViolationCause
+    cause : HintTreeError
         Input violation cause finder to be inspected.
 
     Returns
     -------
-    ViolationCause
+    HintTreeError
         Output violation cause finder type-checking this input.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
     assert cause.hint_sign is HintSignPep484585TupleFixed, (
         f'{repr(cause.hint_sign)} not "HintSignPep484585TupleFixed".')
 

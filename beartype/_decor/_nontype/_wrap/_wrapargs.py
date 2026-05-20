@@ -16,6 +16,22 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
+#FIXME: [SPEED] We currently generate non-optimal type-checking code for
+#*MANDATORY* parameters. *OPTIONAL* parameters seem fine. Sadly, mandatory are
+#more common. We appear to be unconditionally generating the following code for
+#*ALL* parameters, regardless of whether that parameter is mandatory or not:
+#    (line 0019)     # If this parameter was passed...
+#    (line 0020)     if __beartype_pith_0 is not __beartype_get_violation:
+#    (line 0021)         # Type-check this parameter or return against this type hint.
+#    (line 0022)         if not ...
+#
+#If the current parameter is mandatory, the first "if" conditional is a
+#superfluous waste of time. Obviously, a mandatory parameter is *ALWAYS* passed.
+#That needn't be tested. Ergo, the above code should instead reduce to the
+#following for a mandatory parameter:
+#    (line 0019)     # Type-check this parameter or return against this type hint.
+#    (line 0020)     if not ...
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,

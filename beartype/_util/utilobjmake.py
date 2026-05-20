@@ -108,7 +108,7 @@ def permute_object(
 
        >>> from beartype._util.utilobjmake import permute_object
 
-       >>> sleuth = ViolationCause(
+       >>> sleuth = HintTreeError(
        ...     pith=[42,]
        ...     hint=typing.List[int],
        ...     cause_indent='',

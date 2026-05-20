@@ -18,7 +18,7 @@ from beartype.typing import (
     Iterable,
     Tuple,
 )
-from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.error._nonpep.errnonpeptype import (
     find_cause_type_instance_origin)
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
@@ -30,7 +30,7 @@ from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ FINDERS                            }....................
-def find_cause_pep484585_mapping(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484585_mapping(cause: HintTreeError) -> HintTreeError:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the **mapping type hint** (i.e., PEP-compliant type
@@ -40,15 +40,15 @@ def find_cause_pep484585_mapping(cause: ViolationCause) -> ViolationCause:
 
     Parameters
     ----------
-    cause : ViolationCause
+    cause : HintTreeError
         Input cause providing this data.
 
     Returns
     -------
-    ViolationCause
+    HintTreeError
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
     assert cause.hint_sign in HINT_SIGNS_MAPPING, (
         f'{repr(cause.hint)} not mapping hint.')
 

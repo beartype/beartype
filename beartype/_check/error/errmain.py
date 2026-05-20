@@ -54,10 +54,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #        )
 #FIXME: [COLOR] *WAY* more important than the above is our current inconsistent
 #application of colouring in error messages. Refactor as follows:
-#* Define a medley of new "ViolationCause" methods to drastically simplify
+#* Define a medley of new "HintTreeError" methods to drastically simplify
 #  object colouring. For example:
 #      from beartype._util.text.utiltextansi import color_hint
-#      class ViolationCause(object):
+#      class HintTreeError(object):
 #          def color_hint(self) -> str:
 #              return color_hint(text=repr(self.hint), is_color=self.conf.is_color)
 #* Replace all existing:
@@ -76,7 +76,7 @@ from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseException,
 )
 from beartype._check.convert.convmain import sanify_hint_any
-from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.cls.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
@@ -509,7 +509,7 @@ def _find_hint_object_violation_cause(
     pith_name: Optional[str] = None,
     random_int: Optional[int] = None,
     exception_prefix: Optional[str] = None,
-) -> ViolationCause:
+) -> HintTreeError:
     '''
     **Type-checking violation cause** (i.e., object providing various metadata
     describing the failure of the passed object to satisfy the passed type hint
@@ -517,7 +517,7 @@ def _find_hint_object_violation_cause(
 
     Returns
     -------
-    ViolationCause
+    HintTreeError
         This type-checking violation cause.
 
     See Also
@@ -609,7 +609,7 @@ def _find_hint_object_violation_cause(
     )
 
     # Cause describing the failure of this pith to satisfy this hint.
-    violation_cause = ViolationCause(
+    violation_cause = HintTreeError(
         call_meta=call_meta,
         cause_indent='',
         conf=conf,

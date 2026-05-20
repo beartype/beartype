@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._data.typing.datatyping import TypeOrTupleTypes
 from beartype._data.hint.sign.datahintsigns import (
@@ -29,22 +29,22 @@ from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ GETTERS                            }....................
-def find_cause_pep484585_subclass(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484585_subclass(cause: HintTreeError) -> HintTreeError:
     '''
     Output cause describing whether the pith of the passed input cause either is
     or is not a subclass of the issubclassable type of that cause.
 
     Parameters
     ----------
-    cause : ViolationCause
+    cause : HintTreeError
         Input cause providing this data.
 
     Returns
     -------
-    ViolationCause
+    HintTreeError
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
     assert cause.hint_sign is HintSignType, (
         f'{cause.hint_sign} not HintSignType.')
 

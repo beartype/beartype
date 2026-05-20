@@ -19,6 +19,7 @@ from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.cls.hint.hintmeta import HintMeta
 from beartype._check.cls.hint.hintsane import HintSane
+from beartype._check.cls.hint.tree.hinttreeabc import HintTreeABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.check.error.dataerrmagic import (

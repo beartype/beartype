@@ -12,14 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: The following "ViolationCause" instance variables are trivial aliases
+#FIXME: The following "HintTreeError" instance variables are trivial aliases
 #and thus useless. They should be excised where time permits; so, never:
-#* "ViolationCause.hint" is just an alias for "ViolationCause.hint_sane.hint".
+#* "HintTreeError.hint" is just an alias for "HintTreeError.hint_sane.hint".
 
-#FIXME: The recursive "ViolationCause" class strongly overlaps with the equally
+#FIXME: The recursive "HintTreeError" class strongly overlaps with the equally
 #recursive (and substantially superior) "beartype.door.TypeHint" class. Ideally:
 #* Define a new private "beartype.door._doorerror" submodule.
-#* Shift the "ViolationCause" class to
+#* Shift the "HintTreeError" class to
 #  "beartype.door._doorerror._TypeHintUnbearability".
 #* Shift the _TypeHintUnbearability.find_cause() method to a new
 #  *PRIVATE* TypeHint._find_cause() method.
@@ -47,7 +47,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #following comment at #235 for that better:
 #    https://github.com/beartype/beartype/issues/235#issuecomment-1707127231
 #FIXME: *LOL*. Guess we're not doing any of that for the moment, huh? We just
-#went ahead and started merging "ViolationCause" with "HintsMeta". Well, that's
+#went ahead and started merging "HintTreeError" with "HintsMeta". Well, that's
 #fine. As long as we start streamlining this class with *SOMETHING* else, it
 #doesn't particularly matter what that *SOMETHING* else even is. There's a good
 #deal more of commonality to be refactored out, of course. Still, this is an
@@ -63,6 +63,7 @@ from beartype._check.cls.hint.hintsane import (
     HintSane,
     TupleHintSane,
 )
+from beartype._check.cls.hint.tree.hinttreeabc import HintTreeABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     HintSignOrNoneOrSentinel,
@@ -91,9 +92,7 @@ from typing import (
 )
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Subclass "HintTreeABC", please. *sigh*
-#FIXME: Rename this subclass to "HintTreeError", please.
-class ViolationCause(object):
+class HintTreeError(HintTreeABC):
     '''
     **Type-checking violation cause** (i.e., object recursively fabricating the
     human-readable string describing the failure of the pith associated with
@@ -101,10 +100,6 @@ class ViolationCause(object):
 
     Attributes
     ----------
-    call_meta : BeartypeCallMetaABC
-        **Beartype call metadata** (i.e., dataclass aggregating *all* common
-        metadata encapsulating the user-defined callable, type, or statement
-        currently being type-checked by the end user).
     cause_indent : str
         **Indentation** (i.e., string of zero or more spaces) preceding each
         line of the string returned by this getter if this string spans
@@ -115,16 +110,8 @@ class ViolationCause(object):
 
         * Violates this hint, a human-readable string describing this violation.
         * Satisfies this hint, :data:`None`.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all flags, options, settings, and other metadata configuring the
-        current decoration of the decorated callable or class).
     exception_cls : type[Exception]
         Type of violation to be raised.
-    exception_prefix : str
-        Human-readable label describing the parameter or return value from
-        which this object originates, typically embedded in exceptions raised
-        from this getter in the event of unexpected runtime failure.
     hint : Hint
         Type hint to validate this object against.
     hint_sane : HintSane
@@ -177,12 +164,9 @@ class ViolationCause(object):
     # * Prevent accidental declaration of erroneous instance variables.
     # * Minimize space and time complexity.
     __slots__ = (
-        'call_meta',
         'cause_indent',
         'cause_str_or_none',
-        'conf',
         'exception_cls',
-        'exception_prefix',
         'hint',
         'hint_sane',
         'hint_sign',
@@ -195,12 +179,9 @@ class ViolationCause(object):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        call_meta: BeartypeCallMetaABC
         cause_indent: str
         cause_str_or_none: Optional[str]
-        conf: BeartypeConf
         exception_cls: TypeException
-        exception_prefix: str
         hint: Hint
         hint_sane: HintSane
         hint_sign: Optional[HintSign]
@@ -318,10 +299,6 @@ class ViolationCause(object):
 
         See the class docstring for a description of all remaining parameters.
         '''
-        assert isinstance(call_meta, BeartypeCallMetaABC), (
-            f'{repr(call_meta)} not beartype call metadata.')
-        assert isinstance(conf, BeartypeConf), (
-            f'{repr(conf)} not configuration.')
         assert isinstance(cause_indent, str), (
             f'{repr(cause_indent)} not string.')
         assert isinstance(cause_str_or_none, NoneTypeOr[str]), (
@@ -336,8 +313,13 @@ class ViolationCause(object):
             f'{repr(exception_cls)} not type.')
         assert issubclass(exception_cls, Exception), (
             f'{repr(exception_cls)} not exception type.')
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+
+        # Initialize our superclass.
+        super().__init__(
+            call_meta=call_meta,
+            conf=conf,
+            exception_prefix=exception_prefix,
+        )
 
         # If the caller did *NOT* pass a non-default sign identifying this hint,
         # default this sign to the default sign identifying this hint.
@@ -349,12 +331,9 @@ class ViolationCause(object):
             f'{repr(hint_sane)} neither hint sign, "None", nor "SENTINEL".')
 
         # Classify all passed parameters.
-        self.call_meta = call_meta
         self.cause_indent = cause_indent
         self.cause_str_or_none = cause_str_or_none
-        self.conf = conf
         self.exception_cls = exception_cls
-        self.exception_prefix = exception_prefix
         self.hint_sane = hint_sane
         self.hint_sign = hint_sign  # pyright: ignore
         self.pith = pith
@@ -481,7 +460,7 @@ class ViolationCause(object):
         return self._hint_childs_sane
 
     # ..................{ FINDERS                            }..................
-    def find_cause(self) -> 'ViolationCause':
+    def find_cause(self) -> 'HintTreeError':
         '''
         Output cause describing whether the pith of this input cause either
         satisfies or violates the type hint of this input cause.
@@ -517,7 +496,7 @@ class ViolationCause(object):
 
         Returns
         -------
-        ViolationCause
+        HintTreeError
             Output cause type-checking this pith against this type hint.
 
         Raises
@@ -539,7 +518,7 @@ class ViolationCause(object):
         # Else, this hint is unignorable.
 
         # Getter function returning the desired string.
-        cause_finder: Callable[[ViolationCause], ViolationCause] = None  # type: ignore[assignment]
+        cause_finder: Callable[[HintTreeError], HintTreeError] = None  # type: ignore[assignment]
 
         # If this hint...
         if (
@@ -591,7 +570,7 @@ class ViolationCause(object):
         return cause_finder(self)
 
     # ..................{ PERMUTERS                          }..................
-    def permute_cause(self, **kwargs) -> 'ViolationCause':
+    def permute_cause(self, **kwargs) -> 'HintTreeError':
         '''
         Shallow copy of this violation cause such that each passed keyword
         parameter overwrites the instance variable of the same name in this
@@ -604,7 +583,7 @@ class ViolationCause(object):
 
         Returns
         -------
-        ViolationCause
+        HintTreeError
             Shallow copy of this violation cause such that each keyword
             parameter overwrites the instance variable of the same name in this
             copy.
@@ -619,7 +598,7 @@ class ViolationCause(object):
         --------
         .. code-block:: pycon
 
-           >>> sleuth = ViolationCause(
+           >>> sleuth = HintTreeError(
            ...     pith=[42,]
            ...     hint=typing.List[int],
            ...     cause_indent='',
@@ -643,7 +622,7 @@ class ViolationCause(object):
 
 
     def permute_cause_hint_child_insane(
-        self, hint_child_insane: Hint, **kwargs) -> 'ViolationCause':
+        self, hint_child_insane: Hint, **kwargs) -> 'HintTreeError':
         '''
         Shallow copy of this violation cause such that each passed keyword
         parameter overwrites the instance variable of the same name in this copy
@@ -663,7 +642,7 @@ class ViolationCause(object):
 
         Returns
         -------
-        ViolationCause
+        HintTreeError
             Shallow copy of this violation cause, permuted as detailed above.
 
         Raises

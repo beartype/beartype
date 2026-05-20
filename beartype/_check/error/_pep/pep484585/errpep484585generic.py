@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.sign.datahintsigns import (
     HintSignPep484585GenericUnsubbed)
-from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.error._nonpep.errnonpeptype import (
     find_cause_instance_type)
 from beartype._check.pep.checkpep484585generic import (
@@ -26,7 +26,7 @@ from beartype._util.text.utiltextansi import color_hint
 
 # ....................{ GETTERS                            }....................
 def find_cause_pep484585_generic_unsubbed(
-    cause: ViolationCause) -> ViolationCause:
+    cause: HintTreeError) -> HintTreeError:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the :pep:`484`- or :pep:`585`-compliant
@@ -37,15 +37,15 @@ def find_cause_pep484585_generic_unsubbed(
 
     Parameters
     ----------
-    cause : ViolationCause
+    cause : HintTreeError
         Input cause providing this data.
 
     Returns
     -------
-    ViolationCause
+    HintTreeError
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
     assert cause.hint_sign is HintSignPep484585GenericUnsubbed, (
         f'{repr(cause.hint_sign)} not generic.')
     # print(f'[find_cause_generic] cause.pith: {cause.pith}')

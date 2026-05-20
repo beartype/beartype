@@ -8,7 +8,8 @@ Project-wide :pep:`585`-compliant **type hint test data.**
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep585_meta() -> 'List[HintPepMetadata]':
+def hints_pep585_meta() -> (
+    'list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]'):
     '''
     Session-scoped fixture returning a list of :pep:`585`-compliant **type hint
     metadata** (i.e.,
@@ -2559,7 +2560,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # "type" superclass.
+        # Any type (i.e., subclass of the "type" superclass).
         HintPepMetadata(
             hint=type[type],
             pep_sign=HintSignType,
@@ -2575,7 +2576,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Specific class.
+        # Any subclass of an arbitrary type.
         HintPepMetadata(
             hint=type[Class],
             pep_sign=HintSignType,
@@ -2591,7 +2592,8 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Specific class deferred with a forward reference.
+        # Any subclass of an arbitrary type whose resolution is deferred by a
+        # PEP 484-compliant stringified absolute forward reference.
         HintPepMetadata(
             hint=type[_TEST_PEP585_FORWARDREF_CLASSNAME],
             pep_sign=HintSignType,
@@ -2607,7 +2609,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Two or more specific classes.
+        # Any subclass of one or more arbitrary types.
         HintPepMetadata(
             hint=type[Union[Class, OtherClass,]],
             pep_sign=HintSignType,
@@ -2625,7 +2627,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Generic class.
+        # Any subclass of an arbitrary PEP 484-compliant generic type.
         HintPepMetadata(
             hint=type[T],
             pep_sign=HintSignType,

@@ -13,14 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.sign.datahintsigns import HintSignNoReturn
-from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextlabel import label_callable
 from beartype._util.text.utiltextrepr import represent_pith
 from collections.abc import Callable
 
 # ....................{ GETTERS                            }....................
-def find_cause_pep484_noreturn(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484_noreturn(cause: HintTreeError) -> HintTreeError:
     '''
     Output cause describing describing the failure of the decorated callable to
     *not* return a value in violation of the passed :pep:`484`-compliant
@@ -28,15 +28,15 @@ def find_cause_pep484_noreturn(cause: ViolationCause) -> ViolationCause:
 
     Parameters
     ----------
-    cause : ViolationCause
+    cause : HintTreeError
         Input cause providing this data.
 
     Returns
     -------
-    ViolationCause
+    HintTreeError
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
     assert cause.hint_sign is HintSignNoReturn, (
         f'{repr(cause.hint)} not "HintSignNoReturn".')
 

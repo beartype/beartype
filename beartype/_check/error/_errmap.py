@@ -17,12 +17,12 @@ from beartype.typing import (
     Optional,
 )
 from beartype._data.hint.sign.datahintsigncls import HintSign
-from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 
 # ....................{ GLOBALS                            }....................
 # Initialized with automated inspection below in the _init() function.
 HINT_SIGN_TO_GET_CAUSE_FUNC: Dict[
-    Optional[HintSign], Callable[[ViolationCause], ViolationCause]] = {}
+    Optional[HintSign], Callable[[HintTreeError], HintTreeError]] = {}
 '''
 Dictionary mapping each **sign** (i.e., arbitrary object uniquely identifying a
 category of type hints) to a private getter function defined by this submodule

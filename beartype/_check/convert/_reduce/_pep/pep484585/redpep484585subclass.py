@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.cls.hint.hintsane import (
     HintSane,
+    HintOrSane,
     make_hint_sane,
 )
 from beartype._data.typing.datatypingport import Hint
@@ -31,7 +32,7 @@ def reduce_hint_pep484585_subclass(
     hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
     **kwargs
-) -> HintSane:
+) -> HintOrSane:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **subclass hint**
     (i.e., hint constraining objects to subclass that superclass) to the
@@ -99,7 +100,7 @@ def reduce_hint_pep484585_subclass(
     # raise an exception.
     if hint is typing_Type:
         # print(f'Reducing subclass hint {hint} to "type"...')
-        hint = type  # pyright: ignore
+        return type  # pyright: ignore
     # Else, this hint is *NOT* the unsubscripted PEP 484-compliant subclass
     # hint. In this case, preserve this hint as is.
 
@@ -112,8 +113,10 @@ def reduce_hint_pep484585_subclass(
         # subscripting this parent subclass hint that those child hints
         # transitively subscripting a parent subclass hint. Why? Because such
         # child hints *MUST* be reduced in a subclass-specific manner (e.g.,
-        # reducing the child hint "Annotated[cls, ...]" subscripting the
-        # parent subclass hint "type[Annotated[cls, ...]]" to "type[cls]").
+        # reducing the PEP 593-compliant child hint "Annotated[cls, ...]"
+        # subscripting the PEP 585-compliant parent subclass hint
+        # "type[Annotated[cls, ...]]" to merely "type[cls]", thus eliminating
+        # PEP 593 compliance entirely).
         is_hint_parent_pep484585_subclass=True,
     )
 

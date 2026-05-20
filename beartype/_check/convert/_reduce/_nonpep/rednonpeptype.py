@@ -35,11 +35,13 @@ from threading import (
     Lock,
     RLock,
 )
+from typing import Optional
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_nonpep(
     call_meta: BeartypeCallMetaABC,
     hint: Hint,
+    hint_parent_sane: Optional[HintSane],
     **kwargs,
 ) -> HintOrSane:
     '''
@@ -69,8 +71,19 @@ def reduce_hint_nonpep(
         currently being type-checked by the end user).
     hint : Hint
         PEP-noncompliant hint to be reduced.
+    hint_parent_sane : Optional[HintSane]
+        Either:
 
-    All remaining keyword-only parameters are silently ignored.
+        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
+          of child hints), :data:`None`.
+        * Else, the passed hint is a **child** of some parent hint. In this
+          case, the **sanified parent type hint metadata** (i.e., immutable and
+          thus hashable object encapsulating *all* metadata previously returned
+          by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
+          the possibly PEP-noncompliant parent hint of this child hint into a
+          fully PEP-compliant parent hint).
+
+    All remaining passed keyword-only parameters are silently ignored.
 
     Returns
     -------
@@ -99,8 +112,6 @@ def reduce_hint_nonpep(
 
     # ....................{ RECURSE                        }....................
     # If...
-    #
-    # See the "BLACKLIST_METHOD_NAMES_HINT_SELF" definition for further details.
     if (
         # One or more types are currently being decorated by @beartype *AND*...
         call_meta.cls_stack and
@@ -112,6 +123,8 @@ def reduce_hint_nonpep(
     # generating code type-checking this hint *COULD* accidentally ignite
     # infinite recursion while executing that type-checking code in the first
     # subsequent call of that method. In this case...
+    #
+    # See the "BLACKLIST_METHOD_NAMES_HINT_SELF" docstring for further details.
         # Currently decorated type (i.e., most deeply lexically nested type
         # currently being decorated by @beartype).
         decor_type = call_meta.cls_stack[-1]
@@ -177,6 +190,43 @@ def reduce_hint_nonpep(
     # or more types are currently being decorated by @beartype but no method of
     # the most deeply nested such type is also currently being decorated. In any
     # case, this hint *CANNOT* ignite such recursion and is thus preserved.
+
+    #FIXME: Should work, but breaks tests. *LOL*. We clearly munted something...
+    # # ....................{ PEP (484|585)                  }....................
+    # # If...
+    # if (
+    #     # This hint is the root "type" superclass of all types *AND*...
+    #     hint is type and
+    #     # This hint has a parent and is thus a child hint *AND*...
+    #     hint_parent_sane is not None and
+    #     # This child hint transitively subscripts a PEP 484- or 585-compliant
+    #     # parent subclass hint...
+    #     hint_parent_sane.is_hint_parent_pep484585_subclass
+    # ):
+    # # Then this child hint is ignorable. Why? Because *ALL* types necessarily
+    # # subclass the root "type" superclass. Any PEP 484- or 585-compliant
+    # # parent subclass hint transitively subscripted by the root "type"
+    # # superclass (e.g., "type[type]") is thus reducible to that superclass.
+    # # Notably:
+    # # * The PEP 585-compliant parent subclass hint "type[type]" is semantically
+    # #   equivalent to "type[typing.Any]", implying this "root" hint to be
+    # #   ignorable.
+    # # * Any parent PEP 484- or 585-compliant parent union hint subscripted by
+    # #   the root "type" superclass such that that union also subscripts a PEP
+    # #   484- or 585-compliant parent parent subclass hint (e.g., the PEP
+    # #   585-compliant parent subclass hint "type[Union[{hints_child}, type]]"
+    # #   for all "{hints_child}") is also semantically equivalent to
+    # #   "type[typing.Any]" and thus also ignorable by a similar argument. For
+    # #   this reason, there exist a countably infinite number of parent subclass
+    # #   hints to which this same equivalence applies.
+    #     return HINT_SANE_IGNORABLE
+    # # Else, either:
+    # # * This hint is *NOT* the root "type" superclass *OR*...
+    # # * This hint has *NO* parent and is thus the bare "type" hint *OR*...
+    # # * This hint his a parent and is thus a child hint but does *NOT*
+    # #   transitively subscript a PEP 484- or 585-compliant parent subclass.
+    # #
+    # # In any case, preserve this hint as is (for the moment, anyway).
 
     # ....................{ REDUCE                         }....................
     # If this hint is hashable...

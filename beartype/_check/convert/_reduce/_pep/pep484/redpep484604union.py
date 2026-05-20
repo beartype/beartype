@@ -94,8 +94,8 @@ def reduce_hint_pep484604_union(
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
-    All remaining passed keyword parameters are passed to the parent
-    :func:`beartype._check.convert._reduce.redmain.reduce_hint` function
+    All remaining passed keyword-only parameters are passed as is to the
+    :func:`beartype._check.convert._reduce.redmain.reduce_hint_child` reducer
     recursively called by this reducer.
 
     Returns

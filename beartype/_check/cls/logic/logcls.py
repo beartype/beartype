@@ -20,7 +20,7 @@ from abc import (
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
-from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.typing.datatyping import (
@@ -42,10 +42,10 @@ from collections.abc import (
 from typing import TYPE_CHECKING
 
 # ....................{ PRIVATE ~ hints                    }....................
-_GetCauseEnumeratorItem = Callable[[ViolationCause], EnumeratorItem]
+_GetCauseEnumeratorItem = Callable[[HintTreeError], EnumeratorItem]
 '''
 PEP-compliant type hint matching an **enumerator item violation cause getter**
-(i.e., callable accepting a :class:`.ViolationCause` object and returning a
+(i.e., callable accepting a :class:`.HintTreeError` object and returning a
 2-tuple ``(item_index, item)`` describing an arbitrary item efficiently accessed
 from the container encapsulated by this violation cause.
 
@@ -53,7 +53,7 @@ This hint matches callables with signatures resembling:
 
 .. code-block:: python
 
-   def _get_cause_enumerator_item(cause: ViolationCause) -> EnumeratorItem:
+   def _get_cause_enumerator_item(cause: HintTreeError) -> EnumeratorItem:
 
 Callables matched by this hint return 2-tuples of the standard form
 ``(item_index, item)`` returned by the :func:`enumerate` builtin, where:
@@ -102,7 +102,7 @@ class HintLogicABC(object, metaclass=ABCMeta):
     ----------
     _get_cause_enumerator_item : _GetCauseEnumeratorItem
         **Enumerator item violation cause getter** (i.e., callable accepting a
-        :class:`.ViolationCause` object and returning a 2-tuple ``(item_index,
+        :class:`.HintTreeError` object and returning a 2-tuple ``(item_index,
         item)`` describing an arbitrary item efficiently accessed from the
         container encapsulated by this violation cause.
     _is_var_random_int_needed_if_conf_is_random : bool
@@ -160,7 +160,7 @@ class HintLogicABC(object, metaclass=ABCMeta):
             is_var_random_int_needed_if_conf_is_random)
 
     # ..................{ ITERATORS                          }..................
-    def enumerate_cause_items(self, cause: ViolationCause) -> Enumerator:
+    def enumerate_cause_items(self, cause: HintTreeError) -> Enumerator:
         '''
         Arbitrary iterator satisfying the :func:`enumerate` protocol over a
         subset or possibly all items contained in the current pith as configured
@@ -179,7 +179,7 @@ class HintLogicABC(object, metaclass=ABCMeta):
 
         Parameters
         ----------
-        cause: ViolationCause
+        cause: HintTreeError
             Type-checking violation cause finder to be inspected.
 
         Returns
@@ -480,14 +480,14 @@ def _get_sequence_pith_child_expr(hints_meta: HintsMeta) -> str:
 
 # ..................{ PRIVATE ~ getters : cause              }..................
 def _get_cause_enumerator_item_collection(
-    cause: ViolationCause) -> EnumeratorItem:
+    cause: HintTreeError) -> EnumeratorItem:
     '''
     2-tuple ``(item_index, item)`` describing the first item of the passed
     collection satisfying the format of the :func:`enumerate` iterator.
 
     Parameters
     ----------
-    cause: ViolationCause
+    cause: HintTreeError
         Type-checking violation cause finder to be inspected.
 
     Returns
@@ -518,14 +518,14 @@ def _get_cause_enumerator_item_collection(
 
 
 def _get_cause_enumerator_item_reiterable(
-    cause: ViolationCause) -> EnumeratorItem:
+    cause: HintTreeError) -> EnumeratorItem:
     '''
     2-tuple ``(item_index, item)`` describing the first item of the passed
     reiterable satisfying the format of the :func:`enumerate` iterator.
 
     Parameters
     ----------
-    cause: ViolationCause
+    cause: HintTreeError
         Type-checking violation cause finder to be inspected.
 
     Returns
@@ -550,14 +550,14 @@ def _get_cause_enumerator_item_reiterable(
 
 
 def _get_cause_enumerator_item_sequence(
-    cause: ViolationCause) -> EnumeratorItem:
+    cause: HintTreeError) -> EnumeratorItem:
     '''
     2-tuple ``(item_index, item)`` describing a pseudo-random item of the passed
     sequence satisfying the format of the :func:`enumerate` iterator.
 
     Parameters
     ----------
-    cause: ViolationCause
+    cause: HintTreeError
         Type-checking violation cause finder to be inspected.
 
     Returns

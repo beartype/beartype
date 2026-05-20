@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._data.hint.sign.datahintsigns import HintSignLiteral
 from beartype._util.hint.pep.proposal.pep586 import get_hint_pep586_literals
 from beartype._util.text.utiltextansi import color_type
@@ -20,7 +20,7 @@ from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ GETTERS                            }....................
-def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep586_literal(cause: HintTreeError) -> HintTreeError:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the :pep:`586`-compliant :mod:`beartype`-specific
@@ -28,15 +28,15 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
 
     Parameters
     ----------
-    cause : ViolationCause
+    cause : HintTreeError
         Input cause providing this data.
 
     Returns
     ----------
-    ViolationCause
+    HintTreeError
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
     assert cause.hint_sign is HintSignLiteral, (
         f'{repr(cause.hint_sign)} not "HintSignLiteral".')
 

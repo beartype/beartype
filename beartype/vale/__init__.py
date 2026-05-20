@@ -79,7 +79,7 @@ Instead, callers are expected to (in order):
 #  * DivisibleBy.
 
 #FIXME: Add a new BeartypeValidator.find_cause() method with the same
-#signature and docstring as the existing ViolationCause.find_cause()
+#signature and docstring as the existing HintTreeError.find_cause()
 #method. This new BeartypeValidator.find_cause() method should then be
 #called by the "_peperrorannotated" submodule to generate human-readable
 #exception messages. Note that this implies that:

@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._check.cls.hint.tree.hinttreeerror import ViolationCause
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._data.hint.sign.datahintsigns import HintSignAnnotated
 from beartype._util.hint.pep.proposal.pep593 import (
     get_hint_pep593_metadata,
@@ -23,7 +23,7 @@ from beartype._data.check.code.datacodeindent import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ FINDERS                            }....................
-def find_cause_pep593_annotated(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep593_annotated(cause: HintTreeError) -> HintTreeError:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the :pep:`593`-compliant :mod:`beartype`-specific
@@ -34,15 +34,15 @@ def find_cause_pep593_annotated(cause: ViolationCause) -> ViolationCause:
 
     Parameters
     ----------
-    cause : ViolationCause
+    cause : HintTreeError
         Input cause providing this data.
 
     Returns
     -------
-    ViolationCause
+    HintTreeError
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
     assert cause.hint_sign is HintSignAnnotated, (
         f'{cause.hint_sign} not "HintSignAnnotated".')
 
