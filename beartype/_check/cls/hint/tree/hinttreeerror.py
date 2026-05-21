@@ -47,7 +47,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #following comment at #235 for that better:
 #    https://github.com/beartype/beartype/issues/235#issuecomment-1707127231
 #FIXME: *LOL*. Guess we're not doing any of that for the moment, huh? We just
-#went ahead and started merging "HintTreeError" with "HintsMeta". Well, that's
+#went ahead and started merging "HintTreeError" with "HintTreeCode". Well, that's
 #fine. As long as we start streamlining this class with *SOMETHING* else, it
 #doesn't particularly matter what that *SOMETHING* else even is. There's a good
 #deal more of commonality to be refactored out, of course. Still, this is an

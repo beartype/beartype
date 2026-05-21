@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
+from beartype._check.cls.hint.tree.hinttreecode import HintTreeCode
 from beartype._data.check.code.pep.datacodepep484585 import (
     CODE_PEP484585_SUBCLASS_format)
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
@@ -31,31 +31,31 @@ from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
 # ....................{ FACTORIES                          }....................
 def make_hint_pep484585_subclass_check_expr(
-    hints_meta: HintsMeta) -> None:
+    hint_tree: HintTreeCode) -> None:
     '''
     Python code snippet type-checking the current pith against the
     passed :pep:`484`- or :pep:`585`-compliant **subclass type hint** of the
     form ``type[...]`` or ``typing.Type[...]``.
 
     This factory is intentionally *not* memoized (e.g., by the
-    :func:`.callable_cached` decorator), as the ``hints_meta`` parameter is
+    :func:`.callable_cached` decorator), as the ``hint_tree`` parameter is
     **context-sensitive** (i.e., contextually depends on context unique to the
     code being generated for the currently decorated callable).
 
     Parameters
     ----------
-    hints_meta : HintsMeta
+    hint_tree : HintTreeCode
         Stack of metadata describing all visitable hints previously discovered
         by this breadth-first search (BFS).
     '''
-    assert isinstance(hints_meta, HintsMeta), (
-        f'{repr(hints_meta)} not "HintsMeta" object.')
+    assert isinstance(hint_tree, HintTreeCode), (
+        f'{repr(hint_tree)} not "HintTreeCode" object.')
     # print(f'Visiting generic type {repr(hint_curr)}...')
 
     # ....................{ PARENT                         }....................
     # Metadata encapsulating the sanification of this hint, localized for both
     # usability and efficiency.
-    hint_sane = hints_meta.hint_curr_meta.hint_sane
+    hint_sane = hint_tree.hint_curr_meta.hint_sane
 
     # This sanified subclass hint.
     hint = hint_sane.hint
@@ -69,7 +69,7 @@ def make_hint_pep484585_subclass_check_expr(
     # subclass hint, guaranteed to be the *ONLY* child hint subscripting this
     # subclass hint.
     hint_child_insane = get_hint_pep484585_arg(
-        hint=hint, exception_prefix=hints_meta.exception_prefix)
+        hint=hint, exception_prefix=hint_tree.exception_prefix)
 
     # Metadata encapsulating the sanification of this child hint.
     #
@@ -77,7 +77,7 @@ def make_hint_pep484585_subclass_check_expr(
     # forward reference, that this sanified child hint is now guaranteed to be
     # a normal isinstanceable type instead. Ergo, forward references need *NOT*
     # be explicitly handled below.
-    hint_child_sane = hints_meta.sanify_hint_child(hint_child_insane)
+    hint_child_sane = hint_tree.sanify_hint_child(hint_child_insane)
 
     #FIXME: Additionally, if "hint_child_sane.hint is type", then this sanified
     #child hint is *ALSO* ignorable. Why? Because *ALL* types necessarily
@@ -91,7 +91,7 @@ def make_hint_pep484585_subclass_check_expr(
         # case by hardcoding direct (and thus efficient) access of this builtin
         # rather than injecting a hidden beartype-specific parameter into the
         # signature of this wrapper function as we usually do.
-        hints_meta.hint_curr_expr = 'type'
+        hint_tree.hint_curr_expr = 'type'
 
         # Fallback to trivial code shallowly type-checking this pith as an
         # instance of this origin type.
@@ -147,12 +147,12 @@ def make_hint_pep484585_subclass_check_expr(
     # Python expression evaluating to this child hint passed to this wrapper
     # function.
     hint_curr_expr = add_hints_meta_scope_type_or_types(
-        hints_meta=hints_meta, type_or_types=hint_child)  # type: ignore[arg-type]
+        hint_tree=hint_tree, type_or_types=hint_child)  # type: ignore[arg-type]
 
     # Code type-checking this pith against this superclass.
-    hints_meta.func_curr_code = CODE_PEP484585_SUBCLASS_format(
-        pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
-        pith_curr_var_name=hints_meta.pith_curr_var_name,
+    hint_tree.func_curr_code = CODE_PEP484585_SUBCLASS_format(
+        pith_curr_assign_expr=hint_tree.pith_curr_assign_expr,
+        pith_curr_var_name=hint_tree.pith_curr_var_name,
         hint_curr_expr=hint_curr_expr,
-        indent_curr=hints_meta.indent_curr,
+        indent_curr=hint_tree.indent_curr,
     )

@@ -43,7 +43,7 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
     is_check_expr_cacheable : bool
         :data:`True` only if callers may safely cache (memoize) this scope.
         Unsurprisingly, this boolean is an alias of the comparable
-        :attr:`beartype._check.cls.hint.tree.hinttreecode.HintsMeta.is_check_expr_cacheable`
+        :attr:`beartype._check.cls.hint.tree.hinttreecode.HintTreeCode.is_check_expr_cacheable`
         boolean. See also that instance variable for further details.
     '''
 
@@ -95,7 +95,7 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
         is_check_expr_cacheable: bool, default: False
             :data:`True` only if callers may safely cache (memoize) this scope.
             Unsurprisingly, this boolean is an alias of the comparable
-            :attr:`beartype._check.cls.hint.tree.hinttreecode.HintsMeta.is_check_expr_cacheable`
+            :attr:`beartype._check.cls.hint.tree.hinttreecode.HintTreeCode.is_check_expr_cacheable`
             boolean. Defaults to :data:`False` for safety.
         '''
         assert isinstance(beartype_ref_proxies, NoneTypeOr[tuple]), (

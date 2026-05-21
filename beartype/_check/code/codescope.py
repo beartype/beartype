@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.reference.fwdreftest import is_beartype_ref_proxy
-from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
+from beartype._check.cls.hint.tree.hinttreecode import HintTreeCode
 from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
 from beartype._data.check.error.dataerrmagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
@@ -42,7 +42,7 @@ from typing import Optional
 # ....................{ ADDERS ~ type                      }....................
 #FIXME: Unit test us up, please.
 def add_hints_meta_scope_type_or_types(
-    hints_meta: HintsMeta, type_or_types: TypeOrSetOrTupleTypes) -> str:
+    hint_tree: HintTreeCode, type_or_types: TypeOrSetOrTupleTypes) -> str:
     '''
     Add a new **scoped type or tuple of types** (i.e., new key-value pair of the
     passed dictionary mapping from the name to value of each globally or locally
@@ -56,7 +56,7 @@ def add_hints_meta_scope_type_or_types(
 
     Parameters
     ----------
-    hints_meta : HintsMeta
+    hint_tree : HintTreeCode
         Stack of metadata describing all visitable hints currently discovered by
         this breadth-first search (BFS).
     type_or_types : TypeOrSetOrTupleTypes
@@ -76,13 +76,13 @@ def add_hints_meta_scope_type_or_types(
     :func:`.add_func_scope_type_or_types`
         Further details.
     '''
-    assert isinstance(hints_meta, HintsMeta), (
-        f'{repr(hints_meta)} not "HintsMeta" object.')
+    assert isinstance(hint_tree, HintTreeCode), (
+        f'{repr(hint_tree)} not "HintTreeCode" object.')
 
     # Defer to the lower-level add_func_scope_type_or_types() adder.
     return add_func_scope_type_or_types(
         type_or_types=type_or_types,
-        func_scope=hints_meta.func_wrapper_locals,
+        func_scope=hint_tree.func_wrapper_locals,
         exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     )
 

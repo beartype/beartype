@@ -19,7 +19,7 @@ from abc import (
 )
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
-from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
+from beartype._check.cls.hint.tree.hinttreecode import HintTreeCode
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confenum import BeartypeStrategy
@@ -218,14 +218,14 @@ class HintLogicABC(object, metaclass=ABCMeta):
 
     # ..................{ FACTORIES                          }..................
     def make_code(
-        self, hints_meta: HintsMeta, hint_child_sane: HintSane) -> None:
+        self, hint_tree: HintTreeCode, hint_child_sane: HintSane) -> None:
         '''
         Python expression deeply type-checking the current pith against the
         currently visited container hint described by the passed parameters.
 
         Parameters
         ----------
-        hints_meta : HintsMeta
+        hint_tree : HintTreeCode
             Stack of metadata describing all visitable hints currently
             discovered by this breadth-first search (BFS).
         hint_child_sane : HintSane
@@ -236,16 +236,16 @@ class HintLogicABC(object, metaclass=ABCMeta):
 
         # Increase the indentation level of code type-checking this pith
         # *BEFORE* generating that code below..
-        hints_meta.indent_level_child += 1
+        hint_tree.indent_level_child += 1
 
         # Python expression deeply type-checking this pith against this hint.
-        self._make_code(hints_meta=hints_meta, hint_child_sane=hint_child_sane)
+        self._make_code(hint_tree=hint_tree, hint_child_sane=hint_child_sane)
 
         # This expression requires a pseudo-random integer if and only if...
-        hints_meta.is_var_random_int_needed |= (
+        hint_tree.is_var_random_int_needed |= (
             # The beartype configuration under which this expression was
             # generated above allows randomized type-checking *AND*...
-            hints_meta.conf.is_random and
+            hint_tree.conf.is_random and
             # Our subclass insists this expression requires a pseudo-random
             # integer in that case.
             self._is_var_random_int_needed_if_conf_is_random
@@ -254,7 +254,7 @@ class HintLogicABC(object, metaclass=ABCMeta):
     # ..................{ PRIVATE ~ factories                }..................
     @abstractmethod
     def _make_code(
-        self, hints_meta: HintsMeta, hint_child_sane: HintSane) -> None:
+        self, hint_tree: HintTreeCode, hint_child_sane: HintSane) -> None:
         '''
         Python expression deeply type-checking the current pith against the
         currently visited container hint described by the passed parameters.
@@ -265,7 +265,7 @@ class HintLogicABC(object, metaclass=ABCMeta):
 
         Parameters
         ----------
-        hints_meta : HintsMeta
+        hint_tree : HintTreeCode
             Stack of metadata describing all visitable hints currently
             discovered by this breadth-first search (BFS).
         hint_child_sane : HintSane
@@ -311,41 +311,41 @@ class HintLogicQuasiiterable(HintLogicABC):
 
     # ..................{ PRIVATE ~ factories                }..................
     def _make_code(
-        self, hints_meta: HintsMeta, hint_child_sane: HintSane) -> None:
-        assert isinstance(hints_meta, HintsMeta), (
-            f'{repr(hints_meta)} not "HintsMeta" object.')
+        self, hint_tree: HintTreeCode, hint_child_sane: HintSane) -> None:
+        assert isinstance(hint_tree, HintTreeCode), (
+            f'{repr(hint_tree)} not "HintTreeCode" object.')
 
         # ..................{ SUBEXPRESSIONS                 }..................
         # Python expression evaluating to the "collections.abc.Collection" ABC
         # as a hidden parameter passed to the current wrapper function.
         collection_abc_expr = add_hints_meta_scope_type_or_types(
-            hints_meta=hints_meta, type_or_types=Collection)
+            hint_tree=hint_tree, type_or_types=Collection)
 
         # Python expression evaluating to the "collections.abc.Sequence" ABC as
         # a hidden parameter passed to the current wrapper function.
         sequence_abc_expr = add_hints_meta_scope_type_or_types(
-            hints_meta=hints_meta, type_or_types=Sequence)
+            hint_tree=hint_tree, type_or_types=Sequence)
 
         # ..................{ EXPRESSION                     }..................
         # Increment the integer suffixing the name of a unique local variable
         # storing the value of this child pith *BEFORE* defining this variable.
-        hints_meta.pith_curr_var_name_index += 1
+        hint_tree.pith_curr_var_name_index += 1
 
         # Name of this local variable.
         pith_child_var_name = PITH_INDEX_TO_VAR_NAME[
-            hints_meta.pith_curr_var_name_index]
+            hint_tree.pith_curr_var_name_index]
 
         # Python expression deeply type-checking this pith against this hint.
-        hints_meta.func_curr_code = CODE_PEP484585_QUASIITERABLE_format(
+        hint_tree.func_curr_code = CODE_PEP484585_QUASIITERABLE_format(
             collection_abc_expr=collection_abc_expr,
-            hint_curr_expr=hints_meta.hint_curr_expr,
-            indent_curr=hints_meta.indent_curr,
-            pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
-            pith_curr_var_name=hints_meta.pith_curr_var_name,
+            hint_curr_expr=hint_tree.hint_curr_expr,
+            indent_curr=hint_tree.indent_curr,
+            pith_curr_assign_expr=hint_tree.pith_curr_assign_expr,
+            pith_curr_var_name=hint_tree.pith_curr_var_name,
             pith_child_var_name=pith_child_var_name,
             sequence_abc_expr=sequence_abc_expr,
-            sequence_pith_child_expr=_get_sequence_pith_child_expr(hints_meta),
-            hint_child_placeholder=hints_meta.enqueue_hint_child_sane(
+            sequence_pith_child_expr=_get_sequence_pith_child_expr(hint_tree),
+            hint_child_placeholder=hint_tree.enqueue_hint_child_sane(
                 hint_sane=hint_child_sane, pith_expr=pith_child_var_name),
         )
 
@@ -381,22 +381,22 @@ class HintLogicReiterable(HintLogicABC):
 
     # ..................{ PRIVATE ~ factories                }..................
     def _make_code(
-        self, hints_meta: HintsMeta, hint_child_sane: HintSane) -> None:
-        assert isinstance(hints_meta, HintsMeta), (
-            f'{repr(hints_meta)} not "HintsMeta" object.')
+        self, hint_tree: HintTreeCode, hint_child_sane: HintSane) -> None:
+        assert isinstance(hint_tree, HintTreeCode), (
+            f'{repr(hint_tree)} not "HintTreeCode" object.')
 
         # Python snippet accessing the desired reiterable pith item.
         pith_expr = CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR_format(
-            pith_curr_var_name=hints_meta.pith_curr_var_name)
+            pith_curr_var_name=hint_tree.pith_curr_var_name)
 
         # Python expression deeply type-checking this pith against this hint.
-        hints_meta.func_curr_code = (
+        hint_tree.func_curr_code = (
             CODE_PEP484585_REITERABLE_OR_SEQUENCE_format(
-                hint_curr_expr=hints_meta.hint_curr_expr,
-                indent_curr=hints_meta.indent_curr,
-                pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
-                pith_curr_var_name=hints_meta.pith_curr_var_name,
-                hint_child_placeholder=hints_meta.enqueue_hint_child_sane(
+                hint_curr_expr=hint_tree.hint_curr_expr,
+                indent_curr=hint_tree.indent_curr,
+                pith_curr_assign_expr=hint_tree.pith_curr_assign_expr,
+                pith_curr_var_name=hint_tree.pith_curr_var_name,
+                hint_child_placeholder=hint_tree.enqueue_hint_child_sane(
                     hint_sane=hint_child_sane, pith_expr=pith_expr),
             )
         )
@@ -429,26 +429,26 @@ class HintLogicSequence(HintLogicABC):
 
     # ..................{ PRIVATE ~ factories                }..................
     def _make_code(
-        self, hints_meta: HintsMeta, hint_child_sane: HintSane) -> None:
-        assert isinstance(hints_meta, HintsMeta), (
-            f'{repr(hints_meta)} not "HintsMeta" object.')
+        self, hint_tree: HintTreeCode, hint_child_sane: HintSane) -> None:
+        assert isinstance(hint_tree, HintTreeCode), (
+            f'{repr(hint_tree)} not "HintTreeCode" object.')
 
         # Python expression deeply type-checking this pith against this hint.
-        hints_meta.func_curr_code = (
+        hint_tree.func_curr_code = (
             CODE_PEP484585_REITERABLE_OR_SEQUENCE_format(
-                hint_curr_expr=hints_meta.hint_curr_expr,
-                indent_curr=hints_meta.indent_curr,
-                pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
-                pith_curr_var_name=hints_meta.pith_curr_var_name,
-                hint_child_placeholder=hints_meta.enqueue_hint_child_sane(
+                hint_curr_expr=hint_tree.hint_curr_expr,
+                indent_curr=hint_tree.indent_curr,
+                pith_curr_assign_expr=hint_tree.pith_curr_assign_expr,
+                pith_curr_var_name=hint_tree.pith_curr_var_name,
+                hint_child_placeholder=hint_tree.enqueue_hint_child_sane(
                     hint_sane=hint_child_sane,
-                    pith_expr=_get_sequence_pith_child_expr(hints_meta),
+                    pith_expr=_get_sequence_pith_child_expr(hint_tree),
                 ),
             )
         )
 
 # ..................{ PRIVATE ~ getters                      }..................
-def _get_sequence_pith_child_expr(hints_meta: HintsMeta) -> str:
+def _get_sequence_pith_child_expr(hint_tree: HintTreeCode) -> str:
     '''
     :pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding
     the value of some item of the current sequence pith conditionally depending
@@ -456,19 +456,19 @@ def _get_sequence_pith_child_expr(hints_meta: HintsMeta) -> str:
 
     Parameters
     ----------
-    hints_meta : HintsMeta
+    hint_tree : HintTreeCode
         Stack of metadata describing all visitable hints currently discovered by
         this breadth-first search (BFS).
     '''
-    assert isinstance(hints_meta, HintsMeta), (
-        f'{repr(hints_meta)} not "HintsMeta" object.')
+    assert isinstance(hint_tree, HintTreeCode), (
+        f'{repr(hint_tree)} not "HintTreeCode" object.')
 
     # Python expression efficiently yielding the index of either...
     sequence_pith_child_index_expr = (
         # If this beartype configuration allows randomized type-checking, a
         # randomly indexed item of the current sequence pith;
         CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR
-        if hints_meta.conf.is_random else
+        if hint_tree.conf.is_random else
         # Else, the first item of the current sequence pith.
         CODE_PEP484585_SEQUENCE_NONRANDOM_PITH_CHILD_EXPR
     )
@@ -476,7 +476,7 @@ def _get_sequence_pith_child_expr(hints_meta: HintsMeta) -> str:
     # Return the Python expression yielding the corresponding value of the item
     # at that index of the current sequence pith.
     return sequence_pith_child_index_expr.format(
-        pith_curr_var_name=hints_meta.pith_curr_var_name)
+        pith_curr_var_name=hint_tree.pith_curr_var_name)
 
 # ..................{ PRIVATE ~ getters : cause              }..................
 def _get_cause_enumerator_item_collection(

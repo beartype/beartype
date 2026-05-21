@@ -17,9 +17,12 @@ from beartype.roar import BeartypeDecorHintRecursionException
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaexternal import (
+    BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.cls.hint.hintmeta import HintMeta
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.cls.hint.tree.hinttreeabc import HintTreeABC
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.check.error.dataerrmagic import (
@@ -43,46 +46,20 @@ from typing import (
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
-#FIXME: Subclass "HintTreeABC" rather than "FixedList". The latter was always an
-#awkward design choice that was going to eat our faces. And... here we are.
-#Faces being eaten. To do so:
-#* *FIRSTLY*, commit at this point. We want to be able to revert this if things
-#  go south. Done? Great. Then:
-#  * Globally search and replace "hints_meta" with "hint_tree", please.
-#* Rename this subclass to "HintTreeCode".
-#* Define this new slotted instance variable of this subclass:
-#      if TYPE_CHECKING:
-#          hints_meta: FixedList
-#  We trust you now understand why we performed the above global
-#  search-and-replacement first, yeah? No? You got nuthin'? *sigh*
-#* Grepping the codebase for 'hints.*meta.*\[', it looks like the only place we
-#  ever index instances of this type as a list is, uh... once. WAT!? Yeah. This
-#  line in "codemain":
-#        hints_meta[hints_meta_index_curr] = None
-#  That's it. Sheer nonsense! Oh, right. There are also two usages of
-#  "self[index]" dispersed in this submodule. That's fine. Only three total.
-#  Phew!
-#* Refactor each of the above lines (in order) to instead read:
-#        hint_tree.hints_meta[hints_meta_index_curr] = None
-#        self.hints_meta[*WHATEVAHS*]
-#* Subclass "HintTreeABC" rather than "FixedList".
-class HintsMeta(FixedList):
+class HintTreeCode(HintTreeABC):
     '''
-    **Type hint type-checking metadata queue** (i.e., low-level fixed list of
-    metadata describing all visitable type hints currently discovered by the
-    breadth-first search (BFS) dynamically generating pure-Python type-checking
-    code snippets in the :func:`beartype._check.code.codemain.make_check_expr`
-    factory).
+    **Type hint tree type-checking metadata** (i.e., dataclass defining a
+    low-level :attr:`._hint_queue` fixed list of metadata describing all
+    visitable type hints currently discovered by the breadth-first search (BFS)
+    dynamically generating pure-Python type-checking code snippets in the
+    :func:`beartype._check.code.codemain.make_check_expr` factory).
 
-    This list acts as a standard First In First Out (FILO) queue, enabling that
-    BFS to be implemented as an efficient imperative algorithm rather than an
-    inefficient -- and dangerous, due to both unavoidable stack exhaustion and
-    avoidable infinite recursion -- recursive algorithm.
-
-    Note that this list is guaranteed by the previously called
-    ``_die_if_hint_repr_exceeds_child_limit()`` function to be larger than the
-    number of hints transitively visitable from this root hint. Ergo, *all*
-    indexation into this list performed by this BFS is guaranteed to be safe.
+    This metadata defines the :attr:`._hint_queue` instance variable to be a
+    list acting as a standard First-In-First-Out (FIFO) queue, enabling that BFS
+    to be implemented as an efficient imperative algorithm. Without
+    :attr:`._hint_queue`, that BFS would instead have to be naively implemented
+    as a recursive algorithm exhibiting both inefficiency and risk (due to
+    unavoidable stack exhaustion and avoidable infinite recursion).
 
     Design
     ------
@@ -140,15 +117,6 @@ class HintsMeta(FixedList):
 
     Attributes
     ----------
-    call_meta : BeartypeCallMetaABC
-        **Beartype call metadata** (i.e., dataclass aggregating *all* common
-        metadata encapsulating the user-defined callable, type, or statement
-        currently being type-checked by the end user).
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
     func_curr_code : Optional[str]
         Either:
 
@@ -227,6 +195,12 @@ class HintsMeta(FixedList):
         low-level scalar rather than as an inefficient high-level
         "itertools.Counter" object. Since both are equally thread-safe in the
         internal context of this dataclass, the former is preferable.
+    _hint_queue : FixedList
+        **Type hint tree type-checking queue** (i.e., First-In-First-Out (FIFO)
+        queue of :class:`.HintMeta` objects describing all visitable type hints
+        currently discovered by the breadth-first search (BFS) dynamically
+        generating pure-Python type-checking code snippets in the
+        :func:`beartype._check.code.codemain.make_check_expr` factory).
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -235,9 +209,6 @@ class HintsMeta(FixedList):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'call_meta',
-        'conf',
-        'exception_prefix',
         'func_curr_code',
         'func_wrapper_locals',
         'hint_curr_expr',
@@ -252,14 +223,12 @@ class HintsMeta(FixedList):
         'pith_curr_expr',
         'pith_curr_var_name',
         'pith_curr_var_name_index',
+        '_hint_queue',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        call_meta: BeartypeCallMetaABC
-        conf: BeartypeConf
-        exception_prefix: str
         func_curr_code: str
         func_wrapper_locals: LexicalScope
         hint_curr_expr : Optional[str]
@@ -274,6 +243,7 @@ class HintsMeta(FixedList):
         pith_curr_assign_expr: str
         pith_curr_var_name: str
         pith_curr_var_name_index: int
+        _hint_queue : FixedList
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self) -> None:
@@ -281,14 +251,20 @@ class HintsMeta(FixedList):
         Initialize this type-checking metadata queue.
         '''
 
-        # Initialize our superclass.
-        super().__init__(size=FIXED_LIST_SIZE_MEDIUM)
+        # Initialize our superclass with defaults that technically satisfy the
+        # superclass API but ultimately do little to nothing, as the deinit()
+        # method called below overrides most of these with other defaults. UGH.
+        super().__init__(
+            exception_prefix=EXCEPTION_PREFIX,
+            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            conf=BEARTYPE_CONF_DEFAULT,
+        )
 
         # Classify all instance variables that currently *NEVER* change across
         # all reinitializations of this queue.
-        self.exception_prefix = EXCEPTION_PREFIX
+        self._hint_queue = FixedList(size=FIXED_LIST_SIZE_MEDIUM)
 
-        # Nullify instance variables for safety.
+        # Nullify all remaining instance variables for safety.
         self.deinit()
 
 
@@ -297,7 +273,7 @@ class HintsMeta(FixedList):
         Deinitialize this type-checking metadata queue.
         '''
 
-        # Nullify all instance variables.
+        # Nullify all instance variables for safety.
         self.call_meta = (  # type: ignore[assignment]
         self.conf) = (  # pyright: ignore
         self.func_curr_code) = (  # pyright: ignore
@@ -345,13 +321,28 @@ class HintsMeta(FixedList):
         assert isinstance(hint_sane, HintSane), (
             f'{repr(hint_sane)} not sanified hint metadata.')
 
+        #FIXME: This should almost certainly be uncommented. Not quite sure why
+        #this is currently commented out, honestly. We sigh! *sigh*
         # # Deinitialize this type-checking metadata queue *BEFORE* overwriting
         # # the initial defaults applied by this method.
         # self.deinit()
 
+        # ..................{ PARAMETERS                     }..................
         # Classify all passed parameters.
         self.call_meta = call_meta
         self.conf = conf
+
+        # True only if the pure-Python expression dynamically generated by
+        # the higher-level make_check_expr() code factory to type-check this
+        # sanified hint is cacheable, defaulting to the same boolean set on this
+        # sanified hint metadata.
+        self.is_check_expr_cacheable = hint_sane.is_check_expr_cacheable
+
+        # ..................{ DEFAULTS                       }..................
+        # Restore instance variables to initial defaults.
+        self.is_var_random_int_needed = False
+        self.pith_curr_var_name_index = 0
+        self.func_wrapper_locals = {}
 
         # 0-based index of metadata describing the last visitable hint in this
         # queue, initialized to "-1" to ensure that the initial incrementation
@@ -362,77 +353,6 @@ class HintsMeta(FixedList):
         # 1-based indentation level describing the initial level of indentation
         # appropriate for the root hint.
         self.indent_level_child = 1
-
-        # Restore instance variables to initial defaults.
-        self.is_var_random_int_needed = False
-        self.pith_curr_var_name_index = 0
-        self.func_wrapper_locals = {}
-
-        # True only if the pure-Python expression dynamically generated by
-        # the higher-level make_check_expr() code factory to type-check this
-        # sanified hint is cacheable, defaulting to the same boolean set on this
-        # sanified hint metadata.
-        self.is_check_expr_cacheable = hint_sane.is_check_expr_cacheable
-
-    # ..................{ DUNDERS                            }..................
-    def __getitem__(self, hint_index: int) -> HintMeta:  # type: ignore[override]
-        '''
-        **Type hint type-checking metadata** (i.e., :class:`.HintMeta` object)
-        describing the currently visited type hint at the passed index by the
-        breadth-first search (BFS) in the
-        :func:`beartype._check.code.codemain.make_check_expr` factory.
-
-        For both efficiency and simplicity, this dunder method *always* returns
-        a valid :class:`HintMeta` object for all valid indices. This list thus
-        behaves similarly to the :class:`collections.defaultdict` container.
-        Specifically:
-
-        * If this is the first attempt to access metadata at this index from
-          this list (i.e., the value of the item at this index is :data:`None`),
-          this dunder method (in order):
-
-          #. Instantiates a new :class:`.HintMeta` object with all fields
-             initialized to sane values appropriate for this index.
-          #. Replaces the value of the item at this index (which was previously
-             :data:`None`) with this new :class:`.HintMeta` object.
-          #. Returns new :class:`.HintMeta` object.
-
-        * Else, this is a subsequent access of metadata at this index from this
-          list (i.e., the value of the item at this index is an existing
-          :class:`.HintMeta` object). In this case, this dunder method simply
-          returns that existing :class:`.HintMeta` object as is.
-
-        Parameters
-        ----------
-        hint_index : int
-            0-based absolute index of the type hint type-checking metadata to be
-            retrieved, where:
-
-            * Index 0 yields the root type hint currently visited by that BFS.
-            * Index 1 yields the first child type hint of that root type hint.
-            * And so on.
-
-        Returns
-        -------
-        HintMeta
-            Type hint type-checking metadata at this index.
-        '''
-        assert isinstance(hint_index, int), f'{repr(hint_index)} not integer.'
-        assert 0 <= hint_index < FIXED_LIST_SIZE_MEDIUM, (
-            f'{hint_index} not in [0, {FIXED_LIST_SIZE_MEDIUM}].')
-
-        # Type hint type-checking metadata at this hint_index.
-        hint_curr_meta = super().__getitem__(hint_index)  # type: ignore[call-overload]
-
-        # If this metadata has yet to be instantiated...
-        if hint_curr_meta is None:
-            # Instantiate a new "HintMeta" object with all fields initialized
-            # to sane values appropriate for this index.
-            hint_curr_meta = self[hint_index] = HintMeta(hint_index=hint_index)
-        # Else, this metadata has already been instantiated.
-
-        # Return this metadata.
-        return hint_curr_meta
 
     # ..................{ SETTERS                            }..................
     def set_index_current(self, hint_index: int) -> None:
@@ -455,7 +375,12 @@ class HintsMeta(FixedList):
             f'{hint_index} not in [0, {self.index_last}].')
 
         # Metadata describing the currently visited hint.
-        self.hint_curr_meta = self[hint_index]
+        #
+        # Note that this hint is guaranteed to have been enqueued by the prior
+        # range validation. Ergo, this hint may be safely accessed here via a
+        # slightly faster indexed lookup directly on the "_hint_queue" list
+        # rather than slower call to the _get_hint_meta_enqueued() getter.
+        self.hint_curr_meta = self._hint_queue[hint_index]
 
         # Current level of indentation appropriate for this hint.
         indent_level_curr = self.hint_curr_meta.indent_level
@@ -467,11 +392,11 @@ class HintsMeta(FixedList):
         self.indent_child = INDENT_LEVEL_TO_CODE[self.indent_level_child]
 
         #FIXME: *HMM.* Can't callers just refer to
-        #"hints_meta.hint_curr_meta.pith_expr" instead? This is obfuscatory.
+        #"hint_tree.hint_curr_meta.pith_expr" instead? This is obfuscatory.
         self.pith_curr_expr = self.hint_curr_meta.pith_expr
 
         #FIXME: *HMM.* Can't callers just refer to
-        #"hints_meta.hint_curr_meta.pith_var_name_index" instead? This is
+        #"hint_tree.hint_curr_meta.pith_var_name_index" instead? This is
         #obfuscatory as well.
         self.pith_curr_var_name_index = self.hint_curr_meta.pith_var_name_index
 
@@ -626,7 +551,7 @@ class HintsMeta(FixedList):
         # Note that this should *NEVER* happen, but probably nonetheless will.
         if self.index_last >= FIXED_LIST_SIZE_MEDIUM:  # pragma: no cover
             # Metadata encapsulating the previously enqueued root hint.
-            root_hint_meta = self.__getitem__(0)
+            root_hint_meta = self._get_hint_meta_enqueued(hint_index=0)
 
             # This root hint.
             root_hint = root_hint_meta.hint_sane.hint
@@ -648,7 +573,7 @@ class HintsMeta(FixedList):
         # queue. In this case, continue.
 
         # Type hint type-checking metadata at this index.
-        hint_meta = self.__getitem__(self.index_last)
+        hint_meta = self._get_hint_meta_enqueued(hint_index=self.index_last)
 
         # Replace prior fields of this metadata with the passed fields.
         hint_meta.reinit(
@@ -743,3 +668,64 @@ class HintsMeta(FixedList):
 
         # Return this metadata.
         return hint_child_sane
+
+    # ..................{ PRIVATE ~ getters                  }..................
+    def _get_hint_meta_enqueued(self, hint_index: int) -> HintMeta:
+        '''
+        **Type hint type-checking metadata** (i.e., :class:`.HintMeta` object
+        describing the previously enqueued hint at the passed index currently
+        being visited by the breadth-first search (BFS) in the parent
+        :func:`beartype._check.code.codemain.make_check_expr` factory).
+
+        For both efficiency and simplicity, this getter *always* returns
+        a valid :class:`HintMeta` object for all valid indices. This queue thus
+        behaves similarly to the :class:`collections.defaultdict` container.
+        Specifically:
+
+        * If this is the first attempt to access metadata at this index from
+          this queue (i.e., the value of the item at this index is
+          :data:`None`), this dunder method (in order):
+
+          #. Instantiates a new :class:`.HintMeta` object with all fields
+             initialized to sane values appropriate for this index.
+          #. Replaces the value of the item at this index (which was previously
+             :data:`None`) with this new :class:`.HintMeta` object.
+          #. Returns a new :class:`.HintMeta` object.
+
+        * Else, this is a subsequent access of metadata at this index from this
+          queue (i.e., the value of the item at this index is an existing
+          :class:`.HintMeta` object). In this case, this getter simply
+          returns that existing :class:`.HintMeta` object as is.
+
+        Parameters
+        ----------
+        hint_index : int
+            0-based absolute index of the type hint type-checking metadata to be
+            retrieved, where:
+
+            * Index 0 yields the root type hint currently visited by that BFS.
+            * Index 1 yields the first child type hint of that root type hint.
+            * And so on.
+
+        Returns
+        -------
+        HintMeta
+            Type hint type-checking metadata at this index.
+        '''
+        assert isinstance(hint_index, int), f'{repr(hint_index)} not integer.'
+        assert 0 <= hint_index < FIXED_LIST_SIZE_MEDIUM, (
+            f'{hint_index} not in [0, {FIXED_LIST_SIZE_MEDIUM}].')
+
+        # Type hint type-checking metadata at this hint_index.
+        hint_curr_meta = self._hint_queue[hint_index]
+
+        # If this metadata has yet to be instantiated, instantiate a new
+        # "HintMeta" object initialized to sane values suitable for this index.
+        if hint_curr_meta is None:
+            hint_curr_meta = self._hint_queue[hint_index] = HintMeta(
+                hint_index=hint_index)
+        # Else, this metadata has already been instantiated.
+
+        # Return this metadata.
+        return hint_curr_meta
+

@@ -273,7 +273,7 @@ def test_add_func_scope_types() -> None:
 #     from beartype.roar import BeartypeDecorHintForwardRefException
 #     from beartype._check.code.codescope import (
 #         express_hints_meta_scope_type_ref)
-#     from beartype._check.cls.hint.tree.hinttreecode import HintsMeta
+#     from beartype._check.cls.hint.tree.hinttreecode import HintTreeCode
 #     from beartype._data.typing.datatyping import LexicalScope
 #     from pytest import raises
 #     from typing import (
@@ -318,7 +318,7 @@ def test_add_func_scope_types() -> None:
 #     def _make_hints_meta(
 #         func_wrapper_locals: LexicalScope,
 #         hint_refs_type_basename: Optional[set],
-#     ) -> HintsMeta:
+#     ) -> HintTreeCode:
 #         '''
 #         Type-checking metadata queue fabricated from all passed parameters.
 #
@@ -339,7 +339,7 @@ def test_add_func_scope_types() -> None:
 #         '''
 #
 #         # Type-checking metadata queue to be returned.
-#         hints_piths_meta = HintsMeta()
+#         hints_piths_meta = HintTreeCode()
 #
 #         # Initialize this queue by the passed parameters.
 #         hints_piths_meta.func_wrapper_locals = func_wrapper_locals

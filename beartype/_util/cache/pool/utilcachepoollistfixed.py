@@ -90,7 +90,7 @@ class FixedList(list):
         ----------
         size : IntType
             Length to constrain this fixed list to.
-        obj_init : object, optional
+        obj_init : object, default: None
             **Initialization object** (i.e., object to be unilaterally assigned
             to *all* indices of this fixed list). Defaults to :data:`None`.
 

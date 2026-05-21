@@ -324,7 +324,7 @@ type hints whose type-checking code is safely memoizable. Thankfully, most type
 hints are safely memoizable. Exceptions include the so-called "uncachable" type
 hints, defined as:
 
-* Type hints whose sanification by the :meth:`.HintsMeta.sanify_hint_child`
+* Type hints whose sanification by the :meth:`.HintTreeCode.sanify_hint_child`
   method returns **sanified hint metadata** (i.e., :class:`.HintSane` instance)
   whose :attr:`.HintSane.is_check_expr_cacheable` instance variable is
   :data:`False`.

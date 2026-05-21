@@ -113,7 +113,7 @@ class HintMeta(object):
         ----------
         hint_index : int
             0-based index of this type-checking metadata in the parent
-            :class:`.HintsMeta` list containing this metadata.
+            :class:`.HintTreeCode` list containing this metadata.
         '''
         assert isinstance(hint_index, int), f'{repr(hint_index)} not integer.'
         assert hint_index >= 0, f'{repr(hint_index)} < 0.'
@@ -123,11 +123,20 @@ class HintMeta(object):
         self.hint_placeholder = HINT_INDEX_TO_HINT_PLACEHOLDER[hint_index]
 
         # Nullify all remaining instance variables for safety.
-        self.hint_sane = SENTINEL  # type: ignore[assignment]
-        self.hint_sign = SENTINEL  # type: ignore[assignment]
-        self.indent_level = SENTINEL  # type: ignore[assignment]
-        self.pith_expr = SENTINEL  # type: ignore[assignment]
-        self.pith_var_name_index = SENTINEL  # type: ignore[assignment]
+        self.deinit()
+
+
+    def deinit(self) -> None:
+        '''
+        Deinitialize this type-checking metadata.
+        '''
+
+        # Nullify all instance variables for safety.
+        self.hint_sane = (  # type: ignore[assignment]
+        self.hint_sign) = (  # pyright: ignore
+        self.indent_level) = (  # pyright: ignore
+        self.pith_expr) = (  # pyright: ignore
+        self.pith_var_name_index) = SENTINEL  # type: ignore[assignment]
 
 
     def reinit(

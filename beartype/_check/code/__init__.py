@@ -677,7 +677,7 @@
 #should additionally be type-checking their last items as well.
 
 #FIXME: [SPEED] There exists a significant optimization that we *ABSOLUTELY*
-#should implement. Currently, the "hints_meta" data structure is represented as
+#should implement. Currently, the "hint_tree" data structure is represented as
 #a FixedList of size j, each item of which is a k-length tuple. If you briefly
 #consider it, however, that structure could equivalently be represented as a
 #FixedList of size j * k, where we simply store the items previously stored in
@@ -962,14 +962,14 @@
 #
 #1. In the first phase, a "while ...:" loop constructs the BFS tree by
 #   beginning at the root hint, iteratively visiting all child hints, and
-#   inserting metadata describing those hints into our "hints_meta" list as we
+#   inserting metadata describing those hints into our "hint_tree" list as we
 #   currently do. That's it. That's all. But that's enough. This construction
 #   then gives us efficient random access over the entire type hinting
 #   landscape, which then permits us to implement the next phase -- which does
 #   the bulk of the work. To do so, we'll add additional metadata to our
 #   current "hint_meta" tuple: e.g.,
 #   * "_HINT_META_INDEX_CHILD_FIRST_INDEX", the 0-based index into the
-#     "hints_meta" FixedList of the first child hint of the current hint if any
+#     "hint_tree" FixedList of the first child hint of the current hint if any
 #     *OR* "None" otherwise. Since this is a BFS, that child hint could appear
 #     at any 0-based index following the current hint; finding that child hint
 #     during the second phase thus requires persisting the index of that hint.
@@ -987,7 +987,7 @@
 #2. In the second phase, another "while ...:" loop generates a Python code
 #   snippet type-checking the root hint and all child hints visitable from that
 #   hint in full by beginning *AT THE LAST CHILD HINT ADDED TO THE*
-#   "hints_meta" FixedList, generating code type-checking that hint,
+#   "hint_tree" FixedList, generating code type-checking that hint,
 #   iteratively visiting all hints *IN THE REVERSE DIRECTION BACK UP THE TREE*,
 #   and so on.
 #
@@ -1073,17 +1073,17 @@
 #  implies that the currently visited parent type hint *MUST* always be able to
 #  access the "_HINT_META_INDEX_CODE" entry of the most recently visited child
 #  type hint of that parent -- which, in turn, implies that the entire
-#  "hints_meta" FixedList of each child type hint must be temporarily preserved.
+#  "hint_tree" FixedList of each child type hint must be temporarily preserved.
 #  Specifically, when recursing up the DFS stack, each parent type hint will:
-#  1. Access the "hints_meta" FixedList of its most recently visited child type
+#  1. Access the "hint_tree" FixedList of its most recently visited child type
 #     to fill in its own "_HINT_META_INDEX_CODE".
-#  2. Pop that "hints_meta" FixedList of its most recently visited child type
+#  2. Pop that "hint_tree" FixedList of its most recently visited child type
 #     hint off the DFS stack.
 #
 #Some type hints like unions will additionally require hint-specific entries in
-#their "hints_meta" FixedList. The code for a union *CANNOT* be efficiently
+#their "hint_tree" FixedList. The code for a union *CANNOT* be efficiently
 #generated until *ALL* child type hints of that union have been. Although
-#hint-specific entries could be appended to the "hints_meta" FixedList
+#hint-specific entries could be appended to the "hint_tree" FixedList
 #structure, doing so would rapidly increase the memory consumption of all other
 #types of hints for no particularly good reason. Instead, a single new
 #hint-specific entry should be added:

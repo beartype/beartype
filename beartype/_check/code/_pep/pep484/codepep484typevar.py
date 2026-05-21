@@ -54,7 +54,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #     ----------
 #     hint_meta : HintMeta
 #         Metadata describing the currently visited hint, appended by the
-#         previously visited parent hint to the ``hints_meta`` stack.
+#         previously visited parent hint to the ``hint_tree`` stack.
 #     conf : BeartypeConf
 #         **Beartype configuration** (i.e., self-caching dataclass encapsulating
 #         all settings configuring type-checking for the passed object).
