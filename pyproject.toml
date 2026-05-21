@@ -799,6 +799,7 @@ ignore-regex = 'https?://\S+'
 # * The regex char class "[Ll]ist".
 # * Partial or parenthesised tokens like "(mis)used", "offs and ons",
 #   "...thi...", wrapp[ee|er].
+# Thought exercise: Is "commonly misspelled" an oxymoron?
 ignore-words-list = """
     alot,\
     alph,\
@@ -819,6 +820,7 @@ ignore-words-list = """
     raison,\
     sate,\
     teh,\
+    thar,\
     thi,\
     tread,\
     unsecure,\

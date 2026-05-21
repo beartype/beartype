@@ -225,7 +225,7 @@ developed Python versions <Python status_>`__, `all Python package managers
 .. # required above -- which should be most of them, frankly.
 
 .. # ------------------( IMAGES                              )------------------
-.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
+.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.svg
    :target: https://beartype.readthedocs.io
    :alt: beartype —[ the bare-metal type checker ]—
 .. |beartype-contributors| image:: https://contrib.rocks/image?repo=beartype/beartype
