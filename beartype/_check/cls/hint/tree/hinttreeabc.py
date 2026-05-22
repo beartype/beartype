@@ -6,10 +6,29 @@
 '''
 Beartype **type hint tree abstract base classes (ABCs)** (i.e., superclasses
 whose subclasses recursively traverse over abstract trees of child type hints
-transitively subscripting parent type hints annotating external objects).
+transitively subscripting root type hints annotating external objects).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
+
+# ....................{ TODO                               }....................
+#FIXME: Further generalization can and *SHOULD* be done here. In theory, the
+#"HintTreeCode" and "HintTreeError" subclasses still share a great deal of
+#commonality that has yet to be generalized into this "HintTreeABC" superclass.
+#In practice, unlocking this generality will be somewhat... non-trivial. The
+#core insight here is that a similar type hierarchy can and *SHOULD* be created
+#for dataclasses describing a single type hint. Specifically:
+#* Resolve all of the "#FIXME: ...Can't callers just refer to...?" comments
+#  littering the "hinttreecode" submodule. This is relevant. *sigh*
+#* Globally rename "hint_curr_meta" to "hint_data". We'll see why in a moment!
+#* *GREAT*! The next obvious step is to refactor "HintTreeError" as follows:
+#  * Add a new "hint_data" instance variable to "HintTreeError".
+#  * Drop "hint_sane" and "hint_sign" from "HintTreeError".
+#  * Refactor all prior access of "cause.hint_sane" and "cause.hint_sign" to
+#    instead access "cause.hint_data.hint_sane" and "cause.hint_data.hint_sign".
+#
+#Honestly, even that suffices as a first-pass generalization strategy. That's
+#the bare minimum... but that's still leagues ahead of our current non-design.
 
 # ....................{ IMPORTS                            }....................
 from abc import (
@@ -18,6 +37,7 @@ from abc import (
 )
 from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.cls.hint.hintsane import HintSane
+from beartype._check.cls.hint.data.hintdataabc import HintDataABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatypingport import Hint
 from typing import (
@@ -30,7 +50,7 @@ class HintTreeABC(metaclass=ABCMeta):
     '''
     **Type hint tree abstract base class (ABC)** (i.e., superclass whose
     subclasses recursively traverse over abstract trees of child type hints
-    transitively subscripting parent type hints annotating external objects).
+    transitively subscripting root type hints annotating external objects).
 
     Attributes
     ----------
@@ -46,6 +66,10 @@ class HintTreeABC(metaclass=ABCMeta):
         Human-readable label describing the parameter or return value from
         which this object originates, typically embedded in exceptions raised
         from this getter in the event of unexpected runtime failure.
+    hint_data: HintDataABC
+        Metadata describing the **currently visited hint** (i.e., current child
+        hint transitively subscripting the root hint being recursively traversed
+        over by this concrete subclass implementation).
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -56,6 +80,7 @@ class HintTreeABC(metaclass=ABCMeta):
         'call_meta',
         'conf',
         'exception_prefix',
+        'hint_data',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
@@ -64,6 +89,7 @@ class HintTreeABC(metaclass=ABCMeta):
         call_meta: BeartypeCallMetaABC
         conf: BeartypeConf
         exception_prefix: str
+        hint_data: HintDataABC
 
     # ..................{ INITIALIZERS                       }..................
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -94,6 +120,9 @@ class HintTreeABC(metaclass=ABCMeta):
         self.call_meta = call_meta
         self.conf = conf
         self.exception_prefix = exception_prefix
+
+        # Nullify all remaining instance variables for safety.
+        self.hint_data = None  # type: ignore[assignment]
 
     # ..................{ SANIFIERS                          }..................
     @abstractmethod

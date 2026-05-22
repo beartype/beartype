@@ -62,7 +62,7 @@ from beartype._check.cls.hint.hintsane import (
     HintOrSane,
     HintSane,
 )
-from beartype._check.pep.checkpep484typevar import (
+from beartype._check.pep.pep484.checkpep484typevar import (
     die_if_hint_pep484_typevar_bound_unbearable)
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.sign.datahintsigncls import HintSign

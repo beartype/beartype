@@ -4,21 +4,21 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`- and :pep:`585`-compliant **generic type iterators**
-(i.e., low-level callables generically iterating over both :pep:`484`- and
-:pep:`585`-compliant generic class hierarchies).
+Project-wide :pep:`484`- and :pep:`585`-compliant **generic type type-checking
+utilities** (i.e., low-level callables generically applicable to type-checking
+both :pep:`484`- and :pep:`585`-compliant generic class hierarchies).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
+from beartype._check.convert.convmain import sanify_hint_child
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.typing.datatyping import (
@@ -38,15 +38,15 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import 
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
 # ....................{ PRIVATE ~ hints                    }....................
-HintPep484585GenericUnsubbedBaseUnerased = tuple[HintSane, HintSign]
+_HintPep484585GenericUnsubbedBaseUnerased = tuple[HintSane, HintSign]
 '''
 :pep:`585`-compliant type hint matching each item of the tuple returned by the
 :func:`.get_hint_pep484585_generic_unsubbed_bases_unerased` getter.
 '''
 
 
-HintPep484585GenericUnsubbedBasesUnerased = tuple[
-    HintPep484585GenericUnsubbedBaseUnerased, ...]
+_HintPep484585GenericUnsubbedBasesUnerased = tuple[
+    _HintPep484585GenericUnsubbedBaseUnerased, ...]
 '''
 :pep:`585`-compliant type hint matching the tuple returned by the
 :func:`.get_hint_pep484585_generic_unsubbed_bases_unerased` getter.
@@ -62,7 +62,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> HintPep484585GenericUnsubbedBasesUnerased:
+) -> _HintPep484585GenericUnsubbedBasesUnerased:
     '''
     Unmemoized stub enabling callers to effectively pass keyword parameters to
     the memoized :func:`.get_hint_pep484585_generic_unsubbed_bases_unerased`
@@ -106,7 +106,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_prefix: str = '',
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
-) -> HintPep484585GenericUnsubbedBasesUnerased:
+) -> _HintPep484585GenericUnsubbedBasesUnerased:
     '''
     Tuple of the one or more **unerased pseudo-superclasses** (i.e., unignorable
     PEP-compliant type hints originally declared as transitive superclasses
@@ -119,7 +119,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
     pseudo-superclasses of this generic *and* all indirect pseudo-superclasses
     transitively superclassing all direct pseudo-superclasses of this generic.
     For efficiency, this generator is internally implemented with an efficient
-    imperative First In First Out (FILO) queue rather than an inefficient (and
+    imperative First-In-First-Out (FIFO) queue rather than an inefficient (and
     dangerous, due to both unavoidable stack exhaustion and avoidable infinite
     recursion) tree of recursive function calls.
 
@@ -130,7 +130,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
     **This generator exhibits** :math:`O(n)` **linear time complexity for**
     :math:`n` the number of transitive pseudo-superclasses of this generic. So,
     this generator is slow. The caller is expected to memoize *all* calls to
-    this generator, which is itself *not* memoized.
+    this generator, which itself is *not* memoized.
 
     Design
     ------
@@ -323,7 +323,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
     #   unerased transitive pseudo-superclass originally declared as a
     #   superclass prior to its type erasure of this unsubscripted generic.
     # * "hint_sign" is the sign uniquely identifying this pseudo-superclass.
-    hint_bases: list[HintPep484585GenericUnsubbedBaseUnerased] = []
+    hint_bases: list[_HintPep484585GenericUnsubbedBaseUnerased] = []
 
     # Tuple of the one or more unerased pseudo-superclasses originally listed as
     # superclasses prior to their type erasure by this unsubscripted generic.

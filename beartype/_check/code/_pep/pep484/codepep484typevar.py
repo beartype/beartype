@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # # ....................{ IMPORTS                            }....................
 # from beartype.typing import Optional
-# from beartype._check.code.codecls import HintMeta
+# from beartype._check.code.codecls import HintDataCode
 # from beartype._check.convert.convmain import (
 #     sanify_hint_child)
 # from beartype._conf.confmain import BeartypeConf
@@ -28,7 +28,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # # ....................{ FACTORIES                          }....................
 # def make_hint_pep484_typevar_check_expr(
 #     # Mandatory parameters.
-#     hint_meta: HintMeta,
+#     hint_meta: HintDataCode,
 #     conf: BeartypeConf,
 #     pith_curr_assign_expr: str,
 #     pith_curr_var_name_index: int,
@@ -52,7 +52,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #     Parameters
 #     ----------
-#     hint_meta : HintMeta
+#     hint_meta : HintDataCode
 #         Metadata describing the currently visited hint, appended by the
 #         previously visited parent hint to the ``hint_tree`` stack.
 #     conf : BeartypeConf
@@ -82,8 +82,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #         * If this type variable reduces to an unignorable type hint, that hint.
 #         * Else, :data:`None` (i.e., if this type variable is ignorable).
 #     '''
-#     assert isinstance(hint_meta, HintMeta), (
-#         f'{repr(hint_meta)} not "HintMeta" object.')
+#     assert isinstance(hint_meta, HintDataCode), (
+#         f'{repr(hint_meta)} not "HintDataCode" object.')
 #
 #     # ....................{ LOCALS                         }....................
 #     # This type variable, localized for negligible efficiency gains. *sigh*

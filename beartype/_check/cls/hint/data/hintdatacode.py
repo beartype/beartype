@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **type-checking code classes** (i.e., low-level classes storing
-metadata describing each iteration of the breadth-first search (BFS) dynamically
-generating pure-Python code snippets type-checking arbitrary objects against
-PEP-compliant type hints).
+Beartype **type-checking type hint dataclasses** (i.e., low-level classes
+storing metadata describing each iteration of the breadth-first search (BFS)
+dynamically generating pure-Python code snippets type-checking arbitrary objects
+against the type hints annotating those objects).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -15,7 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.code.snip.codesnipcls import HINT_INDEX_TO_HINT_PLACEHOLDER
-from beartype._check.cls.hint.hintsane import HintSane
+from beartype._check.cls.hint.hintsane import (
+    HINT_SANE_IGNORABLE,
+    HintSane,
+)
+from beartype._check.cls.hint.data.hintdataabc import HintDataABC
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import SENTINEL
 from typing import (
@@ -23,15 +27,21 @@ from typing import (
     Optional,
 )
 
-# ....................{ DATACLASSES                        }....................
+# ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
-class HintMeta(object):
+class HintDataCode(HintDataABC):
     '''
-    **Type hint type-checking metadata** (i.e., low-level dataclass storing
+    **Type-checking type hint dataclass** (i.e., low-level class storing
     metadata describing the possibly nested type hint visited by the current
     iteration of the breadth-first search (BFS) dynamically generating
-    pure-Python type-checking code snippets in the
-    :func:`beartype._check.code.codemain.make_check_expr` factory).
+    pure-Python code snippets type-checking arbitrary objects against the type
+    hints annotating those objects).
+
+    Instances of this lower-level dataclass are bound to the
+    :attr:`beartype._check.cls.hint.tree.hinttreecode.HintTreeCode.hint_data`
+    instance variable of the higher-level parent
+    :class:`beartype._check.cls.hint.tree.hinttreecode.HintTreeCode` dataclass
+    iterating over all such instances for a given type hint tree.
 
     Attributes
     ----------
@@ -43,18 +53,6 @@ class HintMeta(object):
         Python code snippet type-checking the **current pith expression** (i.e.,
         the ``pith_var_name`` local) against the **currently visited type hint**
         (i.e., the :attr:`hint` instance variable).
-    hint_sane : HintSane
-        **Sanified type hint metadata** (i.e., immutable and thus hashable
-        object encapsulating *all* metadata returned by
-        :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
-        this possibly PEP-noncompliant hint into a fully PEP-compliant hint)
-        describing the type hint currently visited by this BFS.
-    hint_sign : Optional[HintSign]
-        Either:
-
-        * If this hint is PEP-compliant, the **sign** (i.e., singleton instance
-          of the :class:`.HintSign` class) uniquely identifying this hint.
-        * Else, :data:`None`.
     indent_level : int
         **Indentation level** (i.e., 1-based positive integer providing the
         level of indentation appropriate for this hint).
@@ -87,8 +85,6 @@ class HintMeta(object):
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'hint_placeholder',
-        'hint_sane',
-        'hint_sign',
         'indent_level',
         'pith_expr',
         'pith_var_name_index',
@@ -98,8 +94,6 @@ class HintMeta(object):
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         hint_placeholder: str
-        hint_sane: HintSane
-        hint_sign: Optional[HintSign]
         indent_level: int
         pith_expr: str
         pith_var_name_index: int
@@ -117,6 +111,14 @@ class HintMeta(object):
         '''
         assert isinstance(hint_index, int), f'{repr(hint_index)} not integer.'
         assert hint_index >= 0, f'{repr(hint_index)} < 0.'
+
+        # Initialize our superclass with defaults that technically satisfy the
+        # superclass API but ultimately do little to nothing, as the deinit()
+        # method called below overrides most of these with other defaults. UGH!
+        super().__init__(
+            hint_sane=HINT_SANE_IGNORABLE,
+            hint_sign=None,
+        )
 
         # Placeholder string to be globally replaced by code type-checking the
         # current pith against this hint.

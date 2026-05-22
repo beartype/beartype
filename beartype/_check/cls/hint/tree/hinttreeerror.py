@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **type-checking error cause sleuth type hierarchy** (i.e., types whose
-instances recursively fabricate human-readable strings describing failures of
-currently type-checked objects to satisfy type hints annotating those objects).
+Beartype **exception-generating type hint tree dataclasses** (i.e., low-level
+subclasses recursively fabricating human-readable strings and associated
+metadata detailing why the currently type-checked objects violate the type
+hints annotating those objects).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -328,7 +329,7 @@ class HintTreeError(HintTreeABC):
         # Else, the caller passed a non-default sign identifying this hint.
         # Preserve this sign as is.
         assert isinstance(hint_sign, NoneTypeOr[HintSign]), (
-            f'{repr(hint_sane)} neither hint sign, "None", nor "SENTINEL".')
+            f'{repr(hint_sane)} neither hint sign nor "None".')
 
         # Classify all passed parameters.
         self.cause_indent = cause_indent
@@ -672,6 +673,10 @@ class HintTreeError(HintTreeABC):
         return cause_permuted
 
     # ..................{ SANIFIERS                          }..................
+    #FIXME: DRY violation. This is extremely similar to the
+    #HintTreeCode.sanify_hint_child() implementation. Let's try to push up all
+    #code shared in common to a new concrete HintTreeABC.sanify_hint_child()
+    #implementation, please. *sigh*
     def sanify_hint_child(
         self,
 
@@ -734,7 +739,14 @@ class HintTreeError(HintTreeABC):
             conf=self.conf,
             hint=hint_child_insane,
             hint_parent_sane=hint_parent_sane,
+
+            #FIXME: Pretty weird, honestly. We should at least document *WHY*
+            #exactly child hints require a "pith_name". In theory, only root
+            #hints should require a "pith_name". Since we currently have *NO*
+            #idea what this is about, I suppose the only means of documenting
+            #this is to just comment this out and see which tests break. *UGH*!
             pith_name=self.pith_name,
+
             exception_prefix=self.exception_prefix,
         )
         # print(f'Sanified child hint {hint_child_insane} to {hint_sane_child} of parent {hint_parent_sane}!')

@@ -130,7 +130,7 @@ def is_hint_pep484_typevar(hint: Hint) -> TypeIs[TypeVar]:  # pyright: ignore
 #            CONTRAVARIANCE = auto()
 #            INVARIANCE = auto()
 #  * Add a new "check_variance: CheckVariance = CheckVariance.COVARIANCE"
-#    instance variable to our existing "HintMeta" dataclass.
+#    instance variable to our existing "HintDataCode" dataclass.
 #  * Refactor this get_hint_pep484_typevar_bounded_constraints_or_none() to return a 2-tuple
 #    "(typevar_bound, check_variance)" where:
 #    * "typevar_bound" is the current return value.
@@ -139,10 +139,10 @@ def is_hint_pep484_typevar(hint: Hint) -> TypeIs[TypeVar]:  # pyright: ignore
 #      * "CheckVariance.COVARIANCE" if this type variable is bounded.
 #      * "CheckVariance.INVARIANCE" if this type variable is constrained.
 #  * Refactor make_check_expr() to:
-#    * Track this new "HintMeta.check_variance" instance variable. Mostly
+#    * Track this new "HintDataCode.check_variance" instance variable. Mostly
 #      trivial. Child hints inherit their parent hint's "check_variance".
 #    * Dynamically generate code appropriate for this new
-#      "HintMeta.check_variance" instance variable. That's the super-hard part.
+#      "HintDataCode.check_variance" instance variable. That's the super-hard part.
 #      Even if we initially ignore "CheckVariance.CONTRAVARIANCE" (which we
 #      really should), we'd still basically have to:
 #      * Refactor *MOST* single magic code string globals into dictionary

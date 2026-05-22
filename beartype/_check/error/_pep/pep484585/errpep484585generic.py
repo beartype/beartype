@@ -18,7 +18,7 @@ from beartype._data.hint.sign.datahintsigns import (
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.error._nonpep.errnonpeptype import (
     find_cause_instance_type)
-from beartype._check.pep.checkpep484585generic import (
+from beartype._check.pep.pep484585.checkpep484585generic import (
     get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type_isinstanceable)

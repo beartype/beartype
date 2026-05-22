@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **type-checking code container type hierarchy** (i.e., types storing
-metadata describing the breadth-first search (BFS) dynamically generating
-pure-Python code snippets type-checking arbitrary objects against type hints
-annotating those objects).
+Beartype **type-checking type hint tree dataclasses** (i.e., low-level
+subclasses storing metadata describing the breadth-first search (BFS)
+dynamically generating pure-Python code snippets type-checking arbitrary objects
+against the type hints annotating those objects).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -19,7 +19,7 @@ from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
 from beartype._check.cls.call.callmetaexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
-from beartype._check.cls.hint.hintmeta import HintMeta
+from beartype._check.cls.hint.data.hintdatacode import HintDataCode
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.cls.hint.tree.hinttreeabc import HintTreeABC
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
@@ -136,7 +136,7 @@ class HintTreeCode(HintTreeABC):
           Python expression evaluating to the origin type underlying this hint
           as a hidden :mod:`beartype`-specific parameter injected into the
           signature of the current wrapper function.
-    hint_curr_meta: HintMeta
+    hint_curr_meta: HintDataCode
         Metadata describing the currently visited hint, appended by the
         previously visited parent hint to this queue.
     indent_curr : str
@@ -197,7 +197,7 @@ class HintTreeCode(HintTreeABC):
         internal context of this dataclass, the former is preferable.
     _hint_queue : FixedList
         **Type hint tree type-checking queue** (i.e., First-In-First-Out (FIFO)
-        queue of :class:`.HintMeta` objects describing all visitable type hints
+        queue of :class:`.HintDataCode` objects describing all visitable type hints
         currently discovered by the breadth-first search (BFS) dynamically
         generating pure-Python type-checking code snippets in the
         :func:`beartype._check.code.codemain.make_check_expr` factory).
@@ -232,7 +232,7 @@ class HintTreeCode(HintTreeABC):
         func_curr_code: str
         func_wrapper_locals: LexicalScope
         hint_curr_expr : Optional[str]
-        hint_curr_meta : HintMeta
+        hint_curr_meta : HintDataCode
         indent_curr: str
         indent_child: str
         indent_level_child: int
@@ -253,7 +253,7 @@ class HintTreeCode(HintTreeABC):
 
         # Initialize our superclass with defaults that technically satisfy the
         # superclass API but ultimately do little to nothing, as the deinit()
-        # method called below overrides most of these with other defaults. UGH.
+        # method called below overrides most of these with other defaults. UGH!
         super().__init__(
             exception_prefix=EXCEPTION_PREFIX,
             call_meta=BEARTYPE_CALL_EXTERNAL_META,
@@ -400,7 +400,7 @@ class HintTreeCode(HintTreeABC):
         #obfuscatory as well.
         self.pith_curr_var_name_index = self.hint_curr_meta.pith_var_name_index
 
-        #FIXME: *HMM.* Shouldn't this reside in the "HintMeta" class instead?
+        #FIXME: *HMM.* Shouldn't this reside in the "HintDataCode" class instead?
         self.pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
             self.pith_curr_var_name_index]
 
@@ -430,7 +430,7 @@ class HintTreeCode(HintTreeABC):
     ) -> str:
         '''
         **Enqueue** (i.e., append) to the end of this queue new **type-checking
-        metadata** (i.e., :class:`.HintMeta` object) describing the currently
+        metadata** (i.e., :class:`.HintDataCode` object) describing the currently
         iterated child type hint with the passed metadata, enabling the ongoing
         breadth-first search (BFS) traversing over this queue to subsequently
         visit this child hint.
@@ -590,6 +590,10 @@ class HintTreeCode(HintTreeABC):
         return hint_meta.hint_placeholder
 
     # ..................{ SANIFIERS                          }..................
+    #FIXME: DRY violation. This is extremely similar to the
+    #HintTreeError.sanify_hint_child() implementation. Let's try to push up all
+    #code shared in common to a new concrete HintTreeABC.sanify_hint_child()
+    #implementation, please. *sigh*
     def sanify_hint_child(
         self,
 
@@ -650,10 +654,10 @@ class HintTreeCode(HintTreeABC):
 
         # Metadata encapsulating the sanification of this child hint.
         hint_child_sane = sanify_hint_child(
-            hint=hint_child_insane,
-            hint_parent_sane=hint_parent_sane,
             call_meta=self.call_meta,
             conf=self.conf,
+            hint=hint_child_insane,
+            hint_parent_sane=hint_parent_sane,
             exception_prefix=self.exception_prefix,
         )
 
@@ -670,15 +674,15 @@ class HintTreeCode(HintTreeABC):
         return hint_child_sane
 
     # ..................{ PRIVATE ~ getters                  }..................
-    def _get_hint_meta_enqueued(self, hint_index: int) -> HintMeta:
+    def _get_hint_meta_enqueued(self, hint_index: int) -> HintDataCode:
         '''
-        **Type hint type-checking metadata** (i.e., :class:`.HintMeta` object
+        **Type hint type-checking metadata** (i.e., :class:`.HintDataCode` object
         describing the previously enqueued hint at the passed index currently
         being visited by the breadth-first search (BFS) in the parent
         :func:`beartype._check.code.codemain.make_check_expr` factory).
 
         For both efficiency and simplicity, this getter *always* returns
-        a valid :class:`HintMeta` object for all valid indices. This queue thus
+        a valid :class:`HintDataCode` object for all valid indices. This queue thus
         behaves similarly to the :class:`collections.defaultdict` container.
         Specifically:
 
@@ -686,16 +690,16 @@ class HintTreeCode(HintTreeABC):
           this queue (i.e., the value of the item at this index is
           :data:`None`), this dunder method (in order):
 
-          #. Instantiates a new :class:`.HintMeta` object with all fields
+          #. Instantiates a new :class:`.HintDataCode` object with all fields
              initialized to sane values appropriate for this index.
           #. Replaces the value of the item at this index (which was previously
-             :data:`None`) with this new :class:`.HintMeta` object.
-          #. Returns a new :class:`.HintMeta` object.
+             :data:`None`) with this new :class:`.HintDataCode` object.
+          #. Returns a new :class:`.HintDataCode` object.
 
         * Else, this is a subsequent access of metadata at this index from this
           queue (i.e., the value of the item at this index is an existing
-          :class:`.HintMeta` object). In this case, this getter simply
-          returns that existing :class:`.HintMeta` object as is.
+          :class:`.HintDataCode` object). In this case, this getter simply
+          returns that existing :class:`.HintDataCode` object as is.
 
         Parameters
         ----------
@@ -709,7 +713,7 @@ class HintTreeCode(HintTreeABC):
 
         Returns
         -------
-        HintMeta
+        HintDataCode
             Type hint type-checking metadata at this index.
         '''
         assert isinstance(hint_index, int), f'{repr(hint_index)} not integer.'
@@ -720,9 +724,9 @@ class HintTreeCode(HintTreeABC):
         hint_curr_meta = self._hint_queue[hint_index]
 
         # If this metadata has yet to be instantiated, instantiate a new
-        # "HintMeta" object initialized to sane values suitable for this index.
+        # "HintDataCode" object initialized to sane values suitable for this index.
         if hint_curr_meta is None:
-            hint_curr_meta = self._hint_queue[hint_index] = HintMeta(
+            hint_curr_meta = self._hint_queue[hint_index] = HintDataCode(
                 hint_index=hint_index)
         # Else, this metadata has already been instantiated.
 
