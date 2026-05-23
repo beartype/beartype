@@ -40,7 +40,7 @@ an annotated variadic keyword parameter like ``**kwargs: int``).
 '''
 
 
-ARG_NAME_CALL_META = f'{NAME_PREFIX}call_meta'
+ARG_NAME_CALL_META = f'{NAME_PREFIX}call_curr'
 '''
 Name of the **private beartype type-checking call metadata** (i.e.,
 :mod:`beartype`-specific hidden parameter whose default value is the

@@ -24,7 +24,7 @@ from beartype._cave._cavefast import (
     ThreadLockNonreentrantType,
     ThreadLockReentrantType,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.shame.datashamefunc import BLACKLIST_METHOD_NAMES_HINT_SELF
 from beartype._data.typing.datatypingport import Hint
@@ -39,7 +39,7 @@ from typing import Optional
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_nonpep(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
     **kwargs,
@@ -61,11 +61,11 @@ def reduce_hint_nonpep(
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator), as this reducer accepts one or more
-    unmemoizable parameters (e.g., ``call_meta``).
+    unmemoizable parameters (e.g., ``call_curr``).
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -114,10 +114,10 @@ def reduce_hint_nonpep(
     # If...
     if (
         # One or more types are currently being decorated by @beartype *AND*...
-        call_meta.cls_stack and
+        call_curr.cls_stack and
         # A method of the most deeply nested such type is also currently being
         # decorated by @beartype...
-        call_meta.func is not None
+        call_curr.func is not None
     ):
     # Then there exists a negligible (albeit non-zero) probability that blindly
     # generating code type-checking this hint *COULD* accidentally ignite
@@ -127,11 +127,11 @@ def reduce_hint_nonpep(
     # See the "BLACKLIST_METHOD_NAMES_HINT_SELF" docstring for further details.
         # Currently decorated type (i.e., most deeply lexically nested type
         # currently being decorated by @beartype).
-        decor_type = call_meta.cls_stack[-1]
+        decor_type = call_curr.cls_stack[-1]
 
         # Unqualified basename of that method.
-        decor_type_method_name = call_meta.func.__name__
-        # print(f'Testing type {repr(decor_type)} dunder method {repr(call_meta.func)}...')
+        decor_type_method_name = call_curr.func.__name__
+        # print(f'Testing type {repr(decor_type)} dunder method {repr(call_curr.func)}...')
         # print(f'...hint {repr(hint)}...')
 
         # If...
@@ -162,7 +162,7 @@ def reduce_hint_nonpep(
         #   chance it, the negligible gain of type-checking self-hints of
         #   __getitem__() dunder methods of non-sequence types hardly seems
         #   worth the significant pain of infinitely recursive type-checking.
-            # print(f'Ignoring type {repr(decor_type)} dunder method {repr(call_meta.func)}...')
+            # print(f'Ignoring type {repr(decor_type)} dunder method {repr(call_curr.func)}...')
             # print(f'...recursive hint {repr(hint)}!')
 
             # Fully-qualified name of the module declaring the currently

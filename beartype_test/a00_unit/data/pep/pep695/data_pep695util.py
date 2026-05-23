@@ -333,7 +333,7 @@ def unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695() -> 
     # these aliases and thus accessible *ONLY* by directly accessing the
     # "__parameters__" dunder attribute on these aliases. It is what it is.
     hint_sane = reduce_hint_pep484612646_subbed_typeargs_to_hints(
-        call_meta=BEARTYPE_CALL_EXTERNAL_META,
+        call_curr=BEARTYPE_CALL_EXTERNAL_META,
         hint=irresistible_career[int],
     )
     assert hint_sane == HintSane(
@@ -342,7 +342,7 @@ def unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695() -> 
     )
 
     hint_sane = reduce_hint_pep484612646_subbed_typeargs_to_hints(
-        call_meta=BEARTYPE_CALL_EXTERNAL_META,
+        call_curr=BEARTYPE_CALL_EXTERNAL_META,
         hint=in_thy[bool, complex],
     )
     assert hint_sane == HintSane(
@@ -358,7 +358,7 @@ def unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695() -> 
     # that is *NOT* a PEP 695-compliant subscripted type alias.
     with raises(BeartypeDecorHintPep484612646Exception):
         reduce_hint_pep484612646_subbed_typeargs_to_hints(
-            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            call_curr=BEARTYPE_CALL_EXTERNAL_META,
             hint='In thy devastating omnipotence,'
         )
 
@@ -366,12 +366,12 @@ def unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695() -> 
     # 695-compliant unsubscripted type alias.
     with raises(BeartypeDecorHintPep484612646Exception):
         reduce_hint_pep484612646_subbed_typeargs_to_hints(
-            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            call_curr=BEARTYPE_CALL_EXTERNAL_META,
             hint=guiding_its,
         )
     with raises(BeartypeDecorHintPep484612646Exception):
         reduce_hint_pep484612646_subbed_typeargs_to_hints(
-            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            call_curr=BEARTYPE_CALL_EXTERNAL_META,
             hint=irresistible_career,
         )
 

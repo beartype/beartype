@@ -60,7 +60,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.cls.scope.checkexprscope import BeartypeCheckExprScope
 from beartype._conf.confmain import BeartypeConf
@@ -168,7 +168,7 @@ This hint matches a 2-tuple ``(func_wrapper_code, func_wrapper_locals)``, where:
 
 # ....................{ MAKERS                             }....................
 def make_check_expr(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     conf: BeartypeConf,
     hint_sane: HintSane,
 ) -> CodeGenerated:
@@ -214,7 +214,7 @@ def make_check_expr(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -259,8 +259,8 @@ def make_check_expr(
         If one or more :pep:`484`-compliant type hints visitable from this
         object have been deprecated by :pep:`585`.
     '''
-    assert isinstance(call_meta, BeartypeCallMetaABC), (
-        f'{repr(call_meta)} not beartype call metadata.')
+    assert isinstance(call_curr, BeartypeCallDataABC), (
+        f'{repr(call_curr)} not beartype call metadata.')
     assert isinstance(conf, BeartypeConf), (
         f'{repr(conf)} not beartype configuration.')
     assert isinstance(hint_sane, HintSane), (
@@ -335,7 +335,7 @@ def make_check_expr(
     hint_tree = acquire_instance(HintTreeCode)
 
     # Re-initialize this queue against the passed parameters.
-    hint_tree.reinit(call_meta=call_meta, conf=conf, hint_sane=hint_sane)
+    hint_tree.reinit(call_curr=call_curr, conf=conf, hint_sane=hint_sane)
 
     # 0-based index into this queue describing the currently visited hint.
     hints_meta_index_curr = 0
@@ -526,7 +526,7 @@ def make_check_expr(
 
                 # Code type-checking the current pith against this origin type.
                 hint_tree.func_curr_code = CODE_PEP484_INSTANCE_format(
-                    pith_curr_expr=hint_tree.pith_curr_expr,
+                    pith_curr_expr=hint_tree.hint_curr_meta.pith_expr,
                     # Python expression evaluating to this origin type.
                     hint_curr_expr=add_hints_meta_scope_type_or_types(
                         hint_tree=hint_tree,
@@ -576,9 +576,9 @@ def make_check_expr(
                     # (i.e., this is the first iteration of the outermost loop).
                     # The subsequent call to the str.isidentifier() method is
                     # *MUCH* more expensive than this object identity test.
-                    hint_tree.pith_curr_expr is VAR_NAME_PITH_ROOT or
+                    hint_tree.hint_curr_meta.pith_expr is VAR_NAME_PITH_ROOT or
                     # A simple Python identifier *NOR*...
-                    hint_tree.pith_curr_expr.isidentifier() or
+                    hint_tree.hint_curr_meta.pith_expr.isidentifier() or
                     # A complex Python expression already containing the
                     # assignment expression-specific walrus operator ":=". Since
                     # this implies this expression to already be an assignment
@@ -601,10 +601,10 @@ def make_check_expr(
                     #   or more PEP-compliant type hints (e.g., "list[str] |
                     #   set[bytes]").
                     # * PEP 695-compliant subscripted type aliases.
-                    ':=' in hint_tree.pith_curr_expr
+                    ':=' in hint_tree.hint_curr_meta.pith_expr
                 ):
-                    # Then the current pith is ideally assigned to a unique
-                    # local variable via an assignment expression.
+                # Then the current pith is safely assignable to a unique local
+                # variable via an assignment expression.
                     # print(f'Incrementing hint {hint_curr} pith expression {pith_curr_expr}...')
                     # print(f'...index {pith_curr_var_name_index} by one.')
 
@@ -621,7 +621,7 @@ def make_check_expr(
                     hint_tree.pith_curr_assign_expr = (
                         CODE_PEP572_PITH_ASSIGN_EXPR_format(
                             pith_curr_var_name=hint_tree.pith_curr_var_name,
-                            pith_curr_expr=hint_tree.pith_curr_expr,
+                            pith_curr_expr=hint_tree.hint_curr_meta.pith_expr,
                         ))
                 # Else, the current pith is *NOT* safely assignable to a unique
                 # local variable via an assignment expression. Since the
@@ -647,7 +647,8 @@ def make_check_expr(
 
                     # Preserve the Python code snippet evaluating to the value
                     # of the current pith as is.
-                    hint_tree.pith_curr_assign_expr = hint_tree.pith_curr_expr
+                    hint_tree.pith_curr_assign_expr = (
+                        hint_tree.hint_curr_meta.pith_expr)
 
                 # ............{ UNION                              }............
                 # If this hint is a union (e.g., "typing.Union[bool, str]",
@@ -867,6 +868,95 @@ def make_check_expr(
                     #which reduces to "Hashable". We can't particularly be
                     #bothered at the moment. This is a microoptimization and
                     #will probably require a non-trivial amount of work. *sigh*
+                    #FIXME: Actually, shouldn't be terribly arduous. We already
+                    #do something similar with "type[...]" subclass hints. How?
+                    #By defining a "HintSane.is_hint_parent_pep484585_subclass"
+                    #instance variable, which reducers then test to decide
+                    #whether or not they need to perform a "dict"-specific child
+                    #hint reduction.
+                    #FIXME: Actually, that approach doesn't quite work. Why?
+                    #Because we *DEFINITELY* would not want a comparable
+                    #"HintSane.is_hint_parent_pep484585_mapping" instance
+                    #variable to be inherited by *ALL* transitive child hints.
+                    #Indeed, a similar issue applies to
+                    #"HintSane.is_hint_parent_pep484585_subclass" as well. We
+                    #should *DEFINITELY* stop propagating
+                    #"HintSane.is_hint_parent_pep484585_subclass" onto *ALL*
+                    #transitive child hints.
+                    #
+                    #I wonder how we sanely do that, though? I suppose we need
+                    #to introduce the concept of a "sanified hint metadata
+                    #propagation boundary" or "inheritance wall." For example:
+                    #* The child hint "Union[int, type]" subscripting the parent
+                    #  hint "type[Union[int, type]]" does *NOT* impose an
+                    #  inheritance wall.
+                    #  "HintSane.is_hint_parent_pep484585_subclass" thus
+                    #  propagates from that parent to that child hint. But...
+                    #* The child hint "Mapping[int, Hashable]" subscripting the
+                    #  parent hint "dict[Mapping[int, Hashable], str]" *DOES*
+                    #  impose an inheritance wall.
+                    #  "HintSane.is_hint_parent_pep484585_mapping" thus does
+                    #  *NOT* propagate from that parent to that child hint.
+                    #
+                    #Ergo, there are two kinds of subscriptable type hint
+                    #factories:
+                    #* Those that impose inheritance walls. Most subscriptable
+                    #  type hint *CONTAINER* factories (e.g., "Mapping") impose
+                    #  inheritance walls. "Callable" is another obvious one.
+                    #* Those that do *NOT* impose inheritance walls. Unions are
+                    #  obvious ones. PEP 695-compliant "type" aliases are yet
+                    #  another one. Maybe that's it? Oh, and "NewType",
+                    #  "TypeGuard", and "TypeIs" too probably. Oh, and the
+                    #  "HintSignPep484585GenericSubbed" sign, too. Why? Because
+                    #  the reduce_hint_pep484612646_subbed_typeargs_to_hints()
+                    #  reducer reducing a subscripted generic to an
+                    #  unsubscripted generic + a type variable lookup table
+                    #  should *NOT* impose an inheritance wall.
+                    #
+                    #It looks like we can trivially differentiate between these
+                    #two categories of subscriptable type hint factories as
+                    #follows. Just ask the admittedly non-trivial question:
+                    #* Does @beartype dynamically generate type-checking code
+                    #  for that subscriptable type hint factory itself and, if
+                    #  so, does that code type-check a unique (i.e., nested)
+                    #  pith against that factory and only that factory? If so,
+                    #  that factory "physically exists" in some sense and thus
+                    #  imposes an inheritance wall. Else, it doesn't.
+                    #
+                    #Consider unions, for example. @beartype dynamically
+                    #generates type-checking code for unions, of course.
+                    #However, that code type-checks the *SAME* pith (rather than
+                    #a unique pith) as all child hints subscripting those
+                    #unions. Unions do not, therefore, physically exist. They
+                    #exist semantically, but that's not at all the same thing.
+                    #
+                    #Identifying subscriptable type hint factories by whether
+                    #they physically exist or not is intuitively easy. Well, for
+                    #me, anyway. This means we can (more or less) trivially
+                    #define a new frozenset global "HINT_SIGNS_NONPHYSICAL" in
+                    #our existing "datahintsignset" submodule. Note that we
+                    #intentionally enumerate the proper subset of all
+                    #*NON-PHYSICAL* (rather than physical) subscriptable type
+                    #hint factories. Why? Because it's probably far smaller.
+                    #Since all container type hint factories physically exist
+                    #*AND* since there exist a huge number of such factories,
+                    #the negation of that frozenset (i.e.,
+                    #"HINT_SIGNS_PHYSICAL") is just huge. There's *NO* benefit
+                    #to defining such a huge set explicitly. Instead, if the
+                    #sign of a hint is *NOT* in "HINT_SIGNS_NONPHYSICAL", then
+                    #that hint may safely be assumed to be physical. Done! \o/
+                    #
+                    #Lastly, we have to prevent wallable "HintSane" metadata
+                    #from being unsafely inherited across inheritance walls. The
+                    #obvious (and really only) place to do this is in the
+                    #existing HintSane.permute_sane() method, which should just:
+                    #* Trivially detect whether the sign of the current hint is
+                    #  in "HINT_SIGNS_NONPHYSICAL" and...
+                    #* If that is *NOT* the case, prevent wallable metadata like
+                    #  "is_hint_parent_pep484585_subclass" and
+                    #  "is_hint_parent_pep484585_mapping" from being inherited.
+                    #  Force that metadata to its default values. Trivial.
+
                     # Unignorable sane child key and value hints sanified from
                     # these possibly ignorable insane child key and value hints
                     # *OR* "None" otherwise (i.e., if ignorable).
@@ -1025,7 +1115,7 @@ def make_check_expr(
                         # Expression yielding the value of the current pith,
                         # defined as either...
                         hint_curr_expr = (
-                            hint_tree.pith_curr_expr
+                            hint_tree.hint_curr_meta.pith_expr
                             # If this metahint is annotated by only one beartype
                             # validator, the most efficient expression yielding
                             # the value of the current pith is simply the full
@@ -1375,7 +1465,7 @@ def make_check_expr(
             # pith as an instance of the origin type of this hint.
             hint_tree.func_curr_code = CODE_PEP484_INSTANCE_format(
                 hint_curr_expr=hint_tree.hint_curr_expr,
-                pith_curr_expr=hint_tree.pith_curr_expr,
+                pith_curr_expr=hint_tree.hint_curr_meta.pith_expr,
             )
         # Else, prior logic generated a code snippet type-checking the current
         # pith against the currently visited hint. Preserve this snippet.

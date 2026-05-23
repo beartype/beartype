@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
@@ -55,7 +55,7 @@ _HintPep484585GenericUnsubbedBasesUnerased = tuple[
 # ....................{ GETTERS                            }....................
 def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
     # Mandatory parameters.
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint_sane: HintSane,
 
     # Optional parameters.
@@ -76,7 +76,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
 
     # Defer to this lower-level memoized getter.
     return get_hint_pep484585_generic_unsubbed_bases_unerased(
-        call_meta,
+        call_curr,
         hint_sane,
         conf,
         exception_prefix,
@@ -91,7 +91,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
 @callable_cached
 def get_hint_pep484585_generic_unsubbed_bases_unerased(
     # Mandatory parameters.
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint_sane: HintSane,
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -266,7 +266,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -457,7 +457,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
 
         # Metadata encapsulating the sanification of this pseudo-superclass.
         hint_child_sane = sanify_hint_child(
-            call_meta=call_meta,
+            call_curr=call_curr,
             conf=conf,
             hint=hint_sanify,
             hint_parent_sane=hint_base_subclass_sane,

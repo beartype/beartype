@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintRecursionException
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convmain import sanify_hint_child
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.call.callmetaexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.cls.hint.data.hintdatacode import HintDataCode
@@ -165,14 +165,6 @@ class HintTreeCode(HintTreeABC):
         :data:`True` only if one or more child hints of the root hint of this
         queue require a pseudo-random integer. If :data:`True`, the body of this
         wrapper function will be prefixed with code generating this integer.
-    pith_curr_expr : str
-        Full Python expression evaluating to the value of the **current pith**
-        (i.e., possibly nested object of the current parameter or return value
-        to be type-checked against this union type hint).
-
-        Note that this is intentionally *not* an assignment expression but
-        rather the original inefficient expression provided by the parent type
-        hint of the currently visited hint.
     pith_curr_assign_expr : str
         Assignment expression assigning this full Python expression to the
         unique local variable assigned the value of this expression.
@@ -220,7 +212,6 @@ class HintTreeCode(HintTreeABC):
         'is_check_expr_cacheable',
         'is_var_random_int_needed',
         'pith_curr_assign_expr',
-        'pith_curr_expr',
         'pith_curr_var_name',
         'pith_curr_var_name_index',
         '_hint_queue',
@@ -239,7 +230,6 @@ class HintTreeCode(HintTreeABC):
         index_last: int
         is_check_expr_cacheable: bool
         is_var_random_int_needed: bool
-        pith_curr_expr: str
         pith_curr_assign_expr: str
         pith_curr_var_name: str
         pith_curr_var_name_index: int
@@ -256,7 +246,7 @@ class HintTreeCode(HintTreeABC):
         # method called below overrides most of these with other defaults. UGH!
         super().__init__(
             exception_prefix=EXCEPTION_PREFIX,
-            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            call_curr=BEARTYPE_CALL_EXTERNAL_META,
             conf=BEARTYPE_CONF_DEFAULT,
         )
 
@@ -274,7 +264,7 @@ class HintTreeCode(HintTreeABC):
         '''
 
         # Nullify all instance variables for safety.
-        self.call_meta = (  # type: ignore[assignment]
+        self.call_curr = (  # type: ignore[assignment]
         self.conf) = (  # pyright: ignore
         self.func_curr_code) = (  # pyright: ignore
         self.func_wrapper_locals) = (  # pyright: ignore
@@ -288,13 +278,12 @@ class HintTreeCode(HintTreeABC):
         self.is_var_random_int_needed) = (  # pyright: ignore
         self.pith_curr_var_name_index) = (  # pyright: ignore
         self.pith_curr_assign_expr) = (  # pyright: ignore
-        self.pith_curr_expr) = (  # pyright: ignore
         self.pith_curr_var_name) = None  # type: ignore[assignment]
 
 
     def reinit(
         self,
-        call_meta: BeartypeCallMetaABC,
+        call_curr: BeartypeCallDataABC,
         conf: BeartypeConf,
         hint_sane: HintSane,
     ) -> None:
@@ -303,7 +292,7 @@ class HintTreeCode(HintTreeABC):
 
         Parameters
         ----------
-        call_meta : BeartypeCallMetaABC
+        call_curr : BeartypeCallDataABC
             **Beartype call metadata** (i.e., dataclass aggregating *all* common
             metadata encapsulating the user-defined callable, type, or statement
             currently being type-checked by the end user).
@@ -314,22 +303,21 @@ class HintTreeCode(HintTreeABC):
             **Sanified type hint metadata** (i.e., :data:`.HintSane` object)
             encapsulating the hint to be type-checked.
         '''
-        assert isinstance(call_meta, BeartypeCallMetaABC), (
-            f'{repr(call_meta)} not beartype call metadata.')
+        assert isinstance(call_curr, BeartypeCallDataABC), (
+            f'{repr(call_curr)} not beartype call metadata.')
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not beartype configuration.')
         assert isinstance(hint_sane, HintSane), (
             f'{repr(hint_sane)} not sanified hint metadata.')
 
-        #FIXME: This should almost certainly be uncommented. Not quite sure why
-        #this is currently commented out, honestly. We sigh! *sigh*
-        # # Deinitialize this type-checking metadata queue *BEFORE* overwriting
-        # # the initial defaults applied by this method.
-        # self.deinit()
+        # ..................{ PREAMBLE                       }..................
+        # Deinitialize this type-checking metadata queue *BEFORE* overwriting
+        # the initial defaults applied by this method.
+        self.deinit()
 
         # ..................{ PARAMETERS                     }..................
         # Classify all passed parameters.
-        self.call_meta = call_meta
+        self.call_curr = call_curr
         self.conf = conf
 
         # True only if the pure-Python expression dynamically generated by
@@ -392,15 +380,35 @@ class HintTreeCode(HintTreeABC):
         self.indent_child = INDENT_LEVEL_TO_CODE[self.indent_level_child]
 
         #FIXME: *HMM.* Can't callers just refer to
-        #"hint_tree.hint_curr_meta.pith_expr" instead? This is obfuscatory.
-        self.pith_curr_expr = self.hint_curr_meta.pith_expr
-
-        #FIXME: *HMM.* Can't callers just refer to
         #"hint_tree.hint_curr_meta.pith_var_name_index" instead? This is
         #obfuscatory as well.
+        #FIXME: *DO THIS AT THE BEGINNING OF A COMMIT SESSION*. We modify this a
+        #few times throughout the codebase. Pretty sure everything should still
+        #work if we perform the above global refactoring... but not certain.
         self.pith_curr_var_name_index = self.hint_curr_meta.pith_var_name_index
 
         #FIXME: *HMM.* Shouldn't this reside in the "HintDataCode" class instead?
+        #FIXME: Likewise, this should almost certainly be defined as a dynamic
+        #property rather than a static instance variable. Why? Because we often
+        #see unctuous code like this littered around the codebase:
+        #                       # Increment the integer suffixing the name of a
+        #                       # unique local variable storing the value of
+        #                       # this child key pith *BEFORE* defining this
+        #                       # variable.
+        #                       hint_tree.pith_curr_var_name_index += 1
+        #
+        #                       # Name of this local variable.
+        #                       pith_key_var_name = PITH_INDEX_TO_VAR_NAME[
+        #                           hint_tree.pith_curr_var_name_index]
+        #
+        #Super-silly. Obviously, a dynamic property resolves those sorts of DRY
+        #violations. It's decoration-time. Efficiently (mostly) doesn't matter.
+        #FIXME: After implementing that refactoring, grep the codebase for
+        #wherever we do "pith_curr_var_name_index += 1" and make sure we stop
+        #doing manual lookups into "PITH_INDEX_TO_VAR_NAME". Actually, we should
+        #just stop doing manual lookups into "PITH_INDEX_TO_VAR_NAME" entirely.
+        #That's always a lame idea. The dynamic property should suffice always!
+
         self.pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
             self.pith_curr_var_name_index]
 
@@ -654,7 +662,7 @@ class HintTreeCode(HintTreeABC):
 
         # Metadata encapsulating the sanification of this child hint.
         hint_child_sane = sanify_hint_child(
-            call_meta=self.call_meta,
+            call_curr=self.call_curr,
             conf=self.conf,
             hint=hint_child_insane,
             hint_parent_sane=hint_parent_sane,

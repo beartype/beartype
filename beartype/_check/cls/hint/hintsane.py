@@ -10,6 +10,10 @@
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: *IMPLEMENT THE INHERITANCE WALL.* Pretty critical. Grep the codebase for
+#"HINT_SIGNS_NONPHYSICAL" for further details on this. So fun! So typing! *sigh*
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
 from beartype._cave._cavemap import NoneTypeOr

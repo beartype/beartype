@@ -77,7 +77,7 @@ from beartype.roar._roarexc import (
 )
 from beartype._check.convert.convmain import sanify_hint_any
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
@@ -107,7 +107,7 @@ from typing import Optional
 # ....................{ GETTERS ~ exception                }....................
 def get_func_pith_violation(
     # Mandatory parameters.
-    call_meta: BeartypeCallDecorMinimalMeta,
+    call_curr: BeartypeCallDecorMinimalMeta,
     pith_name: str,
     pith_value: object,
 
@@ -122,7 +122,7 @@ def get_func_pith_violation(
 
     Parameters
     ----------
-    call_meta : BeartypeCallDecorMinimalMeta
+    call_curr : BeartypeCallDecorMinimalMeta
         **Beartype type-check call metadata** (i.e., object encapsulating *all*
         metadata required by the current call to the wrapper function
         type-checking a :func:`beartype.beartype`-decorated callable).
@@ -162,14 +162,14 @@ def get_func_pith_violation(
     :func:`.get_hint_object_violation`
         Further details.
     '''
-    assert isinstance(call_meta, BeartypeCallDecorMinimalMeta), (
-        f'{repr(call_meta)} not type-checking call metadata.')
+    assert isinstance(call_curr, BeartypeCallDecorMinimalMeta), (
+        f'{repr(call_curr)} not type-checking call metadata.')
     assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
 
     # Hint annotating this parameter or return if this parameter or return is
     # annotated *OR* the placeholder sentinel otherwise (i.e., if this parameter
     # or return is unannotated).
-    hint = call_meta.func_annotations.get(pith_name, SENTINEL)
+    hint = call_curr.func_annotations.get(pith_name, SENTINEL)
 
     # If this parameter or return is unannotated, raise an exception.
     #
@@ -179,17 +179,17 @@ def get_func_pith_violation(
     # knowledge or permission, precautions are warranted.
     if hint is SENTINEL:
         raise _BeartypeCallHintPepRaiseException(
-            f'{repr(call_meta.func)} parameter "{pith_name}" unannotated '
+            f'{repr(call_curr.func)} parameter "{pith_name}" unannotated '
             f'(or originally annotated but since deleted) in '
             f'"__annotations__" dunder dictionary:\n'
-            f'{repr(call_meta.func_annotations)}'
+            f'{repr(call_curr.func_annotations)}'
         )
     # Else, this parameter or return is annotated.
 
     # Defer to this lower-level violation factory.
     return get_hint_object_violation(
-        call_meta=call_meta,
-        conf=call_meta.conf,
+        call_curr=call_curr,
+        conf=call_curr.conf,
         hint=hint,  # type: ignore[arg-type]
         obj=pith_value,
         pith_name=pith_name,
@@ -199,7 +199,7 @@ def get_func_pith_violation(
 
 def get_hint_object_violation(
     # Mandatory parameters.
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     conf: BeartypeConf,
     hint: Hint,
     obj: object,
@@ -250,7 +250,7 @@ def get_hint_object_violation(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -365,7 +365,7 @@ def get_hint_object_violation(
         # describing the failure of the passed object to satisfy the passed type
         # hint under the passed beartype configuration).
         violation_cause = _find_hint_object_violation_cause(
-            call_meta=call_meta,
+            call_curr=call_curr,
             conf=conf,
             hint=hint,
             obj=obj,
@@ -440,7 +440,7 @@ def get_hint_object_violation(
 # ....................{ GETTERS ~ exception : message      }....................
 #FIXME: Unit test us up, please. *sigh*
 def get_hint_object_violation_message(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     conf: BeartypeConf,
     hint: Hint,
     obj: object,
@@ -465,7 +465,7 @@ def get_hint_object_violation_message(
     # describing the failure of the passed object to satisfy the passed type
     # hint under the passed beartype configuration).
     violation_cause = _find_hint_object_violation_cause(
-        call_meta=call_meta,
+        call_curr=call_curr,
         conf=conf,
         hint=hint,
         obj=obj,
@@ -500,7 +500,7 @@ excessively long as to prevent human-readability.
 # ....................{ PRIVATE ~ finders                  }....................
 def _find_hint_object_violation_cause(
     # Mandatory parameters.
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     conf: BeartypeConf,
     hint: Hint,
     obj: object,
@@ -525,8 +525,8 @@ def _find_hint_object_violation_cause(
     :func:`.get_hint_object_violation`
         Further details.
     '''
-    assert isinstance(call_meta, BeartypeCallMetaABC), (
-        f'{repr(call_meta)} not beartype call metadata.')
+    assert isinstance(call_curr, BeartypeCallDataABC), (
+        f'{repr(call_curr)} not beartype call metadata.')
     # print('''get_hint_object_violation(
     #     func={!r},
     #     hint={!r},
@@ -576,7 +576,7 @@ def _find_hint_object_violation_cause(
             # Default these exception locals appropriately
             exception_cls = conf.violation_return_type
             exception_prefix = prefix_callable_return_value(
-                func=call_meta.func,  # type: ignore[arg-type]
+                func=call_curr.func,  # type: ignore[arg-type]
                 return_value=obj,
                 is_color=conf.is_color,
             )
@@ -585,7 +585,7 @@ def _find_hint_object_violation_cause(
             # Default these exception locals appropriately
             exception_cls = conf.violation_param_type
             exception_prefix = prefix_callable_arg_value(
-                func=call_meta.func,  # type: ignore[arg-type]
+                func=call_curr.func,  # type: ignore[arg-type]
                 arg_name=pith_name,
                 arg_value=obj,
                 is_color=conf.is_color,
@@ -601,7 +601,7 @@ def _find_hint_object_violation_cause(
     # ....................{ CAUSE                          }....................
     # Metadata encapsulating the sanification of this child hint.
     hint_sane = sanify_hint_any(
-        call_meta=call_meta,
+        call_curr=call_curr,
         conf=conf,
         hint=hint,
         pith_name=pith_name,
@@ -610,7 +610,7 @@ def _find_hint_object_violation_cause(
 
     # Cause describing the failure of this pith to satisfy this hint.
     violation_cause = HintTreeError(
-        call_meta=call_meta,
+        call_curr=call_curr,
         cause_indent='',
         conf=conf,
         hint_sane=hint_sane,

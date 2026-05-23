@@ -58,7 +58,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convmain import sanify_hint_child
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
@@ -193,7 +193,7 @@ class HintTreeError(HintTreeABC):
 
     # ..................{ CLASS VARIABLES ~ set              }..................
     _COPY_VAR_NAMES = frozenset((
-        'call_meta',
+        'call_curr',
         'cause_indent',
         'conf',
         'exception_cls',
@@ -231,7 +231,7 @@ class HintTreeError(HintTreeABC):
         self,
 
         # Mandatory parameters.
-        call_meta: BeartypeCallMetaABC,
+        call_curr: BeartypeCallDataABC,
         cause_indent: str,
         conf: BeartypeConf,
         hint_sane: HintSane,
@@ -317,7 +317,7 @@ class HintTreeError(HintTreeABC):
 
         # Initialize our superclass.
         super().__init__(
-            call_meta=call_meta,
+            call_curr=call_curr,
             conf=conf,
             exception_prefix=exception_prefix,
         )
@@ -360,7 +360,7 @@ class HintTreeError(HintTreeABC):
             f'hint={repr(self.hint)}, '
             f'hint_sane={repr(self.hint_sane)}, '
             f'hint_sign={repr(self.hint_sign)}, '
-            f'call_meta={repr(self.call_meta)}, '
+            f'call_curr={repr(self.call_curr)}, '
             f'cause_indent={repr(self.cause_indent)}, '
             f'cause_str_or_none={repr(self.cause_str_or_none)}, '
             f'conf={repr(self.conf)}, '
@@ -735,7 +735,7 @@ class HintTreeError(HintTreeABC):
 
         # Metadata encapsulating the sanification of this child hint.
         hint_sane_child = sanify_hint_child(
-            call_meta=self.call_meta,
+            call_curr=self.call_curr,
             conf=self.conf,
             hint=hint_child_insane,
             hint_parent_sane=hint_parent_sane,

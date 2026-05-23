@@ -20,7 +20,7 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_RECURSIVE,
     HintOrSane,
@@ -33,7 +33,7 @@ from beartype._util.hint.pep.proposal.pep695 import (
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep695_subbed(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
@@ -51,7 +51,7 @@ def reduce_hint_pep695_subbed(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -130,7 +130,7 @@ def reduce_hint_pep695_subbed(
     #   this subscripted alias.
     # print(f'[reduce_hint_pep484585_generic_subbed] Reducing subscripted generic {repr(hint)}...')
     hint_or_sane = reduce_hint_pep484612646_subbed_typeargs_to_hints(
-        call_meta=call_meta,
+        call_curr=call_curr,
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,

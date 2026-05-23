@@ -20,12 +20,12 @@ This private submodule is *not* intended for importation by downstream callers.
 #for dataclasses describing a single type hint. Specifically:
 #* Resolve all of the "#FIXME: ...Can't callers just refer to...?" comments
 #  littering the "hinttreecode" submodule. This is relevant. *sigh*
-#* Globally rename "hint_curr_meta" to "hint_data". We'll see why in a moment!
+#* Globally rename "hint_curr_meta" to "hint_curr". We'll see why in a moment!
 #* *GREAT*! The next obvious step is to refactor "HintTreeError" as follows:
-#  * Add a new "hint_data" instance variable to "HintTreeError".
+#  * Add a new "hint_curr" instance variable to "HintTreeError".
 #  * Drop "hint_sane" and "hint_sign" from "HintTreeError".
 #  * Refactor all prior access of "cause.hint_sane" and "cause.hint_sign" to
-#    instead access "cause.hint_data.hint_sane" and "cause.hint_data.hint_sign".
+#    instead access "cause.hint_curr.hint_sane" and "cause.hint_curr.hint_sign".
 #
 #Honestly, even that suffices as a first-pass generalization strategy. That's
 #the bare minimum... but that's still leagues ahead of our current non-design.
@@ -35,7 +35,7 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.cls.hint.data.hintdataabc import HintDataABC
 from beartype._conf.confmain import BeartypeConf
@@ -54,7 +54,7 @@ class HintTreeABC(metaclass=ABCMeta):
 
     Attributes
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -66,7 +66,7 @@ class HintTreeABC(metaclass=ABCMeta):
         Human-readable label describing the parameter or return value from
         which this object originates, typically embedded in exceptions raised
         from this getter in the event of unexpected runtime failure.
-    hint_data: HintDataABC
+    hint_curr: HintDataABC
         Metadata describing the **currently visited hint** (i.e., current child
         hint transitively subscripting the root hint being recursively traversed
         over by this concrete subclass implementation).
@@ -77,19 +77,19 @@ class HintTreeABC(metaclass=ABCMeta):
     # * Prevent accidental declaration of erroneous instance variables.
     # * Minimize space and time complexity.
     __slots__ = (
-        'call_meta',
+        'call_curr',
         'conf',
         'exception_prefix',
-        'hint_data',
+        'hint_curr',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        call_meta: BeartypeCallMetaABC
+        call_curr: BeartypeCallDataABC
         conf: BeartypeConf
         exception_prefix: str
-        hint_data: HintDataABC
+        hint_curr: HintDataABC
 
     # ..................{ INITIALIZERS                       }..................
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -98,7 +98,7 @@ class HintTreeABC(metaclass=ABCMeta):
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def __init__(
         self,
-        call_meta: BeartypeCallMetaABC,
+        call_curr: BeartypeCallDataABC,
         conf: BeartypeConf,
         exception_prefix: str,
     ) -> None:
@@ -109,20 +109,20 @@ class HintTreeABC(metaclass=ABCMeta):
         ----------
         See the class docstring for a description of all passed parameters.
         '''
-        assert isinstance(call_meta, BeartypeCallMetaABC), (
-            f'{repr(call_meta)} not beartype call metadata.')
+        assert isinstance(call_curr, BeartypeCallDataABC), (
+            f'{repr(call_curr)} not beartype call metadata.')
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not configuration.')
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
         # Classify all passed parameters.
-        self.call_meta = call_meta
+        self.call_curr = call_curr
         self.conf = conf
         self.exception_prefix = exception_prefix
 
         # Nullify all remaining instance variables for safety.
-        self.hint_data = None  # type: ignore[assignment]
+        self.hint_curr = None  # type: ignore[assignment]
 
     # ..................{ SANIFIERS                          }..................
     @abstractmethod

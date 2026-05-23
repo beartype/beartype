@@ -295,7 +295,7 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     # Assert that this reducer reduces the PEP 484-compliant "typing.Generic"
     # superclass subscripted by only type variables to simply that superclass.
     assert reduce_hint_pep484612646_subbed_typeargs_to_hints(
-        call_meta=BEARTYPE_CALL_EXTERNAL_META, hint=Generic[S, T]) is Generic
+        call_curr=BEARTYPE_CALL_EXTERNAL_META, hint=Generic[S, T]) is Generic
 
     # ....................{ PEP 695                        }....................
     # If the active Python interpreter targets Python >= 3.12 and thus supports
@@ -321,6 +321,6 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     # is *NOT* a PEP 484- or 646-compliant type parameter.
     with raises(BeartypeDecorHintPep484612646Exception):
         reduce_hint_pep484612646_subbed_typeargs_to_hints(
-            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            call_curr=BEARTYPE_CALL_EXTERNAL_META,
             hint='In thy devastating omnipotence,',
         )

@@ -25,7 +25,7 @@ from beartype._check.error.errmain import (
 )
 from beartype._check.forward.reference.fwdrefset import (
     set_beartype_ref_proxies_exception_prefix)
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.call.callmetadecor import (
     BeartypeCallDecorMeta,
     prefix_decor_meta_callable_pith,
@@ -276,7 +276,7 @@ def make_func_checker(
             # dynamically resolve *ALL* PEP 484-compliant forward reference type
             # hints visitable from this hint against the first external lexical
             # scope on the call stack originating from a third-party package.
-            call_meta = BEARTYPE_CALL_EXTERNAL_META
+            call_curr = BEARTYPE_CALL_EXTERNAL_META
 
             # Metadata encapsulating the sanification of this possibly insane
             # hint if this hint is supported by @beartype *OR* raise an
@@ -284,7 +284,7 @@ def make_func_checker(
             #
             # Do this first *BEFORE* passing this hint to any further callables.
             hint_sane = sanify_hint_root_statement(
-                call_meta=call_meta,
+                call_curr=call_curr,
                 conf=conf,
                 hint=hint,
                 exception_prefix=EXCEPTION_PLACEHOLDER,
@@ -312,7 +312,7 @@ def make_func_checker(
             # unreadable type-checking violations prefixed by
             # "EXCEPTION_PLACEHOLDER" (which is an unreadable placeholder).
             code_check, func_scope_frozen = make_code_check(
-                call_meta,
+                call_curr,
                 hint,
                 hint_sane,
                 conf,
@@ -353,7 +353,7 @@ def make_func_checker(
             # the body of this wrapper function by enabling this metadata to be
             # passed as a single unified parameter (rather than individually as
             # multiple distinct parameters).
-            func_scope[ARG_NAME_CALL_META] = call_meta
+            func_scope[ARG_NAME_CALL_META] = call_curr
 
             # ....................{ FUNCTION               }....................
             # Unqualified basename of this type-checking function to be created,
@@ -428,7 +428,7 @@ def make_func_checker(
 # ....................{ FACTORIES ~ code                   }....................
 #FIXME: Unit test us up, please.
 def make_code_raiser_hint_object_check(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint_insane: Hint,
     hint_sane: HintSane,
     conf: BeartypeConf,
@@ -445,7 +445,7 @@ def make_code_raiser_hint_object_check(
 
     This factory is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator), due to both accepting one or more
-    unhashable parameters (e.g., ``call_meta``) *and* only being called by the
+    unhashable parameters (e.g., ``call_curr``) *and* only being called by the
     higher-level memoized :func:`.make_func_checker` factory.
 
     Caveats
@@ -456,7 +456,7 @@ def make_code_raiser_hint_object_check(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the lexical scope of the external call to the
         public :func:`beartype.door.die_if_unbearable` raiser function).
@@ -491,7 +491,7 @@ def make_code_raiser_hint_object_check(
     # Python code snippet comprising a single boolean expression type-checking
     # an arbitrary object against this hint.
     code_expr, func_scope_frozen = make_check_expr(
-        call_meta=call_meta, hint_sane=hint_sane, conf=conf)
+        call_curr=call_curr, hint_sane=hint_sane, conf=conf)
 
     # ....................{ SCOPE                          }....................
     # Mutable dictionary coerced from this immutable frozen dictionary.
@@ -541,7 +541,7 @@ def make_code_raiser_hint_object_check(
 
 #FIXME: Unit test us up, please.
 def make_code_tester_check(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint_insane: Hint,
     hint_sane: HintSane,
     conf: BeartypeConf,
@@ -557,7 +557,7 @@ def make_code_tester_check(
 
     This factory is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator), due to both accepting one or more
-    unhashable parameters (e.g., ``call_meta``) *and* only being called by the
+    unhashable parameters (e.g., ``call_curr``) *and* only being called by the
     higher-level memoized :func:`.make_func_checker` factory.
 
     Caveats
@@ -568,7 +568,7 @@ def make_code_tester_check(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the lexical scope of the external call to the
         public :func:`beartype.door.is_bearable` tester function).
@@ -598,7 +598,7 @@ def make_code_tester_check(
     # Python code snippet comprising a single boolean expression type-checking
     # an arbitrary object against this hint.
     code_expr, func_scope_frozen = make_check_expr(
-        call_meta=call_meta, hint_sane=hint_sane, conf=conf)
+        call_curr=call_curr, hint_sane=hint_sane, conf=conf)
 
     # Code snippet type-checking the root pith against the root hint.
     func_code = f'{CODE_TESTER_CHECK_PREFIX}{code_expr}'
@@ -726,7 +726,7 @@ def make_code_raiser_func_pith_check(
     # Python code snippet comprising a single boolean expression type-checking
     # an arbitrary object against this hint.
     code_expr, func_scope_frozen = make_check_expr(
-        call_meta=decor_meta, hint_sane=hint_sane, conf=decor_meta.conf)
+        call_curr=decor_meta, hint_sane=hint_sane, conf=decor_meta.conf)
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with similar logic in make_func_checker() above.

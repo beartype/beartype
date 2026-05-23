@@ -38,7 +38,7 @@ from typing import (
 )
 
 # ....................{ SUBCLASSES                         }....................
-class BeartypeCallMetaABC(object, metaclass=ABCMeta):
+class BeartypeCallDataABC(object, metaclass=ABCMeta):
     '''
     **Beartype call metadata dataclass superclass** (i.e., abstract base class
     (ABC) of all dataclass subclasses encapsulating the user-defined callable,

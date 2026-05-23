@@ -27,7 +27,7 @@ def test_make_check_expr() -> None:
     from beartype._check.code.codemain import make_check_expr
     from beartype._check.convert.convmain import sanify_hint_any
     from beartype._check.cls.hint.hintsane import HintSane
-    from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+    from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
     from beartype._check.cls.call.callmetadecor import new_decor_meta
     from beartype._check.cls.call.callmetaexternal import (
         BEARTYPE_CALL_EXTERNAL_META)
@@ -40,7 +40,7 @@ def test_make_check_expr() -> None:
     # Keyword arguments to be passed to the pair of memoized make_check_expr()
     # calls below.
     kwargs_cached = dict(
-        call_meta=BEARTYPE_CALL_EXTERNAL_META,
+        call_curr=BEARTYPE_CALL_EXTERNAL_META,
         hint_sane=HintSane(str),
         conf=BEARTYPE_CONF_DEFAULT,
     )
@@ -60,7 +60,7 @@ def test_make_check_expr() -> None:
         hint: Hint,
 
         # Optional parameters.
-        call_meta: BeartypeCallMetaABC = BEARTYPE_CALL_EXTERNAL_META,
+        call_curr: BeartypeCallDataABC = BEARTYPE_CALL_EXTERNAL_META,
         is_exprs_equal: bool = True,
     ) -> None:
         '''
@@ -73,7 +73,7 @@ def test_make_check_expr() -> None:
         ----------
         hint : Hint
             Contextual type hint to be validated.
-        call_meta : BeartypeCallMetaABC, default: BEARTYPE_CALL_EXTERNAL_META
+        call_curr : BeartypeCallDataABC, default: BEARTYPE_CALL_EXTERNAL_META
             **Beartype call metadata** (i.e., dataclass aggregating *all* common
             metadata encapsulating the user-defined callable, type, or statement
             currently being type-checked by the end user). Defaults to the
@@ -89,13 +89,13 @@ def test_make_check_expr() -> None:
         assert isinstance(is_exprs_equal, bool)
 
         # Metadata encapsulating the sanification of this contextual hint.
-        hint_sane = sanify_hint_any(call_meta=call_meta, hint=hint)
+        hint_sane = sanify_hint_any(call_curr=call_curr, hint=hint)
 
         # Keyword arguments to be passed to the pair of unmemoized
         # make_check_expr() calls below, validating that the make_check_expr()
         # code factory intentionally avoids memoizing this contextual hint.
         make_check_expr_kwargs = dict(
-            call_meta=call_meta,
+            call_curr=call_curr,
             hint_sane=hint_sane,
             conf=BEARTYPE_CONF_DEFAULT,
         )
@@ -156,4 +156,4 @@ def test_make_check_expr() -> None:
             # Assert that the make_check_expr() code factory avoids memoizing
             # PEP 673-compliant self root hints.
             assert_hint_check_expr_is_uncached(
-                call_meta=decor_meta_pep673, hint=Self)
+                call_curr=decor_meta_pep673, hint=Self)

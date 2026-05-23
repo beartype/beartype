@@ -96,7 +96,7 @@ callable against the type hint annotating that parameter or return.
 # ....................{ CODE ~ violation : get             }....................
 CODE_GET_HINT_OBJECT_VIOLATION = f''':
             {VAR_NAME_VIOLATION} = {ARG_NAME_GET_VIOLATION}(
-                call_meta={ARG_NAME_CALL_META},
+                call_curr={ARG_NAME_CALL_META},
                 conf={ARG_NAME_CONF},
                 hint={ARG_NAME_RAISER_HINT},
                 obj={VAR_NAME_PITH_ROOT},
@@ -120,7 +120,7 @@ This snippet expects to be formatted with these named interpolations:
 
 CODE_GET_FUNC_PITH_VIOLATION = f''':
             {VAR_NAME_VIOLATION} = {ARG_NAME_GET_VIOLATION}(
-                call_meta={ARG_NAME_CALL_META},
+                call_curr={ARG_NAME_CALL_META},
                 pith_name={{pith_name}},
                 pith_value={VAR_NAME_PITH_ROOT},{{arg_random_int}}
             )

@@ -58,12 +58,12 @@ def test_reduce_hint(
             # Arbitrary callable annotated by one or more arbitrary type hints,
             # passed purely to satisfy API constraints.
             func=test_reduce_hint,
-        ) as call_meta:
+        ) as call_curr:
             # If this is case encapsulates a valid reduction...
             if isinstance(hint_reduction_meta, HintReductionValid):
                 # Sanified metadata encapsulating the reduction of this hint.
                 hint_reduced_sane = reduce_hint(
-                    call_meta=call_meta,
+                    call_curr=call_curr,
                     conf=hint_reduction_meta.conf,
                     hint=hint_reduction_meta.hint_unreduced,
                 )
@@ -80,7 +80,7 @@ def test_reduce_hint(
                 # when passed this input hint.
                 with raises(hint_reduction_meta.exception_type):
                     reduce_hint(
-                        call_meta=call_meta,
+                        call_curr=call_curr,
                         conf=hint_reduction_meta.conf,
                         hint=hint_reduction_meta.hint_unreduced,
                     )

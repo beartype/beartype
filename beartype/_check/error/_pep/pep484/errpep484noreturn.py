@@ -41,7 +41,7 @@ def find_cause_pep484_noreturn(cause: HintTreeError) -> HintTreeError:
         f'{repr(cause.hint)} not "HintSignNoReturn".')
 
     # Decorated callable originating this violation.
-    func: Callable = cause.call_meta.func  # type: ignore[assignment]
+    func: Callable = cause.call_curr.func  # type: ignore[assignment]
 
     # Output cause to be returned, permuted from this input cause such that the
     # justification is a human-readable string describing this failure.

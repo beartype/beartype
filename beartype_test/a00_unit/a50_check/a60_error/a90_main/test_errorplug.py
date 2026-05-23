@@ -104,7 +104,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
 
     # Keyword arguments to be unconditionally passed to *ALL* calls of the
     # get_func_pith_violation() getter below.
-    kwargs = dict(call_meta=minify_decor_meta_kwargs(
+    kwargs = dict(call_curr=minify_decor_meta_kwargs(
         func=of_yesternight, conf=BeartypeConf()))
 
     # Arbitrary non-empty string.

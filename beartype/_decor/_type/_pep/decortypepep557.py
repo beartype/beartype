@@ -87,7 +87,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  reduce_hint_pep557_field_descriptor() from within whatever existing reducer
 #  is already mapped to "None".
 #* Specifically, inside that existing reducer:
-#      type_decorated = call_meta.cls_stack[-1]
+#      type_decorated = call_curr.cls_stack[-1]
 #      if (
 #          type_decorated is not None and
 #          is_type_pep557_dataclass(type_decorated) and

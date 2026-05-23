@@ -237,7 +237,7 @@ def make_hint_pep484604_check_expr(hint_tree: HintTreeCode) -> None:
             # prefer the expression yielding the value of the current pith
             # *WITHOUT* assigning this value to a local variable, which would
             # needlessly go unused.
-            hint_tree.pith_curr_expr
+            hint_tree.hint_curr_meta.pith_expr
         )
 
         hint_tree.func_curr_code += CODE_PEP484604_UNION_CHILD_NONPEP_format(

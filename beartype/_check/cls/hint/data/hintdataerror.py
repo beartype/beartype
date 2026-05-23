@@ -24,7 +24,7 @@ class HintDataError(HintDataABC):
     object).
 
     Instances of this lower-level dataclass are bound to the
-    :attr:`beartype._check.cls.hint.tree.hinttreeerror.HintTreeError.hint_data`
+    :attr:`beartype._check.cls.hint.tree.hinttreeerror.HintTreeError.hint_curr`
     instance variable of the higher-level parent
     :class:`beartype._check.cls.hint.tree.hinttreeerror.HintTreeError` dataclass
     iterating over all such instances for a given type hint tree.

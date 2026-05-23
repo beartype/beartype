@@ -55,7 +55,7 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HINT_SANE_RECURSIVE,
@@ -106,7 +106,7 @@ from typing import Optional
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484612646_typearg(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
@@ -123,7 +123,7 @@ def reduce_hint_pep484612646_typearg(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -299,7 +299,7 @@ def reduce_hint_pep484612646_typearg(
         # *OR* the sentinel placeholder otherwise (i.e., if this type parameter
         # has *NO* default).
         hint_default = get_hint_pep484612646_typearg_packed_default_or_sentinel(
-            hintable=call_meta.func,
+            hintable=call_curr.func,
             hint=hint_packed,
             exception_prefix=exception_prefix,
         )
@@ -324,7 +324,7 @@ def reduce_hint_pep484612646_typearg(
         # parametrizing this type parameter if any *OR* "None" otherwise (i.e.,
         # if this type parameter is both unbounded *AND* unconstrained).
         hint_reduced = get_hint_pep484_typevar_bounded_constraints_or_none(
-            hintable=call_meta.func,
+            hintable=call_curr.func,
             hint=hint_reduced,  # pyright: ignore
             exception_prefix=exception_prefix,
         )
@@ -397,7 +397,7 @@ def reduce_hint_pep484612646_typearg(
 #with the "Caveats" in the docstring below, please. *megasigh*
 def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     # Mandatory parameters.
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint: Hint,
 
     # Optional parameters.
@@ -465,7 +465,7 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -605,7 +605,7 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
         # Type parameter lookup table mapping from each of these type parameters
         # to each of these corresponding child hints.
         typearg_to_hint = _make_hint_pep484612646_typearg_to_hint(
-            hintable=call_meta.func,
+            hintable=call_curr.func,
             hint=hint,
             hints_typearg=hints_typearg,
             hints_child=hints_child,

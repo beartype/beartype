@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.typing.datatypingport import Hint
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,
@@ -29,7 +29,7 @@ from typing import (
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484585_generic_subbed(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
@@ -57,11 +57,11 @@ def reduce_hint_pep484585_generic_subbed(
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator), as this reducer accepts one or more
-    unmemoizable parameters (e.g., ``call_meta``).
+    unmemoizable parameters (e.g., ``call_curr``).
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -149,7 +149,7 @@ def reduce_hint_pep484585_generic_subbed(
     #   this subscripted generic.
     # print(f'[reduce_hint_pep484585_generic_subbed] Reducing subscripted generic {repr(hint)}...')
     hint_reduced = reduce_hint_pep484612646_subbed_typeargs_to_hints(
-        call_meta=call_meta,
+        call_curr=call_curr,
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,
@@ -162,7 +162,7 @@ def reduce_hint_pep484585_generic_subbed(
 
 
 def reduce_hint_pep484585_generic_unsubbed(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint: Hint,
     **kwargs,
 ) -> HintOrSane:
@@ -174,11 +174,11 @@ def reduce_hint_pep484585_generic_unsubbed(
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator), as this reducer accepts one or more
-    unmemoizable parameters (e.g., ``call_meta``).
+    unmemoizable parameters (e.g., ``call_curr``).
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -245,7 +245,7 @@ def reduce_hint_pep484585_generic_unsubbed(
     #   dunder method (e.g., __getitem__()) annotated by this same generic known
     #   to induce infinitely recursive type-checking under various edge cases,
     #   trivially resolved by ignoring this same generic *ONLY* in this case.
-    hint_reduced = reduce_hint_nonpep(call_meta=call_meta, hint=hint, **kwargs)
+    hint_reduced = reduce_hint_nonpep(call_curr=call_curr, hint=hint, **kwargs)
 
     # ....................{ RETURN                         }....................
     # Return this possibly reduced hint.

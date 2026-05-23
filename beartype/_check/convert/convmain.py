@@ -20,7 +20,7 @@ from beartype._check.convert._convcoerce import (
 )
 from beartype._check.convert._reduce.redmain import reduce_hint
 from beartype._check.cls.hint.hintsane import HintSane
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.call.callmetadecor import BeartypeCallDecorMeta
 from beartype._check.cls.call.callmetaexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
@@ -204,7 +204,7 @@ def sanify_hint_root_func(
     # convenient form for beartype-specific type-checking elsewhere.
     hint_sane = reduce_hint(
         arg_kind=arg_kind,
-        call_meta=decor_meta,
+        call_curr=decor_meta,
         conf=decor_meta.conf,
         hint=hint,
         pith_name=pith_name,
@@ -217,7 +217,7 @@ def sanify_hint_root_func(
 
 #FIXME: Unit test us up, please.
 def sanify_hint_root_statement(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
@@ -245,7 +245,7 @@ def sanify_hint_root_statement(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the lexical scope of this external statement).
     hint : Hint
@@ -293,7 +293,7 @@ def sanify_hint_root_statement(
 
     # Metadata encapsulating the sanification of this hint.
     hint_sane = reduce_hint(
-        call_meta=call_meta,
+        call_curr=call_curr,
         conf=conf,
         hint=hint,
         exception_prefix=exception_prefix,
@@ -312,7 +312,7 @@ def sanify_hint_root_statement(
 #FIXME: Unit test us up, please.
 def sanify_hint_child(
     # Mandatory parameters.
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
 
@@ -333,7 +333,7 @@ def sanify_hint_child(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -427,7 +427,7 @@ def sanify_hint_child(
     # exists *NO* space to be compacted here and thus *NO* demonstrable
     # reason to perform hint coercion.
     hint_sane = reduce_hint(
-        call_meta=call_meta,
+        call_curr=call_curr,
         conf=conf,
         hint=hint,
         hint_parent_sane=hint_parent_sane,
@@ -446,7 +446,7 @@ def sanify_hint_any(
     hint: Hint,
 
     # Optional parameters.
-    call_meta: BeartypeCallMetaABC = BEARTYPE_CALL_EXTERNAL_META,
+    call_curr: BeartypeCallDataABC = BEARTYPE_CALL_EXTERNAL_META,
     hint_parent_sane: Optional[HintSane] = None,
     **kwargs
 ) -> HintSane:
@@ -463,7 +463,7 @@ def sanify_hint_any(
     -------
     **The more fine-grained** :func:`.sanify_hint_child` **sanifier should
     typically be called instead.** This more coarse-grained sanifier drops the
-    mandatory ``call_meta`` and ``hint_parent_sane`` parameters required by the
+    mandatory ``call_curr`` and ``hint_parent_sane`` parameters required by the
     former, which is *not* necessarily a good thing. Those parameters should
     typically be passed. Failing to pass those parameters drops essential
     metadata required to properly sanitize many kinds of insane type hints.
@@ -472,7 +472,7 @@ def sanify_hint_any(
     ----------
     hint : Hint
         Type hint to be sanified.
-    call_meta : BeartypeCallMetaABC, default: BEARTYPE_CALL_EXTERNAL_META
+    call_curr : BeartypeCallDataABC, default: BEARTYPE_CALL_EXTERNAL_META
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user). Defaults to the beartype
@@ -508,7 +508,7 @@ def sanify_hint_any(
 
     # Defer to our betters.
     return sanify_hint_child(
-        call_meta=call_meta,
+        call_curr=call_curr,
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         **kwargs

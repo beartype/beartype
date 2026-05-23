@@ -14,7 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.code.snip.codesnipcls import HINT_INDEX_TO_HINT_PLACEHOLDER
+from beartype._check.code.snip.codesnipcls import (
+    HINT_INDEX_TO_HINT_PLACEHOLDER,
+    PITH_INDEX_TO_VAR_NAME,
+)
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
@@ -38,7 +41,7 @@ class HintDataCode(HintDataABC):
     hints annotating those objects).
 
     Instances of this lower-level dataclass are bound to the
-    :attr:`beartype._check.cls.hint.tree.hinttreecode.HintTreeCode.hint_data`
+    :attr:`beartype._check.cls.hint.tree.hinttreecode.HintTreeCode.hint_curr`
     instance variable of the higher-level parent
     :class:`beartype._check.cls.hint.tree.hinttreecode.HintTreeCode` dataclass
     iterating over all such instances for a given type hint tree.
@@ -63,16 +66,16 @@ class HintDataCode(HintDataABC):
         type-checking the current pith against this hint.
     pith_expr : str
         **Pith expression** (i.e., Python code snippet evaluating to the value
-        of) the current **pith** (i.e., possibly nested object of the passed
-        parameter or return to be type-checked against this hint). Note that
-        this expression is intentionally *not* an assignment expression but
-        rather the original inefficient expression provided by the parent type
-        hint of this hint.
+        of the current **pith** (i.e., possibly nested object of the passed
+        parameter or return to be type-checked against this hint)). Note this
+        expression is intentionally *not* defined as an efficient assignment
+        expression but rather the original inefficient expression inherited from
+        the parent hint (if any) of this possibly child hint.
     pith_var_name_index : int
         **Pith variable name index** (i.e., 0-based integer suffixing the name
         of each local variable assigned the value of the current pith in an
         assignment expression, thus uniquifying this variable in the body of the
-        current wrapper function). Indexing the
+        current type-checking wrapper function). Indexing the
         :obj:`beartype._check.code.snip.codesnipcls.PITH_INDEX_TO_VAR_NAME`
         dictionary singleton by this integer efficiently yields the current
         **pith variable name** locally storing the value of the current pith.
@@ -215,3 +218,31 @@ class HintDataCode(HintDataABC):
             f'pith_var_name_index={repr(self.pith_var_name_index)}, '
             f')'
         )
+
+    # ..................{ PROPERTIES                         }..................
+    #FIXME: Actually access this property everywhere, please. *sigh*
+    @property
+    def pith_var_name(self) -> str:
+        '''
+        Name of the current pith variable (i.e., local Python variable in the
+        body of the wrapper function whose value is that of the current pith).
+
+        This name is either:
+
+        * Initially, the name of the currently type-checked parameter or return.
+        * On subsequently type-checking nested items of the parameter or return,
+          the name of the local variable uniquely assigned to by the assignment
+          expression defined by :attr:`.pith_assign_expr` (i.e., the left-hand
+          side (LHS) of that assignment expression).
+
+        Note that this attribute is intentionally defined as a dynamic (albeit
+        slightly less efficient) property rather than as a static (albeit
+        slightly more efficient) instance variable. Why? Safety. The former
+        transparently supports valid use cases in which the caller externally
+        increments the lower-level :attr:`.pith_var_name_index` instance
+        variable this higher-level property internally depends on; the latter
+        does not, inviting non-obvious bugs throughout the codebase.
+        '''
+
+        # Revoke this unprovoked one-liner!
+        return PITH_INDEX_TO_VAR_NAME[self.pith_var_name_index]

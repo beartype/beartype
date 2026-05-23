@@ -656,7 +656,7 @@ class BeartypeForwardRefMeta(type):
             # synchronization with the is_bearable() call performed by the
             # sibling __instancecheck__() dunder method, which implicitly
             # leverages this exact same singleton for the same purpose.
-            call_meta=BEARTYPE_CALL_EXTERNAL_META,
+            call_curr=BEARTYPE_CALL_EXTERNAL_META,
             # See the is_bearable() call performed by the sibling
             # __instancecheck__() dunder method for further details.
             conf=BEARTYPE_CONF_NONRANDOM,

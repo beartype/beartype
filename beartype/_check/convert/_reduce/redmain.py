@@ -26,7 +26,7 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.call.callmetaexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.cls.hint.hintsane import (
@@ -34,6 +34,7 @@ from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,
     HintSane,
+    make_hint_sane,
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
@@ -52,7 +53,7 @@ from typing import Optional
 # ....................{ REDUCERS                           }....................
 def reduce_hint(
     # Mandatory parameters.
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     hint: Hint,
 
     # Optional keyword-only parameters.
@@ -92,7 +93,7 @@ def reduce_hint(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -205,8 +206,8 @@ def reduce_hint(
     # ....................{ PREAMBLE                       }....................
     assert isinstance(arg_kind, NoneTypeOr[ArgKind]), (
         f'{repr(arg_kind)} neither argument kind nor "None".')
-    assert isinstance(call_meta, BeartypeCallMetaABC), (
-        f'{repr(call_meta)} not beartype call metadata.')
+    assert isinstance(call_curr, BeartypeCallDataABC), (
+        f'{repr(call_curr)} not beartype call metadata.')
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
         f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
@@ -265,7 +266,7 @@ def reduce_hint(
                 # * Else, this unreduced hint as is.
                 hint_or_sane_curr = hint_reducer(
                     arg_kind=arg_kind,
-                    call_meta=call_meta,
+                    call_curr=call_curr,
                     conf=conf,
                     hint=hint_curr,
                     hint_parent_sane=hint_parent_sane,
@@ -429,27 +430,18 @@ def reduce_hint(
             # currently visited hint in preparation for subsequent reduction.
             hint_or_sane_curr = hint_curr
 
-        # ....................{ RETURN                     }....................
+        # ....................{ METADATA                   }....................
         # If this hint is *NOT* already sanified type hint metadata, this hint
         # is unignorable. Why? Because, if this hint were ignorable, this hint
         # would have been reduced to the "HINT_SANE_IGNORABLE" singleton, which
-        # is an instance of the "HintSane" dataclass. In this case...
+        # is an instance of the "HintSane" dataclass. In this case, encapsulate
+        # this hint with such metadata.
         if not isinstance(hint_or_sane_curr, HintSane):
-            # Encapsulate this hint with such metadata, defined as either...
-            hint_or_sane_curr = (
-                # If this hint has *NO* parent, this is a root hint. In this
-                # case, the trivial metadata shallowly encapsulating this root
-                # hint;
-                HintSane(hint_or_sane_curr)
-                if hint_parent_sane is None else
-                # Else, this hint has a parent. In this case, the non-trivial
-                # metadata deeply encapsulating both this non-root hint *AND*
-                # all metadata already associated with this parent hint.
-                hint_parent_sane.permute_sane(hint=hint_or_sane_curr)
-            )
+            hint_or_sane_curr = make_hint_sane(
+                hint=hint_or_sane_curr, hint_parent_sane=hint_parent_sane)
         # Else, this hint is already sanified type hint metadata. In this case,
         # preserve this metadata as is.
-    # ....................{ RETURN                         }....................
+    # ....................{ EXCEPTION                      }....................
     # If doing so raises *ANY* exception...
     except Exception as exception:
         # print(f'!!!! reduce_hint() exception_prefix: {exception_prefix}!!!!')
@@ -469,6 +461,7 @@ def reduce_hint(
         reraise_exception_placeholder(
             exception=exception, target_str=exception_prefix)
 
+    # ....................{ RETURN                         }....................
     # Return this possibly reduced hint.
     return hint_or_sane_curr
 
@@ -522,7 +515,7 @@ def reduce_hint_any(
     hint: Hint,
 
     # Optional parameters.
-    call_meta: BeartypeCallMetaABC = BEARTYPE_CALL_EXTERNAL_META,
+    call_curr: BeartypeCallDataABC = BEARTYPE_CALL_EXTERNAL_META,
     **kwargs
 ) -> HintSane:
     '''
@@ -532,7 +525,7 @@ def reduce_hint_any(
 
     This reducer is a convenience wrapper for the more general-purpose
     :func:`.reduce_hint` reducer, principally intended to be called from unit
-    tests. Specifically, this reducer defaults the ``call_meta`` parameter
+    tests. Specifically, this reducer defaults the ``call_curr`` parameter
     accepted by the :func:`.reduce_hint` reduce to the **beartype external call
     metadata singleton** (i.e., :data:`.BEARTYPE_CALL_EXTERNAL_META`). Doing so
     reduces :pep:`484-compliant forward reference type hints visitable from the
@@ -544,7 +537,7 @@ def reduce_hint_any(
     -------
     **The more fine-grained** :func:`.reduce_hint` **reducer should typically be
     called instead.** This more coarse-grained reducer drops the mandatory
-    ``call_meta`` parameter required by the former, which is *not* necessarily a
+    ``call_curr`` parameter required by the former, which is *not* necessarily a
     good thing. That parameter should typically be passed. Failing to pass that
     parameter drops essential metadata required to properly sanitize many kinds
     of insane type hints.
@@ -553,7 +546,7 @@ def reduce_hint_any(
     ----------
     hint : Hint
         Type hint to be reduced.
-    call_meta : BeartypeCallMetaABC, default: BEARTYPE_CALL_EXTERNAL_META
+    call_curr : BeartypeCallDataABC, default: BEARTYPE_CALL_EXTERNAL_META
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user). Defaults to the beartype
@@ -577,7 +570,7 @@ def reduce_hint_any(
     '''
 
     # Default to the beartype external call metadata singleton.
-    kwargs['call_meta'] = BEARTYPE_CALL_EXTERNAL_META
+    kwargs['call_curr'] = BEARTYPE_CALL_EXTERNAL_META
 
     # Return this hint possibly reduced to a lower-level hint.
     return reduce_hint(hint=hint, **kwargs)
@@ -586,7 +579,6 @@ def reduce_hint_any(
 def _reduce_hint_cached(
     hint: Hint,
     hint_sign_seed: HintSignOrNoneOrSentinel,
-    exception_prefix: str,
     **kwargs
 ) -> HintOrSane:
     '''
@@ -603,8 +595,6 @@ def _reduce_hint_cached(
     hint_sign_seed : HintSignOrNoneOrSentinel
         Sign with which to seed (i.e., initialize) this reduction. See also the
         :func:`.reduce_hint` docstring for further details.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
 
     All remaining keyword parameters are silently ignored.
 
@@ -625,6 +615,36 @@ def _reduce_hint_cached(
 
     # Reduced hint to be returned, defaulting to the passed unreduced hint.
     hint_or_sane: HintOrSane = hint
+
+    #FIXME: *DRY VIOLATION*. This same code is repeated by the
+    #_reduce_hint_uncached() reducer below. Instead, the parent reduce_hint()
+    #function should *ALMOST CERTAINLY* be performing this logic instead
+    #*DIRECTLY BEFORE* calling hint_reducer(). Specifically, this is what
+    #reduce_hint() should look like:
+    #    def reduce_hint(...):
+    #        ...
+    #                # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
+    #                # "None" otherwise (e.g., if this hint is PEP-noncompliant), defined as
+    #                # either...
+    #                hint_sign = (
+    #                    # If the caller did *NOT* explicitly pass a sign with which to seed this
+    #                    # reduction, the standard sign uniquely identifying this hint;
+    #                    get_hint_pep_sign_or_none(hint)
+    #                    if hint_sign_seed is SENTINEL else
+    #                    # Else, the caller explicitly passed a sign with which to seed this
+    #                    # reduction. In this case, that sign.
+    #                    hint_sign_seed
+    #                )
+    #
+    #                hint_or_sane_curr = hint_reducer(
+    #                    ...,
+    #                    hint_sign=hint_sign,
+    #                    ...
+    #                )
+    #
+    #To facilitate the above refactoring, we'll lastly need to rename the
+    #"hint_sign_seed" parameters accepted by both this and
+    #_reduce_hint_uncached() to "hint_sign". Trivial. Yay! \o/
 
     # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
     # "None" otherwise (e.g., if this hint is PEP-noncompliant), defined as

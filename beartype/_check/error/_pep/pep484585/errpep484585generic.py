@@ -72,7 +72,7 @@ def find_cause_pep484585_generic_unsubbed(
     # unsubscripted generic *AND* the sign identifying this pseudo-superclass...
     for hint_child_sane, hint_child_sign in (
         get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
-            call_meta=cause.call_meta,
+            call_curr=cause.call_curr,
             conf=cause.conf,
             hint_sane=cause.hint_sane,
             exception_prefix=cause.exception_prefix,

@@ -24,7 +24,7 @@ from beartype._cave._cavefast import (
     HintPep612ParamSpecArgType,
     HintPep612ParamSpecKwargType,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
 from beartype._data.typing.datatypingport import (
@@ -311,7 +311,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     # General-purpose parameters passed by the higher-level
     # beartype._check.convert._reduce.redmain.reduce_hint() reducer to this
     # lower-level reducer.
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     arg_kind: Optional[ArgKind],
     exception_prefix: str,
     hint: object,
@@ -354,7 +354,7 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -466,7 +466,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     # specification variadic positional and keyword parameter type hints *MUST*
     # directly annotate the variadic positional and keyword parameter
     # (respectively) of a callable decorated by the @beartype decorator.
-    if not isinstance(call_meta, BeartypeCallDecorMinimalMeta):
+    if not isinstance(call_curr, BeartypeCallDecorMinimalMeta):
         raise BeartypeDecorHintPep612Exception(
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
@@ -498,7 +498,7 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     # ....................{ LOCALS                         }....................
     # Callable directly annotated by this hint, localized for no good reason.
-    func = call_meta.func
+    func = call_curr.func
 
     # Metadata describing the other variadic parameter accepted by that callable
     # if that callable accepts the other variadic parameter *OR* "None"
@@ -553,7 +553,7 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     # Type hint subscripting the other variadic parameter if any *OR* the
     # sentinel placeholder otherwise.
-    other_arg_hint = call_meta.func_annotations.get(other_arg_name, SENTINEL)
+    other_arg_hint = call_curr.func_annotations.get(other_arg_name, SENTINEL)
 
     # If the other variadic parameter is unannotated, raise an exception.
     if other_arg_hint is SENTINEL:

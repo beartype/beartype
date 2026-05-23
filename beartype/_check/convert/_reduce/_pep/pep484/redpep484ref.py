@@ -86,7 +86,7 @@ from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable,
     proxy_hint_pep749_ref_object,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import (
     HintOrSane,
     HintSane,
@@ -104,7 +104,7 @@ from typing import Optional
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
 def reduce_hint_pep484_ref(
-    call_meta: BeartypeCallMetaABC,
+    call_curr: BeartypeCallDataABC,
     conf: BeartypeConf,
     hint: HintPep484749Ref,
     hint_parent_sane: Optional[HintSane],
@@ -125,7 +125,7 @@ def reduce_hint_pep484_ref(
 
     Parameters
     ----------
-    call_meta : BeartypeCallMetaABC
+    call_curr : BeartypeCallDataABC
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
@@ -157,7 +157,7 @@ def reduce_hint_pep484_ref(
         this forward reference dynamically resolves, relative to the local and
         global scope of the currently type-checked callable, type, or statement.
     '''
-    # print(f'Reducing forward reference {repr(hint)} under {repr(call_meta)}...')
+    # print(f'Reducing forward reference {repr(hint)} under {repr(call_curr)}...')
 
     # ....................{ LOCALS                         }....................
     # Non-string type hint to which this forward reference dynamically resolves,
@@ -283,7 +283,7 @@ def reduce_hint_pep484_ref(
         #   attributes that have yet to be defined in those locals or globals.
         #   In this case, a runtime-usable forward reference proxy encapsulating
         #   this runtime-unusable stringified forward reference.
-        hint_resolved = call_meta.resolve_hint_pep484_ref_str(
+        hint_resolved = call_curr.resolve_hint_pep484_ref_str(
             hint=hint, conf=conf, exception_prefix=exception_prefix)
     # Else, this runtime-unusable forward reference has already been reduced to
     # a runtime-usable forward reference proxy above. Preserve this proxy as is.

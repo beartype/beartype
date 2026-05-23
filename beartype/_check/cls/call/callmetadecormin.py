@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import TYPE_CHECKING
-from beartype._check.cls.call.callmetaabc import BeartypeCallMetaABC
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     LexicalScope,
@@ -28,7 +28,7 @@ from typing import Optional
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
-class BeartypeCallDecorMinimalMeta(BeartypeCallMetaABC):
+class BeartypeCallDecorMinimalMeta(BeartypeCallDataABC):
     '''
     **Beartype decorator call minimal metadata** (i.e., dataclass
     encapsulating the minimal metadata required to type-check the callable
