@@ -209,17 +209,6 @@ dependencies = []
 # hosting service.
 doc-ghp = [
     # ....................{ THEME                          }....................
-    # FIXME: Probably remove this later after committing to Zensical, since it's
-    # built into that system. In the mean time, we'll keep MkDocs on life
-    # support.
-    # Theme stack -- which transitively requires reasonably recent versions of
-    # both MkDocs itself as well as all requisite MkDocs plugins. Note that:
-    # * The "imaging" extra is required by popular optional "mkdocs-material"
-    #   plugins (e.g., "optimize", "social"). Doing so installs Python-centric
-    #   image-processing packages like CairoSVG and Pillow, which *COULD* prove
-    #   non-trivial to install under edge-case environments and platforms.
-    "mkdocs-material[imaging] >=9.6.0",
-
     # It's now sensical
     # To prep for Zensical
     # Extend your tenticles,
@@ -731,7 +720,6 @@ include = [
     "/*.md",
     "/*.rst",
     "/conftest.py",
-    "/mkdocs",
     "/mypy",
     "/mypy.ini",
     "/pyproject.toml",
@@ -747,7 +735,7 @@ include = [
 
     # Relative dirnames of all requisite top-level installation-time
     # directories, including:
-    # * All up-to-date MkDocs-specific files documenting this project in the
+    # * All up-to-date Zensical-specific files documenting this project in the
     #   top-level "docs/" subdirectory.
     # * All obsolete Sphinx-specific files documenting this project in the
     #   top-level "doc/" subdirectory.
