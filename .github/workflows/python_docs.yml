@@ -200,6 +200,10 @@ jobs:
           CI: true
         run: |
           set -xe
+          # Just make sure Zensical builds ...
+          zensical build -f ./zensical.toml --strict
+          rm -fr ./_site
+          # ... but use MkDocs' generated site for GH Pages (for now)
           mkdocs build --config-file ./mkdocs.yml --strict --site-dir ./_site
 
       - name: "Preparing static site for deployment..."
