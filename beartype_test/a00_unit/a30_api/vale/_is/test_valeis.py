@@ -94,6 +94,17 @@ def test_api_vale_is_pass() -> None:
     IsExclamatory = Is[_is_exclamatory]
     IsFalseFake = Is[_is_false_fake]
 
+    # Validator produced by subscripting this factory with a 1-tuple, which is
+    # equivalent to subscripting with the sole item of that tuple directly.
+    IsLengthy1Tuple = Is[
+        lambda text: "dark" in text,
+    ]
+    assert isinstance(IsLengthy1Tuple, BeartypeValidator)
+    assert IsLengthy1Tuple.is_valid(
+        'Whose woods these are I think') is False
+    assert IsLengthy1Tuple.is_valid(
+        'The woods are lovely, dark and deep,') is True
+
     # Validator synthesized from the above validators with the domain-specific
     # language (DSL) supported by those validators.
     IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)

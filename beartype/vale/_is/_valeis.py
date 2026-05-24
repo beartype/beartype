@@ -299,6 +299,10 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
         '''
 
         # ..................{ VALIDATE                       }..................
+        # Unwrap a 1-tuple subscription (e.g., "Is[func,]") into its sole item.
+        if isinstance(is_valid, tuple) and len(is_valid) == 1:
+            is_valid = is_valid[0]
+
         # If this class was subscripted by either no arguments *OR* two or more
         # arguments, raise an exception.
         self._die_unless_getitem_args_1(is_valid)
