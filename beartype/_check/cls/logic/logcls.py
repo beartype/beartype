@@ -329,11 +329,11 @@ class HintLogicQuasiiterable(HintLogicABC):
         # ..................{ EXPRESSION                     }..................
         # Increment the integer suffixing the name of a unique local variable
         # storing the value of this child pith *BEFORE* defining this variable.
-        hint_tree.pith_curr_var_name_index += 1
+        hint_tree.hint_curr_meta.pith_var_name_index += 1
 
         # Name of this local variable.
         pith_child_var_name = PITH_INDEX_TO_VAR_NAME[
-            hint_tree.pith_curr_var_name_index]
+            hint_tree.hint_curr_meta.pith_var_name_index]
 
         # Python expression deeply type-checking this pith against this hint.
         hint_tree.func_curr_code = CODE_PEP484585_QUASIITERABLE_format(

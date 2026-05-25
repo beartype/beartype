@@ -178,15 +178,6 @@ class HintTreeCode(HintTreeABC):
           the name of the local variable uniquely assigned to by the assignment
           expression defined by :attr:`pith_curr_assign_expr` (i.e., the
           left-hand side (LHS) of that assignment expression).
-    pith_curr_var_name_index : int
-        Integer suffixing the name of each local variable assigned the value of
-        the current pith in a assignment expression, thus uniquifying this
-        variable in the body of the current wrapper function.
-
-        Note that this integer is intentionally incremented as an efficient
-        low-level scalar rather than as an inefficient high-level
-        "itertools.Counter" object. Since both are equally thread-safe in the
-        internal context of this dataclass, the former is preferable.
     _hint_queue : FixedList
         **Type hint tree type-checking queue** (i.e., First-In-First-Out (FIFO)
         queue of :class:`.HintDataCode` objects describing all visitable type hints
@@ -213,7 +204,6 @@ class HintTreeCode(HintTreeABC):
         'is_var_random_int_needed',
         'pith_curr_assign_expr',
         'pith_curr_var_name',
-        'pith_curr_var_name_index',
         '_hint_queue',
     )
 
@@ -232,7 +222,6 @@ class HintTreeCode(HintTreeABC):
         is_var_random_int_needed: bool
         pith_curr_assign_expr: str
         pith_curr_var_name: str
-        pith_curr_var_name_index: int
         _hint_queue : FixedList
 
     # ..................{ INITIALIZERS                       }..................
@@ -276,7 +265,6 @@ class HintTreeCode(HintTreeABC):
         self.index_last) = (  # pyright: ignore
         self.is_check_expr_cacheable) = (  # pyright: ignore
         self.is_var_random_int_needed) = (  # pyright: ignore
-        self.pith_curr_var_name_index) = (  # pyright: ignore
         self.pith_curr_assign_expr) = (  # pyright: ignore
         self.pith_curr_var_name) = None  # type: ignore[assignment]
 
@@ -329,7 +317,6 @@ class HintTreeCode(HintTreeABC):
         # ..................{ DEFAULTS                       }..................
         # Restore instance variables to initial defaults.
         self.is_var_random_int_needed = False
-        self.pith_curr_var_name_index = 0
         self.func_wrapper_locals = {}
 
         # 0-based index of metadata describing the last visitable hint in this
@@ -379,14 +366,6 @@ class HintTreeCode(HintTreeABC):
         self.indent_curr  = INDENT_LEVEL_TO_CODE[indent_level_curr]
         self.indent_child = INDENT_LEVEL_TO_CODE[self.indent_level_child]
 
-        #FIXME: *HMM.* Can't callers just refer to
-        #"hint_tree.hint_curr_meta.pith_var_name_index" instead? This is
-        #obfuscatory as well.
-        #FIXME: *DO THIS AT THE BEGINNING OF A COMMIT SESSION*. We modify this a
-        #few times throughout the codebase. Pretty sure everything should still
-        #work if we perform the above global refactoring... but not certain.
-        self.pith_curr_var_name_index = self.hint_curr_meta.pith_var_name_index
-
         #FIXME: *HMM.* Shouldn't this reside in the "HintDataCode" class instead?
         #FIXME: Likewise, this should almost certainly be defined as a dynamic
         #property rather than a static instance variable. Why? Because we often
@@ -395,11 +374,11 @@ class HintTreeCode(HintTreeABC):
         #                       # unique local variable storing the value of
         #                       # this child key pith *BEFORE* defining this
         #                       # variable.
-        #                       hint_tree.pith_curr_var_name_index += 1
+        #                       hint_tree.hint_curr_meta.pith_var_name_index += 1
         #
         #                       # Name of this local variable.
         #                       pith_key_var_name = PITH_INDEX_TO_VAR_NAME[
-        #                           hint_tree.pith_curr_var_name_index]
+        #                           hint_tree.hint_curr_meta.pith_var_name_index]
         #
         #Super-silly. Obviously, a dynamic property resolves those sorts of DRY
         #violations. It's decoration-time. Efficiently (mostly) doesn't matter.
@@ -410,7 +389,7 @@ class HintTreeCode(HintTreeABC):
         #That's always a lame idea. The dynamic property should suffice always!
 
         self.pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
-            self.pith_curr_var_name_index]
+            self.hint_curr_meta.pith_var_name_index]
 
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
@@ -448,8 +427,8 @@ class HintTreeCode(HintTreeABC):
 
         * :attr:`indent_level_child`, the 1-based indentation level describing
           the current level of indentation appropriate for this child hint.
-        * :attr:`pith_curr_var_name_index`, the integer suffixing the name of
-          each local variable assigned the value of the current pith in a
+        * :attr:`hint_curr.pith_var_name_index`, the integer suffixing the name
+          of each local variable assigned the value of the current pith in a
           assignment expression, thus uniquifying this variable in the body of
           the current wrapper function.
 
@@ -589,7 +568,20 @@ class HintTreeCode(HintTreeABC):
             hint_sign=hint_sign,  # type: ignore[arg-type]
             indent_level=self.indent_level_child,
             pith_expr=pith_expr,
-            pith_var_name_index=self.pith_curr_var_name_index,
+
+            #FIXME: Kinda awkward, honestly. This warrants a rethink. *sigh*
+            # Pith variable name index, defined as either...
+            pith_var_name_index=(
+                # If this breadth-first search (BFS) has yet to visit *ANY*
+                # hint, this metadata *MUST* encapsulate the root hint. In this
+                # case, the first such index;
+                0
+                if self.hint_curr_meta is None else
+                # Else, this BFS has already visited at least one hint. In this
+                # case, the same index as that associated with the currently
+                # visited hint.
+                self.hint_curr_meta.pith_var_name_index
+            ),
         )
 
         # Return the placeholder string to be subsequently replaced by code

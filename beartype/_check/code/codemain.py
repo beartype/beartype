@@ -610,11 +610,11 @@ def make_check_expr(
 
                     # Increment the integer suffixing the name of this variable
                     # *BEFORE* defining this variable.
-                    hint_tree.pith_curr_var_name_index += 1
+                    hint_tree.hint_curr_meta.pith_var_name_index += 1
 
                     # Name of this local variable.
                     hint_tree.pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
-                        hint_tree.pith_curr_var_name_index]
+                        hint_tree.hint_curr_meta.pith_var_name_index]
 
                     # Assignment expression assigning this full expression to
                     # this local variable.
@@ -982,11 +982,11 @@ def make_check_expr(
                                 # unique local variable storing the value of
                                 # this child key pith *BEFORE* defining this
                                 # variable.
-                                hint_tree.pith_curr_var_name_index += 1
+                                hint_tree.hint_curr_meta.pith_var_name_index += 1
 
                                 # Name of this local variable.
                                 pith_key_var_name = PITH_INDEX_TO_VAR_NAME[
-                                    hint_tree.pith_curr_var_name_index]
+                                    hint_tree.hint_curr_meta.pith_var_name_index]
 
                                 # Placeholder string to be subsequently replaced
                                 # by code type-checking this child key pith

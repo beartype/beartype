@@ -79,6 +79,11 @@ class HintDataCode(HintDataABC):
         :obj:`beartype._check.code.snip.codesnipcls.PITH_INDEX_TO_VAR_NAME`
         dictionary singleton by this integer efficiently yields the current
         **pith variable name** locally storing the value of the current pith.
+
+        Note that this integer is intentionally incremented as an efficient
+        low-level scalar rather than as an inefficient high-level
+        "itertools.Counter" object. Since both are equally thread-safe in the
+        internal context of this dataclass, the former is preferable.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
