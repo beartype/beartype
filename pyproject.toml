@@ -209,6 +209,9 @@ dependencies = []
 # hosting service.
 doc-ghp = [
     # ....................{ THEME                          }....................
+    # FIXME: Probably remove this later after committing to Zensical, since it's
+    # built into that system. In the mean time, we'll keep MkDocs on life
+    # support.
     # Theme stack -- which transitively requires reasonably recent versions of
     # both MkDocs itself as well as all requisite MkDocs plugins. Note that:
     # * The "imaging" extra is required by popular optional "mkdocs-material"
@@ -217,15 +220,21 @@ doc-ghp = [
     #   non-trivial to install under edge-case environments and platforms.
     "mkdocs-material[imaging] >=9.6.0",
 
+    # It's now sensical
+    # To prep for Zensical
+    # Extend your tenticles,
+    # To welcome, welcome, welcome, welcome Zensical!
+    "zensical >=0.0.43",
+
     # ....................{ EXTENSIONS                     }....................
     # API reference generation stack -- which transitively requires a reasonably
     # recent version of the third-party "mkdocstrings" extension as well.
-    "mkdocstrings-python >=1.16.0",
+    "mkdocstrings-python >=2.0.3",
 
     # "mkdocstrings-python"-specific third-party extension expanding the default
     # "mkdocstrings-python" support for absolute cross-references with
     # additional support for relative cross-references.
-    "mkdocstrings-python-xref >=1.16.0",
+    "mkdocstrings-python-xref >=2.1.1",
 ]
 
 #FIXME: Remove *AFTER* successfully migrating from RTD to GHP.
