@@ -14,14 +14,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintRecursionException
-from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
-from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.call.callmetaexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.cls.hint.data.hintdatacode import HintDataCode
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.cls.hint.tree.hinttreeabc import HintTreeABC
+from beartype._check.convert.convmain import sanify_hint_child
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.datacodeindent import INDENT_LEVEL_TO_CODE
@@ -128,6 +127,9 @@ class HintTreeCode(HintTreeABC):
         **Local scope** (i.e., dictionary mapping from the name to value of each
         attribute referenced in the signature) of this wrapper function required
         by this Python code snippet.
+    hint_curr: HintDataCode
+        Metadata describing the currently visited hint, appended by the
+        previously visited parent hint to this queue.
     hint_curr_expr : Optional[str]
         Either:
 
@@ -136,9 +138,6 @@ class HintTreeCode(HintTreeABC):
           Python expression evaluating to the origin type underlying this hint
           as a hidden :mod:`beartype`-specific parameter injected into the
           signature of the current wrapper function.
-    hint_curr_meta: HintDataCode
-        Metadata describing the currently visited hint, appended by the
-        previously visited parent hint to this queue.
     indent_curr : str
         Python code snippet expanding to the current level of indentation
         appropriate for the currently visited hint.
@@ -195,7 +194,6 @@ class HintTreeCode(HintTreeABC):
         'func_curr_code',
         'func_wrapper_locals',
         'hint_curr_expr',
-        'hint_curr_meta',
         'indent_child',
         'indent_curr',
         'indent_level_child',
@@ -212,8 +210,8 @@ class HintTreeCode(HintTreeABC):
     if TYPE_CHECKING:
         func_curr_code: str
         func_wrapper_locals: LexicalScope
+        hint_curr : HintDataCode
         hint_curr_expr : Optional[str]
-        hint_curr_meta : HintDataCode
         indent_curr: str
         indent_child: str
         indent_level_child: int
@@ -257,8 +255,8 @@ class HintTreeCode(HintTreeABC):
         self.conf) = (  # pyright: ignore
         self.func_curr_code) = (  # pyright: ignore
         self.func_wrapper_locals) = (  # pyright: ignore
+        self.hint_curr) = (  # pyright: ignore
         self.hint_curr_expr) = (  # pyright: ignore
-        self.hint_curr_meta) = (  # pyright: ignore
         self.indent_child) = (  # pyright: ignore
         self.indent_curr) = (  # pyright: ignore
         self.indent_level_child) = (  # pyright: ignore
@@ -355,41 +353,13 @@ class HintTreeCode(HintTreeABC):
         # range validation. Ergo, this hint may be safely accessed here via a
         # slightly faster indexed lookup directly on the "_hint_queue" list
         # rather than slower call to the _get_hint_meta_enqueued() getter.
-        self.hint_curr_meta = self._hint_queue[hint_index]
-
-        # Current level of indentation appropriate for this hint.
-        indent_level_curr = self.hint_curr_meta.indent_level
+        self.hint_curr = self._hint_queue[hint_index]  # pyright: ignore
 
         # Update instance variables of this queue to reflect that this hint is
         # now the currently visited hint.
-        self.indent_level_child = indent_level_curr + 1
-        self.indent_curr  = INDENT_LEVEL_TO_CODE[indent_level_curr]
+        self.indent_level_child = self.hint_curr.indent_level + 1
+        self.indent_curr  = INDENT_LEVEL_TO_CODE[self.hint_curr.indent_level]
         self.indent_child = INDENT_LEVEL_TO_CODE[self.indent_level_child]
-
-        #FIXME: *HMM.* Shouldn't this reside in the "HintDataCode" class instead?
-        #FIXME: Likewise, this should almost certainly be defined as a dynamic
-        #property rather than a static instance variable. Why? Because we often
-        #see unctuous code like this littered around the codebase:
-        #                       # Increment the integer suffixing the name of a
-        #                       # unique local variable storing the value of
-        #                       # this child key pith *BEFORE* defining this
-        #                       # variable.
-        #                       hint_tree.hint_curr_meta.pith_var_name_index += 1
-        #
-        #                       # Name of this local variable.
-        #                       pith_key_var_name = PITH_INDEX_TO_VAR_NAME[
-        #                           hint_tree.hint_curr_meta.pith_var_name_index]
-        #
-        #Super-silly. Obviously, a dynamic property resolves those sorts of DRY
-        #violations. It's decoration-time. Efficiently (mostly) doesn't matter.
-        #FIXME: After implementing that refactoring, grep the codebase for
-        #wherever we do "pith_curr_var_name_index += 1" and make sure we stop
-        #doing manual lookups into "PITH_INDEX_TO_VAR_NAME". Actually, we should
-        #just stop doing manual lookups into "PITH_INDEX_TO_VAR_NAME" entirely.
-        #That's always a lame idea. The dynamic property should suffice always!
-
-        self.pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
-            self.hint_curr_meta.pith_var_name_index]
 
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
@@ -576,11 +546,11 @@ class HintTreeCode(HintTreeABC):
                 # hint, this metadata *MUST* encapsulate the root hint. In this
                 # case, the first such index;
                 0
-                if self.hint_curr_meta is None else
+                if self.hint_curr is None else
                 # Else, this BFS has already visited at least one hint. In this
                 # case, the same index as that associated with the currently
                 # visited hint.
-                self.hint_curr_meta.pith_var_name_index
+                self.hint_curr.pith_var_name_index
             ),
         )
 
@@ -626,7 +596,7 @@ class HintTreeCode(HintTreeABC):
             the possibly PEP-noncompliant parent hint of this child hint into a
             fully PEP-compliant parent hint). Defaults to :data:`None`, in which
             case this parameter actually defaults to
-            ``self.hint_curr_meta.hint_sane``, the previously sanified metadata
+            ``self.hint_curr.hint_sane``, the previously sanified metadata
             encapsulating a parent transitive hint of this child hint. Since
             this default suffices in the common case, callers should only pass
             this parameter when explicitly sanifying the parent hint of this
@@ -648,7 +618,7 @@ class HintTreeCode(HintTreeABC):
         # If the caller explicitly passed *NO* sanified parent hint metadata,
         # default this metadata to that of the currently visited parent hint.
         if hint_parent_sane is None:
-            hint_parent_sane = self.hint_curr_meta.hint_sane
+            hint_parent_sane = self.hint_curr.hint_sane
         # Else, the caller explicitly passed sanified parent hint metadata.
         # Silently preserve this metadata as is.
 
@@ -721,15 +691,14 @@ class HintTreeCode(HintTreeABC):
             f'{hint_index} not in [0, {FIXED_LIST_SIZE_MEDIUM}].')
 
         # Type hint type-checking metadata at this hint_index.
-        hint_curr_meta = self._hint_queue[hint_index]
+        hint_curr = self._hint_queue[hint_index]
 
         # If this metadata has yet to be instantiated, instantiate a new
-        # "HintDataCode" object initialized to sane values suitable for this index.
-        if hint_curr_meta is None:
-            hint_curr_meta = self._hint_queue[hint_index] = HintDataCode(
+        # "HintDataCode" object initialized to values suitable for this index.
+        if hint_curr is None:
+            hint_curr = self._hint_queue[hint_index] = HintDataCode(
                 hint_index=hint_index)
         # Else, this metadata has already been instantiated.
 
         # Return this metadata.
-        return hint_curr_meta
-
+        return hint_curr

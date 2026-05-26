@@ -168,8 +168,9 @@ ARG_KIND_TO_CODE_LOCALIZE = {
     #   functions defaulting to "object()" and then use that here instead,
     #   doing so would slightly reduce efficiency for no tangible gain. *shrug*
     ArgKind.POSITIONAL_OR_KEYWORD: f'''
+
     # Localize this positional or keyword parameter if passed *OR* to the
-    # sentinel "__beartype_raise_exception" guaranteed to never be passed.
+    # sentinel "__beartype_get_violation" guaranteed to never be passed.
     {VAR_NAME_PITH_ROOT} = (
         args[{{arg_index}}] if {VAR_NAME_ARGS_LEN} > {{arg_index}} else
         kwargs.get({{arg_name!r}}, {ARG_NAME_GET_VIOLATION})
@@ -182,7 +183,7 @@ ARG_KIND_TO_CODE_LOCALIZE = {
     # lookup in the wrapper's variadic "**kwargs" dictionary. (See above.)
     ArgKind.KEYWORD_ONLY: f'''
     # Localize this keyword-only parameter if passed *OR* to the sentinel value
-    # "__beartype_raise_exception" guaranteed to never be passed.
+    # "__beartype_get_violation" guaranteed to never be passed.
     {VAR_NAME_PITH_ROOT} = kwargs.get({{arg_name!r}}, {ARG_NAME_GET_VIOLATION})
 
     # If this parameter was passed...

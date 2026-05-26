@@ -18,14 +18,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #In practice, unlocking this generality will be somewhat... non-trivial. The
 #core insight here is that a similar type hierarchy can and *SHOULD* be created
 #for dataclasses describing a single type hint. Specifically:
-#* Resolve all of the "#FIXME: ...Can't callers just refer to...?" comments
-#  littering the "hinttreecode" submodule. This is relevant. *sigh*
-#* Globally rename "hint_curr_meta" to "hint_curr". We'll see why in a moment!
 #* *GREAT*! The next obvious step is to refactor "HintTreeError" as follows:
 #  * Add a new "hint_curr" instance variable to "HintTreeError".
-#  * Drop "hint_sane" and "hint_sign" from "HintTreeError".
-#  * Refactor all prior access of "cause.hint_sane" and "cause.hint_sign" to
-#    instead access "cause.hint_curr.hint_sane" and "cause.hint_curr.hint_sign".
+#  * Drop "hint", "hint_sane", and "hint_sign" from "HintTreeError".
+#  * Refactor all prior access of:
+#    * "cause.hint" to "cause.hint_curr.hint_sane.hint".
+#    * "cause.hint_sane" to "cause.hint_curr.hint_sane".
+#    * "cause.hint_sign" to "cause.hint_curr.hint_sign".
 #
 #Honestly, even that suffices as a first-pass generalization strategy. That's
 #the bare minimum... but that's still leagues ahead of our current non-design.

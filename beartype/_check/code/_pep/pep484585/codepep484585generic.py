@@ -61,7 +61,7 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
     # ....................{ LOCALS                         }....................
     # Metadata encapsulating the sanification of this unsubscripted generic,
     # localized for both usability and efficiency.
-    hint_sane = hint_tree.hint_curr_meta.hint_sane
+    hint_sane = hint_tree.hint_curr.hint_sane
 
     # Unsubscripted generic encapsulated by this metadata.
     hint = hint_sane.hint
@@ -99,7 +99,7 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
                 # Python expression efficiently reusing the value of this pith
                 # previously assigned to a local variable by the prior
                 # expression.
-                pith_expr=hint_tree.pith_curr_var_name,
+                pith_expr=hint_tree.hint_curr.pith_var_name,
             ),
         )
 

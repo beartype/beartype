@@ -48,10 +48,10 @@ def make_hint_pep484585_container_check_expr(hint_tree: HintTreeCode) -> None:
 
     # ....................{ LOCALS                         }....................
     # This container hint, localized for both usability and efficiency.
-    hint = hint_tree.hint_curr_meta.hint_sane.hint
+    hint = hint_tree.hint_curr.hint_sane.hint
 
     # Sign uniquely identifying this hint, localized for usability.
-    hint_sign = hint_tree.hint_curr_meta.hint_sign
+    hint_sign = hint_tree.hint_curr.hint_sign
 
     # Python expression evaluating to the origin type of this hint as a hidden
     # beartype-specific parameter injected into the signature of this wrapper.
@@ -85,7 +85,7 @@ def make_hint_pep484585_container_check_expr(hint_tree: HintTreeCode) -> None:
             hint=hint, exception_prefix=hint_tree.exception_prefix)
     )
     # print(f'Sanifying container hint {repr(hint_curr)} child hint {repr(hint_child)}...')
-    # print(f'...with type variable lookup table {repr(hint_curr_meta.typearg_to_hint)}.')
+    # print(f'...with type variable lookup table {repr(hint_curr.typearg_to_hint)}.')
 
     # Metadata encapsulating the sanification of this child hint.
     hint_child_sane = hint_tree.sanify_hint_child(hint_child)

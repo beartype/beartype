@@ -20,17 +20,49 @@ This private submodule is *not* intended for importation by downstream callers.
 #*MANDATORY* parameters. *OPTIONAL* parameters seem fine. Sadly, mandatory are
 #more common. We appear to be unconditionally generating the following code for
 #*ALL* parameters, regardless of whether that parameter is mandatory or not:
-#    (line 0019)     # If this parameter was passed...
-#    (line 0020)     if __beartype_pith_0 is not __beartype_get_violation:
-#    (line 0021)         # Type-check this parameter or return against this type hint.
-#    (line 0022)         if not ...
+#    (line 0015)     # Localize this positional or keyword parameter if passed *OR* to the
+#    (line 0016)     # sentinel "__beartype_get_violation" guaranteed to never be passed.
+#    (line 0017)     __beartype_pith_0 = (
+#    (line 0018)         args[0] if __beartype_args_len > 0 else
+#    (line 0019)         kwargs.get('two_fair_argent_wings', __beartype_get_violation)
+#    (line 0020)     )
+#    (line 0021)
+#    (line 0022)     # If this parameter was passed...
+#    (line 0023)     if __beartype_pith_0 is not __beartype_get_violation:
+#    (line 0024)         # Type-check this parameter or return against this type hint.
+#    (line 0025)         if not ...
 #
 #If the current parameter is mandatory, the first "if" conditional is a
 #superfluous waste of time. Obviously, a mandatory parameter is *ALWAYS* passed.
 #That needn't be tested. Ergo, the above code should instead reduce to the
 #following for a mandatory parameter:
-#    (line 0019)     # Type-check this parameter or return against this type hint.
-#    (line 0020)     if not ...
+#    (line 0015)     # Localize this positional or keyword parameter if passed *OR* to the
+#    (line 0016)     # sentinel "__beartype_get_violation" guaranteed to never be passed.
+#    (line 0017)     __beartype_pith_0 = (
+#    (line 0018)         args[0] if __beartype_args_len > 0 else
+#    (line 0019)         kwargs['two_fair_argent_wings']
+#    (line 0020)     )
+#    (line 0021)
+#    (line 0022)     # Type-check this parameter or return against this type hint.
+#    (line 0023)     if not ...
+#
+#Critically, note that the optimized code generated for mandatory parameters
+#features two distinct changes:
+#1. Efficient direct parameter lookup in the "kwargs" dictionary via "["- and
+#   "]"-delimited syntax rather than less efficient indirect parameter lookup
+#   via a kwargs.get() call. Efficiency isn't really the concern here (although
+#   it does matter, of course). Strictness is the concern. A mandatory parameter
+#   absolutely *MUST* be passed. If that isn't the case, a low-level CPython
+#   exception *MUST* be raised. Actually... *WAIT*. Issues arise here. Notably:
+#   * Because our type-checking wrapper functions only currently accept variadic
+#     "*args, **kwargs" parameters, the exception raised by directly accessing
+#     "kwargs['two_fair_argent_wings']" if the caller failed to pass that
+#     parameter will basically be useless, unreadable, and awful. Welp. That's
+#     it, folks! That's a critical deal-breaker. No wonder we embraced the
+#     current approach, huh? We can't go ahead with this optimization until we
+#     implement our long-overdue refactoring where we generate type-checking
+#     wrapper functions whose signatures *PERFECTLY* mirror those of the
+#     original underlying callables they wrap. Until then, this is a no-go, bro!
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (

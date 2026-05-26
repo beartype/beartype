@@ -86,7 +86,7 @@ def make_hint_pep484604_check_expr(hint_tree: HintTreeCode) -> None:
     #   "hint_meta" object in entirety would effectively inhibit the memoization
     #   of this getter, which entirely defeats the point.
     hint_childs_sane = _get_hint_pep484604_union_args_flattened(hint_tree)
-    # print(f'Unflattened union {repr(hint_tree.hint_curr_meta.hint)}...')
+    # print(f'Unflattened union {repr(hint_tree.hint_curr.hint)}...')
     # print(f'...child hints {repr(hint_childs_sane)}.')
 
     # Dictionary whose keys comprise the set of all PEP-noncompliant child hints
@@ -237,7 +237,7 @@ def make_hint_pep484604_check_expr(hint_tree: HintTreeCode) -> None:
             # prefer the expression yielding the value of the current pith
             # *WITHOUT* assigning this value to a local variable, which would
             # needlessly go unused.
-            hint_tree.hint_curr_meta.pith_expr
+            hint_tree.hint_curr.pith_expr
         )
 
         hint_tree.func_curr_code += CODE_PEP484604_UNION_CHILD_NONPEP_format(
@@ -250,7 +250,7 @@ def make_hint_pep484604_check_expr(hint_tree: HintTreeCode) -> None:
     # that hint...
     for hint_child_sane_pep_index, hint_child_sane_pep in enumerate(
         hint_childs_sane_pep.keys()):
-        # print(f'Enqueing union {hint_tree.hint_curr_meta.hint_sane.hint}...')
+        # print(f'Enqueing union {hint_tree.hint_curr.hint_sane.hint}...')
         # print(f'...PEP-compliant child {hint_child_sane_pep}.')
 
         # Code deeply type-checking this child hint.
@@ -265,7 +265,7 @@ def make_hint_pep484604_check_expr(hint_tree: HintTreeCode) -> None:
                     # previously assigned to a local variable by either the
                     # above conditional or prior iteration of the current
                     # conditional.
-                    hint_tree.pith_curr_var_name
+                    hint_tree.hint_curr.pith_var_name
                     if (
                         # This union is also subscripted by one or more
                         # PEP-noncompliant child hints *OR*...
@@ -380,12 +380,12 @@ def _get_hint_pep484604_union_args_flattened(
     '''
     assert isinstance(hint_tree, HintTreeCode), (
         f'{repr(hint_tree)} not "HintTreeCode" object.')
-    # print(f'[484/604] hint_curr_meta: {repr(hint_tree.hint_curr_meta)}')
+    # print(f'[484/604] hint_curr: {repr(hint_tree.hint_curr)}')
 
     # ....................{ LOCALS                         }....................
     # Metadata encapsulating the currently visited PEP 484- or 604-compliant
     # union type hint as well as that hint.
-    union_hint_sane = hint_tree.hint_curr_meta.hint_sane
+    union_hint_sane = hint_tree.hint_curr.hint_sane
     union_hint = union_hint_sane.hint
 
     # ....................{ LOCALS ~ child                 }....................

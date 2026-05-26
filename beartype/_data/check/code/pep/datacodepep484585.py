@@ -104,15 +104,17 @@ CODE_PEP484585_QUASIITERABLE = f'''(
 {{indent_curr}}    # reiterable at runtime. Silently assume all items of this
 {{indent_curr}}    # iterable to deeply satisfy this hint. It is what it is.
 {{indent_curr}}    (not isinstance({{pith_curr_var_name}}, {{collection_abc_expr}}) or
-{{indent_curr}}     # This iterable is an empty collection *OR*...
+{{indent_curr}}     # Else, this iterable is a collection and thus safely
+{{indent_curr}}     # reiterable at runtime. In this case, true only if either
+{{indent_curr}}     # this iterable is an empty collection *OR*...
 {{indent_curr}}     not len({{pith_curr_var_name}}) or ((
 {{indent_curr}}        # If this non-empty collection is a sequence, localize a
 {{indent_curr}}        # pseudo-random item of this sequence;
 {{indent_curr}}        (
 {{indent_curr}}            isinstance({{pith_curr_var_name}}, {{sequence_abc_expr}}) and
 {{indent_curr}}            ({{pith_child_var_name}} := {{sequence_pith_child_expr}}) is {{pith_child_var_name}}
-{{indent_curr}}        # Else, this non-empty collection *MUST* be reiterable. In this
-{{indent_curr}}        # case, localize the first item of this reiterable;
+{{indent_curr}}        # Else, this non-empty collection is a non-sequence reiterable.
+{{indent_curr}}        # In this case, localize the first item of this reiterable;
 {{indent_curr}}        ) or ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
 {{indent_curr}}     # True only if this item satisfies this hint.
 {{indent_curr}}     ) and {{hint_child_placeholder}})

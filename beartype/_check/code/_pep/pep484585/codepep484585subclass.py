@@ -55,7 +55,7 @@ def make_hint_pep484585_subclass_check_expr(
     # ....................{ PARENT                         }....................
     # Metadata encapsulating the sanification of this hint, localized for both
     # usability and efficiency.
-    hint_sane = hint_tree.hint_curr_meta.hint_sane
+    hint_sane = hint_tree.hint_curr.hint_sane
 
     # This sanified subclass hint.
     hint = hint_sane.hint
@@ -152,7 +152,7 @@ def make_hint_pep484585_subclass_check_expr(
     # Code type-checking this pith against this superclass.
     hint_tree.func_curr_code = CODE_PEP484585_SUBCLASS_format(
         pith_curr_assign_expr=hint_tree.pith_curr_assign_expr,
-        pith_curr_var_name=hint_tree.pith_curr_var_name,
+        pith_curr_var_name=hint_tree.hint_curr.pith_var_name,
         hint_curr_expr=hint_curr_expr,
         indent_curr=hint_tree.indent_curr,
     )

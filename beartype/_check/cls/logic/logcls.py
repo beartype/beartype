@@ -18,7 +18,6 @@ from abc import (
     abstractmethod,
 )
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
-from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.cls.hint.tree.hinttreecode import HintTreeCode
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.cls.hint.hintsane import HintSane
@@ -326,14 +325,25 @@ class HintLogicQuasiiterable(HintLogicABC):
         sequence_abc_expr = add_hints_meta_scope_type_or_types(
             hint_tree=hint_tree, type_or_types=Sequence)
 
-        # ..................{ EXPRESSION                     }..................
-        # Increment the integer suffixing the name of a unique local variable
-        # storing the value of this child pith *BEFORE* defining this variable.
-        hint_tree.hint_curr_meta.pith_var_name_index += 1
+        # Python expression efficiently yielding the value of a (typically)
+        # pseudo-randomly selected item of the current sequence pith *BEFORE*
+        # modifying the "hint_tree.hint_curr.pith_var_name_index" and thus the
+        # "hint_tree.hint_curr.pith_var_name" property internally accessed by
+        # this getter below.
+        sequence_pith_child_expr = _get_sequence_pith_child_expr(hint_tree)
 
-        # Name of this local variable.
-        pith_child_var_name = PITH_INDEX_TO_VAR_NAME[
-            hint_tree.hint_curr_meta.pith_var_name_index]
+        # ..................{ EXPRESSION                     }..................
+        # Name of a unique local variable storing the value of this parent pith
+        # *BEFORE* modifying the "hint_tree.hint_curr.pith_var_name_index" and
+        # thus this name as well below.
+        pith_curr_var_name = hint_tree.hint_curr.pith_var_name
+
+        # Increment the integer suffixing the name of a unique local variable
+        # storing the value of this child pith *BEFORE* localizing this name.
+        hint_tree.hint_curr.pith_var_name_index += 1
+
+        # Name of a unique local variable storing the value of this child pith.
+        pith_child_var_name = hint_tree.hint_curr.pith_var_name
 
         # Python expression deeply type-checking this pith against this hint.
         hint_tree.func_curr_code = CODE_PEP484585_QUASIITERABLE_format(
@@ -341,10 +351,10 @@ class HintLogicQuasiiterable(HintLogicABC):
             hint_curr_expr=hint_tree.hint_curr_expr,
             indent_curr=hint_tree.indent_curr,
             pith_curr_assign_expr=hint_tree.pith_curr_assign_expr,
-            pith_curr_var_name=hint_tree.pith_curr_var_name,
+            pith_curr_var_name=pith_curr_var_name,
             pith_child_var_name=pith_child_var_name,
             sequence_abc_expr=sequence_abc_expr,
-            sequence_pith_child_expr=_get_sequence_pith_child_expr(hint_tree),
+            sequence_pith_child_expr=sequence_pith_child_expr,
             hint_child_placeholder=hint_tree.enqueue_hint_child_sane(
                 hint_sane=hint_child_sane, pith_expr=pith_child_var_name),
         )
@@ -387,7 +397,7 @@ class HintLogicReiterable(HintLogicABC):
 
         # Python snippet accessing the desired reiterable pith item.
         pith_expr = CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR_format(
-            pith_curr_var_name=hint_tree.pith_curr_var_name)
+            pith_curr_var_name=hint_tree.hint_curr.pith_var_name)
 
         # Python expression deeply type-checking this pith against this hint.
         hint_tree.func_curr_code = (
@@ -395,7 +405,7 @@ class HintLogicReiterable(HintLogicABC):
                 hint_curr_expr=hint_tree.hint_curr_expr,
                 indent_curr=hint_tree.indent_curr,
                 pith_curr_assign_expr=hint_tree.pith_curr_assign_expr,
-                pith_curr_var_name=hint_tree.pith_curr_var_name,
+                pith_curr_var_name=hint_tree.hint_curr.pith_var_name,
                 hint_child_placeholder=hint_tree.enqueue_hint_child_sane(
                     hint_sane=hint_child_sane, pith_expr=pith_expr),
             )
@@ -439,7 +449,7 @@ class HintLogicSequence(HintLogicABC):
                 hint_curr_expr=hint_tree.hint_curr_expr,
                 indent_curr=hint_tree.indent_curr,
                 pith_curr_assign_expr=hint_tree.pith_curr_assign_expr,
-                pith_curr_var_name=hint_tree.pith_curr_var_name,
+                pith_curr_var_name=hint_tree.hint_curr.pith_var_name,
                 hint_child_placeholder=hint_tree.enqueue_hint_child_sane(
                     hint_sane=hint_child_sane,
                     pith_expr=_get_sequence_pith_child_expr(hint_tree),
@@ -476,7 +486,7 @@ def _get_sequence_pith_child_expr(hint_tree: HintTreeCode) -> str:
     # Return the Python expression yielding the corresponding value of the item
     # at that index of the current sequence pith.
     return sequence_pith_child_index_expr.format(
-        pith_curr_var_name=hint_tree.pith_curr_var_name)
+        pith_curr_var_name=hint_tree.hint_curr.pith_var_name)
 
 # ..................{ PRIVATE ~ getters : cause              }..................
 def _get_cause_enumerator_item_collection(

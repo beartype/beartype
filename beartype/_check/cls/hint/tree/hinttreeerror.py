@@ -64,6 +64,7 @@ from beartype._check.cls.hint.hintsane import (
     HintSane,
     TupleHintSane,
 )
+from beartype._check.cls.hint.data.hintdataerror import HintDataError
 from beartype._check.cls.hint.tree.hinttreeabc import HintTreeABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
@@ -115,6 +116,8 @@ class HintTreeError(HintTreeABC):
         Type of violation to be raised.
     hint : Hint
         Type hint to validate this object against.
+    hint_curr : HintDataError
+        Metadata describing this hint.
     hint_sane : HintSane
         Metadata encapsulating the sanification (i.e., sanitization) of the type
         hint to validate this object against.
@@ -184,6 +187,7 @@ class HintTreeError(HintTreeABC):
         cause_str_or_none: Optional[str]
         exception_cls: TypeException
         hint: Hint
+        hint_curr: HintDataError
         hint_sane: HintSane
         hint_sign: Optional[HintSign]
         pith: Any
@@ -198,6 +202,7 @@ class HintTreeError(HintTreeABC):
         'conf',
         'exception_cls',
         'exception_prefix',
+        'hint_curr',
         'hint_sane',
         'pith',
         'pith_name',
@@ -207,10 +212,10 @@ class HintTreeError(HintTreeABC):
     '''
     Frozen set of the names of *all* instance variables whose values will be
     copied as the default values of all **unpassed parameters** (i.e.,
-    parameters *not* explicitly passed to the :meth:`permute_cause` method),
+    parameters *not* explicitly passed to the :meth:`.permute_cause` method),
     defined as a set to enable efficient membership testing.
 
-    Note that the :attr:`hint_sign` instance variable is intentionally omitted.
+    Note that the :attr:`.hint_sign` instance variable is intentionally omitted.
     This variable's value is unique to the current cause and thus *not* safely
     copyable from parent to child hints by the :meth:`permute_cause` method.
     '''
@@ -243,6 +248,10 @@ class HintTreeError(HintTreeABC):
 
         # Optional parameters.
         cause_str_or_none: Optional[str] = None,
+
+        #FIXME: Refactor to be mandatory *AFTER* eliminating the "hint_sane" and
+        #"hint_curr" parameters, please. *sigh*
+        hint_curr: Optional[HintDataError] = None,
         hint_sign: HintSignOrNoneOrSentinel = SENTINEL,
     ) -> None:
         '''
@@ -343,6 +352,24 @@ class HintTreeError(HintTreeABC):
 
         # Sane hint sanified from this possibly insane hint.
         self.hint = hint_sane.hint
+
+        #FIXME: *NON-IDEAL*. Ideally, the caller should explicitly pass a single
+        #"hint_curr" parameter than the gamut of "hint_sane" and "hint_sign"
+        #parameters the caller currently passes. *WHATEVAH*! Something is better
+        #than nothing, QA bear friends. \o/
+        #FIXME: Note that complications could arise when attempting to refactor
+        #away the passed "hint_sane" and "hint_sign" parameters in favour of a
+        #single "hint_curr" parameter. Why? The "hint_sane" parameter. Notably,
+        #this docstring caveat:
+        #    Note that the :attr:`.hint_sign` instance variable is intentionally omitted.
+        #    This variable's value is unique to the current cause and thus *not* safely
+        #    copyable from parent to child hints by the :meth:`permute_cause` method.
+        #
+        #Seems kinda sus, honestly. Let's just give this refactoring a go and
+        #see what blows up. What could possibly blow up!? *sigh*
+
+        # Metadata encapsulating this hint.
+        self.hint_curr = HintDataError(hint_sane=hint_sane, hint_sign=hint_sign)  # pyright: ignore
 
         # Nullify all remaining parameters for safety.
         self._hint_childs_sane = SENTINEL

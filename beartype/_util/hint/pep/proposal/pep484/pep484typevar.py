@@ -149,7 +149,7 @@ def is_hint_pep484_typevar(hint: Hint) -> TypeIs[TypeVar]:  # pyright: ignore
 #        globals mapping from all possible "CheckVariance" members to the
 #        corresponding magic code strings appropriate for those variances.
 #      * Lookup the appropriate magic code strings in those dictionaries with
-#        the current "hint_curr_meta.check_variable" instance variable.
+#        the current "hint_curr.check_variable" instance variable.
 #
 #  Kinda fun, but *REALLY* non-trivial -- and probably no one cares. Guh!
 def get_hint_pep484_typevar_bounded_constraints_or_none(

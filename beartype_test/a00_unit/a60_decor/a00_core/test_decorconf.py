@@ -348,7 +348,7 @@ def test_decor_conf_strategy_O1_nonrandom() -> None:
     # Assert that a callable type-checking pure-Python sequences
     # deterministically accepts a pure-Python empty sequence as expected.
     assert possessed_for_glory(
-        fain_took_throne, fain_took_throne) is 0
+        fain_took_throne, fain_took_throne) == 0
 
     # ..................{ FAIL                               }..................
     # Assert that this same callable rejects any other object by raising the
@@ -370,7 +370,7 @@ def test_decor_conf_strategy_O1_nonrandom() -> None:
         # Assert that this same callable accepts a valid pure-Python non-empty
         # sequence as expected.
         assert possessed_for_glory(
-            the_gods_approach, the_gods_approach) is 6
+            the_gods_approach, the_gods_approach) == 6
 
         # Assert that this same callable rejects an invalid pure-Python
         # non-empty sequence by raising the expected type-checking violation.

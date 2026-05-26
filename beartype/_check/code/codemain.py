@@ -55,7 +55,6 @@ from beartype._check.code._pep.pep484585.codepep484585generic import (
     make_hint_pep484585_generic_unsubbed_check_expr)
 from beartype._check.code._pep.pep484585.codepep484585subclass import (
     make_hint_pep484585_subclass_check_expr)
-from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
@@ -375,7 +374,7 @@ def make_check_expr(
         hint_tree.set_index_current(hints_meta_index_curr)
 
         # Localize metadata for both efficiency and f-string purposes.
-        hint_curr_sane = hint_tree.hint_curr_meta.hint_sane
+        hint_curr_sane = hint_tree.hint_curr.hint_sane
         hint_curr = hint_curr_sane.hint
         # print(f'Visiting type hint {repr(hint_curr_sane)}...')
 
@@ -421,7 +420,7 @@ def make_check_expr(
             )
 
             # Sign uniquely identifying this hint, localized for usability.
-            hint_curr_sign = hint_tree.hint_curr_meta.hint_sign  # type: ignore[assignment]
+            hint_curr_sign = hint_tree.hint_curr.hint_sign  # type: ignore[assignment]
             # print(f'Visiting PEP type hint {repr(hint_curr)} sign {repr(hint_curr_sign)}...')
 
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -526,7 +525,7 @@ def make_check_expr(
 
                 # Code type-checking the current pith against this origin type.
                 hint_tree.func_curr_code = CODE_PEP484_INSTANCE_format(
-                    pith_curr_expr=hint_tree.hint_curr_meta.pith_expr,
+                    pith_curr_expr=hint_tree.hint_curr.pith_expr,
                     # Python expression evaluating to this origin type.
                     hint_curr_expr=add_hints_meta_scope_type_or_types(
                         hint_tree=hint_tree,
@@ -564,10 +563,10 @@ def make_check_expr(
                 # Note that we explicitly test against piths rather than
                 # seemingly equivalent metadata to account for edge cases.
                 # Notably, child hints of unions (and possibly other "typing"
-                # objects) do *NOT* narrow the current pith and are *NOT* the
-                # root hint. Ergo, a seemingly equivalent test like
-                # "hints_meta_index_curr != 0" would generate false positives
-                # and thus unnecessarily inefficient code.
+                # objects) both do *NOT* narrow the current pith and are *NOT*
+                # the root hint. Ergo, a seemingly equivalent test like
+                # "hint_tree.index_curr != 0" would generate false positives and
+                # thus unnecessarily inefficient code.
                 if not (
                     # The root pith *NOR*...
                     #
@@ -576,9 +575,9 @@ def make_check_expr(
                     # (i.e., this is the first iteration of the outermost loop).
                     # The subsequent call to the str.isidentifier() method is
                     # *MUCH* more expensive than this object identity test.
-                    hint_tree.hint_curr_meta.pith_expr is VAR_NAME_PITH_ROOT or
+                    hint_tree.hint_curr.pith_expr is VAR_NAME_PITH_ROOT or
                     # A simple Python identifier *NOR*...
-                    hint_tree.hint_curr_meta.pith_expr.isidentifier() or
+                    hint_tree.hint_curr.pith_expr.isidentifier() or
                     # A complex Python expression already containing the
                     # assignment expression-specific walrus operator ":=". Since
                     # this implies this expression to already be an assignment
@@ -601,7 +600,7 @@ def make_check_expr(
                     #   or more PEP-compliant type hints (e.g., "list[str] |
                     #   set[bytes]").
                     # * PEP 695-compliant subscripted type aliases.
-                    ':=' in hint_tree.hint_curr_meta.pith_expr
+                    ':=' in hint_tree.hint_curr.pith_expr
                 ):
                 # Then the current pith is safely assignable to a unique local
                 # variable via an assignment expression.
@@ -609,19 +608,16 @@ def make_check_expr(
                     # print(f'...index {pith_curr_var_name_index} by one.')
 
                     # Increment the integer suffixing the name of this variable
-                    # *BEFORE* defining this variable.
-                    hint_tree.hint_curr_meta.pith_var_name_index += 1
-
-                    # Name of this local variable.
-                    hint_tree.pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
-                        hint_tree.hint_curr_meta.pith_var_name_index]
+                    # *BEFORE* possibly localizing this name below.
+                    hint_tree.hint_curr.pith_var_name_index += 1
 
                     # Assignment expression assigning this full expression to
                     # this local variable.
                     hint_tree.pith_curr_assign_expr = (
                         CODE_PEP572_PITH_ASSIGN_EXPR_format(
-                            pith_curr_var_name=hint_tree.pith_curr_var_name,
-                            pith_curr_expr=hint_tree.hint_curr_meta.pith_expr,
+                            pith_curr_var_name=(
+                                hint_tree.hint_curr.pith_var_name),
+                            pith_curr_expr=hint_tree.hint_curr.pith_expr,
                         ))
                 # Else, the current pith is *NOT* safely assignable to a unique
                 # local variable via an assignment expression. Since the
@@ -648,7 +644,7 @@ def make_check_expr(
                     # Preserve the Python code snippet evaluating to the value
                     # of the current pith as is.
                     hint_tree.pith_curr_assign_expr = (
-                        hint_tree.hint_curr_meta.pith_expr)
+                        hint_tree.hint_curr.pith_expr)
 
                 # ............{ UNION                              }............
                 # If this hint is a union (e.g., "typing.Union[bool, str]",
@@ -718,14 +714,14 @@ def make_check_expr(
                     if is_hint_pep484585646_tuple_empty(hint_curr):
                         hint_tree.func_curr_code += (
                             CODE_PEP484585_TUPLE_FIXED_EMPTY_format(
-                                pith_curr_var_name=hint_tree.pith_curr_var_name))
+                                pith_curr_var_name=hint_tree.hint_curr.pith_var_name))
                     # Else, that ridiculous edge case does *NOT* apply. In this
                     # case...
                     else:
                         # Append code type-checking the length of this pith.
                         hint_tree.func_curr_code += (
                             CODE_PEP484585_TUPLE_FIXED_LEN_format(
-                                pith_curr_var_name=hint_tree.pith_curr_var_name,
+                                pith_curr_var_name=hint_tree.hint_curr.pith_var_name,
                                 hint_childs_len=hint_childs_len,
                             ))
 
@@ -739,7 +735,7 @@ def make_check_expr(
                             # otherwise (i.e., if this child hint is ignorable).
                             hint_child_sane = hint_tree.sanify_hint_child(
                                 hint_child)  # type: ignore[arg-type]
-                            # print(f'Sanified fixed tuple {hint_tree.hint_curr_meta}...')
+                            # print(f'Sanified fixed tuple {hint_tree.hint_curr}...')
                             # print(f'...child hint {hint_child} -> {hint_child_sane}!')
 
                             # If this child hint is unignorable...
@@ -750,7 +746,7 @@ def make_check_expr(
                                 pith_child_expr = (
                                     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
                                         pith_curr_var_name=(
-                                            hint_tree.pith_curr_var_name),
+                                            hint_tree.hint_curr.pith_var_name),
                                         pith_child_index=hint_child_index,
                                     ))
 
@@ -970,6 +966,12 @@ def make_check_expr(
                         hint_child_sane_key   is HINT_SANE_IGNORABLE and
                         hint_child_sane_value is HINT_SANE_IGNORABLE
                     ):
+                        # Name of a unique local variable storing the value of
+                        # this parent pith *BEFORE* possibly modifying the
+                        # "hint_tree.hint_curr.pith_var_name_index" and thus
+                        # this name as well below.
+                        pith_curr_var_name = hint_tree.hint_curr.pith_var_name
+
                         # If this child key hint is unignorable...
                         if hint_child_sane_key is not HINT_SANE_IGNORABLE:
                             # If this child value hint is also unignorable...
@@ -980,13 +982,13 @@ def make_check_expr(
 
                                 # Increment the integer suffixing the name of a
                                 # unique local variable storing the value of
-                                # this child key pith *BEFORE* defining this
-                                # variable.
-                                hint_tree.hint_curr_meta.pith_var_name_index += 1
+                                # this child key pith *BEFORE* localizing this
+                                # name below.
+                                hint_tree.hint_curr.pith_var_name_index += 1
 
                                 # Name of this local variable.
-                                pith_key_var_name = PITH_INDEX_TO_VAR_NAME[
-                                    hint_tree.hint_curr_meta.pith_var_name_index]
+                                pith_key_var_name = (
+                                    hint_tree.hint_curr.pith_var_name)
 
                                 # Placeholder string to be subsequently replaced
                                 # by code type-checking this child key pith
@@ -1005,7 +1007,7 @@ def make_check_expr(
                                         hint_sane=hint_child_sane_value,
                                         pith_expr=CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format(
                                             pith_curr_var_name=(
-                                                hint_tree.pith_curr_var_name),
+                                                pith_curr_var_name),
                                             pith_key_var_name=pith_key_var_name,
                                         ),
                                     ))
@@ -1016,8 +1018,7 @@ def make_check_expr(
                                     CODE_PEP484585_MAPPING_KEY_VALUE_format(
                                         indent_curr=hint_tree.indent_curr,
                                         pith_key_var_name=pith_key_var_name,  # pyright: ignore
-                                        pith_curr_var_name=(
-                                            hint_tree.pith_curr_var_name),
+                                        pith_curr_var_name=pith_curr_var_name,
                                         hint_key_placeholder=(
                                             hint_key_placeholder),
                                         hint_value_placeholder=(
@@ -1039,7 +1040,8 @@ def make_check_expr(
                                                 hint_sane=hint_child_sane_key,
                                                 pith_expr=CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format(
                                                     pith_curr_var_name=(
-                                                        hint_tree.pith_curr_var_name)),
+                                                        pith_curr_var_name),
+                                                ),
                                             )
                                         ),
                                     )
@@ -1061,7 +1063,8 @@ def make_check_expr(
                                             hint_sane=hint_child_sane_value,
                                             pith_expr=CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format(
                                                 pith_curr_var_name=(
-                                                    hint_tree.pith_curr_var_name)),
+                                                    pith_curr_var_name),
+                                            ),
                                         )
                                     ),
                                 )
@@ -1072,7 +1075,7 @@ def make_check_expr(
                         hint_tree.func_curr_code = CODE_PEP484585_MAPPING_format(
                             indent_curr=hint_tree.indent_curr,
                             pith_curr_assign_expr=hint_tree.pith_curr_assign_expr,
-                            pith_curr_var_name=hint_tree.pith_curr_var_name,
+                            pith_curr_var_name=pith_curr_var_name,
                             hint_curr_expr=hint_tree.hint_curr_expr,
                             func_curr_code_key_value=func_curr_code_key_value,
                         )
@@ -1102,7 +1105,7 @@ def make_check_expr(
                     hint_child_sane = hint_tree.sanify_hint_child(
                         get_hint_pep593_metahint(hint_curr))
                     # print(f'[593] metahint: {repr(get_hint_pep593_metahint(hint_curr))}')
-                    # print(f'[593] hint_curr_meta: {repr(hint_tree.hint_curr_meta)}')
+                    # print(f'[593] hint_curr: {repr(hint_tree.hint_curr)}')
                     # print(f'[593] hint_curr: {repr(hint_curr)}; hint_child_sane: {repr(hint_child_sane)}')
 
                     # Tuple of the one or more beartype validators annotating
@@ -1115,7 +1118,7 @@ def make_check_expr(
                         # Expression yielding the value of the current pith,
                         # defined as either...
                         hint_curr_expr = (
-                            hint_tree.hint_curr_meta.pith_expr
+                            hint_tree.hint_curr.pith_expr
                             # If this metahint is annotated by only one beartype
                             # validator, the most efficient expression yielding
                             # the value of the current pith is simply the full
@@ -1143,7 +1146,7 @@ def make_check_expr(
                         # pith, defaulting to the name of the local variable
                         # assigned to by the assignment expression performed
                         # below.
-                        hint_curr_expr = hint_tree.pith_curr_var_name
+                        hint_curr_expr = hint_tree.hint_curr.pith_var_name
 
                         # Code deeply type-checking this metahint.
                         hint_tree.func_curr_code += (
@@ -1212,7 +1215,7 @@ def make_check_expr(
                         #   expression for each additional beartype validator by
                         #   efficiently reusing the previously assigned local.
                         elif hint_child_index:
-                            hint_curr_expr = hint_tree.pith_curr_var_name
+                            hint_curr_expr = hint_tree.hint_curr.pith_var_name
                         # Else, this is the first beartype validator. See above.
 
                         # Code deeply type-checking this validator.
@@ -1278,7 +1281,7 @@ def make_check_expr(
                 #     # Either the unignorable hint this type variable reduces to
                 #     # if any *OR* "None" if this type variable is ignorable.
                 #     hint_child = make_hint_pep484_typevar_check_expr(  # type: ignore[assignment]
-                #         hint_meta=hint_curr_meta,
+                #         hint_meta=hint_curr,
                 #         conf=conf,
                 #         pith_curr_assign_expr=pith_curr_assign_expr,
                 #         pith_curr_var_name_index=pith_curr_var_name_index,
@@ -1355,7 +1358,7 @@ def make_check_expr(
                         # Generate and append efficient code type-checking
                         # this data validator by embedding this code as is.
                         hint_tree.func_curr_code += CODE_PEP586_LITERAL_format(
-                            pith_curr_var_name=hint_tree.pith_curr_var_name,
+                            pith_curr_var_name=hint_tree.hint_curr.pith_var_name,
                             # Python expression evaluating to this object.
                             hint_child_expr=add_func_scope_attr(
                                 attr=hint_child,
@@ -1465,7 +1468,7 @@ def make_check_expr(
             # pith as an instance of the origin type of this hint.
             hint_tree.func_curr_code = CODE_PEP484_INSTANCE_format(
                 hint_curr_expr=hint_tree.hint_curr_expr,
-                pith_curr_expr=hint_tree.hint_curr_meta.pith_expr,
+                pith_curr_expr=hint_tree.hint_curr.pith_expr,
             )
         # Else, prior logic generated a code snippet type-checking the current
         # pith against the currently visited hint. Preserve this snippet.
@@ -1473,7 +1476,7 @@ def make_check_expr(
         # Inject this code into the body of this wrapper.
         func_wrapper_code = replace_str_substrs(
             text=func_wrapper_code,
-            old=hint_tree.hint_curr_meta.hint_placeholder,
+            old=hint_tree.hint_curr.hint_placeholder,
             new=hint_tree.func_curr_code,
         )
 
@@ -1484,7 +1487,7 @@ def make_check_expr(
         # Deinitialize the type-checking metadata describing the previously
         # visited hint in this queue. Doing so avoids spurious memory leaks by
         # gently encouraging garbage collection.
-        hint_tree.hint_curr_meta.deinit()
+        hint_tree.hint_curr.deinit()
 
         # Increment the 0-based index of metadata describing the next visited
         # hint in this queue *BEFORE* visiting that hint (but *AFTER* performing
