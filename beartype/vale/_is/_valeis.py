@@ -19,7 +19,6 @@ from beartype.roar import (
     BeartypeValeLambdaWarning,
     BeartypeValeValidationException,
 )
-from beartype.typing import Protocol
 from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype.vale._util._valeutilfunc import die_unless_validator_tester
@@ -30,6 +29,12 @@ from beartype._util.text.utiltextrepr import (
     represent_func,
     represent_object,
 )
+from typing import Union
+
+# Intentionally import the PEP 544-compliant beartype-specific fast-caching
+# "beartype.typing.Protocol" superclass rather than the equally PEP
+# 544-compliant beartype-agnostic slow-caching "typing.Protocol" superclass.
+from beartype.typing import Protocol
 
 # ....................{ PRIVATE ~ subclasses               }....................
 class _IsFactory(_BeartypeValidatorFactoryABC):
@@ -258,7 +263,9 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
 
     # ..................{ DUNDERS                            }..................
     def __getitem__(  # type: ignore[override]
-        self, is_valid: BeartypeValidatorTester) -> BeartypeValidator:
+        self,
+        is_valid: Union[BeartypeValidatorTester, tuple[BeartypeValidatorTester]]
+    ) -> BeartypeValidator:
         '''
         Create and return a new beartype validator from the passed **validator
         callable** (i.e., caller-defined callable accepting a single arbitrary
@@ -272,8 +279,22 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
 
         Parameters
         ----------
-        is_valid : Callable[[Any,], bool]
-            Validator callable to validate parameters and returns against.
+        is_valid : Union[Callable[[Any,], bool], tuple[Callable[[Any,], bool]]]
+            Either:
+
+            * Validator callable to validate parameters and returns against.
+            * 1-tuple whose sole item is such a validator, semantically
+              equivalent to the prior kind of subscription (i.e., such a
+              validator outside any tuple structure). This kind of subscription
+              is typically created by subscripting this factory with a callable
+              suffixed by a trailing comma (e.g., ``Is[lambda obj: bool,]``).
+              While awkward, *all* PEP-compliant type hint factories implicitly
+              support similar 1-tuple unwrapping: e.g.,
+
+              .. code-block:: python
+
+                 >>> list[int,]
+                 list[int]
 
         Returns
         -------
@@ -299,31 +320,34 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
         '''
 
         # ..................{ VALIDATE                       }..................
-        # Unwrap a 1-tuple subscription (e.g., "Is[func,]") into its sole item.
+        # If the caller subscripted this factory by a 1-tuple, reduce this
+        # 1-tuple to the single item it contains (e.g., from "Is[func,]" to
+        # "Is[func]"). See also the docstring for further details.
         if isinstance(is_valid, tuple) and len(is_valid) == 1:
             is_valid = is_valid[0]
+        # Else, the caller did *NOT* subscript this factory by a 1-tuple.
 
-        # If this class was subscripted by either no arguments *OR* two or more
-        # arguments, raise an exception.
+        # If the caller subscripted this factory by either no arguments *OR* two
+        # or more arguments, raise an exception.
         self._die_unless_getitem_args_1(is_valid)
-        # Else, this class was subscripted by exactly one argument.
+        # Else, the caller subscripted this factory by exactly one argument.
 
         # If that callable is *NOT* a validator tester, raise an exception.
-        die_unless_validator_tester(is_valid)
+        die_unless_validator_tester(is_valid)  # pyright: ignore
         # Else, that callable is a validator tester.
 
-        # Lambda function dynamically generating the machine-readable
+        # ..................{ CLOSURES                       }..................
+        # Lambda closure dynamically generating the machine-readable
         # representation of this validator, deferred due to the computational
         # expense of accurately retrieving the source code for this validator
         # (especially when this validator is itself a lambda function).
         get_repr = lambda: (
             f'beartype.vale.{self._basename}['
-            f'{represent_func(func=is_valid, warning_cls=BeartypeValeLambdaWarning)}'
+            f'{represent_func(func=is_valid, warning_cls=BeartypeValeLambdaWarning)}'  # pyright: ignore
             f']'
         )
 
-        # ..................{ CLOSURE                        }..................
-        #FIXME: Unit test edge cases extensively, please.
+        #FIXME: Unit test up edge cases extensively, please. *sigh*
         def _is_valid_bool(obj: object) -> bool:
             '''
             :data:`True` only if the passed object satisfies the caller-defined
@@ -403,7 +427,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
             '''
 
             # Object returned by validating this object against that callable.
-            is_obj_valid = is_valid(obj)
+            is_obj_valid = is_valid(obj)  # pyright: ignore
 
             # If that object is a boolean, return that object as is.
             if isinstance(is_obj_valid, bool):

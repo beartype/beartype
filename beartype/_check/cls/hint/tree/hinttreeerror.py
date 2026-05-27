@@ -13,10 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: The following "HintTreeError" instance variables are trivial aliases
-#and thus useless. They should be excised where time permits; so, never:
-#* "HintTreeError.hint" is just an alias for "HintTreeError.hint_sane.hint".
-
 #FIXME: The recursive "HintTreeError" class strongly overlaps with the equally
 #recursive (and substantially superior) "beartype.door.TypeHint" class. Ideally:
 #* Define a new private "beartype.door._doorerror" submodule.
@@ -67,12 +63,8 @@ from beartype._check.cls.hint.hintsane import (
 from beartype._check.cls.hint.data.hintdataerror import HintDataError
 from beartype._check.cls.hint.tree.hinttreeabc import HintTreeABC
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.typing.datatyping import (
-    HintSignOrNoneOrSentinel,
-    TypeException,
-)
+from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
@@ -82,7 +74,6 @@ from beartype._data.kind.datakindiota import (
     Iota,
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.utilobjmake import permute_object
 from collections.abc import Callable
@@ -114,18 +105,8 @@ class HintTreeError(HintTreeABC):
         * Satisfies this hint, :data:`None`.
     exception_cls : type[Exception]
         Type of violation to be raised.
-    hint : Hint
-        Type hint to validate this object against.
     hint_curr : HintDataError
         Metadata describing this hint.
-    hint_sane : HintSane
-        Metadata encapsulating the sanification (i.e., sanitization) of the type
-        hint to validate this object against.
-    hint_sign : Optional[HintSign]
-        Either:
-
-        * If this hint is PEP-compliant, the sign identifying this hint.
-        * Else, :data:`None`.
     pith : Any
         Arbitrary object to be validated.
     pith_name : Optional[str]
@@ -171,9 +152,6 @@ class HintTreeError(HintTreeABC):
         'cause_indent',
         'cause_str_or_none',
         'exception_cls',
-        'hint',
-        'hint_sane',
-        'hint_sign',
         'pith',
         'pith_name',
         'random_int',
@@ -186,10 +164,7 @@ class HintTreeError(HintTreeABC):
         cause_indent: str
         cause_str_or_none: Optional[str]
         exception_cls: TypeException
-        hint: Hint
         hint_curr: HintDataError
-        hint_sane: HintSane
-        hint_sign: Optional[HintSign]
         pith: Any
         pith_name: Optional[str]
         random_int: Optional[int]
@@ -199,32 +174,27 @@ class HintTreeError(HintTreeABC):
     _COPY_VAR_NAMES = frozenset((
         'call_curr',
         'cause_indent',
+        'cause_str_or_none',
         'conf',
         'exception_cls',
         'exception_prefix',
         'hint_curr',
-        'hint_sane',
         'pith',
         'pith_name',
         'random_int',
-        'cause_str_or_none',
     ))
     '''
     Frozen set of the names of *all* instance variables whose values will be
-    copied as the default values of all **unpassed parameters** (i.e.,
-    parameters *not* explicitly passed to the :meth:`.permute_cause` method),
-    defined as a set to enable efficient membership testing.
-
-    Note that the :attr:`.hint_sign` instance variable is intentionally omitted.
-    This variable's value is unique to the current cause and thus *not* safely
-    copyable from parent to child hints by the :meth:`permute_cause` method.
+    reused as the default values of all **unpassed parameters** (i.e.,
+    parameters *not* explicitly passed by callers to the :meth:`.permute_cause`
+    method), defined as a frozen set to enable efficient membership testing.
     '''
 
 
-    _INIT_ARG_NAMES = _COPY_VAR_NAMES | frozenset(('hint_sign',))
+    _INIT_ARG_NAMES = _COPY_VAR_NAMES
     '''
     Frozen set of the names of *all* parameters accepted by the :meth:`init`
-    method, defined as a set to enable efficient membership testing.
+    method, defined as a frozen set to enable efficient membership testing.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -239,7 +209,7 @@ class HintTreeError(HintTreeABC):
         call_curr: BeartypeCallDataABC,
         cause_indent: str,
         conf: BeartypeConf,
-        hint_sane: HintSane,
+        hint_curr: HintDataError,
         pith: Any,
         pith_name: Optional[str],
         random_int: Optional[int],
@@ -248,73 +218,20 @@ class HintTreeError(HintTreeABC):
 
         # Optional parameters.
         cause_str_or_none: Optional[str] = None,
-
-        #FIXME: Refactor to be mandatory *AFTER* eliminating the "hint_sane" and
-        #"hint_curr" parameters, please. *sigh*
-        hint_curr: Optional[HintDataError] = None,
-        hint_sign: HintSignOrNoneOrSentinel = SENTINEL,
     ) -> None:
         '''
         Initialize this violation cause.
 
         Parameters
         ----------
-        hint_sign : Union[Optional[HintSign], Iota], default: SENTINEL
-            Either:
-
-            * If this child hint is uniquely identified by a **non-default
-              sign** (i.e., a singleton instance of the :class:`.HintSign` class
-              *other* than the standard sign returned by the
-              :func:`.get_hint_pep_sign_or_none` getter), this sign.
-            * Else, the sentinel placeholder, in which case this parameter
-              defaults to the **default sign** (i.e., the standard sign returned
-              by the :func:`.get_hint_pep_sign_or_none` getter).
-
-            Defaults to the sentinel placeholder. This parameter should
-            typically *not* be passed. Almost all hints are uniquely identified
-            by the default sign. A small subset of hints, however, concurrently
-            satisfy the detection criteria for multiple signs and are thus
-            identifiable with multiple signs. This parameter supports those
-            hints by enabling callers to call this method multiple times with
-            the same hint passed different signs.
-
-            Prominent examples include:
-
-            * :pep:`484`- and :pep:`585`-compliant unsubscripted generics --
-              which, due to being user-defined types, may subclass another
-              PEP-compliant :mod:`typing` superclass also identifiable by
-              another sign. Prominent examples include:
-
-              * **Generic typed dictionaries** identifiable as both the
-                :data:`.HintSignPep484585GenericUnsubbed` sign *and* the
-                :data:`HintSignTypedDict` sign for :pep:`589`-compliant typed
-                dictionaries: e.g.,
-
-                .. code-block:: python
-
-                   from typing import Generic, TypedDict
-                   class GenericTypedDict[T](TypedDict, Generic[T]):
-                       generic_item: T
-
-              * **Generic named tuples** identifiable as both the
-                :data:`.HintSignPep484585GenericUnsubbed` sign *and* the
-                :data:`HintSignNamedTuple` sign for :pep:`484`-compliant named
-                tuples: e.g.,
-
-                .. code-block:: python
-
-                   from typing import Generic, NamedTuple
-                   class GenericNamedTuple[T](NamedTuple, Generic[T]):
-                       generic_item: T
-
         See the class docstring for a description of all remaining parameters.
         '''
         assert isinstance(cause_indent, str), (
             f'{repr(cause_indent)} not string.')
         assert isinstance(cause_str_or_none, NoneTypeOr[str]), (
             f'{repr(cause_str_or_none)} not string or "None".')
-        assert isinstance(hint_sane, HintSane), (
-            f'{repr(hint_sane)} not sanified metadata.')
+        assert isinstance(hint_curr, HintDataError), (
+            f'{repr(hint_curr)} not "HintDataError" object.')
         assert isinstance(pith_name, NoneTypeOr[str]), (
             f'{repr(pith_name)} not string or "None".')
         assert isinstance(random_int, NoneTypeOr[int]), (
@@ -331,45 +248,14 @@ class HintTreeError(HintTreeABC):
             exception_prefix=exception_prefix,
         )
 
-        # If the caller did *NOT* pass a non-default sign identifying this hint,
-        # default this sign to the default sign identifying this hint.
-        if hint_sign is SENTINEL:
-            hint_sign = get_hint_pep_sign_or_none(hint_sane.hint)
-        # Else, the caller passed a non-default sign identifying this hint.
-        # Preserve this sign as is.
-        assert isinstance(hint_sign, NoneTypeOr[HintSign]), (
-            f'{repr(hint_sane)} neither hint sign nor "None".')
-
         # Classify all passed parameters.
         self.cause_indent = cause_indent
         self.cause_str_or_none = cause_str_or_none
         self.exception_cls = exception_cls
-        self.hint_sane = hint_sane
-        self.hint_sign = hint_sign  # pyright: ignore
+        self.hint_curr = hint_curr  # pyright: ignore
         self.pith = pith
         self.pith_name = pith_name
         self.random_int = random_int
-
-        # Sane hint sanified from this possibly insane hint.
-        self.hint = hint_sane.hint
-
-        #FIXME: *NON-IDEAL*. Ideally, the caller should explicitly pass a single
-        #"hint_curr" parameter than the gamut of "hint_sane" and "hint_sign"
-        #parameters the caller currently passes. *WHATEVAH*! Something is better
-        #than nothing, QA bear friends. \o/
-        #FIXME: Note that complications could arise when attempting to refactor
-        #away the passed "hint_sane" and "hint_sign" parameters in favour of a
-        #single "hint_curr" parameter. Why? The "hint_sane" parameter. Notably,
-        #this docstring caveat:
-        #    Note that the :attr:`.hint_sign` instance variable is intentionally omitted.
-        #    This variable's value is unique to the current cause and thus *not* safely
-        #    copyable from parent to child hints by the :meth:`permute_cause` method.
-        #
-        #Seems kinda sus, honestly. Let's just give this refactoring a go and
-        #see what blows up. What could possibly blow up!? *sigh*
-
-        # Metadata encapsulating this hint.
-        self.hint_curr = HintDataError(hint_sane=hint_sane, hint_sign=hint_sign)  # pyright: ignore
 
         # Nullify all remaining parameters for safety.
         self._hint_childs_sane = SENTINEL
@@ -384,9 +270,7 @@ class HintTreeError(HintTreeABC):
         # needed to reasonably describe this metadata.
         return (
             f'{self.__class__.__name__}('
-            f'hint={repr(self.hint)}, '
-            f'hint_sane={repr(self.hint_sane)}, '
-            f'hint_sign={repr(self.hint_sign)}, '
+            f'hint_curr={repr(self.hint_curr)}, '
             f'call_curr={repr(self.call_curr)}, '
             f'cause_indent={repr(self.cause_indent)}, '
             f'cause_str_or_none={repr(self.cause_str_or_none)}, '
@@ -400,6 +284,20 @@ class HintTreeError(HintTreeABC):
         )
 
     # ..................{ PROPERTIES                          }..................
+    @property
+    def hint_curr_sanified(self) -> Hint:
+        '''
+        Currently visited type hint to validate the currently visited pith
+        against.
+
+        Note that this dynamic property is a convenient shorthand for the
+        static nested instance variable ``hint_curr.hint_sane.hint``.
+        '''
+
+        # If at ain't a one-liner, it ain't broke. Isn't that how it goes!?
+        return self.hint_curr.hint_sane.hint
+
+
     #FIXME: This should almost certainly be cached via @property_cached. Doing
     #so simplifies all of that awkward "SENTINEL" caching logic below. *shrug*
     @property
@@ -428,9 +326,9 @@ class HintTreeError(HintTreeABC):
         # If this hint is either...
         elif (
             # Ignorable *OR*...
-            self.hint_sane is HINT_SANE_IGNORABLE or
+            self.hint_curr.hint_sane is HINT_SANE_IGNORABLE or
             # PEP-noncompliant...
-            not is_hint_pep(self.hint)
+            not is_hint_pep(self.hint_curr_sanified)
         # Then this hint *CANNOT* by definition be subscripted by any meaningful
         # child hints. In this case...
         ):
@@ -443,7 +341,7 @@ class HintTreeError(HintTreeABC):
         # *COULD* be subscripted by meaningful child hints, continue.
 
         # Tuple of the zero or more arguments subscripting this hint.
-        hint_childs_insane = get_hint_pep_args(self.hint)
+        hint_childs_insane = get_hint_pep_args(self.hint_curr_sanified)
 
         # List of the zero or more possibly ignorable metadata generated by
         # sanifying these child hints, initialized to the empty list.
@@ -470,7 +368,7 @@ class HintTreeError(HintTreeABC):
                 # Sanify this child hint into this metadata.
                 hint_child_sane = self.sanify_hint_child(
                     hint_child_insane=hint_child_insane,
-                    hint_parent_sane=self.hint_sane,
+                    hint_parent_sane=self.hint_curr.hint_sane,
                 )
             # Else, this child hint is PEP-noncompliant. In this case, preserve
             # this child hint as is.
@@ -536,27 +434,30 @@ class HintTreeError(HintTreeABC):
             * PEP-compliant but no getter function has been implemented to
               handle this category of PEP-compliant type hint yet.
         '''
-        # print(f'Finding cause for {self.hint} identified by {self.hint_sign}...')
+        # print(f'Finding cause for {self.hint_curr}...')
 
+        # ..................{ NOOP                           }..................
         # If this hint is ignorable, all possible objects satisfy this hint.
         # Since this hint *CANNOT* (by definition) be the cause of this failure,
         # return the same cause as is.
-        if self.hint_sane is HINT_SANE_IGNORABLE:
+        if self.hint_curr.hint_sane is HINT_SANE_IGNORABLE:
             return self
         # Else, this hint is unignorable.
 
+        # ..................{ LOCALS                         }..................
         # Getter function returning the desired string.
         cause_finder: Callable[[HintTreeError], HintTreeError] = None  # type: ignore[assignment]
 
+        # ..................{ SHALLOW                        }..................
         # If this hint...
         if (
             # Originates from an origin type and may thus be shallowly
             # type-checked against that type *AND is either...
-            self.hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
+            self.hint_curr.hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
                 # Unsubscripted *OR*...
-                not get_hint_pep_args(self.hint) or
+                not get_hint_pep_args(self.hint_curr_sanified) or
                 # Currently unsupported with deep type-checking...
-                self.hint_sign not in HINT_SIGNS_SUPPORTED_DEEP
+                self.hint_curr.hint_sign not in HINT_SIGNS_SUPPORTED_DEEP
             )
         # Then this hint is both unsubscripted and originating from a standard
         # type origin. In this case, this hint was type-checked shallowly.
@@ -568,6 +469,7 @@ class HintTreeError(HintTreeABC):
             # Defer to the getter function supporting hints originating from
             # origin types.
             cause_finder = find_cause_type_instance_origin
+        # ..................{ DEEP                           }..................
         # Else, this hint is either subscripted *OR* unsubscripted but not
         # originating from a standard type origin. In either case, this hint was
         # type-checked deeply.
@@ -579,20 +481,21 @@ class HintTreeError(HintTreeABC):
             # Getter function returning the desired string for this attribute if
             # any *OR* "None" otherwise.
             cause_finder = HINT_SIGN_TO_GET_CAUSE_FUNC.get(  # type: ignore[assignment]
-                self.hint_sign, None)  # type: ignore[arg-type]
+                self.hint_curr.hint_sign, None)  # type: ignore[arg-type]
 
             # If no such function has been implemented to handle this attribute
             # yet, raise an exception.
             if cause_finder is None:
                 raise _BeartypeCallHintPepRaiseException(
                     f'{self.exception_prefix}type hint '
-                    f'{repr(self.hint)} unsupported (i.e., no '
-                    f'"find_cause_"-prefixed getter function defined '
+                    f'{repr(self.hint_curr_sanified)} unsupported '
+                    f'(i.e., no "find_cause_"-prefixed getter function defined '
                     f'for this category of hint).'
                 )
             # Else, a getter function has been implemented to handle this
             # attribute.
 
+        # ..................{ RETURN                         }..................
         # Call this getter function with ourselves and return the string
         # returned by this getter.
         return cause_finder(self)
@@ -638,6 +541,18 @@ class HintTreeError(HintTreeABC):
            >>> sleuth_copy.hint
            typing.List[int]
         '''
+
+        #FIXME: Unsure if this suffices. If the caller explicitly passes
+        #"hint_curr", this probably suffices. However, if the caller fails to
+        #explicitly pass "hint_curr", we probably want to redefine it *WITHOUT*
+        #preserving the prior "hint_sign": e.g.,
+        #    if 'hint_curr' not in kwargs:
+        #        kwargs['hint_curr'] = HintDataError(self.hint_curr.hint_sane)
+        #
+        #Why? This now-deleted docstring fragment:
+        #    Note that the :attr:`.hint_sign` instance variable is intentionally omitted.
+        #    This variable's value is unique to the current cause and thus *not* safely
+        #    copyable from parent to child hints by the :meth:`permute_cause` method.
 
         # Set us up the permutation! Make your time!
         return permute_object(
@@ -690,11 +605,14 @@ class HintTreeError(HintTreeABC):
         # "parent" of the passed hint for all intents and purposes.
         hint_sane = self.sanify_hint_child(
             hint_child_insane=hint_child_insane,
-            hint_parent_sane=self.hint_sane,
+            hint_parent_sane=self.hint_curr.hint_sane,
         )
 
+        # Higher-level metadata encapsulating that lower-level metadata. *sigh*
+        hint_curr = HintDataError(hint_sane)
+
         # Violation cause permuted from this metadata and these keywords.
-        cause_permuted = self.permute_cause(hint_sane=hint_sane, **kwargs)
+        cause_permuted = self.permute_cause(hint_curr=hint_curr, **kwargs)
 
         # Return this permuted cause.
         return cause_permuted
@@ -756,7 +674,7 @@ class HintTreeError(HintTreeABC):
         # If the caller explicitly passed *NO* sanified parent hint metadata,
         # default this metadata to that of the currently visited hint.
         if hint_parent_sane is None:
-            hint_parent_sane = self.hint_sane
+            hint_parent_sane = self.hint_curr.hint_sane
         # Else, the caller explicitly passed sanified parent hint metadata.
         # Silently preserve this metadata as is.
 

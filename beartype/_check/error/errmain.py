@@ -69,17 +69,17 @@ This private submodule is *not* intended for importation by downstream callers.
 #  "utiltextansi" submodule as well, please.
 
 # ....................{ IMPORTS                            }....................
-from beartype._metaverse import URL_ISSUES
 from beartype.roar import BeartypeWarning
 from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseDesynchronizationException,
     _BeartypeCallHintPepRaiseException,
 )
-from beartype._check.convert.convmain import sanify_hint_any
-from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.call.callmetadecormin import (
     BeartypeCallDecorMinimalMeta)
+from beartype._check.cls.hint.data.hintdataerror import HintDataError
+from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
+from beartype._check.convert.convmain import sanify_hint_any
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeViolationVerbosity
 from beartype._conf.confmain import BeartypeConf
@@ -87,6 +87,7 @@ from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
+from beartype._metaverse import URL_ISSUES
 from beartype._util.error.utilerrwarn import warnings_ignored
 from beartype._util.text.utiltextansi import (
     color_hint,
@@ -613,7 +614,7 @@ def _find_hint_object_violation_cause(
         call_curr=call_curr,
         cause_indent='',
         conf=conf,
-        hint_sane=hint_sane,
+        hint_curr=HintDataError(hint_sane),
         pith=obj,
         pith_name=pith_name,
         random_int=random_int,

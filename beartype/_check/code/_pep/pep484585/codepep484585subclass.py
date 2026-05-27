@@ -14,20 +14,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
-from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._check.cls.hint.tree.hinttreecode import HintTreeCode
+from beartype._check.pep.pep484585.checkpep484585subclass import (
+    get_hint_pep484585_subclass_hint_child_sanified)
 from beartype._data.check.code.pep.datacodepep484585 import (
     CODE_PEP484585_SUBCLASS_format)
-from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from beartype._data.hint.sign.datahintsigns import HintSignUnion
-from beartype._util.cls.pep.clspep3119 import (
-    die_unless_object_issubclassable,
-    is_object_issubclassable,
-)
-from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
-    get_hint_pep484585_arg)
-from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
 # ....................{ FACTORIES                          }....................
 def make_hint_pep484585_subclass_check_expr(
@@ -52,39 +43,19 @@ def make_hint_pep484585_subclass_check_expr(
         f'{repr(hint_tree)} not "HintTreeCode" object.')
     # print(f'Visiting generic type {repr(hint_curr)}...')
 
-    # ....................{ PARENT                         }....................
-    # Metadata encapsulating the sanification of this hint, localized for both
-    # usability and efficiency.
-    hint_sane = hint_tree.hint_curr.hint_sane
-
-    # This sanified subclass hint.
-    hint = hint_sane.hint
-
-    # ....................{ CHILD                          }....................
-    #FIXME: DRY violation. This non-trivial logic is duplicated between this and
-    #the comparable "errpep484585subclass" submodule. Unfortunately, resolving
-    #this requires first implementing our "HintTreeABC" refactoring. *sigh*
-
-    # Possibly ignorable insane child hint subscripting this parent sanified
-    # subclass hint, guaranteed to be the *ONLY* child hint subscripting this
-    # subclass hint.
-    hint_child_insane = get_hint_pep484585_arg(
-        hint=hint, exception_prefix=hint_tree.exception_prefix)
-
-    # Metadata encapsulating the sanification of this child hint.
-    #
-    # Note that, if this possibly insane child hint was a PEP 484-compliant
-    # forward reference, that this sanified child hint is now guaranteed to be
-    # a normal isinstanceable type instead. Ergo, forward references need *NOT*
-    # be explicitly handled below.
-    hint_child_sane = hint_tree.sanify_hint_child(hint_child_insane)
+    # ....................{ IGNORABLE                      }....................
+    # Sanified child hint subscripting the subclass hint rooting this tree.
+    hint_child = get_hint_pep484585_subclass_hint_child_sanified(hint_tree)
 
     #FIXME: Additionally, if "hint_child_sane.hint is type", then this sanified
     #child hint is *ALSO* ignorable. Why? Because *ALL* types necessarily
     #subclass the root "type" superclass. Ergo, the type hint "type[type]" is
     #semantically equivalent to "type[Any]" and thus ignorable.
-    # If this sanified child hint is ignorable...
-    if hint_child_sane is HINT_SANE_IGNORABLE:
+
+    # If this sanified child hint is the root "object" superclass intentionally
+    # returned by the above getter to connote ignorability, this sanified child
+    # hint is ignorable. In this case...
+    if hint_child is object:
         # Python expression evaluating to the origin type of this hint (i.e.,
         # the "type" root superclass by definition). Since this superclass is a
         # builtin (i.e., universally accessible object), microoptimize this edge
@@ -96,52 +67,7 @@ def make_hint_pep484585_subclass_check_expr(
         # Fallback to trivial code shallowly type-checking this pith as an
         # instance of this origin type.
         return
-    # Else, this child hint is unignorable.
-
-    # Sanified child hint encapsulated by this metadata.
-    hint_child = hint_child_sane.hint
-
-    # Sign identifying this child hint.
-    hint_child_sign = get_hint_pep_sign_or_none(hint_child)
-
-    #FIXME: Also support "typing.Annotated[...]", please. Fascinating edge case.
-    #Note that we'll need to roll out similar support in "beartype._check.error"
-    #as well, of course. Also, new unit tests probably necessitating new sample
-    #type hints in "beartype_test.a00_unit.data.hint.pep". We sigh! *sigh*
-
-    # If this child hint is a union of superclasses, reduce this union to a
-    # tuple of superclasses. Only the latter is safely passable as the second
-    # parameter to the issubclass() builtin under all supported Python versions.
-    if hint_child_sign is HintSignUnion:
-        hint_child = get_hint_pep_args(hint_child)
-    # Else, this child hint is *NOT* a union.
-
-    # If this child hint is *NOT* an issubclassable object, raise an exception.
-    # Note that:
-    # * The is_object_issubclassable() tester is faster and thus called before
-    #   the slower die_unless_object_issubclassable() raiser.
-    # * This tester is memoized and thus requires that all parameters be passed
-    #   only positionally. It is what it is.
-    if not is_object_issubclassable(
-        hint_child,  # type: ignore[arg-type]
-        # Permit this hint to be a beartype-specific forward reference proxy
-        # (i.e., "_BeartypeForwardRefABC" subtype). Although prohibiting such
-        # proxies from consideration as supported hints is typically desirable,
-        # this lower-level reducer is passed such proxies produced by the
-        # higher-level reduce_hint_pep484_ref() reducer. Such proxies are thus
-        # valid for this specific use case.
-        True,  # <-- "is_ref_proxy_valid=True", effectively *sigh*
-    ):
-        die_unless_object_issubclassable(
-            obj=hint_child,  # type: ignore[arg-type]
-            is_ref_proxy_valid=True,
-            exception_prefix=(
-                f'{EXCEPTION_PLACEHOLDER}'
-                f'PEP 484 or 585 subclass type hint {repr(hint)} '
-                f'child type hint '
-            ),
-        )
-    # Else, this child hint is an issubclassable object.
+    # Else, this sanified child hint is unignorable.
 
     # ....................{ CHECK                          }....................
     # Python expression evaluating to this child hint passed to this wrapper

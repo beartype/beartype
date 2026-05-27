@@ -49,7 +49,7 @@ def find_cause_nonpep(cause: HintTreeError) -> HintTreeError:
 
     # If this PEP-noncompliant hint is a tuple union, defer to the finder
     # specific to tuple unions.
-    if isinstance(cause.hint, tuple):
+    if isinstance(cause.hint_curr_sanified, tuple):
         cause_finder = find_cause_instance_types_tuple
     # Else, this PEP-noncompliant hint is *NOT* a tuple union. In this case,
     # assume this hint to be an isinstanceable class by deferring to the finder
@@ -104,7 +104,7 @@ def find_cause_instance_type(cause: HintTreeError) -> HintTreeError:
     assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
 
     # Isinstanceable class against which this pith was type-checked.
-    hint: type = cause.hint  # type: ignore[assignment]
+    hint: type = cause.hint_curr_sanified  # type: ignore[assignment]
 
     # Pith type-checked against this isinstanceable class.
     pith = cause.pith
@@ -213,13 +213,13 @@ def find_cause_type_instance_origin(cause: HintTreeError) -> HintTreeError:
     assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
 
     # Isinstanceable origin type originating this hint if any *OR* "None".
-    hint_type = get_hint_pep_origin_type_isinstanceable_or_none(cause.hint)
+    hint_type = get_hint_pep_origin_type_isinstanceable_or_none(cause.hint_curr_sanified)
 
     # If this hint does *NOT* originate from such a type, raise an exception.
     if hint_type is None:
         raise _BeartypeCallHintPepRaiseException(
             f'{cause.exception_prefix}type hint '
-            f'{repr(cause.hint)} not originated from '
+            f'{repr(cause.hint_curr_sanified)} not originated from '
             f'isinstanceable origin type.'
         )
     # Else, this hint originates from such a type.
@@ -250,7 +250,7 @@ def find_cause_instance_types_tuple(cause: HintTreeError) -> HintTreeError:
     assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
 
     # This tuple union.
-    hint: TupleTypes = cause.hint  # type: ignore[assignment]
+    hint: TupleTypes = cause.hint_curr_sanified  # type: ignore[assignment]
 
     # If this hint is *NOT* a tuple union, raise an exception.
     die_unless_hint_nonpep_tuple(

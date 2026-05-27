@@ -24,8 +24,7 @@ from beartype._check.convert.convmain import sanify_hint_child
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.datacodeindent import INDENT_LEVEL_TO_CODE
-from beartype._data.check.error.dataerrmagic import (
-    EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
+from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (
     HintSignOrNoneOrSentinel,
@@ -232,7 +231,7 @@ class HintTreeCode(HintTreeABC):
         # superclass API but ultimately do little to nothing, as the deinit()
         # method called below overrides most of these with other defaults. UGH!
         super().__init__(
-            exception_prefix=EXCEPTION_PREFIX,
+            exception_prefix=EXCEPTION_PLACEHOLDER,
             call_curr=BEARTYPE_CALL_EXTERNAL_META,
             conf=BEARTYPE_CONF_DEFAULT,
         )

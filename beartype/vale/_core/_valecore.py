@@ -236,8 +236,8 @@ class BeartypeValidator(object):
     def is_valid(self) -> BeartypeValidatorTester:
         '''
         **Validator callable** (i.e., caller-defined callable accepting a
-        single arbitrary object and returning either ``True`` if that object
-        satisfies an arbitrary constraint *or* ``False`` otherwise).
+        single arbitrary object and returning either :data:`True` if that object
+        satisfies an arbitrary constraint *or* :data:`False` otherwise).
         '''
 
         return self._is_valid

@@ -15,12 +15,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._check.cls.logic.logmap import (
-    HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
+from beartype._check.cls.hint.data.hintdataerror import HintDataError
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.error._nonpep.errnonpeptype import (
     find_cause_type_instance_origin)
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.logic.logmap import (
+    HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
 from beartype._data.hint.sign.datahintsigns import HintSignPep484585TupleFixed
 from beartype._data.hint.sign.datahintsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
@@ -54,17 +55,20 @@ def find_cause_pep484585_container_args_1(
         Output violation cause finder type-checking this input.
     '''
     assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
-    assert cause.hint_sign in HINT_SIGNS_CONTAINER_ARGS_1, (
-        f'{repr(cause.hint)} not 1-argument container type hint.')
+    assert cause.hint_curr.hint_sign in HINT_SIGNS_CONTAINER_ARGS_1, (
+        f'{repr(cause.hint_curr_sanified)} not 1-argument container type hint.')
 
+    # ....................{ VIOLATE ~ shallow              }....................
     # Number of child type hints expected to be subscripting this hint.
     hints_child_len_expected = (
-        HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE[cause.hint_sign])
+        HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE[
+            cause.hint_curr.hint_sign])
 
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
     assert len(cause.hint_childs_sane) in hints_child_len_expected, (
-        f'Container type hint {repr(cause.hint)} number of child type hints '
+        f'Container type hint {repr(cause.hint_curr_sanified)} '
+        f'number of child type hints '
         f'{len(cause.hint_childs_sane)} not in {hints_child_len_expected}.'
     )
 
@@ -89,6 +93,7 @@ def find_cause_pep484585_container_args_1(
     #   to be an ellipses and thus ignorable syntactic chuff.
     hint_child_sane = cause.hint_childs_sane[0]
 
+    # ....................{ SATISFY ~ empty                }....................
     # If either...
     if (
         # This container is empty, *ALL* items of this container (of which there
@@ -113,15 +118,18 @@ def find_cause_pep484585_container_args_1(
         return cause
     # Else, this container is non-empty *AND* this child hint is unignorable.
 
+    # ....................{ VIOLATE ~ deep                 }....................
     # Hint logic type-checking this sign if any *OR* "None" otherwise.
-    hint_logic = HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get(cause.hint_sign)
+    hint_logic = HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get(
+        cause.hint_curr.hint_sign)
 
     # If *NO* hint logic type-checks this sign, raise an exception. Note
     # that this logic should *ALWAYS* be non-"None". Nonetheless, assumptions.
     if hint_logic is None:  # pragma: no cover
         raise _BeartypeCallHintPepRaiseException(
-            f'{cause.exception_prefix}1-argument container type hint '
-            f'{repr(cause.hint)} beartype sign {repr(cause.hint_sign)} '
+            f'{cause.exception_prefix}'
+            f'1-argument container type hint {repr(cause.hint_curr_sanified)} '
+            f'beartype sign {repr(cause.hint_curr.hint_sign)} '
             f'code generation logic not found.'
         )
     # Else, some hint logic type-checks this sign.
@@ -142,7 +150,8 @@ def find_cause_pep484585_container_args_1(
             # this child hint if this item violates this child hint *OR* "None"
             # otherwise (i.e., if this item satisfies this child hint).
             cause_deep = cause.permute_cause(
-                hint_sane=hint_child_sane, pith=pith_item).find_cause()
+                hint_curr=HintDataError(hint_child_sane), pith=pith_item,
+            ).find_cause()
 
             # If this item is the cause of this failure...
             if cause_deep.cause_str_or_none is not None:
@@ -161,8 +170,9 @@ def find_cause_pep484585_container_args_1(
     # Else, this pith is *NOT* collection and thus *NOT* safely reiterable here.
     # We have *NO* recourse but to assume this pith deeply satisfies this hint.
 
-    # Return this cause as is; all items of this container are valid, implying
-    # this container to deeply satisfy this hint.
+    # ....................{ SATISFY ~ non-empty            }....................
+    # Return this cause as is. Since *ALL* items of this non-empty container are
+    # valid, this container deeply satisfies this hint.
     return cause
 
 
@@ -184,9 +194,10 @@ def find_cause_pep484585_tuple_fixed(cause: HintTreeError) -> HintTreeError:
         Output violation cause finder type-checking this input.
     '''
     assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
-    assert cause.hint_sign is HintSignPep484585TupleFixed, (
-        f'{repr(cause.hint_sign)} not "HintSignPep484585TupleFixed".')
+    assert cause.hint_curr.hint_sign is HintSignPep484585TupleFixed, (
+        f'{repr(cause.hint_curr.hint_sign)} not "HintSignPep484585TupleFixed".')
 
+    # ....................{ VIOLATE ~ shallow              }....................
     # Shallow output cause describing the failure of this path to be a shallow
     # instance of the type originating this hint (e.g., "tuple" for the hint
     # "tuple[str]") if this pith is not an instance of this type *OR* "None"
@@ -198,9 +209,10 @@ def find_cause_pep484585_tuple_fixed(cause: HintTreeError) -> HintTreeError:
         return cause_shallow
     # Else, this pith is a tuple.
     #
+    # ....................{ HINT ~ empty                   }....................
     # If this hint is the empty fixed-length tuple, validate this pith to be
     # the empty tuple.
-    elif is_hint_pep484585646_tuple_empty(cause.hint):
+    elif is_hint_pep484585646_tuple_empty(cause.hint_curr_sanified):
         # If this pith is the empty tuple, this path satisfies this hint.
         #
         # Note that this test *CANNOT* safely be optimized away to simply:
@@ -218,8 +230,9 @@ def find_cause_pep484585_tuple_fixed(cause: HintTreeError) -> HintTreeError:
 
         # Return this cause.
         return cause_deep
-    # Else, this hint is a standard fixed-length tuple.
+    # Else, this hint is a non-empty fixed-length tuple.
     #
+    # ....................{ VIOLATE ~ deep                 }....................
     # If this pith and hint are of differing lengths, this tuple fails to
     # satisfy this hint. In this case...
     elif len(cause.pith) != len(cause.hint_childs_sane):
@@ -249,7 +262,8 @@ def find_cause_pep484585_tuple_fixed(cause: HintTreeError) -> HintTreeError:
         # Deep output cause to be returned, type-checking whether this tuple
         # item satisfies this child hint.
         cause_deep = cause.permute_cause(
-            hint_sane=hint_child_sane, pith=pith_item).find_cause()
+            hint_curr=HintDataError(hint_child_sane), pith=pith_item,
+        ).find_cause()
 
         # If this item is the cause of this failure...
         if cause_deep.cause_str_or_none is not None:
@@ -268,6 +282,7 @@ def find_cause_pep484585_tuple_fixed(cause: HintTreeError) -> HintTreeError:
         # Else, this item is *NOT* the cause of this failure. Silently
         # continue to the next.
 
-    # Return this cause as is; all items of this fixed-length tuple are valid,
-    # implying this pith to deeply satisfy this hint.
+    # ....................{ SATISFY ~ non-empty            }....................
+    # Return this cause as is. Since *ALL* items of this fixed-length non-empty
+    # tuple are valid, this pith deeply satisfies this hint.
     return cause

@@ -66,6 +66,7 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
     # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
+
         # Optional positional parameters.
         *args,
 

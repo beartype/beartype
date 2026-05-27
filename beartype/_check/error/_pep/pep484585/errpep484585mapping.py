@@ -13,11 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype import BeartypeStrategy
-from beartype.typing import (
-    Hashable,
-    Iterable,
-    Tuple,
-)
+from beartype._check.cls.hint.data.hintdataerror import HintDataError
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.error._nonpep.errnonpeptype import (
     find_cause_type_instance_origin)
@@ -28,6 +24,10 @@ from beartype._data.hint.sign.datahintsigns import HintSignCounter
 from beartype._data.hint.sign.datahintsignset import HINT_SIGNS_MAPPING
 from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith
+from collections.abc import (
+    Hashable,
+    Iterable,
+)
 
 # ....................{ FINDERS                            }....................
 def find_cause_pep484585_mapping(cause: HintTreeError) -> HintTreeError:
@@ -49,17 +49,18 @@ def find_cause_pep484585_mapping(cause: HintTreeError) -> HintTreeError:
         Output cause type-checking this data.
     '''
     assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
-    assert cause.hint_sign in HINT_SIGNS_MAPPING, (
-        f'{repr(cause.hint)} not mapping hint.')
+    assert cause.hint_curr.hint_sign in HINT_SIGNS_MAPPING, (
+        f'{repr(cause.hint_curr_sanified)} not mapping hint.')
 
+    # ....................{ VIOLATE ~ shallow              }....................
     # Number of child type hints expected to be subscripting this hint.
     hints_child_len_expected = (
-        HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE[cause.hint_sign])
+        HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE[cause.hint_curr.hint_sign])
 
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
     assert len(cause.hint_childs_sane) in hints_child_len_expected, (
-        f'Mapping type hint {repr(cause.hint)} number of child type hints '
+        f'Mapping type hint {repr(cause.hint_curr_sanified)} number of child type hints '
         f'{len(cause.hint_childs_sane)} not in {hints_child_len_expected}.'
     )
 
@@ -74,6 +75,7 @@ def find_cause_pep484585_mapping(cause: HintTreeError) -> HintTreeError:
         return cause_shallow
     # Else, this pith is an instance of this type and thus a mapping.
     #
+    # ....................{ SATISFY ~ empty                }....................
     # If this mapping is empty, all items of this mapping (of which there are
     # none) are valid. By definition, this mapping satisfies this hint. In this
     # case, return the passed cause as is.
@@ -94,6 +96,7 @@ def find_cause_pep484585_mapping(cause: HintTreeError) -> HintTreeError:
         return cause
     # Else, this mapping is non-empty.
 
+    # ....................{ VIOLATE ~ deep                 }....................
     # Child key hint subscripting this parent mapping hint.
     hint_key_sane = cause.hint_childs_sane[0]
 
@@ -106,7 +109,7 @@ def find_cause_pep484585_mapping(cause: HintTreeError) -> HintTreeError:
         cause.sanify_hint_child(int)
         # Else, this hint does *NOT* describes a "collections.Counter"
         # dictionary subclass. In this case, this child value hint as is.
-        if cause.hint_sign is HintSignCounter else
+        if cause.hint_curr.hint_sign is HintSignCounter else
         cause.hint_childs_sane[1]
     )
 
@@ -118,7 +121,7 @@ def find_cause_pep484585_mapping(cause: HintTreeError) -> HintTreeError:
     # zero or more 2-tuples of the form "(key, value)", where:
     # * "key" is the key of the current key-value pair.
     # * "value" is the value of the current key-value pair.
-    pith_items: Iterable[Tuple[Hashable, object]] = None  # type: ignore[assignment]
+    pith_items: Iterable[tuple[Hashable, object]] = None  # type: ignore[assignment]
 
     # If the only the first key-value pair of this mapping was type-checked by
     # the parent @beartype-generated wrapper function in O(1) time, type-check
@@ -147,7 +150,8 @@ def find_cause_pep484585_mapping(cause: HintTreeError) -> HintTreeError:
             # "None" otherwise (i.e., if this key satisfies this child key
             # hint).
             cause_deep = cause.permute_cause(
-                hint_sane=hint_key_sane, pith=pith_key).find_cause()
+                hint_curr=HintDataError(hint_key_sane), pith=pith_key,
+            ).find_cause()
 
             # If this key is the cause of this failure...
             if cause_deep.cause_str_or_none is not None:
@@ -171,7 +175,8 @@ def find_cause_pep484585_mapping(cause: HintTreeError) -> HintTreeError:
             # *OR* "None" otherwise (i.e., if this value satisfies this child
             # value hint).
             cause_deep = cause.permute_cause(
-                hint_sane=hint_value_sane, pith=pith_value).find_cause()
+                hint_curr=HintDataError(hint_value_sane), pith=pith_value,
+            ).find_cause()
 
             # If this value is the cause of this failure...
             if cause_deep.cause_str_or_none is not None:
@@ -189,6 +194,7 @@ def find_cause_pep484585_mapping(cause: HintTreeError) -> HintTreeError:
             # continue to the key-value pair.
         # Else, this child value hint is ignorable.
 
-    # Return this cause as is; all items of this mapping are valid, implying
-    # this mapping to deeply satisfy this hint.
+    # ....................{ SATISFY ~ non-empty            }....................
+    # Return this cause as is. Since *ALL* items of this non-empty mapping are
+    # valid, this mapping deeply satisfies this hint.
     return cause

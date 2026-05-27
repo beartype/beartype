@@ -22,7 +22,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * Add a new "hint_curr" instance variable to "HintTreeError".
 #  * Drop "hint", "hint_sane", and "hint_sign" from "HintTreeError".
 #  * Refactor all prior access of:
-#    * "cause.hint" to "cause.hint_curr.hint_sane.hint".
 #    * "cause.hint_sane" to "cause.hint_curr.hint_sane".
 #    * "cause.hint_sign" to "cause.hint_curr.hint_sign".
 #
@@ -123,7 +122,7 @@ class HintTreeABC(metaclass=ABCMeta):
         # Nullify all remaining instance variables for safety.
         self.hint_curr = None  # type: ignore[assignment]
 
-    # ..................{ SANIFIERS                          }..................
+    # ..................{ ABSTRACT                           }..................
     @abstractmethod
     def sanify_hint_child(
         self,

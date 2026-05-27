@@ -53,6 +53,12 @@ _HintPep484585GenericUnsubbedBasesUnerased = tuple[
 '''
 
 # ....................{ GETTERS                            }....................
+#FIXME: *THIS IS HOT TRASH*. This no longer has *ANY* reason to exist.
+#Specifically:
+#* Refactor the get_hint_pep484585_generic_unsubbed_bases_unerased() getter
+#  defined below to simply accept a single mandatory "HintTreeABC" parameter.
+#* Globally replace all calls to this getter with calls to that getter.
+#* Excise up this getter! \o/
 def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
     # Mandatory parameters.
     call_curr: BeartypeCallDataABC,
@@ -85,6 +91,8 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
 
 
 #FIXME: Unit test us up, please.
+#FIXME: Refactor this getter to simply accept a single mandatory "HintTreeABC"
+#parameter, please. Thank Guido for this super API redesign! \o/
 #FIXME: Note that this would be, ideally, internally refactored to leverage the
 #lower-level iter_hint_pep560_bases_unerased() iterator. We tried,
 #actually... and failed hard. The current approach is "good enough." *shrug*

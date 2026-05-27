@@ -37,8 +37,8 @@ def find_cause_pep484_noreturn(cause: HintTreeError) -> HintTreeError:
         Output cause type-checking this data.
     '''
     assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
-    assert cause.hint_sign is HintSignNoReturn, (
-        f'{repr(cause.hint)} not "HintSignNoReturn".')
+    assert cause.hint_curr.hint_sign is HintSignNoReturn, (
+        f'{repr(cause.hint_curr_sanified)} not "HintSignNoReturn".')
 
     # Decorated callable originating this violation.
     func: Callable = cause.call_curr.func  # type: ignore[assignment]
@@ -47,7 +47,7 @@ def find_cause_pep484_noreturn(cause: HintTreeError) -> HintTreeError:
     # justification is a human-readable string describing this failure.
     cause_return = cause.permute_cause(cause_str_or_none=(
         f'{label_callable(func)} annotated by PEP 484 return type hint '
-        f'{color_hint(text=repr(cause.hint), is_color=cause.conf.is_color)} '
+        f'{color_hint(text=repr(cause.hint_curr_sanified), is_color=cause.conf.is_color)} '
         f'returned {represent_pith(cause.pith)}'
     ))
 
