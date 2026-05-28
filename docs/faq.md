@@ -24,7 +24,7 @@ You know [typeguard](https://github.com/agronholm/typeguard)? Then you know bear
 
 You know how in low-level [statically-typed](https://en.wikipedia.org/wiki/Type_system) [memory-unsafe](https://en.wikipedia.org/wiki/Memory_safety) languages that no one should use like [C](https://en.wikipedia.org/wiki/C_(programming_language)) and [C++](https://en.wikipedia.org/wiki/C%2B%2B), the compiler validates at compilation time the types of all values passed to and returned from all functions and methods across the entire codebase?
 
-``` bash
+```bash
 $ gcc -Werror=int-conversion -xc - <<EOL
 #include <stdio.h>
 int main() {
@@ -40,7 +40,7 @@ cc1: some warnings being treated as errors
 
 You know how in high-level [duck-typed](https://en.wikipedia.org/wiki/Duck_typing) languages that everyone should use instead like [Python](https://www.python.org) and [Ruby](https://www.ruby-lang.org), the interpreter performs no such validation at any interpretation phase but instead permits any arbitrary values to be passed to or returned from any function or method?
 
-``` bash
+```bash
 $ python3 - <<EOL
 def main() -> int:
     print("Hello, world!");
@@ -53,7 +53,7 @@ Hello, world!
 
 Runtime type-checkers like [beartype](https://github.com/beartype/beartype) and [typeguard](https://github.com/agronholm/typeguard) selectively shift the dial on type safety in Python from [duck](https://en.wikipedia.org/wiki/Duck_typing) to [static typing](https://en.wikipedia.org/wiki/Type_system) while still preserving all of the permissive benefits of the former as a default behaviour. Now you too can quack like a duck while roaring like a bear.
 
-``` bash
+```bash
 $ python3 - <<EOL
 from beartype import beartype
 @beartype
@@ -109,7 +109,7 @@ Beartype can *always* be safely added to *any* Python package, module, app, or s
 
 The idea of competing runtime type-checkers like [typeguard](https://github.com/agronholm/typeguard) is that they compulsively do *everything.* If you annotate a function decorated by [typeguard](https://github.com/agronholm/typeguard) as accepting a triply-nested list of integers and pass that function a list of 1,000 nested lists of 1,000 nested lists of 1,000 integers, *every* call to that function will check *every* integer transitively nested in that list – even when that list never changes. Did we mention that list transitively contains 1,000,000,000 integers in total?
 
-``` bash
+```bash
 $ python3 -m timeit -n 1 -r 1 -s '
 from typeguard import typechecked
 @typechecked
@@ -131,7 +131,7 @@ Consider [the prior example of a function annotated as accepting a triply-nested
 - [typeguard](https://github.com/agronholm/typeguard), every call to that function checks every integer nested in that list.
 - beartype, every call to the same function checks only a single random integer contained in a single random nested list contained in a single random nested list contained in that parent list. This is what we mean by the quaint phrase "one-way random walk over the expected data structure."
 
-``` bash
+```bash
 $ python3 -m timeit -n 1024 -r 4 -s '
 from beartype import beartype
 @beartype
@@ -214,7 +214,7 @@ It means stupid-fast. And... yes. I mean no. Of course no! No! Everything you re
 
 Beartype type-checks objects at runtime in around **1µs** (i.e., one microsecond, one millionth of a second), the standard high-water mark for [real-time software](https://en.wikipedia.org/wiki/Real-time_computing):
 
-``` pycon
+```pycon
 # Let's check a list of 181,320,382 integers in ~1µs.
 >>> from beartype import beartype
 >>> def sum_list_unbeartyped(some_list: list) -> int:
@@ -251,7 +251,7 @@ In the usual use case, you call our `beartype.claw.beartype_this_package` functi
 
 - All **annotated variable assignments** (e.g., `muh_var: int = 42`). After any assignment to a global or local variable annotated by a type hint, our import hooks implicitly append a new statement at the same indentation level calling our `beartype.door.die_if_unbearable` function passed both that variable and that type hint. That is:
 
-  ``` python
+  ```python
   # Beartype import hooks append each assignment resembling this...
   {var_name}: {type_hint} = {var_value}
 
@@ -261,7 +261,7 @@ In the usual use case, you call our `beartype.claw.beartype_this_package` functi
 
 - All **annotated variable declarations** (e.g., `muh_var: int`). After any declaration to a global or local variable annotated by a type hint not assigned a new value, our import hooks implicitly append a new statement at the same indentation level calling our `beartype.door.die_if_unbearable` function passed both that variable and that type hint. That is:
 
-  ``` python
+  ```python
   # Beartype import hooks append each declaration resembling this...
   {var_name}: {type_hint}
 
@@ -312,7 +312,7 @@ Beartype is a third-generation type-checker. This is the shock twist in the seas
 **H-hey!** You can, okay? You can have everything that market forces demand. Bring to *bear* <sup>cough</sup> the combined powers of [PEP 484-compliant type aliases](https://peps.python.org/pep-0484/#type-aliases), the [PEP 484-compliant "typing.TYPE_CHECKING" boolean global](https://docs.python.org/3/library/typing.html#typing.TYPE_CHECKING), and `beartype validators
 <beartype.vale>` to satisfy both static and runtime type-checkers:
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from boto3 import resource
@@ -396,7 +396,7 @@ You only have two options here. We're pretty sure two is better than none. Thus,
 
 - You mind adding an additional mandatory runtime dependency to your app. In this case, prefer [beartype validators](api_vale.md). For example, validate callable parameters and returns as either floating-point *or* integral PyTorch tensors via the functional validator factory `beartype.vale.Is`:
 
-  ``` python
+  ```python
   # Import the requisite machinery.
   from beartype import beartype
   from beartype.vale import Is
@@ -434,7 +434,7 @@ Beartype fully relies upon the `isinstance` builtin under the hood for its low-l
 
 **You bet your bottom honey barrel.** In your mock type, just define a new `__class__()` property returning the original type: e.g.,
 
-``` pycon
+```pycon
 >>> class OriginalType: pass
 >>> class MockType:
 ...     @property
@@ -458,7 +458,7 @@ Type-check *any* [pandas](https://pandas.pydata.org) object with [type hints](ht
 
 Because caring is sharing code that works, beartype transparently supports *all* [pandera type hints](https://pandera.readthedocs.io/en/stable/reference/generated/pandera.typing.html). Soon, you too will believe that machine-learning pipelines can be domesticated. Arise, huge example! Stun the disbelievers throwing peanuts at [our issue tracker](https://github.com/beartype/beartype/issues).
 
-``` python
+```python
 # Import important machinery. It's important.
 import pandas as pd
 import pandera as pa
@@ -543,7 +543,7 @@ convert_dataframe_column_to_series(
 
 Order of decoration is insignificant. The `beartype.beartype` and [pandera.check_types](https://pandera.readthedocs.io/en/stable/reference/generated/pandera.decorators.check_types.html) decorators are both permissive. Apply them in whichever order you like. This is fine, too:
 
-``` python
+```python
 # Everyone is fine with this. That's what they say. But can we trust them?
 @pa.check_types
 @beartype
@@ -559,7 +559,7 @@ There are two lessons here. Both suck. Nobody should need to read fifty paragrap
 
 Define a new `@bearpanderatype` decorator internally applying both the `beartype.beartype` and [pandera.check_types](https://pandera.readthedocs.io/en/stable/reference/generated/pandera.decorators.check_types.html) decorators; then use that instead of either of those. Automate away the madness with more madness:
 
-``` python
+```python
 # Never again suffer for the sins of others.
 def bearpanderatype(*args, **kwargs):
     return beartype(pa.check_types(*args, **kwargs))
@@ -575,7 +575,7 @@ def convert_dataframe_column_to_series(...) -> ...: ...
 
 **So.** It comes to this. You want to type-check a method parameter or return to be an instance of the class declaring that method. In short, you want to type-check a common use case like this factory:
 
-``` python
+```python
 class ClassFactory(object):
    def __init__(self, *args) -> None:
        self._args = args
@@ -590,7 +590,7 @@ You have three choices here. One of these choices is good and worthy of smiling 
 
 1.  **\[Recommended\]** The `673`-compliant `typing.Self` type hint (introduced by Python 3.11) efficiently and reliably solves this. Annotate the type of the current class as `~typing.Self` – fully supported by `beartype`:
 
-    ``` python
+    ```python
     # Import important stuff. Boilerplate: it's the stuff we make.
     from beartype import beartype
     from typing import Self  # <---------------- if Python ≥ 3.11.0
@@ -615,7 +615,7 @@ You have three choices here. One of these choices is good and worthy of smiling 
 
 2.  A `484`-compliant **forward reference** (i.e., type hint that is a string that is the unqualified name of the current class) also solves this. The only costs are inexcusable inefficiency and unreliability. This is what everyone should no longer do. This is...
 
-    ``` python
+    ```python
     # The bad old days when @beartype had to bathe in the gutter.
     # *PLEASE DON'T DO THIS ANYMORE.* Do you want @beartype to cry?
     from beartype import beartype
@@ -632,7 +632,7 @@ You have three choices here. One of these choices is good and worthy of smiling 
 
 3.  A `563`-compliant **postponed type hint** (i.e., type hint unparsed by `from __future__ import annotations` back into a string that is the unqualified name of the current class) also resolves this. The only costs are codebase-shattering inefficiency, non-deterministic fragility so profound that even [Hypothesis](https://hypothesis.readthedocs.io) is squinting, and the ultimate death of your business model. Only do this over the rotting corpse of `beartype`. This is...
 
-    ``` python
+    ```python
     # Breaking the Python interpreter: feels bad, because it is bad.
     # *PLEASE DON'T DO THIS ANYWHERE.* Do you want @beartype to be a shambling wreck?
     from __future__ import annotations
@@ -698,7 +698,7 @@ The procedural `beartype.door.is_bearable` function narrows the type of the pass
 
 Calling `beartype.door.is_bearable` in your code enables beartype to symbiotically eliminate false positives from static type-checkers checking that code, reducing static type-checker chum that went rotten decades ago:
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype.door import is_bearable
 
@@ -737,7 +737,7 @@ Isolate `beartype` to tests today. If everything blows up, at least you can say 
 
 1.  Install [pytest-beartype](https://pypi.org/project/pytest-beartype):
 
-    ``` bash
+    ```bash
     pip3 install pytest-beartype
     ```
 
@@ -745,20 +745,20 @@ Isolate `beartype` to tests today. If everything blows up, at least you can say 
 
     - Pass the `--beartype-packages` option to the `pytest` command:
 
-      ``` bash
+      ```bash
       pytest --beartype-packages='{your_package},...,{another_package}'
       ```
 
     - Add the `beartype_packages` option to your `pyproject.toml` file:
 
-      ``` toml
+      ```toml
       [tool.pytest.ini_options]
       beartype_packages = '{your_package},...,{another_package}'
       ```
 
     - Add the `beartype_packages` option to your `pytest.ini` file:
 
-      ``` ini
+      ```ini
       [pytest]
       beartype_packages='{your_package},...,{another_package}'
       ```
@@ -773,7 +773,7 @@ You have come to the right FAQ entry. This the common use case for temporarily *
 
 - The `beartype.beartype` decorator configured under the **no-time strategy** `beartype.BeartypeStrategy.O0`: e.g.,
 
-  ``` python
+  ```python
   # Import the requisite machinery.
   from beartype import beartype, BeartypeConf, BeartypeStrategy
 
@@ -791,7 +791,7 @@ You have come to the right FAQ entry. This the common use case for temporarily *
 
 - The `484`-compliant `typing.no_type_check` decorator: e.g.,
 
-  ``` python
+  ```python
   # Import more requisite machinery. It is requisite.
   from beartype import beartype
   from typing import no_type_check

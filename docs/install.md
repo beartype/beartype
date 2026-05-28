@@ -11,13 +11,13 @@ Child Markdown document detailing installation instructions.
 
 Install beartype with [pip](https://pip.pypa.io), because [PyPI](https://pypi.org/project/beartype) is the [cheese shop](https://pypi.org) and you too enjoy a [fine Venezuelan beaver cheese](https://en.wikipedia.org/wiki/Cheese_Shop_sketch) while mashing disconsolately on your keyboard late on a rain-soaked Friday evening. Wherever expensive milk byproducts ferment, beartype will be there.
 
-``` bash
+```bash
 pip3 install beartype
 ```
 
 Install beartype with [Anaconda](https://docs.conda.io/en/latest/miniconda.html), because package managers named after vicious South American murder reptiles have finally inspired your team to embrace more mammal-friendly packages. Your horoscope also reads: "Avoid reckless ecotourism in places that rain alot."
 
-``` bash
+```bash
 conda config --add channels conda-forge
 conda install beartype
 ```
@@ -32,13 +32,13 @@ Beartype is also installable with platform-specific package managers, because so
 
 Let's install beartype with [Homebrew](https://brew.sh) on [macOS](https://en.wikipedia.org/wiki/MacOS) courtesy [our third-party tap](https://github.com/beartype/homebrew-beartype):
 
-``` bash
+```bash
 brew install beartype/beartype/beartype
 ```
 
 Let's install beartype with [MacPorts](https://www.macports.org) on [macOS](https://en.wikipedia.org/wiki/MacOS):
 
-``` bash
+```bash
 sudo port install py-beartype
 ```
 
@@ -48,7 +48,7 @@ A big bear hug to [our official macOS package maintainer @harens](https://github
 
 Let's install beartype with `pacman` on [Arch Linux](https://archlinux.org) – where beartype is now [officially packaged](https://aur.archlinux.org/packages/python-beartype) in the [Arch User Repository (AUR)](https://aur.archlinux.org/packages/python-beartype) itself:
 
-``` bash
+```bash
 git clone https://aur.archlinux.org/python-beartype.git
 cd python-beartype
 makepkg -si
@@ -60,7 +60,7 @@ Truly, Arch Linux has now seen the face of quality assurance. It looks like a gr
 
 Let's install beartype with `emerge` on [Gentoo Linux](https://www.gentoo.org) – where beartype is now [officially packaged](https://packages.gentoo.org/packages/dev-python/beartype) in the Portage tree itself:
 
-``` bash
+```bash
 emerge beartype
 ```
 
@@ -76,13 +76,13 @@ All this magic and possibly more can be yours with:
 
 - **Markdown**:
 
-  ``` md
+  ```md
   YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io)!
   ```
 
 - **reStructuredText**:
 
-  ``` rst
+  ```rst
   YummySoft is now |bear-ified|!
 
   .. # See https://docutils.sourceforge.io/docs/ref/rst/directives.html#image
@@ -94,7 +94,7 @@ All this magic and possibly more can be yours with:
 
 - **Raw HTML**:
 
-  ``` html
+  ```html
   YummySoft is now <a href="https://beartype.readthedocs.io"><img
     src="https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg"
     alt="bear-ified"

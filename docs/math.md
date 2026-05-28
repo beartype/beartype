@@ -18,7 +18,7 @@ Math(s) time, people. <sup>it's happening.</sup>
 
 Let's profile beartype against other runtime type-checkers with [a battery of surely fair, impartial, and unbiased use cases](https://github.com/beartype/beartype/blob/main/bin/profile.bash):
 
-``` bash
+```bash
 $ bin/profile.bash
 
 beartype profiler [version]: 0.0.2
@@ -131,7 +131,7 @@ Our quandary thus becomes: "Is 0.01µsec to 1µsec of call-time overhead reasona
 
 We can answer that by first inspecting the theoretical maximum efficiency for a pure-Python decorator that performs minimal work by wrapping the decorated callable with a closure that just defers to the decorated callable. This excludes the identity decorator (i.e., decorator that merely returns the decorated callable unmodified), which doesn't actually perform *any* work whatsoever. The fastest *meaningful* pure-Python decorator is thus:
 
-``` python
+```python
 def fastest_decorator(func):
     def fastest_wrapper(*args, **kwargs): return func(*args, **kwargs)
     return fastest_wrapper
@@ -139,7 +139,7 @@ def fastest_decorator(func):
 
 Replacing `@beartype` with `@fastest_decorator` in [aforementioned third-party timings](https://github.com/beartype/beartype/issues/58#issuecomment-940100279) then exposes the minimal cost of Python decoration – a lower bound that *all* Python decorators necessarily pay:
 
-``` bash
+```bash
 $ python3.7 <<EOF
 from timeit import timeit
 def fastest_decorator(func):

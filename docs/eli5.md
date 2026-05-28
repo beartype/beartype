@@ -73,13 +73,13 @@ Let's type-check a `"Hello, Jungle!"` toy example. Just:
 
 1.  Import the `beartype.beartype` decorator:
 
-    ``` python
+    ```python
     from beartype import beartype
     ```
 
 2.  Decorate any annotated function with that decorator:
 
-    ``` python
+    ```python
     from sys import stderr, stdout
     from typing import TextIO
 
@@ -105,14 +105,14 @@ Let's type-check a `"Hello, Jungle!"` toy example. Just:
 
 3.  Call that function with valid parameters and caper as things work:
 
-    ``` pycon
+    ```pycon
     >>> hello_jungle(sep='...ROOOAR!!!!', end='uhoh.', file=stderr, flush=True)
     Hello, Jungle! ...ROOOAR!!!! uhoh.
     ```
 
 4.  Call that function with invalid parameters and cringe as things blow up with human-readable exceptions exhibiting the single cause of failure:
 
-    ``` pycon
+    ```pycon
     >>> hello_jungle(sep=(
     ...     b"What? Haven't you ever seen a byte-string separator before?"))
     BeartypeCallHintPepParamException: @beartyped hello_jungle() parameter
@@ -125,7 +125,7 @@ Let's type-check a `"Hello, Jungle!"` toy example. Just:
 
 Let's wrap the [third-party numpy.empty_like() function](https://numpy.org/doc/stable/reference/generated/numpy.empty_like.html) with automated runtime type checking to demonstrate beartype's support for non-trivial combinations of nested type hints compliant with different PEPs:
 
-``` python
+```python
 from beartype import beartype
 from collections.abc import Sequence
 from typing import Optional, Union
@@ -150,7 +150,7 @@ Note the non-trivial hint for the optional `shape` parameter, synthesized from a
 
 Let's call that wrapper with both valid and invalid parameters:
 
-``` pycon
+```pycon
 >>> empty_like_bear(([1,2,3], [4,5,6]), shape=(2, 2))
 array([[94447336794963,              0],
        [             7,             -1]])
@@ -174,7 +174,7 @@ Let's begin with the simplest type of type-checking supported by `beartype.beart
 
 Let's declare a simple beartyped function accepting a string and a dictionary and returning a tuple:
 
-``` python
+```python
 from beartype import beartype
 
 @beartype
@@ -184,14 +184,14 @@ def law_of_the_jungle(wolf: str, pack: dict) -> tuple:
 
 Let's call that function with good types:
 
-``` pycon
+```pycon
 >>> law_of_the_jungle(wolf='Akela', pack={'Akela': 'alone', 'Raksha': 'protection'})
 ('Akela', 'alone')
 ```
 
 Good function. Let's call it again with bad types:
 
-``` pycon
+```pycon
 >>> law_of_the_jungle(wolf='Akela', pack=['Akela', 'Raksha'])
 Traceback (most recent call last):
   File "<ipython-input-10-7763b15e5591>", line 1, in <module>
@@ -204,7 +204,7 @@ The `beartype.roar` submodule publishes exceptions raised at both decoration tim
 
 Good function! Let's call it again with good types exposing a critical issue in this function's implementation and/or return type annotation:
 
-``` pycon
+```pycon
 >>> law_of_the_jungle(wolf='Leela', pack={'Akela': 'alone', 'Raksha': 'protection'})
 Traceback (most recent call last):
   File "<ipython-input-10-7763b15e5591>", line 1, in <module>
@@ -215,7 +215,7 @@ beartype.roar.BeartypeCallTypeReturnException: @beartyped law_of_the_jungle() re
 
 *Bad function.* Let's conveniently resolve this by permitting this function to return either a tuple or `None` as [detailed below](#unions-of-types):
 
-``` pycon
+```pycon
 >>> from beartype.cave import NoneType
 >>> @beartype
 ... def law_of_the_jungle(wolf: str, pack: dict) -> (tuple, NoneType):
@@ -228,7 +228,7 @@ The `beartype.cave` submodule publishes generic types suitable for use with the 
 
 Note that usage of the `beartype.cave` submodule is entirely optional (but more efficient and convenient than most alternatives). In this case, the type of the `None` singleton can also be accessed directly as `type(None)` and listed in place of `NoneType` above: e.g.,
 
-``` pycon
+```pycon
 >>> @beartype
 ... def law_of_the_jungle(wolf: str, pack: dict) -> (tuple, type(None)):
 ...     return (wolf, pack[wolf]) if wolf in pack else None
@@ -249,7 +249,7 @@ Everything above also extends to:
 
 Let's declare a motley crew of beartyped callables doing various silly things in a strictly typed manner, *just 'cause*:
 
-``` python
+```python
 from beartype import beartype
 from beartype.cave import GeneratorType, IterableType, NoneType
 
@@ -270,7 +270,7 @@ For specificity, the `inform_baloo()` generator function has been explicitly ann
 
 Let's iterate over that generator with good types:
 
-``` pycon
+```pycon
 >>> maxims = MaximsOfBaloo(sayings={
 ...     '''If ye find that the Bullock can toss you,
 ...           or the heavy-browed Sambhur can gore;
@@ -288,7 +288,7 @@ Let's iterate over that generator with good types:
 
 Good generator. Let's call it again with bad types:
 
-``` pycon
+```pycon
 >>> for maxim in inform_baloo([
 ...     'Oppress not the cubs of the stranger,',
 ...     '     but hail them as Sister and Brother,',
@@ -310,7 +310,7 @@ That's all typed well, but everything above only applies to parameters and retur
 
 Unions of types are trivially type-checked by annotating parameters and return values with the `typing.Union` type hint containing those types. Let's declare another beartyped function accepting either a mapping *or* a string and returning either another function *or* an integer:
 
-``` python
+```python
 from beartype import beartype
 from collections.abc import Callable, Mapping
 from numbers import Integral
@@ -326,7 +326,7 @@ For genericity, the `toomai_of_the_elephants()` function both accepts and return
 
 Let's call that function with good types:
 
-``` pycon
+```pycon
 >>> memory_of_kala_nag = {
 ...     'remember': 'I will remember what I was, I am sick of rope and chain—',
 ...     'strength': 'I will remember my old strength and all my forest affairs.',
@@ -345,7 +345,7 @@ Let's call that function with good types:
 
 Good function. Let's call it again with a tastelessly bad type:
 
-``` pycon
+```pycon
 >>> toomai_of_the_elephants(
 ...     'Shiv, who poured the harvest and made the winds to blow,')
 BeartypeCallHintPepParamException: @beartyped toomai_of_the_elephants()
@@ -365,7 +365,7 @@ Optional types are trivially type-checked by annotating optional parameters (par
 
 Let's declare another beartyped function accepting either an enumeration type *or* `None` and returning either an enumeration member *or* `None`:
 
-``` python
+```python
 from beartype import beartype
 from beartype.cave import EnumType, EnumMemberType
 from typing import Optional
@@ -380,7 +380,7 @@ For efficiency, the `typing.Optional` type hint creates, caches, and returns new
 
 Let's call that function with good types:
 
-``` pycon
+```pycon
 >>> from enum import Enum
 >>> class Lukannon(Enum):
 ...     WINTER_WHEAT = 'The Beaches of Lukannon—the winter wheat so tall—'
@@ -401,7 +401,7 @@ You may now be pondering to yourself grimly in the dark: "...but could we not al
 
 You would, of course, be correct. Let's grimly redeclare the same function accepting and returning the same types – only annotated with `NoneType` rather than `typing.Optional`:
 
-``` python
+```python
 from beartype import beartype
 from beartype.cave import EnumType, EnumMemberType, NoneType
 from typing import Union
@@ -416,7 +416,7 @@ Since `typing.Optional` internally reduces to `typing.Union`, these two approach
 
 Whereas `typing.Union` accepts an arbitrary number of child type hints, however, `typing.Optional` accepts only a single child type hint. This can be circumvented by either indexing `typing.Optional` by `typing.Union` *or* indexing `typing.Union` by `NoneType`. Let's exhibit the former approach by declaring another beartyped function accepting either an enumeration type, enumeration type member, or `None` and returning either an enumeration type, enumeration type member, or `None`:
 
-``` python
+```python
 from beartype import beartype
 from beartype.cave import EnumType, EnumMemberType, NoneType
 from typing import Optional, Union
@@ -431,7 +431,7 @@ def sang_them_up_the_beach(
 
 Let's call that function with good types:
 
-``` python
+```python
 >>> sang_them_up_the_beach(Lukannon)
 <Lukannon.SEALERS: 'And still we sing Lukannon—before the sealers came.'>
 >>> sang_them_up_the_beach()

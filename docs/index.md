@@ -31,7 +31,7 @@ documents for this project.
 
 Beartype enforces [type hints](eli5.md#standard-hints) across your entire app in [two lines of runtime code with no runtime overhead](api_claw.md). If seeing is believing, prepare to do both those things.
 
-``` bash
+```bash
 # Install beartype.
 $ pip3 install beartype
 
@@ -39,7 +39,7 @@ $ pip3 install beartype
 $ vim {your_package}/__init__.py      # <-- so, i see that you too vim
 ```
 
-``` python
+```python
 # At the very top of your "{your_package}.__init__" submodule:
 from beartype.claw import beartype_this_package  # <-- boilerplate for victory
 beartype_this_package()                          # <-- yay! your team just won
@@ -49,7 +49,7 @@ Beartype now implicitly type-checks *all* annotated classes, callables, and vari
 
 But why stop at the burning tires in only *your* code? Your app depends on a sprawling ghetto of other packages, modules, and services. How riddled with infectious diseases is *that* code? You're about to find out.
 
-``` python
+```python
 # ....................{ BIG BEAR                        }....................
 # Warn about type hint violations in *OTHER* packages outside your control;
 # only raise exceptions from violations in your package under your control.
@@ -64,12 +64,12 @@ Beartype now implicitly type-checks *all* annotated classes, callables, and vari
 
 Beartype also publishes a [plethora of APIs for fine-grained control over type-checking](api.md). For those who are about to QA, beartype salutes you. Would you like to know more?
 
-``` bash
+```bash
 # So let's do this.
 $ python3
 ```
 
-``` pycon
+```pycon
 # ....................{ RAISE THE PAW                   }....................
 # Manually enforce type hints across individual classes and callables.
 # Do this only if you want a(nother) repetitive stress injury.
