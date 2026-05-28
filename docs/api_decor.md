@@ -1,6 +1,6 @@
 # Beartype Decoration
 
-``` text
+```text
 wrap anything with runtime type-checking
     ...except that, of course.
        — Thus Spake Bearathustra, Book I
@@ -12,7 +12,7 @@ The beating heart of beartype is the eponymous `beartype` decorator. This is its
 
 ### Callable Mode
 
-*def* beartype.**beartype**(func: [collections.abc.Callable](https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable)) -\> [collections.abc.Callable](https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable)
+`def beartype.beartype(func: `[`collections.abc.Callable`](https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable)`) -> `[`collections.abc.Callable`](https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable)
 
 In callable mode, `beartype` dynamically generates a new **callable** (i.e., pure-Python function or method) runtime type-checking the passed callable.
 
@@ -25,7 +25,7 @@ Because laziness prevails, `beartype` is *usually* invoked as a decorator. Simpl
 
 An example explicates a thousand words.
 
-``` pycon
+```pycon
 # Import the requisite machinery.
 >>> from beartype import beartype
 
@@ -59,7 +59,7 @@ Because this is the NP-hard timeline, however, assumptions are risky. If you dou
 
 An example is brighter than a thousand Suns! <sup>astronomers throwing chalk here</sup>
 
-``` pycon
+```pycon
 # Import the requisite machinery.
 >>> from beartype import beartype
 
@@ -80,7 +80,7 @@ An example is brighter than a thousand Suns! <sup>astronomers throwing chalk her
 
 Because Python means not caring what anyone else thinks, `beartype` can also be called as a function. This is useful in unthinkable edge cases like monkey-patching *other* people's code with runtime type-checking. You usually shouldn't do this, but you usually shouldn't do a lot of things that you do when you're the sort of Pythonista that reads tortuous documentation like this.
 
-``` pycon
+```pycon
 # Import the requisite machinery.
 >>> from beartype import beartype
 
@@ -106,7 +106,7 @@ One `beartype()` to monkey-patch them all and in the darkness type-check them.
 
 - Beartype has been configured with the **no-time strategy** `.BeartypeStrategy.O0`: e.g.,
 
-  ``` python
+  ```python
   # Import the requisite machinery.
   from beartype import beartype, BeartypeConf, BeartypeStrategy
 
@@ -125,7 +125,7 @@ One `beartype()` to monkey-patch them all and in the darkness type-check them.
 
   - The [PEP 484](https://peps.python.org/pep-0484)-compliant `typing.no_type_check` decorator: e.g.,
 
-    ``` python
+    ```python
     # Import more requisite machinery. It is requisite.
     from beartype import beartype
     from typing import no_type_check
@@ -147,7 +147,7 @@ Laziness **+** efficiency **==** `beartype`.
 
 ### Class Mode
 
-*def* beartype.**beartype**(cls: type) -\> type
+`def beartype.beartype(cls: type) -> type`
 
 In class mode, `beartype` dynamically replaces *each* method of the passed pure-Python class with a new method runtime type-checking the original method.
 
@@ -160,7 +160,7 @@ As with [callable mode](#callable-mode), simply prefix the class to be runtime t
 
 Superficially, this is just syntactic sugar – but sometimes you gotta dip your paws into the honey pot.
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 
@@ -194,7 +194,7 @@ When decorating classes, `@beartype` should *usually* be listed as the **first**
 
 Come for the working examples. Stay for the wild hand-waving.
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from dataclasses import dataclass
@@ -211,11 +211,11 @@ class SoTheyWentOffTogether(object):
 
 ### Configuration Mode
 
-*def* beartype.**beartype**(\*, conf: beartype.BeartypeConf) -\> collections.abc.Callable[[T], T]
+`def beartype.beartype( *, conf: beartype.BeartypeConf) -> collections.abc.Callable[[T], T]`
 
 In configuration mode, `beartype` dynamically generates a new `beartype` decorator – configured uniquely for your exact use case. You too may cackle villainously as you feel the unbridled power of your keyboard.
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype, BeartypeConf, BeartypeStrategy
 
@@ -235,7 +235,7 @@ Configuration: *because you know best*.
 
 #### Beartype Configuration API
 
-BeartypeConf( \*, is_color: bool \| None = None, is_debug: bool = False, is_pep484_tower: bool = False, strategy: BeartypeStrategy = BeartypeStrategy.O1, )
+`BeartypeConf(*, is_color: bool | None = None, is_debug: bool = False, is_pep484_tower: bool = False, strategy: BeartypeStrategy = BeartypeStrategy.O1, )`
 
 **Beartype configuration** (i.e., self-caching dataclass instance encapsulating all flags, options, settings, and other metadata configuring each type-checking operation performed by beartype – including each decoration of a callable or class by the `beartype` decorator).
 
@@ -261,7 +261,7 @@ Beartype configurations may be passed as the optional keyword-only `conf` parame
 
 Beartype configurations are immutable objects memoized (i.e., cached) on the unordered set of all passed parameters:
 
-``` pycon
+```pycon
 >>> from beartype import BeartypeConf
 >>> BeartypeConf() is BeartypeConf()
 True
@@ -271,14 +271,14 @@ True
 
 Beartype configurations are comparable under equality:
 
-``` pycon
+```pycon
 >>> BeartypeConf(is_color=False) == BeartypeConf(is_color=True)
 False
 ```
 
 Beartype configurations are hashable and thus suitable for use as dictionary keys and set members:
 
-``` pycon
+```pycon
 >>> BeartypeConf(is_color=False) == BeartypeConf(is_color=True)
 False
 >>> confs = {BeartypeConf(), BeartypeConf(is_color=False)}
@@ -288,14 +288,14 @@ True
 
 Beartype configurations support meaningful `repr` output:
 
-``` pycon
+```pycon
 >>> repr(BeartypeConf())
 'BeartypeConf(is_color=None, is_debug=False, is_pep484_tower=False, strategy=<BeartypeStrategy.O1: 2>)'
 ```
 
 Beartype configurations expose read-only public properties of the same names as the above parameters:
 
-``` pycon
+```pycon
 >>> BeartypeConf().is_color
 None
 >>> BeartypeConf().strategy
@@ -324,7 +324,7 @@ General-purpose configuration parameters are *always* safely passable:
 
 Defaults to `False`. Eye-gouging sample output or it didn't happen, so:
 
-``` pycon
+```pycon
 # Import the requisite machinery.
 >>> from beartype import beartype, BeartypeConf
 
@@ -376,7 +376,7 @@ Defaults to `False` to minimize precision error introduced by lossy conversions 
 
 The standard use case is to dynamically define your own app-specific `beartype` decorator unconditionally enabling support for the implicit numeric tower, usually as a convenience to your userbase who do *not* particularly care about the above precision concerns. Behold the permissive powers of... `@beartowertype`!
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype, BeartypeConf
 
@@ -416,7 +416,7 @@ Defaults to `.BeartypeStrategy.O1`, the constant-time $O(1)$ strategy – maximi
 
 ##### is_color
 
-*Type:* `bool` \| `None` = `None`
+*Type:* `bool | None = None`
 
 Tri-state boolean governing how and whether beartype colours **type-checking violations** (i.e., human-readable `beartype.roar.BeartypeCallHintViolation` exceptions) with POSIX-compliant ANSI escape sequences for readability. Specifically, if this boolean is:
 
@@ -436,7 +436,7 @@ Effectively defaults to `None`. Technically, this parameter defaults to a privat
 
 The standard use case is to dynamically define your own app-specific `beartype` decorator unconditionally disabling colours in type-checking violations, usually due to one or more frameworks in your app stack failing to support ANSI escape sequences. Please file issues with those frameworks requesting ANSI support. In the meanwhile, behold the monochromatic powers of... `@monobeartype`!
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype, BeartypeConf
 
@@ -459,7 +459,7 @@ Enumeration of all kinds of **type-checking strategies** (i.e., competing proced
 
 Strategies are intentionally named according to [conventional Big O notation](https://en.wikipedia.org/wiki/Big_O_notation) (e.g., `.BeartypeStrategy.On` enables the $O(n)$ strategy). Strategies are established per-decoration at the fine-grained level of callables decorated by the `beartype` decorator. Simply set the `.BeartypeConf.strategy` parameter of the `BeartypeConf` object passed as the optional `conf` parameter to the `beartype` decorator.
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype, BeartypeConf, BeartypeStrategy
 
@@ -523,7 +523,7 @@ Just like in real life, there exist valid use cases for doing absolutely nothing
 - **Blacklisting callables.** While seemingly useless, this strategy
 allows callers to selectively prevent callables that would otherwise be type-checked (e.g., due to class decorations or import hooks) from being type-checked:
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype, BeartypeConf, BeartypeStrategy
 
@@ -558,7 +558,7 @@ Either:
 
 - Define a new `@maybebeartype` decorator disabling type-checking when an app-specific constant `I_AM_RELEASE_BUILD` defined elsewhere is enabled:
 
-  ``` python
+  ```python
   # Import the requisite machinery.
   from beartype import beartype, BeartypeConf, BeartypeStrategy
 
@@ -595,7 +595,7 @@ The `${BEARTYPE_IS_COLOR}` environment variable globally overrides the `.Beartyp
 
 Force beartype to obey your unthinking hatred of the colour spectrum. You can't be wrong!
 
-``` bash
+```bash
 BEARTYPE_IS_COLOR=False python3 -m monochrome_retro_app.its_srsly_cool
 ```
 

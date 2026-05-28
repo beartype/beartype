@@ -1,6 +1,6 @@
 # Beartype DOOR
 
-``` text
+```text
 DOOR: the Decidedly Object-Oriented Runtime-checker
 DOOR: it's capitalized, so it matters
 ```
@@ -27,7 +27,7 @@ Don't be like beartype. Use DOOR instead.
 
 ## DOOR Procedures
 
-``` text
+```text
 Type-check anything
    against any type hint –
         at any time,
@@ -40,7 +40,7 @@ Type-check anything
 
 #### die_if_unbearable
 
-*def* beartype.door.**die_if_unbearable**( obj: object, hint: object, \*, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -\> None
+`def beartype.door.die_if_unbearable( obj: object, hint: object, *, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -> None`
 
 - **`obj`** (`object`): Arbitrary object to be type-checked against `hint`.
 - **`hint`** (`object`): Type hint to type-check `obj` against.
@@ -53,7 +53,7 @@ Type-check anything
 
 Release the bloodthirsty examples!
 
-``` pycon
+```pycon
 # Import the requisite machinery.
 >>> from beartype.door import die_if_unbearable
 >>> from beartype.typing import List, Sequence
@@ -74,7 +74,7 @@ hint list[int] | None, as str 'My people ate them all!' not list or <class
 
 #### is_bearable
 
-*def* beartype.door.**is_bearable**( obj: object, hint: object, \*, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -\> bool
+`def beartype.door.is_bearable( obj: object, hint: object, *, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -> bool`
 
 - **`obj`** (`object`): Arbitrary object to be type-checked against `hint`.
 - **`hint`** (`object`): Type hint to type-check `obj` against.
@@ -87,7 +87,7 @@ hint list[int] | None, as str 'My people ate them all!' not list or <class
 
 An example paints a thousand docstrings. <sup>...what does that even mean?</sup>
 
-``` pycon
+```pycon
 # Import the requisite machinery.
 >>> from beartype.door import is_bearable
 >>> from beartype.typing import List, Sequence
@@ -105,7 +105,7 @@ True
 
 `is_bearable` is a strict superset of the `isinstance` builtin. `is_bearable` can thus be safely called wherever `isinstance` is called with the same exact parameters in the same exact order:
 
-``` pycon
+```pycon
 # Requisite machinery: I import you.
 >>> from beartype.door import is_bearable
 
@@ -130,7 +130,7 @@ True
 
 `is_bearable` is also a *spiritual* superset of the `issubclass` builtin. `is_bearable` can be safely called wherever `issubclass` is called by replacing the superclass(es) to be tested against with a `type[{cls}]` or `type[{cls1}] | ... | type[{clsN}]` type hint:
 
-``` pycon
+```pycon
 # Machinery. It is requisite.
 >>> from beartype.door import is_bearable
 >>> from beartype.typing import Type
@@ -159,7 +159,7 @@ True
 
 #### is_subhint
 
-*def* beartype.door.**is_subhint**(subhint: object, superhint: object) -\> bool
+`def beartype.door.is_subhint(subhint: object, superhint: object) -> bool`
 
 - **`subhint`** (`object`): Type hint to tested as a subhint.
 - **`superhint`** (`object`): Type hint to tested as a superhint.
@@ -169,7 +169,7 @@ True
 - `subhint` is a **subhint** of type hint `superhint`, `is_subhint` returns `True`; else, `is_subhint` returns `False`.
 - `superhint` is a **superhint** of type hint `subhint`, `is_subhint` returns `True`; else, `is_subhint` returns `False`. This is an alternative way of expressing the same relation as the prior condition – just with the jargon reversed. Jargon gonna jargon.
 
-``` pycon
+```pycon
 # Import us up the machinery.
 >>> from beartype.door import is_subhint
 >>> from beartype.typing import Any
@@ -222,7 +222,7 @@ By the power of beartype, you too shall catch all the bugs.
 
 Detect breaking API changes in arbitrary callables via type hints alone in ten lines of code – ignoring imports, docstrings, comments, and blank lines to make us look better.
 
-``` python
+```python
 from beartype import beartype
 from beartype.door import is_subhint
 from beartype.peps import resolve_pep563
@@ -281,7 +281,7 @@ def is_func_api_preserved(func_new: Callable, func_old: Callable) -> bool:
 
 The proof is in the real-world pudding.
 
-``` pycon
+```pycon
 >>> from numbers import Real
 
 # New and successively older APIs of the same example function.
@@ -316,7 +316,7 @@ You've already seen that type hints do *not* define a usable public Pythonic API
 
 Open the locked cathedral of type hints with `beartype.door`: your QA crowbar that legally pries open all type hints. Cry havoc, the bugbears of war!
 
-``` pycon
+```pycon
 # This is DOOR. It's a Pythonic API providing an object-oriented interface
 # to low-level type hints that *OFFICIALLY* have no API whatsoever.
 >>> from beartype.door import TypeHint
@@ -422,7 +422,7 @@ Open the DOOR to a whole new world. <sup>Sing along, everybody! “A whole new w
 
 `TypeHint` is thus a **type hint introspector factory.** What you read next may shock you.
 
-``` pycon
+```pycon
 >>> from beartype.door import TypeHint
 >>> from beartype.typing import Optional, Union
 
@@ -438,7 +438,7 @@ beartype.door.UnionTypeHint  # <-- Search your MRO. You know it to be true.
 
 `TypeHint` wrappers cache efficient **singletons** of themselves. On the first instantiation of `TypeHint` by `hint`, a new instance unique to `hint` is created and cached; on each subsequent instantiation, the previously cached instance is returned. Observe and tremble in ecstasy as your introspection eats less space and time.
 
-``` pycon
+```pycon
 >>> from beartype.door import TypeHint
 >>> TypeHint(list[int]) is TypeHint(list[int])
 True  # <-- you caching monster. how could you? we trusted you!
@@ -452,7 +452,7 @@ True  # <-- you caching monster. how could you? we trusted you!
 
 Tuple of the zero or more **original child type hints** subscripting the original type hint wrapped by this wrapper.
 
-``` pycon
+```pycon
 >>> from beartype.door import TypeHint
 >>> TypeHint(list).args
 ()  # <-- i believe this
@@ -466,7 +466,7 @@ Tuple of the zero or more **original child type hints** subscripting the origina
 
 This makes more sense than it seems. Throw us a frickin' bone here.
 
-``` pycon
+```pycon
 >>> from beartype.door import TypeHint
 >>> tuple(TypeHint(list))
 ()  # <-- is this the real life? is this just fantasy? ...why not both?
@@ -484,7 +484,7 @@ This property is memoized (cached) for both space and time efficiency.
 
 **Original type hint** wrapped by this wrapper at instantiation time.
 
-``` pycon
+```pycon
 >>> from beartype.door import TypeHint
 >>> TypeHint(list[int]).hint
 list[int]
@@ -511,7 +511,7 @@ Seriously. That's it. That's the property. This isn't *Principia Mathematica*. T
 - Any subscription of `typing.Annotated` by one or more ignorable type hints. As with `typing.Union`, there exists a countably infinite number of such subscriptions. See the prior item. Or don't. You know. It's all a little boring and tedious, frankly. Are you even reading this? You are, aren't you? Well, dunk me in a bucket full of honey. Post a discussion thread on the beartype repository for your chance to win a dancing cat emoji today!
 - The `typing.Generic` and `typing.Protocol` superclasses, both of which impose no constraints *in and of themselves.* Since all possible objects satisfy both superclasses. both superclasses are equivalent to the ignorable `object` root superclass: e.g.,
 
-``` pycon
+```pycon
 >>> from typing as Protocol
 >>> isinstance(object(), Protocol)
 True  # <-- uhh...
@@ -530,14 +530,14 @@ This property is memoized (cached) for both space and time efficiency.
 
 ##### die_if_unbearable
 
-*def* beartype.door.TypeHint.**die_if_unbearable**( obj: object, \*, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -\> None
+`def beartype.door.TypeHint.die_if_unbearable( obj: object, *, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -> None`
 
 - **`obj`** (`object`): Arbitrary object to be type-checked against this type hint.
 - **`conf`** (`beartype.BeartypeConf`): Beartype configuration. Defaults to the default configuration performing $O(1)$ type-checking.
 - *Raises* `beartype.roar.BeartypeCallHintViolation`: If `obj` violates this type hint.
 Shorthand for calling the `beartype.door.die_if_unbearable` function as `die_if_unbearable(obj=obj, hint=self.hint, conf=conf)`. Behold: an example.
 
-``` pycon
+```pycon
 # This object-oriented approach...
 >>> from beartype.door import TypeHint
 >>> TypeHint(bytes | None).die_if_unbearable(
@@ -557,14 +557,14 @@ hope when it's hopeless." not bytes or <class "builtins.NoneType">.
 
 ##### is_bearable
 
-*def* beartype.door.TypeHint.**is_bearable**( obj: object, \*, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -\> bool
+`def beartype.door.TypeHint.**is_bearable( obj: object, *, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -> bool`
 
 - **`obj`** (`object`): Arbitrary object to be type-checked against this type hint.
 - **`conf`** (`beartype.BeartypeConf`): Beartype configuration. Defaults to the default configuration performing $O(1)$ type-checking.
 - *Returns* `bool`: `True` only if `obj` satisfies this type hint.
 Shorthand for calling the `beartype.door.is_bearable` function as `is_bearable(obj=obj, hint=self.hint, conf=conf)`. Awaken the example!
 
-``` pycon
+```pycon
 # This object-oriented approach...
 >>> from beartype.door import TypeHint
 >>> TypeHint(int | float).is_bearable(
@@ -582,13 +582,13 @@ False
 
 ##### is_subhint
 
-*def* beartype.door.TypeHint.**is_subhint**(superhint: object) -\> bool
+`def beartype.door.TypeHint.is_subhint(superhint: object) -> bool`
 
 - **`superhint`** (`object`): Type hint to tested as a superhint.
 - *Returns* `bool`: `True` only if this type hint is a subhint of `superhint`.
 Shorthand for calling the `beartype.door.is_subhint` function as `is_subhint(subhint=self.hint, superhint=superhint)`. I love the smell of examples in the morning.
 
-``` pycon
+```pycon
 # This object-oriented approach...
 >>> from beartype.door import TypeHint
 >>> TypeHint(tuple[bool]).is_subhint(tuple[int])

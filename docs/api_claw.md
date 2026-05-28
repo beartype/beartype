@@ -2,7 +2,7 @@
 
 **Beartype import hooks** enforce type hints across your entire app in two lines of code with *no* runtime overhead. This is beartype import hooks in ten seconds. <sup>dyslexia notwithstanding</sup>
 
-``` python
+```python
 # Add *ONE* of the following semantically equivalent two-liners to the very
 # top of your "{your_package}.__init__" submodule. Start with *THE FAST WAY*.
 
@@ -53,7 +53,7 @@ As the simplest and most convenient of several import hooks published by the `be
 
 Examples or we're lying again. `beartype_this_package` transforms your `{your_package}.{buggy_submodule}` from this quietly broken code that you insist you never knew about, you swear:
 
-``` python
+```python
 # This is "{your_package}.{buggy_submodule}". It is bad, but you never knew.
 import typing as t
 
@@ -71,7 +71,7 @@ BadClass().bad_method()  # <-- no exception
 
 ...into this loudly broken code that even your unionized QA team can no longer ignore:
 
-``` python
+```python
 # This is "{your_package}.{buggy_submodule}" on beartype_this_package().
 # Any questions? Actually, that was rhetorical. No questions, please.
 from beartype import beartype
@@ -126,7 +126,7 @@ With great globality comes great responsibility.
 
 #### beartype_this_package
 
-*def* beartype.claw.**beartype_this_package**(\*, conf: beartype.BeartypeConf = beartype.BeartypeConf()) -\> None
+`def beartype.claw.beartype_this_package(*, conf: beartype.BeartypeConf = beartype.BeartypeConf()) -> None`
 
 - **`conf`** (`beartype.BeartypeConf`): Beartype configuration. Defaults to the default configuration performing $O(1)$ type-checking.
 - *Raises* `beartype.roar.BeartypeClawHookException`: If either:
@@ -142,7 +142,7 @@ This hook is typically called as the first statement in the `__init__` submodule
 - Your top-level `{your_package}.__init__` submodule, this hook type-checks your entire package. This includes *all* submodules and subpackages across your entire package.
 - Some mid-level `{your_package}.{your_subpackage}.__init__` submodule, this hook type-checks only that subpackage. This includes *only* submodules and subsubpackages of that subpackage. All other submodules and subpackages of your package remain unaffected (i.e., will *not* be type-checked).
 
-``` python
+```python
 # At the top of your "{your_package}.__init__" submodule:
 from beartype import BeartypeConf                # <-- boilerplate
 from beartype.claw import beartype_this_package  # <-- boilerplate: the revenge
@@ -151,7 +151,7 @@ beartype_this_package(conf=BeartypeConf(is_color=False))  # <-- no color is best
 
 This hook is effectively syntactic sugar for the following idiomatic one-liners that are so cumbersome, fragile, and unreadable that no one should even be reading this:
 
-``` python
+```python
 beartype_this_package()                            # <-- this...
 beartype_package(__name__.rpartition('.')[0])      # <-- ...is equivalent to this...
 beartype_packages((__name__.rpartition('.')[0],))  # <-- ...is equivalent to this.
@@ -167,7 +167,7 @@ When in doubt, have no doubt. Just call `beartype_this_package`.
 
 #### beartype_package
 
-*def* beartype.claw.**beartype_package**( package_name: str, \*, conf: beartype.BeartypeConf = beartype.BeartypeConf() ) -\> None
+`def beartype.claw.beartype_package( package_name: str, *, conf: beartype.BeartypeConf = beartype.BeartypeConf() ) -> None`
 
 - **`package_name`** (`str`): Absolute name of the package or module to be type-checked.
 - **`conf`** (`beartype.BeartypeConf`): Beartype configuration. Defaults to the default configuration performing $O(1)$ type-checking.
@@ -187,7 +187,7 @@ This hook should be called *before* that package or module is imported; when err
 
 This hook is typically called as the first statement in the `__init__` submodule of your top-level `{your_package}.__init__` submodule.
 
-``` python
+```python
 # At the top of your "{your_package}.__init__" submodule:
 from beartype import BeartypeConf           # <-- <Ctrl-c> <Ctrl-v>
 from beartype.claw import beartype_package  # <-- <Ctrl-c> <Ctrl-v> x 2
@@ -198,14 +198,14 @@ beartype_package('your_package', conf=BeartypeConf(is_debug=True))
 
 Of course, that's fairly worthless. Just call `beartype_this_package`, right? But what if you want to type-check just *one* subpackage or submodule of your package rather than your *entire* package? In that case, `beartype_this_package` is overbearing. <sup>badum ching</sup> Enter `beartype_package`, the outer limits of QA where you control the horizontal and the vertical:
 
-``` python
+```python
 # Just because you can do something, means you should do something.
 beartype_package('good_package.m.A.A.d_submodule')  # <-- fine-grained precision strike
 ```
 
 `beartype_package` shows it true worth, however, in type-checking *other* people's code. Because the `beartype.claw` API is a permissive Sarlacc pit, `beartype_package` happily accepts the absolute name of *any* package or module – whether they wanted you to do that or not:
 
-``` python
+```python
 # Whenever you want to break something over your knee, never leave your
 # favorite IDE [read: Vim] without beartype_package().
 beartype_package('somebody_elses_package')  # <-- blow it up like you just don't care
@@ -213,7 +213,7 @@ beartype_package('somebody_elses_package')  # <-- blow it up like you just don't
 
 This hook is effectively syntactic sugar for passing the `beartype_packages` function a 1-tuple containing only this package or module name.
 
-``` python
+```python
 beartype_package('your_package')      # <-- this...
 beartype_packages(('your_package',))  # <-- ...is equivalent to this.
 ```
@@ -228,7 +228,7 @@ Pretend you didn't see that. Just call `beartype_package`.
 
 #### beartype_packages
 
-*def* beartype.claw.**beartype_packages**( package_names: collections.abc.Iterable[str], \*, conf: beartype.BeartypeConf = beartype.BeartypeConf() ) -\> None
+`def beartype.claw.beartype_packages( package_names: collections.abc.Iterable[str], *, conf: beartype.BeartypeConf = beartype.BeartypeConf() ) -> None`
 
 - **`package_name`** (`collections.abc.Iterable[str]`): Iterable of the absolute names of one or more packages or modules to be type-checked.
 - **`conf`** (`beartype.BeartypeConf`): Beartype configuration. Defaults to the default configuration performing $O(1)$ type-checking.
@@ -251,7 +251,7 @@ This hook should be called *before* those packages and modules are imported; whe
 
 This hook is typically called as the first statement in the `__init__` submodule of your top-level `{your_package}.__init__` submodule.
 
-``` python
+```python
 # At the top of your "{your_package}.__init__" submodule:
 from beartype import BeartypeConf            # <-- copy-pasta
 from beartype.claw import beartype_packages  # <-- copy-pasta intensifies
@@ -274,7 +274,7 @@ This hook is the penultimate force in `global import hooks
 
 #### beartype_all
 
-*def* beartype.claw.**beartype_all**(\*, conf: beartype.BeartypeConf = beartype.BeartypeConf()) -\> None
+`def beartype.claw.beartype_all(*, conf: beartype.BeartypeConf = beartype.BeartypeConf()) -> None`
 
 - **`conf`** (`beartype.BeartypeConf`): Beartype configuration. Defaults to the default configuration performing $O(1)$ type-checking.
 - *Raises* `beartype.roar.BeartypeClawHookException`: If `conf` is *not* a beartype configuration.
@@ -284,7 +284,7 @@ This hook should be called *before* those packages and modules are imported; whe
 
 This hook is typically called as the first statement in the `__init__` submodule of your top-level `{your_package}.__init__` submodule.
 
-``` python
+```python
 # At the top of your "{your_package}.__init__" submodule,
 from beartype import BeartypeConf       # <-- @beartype seemed so innocent, once
 from beartype.claw import beartype_all  # <-- where did it all go wrong?
@@ -319,7 +319,7 @@ This hook is the extreme QA nuclear option. Because this hook is the extreme QA 
 
 Beartype import hooks accept an optional keyword-only `conf` parameter whose value is a **beartype configuration** (i.e., `beartype.BeartypeConf` instance), defaulting to the default beartype configuration `BeartypeConf()`. Unsurprisingly, that configuration configures the behaviour of its hook: e.g.,
 
-``` python
+```python
 # In your "{your_package}.__init__" submodule, enable @beartype's support for
 # the PEP 484-compliant implicit numeric tower (i.e., expand "int" to "int |
 # float" and "complex" to "int | float | complex"):
@@ -332,7 +332,7 @@ Equally unsurprisingly, `beartype.BeartypeConf` has been equipped with import ho
 
 - `BeartypeConf(claw_is_pep526: bool = True)`. By default, `beartype.claw` type-checks annotated variable assignments like `muh_int: int = 'Pretty sure this isn't an integer.'`. Although this is *usually* what everyone wants, this may not be what someone suspicious wearing aviator goggles, a red velvet cape, and too-tight black leather wants. Nobody knows what those people want. If you are such a person, consider disabling this option to reduce type safety and destroy your code like Neo-Tokyo vs. Mecha-Baby-Godzilla: <sup>...who will win!?!?</sup>
 
-``` python
+```python
 # In your "{your_package}.__init__" submodule, disable PEP 526 support out
 # of spite. You cackle disturbingly as you do. Sanity crumbles. Python shrugs.
 from beartype import BeartypeConf            # <-- boiling boilerplate...
@@ -347,7 +347,7 @@ beartype_packages(
 
   - Passing `None` as the value of this parameter. Doing so forces `beartype.claw` to act strictly, inflexibly, and angrily. Expect spittle-flecked mouth frothing and claws all over the place:
 
-  ``` python
+  ```python
   # In your "{your_package}.__init__" submodule, raise exceptions because you
   # hate worky. The CI pipeline you break over your knee may just be your own.
   from beartype import BeartypeConf                # <-- boiling boilerplate...

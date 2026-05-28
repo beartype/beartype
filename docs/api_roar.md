@@ -68,7 +68,7 @@ For once, we're not the ones to blame. The relief in our cubicle is palpable.
 
 As we gaze forward in time, so too do we glimpse ourselves – unshaven and shabbily dressed – in the rear-view mirror.
 
-``` pycon
+```pycon
 >>> from beartype import beartype
 >>> from beartype.roar import BeartypeCallHintForwardRefException
 >>> @beartype
@@ -97,7 +97,7 @@ Because type-checking violations are why we are all here, instances of this exce
 
 #### culprits
 
-*Type:* `tuple`[`object`, ...]
+*Type:* `tuple[object, ...]`
 
 Tuple of one or more **culprits** (i.e., irresponsible objects that violated the type hints annotating those objects during a recent type-check).
 
@@ -110,7 +110,7 @@ Specifically, this property returns either:
 
 Let us examine what the latter means for your plucky intern who will do this after fetching more pumpkin spice lattes for The Team™ (currently engrossed in a critical morale-building "Best of 260" Atari 2600 *Pong* competition):
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from beartype.roar import BeartypeCallHintViolation
@@ -150,7 +150,7 @@ except BeartypeCallHintViolation as violation:
 
 Let us examine what this means for your malding CTO:
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from beartype.roar import BeartypeCallHintViolation
@@ -224,7 +224,7 @@ Season Eight of *Game of Thrones* previously answered this question, but let's t
 
 1.  **Import from** `beartype.typing` **instead.** The easiest (and best) solution is to globally replace all imports from the standard `typing` module with equivalent imports from our `beartype.typing` module. So:
 
-    ``` python
+    ```python
     # If you prefer attribute imports, just do this...
     from beartype.typing import Dict, FrozenSet, List, Set, Tuple, Type
 
@@ -247,7 +247,7 @@ Season Eight of *Game of Thrones* previously answered this question, but let's t
 
 3.  **Hide warnings.** The reprehensible (but understandable) middle-finger way is to just squelch all deprecation warnings with an ignore warning filter targeting the `BeartypeDecorHintPep585DeprecationWarning` category. On the one hand, this will still fail in 2025 or 2026 with fiery explosions and thus only constitutes a temporary workaround at best. On the other hand, this has the obvious advantage of preserving Python \< 3.9 support with minimal to no refactoring costs. The two ways to do this have differing tradeoffs depending on who you want to suffer most – your developers or your userbase:
 
-    ``` python
+    ```python
     # Do it globally for everyone, whether they want you to or not!
     # This is the "Make Users Suffer" option.
     from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
@@ -267,7 +267,7 @@ Season Eight of *Game of Thrones* previously answered this question, but let's t
 
 4.  **Type aliases.** The hardest (but best) solution is to use [type aliases](https://peps.python.org/pep-0484/#type-aliases) to conditionally annotate callables with either [PEP 484](https://peps.python.org/pep-0484) *or* [PEP 585](https://peps.python.org/pep-0585) type hints depending on the major version of the current Python interpreter. Since this is life, the hard way is also the best way – but also hard. Unlike the **drop Python \< 3.9** approach, this approach preserves backward compatibility with Python \< 3.9. Unlike the **hide warnings** approach, this approach also preserves forward compatibility with Python ≥ 3.14159265. [Type aliases](https://peps.python.org/pep-0484/#type-aliases) means defining a new private `{your_package}._typing` submodule resembling:
 
-    ``` python
+    ```python
     # In "{your_package}._typing":
     from sys import version_info
 
@@ -281,7 +281,7 @@ Season Eight of *Game of Thrones* previously answered this question, but let's t
 
     Then globally refactor all deprecated [PEP 484](https://peps.python.org/pep-0484) imports from `typing` to `{your_package}._typing` instead:
 
-    ``` python
+    ```python
     # Instead of this...
     from typing import List, Tuple
 
