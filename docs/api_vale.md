@@ -5,7 +5,7 @@
 
 When standards fail, do what you want anyway. When official type hints fail to scale to your validation use case, design your own PEP-compliant type hints with compact **beartype validators:**
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from beartype.vale import Is
@@ -51,13 +51,13 @@ Beartype validator code is thus **call-explicit.** Since pure-Python function an
 
 - The declarative validator `Annotated[np.ndarray, IsAttr['dtype', IsAttr['type', IsEqual[np.float64]]]]` detects NumPy arrays of 64-bit floating-point precision by generating the fastest possible inline expression for doing so:
 
-  ``` python
+  ```python
   isinstance(array, np.ndarray) and array.dtype.type == np.float64
   ```
 
 - The functional validator `Annotated[np.ndarray, Is[lambda array: array.dtype.type == np.float64]]` also detects the same arrays by generating a slightly slower inline expression calling the lambda function you define:
 
-  ``` python
+  ```python
   isinstance(array, np.ndarray) and your_lambda_function(array)
   ```
 
@@ -74,14 +74,14 @@ Everywhere else, fallback to *functional* validators for generality.
 
 ### Is
 
-*Subscription API:* beartype.vale.**Is**[`collections.abc.Callable`[[`object`], `bool`]]
+*Subscription API:* `beartype.vale.Is[collections.abc.Callable[[object], bool]]`
 
 **Functional validator.** A PEP-compliant type hint enforcing any arbitrary runtime constraint – created by subscripting (indexing) the `Is` type hint factory with a function accepting a single parameter and returning either:
 
 - `True` if that parameter satisfies that constraint.
 - `False` otherwise.
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype.vale import Is
 from typing import Annotated
@@ -94,14 +94,14 @@ Functional validators are caller-defined and may thus validate the internal inte
 
 ### IsAttr
 
-*Subscription API:* beartype.vale.**IsAttr**[`str`, `beartype.vale.*`]
+*Subscription API:* `beartype.vale.IsAttr[str, beartype.vale.*]`
 
 **Declarative attribute validator.** A PEP-compliant type hint enforcing any arbitrary runtime constraint on any named object attribute – created by subscripting (indexing) the `IsAttr` type hint factory with (in order):
 
 1.  The unqualified name of that attribute.
 2.  Any other beartype validator enforcing that constraint.
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype.vale import IsAttr, IsEqual
 from typing import Annotated
@@ -115,7 +115,7 @@ Numpy2DArray = Annotated[np.ndarray, IsAttr['ndim', IsEqual[2]]]
 
 The first argument subscripting this class *must* be a syntactically valid unqualified Python identifier string containing only alphanumeric and underscore characters (e.g., `"dtype"`, `"ndim"`). Fully-qualified attributes comprising two or more dot-delimited identifiers (e.g., `"dtype.type"`) may be validated by nesting successive `IsAttr` subscriptions:
 
-``` python
+```python
 # Type hint matching only NumPy arrays of 64-bit floating-point numbers.
 # From this, @beartype generates an efficient expression resembling:
 #     isinstance(array, np.ndarray) and array.dtype.type == np.float64
@@ -131,11 +131,11 @@ The second argument subscripting this class *must* be a beartype validator. This
 
 ### IsEqual
 
-*Subscription API:* beartype.vale.**IsEqual**[`object`]
+*Subscription API:* `beartype.vale.IsEqual[object]`
 
 **Declarative equality validator.** A PEP-compliant type hint enforcing equality against any object – created by subscripting (indexing) the `IsEqual` type hint factory with that object:
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype.vale import IsEqual
 from typing import Annotated
@@ -146,7 +146,7 @@ AnswerToTheUltimateQuestion = Annotated[list, IsEqual[list(range(42))]]
 
 `IsEqual` generalizes the comparable [PEP 586](https://peps.python.org/pep-0586)-compliant `typing.Literal` type hint. Both check equality against user-defined objects. Despite the differing syntax, these two type hints enforce the same semantics:
 
-``` python
+```python
 # This beartype validator enforces the same semantics as...
 IsStringEqualsWithBeartype = Annotated[str,
     IsEqual['Don’t you envy our pranceful bands?'] |
@@ -176,11 +176,11 @@ Wherever you can (which is mostly nowhere), prefer `typing.Literal`. Sure, `typi
 
 ### IsInstance
 
-*Subscription API:* beartype.vale.**IsInstance**[`type`, ...]
+*Subscription API:* `beartype.vale.IsInstance[type, ...]`
 
 **Declarative instance validator.** A PEP-compliant type hint enforcing instancing of one or more classes – created by subscripting (indexing) the `IsInstance` type hint factory with those classes:
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype.vale import IsInstance
 from typing import Annotated
@@ -192,7 +192,7 @@ StrOrBytesInstance = Annotated[object, IsInstance[str, bytes]]
 
 `IsInstance` generalizes **isinstanceable type hints** (i.e., normal pure-Python or C-based classes that can be passed as the second parameter to the `isinstance` builtin). Both check instancing of classes. Despite the differing syntax, the following hints all enforce the same semantics:
 
-``` python
+```python
 # This beartype validator enforces the same semantics as...
 IsUnicodeStrWithBeartype = Annotated[object, IsInstance[str]]
 
@@ -215,7 +215,7 @@ Unlike isinstanceable type hints, instance validators support various [set theor
 
 That sounded intellectual and thus boring. Yet, the disturbing fact that Python booleans are integers <sup>...yup</sup> while Python strings are infinitely recursive sequences of strings <sup>...yup</sup> means that [type hint arithmetic](#type-hint-elision) can save your codebase from Guido's younger self. Consider this instance validator matching only non-boolean integers, which *cannot* be expressed with any isinstanceable type hint (e.g., `int`) or other combination of standard off-the-shelf type hints (e.g., unions):
 
-``` python
+```python
 # Type hint matching any non-boolean integer. Never fear integers again.
 IntNonbool = Annotated[int, ~IsInstance[bool]]   # <--- bruh
 ```
@@ -224,11 +224,11 @@ Wherever you can, prefer isinstanceable type hints. Sure, they're inflexible, bu
 
 ### IsSubclass
 
-*Subscription API:* beartype.vale.**IsSubclass**[`type`, ...]
+*Subscription API:* `beartype.vale.IsSubclass[type, ...]`
 
 **Declarative inheritance validator.** A PEP-compliant type hint enforcing subclassing of one or more superclasses (base classes) – created by subscripting (indexing) the `IsSubclass` type hint factory with those superclasses:
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype.vale import IsSubclass
 from typing import Annotated
@@ -239,7 +239,7 @@ StrOrBytesSubclass = Annotated[type, IsSubclass[str, bytes]]
 
 `IsSubclass` generalizes the comparable [PEP 484](https://peps.python.org/pep-0484)-compliant `typing.Type` and [PEP 585](https://peps.python.org/pep-0585)-compliant `type` type hint factories. All three check subclassing of arbitrary superclasses. Despite the differing syntax, the following hints all enforce the same semantics:
 
-``` python
+```python
 # This beartype validator enforces the same semantics as...
 IsStringSubclassWithBeartype = Annotated[type, IsSubclass[str]]
 
@@ -257,7 +257,7 @@ The similarities end there, of course:
 
 Consider this subclass validator, which validates type inheritance of a deeply nested attribute and thus *cannot* be expressed with `typing.Type` or `type`:
 
-``` python
+```python
 # Type hint matching only NumPy arrays of reals (i.e., either integers
 # or floats) of arbitrary precision, generating code resembling:
 #    (isinstance(array, np.ndarray) and
@@ -275,7 +275,7 @@ Beartype validators support a rich domain-specific language (DSL) leveraging fam
 
 - **Negation** (i.e., `not`). Negating any validator with the `~` operator creates a new validator returning `True` only when the negated validator returns `False`:
 
-  ``` python
+  ```python
   # Type hint matching only strings containing *no* periods, semantically
   # equivalent to this type hint:
   #     PeriodlessString = Annotated[str, Is[lambda text: '.' not in text]]
@@ -284,7 +284,7 @@ Beartype validators support a rich domain-specific language (DSL) leveraging fam
 
 - **Conjunction** (i.e., `and`). And-ing two or more validators with the `&` operator creates a new validator returning `True` only when *all* of the and-ed validators return `True`:
 
-  ``` python
+  ```python
   # Type hint matching only non-empty strings containing *no* periods,
   # semantically equivalent to this type hint:
   #     NonemptyPeriodlessString = Annotated[
@@ -297,7 +297,7 @@ Beartype validators support a rich domain-specific language (DSL) leveraging fam
 
 - **Disjunction** (i.e., `or`). Or-ing two or more validators with the `|` operator creates a new validator returning `True` only when at least one of the or-ed validators returns `True`:
 
-  ``` python
+  ```python
   # Type hint matching only empty strings *and* non-empty strings containing
   # one or more periods, semantically equivalent to this type hint:
   #     EmptyOrPeriodfullString = Annotated[
@@ -310,7 +310,7 @@ Beartype validators support a rich domain-specific language (DSL) leveraging fam
 
 - **Enumeration** (i.e., `,`). Delimiting two or or more validators with commas at the top level of a `typing.Annotated` type hint is an alternate syntax for and-ing those validators with the `&` operator, creating a new validator returning `True` only when *all* of those delimited validators return `True`.
 
-  ``` python
+  ```python
   # Type hint matching only non-empty strings containing *no* periods,
   # semantically equivalent to the "SentenceFragment" defined above.
   SentenceFragment = Annotated[str,
@@ -323,7 +323,7 @@ Beartype validators support a rich domain-specific language (DSL) leveraging fam
 
 - **Interoperability.** As PEP-compliant type hints, validators are safely interoperable with other PEP-compliant type hints and usable wherever other PEP-compliant type hints are usable. Standard type hints are subscriptable with validators, because validators *are* standard type hints:
 
-  ``` python
+  ```python
   # Type hint matching only sentence fragments defined as either Unicode or
   # byte strings, generalizing "SentenceFragment" type hints defined above.
   SentenceFragment = Union[
@@ -352,7 +352,7 @@ Observe the disturbing (yet alluring) utility of beartype validators in action a
 
 Let's validate **all integers in a list of integers in O(n) time**, because validators mean you no longer have to accept the QA scraps we feed you:
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from beartype.vale import Is
@@ -384,7 +384,7 @@ Welcome to **full-fat type-checking.** In [our disastrous roadmap to beartype 1.
 
 Let's accept strings either at least 80 characters long *or* both quoted and suffixed by a period. Look, it doesn't matter. Just do it already, beartype!
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from beartype.vale import Is
@@ -453,7 +453,7 @@ Guido doesn't want you to know. But you want to know, don't you? You are about t
 
 - **Booleans are integers.** They shouldn't be. Booleans aren't integers in most high-level languages. Wait. Are you telling me booleans are literally integers in Python? Surely you jest. That can't be. You can't *add* booleans, can you? What would that even mean if you could? Observe and cower, rigorous data scientists.
 
-  ``` python
+  ```python
   >>> True + 3.1415
   4.141500000000001  # <-- oh. by. god.
   >>> isinstance(False, int)
@@ -462,7 +462,7 @@ Guido doesn't want you to know. But you want to know, don't you? You are about t
 
 - **Strings are infinitely recursive sequences of...** yup, it's strings. They shouldn't be. Strings aren't infinitely recursive data structures in any other language devised by incautious mortals – high-level or not. Wait. Are you telling me strings are both indistinguishable from full-blown immutable sequences containing arbitrary items *and* infinitely recurse into themselves like that sickening non-Euclidean Hall of Mirrors I puked all over when I was a kid? Surely you kid. That can't be. You can't infinitely index into strings *and* pass and return the results to and from callables expecting either `Sequence[Any]` or `Sequence[str]` type hints, can you? Witness and tremble, stricter-than-thou QA evangelists.
 
-  ``` python
+  ```python
   >>> 'yougottabekiddi—'[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0]
   'y'   # <-- pretty sure we just broke the world
   >>> from collections.abc import Sequence
@@ -478,7 +478,7 @@ To resolve these counter-intuitive concerns, we need the equivalent of the [rela
 
 Let's first validate **non-boolean integers** with a beartype validator effectively declaring a new `int - bool` class (i.e., the subclass of all integers that are *not* booleans):
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from beartype.vale import IsInstance
@@ -504,7 +504,7 @@ def sum_ints(*args: IntNonbool) -> IntNonbool:
 
 Let's next validate **non-string sequences** with beartype validators effectively declaring a new `Sequence - str` class (i.e., the subclass of all sequences that are *not* strings):
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from beartype.vale import IsInstance
@@ -542,7 +542,7 @@ def join_strs(my_sequence: SequenceNonstrOfStr) -> str:
 
 Let's validate [the same two-dimensional NumPy array of floats of arbitrary precision as in the lead example above](#beartype-validators) with an efficient declarative validator avoiding the additional stack frame imposed by the functional validator in that example:
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from beartype.vale import IsAttr, IsEqual, IsSubclass
@@ -596,7 +596,7 @@ Beartype internally converts [NumPy type hints](https://numpy.org/devdocs/refere
 
 Wherever you can, prefer [NumPy type hints](https://numpy.org/devdocs/reference/typing.html) for portability. Everywhere else, default to [beartype validators](#beartype-validators) for generality. Combine them for the best of all possible worlds:
 
-``` python
+```python
 # Import the requisite machinery.
 from beartype import beartype
 from beartype.vale import IsAttr, IsEqual
@@ -621,7 +621,7 @@ Type NumPy arrays by subscripting (indexing) the [numpy.typing.NDArray](https://
 
 Beartype generates fundamentally different type-checking code for these types, complying with both [mypy](http://mypy-lang.org) semantics (which behaves similarly) and our userbase (which demands this behaviour). May there be hope for our collective future.
 
-*class* numpy.typing.**NDArray**[[numpy.dtype](https://numpy.org/doc/stable/reference/arrays.dtypes.html)]
+`class numpy.typing.NDArray[`[`numpy.dtype`](https://numpy.org/doc/stable/reference/arrays.dtypes.html)`]`
 
 > **NumPy array typed by array dtype.** A PEP-noncompliant type hint enforcing object equality against any **array dtype** (i.e., [numpy.dtype](https://numpy.org/doc/stable/reference/arrays.dtypes.html) instance), created by subscripting (indexing) the [numpy.typing.NDArray](https://numpy.org/devdocs/reference/typing.html#ndarray) class with that array dtype.
 >
@@ -640,7 +640,7 @@ Beartype generates fundamentally different type-checking code for these types, c
 > NumpyInt32BigEndianArray = NDArray[dtype('>i4')]
 > ```
 
-*class* numpy.typing.**NDArray**[[numpy.dtype.type](https://numpy.org/doc/stable/reference/arrays.dtypes.html)]
+`class numpy.typing.NDArray[`[`numpy.dtype.type`](https://numpy.org/doc/stable/reference/arrays.dtypes.html)`]`
 
 > **NumPy array typed by scalar dtype.** A PEP-noncompliant type hint enforcing object equality against any **scalar dtype** (i.e., concrete subclass of the [numpy.generic](https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.generic) ABC), created by subscripting (indexing) the [numpy.typing.NDArray](https://numpy.org/devdocs/reference/typing.html#ndarray) class with that scalar dtype.
 >
@@ -664,7 +664,7 @@ Beartype generates fundamentally different type-checking code for these types, c
 > - **Fixed-precision integer dtypes** (e.g., `numpy.int32`, `numpy.int64`).
 > - **Fixed-precision floating-point dtypes** (e.g., `numpy.float32`, `numpy.float64`).
 
-*class* numpy.typing.**NDArray**[[type](https://docs.python.org/3/library/stdtypes.html#bltin-type-objects)[[numpy.dtype.type](https://numpy.org/doc/stable/reference/arrays.dtypes.html)]]
+`class numpy.typing.NDArray[`[`type`](https://docs.python.org/3/library/stdtypes.html#bltin-type-objects)`[`[`numpy.dtype.type`](https://numpy.org/doc/stable/reference/arrays.dtypes.html)`]]`
 
 > **NumPy array typed by scalar dtype ABC.** A PEP-noncompliant type hint enforcing type inheritance against any **scalar dtype ABC** (i.e., abstract subclass of the [numpy.generic](https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.generic) ABC), created by subscripting (indexing) the [numpy.typing.NDArray](https://numpy.org/devdocs/reference/typing.html#ndarray) class with that ABC.
 >
