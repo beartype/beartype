@@ -20,7 +20,7 @@ Beartype dynamically generates type-checking code unique to each class and calla
 
 We begin by wading into the torpid waters of the many ways beartype avoids doing any work whatsoever, because laziness is the virtue we live by. The reader may recall that the fastest decorator at decoration- *and* call-time is the **identity decorator** returning its decorated callable unmodified: e.g.,
 
-``` python
+```python
 from collections.abc import Callable
 
 def identity_decorator(func: Callable): -> Callable:
@@ -33,14 +33,14 @@ Beartype silently reduces to the identity decorator whenever it can, which is su
 
 Let's define a trivial function annotated by *no* type hints:
 
-``` python
+```python
 def law_of_the_jungle(strike_first_and_then_give_tongue):
     return strike_first_and_then_give_tongue
 ```
 
 Let's decorate that function by `beartype.beartype` and verify that `beartype.beartype` reduced to the identity decorator by returning that function unmodified:
 
-``` pycon
+```pycon
 >>> from beartype import beartype
 >>> beartype(law_of_the_jungle) is law_of_the_jungle
 True
@@ -58,7 +58,7 @@ We've verified that `beartype.beartype` reduces to the identity decorator when d
 
 Let's define a trivial function annotated by the [PEP 484](https://peps.python.org/pep-0484)-compliant `typing.Any` type hint:
 
-``` python
+```python
 from typing import Any
 
 def law_of_the_jungle_2(never_order_anything_without_a_reason: Any) -> Any:
@@ -67,7 +67,7 @@ def law_of_the_jungle_2(never_order_anything_without_a_reason: Any) -> Any:
 
 Again, let's decorate that function by `beartype.beartype` and verify that `beartype.beartype` reduced to the identity decorator by returning that function unmodified:
 
-``` pycon
+```pycon
 >>> from beartype import beartype
 >>> beartype(law_of_the_jungle_2) is law_of_the_jungle_2
 True
@@ -86,7 +86,7 @@ We've verified that `beartype.beartype` reduces to the identity decorator when d
 
 Let's define a trivial function annotated by a non-trivial [PEP 484](https://peps.python.org/pep-0484)-, [PEP 585](https://peps.python.org/pep-0585)- and [PEP 593](https://peps.python.org/pep-0593)-compliant type hint that superficially *appears* to convey meaningful constraints:
 
-``` python
+```python
 from typing import Annotated, NewType, Union
 
 hint = Union[str, list[int], NewType('MetaType', Annotated[object, 53])]
@@ -96,7 +96,7 @@ def law_of_the_jungle_3(bring_them_to_the_pack_council: hint) -> hint:
 
 Despite appearances, it can be shown by exhaustive (and frankly exhausting) reduction that that hint is actually ignorable. Let's decorate that function by `beartype.beartype` and verify that `beartype.beartype` reduced to the identity decorator by returning that function unmodified:
 
-``` pycon
+```pycon
 >>> from beartype import beartype
 >>> beartype(law_of_the_jungle_3) is law_of_the_jungle_3
 True
@@ -117,7 +117,7 @@ We continue by trundling into the turbid waters out at sea, where beartype reluc
 
 Let's define a trivial function annotated by type hints that are builtin types:
 
-``` python
+```python
 from beartype import beartype
 
 @beartype
@@ -127,7 +127,7 @@ def law_of_the_jungle_4(he_must_be_spoken_for_by_at_least_two: int):
 
 Let's see the wrapper function `beartype.beartype` dynamically generated from that:
 
-``` pycon
+```pycon
 def law_of_the_jungle_4(
     *args,
     __beartype_func=__beartype_func,
@@ -175,7 +175,7 @@ So good so far. But that's easy. Let's delve deeper.
 
 Let's define a trivial function annotated by type hints that are pure-Python classes rather than builtin types:
 
-``` python
+```python
 from argparse import ArgumentParser
 from beartype import beartype
 
@@ -186,7 +186,7 @@ def law_of_the_jungle_5(a_cub_may_be_bought_at_a_price: ArgumentParser):
 
 Let's see the wrapper function `beartype.beartype` dynamically generated from that:
 
-``` python
+```python
 def law_of_the_jungle_5(
     *args,
     __beartype_func=__beartype_func,
@@ -220,7 +220,7 @@ def law_of_the_jungle_5(
 
 The result is largely the same. The only meaningful difference is the type-check on line 20:
 
-``` python
+```python
 if not isinstance(__beartype_pith_0, __beartypistry['argparse.ArgumentParser']):
 ```
 
@@ -232,7 +232,7 @@ So good so far... so what! Let's spelunk harder.
 
 Let's define a trivial function annotated by type hints that are [PEP 585](https://peps.python.org/pep-0585)-compliant builtin types subscripted by ignorable arguments:
 
-``` python
+```python
 from beartype import beartype
 
 @beartype
@@ -242,7 +242,7 @@ def law_of_the_jungle_6(all_the_jungle_is_thine: list[object]):
 
 Let's see the wrapper function `beartype.beartype` dynamically generated from that:
 
-``` python
+```python
 def law_of_the_jungle_6(
     *args,
     __beartype_func=__beartype_func,
@@ -276,7 +276,7 @@ def law_of_the_jungle_6(
 
 We are still within the realm of normalcy. Correctly detecting this type hint to be subscripted by an ignorable argument, `beartype.beartype` only bothered type-checking this parameter to be an instance of this builtin type:
 
-``` python
+```python
 if not isinstance(__beartype_pith_0, list):
 ```
 
@@ -286,7 +286,7 @@ It's time to iteratively up the ante.
 
 Let's define a trivial function annotated by type hints that are [PEP 585](https://peps.python.org/pep-0585)-compliant builtin types subscripted by builtin types:
 
-``` python
+```python
 from beartype import beartype
 
 @beartype
@@ -296,7 +296,7 @@ def law_of_the_jungle_7(kill_everything_that_thou_canst: list[str]):
 
 Let's see the wrapper function `beartype.beartype` dynamically generated from that:
 
-``` python
+```python
 def law_of_the_jungle_7(
     *args,
     __beartype_func=__beartype_func,
@@ -351,7 +351,7 @@ Well, that escalated quickly.
 
 Let's define a trivial function annotated by type hints that are [PEP 585](https://peps.python.org/pep-0585)-compliant builtin types recursively subscripted by instances of themselves, because *we are typing masochists*:
 
-``` python
+```python
 from beartype import beartype
 
 @beartype
@@ -362,7 +362,7 @@ def law_of_the_jungle_8(pull_thorns_from_all_wolves_paws: (
 
 Let's see the wrapper function `beartype.beartype` dynamically generated from that:
 
-``` python
+```python
 def law_of_the_jungle_8(
     *args,
     __beartype_func=__beartype_func,
@@ -454,31 +454,31 @@ Let's take this from the top.
 
 8.  **Clone your fork,** replacing `{URL}` with the previously copied URL.
 
-    ``` bash
+    ```bash
     git clone {URL}
     ```
 
 9.  **Add a new remote** referring to this upstream repository.
 
-    ``` bash
+    ```bash
     git remote add upstream https://github.com/beartype/beartype.git
     ```
 
 10. **Uninstall all previously installed versions** of beartype. For example, if you previously installed beartype with `pip`, manually uninstall beartype with `pip`.
 
-    ``` bash
+    ```bash
     pip uninstall beartype
     ```
 
 11. Install beartype with `pip` in **editable mode.** This synchronizes changes made to your fork against the beartype package imported in Python. Note the `[dev]` extra installs developer-specific mandatory dependencies required at test or documentation time.
 
-    ``` bash
+    ```bash
     pip3 install -e .[dev]
     ```
 
 12. **Create a new branch** to isolate changes to, replacing `{branch_name}` with the desired name.
 
-    ``` bash
+    ```bash
     git checkout -b {branch_name}
     ```
 
@@ -486,7 +486,7 @@ Let's take this from the top.
 
 14. **Test these changes.** Note this command assumes you have installed *all* [major versions of both CPython and PyPy supported by the next stable release of beartype you are hacking on](pep.md). If this is *not* the case, install these versions with [pyenv](https://operatingops.org/2020/10/24/tox-testing-multiple-python-versions-with-pyenv). This is vital, as type hinting support varies significantly between major versions of different Python interpreters.
 
-    ``` bash
+    ```bash
     ./tox
     ```
 
@@ -503,19 +503,19 @@ Let's take this from the top.
 
 15. **Stage these changes.**
 
-    ``` bash
+    ```bash
     git add -a
     ```
 
 16. **Commit these changes.**
 
-    ``` bash
+    ```bash
     git commit
     ```
 
 17. **Push these changes** to your remote fork.
 
-    ``` bash
+    ```bash
     git push
     ```
 
@@ -523,7 +523,7 @@ Let's take this from the top.
 
 19. Afterward, **routinely pull upstream changes** to avoid desynchronization with [the "beartype/beartype" repository](https://github.com/beartype/beartype).
 
-    ``` bash
+    ```bash
     git checkout main && git pull upstream main
     ```
 
