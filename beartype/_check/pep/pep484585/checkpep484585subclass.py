@@ -128,10 +128,11 @@ def get_hint_pep484585_subclass_hint_child_sanified(
         hint_child,  # type: ignore[arg-type]
         # Permit this hint to be a beartype-specific forward reference proxy
         # (i.e., "_BeartypeForwardRefABC" subtype). Although prohibiting such
-        # proxies from consideration as supported hints is typically desirable,
-        # this lower-level reducer is passed such proxies produced by the
-        # higher-level reduce_hint_pep484_ref() reducer. Such proxies are thus
-        # valid for this specific use case.
+        # proxies from consideration as supported hints is usually desirable,
+        # this lower-level getter called by higher-level reducers that are
+        # themselves passed such proxies produced by the even higher-level
+        # reduce_hint_pep484_ref() reducer. Such proxies are thus valid for this
+        # specific use case.
         True,  # <-- "is_ref_proxy_valid=True", effectively *sigh*
     ):
         die_unless_object_issubclassable(

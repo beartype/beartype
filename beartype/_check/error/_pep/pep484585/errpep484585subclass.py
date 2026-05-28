@@ -12,18 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
-from beartype._data.typing.datatyping import TypeOrTupleTypes
-from beartype._data.hint.sign.datahintsigns import (
-    HintSignType,
-    HintSignUnion,
-)
-from beartype._util.cls.pep.clspep3119 import die_unless_object_issubclassable
+from beartype._check.pep.pep484585.checkpep484585subclass import (
+    get_hint_pep484585_subclass_hint_child_sanified)
+from beartype._data.hint.sign.datahintsigns import HintSignType
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_pith
@@ -63,53 +56,16 @@ def find_cause_pep484585_subclass(cause: HintTreeError) -> HintTreeError:
         return cause_shallow
     # Else, this pith is a type.
 
-    # ....................{ SATISFY ~ ignorable            }....................
-    #FIXME: Refactor most of everything that follows to call
-    #get_hint_pep484585_subclass_hint_child_sanified(), please. *sigh*
+    # ....................{ SATISFY                        }....................
+    # Sanified child hint subscripting the subclass hint rooting this tree.
+    hint_child = get_hint_pep484585_subclass_hint_child_sanified(cause)
 
-    # Metadata encapsulating the sanification of the superclass this pith is
-    # required to be a subclass of.
-    hint_child_sane = cause.hint_childs_sane[0]
-
-    # If this superclass is ignorable, then *ALL* types including this pith
-    # satisfy this superclass. In this case, return the passed cause as is.
-    if hint_child_sane is HINT_SANE_IGNORABLE:
-        return cause
-    # Else, this superclass is unignorable.
-
-    # ....................{ VIOLATE ~ deep                 }....................
-    # Superclass this pith is required to be a subclass of.
-    hint_child: TypeOrTupleTypes = hint_child_sane.hint  # type: ignore[assignment]
-
-    # Arbitrary object uniquely identifying this superclass.
-    hint_child_sign = get_hint_pep_sign_or_none(hint_child)  # pyright: ignore
-
-    # If this child hint is a union of superclasses, reduce this union to a
-    # tuple of superclasses. Only the latter is safely passable as the second
-    # parameter to the issubclass() builtin under all supported Python versions.
-    if hint_child_sign is HintSignUnion:
-        hint_child = get_hint_pep_args(hint_child)
-    # Else, this child hint is *NOT* a union. By process of elimination, this
-    # child hint *MUST be a class. In this case, preserve this class as is.
-
-    # If this child hint is *NOT* an issubclassable object, raise an exception.
-    #
-    # Technically, this validation is only necessary when this child hint was a
-    # forward reference. Pragmatically, there's *NO* harm in performing this
-    # validation in all possible cases. Ergo, we do. *shrug*
-    die_unless_object_issubclassable(
-        obj=hint_child,
-        # If this child hint is still a forward reference, raise an exception.
-        # Ideally, the above conditional should already have resolved all
-        # forward references.
-        is_ref_proxy_valid=False,
-        exception_cls=_BeartypeCallHintPepRaiseException,
-        exception_prefix=cause.exception_prefix,
-    )
-    # Else, this child hint is an issubclassable object.
-
-    # ....................{ SATISFY ~ non-ignorable        }....................
     # If this pith subclasses this superclass, return the passed cause as is.
+    #
+    # Note that this simplistic logic implicitly handles the edge case in which
+    # this sanified child hint is the root "object" superclass intentionally
+    # returned by the above getter to connote ignorability, as *ALL* types are
+    # necessarily subclasses of the root "object" superclass.
     if is_type_subclass(cause.pith, hint_child):
         return cause
     # Else, this pith does *NOT* subclass this superclass.

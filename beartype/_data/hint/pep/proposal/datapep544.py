@@ -13,6 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from abc import abstractmethod
 from beartype._data.typing.datatyping import DictTypeToAny
+from io import (
+    FileIO as io_FileIO,
+)
 from typing import (
     Any,
     AnyStr,
@@ -187,7 +190,11 @@ class _BinaryIOMeta(type):
         :class:`.TextIO` protocol).
         '''
 
+        # Return true only if...
         return (
+            # This object satisfies the PEP 544-compliant beartype-specific "IO"
+            # protocol but *NOT* the PEP 544-compliant beartype-specific
+            # "TextIO" protocol.
             isinstance(obj, IO) and not  # type: ignore[misc]
             isinstance(obj, TextIO)  # type: ignore[misc]
         )
@@ -200,7 +207,67 @@ class _BinaryIOMeta(type):
         :class:`typing.BinaryIO` generic.
         '''
 
-        return issubclass(subclass, typing_BinaryIO)
+        # If this other type is *NOT* a type, raise the standard "TypeError"
+        # exception expected to be raised by the issubclass() builtin in this
+        # common edge case. To do so trivially, we intentionally masquerade as
+        # the root "object" superclass here. Weird Python is worky Python.
+        issubclass(subclass, object)  # type: ignore[arg-type]
+        # Else, this other type is a type.
+
+        # If this other type is either the standard PEP-noncompliant
+        # "io.FileIO" type *OR* a subclass of that type, immediately return
+        # true. Ideally, "io.FileIO" would be a pure-Python type trivially
+        # satisfying the "IO" protocol. Instead, "io.FileIO" is a C-based type
+        # non-trivially violating the "IO" protocol. Why? Because "io.FileIO"
+        # defines:
+        # * *ALL* methods required by the "IO" protocol.
+        # * *ALL* properties required by the "IO" protocol, except the "name"
+        #   property, which bizarrely remains undefined on that type:
+        #       >>> from io import FileIO
+        #       >>> dir(FileIO)
+        #       ['__class__', '__del__', '__delattr__', '__dict__', '__dir__',
+        #       '__doc__', '__enter__', '__eq__', '__exit__', '__format__',
+        #       '__ge__', '__getattribute__', '__getstate__', '__gt__',
+        #       '__hash__', '__init__', '__init_subclass__', '__iter__',
+        #       '__le__', '__lt__', '__module__', '__ne__', '__new__',
+        #       '__next__', '__reduce__', '__reduce_ex__', '__repr__',
+        #       '__setattr__', '__sizeof__', '__str__', '__subclasshook__',
+        #       '_blksize', '_checkClosed', '_checkReadable', '_checkSeekable',
+        #       '_checkWritable', '_dealloc_warn', '_finalizing',
+        #       '_isatty_open_only', 'close', 'closed', 'closefd', 'fileno',
+        #       'flush', 'isatty', 'mode', 'read', 'readable', 'readall',
+        #       'readinto', 'readline', 'readlines', 'seek', 'seekable', 'tell',
+        #       'truncate', 'writable', 'write', 'writelines']
+        #
+        # Interestingly, this same issue does *NOT* apply to the sibling
+        # __instancecheck__() dunder method. Why? Because "io.FileIO" instances
+        # do actually define the "name" property. We don't make the rules. UGH!
+        if issubclass(subclass, io_FileIO):
+            return True
+        # Else, this other type is neither the standard PEP-noncompliant
+        # "io.FileIO" type *NOR* a subclass of that type.
+
+        #FIXME: *UGH*. The standard "typing.Protocol" implementation prohibits
+        #issubclass() checks against protocols defining one or more non-method
+        #member attributes, which "IO" does. A "simple" (air quotes are doing
+        #hard work here) solution could be to:
+        #* Define a new even higher-level "IOMemberless" protocol superclass of
+        #  our existing "IO" protocol superclass. Shift *ALL*...
+        #
+        #*HMM*. Or, maybe we could just generalize our non-standard
+        #"beartype.typing.Protocol" implementation to support that? No idea why
+        #"typing.Protocol" prohibits that to begin with, honestly. *sigh*
+
+        # Return true only if either...
+        return (
+            (
+                # This other type satisfies the PEP 544-compliant
+                # beartype-specific "IO" protocol but *NOT* the PEP
+                # 544-compliant beartype-specific "TextIO" protocol...
+                issubclass(subclass, IO) and not  # type: ignore[misc]
+                issubclass(subclass, TextIO)  # type: ignore[misc]
+            )
+        )
 
 
 class BinaryIO(object, metaclass=_BinaryIOMeta):

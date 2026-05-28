@@ -187,6 +187,7 @@ def _is_fake_proxy_superclass(
     #
     # Weird Python is worky Python. Metaclasses do still be like that.
     issubclass(subclass, object)  # type: ignore[arg-type]
+    # Else, this other type is a type.
 
     # ....................{ FAST                           }....................
     # Unqualified basename of this fake proxy, localized purely as a negligible

@@ -30,6 +30,17 @@ performance improvements.
 #
 #This issue is almost certainly related to classmethods. We clearly never tested
 #that. Classmethods clearly require explicit handling and caching. *sigh*
+#FIXME: *LOL*. Actually, that works now. No idea. Look. We *CLEARLY* need to
+#actually start testing this. Trivial. Just do it, please: *sigh*
+#    from beartype.typing import Protocol
+#    class BrokenProtocol(Protocol):
+#        @classmethod
+#        def broken_classmethod(cls) -> object:
+#            pass
+#    
+#    class BrokenClass(object): pass
+#    
+#    assert isinstance(BrokenClass, BrokenProtocol) is False
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing._typingcache import callable_cached_minimal
@@ -270,10 +281,10 @@ class _CachingProtocolMeta(_ProtocolMeta):
 
         # Attempt to...
         try:
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # CAUTION: This *MUST* remain *SUPER* tight!! Even adding a
             # mere assertion here can add ~50% to our best-case runtime.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # Return a pre-cached boolean indicating whether an object of
             # the same arbitrary type as the object passed to this call
             # satisfied the same protocol in a prior call of this method.
@@ -285,15 +296,28 @@ class _CachingProtocolMeta(_ProtocolMeta):
         # expand the rest of this method if you can avoid it.
         except KeyError:
             # True only if the type of this object subclasses *ALL* unignorable
-            # types in the method-order resolution of this protocol.
+            # types in the method-order resolution of this protocol, defaulting
+            # to true to simplify iteration performed below.
             is_obj_type_subtype = True
 
             # Type of this object.
             obj_type = type(obj)
 
-            #FIXME: [Speed] *HMM.* This can be optimized a bit by pre-filtering
+            #FIXME: [SPEED] *HMM.* This can be optimized a bit by pre-filtering
             #out all ignorable superclasses from "cls.__bases__" in the
             #__init__() method above rather than repeatedly doing so here.
+            #FIXME: [SPEED] Also, "for" loops are comparatively slower than
+            #equivalent "while" loops (due to implicit exception handling of the
+            #"StopException" raised by the former). Ergo, refactor this into an
+            #equivalent "while" loop, please. On doing so, we can optimize this
+            #even further by just ignoring:
+            #* The first item (i.e., "base is cls") as well as...
+            #* The last item (i.e., "base.__name__ in
+            #  _PROTOCOL_SUPERCLASS_IGNORABLE_BASENAMES").
+            #
+            #In theory, we should then be able to drop the first "if"
+            #conditional below. Of course, we could achieve a similar effect by
+            #just slicing "cls.__bases__[1:-1]". Unsure which is faster. *shrug*
             for base in cls.__bases__:
                 if (
                     base is cls or
@@ -308,8 +332,14 @@ class _CachingProtocolMeta(_ProtocolMeta):
                 ):
                     continue
 
+                # If the passed object is *NOT* an instance of this superclass
+                # of this protocol...
                 if not isinstance(obj, base):
+                    # Record that the type of this object does *NOT* subclass
+                    # all unignorable types in the MRO of this protocol.
                     is_obj_type_subtype = False
+
+                    # Immediately halt iteration.
                     break
 
             # True only if this object satisfies this protocol. Specifically,
@@ -320,8 +350,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
             # protocol type.
             is_obj_valid = cls._abc_inst_check_cache[obj_type] = (
                 # True only if the type of this object subclasses all
-                # unignorable types in the method-order resolution of this
-                # protocol *AND*...
+                # unignorable types in the MRO of this protocol *AND*...
                 is_obj_type_subtype and
                 # This object defines all attributes required by this protocol.
                 _is_obj_structural_subtype(cls, obj)
@@ -331,7 +360,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
             return is_obj_valid
 
 # ....................{ PRIVATE ~ globals                  }....................
-_EMPTY_DICT: dict[str, object] = {}
+_DICT_EMPTY: dict[str, object] = {}
 '''
 Empty dictionary.
 '''
@@ -375,6 +404,7 @@ def _is_obj_structural_subtype(cls, obj: Any) -> bool:
     # declared by this protocol class.
     cls_attr_name_to_value = cls.__dict__
 
+    #FIXME: *LOL*. Pretty sure we still need this. Oh, well. Nobody cares, huh?
     # Dictionary mapping from the name to type hint of each possibly undefined
     # attribute directly declared by this protocol class if this class defines
     # this dictionary *OR* .
@@ -383,30 +413,10 @@ def _is_obj_structural_subtype(cls, obj: Any) -> bool:
     # attributes annotated by a type hint but lacking a value: e.g.,
     #     class SomeProtocol(Protocol):
     #         some_attr: int | str  # <-- note the lack of a value
-    # cls_attr_name_to_hint = get_hintable_pep649749_annotations_or_none(cls)
+    cls_attr_name_to_hint = get_hintable_pep649749_annotations_or_none(cls)
 
-    #FIXME: Generalize to support Python 3.14. Super-nontrivial. We'll basically
-    #need to define a new get_hintable_pep649749_dict_annotations_or_none() getter
-    #to perform *ONLY* the first half of the annotationslib.get_annotations()
-    #getter. For now, doing nothing is preferable. Doing nothing simply means
-    #that "beartype.typing.Protocol" users will be unable to use unquoted
-    #forward references in protocol type hints under Python >= 3.14. That's
-    #non-ideal, of course, but we can't be bothered to tackle this yet. *sigh*
-    #FIXME: *HMM.* PEP 749 explicitly prohibits this behaviour:
-    #    Users should not access the class dictionary directly for accessing
-    #    annotations or the annotate function; the data stored in the class
-    #    dictionary is an implementation detail and its format may change in the
-    #    future. If only the class namespace dictionary is available (e.g.,
-    #    while the class is being constructed),
-    #    annotationlib.get_annotate_from_class_namespace() may be used to
-    #    retrieve the annotate function from the class dictionary.
-    #
-    #This... is becoming kinda ugly. At this point, perhaps we genuinely *DO*
-    #want to quietly remove this @beartype-specific protocol infrastructure at
-    #some point? I mean, we aren't CPython. We can't fulfill that obligation,
-    #however much we might like to pretend that we can. *sigh*
-    cls_attr_name_to_hint = cls_attr_name_to_value.get(
-        '__annotations__', _EMPTY_DICT)
+    if cls_attr_name_to_hint is None:
+        cls_attr_name_to_hint = _DICT_EMPTY
 
     # Dictionary mapping from the name to either value of each attribute *OR*
     # type hint of each possibly undefined attribute directly declared by this

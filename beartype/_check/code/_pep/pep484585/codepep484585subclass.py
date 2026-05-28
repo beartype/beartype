@@ -47,11 +47,6 @@ def make_hint_pep484585_subclass_check_expr(
     # Sanified child hint subscripting the subclass hint rooting this tree.
     hint_child = get_hint_pep484585_subclass_hint_child_sanified(hint_tree)
 
-    #FIXME: Additionally, if "hint_child_sane.hint is type", then this sanified
-    #child hint is *ALSO* ignorable. Why? Because *ALL* types necessarily
-    #subclass the root "type" superclass. Ergo, the type hint "type[type]" is
-    #semantically equivalent to "type[Any]" and thus ignorable.
-
     # If this sanified child hint is the root "object" superclass intentionally
     # returned by the above getter to connote ignorability, this sanified child
     # hint is ignorable. In this case...

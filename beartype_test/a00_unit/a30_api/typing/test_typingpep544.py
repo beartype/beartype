@@ -16,8 +16,8 @@ This submodule unit tests both the public *and* private API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                              }....................
-def test_typingpep544_metaclass() -> None:
+# ....................{ TESTS ~ protocol : metaclass       }....................
+def test_typingpep544_protocol_metaclass() -> None:
     '''
     Test the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
@@ -54,9 +54,11 @@ def test_typingpep544_metaclass() -> None:
     assert issubclass(type(SupportsRoundFromScratch), _CachingProtocolMeta)
 
 
-def test_typingpep544_superclass() -> None:
+# ....................{ TESTS ~ protocol                   }....................
+def test_typingpep544_protocol_superclass() -> None:
     '''
-    Test the public :class:`beartype.typing.Protocol` superclass.
+    Test that the public :pep:`544`-compliant :class:`beartype.typing.Protocol`
+    superclass itself behaves as expected.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -98,10 +100,10 @@ def test_typingpep544_superclass() -> None:
         ProtocolFast[str]
 
 
-def test_typingpep544_subclass() -> None:
+def test_typingpep544_protocol_subclass() -> None:
     '''
-    Test expected behaviour of user-defined subclasses of the public
-    :class:`beartype.typing.Protocol` superclass.
+    Test that the :pep:`544`-compliant :class:`beartype.typing.Protocol`
+    superclass behaves as expected with respect to user-defined subclasses.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -155,8 +157,8 @@ def test_typingpep544_subclass() -> None:
     with raises(TypeError):
         runtime_checkable(SupportsHiddenBuds)
 
-
-def test_typingpep544_protocols_typing() -> None:
+# ....................{ TESTS ~ supports*                  }....................
+def test_typingpep544_protocols_supports() -> None:
     '''
     Test the public retinue of ``beartype.typing.Supports*`` protocols with
     respect to both caching optimizations implemented by the public
@@ -164,6 +166,7 @@ def test_typingpep544_protocols_typing() -> None:
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from decimal import Decimal
     from fractions import Fraction
@@ -178,7 +181,8 @@ def test_typingpep544_protocols_typing() -> None:
     )
     from beartype.typing._typingpep544 import _CachingProtocolMeta
 
-    # Assert *ALL* standard protocols share the expected metaclass.
+    # ....................{ ASSERTS ~ metaclass            }....................
+    # Assert that *ALL* standard protocols share the expected metaclass.
     for supports_t in (
         SupportsAbs,
         SupportsBytes,
@@ -191,6 +195,8 @@ def test_typingpep544_protocols_typing() -> None:
         assert issubclass(type(supports_t), _CachingProtocolMeta)
         assert supports_t.__module__ == 'beartype.typing'
 
+    # ....................{ ASSERTS                        }....................
+    #FIXME: *NO IDEA*. Somebody, please docstring and comment us up. ohnoes
     def _assert_isinstance(*types: type, target_t: type) -> None:
 
         assert issubclass(

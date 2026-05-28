@@ -95,14 +95,25 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # ..................{ PROTOCOLS ~ structural             }..................
     class ProtocolCustomStructural(object):
         '''
-        User-defined class structurally (i.e., implicitly) satisfying *without*
-        explicitly subclassing this user-defined protocol.
+        Arbitrary user-defined class structurally (i.e., implicitly) satisfying
+        *without* explicitly subclassing both the :pep:`544`-compliant
+        :class:`.ProtocolCustomUntypevared` *and*
+        :class:`.ProtocolCustomTypevared` protocols defined below.
         '''
 
         def alpha(self) -> str:
+            '''
+            Arbitrary instance method required by these protocols.
+            '''
+
             return "Sufferance's humus excursion, humility’s endurance, an"
 
+
         def omega(self) -> str:
+            '''
+            Arbitrary instance method required by these protocols.
+            '''
+
             return 'Surfeit need'
 
 
@@ -133,43 +144,65 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         @runtime_checkable
         class ProtocolCustomUntypevared(Protocol):
             '''
-            User-defined protocol parametrized by *no* type variables declaring
-            arbitrary concrete and abstract methods.
+            Arbitrary user-defined protocol parametrized by *no* type variables
+            declaring arbitrary concrete and abstract methods.
             '''
 
             def alpha(self) -> str:
+                '''
+                Arbitrary concrete instance method.
+                '''
+
                 return 'Of a Spicily sated'
 
+
             @abstractmethod
-            def omega(self) -> str: pass
+            def omega(self) -> str:
+                '''
+                Arbitrary abstract instance method.
+                '''
+
+                pass
 
 
         @runtime_checkable
         class ProtocolCustomTypevared(Protocol[T]):
             '''
-            User-defined protocol parametrized by a type variable declaring
-            arbitrary concrete and abstract methods.
+            Arbitrary user-defined protocol parametrized by a type variable
+            declaring arbitrary concrete and abstract methods.
             '''
 
             def alpha(self) -> str:
+                '''
+                Arbitrary concrete instance method.
+                '''
+
                 return 'Gainfully ungiving criticisms, schismatizing Ŧheo‐'
 
             @abstractmethod
-            def omega(self) -> str: pass
+            def omega(self) -> str:
+                '''
+                Arbitrary abstract instance method.
+                '''
+
+                pass
 
         # ................{ PROTOCOLS ~ user : abc             }................
         @runtime_checkable
         class ProtocolCustomSuperclass(Protocol):
             '''
-            User-defined protocol superclass.
+            Arbitrary user-defined protocol superclass.
             '''
 
             instance_variable: int
+            '''
+            Arbitrary instance variable assigned *NO* default value.
+            '''
 
 
         class ProtocolCustomABC(ProtocolCustomSuperclass, ABC):
             '''
-            User-defined abstract protocol subclassing both this superclass
+            User-defined abstract protocol subclassing both that superclass
             *and* the standard abstract base class (ABC) superclass, exercising
             a prior issue with respect to non-trivial protocol hierarchies.
 
@@ -178,20 +211,33 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             '''
 
             instance_variable = 42
+            '''
+            Arbitrary instance variable assigned a default value.
+            '''
+
 
             def concrete_method(self) -> str:
+                '''
+                Arbitrary concrete instance method.
+                '''
+
                 return (
                     'Lit, Faux-Phonetician Grecian predilection derelictions '
                     'predi‐sposed to'
                 )
 
+
             @abstractmethod
-            def abstract_method(self) -> str: pass
+            def abstract_method(self) -> str:
+                '''
+                Arbitrary abstract instance method.
+                '''
 
 
         class ProtocolCustomSubclass(ProtocolCustomABC):
             '''
-            User-defined protocol subclass concretely subclassing this ABC.
+            Arbitrary user-defined protocol subclass concretely subclassing that
+            protocol ABC.
             '''
 
             def abstract_method(self) -> str:
@@ -292,7 +338,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for BinaryIO in get_typing_attrs('BinaryIO'):
-        hints_piths_pep_meta.append(
+        hints_piths_pep_meta.extend((
             # ..............{ GENERICS ~ io : unsubscripted      }..............
             # Unsubscripted "BinaryIO" abstract base class (ABC).
             HintPepMetadata(
@@ -300,14 +346,17 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignBinaryIO,
                 generic_type=BinaryIO,
                 piths_meta=BINARYIO_PITHS_META,
-            )
-        )
+            ),
+
+            # ................{ PEP 585 ~ subclass             }................
+            # The "BinaryIO" ABC is...
+        ))
 
     # ..................{ FACTORIES ~ TextIO                 }..................
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module, add PEP-specific type hint metadata.
     for TextIO in get_typing_attrs('TextIO'):
-        hints_piths_pep_meta.append(
+        hints_piths_pep_meta.extend((
             # ..............{ GENERICS ~ io : unsubscripted      }..............
             # Unsubscripted "TextIO" abstract base class (ABC).
             HintPepMetadata(
@@ -325,8 +374,8 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                     PithUnsatisfiedMetadata(
                         pith=open_file_binary, is_pith_factory=True),
                 ),
-            )
-        )
+            ),
+        ))
 
     # ..................{ FACTORIES ~ IO                     }..................
     # For each PEP-specific type hint factory importable from each currently
@@ -414,7 +463,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
 
-            # ................{ SUBCLASS                       }................
+            # ................{ PEP 585 ~ subclass             }................
         ))
 
     # ..................{ FACTORIES ~ SupportsAbs            }..................

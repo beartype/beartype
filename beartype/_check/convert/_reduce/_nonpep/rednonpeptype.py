@@ -191,43 +191,6 @@ def reduce_hint_nonpep(
     # the most deeply nested such type is also currently being decorated. In any
     # case, this hint *CANNOT* ignite such recursion and is thus preserved.
 
-    #FIXME: Should work, but breaks tests. *LOL*. We clearly munted something...
-    # # ....................{ PEP (484|585)                  }....................
-    # # If...
-    # if (
-    #     # This hint is the root "type" superclass of all types *AND*...
-    #     hint is type and
-    #     # This hint has a parent and is thus a child hint *AND*...
-    #     hint_parent_sane is not None and
-    #     # This child hint transitively subscripts a PEP 484- or 585-compliant
-    #     # parent subclass hint...
-    #     hint_parent_sane.is_hint_parent_pep484585_subclass
-    # ):
-    # # Then this child hint is ignorable. Why? Because *ALL* types necessarily
-    # # subclass the root "type" superclass. Any PEP 484- or 585-compliant
-    # # parent subclass hint transitively subscripted by the root "type"
-    # # superclass (e.g., "type[type]") is thus reducible to that superclass.
-    # # Notably:
-    # # * The PEP 585-compliant parent subclass hint "type[type]" is semantically
-    # #   equivalent to "type[typing.Any]", implying this "root" hint to be
-    # #   ignorable.
-    # # * Any parent PEP 484- or 585-compliant parent union hint subscripted by
-    # #   the root "type" superclass such that that union also subscripts a PEP
-    # #   484- or 585-compliant parent parent subclass hint (e.g., the PEP
-    # #   585-compliant parent subclass hint "type[Union[{hints_child}, type]]"
-    # #   for all "{hints_child}") is also semantically equivalent to
-    # #   "type[typing.Any]" and thus also ignorable by a similar argument. For
-    # #   this reason, there exist a countably infinite number of parent subclass
-    # #   hints to which this same equivalence applies.
-    #     return HINT_SANE_IGNORABLE
-    # # Else, either:
-    # # * This hint is *NOT* the root "type" superclass *OR*...
-    # # * This hint has *NO* parent and is thus the bare "type" hint *OR*...
-    # # * This hint his a parent and is thus a child hint but does *NOT*
-    # #   transitively subscript a PEP 484- or 585-compliant parent subclass.
-    # #
-    # # In any case, preserve this hint as is (for the moment, anyway).
-
     # ....................{ REDUCE                         }....................
     # If this hint is hashable...
     if is_object_hashable(hint):
