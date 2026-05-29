@@ -17,20 +17,20 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ getter                     }....................
-def test_get_object_attrs_name_to_value_explicit() -> None:
+def test_get_object_attrs_name_to_value() -> None:
     '''
     Test both the
-    :func:`beartype._util.utilobjattr.get_object_attrs_name_to_value_explicit`
+    :func:`beartype._util.utilobjattr.get_object_attrs_name_to_value`
     *and*
-    :func:`beartype._util.utilobjattr.get_object_methods_name_to_value_explicit`
+    :func:`beartype._util.utilobjattr.get_object_methods_name_to_value`
     getters, whose testing requires identical types and objects.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.utilobjattr import (
-        get_object_attrs_name_to_value_explicit,
-        get_object_methods_name_to_value_explicit,
+        get_object_attrs_name_to_value,
+        get_object_methods_name_to_value,
     )
     from beartype._util.text.utiltextidentifier import is_dunder
 
@@ -85,12 +85,12 @@ def test_get_object_attrs_name_to_value_explicit() -> None:
         'some_joyous_madness': RousedBy.some_joyous_madness,
         'from_the_couch': type(of_fever).__dict__['from_the_couch'],
     }
-    of_fever_attrs_actual = get_object_attrs_name_to_value_explicit(of_fever)
+    of_fever_attrs_actual = get_object_attrs_name_to_value(of_fever)
     assert of_fever_attrs_expect.items() <= of_fever_attrs_actual.items()
 
     # Assert this getter returns the expected dictionary when passed this
     # instance *WITH* a predicate.
-    assert get_object_attrs_name_to_value_explicit(
+    assert get_object_attrs_name_to_value(
         obj=of_fever,
         predicate=lambda attr_name, attr_value: not is_dunder(attr_name)
     ) == of_fever_attrs_expect
@@ -110,7 +110,7 @@ def test_get_object_attrs_name_to_value_explicit() -> None:
         'some_joyous_madness': RousedBy.some_joyous_madness,
     }
     of_fever_methods_actual = (
-        get_object_methods_name_to_value_explicit(of_fever))
+        get_object_methods_name_to_value(of_fever))
     assert of_fever_methods_expect.items() <= of_fever_methods_actual.items()
 
     # ....................{ PASS ~ method : dir            }....................
@@ -123,6 +123,6 @@ def test_get_object_attrs_name_to_value_explicit() -> None:
 
     # Assert this getter returns the expected dictionary when passed this
     # instance with an arbitrary method name removed from this list.
-    of_fever_methods_actual = get_object_methods_name_to_value_explicit(
+    of_fever_methods_actual = get_object_methods_name_to_value(
         obj=of_fever, obj_dir=of_fever_dir)
     assert of_fever_methods_expect.items() <= of_fever_methods_actual.items()

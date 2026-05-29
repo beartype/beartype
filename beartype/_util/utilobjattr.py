@@ -12,77 +12,29 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 # from beartype._cave._cavefast import MethodBoundInstanceDunderCType
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.func.datafunc import OBJECT_SLOT_WRAPPERS
-from beartype._data.typing.datatyping import DictStrToAny
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from beartype._data.typing.datatyping import (
+    DictStrToAny,
+    FrozenSetStrs,
+    ListStrs,
+)
 from collections.abc import Callable
 from inspect import getattr_static
 from typing import Optional
 
 # ....................{ GETTERS                            }....................
-def get_object_methods_name_to_value_explicit(
+#FIXME: Unit test up the new "predicate_attr_names_*" parameters, please. *sigh*
+def get_object_attrs_name_to_value(
     # Mandatory parameters.
     obj: object,
 
     # Optional parameters.
-    obj_dir: Optional[list[str]] = None,
-) -> DictStrToAny:
-    '''
-    Dictionary mapping from the name to **explicit value** (i.e., value
-    retrieved *without* implicitly calling the :func:`property`-decorated method
-    implementing this attribute if this attribute is a property) of each method
-    bound to the passed object.
-
-    Parameters
-    ----------
-    obj : object
-        Object to be introspected.
-    obj_dir : Optional[List[str]]
-        See also the :func:`.get_object_attrs_name_to_value_explicit` getter.
-
-    Caveats
-    -------
-    **This getter intentionally returns unbound pure-Python method functions
-    rather than bound C-based method descriptors.** In theory, the latter
-    approach would be marginally more useful. In practice, the standard
-    :func:`.getattr_static` getter underlying this getter only supports the
-    former approach. It is what it is.
-
-    **This getter intentionally omits uncallable methods.** This includes most
-    C-based method descriptors, most of which are uncallable depending on the
-    version of the active Python interpreter. This *particularly* includes all
-    C-based slot wrappers implicitly inherited by all classes from the root
-    :class:`object` superclass (e.g., the :meth:`object.__str__` dunder method).
-    The default implementations of slot wrappers have no intrinsic value in any
-    meaningful context and only serve to obfuscate *actual* methods of
-    general-purpose interest to most callers.
-
-    Returns
-    -------
-    DictStrToAny
-        Dictionary mapping from the name to explicit value of each methods bound
-        to the passed object.
-
-    Methods
-    -------
-    :func:`.get_object_attrs_name_to_value_explicit`
-        Further details.
-    '''
-
-    # This is why we predicate, folks.
-    return get_object_attrs_name_to_value_explicit(
-        obj=obj,
-        obj_dir=obj_dir,
-        predicate=_is_object_attr_callable_not_object_slot_wrapper,
-    )
-
-
-def get_object_attrs_name_to_value_explicit(
-    # Mandatory parameters.
-    obj: object,
-
-    # Optional parameters.
-    obj_dir: Optional[list[str]] = None,
-    predicate: Optional[Callable[[str, object], bool]] = None
+    obj_dir: Optional[ListStrs] = None,
+    predicate: Optional[Callable[[str, object], bool]] = None,
+    predicate_attr_names_all: Optional[FrozenSetStrs] = None,
+    predicate_attr_names_any: Optional[FrozenSetStrs] = None,
 ) -> DictStrToAny:
     '''
     Dictionary mapping from the name to **explicit value** (i.e., value
@@ -113,19 +65,14 @@ def get_object_attrs_name_to_value_explicit(
     **This getter exhibits linear time complexity** :math:`O(n)` for :math:`n`
     the number of attributes transitively defined by the passed object
     (including both the type of that object and all superclasses of that type).
-    This getter should thus be called with some measure of caution.
-
-    **This getter only introspects attributes statically registered by the
-    internal dictionary of this object** (e.g., ``__dict__`` in unslotted
-    objects, ``__slots__`` in slotted objects). This getter thus silently
-    ignores *all* attributes dynamically defined by the ``__getattr__()`` method
-    or related runtime magic of this object.
+    This getter should thus be called with some measure of caution and, ideally,
+    only by memoized, cached, or otherwise efficient callers.
 
     Parameters
     ----------
     obj : object
         Object to be introspected.
-    obj_dir : Optional[list[str]]
+    obj_dir : Optional[list[str]], default: None
         Either:
 
         * List of the names of all relevant attributes bound to this object.
@@ -140,10 +87,16 @@ def get_object_attrs_name_to_value_explicit(
 
         * :data:`None`, in which case this getter defaults this list to the
           names of *all* attributes bound to this object by calling the
-          :func:`dir` builtin on this object.
+          :func:`dir` builtin on this object. Note that :func:`dir`:
+
+          * Only introspects attributes statically registered by the internal
+            dictionary of this object (e.g., ``__dict__`` in unslotted objects,
+            ``__slots__`` in slotted objects).
+          * Thus silently ignores *all* attributes dynamically defined by the
+            ``__getattr__()`` method or related runtime magic of this object.
 
         Defaults to :data:`None`.
-    predicate: Optional[Callable[[str, object], bool]]
+    predicate: Optional[Callable[[str, object], bool]], default: None
         Either:
 
         * Callable iteratively passed both the name and explicit value of each
@@ -161,35 +114,118 @@ def get_object_attrs_name_to_value_explicit(
         * :data:`None`, in which case this getter unconditionally adds *all*
           attributes bound to this object to this dictionary.
 
+        Callers passing this parameter may consider also passing a
+        ``predicate_attr_names_*`` parameter as a useful optimization. Defaults
+        to :data:`None`.
+    predicate_attr_names_all : Optional[FrozenSetStrs], default: None
+        Either:
+
+        * Maximal frozen set of the names of all **requisite attributes** (i.e.,
+          maximal superset of attributes that *must* be bound to this object).
+          If the intersection of this set with a similar frozen set coerced from
+          the passed ``obj_dir`` parameter is anything less than ``obj_dir``,
+          this getter efficiently reduces to a noop by immediately returning the
+          empty frozen dictionary. Note that this is merely an optimization
+          against worst-case pathological behaviour -- albeit a useful one.
+        * :data:`None`, in which this getter does *not* attempt to reduce to
+          such a noop.
+
+        Defaults to :data:`None`.
+    predicate_attr_names_any : Optional[FrozenSetStrs], default: None
+        Either:
+
+        * Minimal frozen set of the names of any **requisite attributes** (i.e.,
+          minimum subset of attributes that *must* be bound to this object). If
+          the intersection of this set with a similar frozen set coerced from
+          the passed ``obj_dir`` parameter is empty, this getter efficiently
+          reduces to a noop by immediately returning the empty frozen
+          dictionary. Note that this is merely an optimization against
+          worst-case pathological behaviour -- albeit a useful one.
+        * :data:`None`, in which this getter does *not* attempt to reduce to
+          such a noop.
+
         Defaults to :data:`None`.
 
     Returns
     -------
     DictStrToAny
-        Dictionary mapping from the name to explicit value of each attribute
-        bound to the passed object whose name and/or value matches the passed
-        predicate (in ascending lexicographic order of attribute name).
+        Either:
+
+        * If the caller passed a ``predicate_attr_names_*`` parameter whose
+          intersection with a similar frozen set coerced from the passed
+          ``obj_dir`` parameter is either empty *or* that ``obj_dir`` parameter
+          (conditionally depending on which ``predicate_attr_names_*`` parameter
+          was passed), the empty frozen dictionary singleton
+          :data:`.FROZENDICT_EMPTY`.
+        * Else, a mutable dictionary mapping from the name to explicit value of
+          each attribute bound to the passed object whose name and/or value
+          matches the passed predicate (in ascending lexicographic order of
+          attribute name).
     '''
+    #FIXME: Refactor these assertions to also use "NoneTypeOr", please. *sigh*
     assert obj_dir is None or isinstance(obj_dir, list), (
         f'{repr(obj_dir)} neither list of strings nor "None".')
     assert predicate is None or callable(predicate), (
         f'{repr(predicate)} neither callable nor "None".')
+    assert isinstance(predicate_attr_names_all, NoneTypeOr[frozenset]), (
+        f'{repr(predicate_attr_names_all)} neither frozen set nor "None".')
+    assert isinstance(predicate_attr_names_any, NoneTypeOr[frozenset]), (
+        f'{repr(predicate_attr_names_any)} neither frozen set nor "None".')
 
-    # Dictionary mapping from the name of each attribute of the passed object
-    # satisfying the passed predicate to the corresponding explicit value of
-    # that attribute.
-    attrs_name_to_value_explicit = None  # type: ignore[assignment]
-
+    # ....................{ PREAMBLE                       }....................
     # If the caller passed *NO* list of attribute names, default this to the
     # list of *ALL* attribute names bound to this object.
     if obj_dir is None:
         obj_dir = dir(obj)
     # Else, the caller passed a list of attribute names.
 
+    # If either...
+    if (
+        (
+            # The caller passed a maximal frozen set of the names of all
+            # requisite attributes *AND*...
+            predicate_attr_names_all is not None and
+            # The total number of attribute names in the intersection of the set
+            # of of the names of all requisite attributes with the set of the
+            # names of all attributes bound to this object is *NOT* the number
+            # of requisite attribute names, this object fails to define *ALL* of
+            # the requisite attributes.
+            len(predicate_attr_names_all & frozenset(obj_dir)) !=
+            len(predicate_attr_names_all)
+        # *OR*...
+        ) or (
+            # The caller passed a minimal frozen set of the names of any
+            # requisite attributes *AND*...
+            predicate_attr_names_any is not None and
+            # The total number of attribute names in the intersection of the set
+            # of of the names of all requisite attributes with the set of the
+            # names of all attributes bound to this object is empty, this object
+            # fails to define *ANY* of the requisite attributes.
+            not (predicate_attr_names_any & frozenset(obj_dir))
+        )
+    ):
+        # In either case, efficiently reduce to a noop by safely returning the
+        # empty frozen dictionary singleton.
+        return FROZENDICT_EMPTY
+    # Else, the total number of attribute names in the intersection of the set
+    # of of the names of all requisite attributes with the set of the names of
+    # all attributes bound to this object is the number of requisite attribute
+    # names. This implies this object defines *ALL* of the requisite attributes.
+    #
+    # Note that this does *NOT* necessarily imply these attributes all
+    # satisfy the passed predicate (if any). Further disambiguation is required.
+
+    # ....................{ LOCALS                         }....................
+    # Dictionary mapping from the name of each attribute of the passed object
+    # satisfying the passed predicate to the corresponding explicit value of
+    # that attribute.
+    attrs_name_to_value = None  # type: ignore[assignment]
+
+    # ....................{ PREDICATE                      }....................
     # If the caller passed a predicate...
     if predicate:
         # Initialize this dictionary to the empty dictionary.
-        attrs_name_to_value_explicit = {}
+        attrs_name_to_value = {}
 
         # Ideally, this function would be reimplemented in terms of the
         # iter_attrs_implicit_matching() function calling the canonical
@@ -223,30 +259,135 @@ def get_object_attrs_name_to_value_explicit(
                 # dictionary as a new key-vaue pair. Note that, due to the above
                 # assignment, this iteration *CANNOT* reasonably be optimized
                 # into a dictionary comprehension.
-                attrs_name_to_value_explicit[attr_name] = attr_value
+                attrs_name_to_value[attr_name] = attr_value
             # Else, this attribute fails to match this predicate. In this case,
             # silently ignore this attribute.
     # Else, the caller passed *NO* predicate. In this case...
     else:
         # Trivially define this dictionary via a dictionary comprehension.
-        attrs_name_to_value_explicit = {
+        attrs_name_to_value = {
             attr_name: getattr_static(obj, attr_name)
             for attr_name in obj_dir
         }
 
+    # ....................{ RETURN                         }....................
     # Return this dictionary.
-    return attrs_name_to_value_explicit
+    return attrs_name_to_value
+
+# ....................{ GETTERS ~ explicit : methods       }....................
+def get_object_methods_name_to_value(
+    # Mandatory parameters.
+    obj: object,
+
+    # Optional parameters.
+    obj_dir: Optional[ListStrs] = None,
+) -> DictStrToAny:
+    '''
+    Dictionary mapping from the name to **explicit value** (i.e., value
+    retrieved *without* implicitly calling the :func:`property`-decorated method
+    implementing this attribute if this attribute is a property) of each method
+    bound to the passed object.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be introspected.
+    obj_dir : Optional[List[str]]
+        See also the :func:`.get_object_attrs_name_to_value` getter.
+
+    Caveats
+    -------
+    **This getter intentionally returns unbound pure-Python method functions
+    rather than bound C-based method descriptors.** In theory, the latter
+    approach would be marginally more useful. In practice, the standard
+    :func:`.getattr_static` getter underlying this getter only supports the
+    former approach. It is what it is.
+
+    **This getter intentionally omits uncallable methods.** This includes most
+    C-based method descriptors, most of which are uncallable depending on the
+    version of the active Python interpreter. This *particularly* includes all
+    C-based slot wrappers implicitly inherited by all classes from the root
+    :class:`object` superclass (e.g., the :meth:`object.__str__` dunder method).
+    The default implementations of slot wrappers have no intrinsic value in any
+    meaningful context and only serve to obfuscate *actual* methods of
+    general-purpose interest to most callers.
+
+    Returns
+    -------
+    DictStrToAny
+        Dictionary mapping from the name to explicit value of each method bound
+        to the passed object.
+
+    See Also
+    --------
+    :func:`.get_object_attrs_name_to_value`
+        Further details.
+    '''
+
+    # This is why we predicate, folks.
+    return get_object_attrs_name_to_value(
+        obj=obj,
+        obj_dir=obj_dir,
+        predicate=_is_object_attr_callable_not_object_slot_wrapper,
+    )
+
+
+#FIXME: Unit test us up, please. *sigh*
+def get_object_nonmethods_name_to_value(
+    # Mandatory parameters.
+    obj: object,
+
+    # Optional parameters.
+    obj_dir: Optional[ListStrs] = None,
+) -> DictStrToAny:
+    '''
+    Dictionary mapping from the name to **explicit value** (i.e., value
+    retrieved *without* implicitly calling the :func:`property`-decorated method
+    implementing this attribute if this attribute is a property) of each
+    non-method attribute bound to the passed object.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be introspected.
+    obj_dir : Optional[List[str]]
+        See also the :func:`.get_object_attrs_name_to_value` getter.
+
+    Caveats
+    -------
+    **This getter intentionally includes uncallable methods.** This includes
+    most C-based method descriptors, most of which are uncallable depending on
+    the version of the active Python interpreter. Why? Because some of these
+    method descriptors are actually C extension-specific unbound property method
+    descriptors describing properties semantically equivalent to non-method
+    attributes. Python. It do be like that.
+
+    Returns
+    -------
+    DictStrToAny
+        Dictionary mapping from the name to explicit value of each non-method
+        bound to the passed object.
+
+    See Also
+    --------
+    :func:`.get_object_attrs_name_to_value`
+        Further details.
+    '''
+
+    # Predicate and listen! @leycec back with a brand new QA mission! *barf*
+    return get_object_attrs_name_to_value(
+        obj=obj, obj_dir=obj_dir, predicate=_is_object_attr_uncallable)
 
 # ....................{ PRIVATE ~ testers                  }....................
 def _is_object_attr_callable_not_object_slot_wrapper(
     attr_name: str, attr_value: object) -> bool:
     '''
     Predicate suitable for passing as the ``predicate`` parameter to the
-    :func:`.get_object_attrs_name_to_value_explicit` getter, returning
+    :func:`.get_object_attrs_name_to_value` getter, returning
     :data:`True` only if the passed attribute value is both callable and *not*
-    an **object slot wrappers** (i.e., low-level C-based callables bound to the
-    root :class:`object` superclass providing mostly useless default
-    implementations of popular dunder methods).
+    an **object slot wrapper** (i.e., low-level C-based callable bound to the
+    root :class:`object` superclass, defining a trivial and thus mostly useless
+    default implementation of a dunder method).
     '''
     # print(f'OBJECT_SLOT_WRAPPERS: {OBJECT_SLOT_WRAPPERS}')
 
@@ -276,3 +417,14 @@ def _is_object_attr_callable_not_object_slot_wrapper(
 
     # Return true as a fallback.
     return True
+
+
+def _is_object_attr_uncallable(attr_name: str, attr_value: object) -> bool:
+    '''
+    Predicate suitable for passing as the ``predicate`` parameter to the
+    :func:`.get_object_attrs_name_to_value` getter, returning
+    :data:`True` only if the passed attribute value is uncallable.
+    '''
+
+    # Return true only if the passed attribute value is uncallable.
+    return not callable(attr_value)

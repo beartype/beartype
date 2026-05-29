@@ -434,7 +434,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     COLLECTIONS_ABC_BASENAMES = []
 
     #FIXME: Call the higher-level and *SIGNIFICANTLY* safer
-    #get_object_attrs_name_to_value_explicit() getter instead of manually
+    #get_object_attrs_name_to_value() getter instead of manually
     #iterating over "__dict__.items()", please. *sigh*
     # For the unqualified basename of each attribute and that attribute defined
     # by the standard "collections.abc" submodule...

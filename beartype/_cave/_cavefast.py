@@ -506,8 +506,8 @@ Type of all **C extension-specific unbound non-trivial property method
 descriptors** (i.e., uncallable objects implemented in low-level C extensions,
 associated with **non-trivial property methods** (i.e., wrapping underlying
 attributes that are *not* trivially convertible to C types) of C extensions when
-accessed with the low-level :attr:`object.__dict__` dictionary rather than as
-class or instance attributes).
+accessed with either the low-level :attr:`object.__dict__` dictionary or as
+class attributes rather than as instance attributes).
 '''
 
 

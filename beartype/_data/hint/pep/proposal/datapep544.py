@@ -13,6 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from abc import abstractmethod
 from beartype._data.typing.datatyping import DictTypeToAny
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.utilobjattr import get_object_nonmethods_name_to_value
 from io import (
     FileIO as io_FileIO,
 )
@@ -28,84 +30,40 @@ from typing import (
 from beartype.typing import Protocol  # <-- *OPTIMIZED PROTOCOL*! \o/
 
 # ....................{ PROTOCOLS ~ superclass             }....................
-class IO(Protocol[AnyStr]):
+class _IOMethodsOnly(Protocol[AnyStr]):
     '''
-    :pep:`544`-compliant **IO protocol** (i.e., useful protocol copied wholesale
-    from the existing useless :class:`typing.IO` generic).
+    **Methods-only IO protocol** (i.e., useful :mod:`beartype`-specific
+    :pep:`544`-compliant protocol defining *only* the abstract methods defined
+    by the existing useless :mod:`beartype`-agnostic :pep:`484`-compliant
+    :class:`typing.IO` generic).
 
-    This protocol transparently serves as:
+    This protocol intentionally excludes *all* non-method attributes defined by
+    :class:`typing.IO`. Why? Because the :func:`issubclass` builtin.
+    :mod:`beartype` type-checks each :pep:`484`- or :pep:`585`-compliant
+    subclass type hint (e.g., ``typing.Type[...]``, ``type[...]``)  by
+    dynamically generating code passing the single child hint subscripting that
+    subclass type hint as the second parameter to :func:`issubclass`. However,
+    protocols defining one or more non-methods are prohibited from being passed
+    as the second parameter to :func:`issubclass`. Ergo, the *only* means of
+    type-checking subclass type hints of the form ``typing.Type[typing.IO]`` or
+    ``type[typing.IO]`` is to internally reduce the standard :class:`typing.IO`
+    generic to this non-standard protocol omitting all non-method attributes:
 
-    * A type hint matching file handles opened in either text or binary mode.
-    * The abstract base class (ABC) of both the :class:`.TextIO` and
-      :class:`.BinaryIO` concrete protocol subclasses.
+    .. code-block:: python
 
-    This is an abstract generic version of the return of :func:`open`.
+       >>> from beartype._data.hint.pep.proposal.datapep544 import IO
+       >>> issubclass(object, IO)
+       TypeError: Protocols with non-method members don't support issubclass().
+       Non-method members: 'closed', 'mode', 'name'.
 
-    NOTE: This does not distinguish between the different possible classes (text
-    vs. binary, read vs. write vs. read/write, append-only, unbuffered). The
-    :class:`typing.TextIO` and :class:`typing.BinaryIO` subclasses below capture
-    the distinctions between text vs. binary, which is pervasive in the
-    interface; however we currently do not offer a way to track the other
-    distinctions in the type system.
-
-    Design
-    ------
-    This base class intentionally duplicates the contents of the existing
-    :class:`typing.IO` generic base class by substituting the useless
-    :class:`typing.Generic` superclass of the latter with the useful
-    :class:`typing.Protocol` superclass of the former. Why? Because *no* stdlib
-    classes (excluding those defined by the :mod:`typing` module itself)
-    subclass :class:`typing.IO`. However, :class:`typing.IO` leverages neither
-    the :class:`abc.ABCMeta` metaclass *nor* the :class:`typing.Protocol`
-    superclass needed to support structural subtyping. Therefore, *no* stdlib
-    objects (including those returned by the :func:`open` builtin) satisfy
-    either :class:`typing.IO` itself or any subclasses of :class:`typing.IO`
-    (e.g., :class:`typing.BinaryIO`, :class:`typing.TextIO`). Therefore,
-    :class:`typing.IO` and all subclasses thereof are functionally useless for
-    all practical intents. The conventional excuse `given by Python maintainers
-    to justify this abhorrent nonsensicality is as follows <typeshed_>`__:
-
-        There are a lot of "file-like" classes, and the typing IO classes are
-        meant as "protocols" for general files, but they cannot actually be
-        protocols because the file protocol isn't very well defined—there are
-        lots of methods that exist on some but not all filelike classes.
-
-    Like most :mod:`typing`-oriented confabulation, that, of course, is
-    bollocks. Refactoring the family of :mod:`typing` IO classes from inveterate
-    generics into pragmatic protocols is both technically trivial and
-    semantically useful, because that is exactly what :mod:`beartype` does. It
-    works. It necessitates modifying three lines of existing code. It preserves
-    backward compatibility. In short, it should have been done a decade ago. If
-    the file protocol "isn't very well defined," the solution is to define that
-    protocol with a rigorous type hierarchy satisfying all possible edge cases.
-    The solution is *not* to pretend that no solutions exist, that the existing
-    non-solution suffices, and instead do nothing. Welcome to :mod:`typing`,
-    where no one cares that nothing works as advertised (or at all)... *and no
-    one ever will.*
-
-    .. _typeshed:
-       https://github.com/python/typeshed/issues/3225#issuecomment-529277448
+    See Also
+    --------
+    :class:`.IO`
+        Further details.
     '''
-
-    __slots__: tuple = ()
-
-    @property
-    @abstractmethod
-    def mode(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        pass
 
     @abstractmethod
     def close(self) -> None:
-        pass
-
-    @property
-    @abstractmethod
-    def closed(self) -> bool:
         pass
 
     @abstractmethod
@@ -172,7 +130,101 @@ class IO(Protocol[AnyStr]):
     def __exit__(self, cls, value, traceback) -> None:
         pass
 
+
+# Note that:
+# * PEP 544 explicitly requires *ALL* protocols (including protocols subclassing
+#   protocols) to explicitly subclass the "Protocol" superclass, in violation of
+#   both sanity and usability. (Thanks, guys.)
+# * The beartype-agnostic "typing.Protocol" superclass underlying the
+#   beartype-specific "beartype.typing.Protocol" superclass implicitly requires
+#   that *ALL* subscriptable protocol superclasses in a type hierarchy
+#   explicitly subclass the "Protocol" superclass subscripted by the exact same
+#   PEP 484-compliant type variable (e.g., "AnyStr" in this case). Why? Because
+#   The "typing.Protocol" superclass is hostile to runtime usability, clearly.
+#   If this arbitrary stricture is disobeyed, then *ALL* parametrized subclasses
+#   of this superclass erroneously raise a "TypeError" resembling the following
+#   on subclass declaration:
+#       TypeError: <class 'beartype._data.hint.pep.proposal.datapep544.IO'> is
+#       not a generic class
+class IO(_IOMethodsOnly[AnyStr], Protocol):
+    '''
+    :pep:`544`-compliant **IO protocol** (i.e., useful protocol copied wholesale
+    from the existing useless :class:`typing.IO` generic).
+
+    This protocol transparently serves as:
+
+    * A type hint matching file handles opened in either text or binary mode.
+    * The abstract base class (ABC) of both the :class:`.TextIO` and
+      :class:`.BinaryIO` concrete protocol subclasses.
+
+    This is an abstract generic version of the return of :func:`open`.
+
+    NOTE: This does not distinguish between the different possible classes (text
+    vs. binary, read vs. write vs. read/write, append-only, unbuffered). The
+    :class:`typing.TextIO` and :class:`typing.BinaryIO` subclasses below capture
+    the distinctions between text vs. binary, which is pervasive in the
+    interface; however we currently do not offer a way to track the other
+    distinctions in the type system.
+
+    Design
+    ------
+    This base class intentionally duplicates the contents of the existing
+    :class:`typing.IO` generic base class by substituting the useless
+    :class:`typing.Generic` superclass of the latter with the useful
+    :class:`typing.Protocol` superclass of the former. Why? Because *no* stdlib
+    classes (excluding those defined by the :mod:`typing` module itself)
+    subclass :class:`typing.IO`. However, :class:`typing.IO` leverages neither
+    the :class:`abc.ABCMeta` metaclass *nor* the :class:`typing.Protocol`
+    superclass needed to support structural subtyping. Therefore, *no* stdlib
+    objects (including those returned by the :func:`open` builtin) satisfy
+    either :class:`typing.IO` itself or any subclasses of :class:`typing.IO`
+    (e.g., :class:`typing.BinaryIO`, :class:`typing.TextIO`). Therefore,
+    :class:`typing.IO` and all subclasses thereof are functionally useless for
+    all practical intents. The conventional excuse `given by Python maintainers
+    to justify this abhorrent nonsensicality is as follows <typeshed_>`__:
+
+        There are a lot of "file-like" classes, and the typing IO classes are
+        meant as "protocols" for general files, but they cannot actually be
+        protocols because the file protocol isn't very well defined—there are
+        lots of methods that exist on some but not all filelike classes.
+
+    Like most :mod:`typing`-oriented confabulation, that, of course, is
+    bollocks. Refactoring the family of :mod:`typing` IO classes from inveterate
+    generics into pragmatic protocols is both technically trivial and
+    semantically useful, because that is exactly what :mod:`beartype` does. It
+    works. It necessitates modifying three lines of existing code. It preserves
+    backward compatibility. In short, it should have been done a decade ago. If
+    the file protocol "isn't very well defined," the solution is to define that
+    protocol with a rigorous type hierarchy satisfying all possible edge cases.
+    The solution is *not* to pretend that no solutions exist, that the existing
+    non-solution suffices, and instead do nothing. Welcome to :mod:`typing`,
+    where no one cares that nothing works as advertised (or at all)... *and no
+    one ever will.*
+
+    .. _typeshed:
+       https://github.com/python/typeshed/issues/3225#issuecomment-529277448
+    '''
+
+    @property
+    @abstractmethod
+    def mode(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def closed(self) -> bool:
+        pass
+
 # ....................{ PROTOCOLS ~ subclass : binary      }....................
+# Note that the "BinaryIO" protocol is intentionally defined *BEFORE* the
+# "TextIO" protocol, whose annotations reference the "BinaryIO" protocol and
+# *MUST* thus be defined last.
+
 class _BinaryIOMeta(type):
     '''
     :pep:`3119`-compliant **binary IO pseudo-protocol metaclass** (i.e.,
@@ -200,21 +252,26 @@ class _BinaryIOMeta(type):
         )
 
 
+    @callable_cached
     def __subclasscheck__(cls: 'BinaryIO', subclass: type) -> bool:  # type: ignore[misc]
         '''
         :data:`True` only if the passed arbitrary class is a
         :pep:`484`-compliant generic subclassing the standard
         :class:`typing.BinaryIO` generic.
+
+        This dunder method is memoized for efficiency.
         '''
 
-        # If this other type is *NOT* a type, raise the standard "TypeError"
+        # ....................{ PREAMBLE                   }....................
+        # If this passed type is *NOT* a type, raise the standard "TypeError"
         # exception expected to be raised by the issubclass() builtin in this
         # common edge case. To do so trivially, we intentionally masquerade as
         # the root "object" superclass here. Weird Python is worky Python.
         issubclass(subclass, object)  # type: ignore[arg-type]
-        # Else, this other type is a type.
+        # Else, this passed type is a type.
 
-        # If this other type is either the standard PEP-noncompliant
+        # ....................{ NON-PEP                    }....................
+        # If this passed type is either the standard PEP-noncompliant
         # "io.FileIO" type *OR* a subclass of that type, immediately return
         # true. Ideally, "io.FileIO" would be a pure-Python type trivially
         # satisfying the "IO" protocol. Instead, "io.FileIO" is a C-based type
@@ -244,30 +301,38 @@ class _BinaryIOMeta(type):
         # do actually define the "name" property. We don't make the rules. UGH!
         if issubclass(subclass, io_FileIO):
             return True
-        # Else, this other type is neither the standard PEP-noncompliant
+        # Else, this passed type is neither the standard PEP-noncompliant
         # "io.FileIO" type *NOR* a subclass of that type.
 
-        #FIXME: *UGH*. The standard "typing.Protocol" implementation prohibits
-        #issubclass() checks against protocols defining one or more non-method
-        #member attributes, which "IO" does. A "simple" (air quotes are doing
-        #hard work here) solution could be to:
-        #* Define a new even higher-level "IOMemberless" protocol superclass of
-        #  our existing "IO" protocol superclass. Shift *ALL*...
-        #
-        #*HMM*. Or, maybe we could just generalize our non-standard
-        #"beartype.typing.Protocol" implementation to support that? No idea why
-        #"typing.Protocol" prohibits that to begin with, honestly. *sigh*
+        # ....................{ PEP 484                    }....................
+        # If this passed type defines all methods required by the PEP
+        # 544-compliant beartype-specific "IO" protocol, this passed type *COULD*
+        # satisfy the "BinaryIO" protocol. In this case...
+        if issubclass(subclass, _IOMethodsOnly):  # type: ignore[misc]
+            #FIXME: *UGH*. The standard "typing.Protocol" implementation prohibits
+            #issubclass() checks against protocols defining one or more non-method
+            #member attributes, which "IO" does. A "simple" (air quotes are doing
+            #hard work here) solution could be to:
+            #* Define a new even higher-level "IOMemberless" protocol superclass of
+            #  our existing "IO" protocol superclass. Shift *ALL*...
+            #* Intersect...
+            pass
 
-        # Return true only if either...
-        return (
-            (
-                # This other type satisfies the PEP 544-compliant
-                # beartype-specific "IO" protocol but *NOT* the PEP
-                # 544-compliant beartype-specific "TextIO" protocol...
-                issubclass(subclass, IO) and not  # type: ignore[misc]
-                issubclass(subclass, TextIO)  # type: ignore[misc]
-            )
-        )
+            #FIXME: Uncomment us up, please. *sigh*
+            # # Dictionary mapping from the names of all non-method attributes of
+            # # the passed type to the values of those attributes
+            # cls_nonmethods_name_to_value = (
+            #     get_object_nonmethods_name_to_value(
+            #         obj=cls, obj_dir=cls_attr_names))
+            #
+            # # Set of the names of all methods bound to this class.
+            # cls_method_names = cls_methods_name_to_method.keys()
+        # Else, this passed type either does *NOT* define all methods required by
+        # the PEP 544-compliant beartype-specific "IO" protocol and thus
+        # *CANNOT* satisfy the "BinaryIO" protocol.
+
+        # Return false as a fallback.
+        return False
 
 
 class BinaryIO(object, metaclass=_BinaryIOMeta):
@@ -337,9 +402,20 @@ class TextIO(IO[str], Protocol):
 
     * A type hint matching file handles opened in text rather than binary mode.
     * A typed version of the return of the :func:`open` builtin in text mode.
-    '''
 
-    __slots__: tuple = ()
+    Caveats
+    -------
+    **This protocol is unsuitable for passing as the second parameter to the**
+    :func:`issubclass` **builtin.** Moreover, the uniquely subclass-specific
+    attributes required by this protocol subclass are *all* non-method
+    attributes. Whereas the :func:`issubclass`-friendly :class:`_IOMethodsOnly`
+    superclass of the :func:`issubclass`-hostile :class:`.IO` superclass could
+    be defined, *no* similar :func:`issubclass`-friendly ``_TextIOMethodsOnly``
+    superclass of this :func:`issubclass`-hostile protocol can be defined. That
+    superclass would be empty and thus effectively useless. Ergo, the *only*
+    means of detecting whether a given type satisfies this protocol is to
+    manually introspect the non-method attributes of that type. Python: "Ugh."
+    '''
 
     @property
     @abstractmethod
@@ -364,10 +440,6 @@ class TextIO(IO[str], Protocol):
     @property
     @abstractmethod
     def newlines(self) -> Any:
-        pass
-
-    @abstractmethod
-    def __enter__(self) -> 'TextIO':  # pyright: ignore
         pass
 
 # ....................{ MAPPINGS                           }....................
@@ -416,4 +488,24 @@ into immutability by instantiating the :mod:`beartype`-specific type
 Because external callables (e.g., the
 :func:`beartype._check.convert._reduce._pep.redpep544.reduce_hint_pep484_generic_io_to_pep544_protocol`)
 efficiently memoize themselves by caching into this dictionary. Just accept it.
+'''
+
+# ....................{ PRIVATE ~ sets                     }....................
+_IO_NONMETHOD_ATTR_NAMES = frozenset(('mode', 'name', 'closed',))
+'''
+Frozen set of the names of all non-method attributes required by the
+:class:`.IO` protocol.
+'''
+
+
+_TEXTIO_NONMETHOD_ATTR_NAMES = frozenset((
+    'buffer',
+    'encoding',
+    'errors',
+    'line_buffering',
+    'newlines',
+))
+'''
+Frozen set of the names of all non-method attributes (which, sadly, is literally
+*all* of them) required by the :class:`.TextIO` protocol.
 '''

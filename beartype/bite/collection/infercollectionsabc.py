@@ -56,19 +56,17 @@ protocols).
 #That's it. That's the entire solution. Ridiculous, huh? Genius is genius.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    TYPE_CHECKING,
-    Annotated,
-    Dict,
-    Optional,
-    Set,
-)
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import FrozenSetStrs
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.utilobjattr import get_object_methods_name_to_value_explicit
+from beartype._util.utilobjattr import get_object_methods_name_to_value
 from collections.abc import (
     Collection as CollectionABC,
+)
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Optional,
 )
 
 # ....................{ INFERERS                           }....................
@@ -307,7 +305,7 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     # ....................{ LOCALS                         }....................
     # Dictionary mapping from the names of all methods of the passed class to
     # those methods.
-    cls_methods_name_to_method = get_object_methods_name_to_value_explicit(
+    cls_methods_name_to_method = get_object_methods_name_to_value(
         obj=cls, obj_dir=cls_attr_names)
 
     # Set of the names of all methods bound to this class.
@@ -407,7 +405,7 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     return node_curr.hint_factory
 
 # ....................{ PRIVATE ~ hints                    }....................
-_FiniteStateMachine = Dict[FrozenSetStrs, '_FiniteStateMachineNode']
+_FiniteStateMachine = dict[FrozenSetStrs, '_FiniteStateMachineNode']
 '''
 PEP-compliant type hint matching a :mod:`collections.abc` **fine state machine
 (FSM)** as a dictionary whose:
@@ -527,7 +525,7 @@ class _FiniteStateMachineNode(object):
 
         # Frozen set of the names of all transition methods, initialized to the
         # empty set.
-        nodes_next_method_names: Set[str] = set()
+        nodes_next_method_names: set[str] = set()
 
         # For the frozen set of all method names *AND* FSM nodes to which those
         # methods transition...
@@ -720,7 +718,7 @@ def get_finite_state_machine() -> _FiniteStateMachineNode:
                             '__xor__',
                             'isdisjoint',
                         )): _FiniteStateMachineNode(
-                            hint_factory=Set,
+                            hint_factory=set,
                             nodes_next={
                                 # "collections.abc.MutableSet" FSM.
                                 frozenset((

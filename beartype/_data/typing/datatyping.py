@@ -403,7 +403,7 @@ GetObjectAttrsDir = list[str] | None
 '''
 PEP-compliant type hint matching the ``obj_dir`` parameter accepted by all
 **object attribute getters** (e.g.,
-:func:`beartype._util.utilobject.get_object_attrs_name_to_value_explicit`).
+:func:`beartype._util.utilobject.get_object_attrs_name_to_value`).
 '''
 
 
@@ -411,7 +411,7 @@ GetObjectAttrsPredicate = Callable[[str, object], bool] | None
 '''
 PEP-compliant type hint matching the ``predicate`` parameter accepted by all
 **object attribute getters** (e.g.,
-:func:`beartype._util.utilobject.get_object_attrs_name_to_value_explicit`).
+:func:`beartype._util.utilobject.get_object_attrs_name_to_value`).
 '''
 
 # ....................{ PATH                               }....................
@@ -426,7 +426,15 @@ test-specific :mod:`beartype_test._util.command.pytcmdrun` submodule).
 # ....................{ SET                                }....................
 SetStrs = set[str]
 '''
-PEP-compliant type hint matching *any* mutable set of zero or more strings.
+:pep:`585`-compliant type hint matching *any* builtin set of zero or more
+strings.
+'''
+
+# ....................{ SET ~ abstract                     }....................
+AbstractSetTypes = Set[type]
+'''
+:pep:`585`-compliant type hint matching *any* abstract set of zero or more
+types.
 '''
 
 # ....................{ SET ~ frozenset                    }....................
@@ -562,12 +570,6 @@ While ad-hoc, this data structure has proven useful throughout the codebase.
 '''
 
 # ....................{ TYPE                               }....................
-AbstractSetTypes = Set[type]
-'''
-:pep:`585`-compliant type hint matching a set of zero or more classes.
-'''
-
-
 IterableTypes = Iterable[type]
 '''
 PEP-compliant type hint matching an iterable of zero or more types.
