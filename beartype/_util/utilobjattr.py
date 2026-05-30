@@ -25,8 +25,7 @@ from inspect import getattr_static
 from typing import Optional
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test up the new "predicate_attr_names_*" parameters, please. *sigh*
-def get_object_attrs_name_to_value(
+def get_object_attr_name_to_value(
     # Mandatory parameters.
     obj: object,
 
@@ -162,10 +161,9 @@ def get_object_attrs_name_to_value(
           matches the passed predicate (in ascending lexicographic order of
           attribute name).
     '''
-    #FIXME: Refactor these assertions to also use "NoneTypeOr", please. *sigh*
-    assert obj_dir is None or isinstance(obj_dir, list), (
+    assert isinstance(obj_dir, NoneTypeOr[list]), (
         f'{repr(obj_dir)} neither list of strings nor "None".')
-    assert predicate is None or callable(predicate), (
+    assert isinstance(predicate, NoneTypeOr[Callable]), (
         f'{repr(predicate)} neither callable nor "None".')
     assert isinstance(predicate_attr_names_all, NoneTypeOr[frozenset]), (
         f'{repr(predicate_attr_names_all)} neither frozen set nor "None".')
@@ -275,13 +273,7 @@ def get_object_attrs_name_to_value(
     return attrs_name_to_value
 
 # ....................{ GETTERS ~ explicit : methods       }....................
-def get_object_methods_name_to_value(
-    # Mandatory parameters.
-    obj: object,
-
-    # Optional parameters.
-    obj_dir: Optional[ListStrs] = None,
-) -> DictStrToAny:
+def get_object_method_name_to_value(obj: object, **kwargs) -> DictStrToAny:
     '''
     Dictionary mapping from the name to **explicit value** (i.e., value
     retrieved *without* implicitly calling the :func:`property`-decorated method
@@ -292,8 +284,9 @@ def get_object_methods_name_to_value(
     ----------
     obj : object
         Object to be introspected.
-    obj_dir : Optional[List[str]]
-        See also the :func:`.get_object_attrs_name_to_value` getter.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.get_object_attr_name_to_value` getter underlying this getter.
 
     Caveats
     -------
@@ -320,26 +313,20 @@ def get_object_methods_name_to_value(
 
     See Also
     --------
-    :func:`.get_object_attrs_name_to_value`
+    :func:`.get_object_attr_name_to_value`
         Further details.
     '''
 
     # This is why we predicate, folks.
-    return get_object_attrs_name_to_value(
+    return get_object_attr_name_to_value(
         obj=obj,
-        obj_dir=obj_dir,
         predicate=_is_object_attr_callable_not_object_slot_wrapper,
+        **kwargs
     )
 
 
 #FIXME: Unit test us up, please. *sigh*
-def get_object_nonmethods_name_to_value(
-    # Mandatory parameters.
-    obj: object,
-
-    # Optional parameters.
-    obj_dir: Optional[ListStrs] = None,
-) -> DictStrToAny:
+def get_object_nonmethod_name_to_value(obj: object, **kwargs) -> DictStrToAny:
     '''
     Dictionary mapping from the name to **explicit value** (i.e., value
     retrieved *without* implicitly calling the :func:`property`-decorated method
@@ -350,8 +337,9 @@ def get_object_nonmethods_name_to_value(
     ----------
     obj : object
         Object to be introspected.
-    obj_dir : Optional[List[str]]
-        See also the :func:`.get_object_attrs_name_to_value` getter.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.get_object_attr_name_to_value` getter underlying this getter.
 
     Caveats
     -------
@@ -370,20 +358,20 @@ def get_object_nonmethods_name_to_value(
 
     See Also
     --------
-    :func:`.get_object_attrs_name_to_value`
+    :func:`.get_object_attr_name_to_value`
         Further details.
     '''
 
     # Predicate and listen! @leycec back with a brand new QA mission! *barf*
-    return get_object_attrs_name_to_value(
-        obj=obj, obj_dir=obj_dir, predicate=_is_object_attr_uncallable)
+    return get_object_attr_name_to_value(
+        obj=obj, predicate=_is_object_attr_uncallable, **kwargs)
 
 # ....................{ PRIVATE ~ testers                  }....................
 def _is_object_attr_callable_not_object_slot_wrapper(
     attr_name: str, attr_value: object) -> bool:
     '''
     Predicate suitable for passing as the ``predicate`` parameter to the
-    :func:`.get_object_attrs_name_to_value` getter, returning
+    :func:`.get_object_attr_name_to_value` getter, returning
     :data:`True` only if the passed attribute value is both callable and *not*
     an **object slot wrapper** (i.e., low-level C-based callable bound to the
     root :class:`object` superclass, defining a trivial and thus mostly useless
@@ -422,7 +410,7 @@ def _is_object_attr_callable_not_object_slot_wrapper(
 def _is_object_attr_uncallable(attr_name: str, attr_value: object) -> bool:
     '''
     Predicate suitable for passing as the ``predicate`` parameter to the
-    :func:`.get_object_attrs_name_to_value` getter, returning
+    :func:`.get_object_attr_name_to_value` getter, returning
     :data:`True` only if the passed attribute value is uncallable.
     '''
 

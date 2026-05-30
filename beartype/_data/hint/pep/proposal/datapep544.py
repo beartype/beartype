@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from abc import abstractmethod
 from beartype._data.typing.datatyping import DictTypeToAny
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.utilobjattr import get_object_nonmethods_name_to_value
+from beartype._util.utilobjattr import get_object_nonmethod_name_to_value
 from io import (
     FileIO as io_FileIO,
 )

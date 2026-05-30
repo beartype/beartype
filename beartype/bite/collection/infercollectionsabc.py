@@ -59,7 +59,7 @@ protocols).
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import FrozenSetStrs
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.utilobjattr import get_object_methods_name_to_value
+from beartype._util.utilobjattr import get_object_method_name_to_value
 from collections.abc import (
     Collection as CollectionABC,
 )
@@ -273,19 +273,34 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
 
-    # ....................{ PREAMBLE                       }....................
-    # List of the names of all attributes bound to this class.
-    cls_attr_names = dir(cls)
-
+    # ....................{ LOCALS                         }....................
     # "collections.abc" finite state machine (FSM).
     _START_NODE = get_finite_state_machine()
 
+    # Dictionary mapping from the names of all methods of the passed class to
+    # those methods.
+    cls_methods_name_to_method = get_object_method_name_to_value(
+        obj=cls,
+        # Minimal frozen set of the names of any requisite methods (i.e.,
+        # minimum subset of methods that this class *MUST* define, required to
+        # transition from the start node to a transitional node).
+        #
+        # If the intersection of the set of the names of all attributes bound to
+        # this class with this is empty, this class fails to define *ANY*
+        # methods required by a "collections.abc" ABC and this getter reduces to
+        # a noop by efficiently returning the empty frozen dictionary singleton.
+        predicate_attr_names_any=_START_NODE.nodes_next_method_names,
+    )
+
     # If the intersection of the set of the names of all attributes bound to
-    # this class with the set of the names of all requisite methods (i.e.,
-    # methods required to transition from the start node to a transitional node)
-    # is the empty set, then this class fails to define *ANY* methods required
-    # by a "collections.abc" ABC. In this case, silently reduce to a noop.
-    if not (set(cls_attr_names) & _START_NODE.nodes_next_method_names):
+    # this class with the minimal frozen set of the names of any requisite
+    # methods passed above is empty, this class fails to define *ANY* methods
+    # required by a "collections.abc" ABC. In this case, reduce to a noop.
+    #
+    # Note that this is technically merely an optimization. The iteration below
+    # detects this edge case and return "None" as expected. Nonetheless, this
+    # optimization avoids an unnecessary O(n) search and is thus useful. Yo! \o/
+    if not cls_methods_name_to_method:
         return None
     # Else, this intersection is non-empty. In this case, this class defines at
     # least one attribute whose name is that of a method required by a
@@ -301,12 +316,6 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     #         __sized__: int
     #
     # Further detection is warranted to disambiguate this edge case.
-
-    # ....................{ LOCALS                         }....................
-    # Dictionary mapping from the names of all methods of the passed class to
-    # those methods.
-    cls_methods_name_to_method = get_object_methods_name_to_value(
-        obj=cls, obj_dir=cls_attr_names)
 
     # Set of the names of all methods bound to this class.
     cls_method_names = cls_methods_name_to_method.keys()
