@@ -12,13 +12,9 @@ documents for this project.
 
 <!-- Hide the title defined above in favour of the banner displayed below while
      still listing this title in the site-wide navigation block to the left.
-     Note that this started as an obscure MkDocs kludge first publicized here:
-     https://github.com/mkdocs/mkdocs/discussions/2431#discussioncomment-7750379
-     It works for Zensical, too, though!
   -->
 <style>
-  .md-typeset h1,
-  .md-content__button {
+  #welcome {
     display: none;
   }
 </style>
@@ -176,11 +172,18 @@ Beartype is [portably implemented](https://github.com/beartype/beartype/tree/mai
 
 Beartype [powers quality assurance across the Python ecosystem](https://github.com/beartype/beartype/network/dependents).
 
-# The Typing Tree
+<!--
+## The Typing Tree
 
+Welcome to the **Bearpedia** – your one-stop Encyclopedia Beartanica for all things @beartype. It's "[`typing`](https://docs.python.org/3/library/typing.html) or bust!" as you...
 
+**Bear with Us**
 
-# See Also
+<!-- This ... does not work. It only renders the *page's* headings as a TOC, *not* an expanded TOC for the entire *site* -->
+[TOC]
+  -->
+
+## See Also
 
 Beartype plugins adjacent to your interests include:
 
@@ -190,15 +193,15 @@ Beartype plugins adjacent to your interests include:
   - Terminal-based [IPython](https://ipython.org) REPLs.
 - [pytest-beartype](https://pypi.org/project/pytest-beartype), beartype's official [pytest](https://docs.pytest.org) plugin. Type-check packages *only* at [pytest](https://docs.pytest.org) test-time. Fatally obsessed with speed? Fatally accepting of critical failure? Can't bear to type-check at runtime? When your team lacks trust, your team chooses [pytest-beartype](https://pypi.org/project/pytest-beartype).
 
-# License
+## License
 
 Beartype is [open-source software released](https://github.com/beartype/beartype/blob/main/LICENSE) under the [permissive MIT license](https://opensource.org/licenses/MIT).
 
-# Security
+## Security
 
 Beartype encourages security researchers, institutes, and concerned netizens to [responsibly disclose security vulnerabilities as GitHub-originated Security Advisories](https://github.com/beartype/beartype/blob/main/.github/SECURITY.md) – published with full acknowledgement in the public [GitHub Advisory Database](https://github.com/advisories).
 
-# Funding
+## Funding
 
 Beartype is financed as a [purely volunteer open-source project via GitHub Sponsors](https://github.com/sponsors/leycec), to whom our burgeoning community is eternally indebted. Without your generosity, runtime type-checking would be a shadow of its current hulking bulk. We genuflect before your selfless charity, everyone!
 
@@ -206,7 +209,7 @@ Prior official funding sources (*yes, they once existed*) include:
 
 1.  A [Paul Allen Discovery Center award](https://www.alleninstitute.org/what-we-do/frontiers-group/news-press/press-resources/press-releases/paul-g-allen-frontiers-group-announces-allen-discovery-center-tufts-university) from the [Paul G. Allen Frontiers Group](https://www.alleninstitute.org/what-we-do/frontiers-group) under the administrative purview of the [Paul Allen Discovery Center](http://www.alleninstitute.org/what-we-do/frontiers-group/discovery-centers/allen-discovery-center-tufts-university) at [Tufts University](https://www.tufts.edu) over the period 2015—2018 preceding the untimely death of [Microsoft co-founder Paul Allen](https://en.wikipedia.org/wiki/Paul_Allen), during which beartype was maintained as the private `@type_check` decorator in the [Bioelectric Tissue Simulation Engine (BETSE)](https://github.com/betsee/betse). <sup>Phew!</sup>
 
-# Contributors
+## Contributors
 
 Beartype is the work product of volunteer enthusiasm, excess caffeine, and sleepless Wednesday evenings. These brave GitHubbers hurtled [the pull request (PR) gauntlet](https://github.com/beartype/beartype/pulls) so that you wouldn't have to:
 
@@ -214,7 +217,7 @@ Beartype is the work product of volunteer enthusiasm, excess caffeine, and sleep
 
 It's a heavy weight they bear. Applaud them as they buckle under the load!
 
-# History
+## History
 
 Beartype's histrionic past is checkered with drama, papered over in propaganda, and chock full of the stuff of stars. Gaze upon their glistening visage as they grow monotonically. But do the stars matter? Neither to mortal nor to bear. Yet, by starlight, we all howl to commit by dawn.
 
