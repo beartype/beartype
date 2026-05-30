@@ -126,6 +126,9 @@ footnotes = {}
 #     https://python-markdown.github.io/extensions/tables
 tables = {}
 
+# Enable permalinks that appear as paragraph marks next to headings
+toc = {permalink = true}
+
 # PyMdown Extensions. See also:
 #     https://facelessuser.github.io/pymdown-extensions
 
@@ -303,31 +306,45 @@ custom_dir = "overrides"
 # bloat. But now, it's a svelte 8k .svg. Maybe we should just copy it here?
 favicon = "https://raw.githubusercontent.com/beartype/beartype-assets/main/favicon.svg"
 
+# Theme-specific features.
+features = [
+  # . See:
+  #    https://zensical.org/docs/setup/navigation/#navigation-expansion-with-expansion
+  "navigation.expand",
+
+  # Displays content changes without page reloads (i.e., behaves like
+  # a single-page app). See:
+  #     https://zensical.org/docs/setup/navigation/#instant-navigation
+  "navigation.instant",
+  "navigation.instant.progress",
+
+  # Adds prev/next navigation links at the bottom of each page. See:
+  #     https://zensical.org/docs/setup/footer/#navigation.
+  "navigation.footer",
+
+  # Enable search highlighting, dynamically displaying all occurrences
+  # of the search term in each found document.
+  "search.highlight",
+
+  # Enable search suggestions, dynamically displaying the likeliest
+  # completion for the last word which can be accepted with the
+  # <Right> arrow key.
+  "search.suggest",
+
+  #FIXME: Seems useful, but let's research this a bit more, please.
+  # "navigation.tabs",
+]
+
+# Theme-specific color scheme(s). See also:
+#     https://zensical.org/docs/setup/colors/
 # See also:
 #   https://zensical.org/docs/setup/logo-and-icons/
 [project.theme.icon]
 repo = "fontawesome/brands/github"
 
-# Theme-specific features.
-[project.theme.features]
-# Enable search highlighting, dynamically displaying all occurrences of the
-# search term in each found document.
-search.highlight = true
-
-# Enable search suggestions, dynamically displaying the likeliest completion
-# for the last word which can be accepted with the <Right> arrow key.
-search.suggest = true
-
-#FIXME: Seems useful, but let's research this a bit more, please.
-# navigation.tabs = true
-# navigation.instant = true
-
-# Theme-specific color scheme(s). See also:
-#     https://zensical.org/docs/setup/colors/
-
 # Palette toggle for automatic mode.
 [[project.theme.palette]]
-    media = "(prefers-color-scheme)"
+media = "(prefers-color-scheme)"
 toggle = {icon = "lucide/sun-moon", name = "Switch to dark mode"}  # old icon: material/brightness-auto
 
 # Palette toggle for dark mode.
@@ -343,3 +360,9 @@ toggle = {icon = "lucide/moon", name = "Switch to light mode"}  # old icon: mate
 media = "(prefers-color-scheme: light)"
 scheme = "default"
 toggle = {icon = "lucide/sun", name = "Switch to system preference"}  # old icon: material/brightness-7
+
+[project.validation]
+# TODO: https://github.com/zensical/zensical/issues/700 - Snippets
+# [and other things] recognized as unresolved link reference. This is
+# necessary to build under --strict until that issue is fixed.
+unresolved_references = false
