@@ -4,6 +4,281 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                               }....................
+#FIXME: [PEP 484|585] Deeply type-check "TypeVar" objects in simple non-method
+#functions as a prerequisite to gradually expanding deep type-checking of
+#"TypeVar" objects to more complex typing use cases. However, even this
+#deceptively simplistic use case is surprisingly non-trivial. Through a series
+#of increasingly complex parametrized type hints, we will now show that
+#simplistic assumptions about dynamically generating code type-checking all
+#possible type variable contexts break down in common edge cases and thus fail
+#to suffice. We then show a seemingly general-purpose solution resilient against
+#these edge cases. Let's go! \o/
+#
+#Consider a union over:
+#* The trivial parametrized type hint "dict[T, T]" matching only a dictionary
+#  whose keys and values are the same types.
+#* The trivial parametrized type hint "dict[int, T]" matching a dictionary whose
+#  keys are integers and whose values are arbitrary objects of any arbitrary
+#  type.
+#
+#Notably, consider this annotated function, which then conditionally constrains
+#the return value by whichever of the above two type hints matched: e.g.,
+#
+#    def muh_func[T](muh_dict: Union[dict[T, T], dict[int, T]]) -> T: ...
+#
+#Seems simple, right? Yet it is not. The trivial approach to dynamically
+#generating code type-checking the type variable "T" above is to, inside the
+#single "if" statement testing the passed "muh_dict" parameter (in order):
+#1. Locally bind a new local variable "__beartype_T" in the body of muh_func()
+#   to the type of the first key of the passed "muh_dict" dictionary via a
+#   ":="-style assignment expression.
+#2. Type-check that the first value of the passed "muh_dict" dictionary is an
+#   instance of that local variable "__beartype_T".
+#
+#If one considers it, though, how *EXACTLY* will our make_check_expr() code
+#factory dynamically generate such fundamentally different type-checking code?
+#After all, a type variable "T" is a type variable "T". Our make_check_expr()
+#factory currently operates via a breadth-first search (BFS) in which the
+#type-checking code generated for each child hint is contextually generated
+#based *ONLY* on the parent hint(s) of that child hint. It's simply *NOT*
+#possible for sibling child hints to modify the type-checking code generated for
+#another sibling child hint. Not cleanly or sanely, anyway. Not that we can see.
+#
+#Actually, it *MIGHT* be feasible. "HintTreeCode" is, ultimately, just a list of
+#"HintDataCode" items. Those items have unique indices and are thus efficiently
+#indexable into that list *WITHOUT* requiring that the "HintTreeCode"
+#encapsulating child hints retain strong references to the "HintTreeCode"
+#encapsulating their parent hints. Ergo, it *SHOULD* be feasible for sibling
+#child hints to modify the type-checking code generated for another sibling
+#child hint. How? Consider the following workflow:
+#
+#* Define the following new instance variables of the "HintDataCode" dataclass:
+#      class HintDataCode(HintDataABC):
+#          if TYPE_CHECKING:
+#              hint_parent_index: Optional[int]
+#  *WAIT*. Definitely not that simple. If the parent hint of a child hint "T" is
+#  a union, we really do *NOT* want that child hint "T" to modify that parent
+#  hint. *HMMM*.
+#* The code generator for the first type variable "T" visited above modifies the
+#  "HintDataCode" object encapsulating its parent hint "dict[T, T]". Yeah... Not
+#  seeing it, actually. That might work for parent *CONTAINER* hints like "dict"
+#  but definitely falters for more abstract parent non-container hints like
+#  "Union". *HMMM*.
+#
+#I suspect this is an interesting case where a PEP 3119-compliant
+#__instancecheck__()-style metaclass-based solution would actually be *FAR*
+#easier to implement in the context of our BFS-based code-generating engine.
+#
+#First, consider this slightly more complicated type variable type-checking
+#scenario than above:
+#    def muh_func[S, T](
+#        muh_dict: Union[dict[S, dict[T, T]], dict[T, S]],
+#    ) -> T: ...
+#
+#Given that example, we can see that the first "S" trivially matching does *NOT*
+#guarantee the subsequent non-trivial sibling "T" constraint to trivially match.
+#Indeed, if the subsequent non-trivial sibling "T" constraint fails to match,
+#our metaclass __instancecheck__() solution needs to forcefully unbind *ALL*
+#previously bound type variables that depend upon that "T" constraint matching.
+#
+#Consider this metaclass and associated type instance:
+#
+#    class _HintPep484TypeVarFreeMeta(type):
+#        def __instancecheck__(cls: 'HintPep484TypeVarFree', obj: object) -> bool:
+#           if cls.type_bound is SENTINEL:
+#               cls.type_bound = type(obj)
+#               return True
+#           elif isinstance(obj, cls.type_bound):
+#               return True
+#
+#           for hint_parents_typevar in cls.hint_parents_typevars:
+#               hint_parents_typevar.unbind()
+#
+#           return False
+#
+#    class HintPep484TypeVarFree(object, metaclass=_HintPep484TypeVarFreeMeta)
+#        if TYPE_CHECKING:
+#            type_bound: type
+#            hint_parents_typevars: frozenset['HintPep484TypeVarFree']
+#
+#        def __init__(
+#            self,
+#            hint_parents_typevars: : frozenset['HintPep484TypeVarFree'],
+#        ) -> None:
+#            self.hint_parents_typevars = hint_parents_typevars
+#            self.unbind_type()
+#
+#        def unbind_type(self) -> None:
+#            self.type_bound = SENTINEL
+#
+#Brilliant, huh? Trivial and capably solves all possible issues, really. The
+#idea is as follows:
+#
+#* First, we introduce the idea of a "free" type variable (i.e., a type variable
+#  *NOT* assigned a static type at @beartype decoration time). The type
+#  variables parametrizing generics subscripted by static types (e.g.,
+#  "MuhGeneric[int]") are a common example of non-free type variables.
+#* Our dynamic code generator accumulates the set of all free type variables
+#  required to type-check any given parameter or return via a new
+#  "HintTreeCode.typevar_free_names" instance variable. Initally, we just
+#  consider type variables. Tuple type variables and so on are *WAAAY* out of
+#  scope for an initial implementation. This is hard enough, bear people!
+#* Our type variable reducer stops unconditionally ignoring free type variables,
+#  obviously. Even bound and constrained type variables now need to be handled
+#  differently. Previously, we just unconditionally reduced both bound and
+#  constrained type variables to those bounds and constraints. Now, we need to
+#  stop performing that reduction. Bounds and constraints should be handled when
+#  generating code type-checking a type variable. For now, I suppose we could
+#  temporarily leave these reductions as is. One thing at a time, right? *shrug*
+#* Define a new "HintSane.
+#* A new code generator for type variables mapped to "HintSignTypeVar" needs to
+#  be defined. In this generator:
+#  * Assign the passed type variable the name of a new local variable to be
+#    locally defined in the body of the current type-checking wrapper function.
+#    This name should be suffixed by an integer one greater than the length of
+#    "HintTreeCode.typevar_free_names" for uniqueness: e.g.,
+#        typevar_free_name = (
+#            f'__beartype_typevar_free_{len(hint_tree.typevar_free_names)}')
+#  * Add this "typevar_free_name" to the "hint_tree.typevar_free_names" set:
+#        hint_tree.typevar_free_names.add(typevar_free_name)
+#* Our higher-level code generator above the make_check_expr() level (uh,
+#  whatever *THAT* is -- maybe we don't even have such a higher-level code
+#  factory and now need one) then needs to generate code locally instantiating
+#  one new "HintPep484TypeVarFree" object for each item of the
+#  "hint_tree.typevar_free_names" set, obviously locally assigned to that name:
+#      code_typevar_free_init = ''
+#      for typevar_free_name in hint_tree.typevar_free_names:
+#          code_typevar_free_init += f'''
+#   {typevar_free_name} = HintPep484TypeVarFree()'''
+#* Obviously pass "HintPep484TypeVarFree" as a new hidden parameter to each
+#  type-checking wrapper function *ONLY* if the "hint_tree.typevar_free_names"
+#  set is non-empty.
+#FIXME: *WAIT*. The above approach is demonstrably awesome, but (A) slow at
+#runtime because all this object instantiation and method calls ain't free and
+#(B) just overly complicated, frankly. The real issue is how to decide the
+#HintPep484TypeVarFree.__init__(hint_parents_typevars) parameter at
+#"HintPep484TypeVarFree" instantiation time in the start of the body of each
+#type-checking wrapper function. That seems... super non-trivial, albeit
+#technically feasible.
+#
+#Instead, let's reconsider the trivial approach of dynamically generating code
+#type-checking the type variable "T" above. Inside the single "if" statement
+#testing the passed "muh_dict" parameter (in order):
+#1. Locally bind a new local variable "__beartype_T" in the body of muh_func()
+#   to the type of the first key of the passed "muh_dict" dictionary via a
+#   ":="-style assignment expression.
+#2. Type-check that the first value of the passed "muh_dict" dictionary is an
+#   instance of that local variable "__beartype_T".
+#
+#If we can get that worky, we simply don't need to fiddle about with object
+#instantiation issues like above. Crude ":="-style assignment expressions should
+#dynamically bind everything as expected at runtime. Thanks, CPython!
+#
+#The looming issue then is how to negotiate communication between sibling child
+#hints. "I'm the first type variable T!" "No, I am!" The solution appears to lie
+#in the HintTreeCode.enqueue_hint_child_sane() method. This method is the glue
+#between parent and child hints. In theory, communication can happen here.
+#Consider:
+#
+#* Refactor "HintDataCode" as follows:
+#      class HintDataCode(HintDataABC):
+#          if TYPE_CHECKING:
+#              hint_childs_typevar_free: SetTypeVars
+#
+#              #FIXME: *WAIT*. Might not even need this. *shrug*
+#              hint_index: int
+#              hint_parent_index: Optional[int]
+#* Refactor "HintTreeCode" as follows:
+#      class HintTreeCode(HintTreeABC):
+#          if TYPE_CHECKING:
+#              hint_subtree_typevars_free: SetTypeVars
+#
+#          def enqueue_hint_child_sane(...) -> ...:
+#              ...
+#              hint_curr = self.hint_curr
+#
+#              # Fairly clever stuff here. If this current hint is a union, we
+#              # prevent *ANY* children from dangerously modifying our own
+#              # "hint_subtree_typevars_free" set by quietly passing a shallow
+#              # copy of that set; else, we allow children to modify that set.
+#              hint_next_childs_typevar_free = (
+#                  set(hint_curr.hint_subtree_typevars_free)
+#                  if self.hint_curr.hint_sign is HintSignUnion else
+#                  hint_curr.hint_subtree_typevars_free
+#              )
+#
+#              hint_next.reinit(
+#                 ...
+#                 hint_subtree_typevars_free=hint_next_childs_typevar_free,
+#
+#                 #FIXME: *WAIT*. Might not even need this. *shrug*
+#                 hint_parent_index=hint_curr.hint_index,
+#                 ...
+#              )
+#
+#          #FIXME: *WAIT*. Might not even need this. *shrug*
+#          def get_hint_parent() -> Optional[HintCode]:
+#              hint_parent_index = self.hint_curr.hint_parent_index
+#              return (
+#                  _get_hint_data(hint_parent_index)
+#                  if hint_parent_index is not None else
+#                  None
+#              )
+#
+#          #FIXME: *WAIT*. Might not even need this. *shrug*
+#          def _get_hint_data(hint_index: int) -> HintCode:
+#              if hint_index > self.index_last:
+#                  raise SuperBadExceptionYo('Ugh!')
+#
+#              return self._hint_queue[hint_index]
+#
+#* Define a new type variable code generator that then inspects
+#  "hint_tree.hint_curr.hint_subtree_typevars_free". If:
+#  * That set does *NOT* yet contain the passed type variable:
+#    * Conditionally generate a ":="-style assignment expression locally binding
+#      a new local variable f"__beartype_typevar_free_{hint.name}" to the type
+#      of the current pith. Seems reasonable. *shrug*
+#    * Add the passed type variable to the
+#      "hint_tree.hint_curr.hint_subtree_typevars_free" set. Crucially, since all
+#      children share their parent's free type variable sets, this *IMPLICITLY
+#      ADDS THIS TYPE VARIABLE TO THE PARENT'S SAME SET AND THUS ALL CHILD HINTS
+#      OF THAT PARENT AND THUS ALL SIBLINGS OF THE CURRENT HINT.* In other
+#      words, this facilitates magical communication across the entire tree. The
+#      one exception, obviously, are unions -- which quietly break that
+#      connection in a safe way at union boundaries.
+#  * That set already contains the passed type variable, conditionally generate
+#    code type-checking that the current pith is an instance of that local
+#    variable f"__beartype_typevar_free_{hint.name}". Still seems reasonable.
+#
+#*NOICE*. Pretty sure the above means that we don't even need any of those
+#"hint_index" or "hint_parent_index" generalizations. Interestingly, they *DO*
+#appear to work. If we ever need hardcore cross-hint communication in the
+#future, that should be our goto. Still, we don't need any of that *NOW*. So,
+#dispense with all of that indexing stuff, please. We carry only what we need.
+#
+#Lastly, note that all of the above actually generically applies to *ALL*
+#possible type variable constraints validation at the level of a single
+#callable, including:
+#* Type variable constraints validation isolated to single type hints (e.g.,
+#  "muh_dict" above).
+#* Type variable constraints validation propagated across one or more
+#  parameters.
+#* Type variable constraints validation propagated across one or more
+#  parameters to a return.
+#
+#How? With clever (by which I mean "totally dumb") local variable nomenclature.
+#Clearly, type variables have names. Clearly, those names mean something.
+#Indeed, @beartype *ABSOLUTELY* can safely assume that there exists a one-to-one
+#mapping between a type variable and its name for the scope of a single
+#callable. In turn, this means that the local variable
+#f"__beartype_typevar_free_{hint.name}" uniquely provides the value of the type
+#bound to that type variable for the duration of the current type-checking
+#wrapper function call -- regardless of whether that type variable was assigned
+#to in the same "if" conditional checking the current parameter or not. *WOAH*.
+#
+#This is pretty ridiculous, honestly. I invented all of this accidentally on a
+#warm summer's Saturday evening rather than playing video games. WHATAMIDOING!?!
+
 #FIXME: [PEP 484|585] Deeply type-check TypeVar-parametrized methods of PEP 484-
 #and 585-compliant subscripted generics, please. Again, although we initially
 #though this would be *EXTREMELY* non-trivial, we now see that this is indeed
@@ -2485,49 +2760,6 @@
 #    func_data.config = config
 #
 #Since we pass "func_data" everywhere, we get configuration for free. Muhaha!
-
-#FIXME: Propagate generic subscriptions both to *AND* from pseudo-superclasses.
-#First, consider the simpler case of propagating a generic subscription to
-#pseudo-superclasses: e.g.,
-#    from typing import List
-#    class MuhList(List): pass
-#
-#    @beartype
-#    def muh_lister(muh_list: MuhList[int]) -> None: pass
-#
-#During internal type hint visitation, @beartype should propagate the "int"
-#child type hint subscripting the "MuhList" type hint up to the "List"
-#pseudo-superclass under Python >= 3.9. Under older Python versions, leaving
-#"List" unsubscripted appears to raise exceptions at parse time. *shrug*
-#
-#Of the two cases, this first case is *SIGNIFICANTLY* more important than the
-#second case documented below. Why? Because mypy (probably) supports this first
-#but *NOT* second case, for  which mypy explicitly raises an "error". Since
-#mypy has effectively defined the standard interpretation of type hints,
-#there's little profit in contravening that ad-hoc standard by supporting
-#something unsupported under mypy -- especially because doing so would then
-#expose end user codebases to mypy errors. Sure, that's "not our problem, man,"
-#but it kind of is, because community standards exist for a reason -- even if
-#they're ad-hoc community standards we politely disagree with.
-#
-#Nonetheless, here's the second case. Consider the reverse case of propagating
-#a generic subscription from a pseudo-superclass down to its unsubscripted
-#generic: e.g.,
-#    from typing import Generic, TypeVar
-#
-#    T = TypeVar('T')
-#    class MuhGeneric(Generic[T]):
-#        def __init__(self, muh_param: T): pass
-#
-#    @beartype
-#    def muh_genericizer(generic: MuhGeneric, T) -> None: pass
-#
-#During internal type hint visitation, @beartype should propagate the "T"
-#child type hint subscripting the "Generic" pseudo-superclass down to the
-#"MuhGeneric" type hint under Python >= 3.9 and possibly older versions. Doing
-#so would reduce DRY violations, because there's no tangible reason why users
-#should have to perpetually subscript "MuhGeneric" when its pseudo-superclass
-#already has been. Of course, mypy doesn't see it that way. *shrug*
 
 #FIXME: When time permits, we can augment the pretty lame approach by
 #publishing our own "BeartypeDict" class that supports efficient random access
