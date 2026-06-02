@@ -13,11 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from abc import abstractmethod
 from beartype._data.typing.datatyping import DictTypeToAny
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.utilobjattr import get_object_nonmethod_name_to_value
-from io import (
-    FileIO as io_FileIO,
-)
 from typing import (
     Any,
     AnyStr,
@@ -236,103 +231,79 @@ class _BinaryIOMeta(type):
 
     def __instancecheck__(cls: 'BinaryIO', obj: object) -> bool:  # type: ignore[misc]
         '''
-        :data:`True` only if the passed arbitrary object satisfies the
-        **binary IO pseudo-protocol** (i.e., satisfies the :pep:`544`-compliant
-        :class:`.IO` protocol but *not* the :pep:`544`-compliant
-        :class:`.TextIO` protocol).
+        :data:`True` only if the passed arbitrary object either:
+
+        * Is an instance of the standard :pep:`484`-compliant
+          :class:`typing.BinaryIO` type.
+        * Satisfies the **binary IO pseudo-protocol** (i.e., satisfies our
+          non-standard :pep:`544`-compliant :class:`.IO` protocol but *not* our
+          non-standard :pep:`544`-compliant :class:`.TextIO` protocol).
+
+        Parameters
+        ----------
+        obj: object
+            Object to be tested.
+
+        Returns
+        -------
+        bool
+            :data:`True` only if this object satisfies this pseudo-protocol.
         '''
 
-        # Return true only if...
+        # Return true only if either...
         return (
-            # This object satisfies the PEP 544-compliant beartype-specific "IO"
-            # protocol but *NOT* the PEP 544-compliant beartype-specific
-            # "TextIO" protocol.
-            isinstance(obj, IO) and not  # type: ignore[misc]
-            isinstance(obj, TextIO)  # type: ignore[misc]
+            # This object is an instance of the standard PEP 484-compliant
+            # "typing.BinaryIO" generic *OR*...
+            #
+            # Note that this test is significantly faster and thus intentionally
+            # performed first. It is what we say it is, @beartype! Celebrate.
+            isinstance(obj, typing_BinaryIO) or
+            # This object satisfies our non-standard PEP 544-compliant "IO"
+            # protocol but *NOT* our non-standard PEP 544-compliant "TextIO"
+            # protocol. See also their docstrings for further details.
+            (
+                isinstance(obj, IO) and not  # type: ignore[misc]
+                isinstance(obj, TextIO)  # type: ignore[misc]
+            )
         )
 
 
-    @callable_cached
     def __subclasscheck__(cls: 'BinaryIO', subclass: type) -> bool:  # type: ignore[misc]
         '''
-        :data:`True` only if the passed arbitrary class is a
-        :pep:`484`-compliant generic subclassing the standard
-        :class:`typing.BinaryIO` generic.
+        :data:`True` only if the passed arbitrary type either:
+
+        * Is a subclass of the standard :pep:`484`-compliant
+          :class:`typing.BinaryIO` type.
+        * Satisfying the **binary IO pseudo-protocol** (i.e., satisfies our
+          non-standard :pep:`544`-compliant :class:`.IO` protocol but *not* our
+          non-standard :pep:`544`-compliant :class:`.TextIO` protocol).
 
         This dunder method is memoized for efficiency.
+
+        Parameters
+        ----------
+        subclass: type
+            Type to be tested.
+
+        Returns
+        -------
+        bool
+            :data:`True` only if this object satisfies this pseudo-protocol.
+
+        Raises
+        ------
+        TypeError
+            If the passed type is *not* actually a type.
         '''
 
-        # ....................{ PREAMBLE                   }....................
-        # If this passed type is *NOT* a type, raise the standard "TypeError"
-        # exception expected to be raised by the issubclass() builtin in this
-        # common edge case. To do so trivially, we intentionally masquerade as
-        # the root "object" superclass here. Weird Python is worky Python.
-        issubclass(subclass, object)  # type: ignore[arg-type]
-        # Else, this passed type is a type.
-
-        # ....................{ NON-PEP                    }....................
-        # If this passed type is either the standard PEP-noncompliant
-        # "io.FileIO" type *OR* a subclass of that type, immediately return
-        # true. Ideally, "io.FileIO" would be a pure-Python type trivially
-        # satisfying the "IO" protocol. Instead, "io.FileIO" is a C-based type
-        # non-trivially violating the "IO" protocol. Why? Because "io.FileIO"
-        # defines:
-        # * *ALL* methods required by the "IO" protocol.
-        # * *ALL* properties required by the "IO" protocol, except the "name"
-        #   property, which bizarrely remains undefined on that type:
-        #       >>> from io import FileIO
-        #       >>> dir(FileIO)
-        #       ['__class__', '__del__', '__delattr__', '__dict__', '__dir__',
-        #       '__doc__', '__enter__', '__eq__', '__exit__', '__format__',
-        #       '__ge__', '__getattribute__', '__getstate__', '__gt__',
-        #       '__hash__', '__init__', '__init_subclass__', '__iter__',
-        #       '__le__', '__lt__', '__module__', '__ne__', '__new__',
-        #       '__next__', '__reduce__', '__reduce_ex__', '__repr__',
-        #       '__setattr__', '__sizeof__', '__str__', '__subclasshook__',
-        #       '_blksize', '_checkClosed', '_checkReadable', '_checkSeekable',
-        #       '_checkWritable', '_dealloc_warn', '_finalizing',
-        #       '_isatty_open_only', 'close', 'closed', 'closefd', 'fileno',
-        #       'flush', 'isatty', 'mode', 'read', 'readable', 'readall',
-        #       'readinto', 'readline', 'readlines', 'seek', 'seekable', 'tell',
-        #       'truncate', 'writable', 'write', 'writelines']
+        # Return true only if either:
+        # * This type is a subclass of the standard PEP 484-compliant
+        #   "typing.BinaryIO" generic *OR*...
+        # * This type defines *ALL* methods required by our non-standard PEP
+        #   544-compliant "IO" protocol.
         #
-        # Interestingly, this same issue does *NOT* apply to the sibling
-        # __instancecheck__() dunder method. Why? Because "io.FileIO" instances
-        # do actually define the "name" property. We don't make the rules. UGH!
-        if issubclass(subclass, io_FileIO):
-            return True
-        # Else, this passed type is neither the standard PEP-noncompliant
-        # "io.FileIO" type *NOR* a subclass of that type.
-
-        # ....................{ PEP 484                    }....................
-        # If this passed type defines all methods required by the PEP
-        # 544-compliant beartype-specific "IO" protocol, this passed type *COULD*
-        # satisfy the "BinaryIO" protocol. In this case...
-        if issubclass(subclass, _IOMethodsOnly):  # type: ignore[misc]
-            #FIXME: *UGH*. The standard "typing.Protocol" implementation prohibits
-            #issubclass() checks against protocols defining one or more non-method
-            #member attributes, which "IO" does. A "simple" (air quotes are doing
-            #hard work here) solution could be to:
-            #* Define a new even higher-level "IOMemberless" protocol superclass of
-            #  our existing "IO" protocol superclass. Shift *ALL*...
-            #* Intersect...
-            pass
-
-            #FIXME: Uncomment us up, please. *sigh*
-            # # Dictionary mapping from the names of all non-method attributes of
-            # # the passed type to the values of those attributes
-            # cls_nonmethods_name_to_value = (
-            #     get_object_nonmethods_name_to_value(
-            #         obj=cls, obj_dir=cls_attr_names))
-            #
-            # # Set of the names of all methods bound to this class.
-            # cls_method_names = cls_methods_name_to_method.keys()
-        # Else, this passed type either does *NOT* define all methods required by
-        # the PEP 544-compliant beartype-specific "IO" protocol and thus
-        # *CANNOT* satisfy the "BinaryIO" protocol.
-
-        # Return false as a fallback.
-        return False
+        # See the "_BINARY_IO_SUPERTYPES" definition below for further comments.
+        return issubclass(subclass, _BINARY_IO_SUPERTYPES)  # pyright: ignore
 
 
 class BinaryIO(object, metaclass=_BinaryIOMeta):
@@ -386,12 +357,8 @@ class BinaryIO(object, metaclass=_BinaryIOMeta):
     necessarily be opened in binary mode instead.
     '''
 
-    pass
 
 # ....................{ PROTOCOLS ~ subclass : text        }....................
-# Note that PEP 544 explicitly requires *ALL* protocols (including protocols
-# subclassing protocols) to explicitly subclass the "Protocol" superclass, in
-# violation of both sanity and usability. (Thanks, guys.)
 class TextIO(IO[str], Protocol):
     '''
     :pep:`544`-compliant **text IO protocol** (i.e., :mod:`beartype-specific
@@ -490,22 +457,39 @@ Because external callables (e.g., the
 efficiently memoize themselves by caching into this dictionary. Just accept it.
 '''
 
-# ....................{ PRIVATE ~ sets                     }....................
-_IO_NONMETHOD_ATTR_NAMES = frozenset(('mode', 'name', 'closed',))
-'''
-Frozen set of the names of all non-method attributes required by the
-:class:`.IO` protocol.
-'''
+# ....................{ PUBLIC ~ monkey-patch              }....................
+#FIXME: Nice idea, but fundamentally destroys everything. *sigh*
+# Masquerade *ALL* of the non-standard protocols defined above as if they were
+# their corresponding standard "typing" generics, improving the readability of
+# type-checking violations involving these generics for end users. It's all for
+# you, lovely userbase!
+# for io_protocol in (IO, BinaryIO, TextIO):
+#     io_protocol.__module__ = 'typing'
 
+# ....................{ PRIVATE ~ constants                }....................
+# Any arbitrary type satisfies the binary IO pseudo-protocol if either...
+_BINARY_IO_SUPERTYPES = (
+    # That type is a subclass of the standard PEP 484-compliant
+    # "typing.BinaryIO" generic *OR*...
+    #
+    # Note that this test is significantly faster and thus intentionally
+    # performed first. It is what we say it is, @beartype! Celebrate.
+    typing_BinaryIO,
 
-_TEXTIO_NONMETHOD_ATTR_NAMES = frozenset((
-    'buffer',
-    'encoding',
-    'errors',
-    'line_buffering',
-    'newlines',
-))
+    # That type defines *ALL* methods required by our non-standard PEP
+    # 544-compliant "IO" protocol. Ideally, that type would also need to *NOT*
+    # define any methods required by our non-standard PEP 544-compliant "TextIO"
+    # protocol. Sadly, the standard PEP 484-compliant "typing.TextIO" generic
+    # defines *NO* methods. Ergo, there exists *NO* means of differentiating
+    # binary from text IO subclasses. From the class-oriented perspective, any
+    # type defining *ALL* methods required by our non-standard PEP 544-compliant
+    # "IO" protocol necessarily satisfies our non-standard PEP 544-compliant
+    # "BinaryIO" *AND* "TextIO" protocols as well. This core limitation imposed
+    # by the "typing.TextIO" API *CANNOT* be circumvented by beartype.
+    _IOMethodsOnly,
+)
 '''
-Frozen set of the names of all non-method attributes (which, sadly, is literally
-*all* of them) required by the :class:`.TextIO` protocol.
+**Binary IO superclass tuple union** (i.e., tuple passable as the second
+parameter to :func:`issubclass` builtin such that any subclass of any type in
+this tuple satisfies the binary IO pseudo-protocol).
 '''

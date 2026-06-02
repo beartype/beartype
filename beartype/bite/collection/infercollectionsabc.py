@@ -279,16 +279,17 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
 
     # Dictionary mapping from the names of all methods of the passed class to
     # those methods.
-    cls_methods_name_to_method = get_object_method_name_to_value(
+    cls_method_name_to_method = get_object_method_name_to_value(
         obj=cls,
         # Minimal frozen set of the names of any requisite methods (i.e.,
         # minimum subset of methods that this class *MUST* define, required to
         # transition from the start node to a transitional node).
         #
-        # If the intersection of the set of the names of all attributes bound to
-        # this class with this is empty, this class fails to define *ANY*
-        # methods required by a "collections.abc" ABC and this getter reduces to
-        # a noop by efficiently returning the empty frozen dictionary singleton.
+        # If the intersection of this set with the set of the names of all
+        # attributes bound to this class is empty, this class fails to define
+        # *ANY* methods required by a "collections.abc" ABC, in which case this
+        # getter reduces to a noop by efficiently returning the empty frozen
+        # dictionary singleton.
         predicate_attr_names_any=_START_NODE.nodes_next_method_names,
     )
 
@@ -300,7 +301,7 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     # Note that this is technically merely an optimization. The iteration below
     # detects this edge case and return "None" as expected. Nonetheless, this
     # optimization avoids an unnecessary O(n) search and is thus useful. Yo! \o/
-    if not cls_methods_name_to_method:
+    if not cls_method_name_to_method:
         return None
     # Else, this intersection is non-empty. In this case, this class defines at
     # least one attribute whose name is that of a method required by a
@@ -318,7 +319,7 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     # Further detection is warranted to disambiguate this edge case.
 
     # Set of the names of all methods bound to this class.
-    cls_method_names = cls_methods_name_to_method.keys()
+    cls_method_names = cls_method_name_to_method.keys()
 
     # Finite state machine (FSM) node currently visited by the search below.
     node_curr = _START_NODE

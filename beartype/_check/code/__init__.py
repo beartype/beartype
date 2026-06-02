@@ -278,6 +278,28 @@
 #
 #This is pretty ridiculous, honestly. I invented all of this accidentally on a
 #warm summer's Saturday evening rather than playing video games. WHATAMIDOING!?!
+#FIXME: Oh -- and there's an obvious possibility of backward compatibility
+#breakage here. Unlikely, but the unlikely has happened before. Consider
+#defining a new "BeartypeConf(is_pep484_typevar: bool = True)" option gating
+#this behaviour.
+#
+#Oh. Wait. Breakage is actually *GUARANTEED* at the moment. So, we should
+#definitely still do this -- but "is_pep484_typevar" needs to default to False
+#for the moment. Why? Because we currently don't deeply type-check everything,
+#which means we don't deeply visit all possible type variables during code
+#generation, which means unvisited type variables *WILL NOT BE ASSIGNED TO*.
+#Examples include:
+#* Type variables subscripting "Callable[...]" type hints.
+#* Type variables subscripting "Generator[...]" type hints.
+#
+#*HMM*. Wait. Isn't it fine if a type variable isn't visited? The above
+#algorithm appears to be implicitly resilient against that. The first visited
+#type variable following any unvisited type variable will simply be assigned to
+#(i.e., treated as if everything is fine). Seems okay to me.
+#
+#Let's go with "BeartypeConf(is_pep484_typevar: bool = True)" after all. Pretty
+#sure it's implicitly resilient against failure. We'll obviously want to test
+#that, of course. I'm weeping as I type this.
 
 #FIXME: [PEP 484|585] Deeply type-check TypeVar-parametrized methods of PEP 484-
 #and 585-compliant subscripted generics, please. Again, although we initially

@@ -328,7 +328,7 @@ def __getattr__(attr_name: str) -> object:
         attr_name == 'ByteString'
     ):
         # Import and return this deprecated type.
-        from collections.abc import ByteString
+        from collections.abc import ByteString  # pyright: ignore
         return ByteString
     # Else, either:
     # * The active Python interpreter targets Python >= 3.17, in which case the
