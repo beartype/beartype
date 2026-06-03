@@ -120,7 +120,7 @@
 #  "MuhGeneric[int]") are a common example of non-free type variables.
 #* Our dynamic code generator accumulates the set of all free type variables
 #  required to type-check any given parameter or return via a new
-#  "HintTreeCode.typevar_free_names" instance variable. Initally, we just
+#  "HintTreeCode.typevar_free_names" instance variable. Initially, we just
 #  consider type variables. Tuple type variables and so on are *WAAAY* out of
 #  scope for an initial implementation. This is hard enough, bear people!
 #* Our type variable reducer stops unconditionally ignoring free type variables,

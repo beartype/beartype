@@ -24,6 +24,120 @@ from collections.abc import Callable
 from inspect import getattr_static
 from typing import Optional
 
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please.
+def is_object_attr_names_all(
+    # Mandatory parameters.
+    obj: object,
+    attr_names_all: FrozenSetStrs,
+
+    # Optional parameters.
+    obj_dir: Optional[ListStrs] = None,
+) -> bool:
+    '''
+    :data:`True` only if the passed arbitrary object defines *all* attributes
+    whose names are in the passed frozen set.
+
+    Equivalently, this tester returns :data:`True` only if the intersection of
+    this passed set with a similar frozen set coerced from the passed
+    ``obj_dir`` parameter is exactly this passed set.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), as this tester efficiently reduces to a set
+    intersection one-liner.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be introspected.
+    attr_names_all : FrozenSetStrs
+        Maximal frozen set of the names of all **requisite attributes** (i.e.,
+        maximum subset of attributes that *must* be bound to this object).
+    obj_dir : Optional[list[str]], default: None
+        List of the names of all relevant attributes bound to this object to be
+        tested against *or* :data:`None`, in which case this list defaults to
+        the names of *all* attributes bound to this object by calling the
+        :func:`dir` builtin on this object. Defaults to :data:`None`. See also
+        :func:`.get_object_attr_name_to_value` for further details.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object defines *all* such attributes.
+    '''
+    assert isinstance(obj_dir, NoneTypeOr[list]), (
+        f'{repr(obj_dir)} neither list of strings nor "None".')
+    assert isinstance(attr_names_all, frozenset), (
+        f'{repr(attr_names_all)} not frozen set.')
+
+    # If the caller passed *NO* list of attribute names, default this to the
+    # list of *ALL* attribute names bound to this object.
+    if obj_dir is None:
+        obj_dir = dir(obj)
+    # Else, the caller passed a list of attribute names.
+
+    # Return true only if the intersection of the passed set of the names of all
+    # relevant attributes bound to this object with the set of the names of all
+    # attributes bound to this object is the former set.
+    return len(attr_names_all) == len(attr_names_all & frozenset(obj_dir))
+
+
+#FIXME: Unit test us up, please.
+def is_object_attr_names_any(
+    # Mandatory parameters.
+    obj: object,
+    attr_names_any: FrozenSetStrs,
+
+    # Optional parameters.
+    obj_dir: Optional[ListStrs] = None,
+) -> bool:
+    '''
+    :data:`True` only if the passed arbitrary object defines at least one
+    attribute whose name is in the passed frozen set.
+
+    Equivalently, this tester returns :data:`True` only if the intersection of
+    this passed set with a similar frozen set coerced from the passed
+    ``obj_dir`` parameter is non-empty.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), as this tester efficiently reduces to a set
+    intersection one-liner.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be introspected.
+    attr_names_any : FrozenSetStrs
+        Minimal frozen set of the names of any **requisite attributes** (i.e.,
+        minimum subset of attributes that *must* be bound to this object).
+    obj_dir : Optional[list[str]], default: None
+        List of the names of all relevant attributes bound to this object to be
+        tested against *or* :data:`None`, in which case this list defaults to
+        the names of *all* attributes bound to this object by calling the
+        :func:`dir` builtin on this object. Defaults to :data:`None`. See also
+        :func:`.get_object_attr_name_to_value` for further details.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object defines *any* such attribute.
+    '''
+    assert isinstance(obj_dir, NoneTypeOr[list]), (
+        f'{repr(obj_dir)} neither list of strings nor "None".')
+    assert isinstance(attr_names_any, frozenset), (
+        f'{repr(attr_names_any)} not frozen set.')
+
+    # If the caller passed *NO* list of attribute names, default this to the
+    # list of *ALL* attribute names bound to this object.
+    if obj_dir is None:
+        obj_dir = dir(obj)
+    # Else, the caller passed a list of attribute names.
+
+    # Return true only if the intersection of the passed set of the names of all
+    # relevant attributes bound to this object with the set of the names of all
+    # attributes bound to this object is non-empty.
+    return bool(attr_names_any & frozenset(obj_dir))
+
 # ....................{ GETTERS                            }....................
 def get_object_attr_name_to_value(
     # Mandatory parameters.
@@ -58,6 +172,11 @@ def get_object_attr_name_to_value(
     compare, this getter *never* raises unexpected exceptions. Unless properties
     are of interest, callers are strongly encouraged to call this getter rather
     than unsafe alternatives.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), as doing so would prohibit keyword
+    parameters and thus render calls to this getter largely unreadable.
+    Efficiency *is* important, but codebase maintainability even more so.
 
     Caveats
     -------
@@ -183,23 +302,23 @@ def get_object_attr_name_to_value(
             # The caller passed a maximal frozen set of the names of all
             # requisite attributes *AND*...
             predicate_attr_names_all is not None and
-            # The total number of attribute names in the intersection of the set
-            # of of the names of all requisite attributes with the set of the
-            # names of all attributes bound to this object is *NOT* the number
-            # of requisite attribute names, this object fails to define *ALL* of
-            # the requisite attributes.
-            len(predicate_attr_names_all & frozenset(obj_dir)) !=
-            len(predicate_attr_names_all)
+            # This object defines less than *ALL* of these attributes...
+            not is_object_attr_names_all(
+                obj=obj,
+                obj_dir=obj_dir,
+                attr_names_all=predicate_attr_names_all,
+            )
         # *OR*...
         ) or (
             # The caller passed a minimal frozen set of the names of any
             # requisite attributes *AND*...
             predicate_attr_names_any is not None and
-            # The total number of attribute names in the intersection of the set
-            # of of the names of all requisite attributes with the set of the
-            # names of all attributes bound to this object is empty, this object
-            # fails to define *ANY* of the requisite attributes.
-            not (predicate_attr_names_any & frozenset(obj_dir))
+            # This object defines *NONE* of these attributes...
+            not is_object_attr_names_any(
+                obj=obj,
+                obj_dir=obj_dir,
+                attr_names_any=predicate_attr_names_any,
+            )
         )
     ):
         # In either case, efficiently reduce to a noop by safely returning the

@@ -13,6 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from abc import abstractmethod
 from beartype._data.typing.datatyping import DictTypeToAny
+from beartype._util.utilobjattr import is_object_attr_names_all
+
 from typing import (
     Any,
     AnyStr,
@@ -296,14 +298,35 @@ class _BinaryIOMeta(type):
             If the passed type is *not* actually a type.
         '''
 
-        # Return true only if either:
-        # * This type is a subclass of the standard PEP 484-compliant
-        #   "typing.BinaryIO" generic *OR*...
-        # * This type defines *ALL* methods required by our non-standard PEP
-        #   544-compliant "IO" protocol.
+        # If this type is a subclass of the standard PEP 484-compliant
+        # "typing.BinaryIO" generic, return true immediately.
         #
-        # See the "_BINARY_IO_SUPERTYPES" definition below for further comments.
-        return issubclass(subclass, _BINARY_IO_SUPERTYPES)  # pyright: ignore
+        # Note that this test is significantly faster and thus intentionally
+        # performed first. It is what we say it is, @beartype! Celebrate.
+        if issubclass(subclass, typing_BinaryIO):
+            return True
+        # Else, this type is *NOT* a subclass of the standard PEP 484-compliant
+        # "typing.BinaryIO" generic.
+        #
+        # If this type defines all methods required by our non-standard PEP
+        # 544-compliant "IO" protocol, this type *MAY* satisfy our PEP
+        # 544-compliant "BinaryIO" protocol. In this case...
+        elif issubclass(subclass, _IOMethodsOnly):  # type: ignore[misc]
+            # Return either:
+            # * If this subclass defines *ALL* of non-method attributes required
+            #   by the standard PEP 484-compliant "TextIO" generic, false. Why?
+            #   A subclass that is semantically textual in nature cannot, by
+            #   definition, also be semantically binary in nature.
+            # * If this subclass defines less than *ALL* of those attributes,
+            #   true.
+            return not is_object_attr_names_all(
+                obj=subclass, attr_names_all=_TEXTIO_NONMETHOD_ATTR_NAMES)
+        # Else, this type fails to define all methods required by our
+        # non-standard PEP 544-compliant "IO" protocol and thus *CANNOT* satisfy
+        # our non-standard PEP 544-compliant "BinaryIO" protocol either.
+
+        # Return false as a fallback.
+        return False
 
 
 class BinaryIO(object, metaclass=_BinaryIOMeta):
@@ -457,39 +480,52 @@ Because external callables (e.g., the
 efficiently memoize themselves by caching into this dictionary. Just accept it.
 '''
 
-# ....................{ PUBLIC ~ monkey-patch              }....................
-#FIXME: Nice idea, but fundamentally destroys everything. *sigh*
-# Masquerade *ALL* of the non-standard protocols defined above as if they were
-# their corresponding standard "typing" generics, improving the readability of
-# type-checking violations involving these generics for end users. It's all for
-# you, lovely userbase!
-# for io_protocol in (IO, BinaryIO, TextIO):
-#     io_protocol.__module__ = 'typing'
-
-# ....................{ PRIVATE ~ constants                }....................
-# Any arbitrary type satisfies the binary IO pseudo-protocol if either...
-_BINARY_IO_SUPERTYPES = (
-    # That type is a subclass of the standard PEP 484-compliant
-    # "typing.BinaryIO" generic *OR*...
-    #
-    # Note that this test is significantly faster and thus intentionally
-    # performed first. It is what we say it is, @beartype! Celebrate.
-    typing_BinaryIO,
-
-    # That type defines *ALL* methods required by our non-standard PEP
-    # 544-compliant "IO" protocol. Ideally, that type would also need to *NOT*
-    # define any methods required by our non-standard PEP 544-compliant "TextIO"
-    # protocol. Sadly, the standard PEP 484-compliant "typing.TextIO" generic
-    # defines *NO* methods. Ergo, there exists *NO* means of differentiating
-    # binary from text IO subclasses. From the class-oriented perspective, any
-    # type defining *ALL* methods required by our non-standard PEP 544-compliant
-    # "IO" protocol necessarily satisfies our non-standard PEP 544-compliant
-    # "BinaryIO" *AND* "TextIO" protocols as well. This core limitation imposed
-    # by the "typing.TextIO" API *CANNOT* be circumvented by beartype.
-    _IOMethodsOnly,
-)
+# ....................{ PRIVATE ~ sets                     }....................
+_TEXTIO_NONMETHOD_ATTR_NAMES = frozenset((
+    'encoding',
+    'errors',
+    'line_buffering',
+    'newlines',
+))
 '''
-**Binary IO superclass tuple union** (i.e., tuple passable as the second
-parameter to :func:`issubclass` builtin such that any subclass of any type in
-this tuple satisfies the binary IO pseudo-protocol).
+Frozen set of the names of all non-method attributes (which, sadly, is literally
+*all* of them) required by the :class:`.TextIO` protocol.
+
+Caveats
+-------
+This set intentionally excludes the ``buffer`` non-method attribute required by
+the standard :pep:`484`-compliant :class:`typing.TextIO` generic and thus our .
+non-standard :pep:`544`-compliant :class:`.TextIO` protocol. Why? Because
+real-world standard types that otherwise satisfy this protocol (e.g.,
+:class:`io.StringIO`) fail to define this attribute as a class variable: e.g.,
+
+.. code-block:: pycon
+
+   # Prove that "io.StringIO" fails to define the "buffer" non-method attribute
+   # as either a class or instance variable.
+   >>> dir(StringIO)
+   dir(StringIO): ['__class__', '__del__', '__delattr__', '__dict__', '__dir__',
+   '__doc__', '__enter__', '__eq__', '__exit__', '__format__', '__ge__',
+   '__getattribute__', '__getstate__', '__gt__', '__hash__', '__init__',
+   '__init_subclass__', '__iter__', '__le__', '__lt__', '__module__', '__ne__',
+   '__new__', '__next__', '__reduce__', '__reduce_ex__', '__repr__',
+   '__setattr__', '__setstate__', '__sizeof__', '__str__', '__subclasshook__',
+   '_checkClosed', '_checkReadable', '_checkSeekable', '_checkWritable',
+   'close', 'closed', 'detach', 'encoding', 'errors', 'fileno', 'flush',
+   'getvalue', 'isatty', 'line_buffering', 'newlines', 'read', 'readable',
+   'readline', 'readlines', 'seek', 'seekable', 'tell', 'truncate', 'writable',
+   'write', 'writelines'] # <-- no "buffer", huh? le sigh
+   >>> StringIO().buffer
+   AttributeError: '_io.StringIO' object has no attribute 'buffer'
+   # ^--- still no "buffer", huh? more le sigh
+
+Including this attribute in this set would thus induce :mod:`beartype` to
+erroneously return false negatives for common use cases. Indeed, the standard
+:class:`io.TextIOBase` superclass of :class:`io.StringIO` explicitly documents
+that this attribute is only conditionally defined even as an instance variable:
+
+    buffer
+        The underlying binary buffer (a BufferedIOBase or RawIOBase instance)
+        that TextIOBase deals with. This is not part of the TextIOBase API and
+        may not exist in some implementations.
 '''
