@@ -312,15 +312,36 @@ class _BinaryIOMeta(type):
         # 544-compliant "IO" protocol, this type *MAY* satisfy our PEP
         # 544-compliant "BinaryIO" protocol. In this case...
         elif issubclass(subclass, _IOMethodsOnly):  # type: ignore[misc]
-            # Return either:
-            # * If this subclass defines *ALL* of non-method attributes required
-            #   by the standard PEP 484-compliant "TextIO" generic, false. Why?
-            #   A subclass that is semantically textual in nature cannot, by
-            #   definition, also be semantically binary in nature.
-            # * If this subclass defines less than *ALL* of those attributes,
-            #   true.
-            return not is_object_attr_names_all(
-                obj=subclass, attr_names_all=_TEXTIO_NONMETHOD_ATTR_NAMES)
+            # List of the names of *ALL* attributes bound to this type.
+            subclass_dir = dir(subclass)
+
+            # Return true only if...
+            return (
+                # This type define *ALL* of the properties required by the
+                # standard PEP 484-compliant "IO" generic superclass *AND*...
+                is_object_attr_names_all(
+                    obj=subclass,
+                    obj_dir=subclass_dir,
+                    attr_names_all=_IO_PROPERTY_NAMES,
+                ) and
+                # This type does *NOT* define *ALL* of the properties required
+                # by the standard PEP 484-compliant "TextIO" generic. Why?
+                # Suppose this type defines *ALL* of these properties. Then this
+                # type would necessarily be semantically textual in nature and
+                # thus *NOT*, by definition, semantically binary in nature.
+                # Conversely, if this type defines less than *ALL* of these
+                # properties, this type *CANNOT* be semantically textual in
+                # nature. However, by the prior check, this type defines *ALL*
+                # of the properties required by the standard PEP 484-compliant
+                # "IO" generic and is thus a valid "IO" type, which *MUST* be
+                # either semantically textual or binary in nature. It follows
+                # that, since this type is *NOT* textual, it *MUST* be binary.
+                not is_object_attr_names_all(
+                    obj=subclass,
+                    obj_dir=subclass_dir,
+                    attr_names_all=_TEXTIO_PROPERTY_NAMES,
+                )
+            )
         # Else, this type fails to define all methods required by our
         # non-standard PEP 544-compliant "IO" protocol and thus *CANNOT* satisfy
         # our non-standard PEP 544-compliant "BinaryIO" protocol either.
@@ -439,28 +460,28 @@ HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL: DictTypeToAny = {
     typing_BinaryIO:  BinaryIO,
     typing_TextIO:    TextIO,
 
-    # Subscripted mappings, leveraging the useful observation that these
-    # classes all self-cache by design: e.g.,
+    # Subscripted mappings, leveraging the useful observation that these types
+    # all self-cache by design: e.g.,
     #     >>> import typing
     #     >>> typing.IO[str] is typing.IO[str]
     #     True
     #
-    # Note that we intentionally map:
-    # * "IO[Any]" to the unsubscripted "IO" rather than the
-    #   subscripted "IO[Any]". Although the two are semantically
-    #   equivalent, the latter is marginally more space- and time-efficient
-    #   to generate code for and thus preferable.
-    # * "IO[bytes]" to the unsubscripted "_Pep544Binary" rather than the
-    #   subscripted "IO[bytes]". Why? Because the former applies
-    #   meaningful runtime constraints, whereas the latter does *NOT*.
-    # * "IO[str]" to the unsubscripted "_Pep544Text" rather than the
-    #   subscripted "IO[str]" -- for the same reason.
-    #
-    # Note that we intentionally avoid mapping parametrizations of "IO" by
-    # type variables. Since there exist a countably infinite number of
-    # such parametrizations, the parent
-    # reduce_hint_pep484_generic_io_to_pep544_protocol() function calling
-    # this function handles such parametrizations mostly intelligently.
+    # Note that:
+    # * We intentionally map:
+    #   * "IO[Any]" to our unsubscripted "IO" protocol rather than a subscripted
+    #     "IO[Any]" protocol. Although the two are semantically equivalent, the
+    #     latter is marginally more space- and time-efficient to generate code
+    #     for and thus preferable.
+    #   * "IO[bytes]" to our unsubscripted "BinaryIO" protocol rather than our
+    #     subscripted "IO[bytes]" protocol. Why? Because the former applies
+    #     meaningful runtime constraints, whereas the latter does *NOT*.
+    #   * "IO[str]" to our unsubscripted "TextIO" protocol rather than our
+    #     subscripted "IO[str]" protocol (for the exact same reason).
+    # * We intentionally avoid attempting to map parametrizations of "IO" by
+    #   arbitrary other type variables. Since there exist a countably infinite
+    #   number of such parametrizations, the parent
+    #   reduce_hint_pep484_generic_io_to_pep544_protocol() function calling this
+    #   function handles such parametrizations mostly intelligently.
     typing_IO[Any]:   IO,
     typing_IO[bytes]: BinaryIO,
     typing_IO[str]:   TextIO,
@@ -481,28 +502,68 @@ efficiently memoize themselves by caching into this dictionary. Just accept it.
 '''
 
 # ....................{ PRIVATE ~ sets                     }....................
-_TEXTIO_NONMETHOD_ATTR_NAMES = frozenset((
+_IO_PROPERTY_NAMES = frozenset(('mode', 'closed',))
+'''
+Frozen set of the names of all properties directly required by our non-standard
+:pep:`544`-compliant :class:`.IO` protocol.
+
+Caveats
+-------
+This set intentionally excludes the ``name`` instance variable required by
+the standard :pep:`484`-compliant :class:`typing.IO` generic and thus our
+non-standard :pep:`544`-compliant :class:`.IO` protocol. Why? Because
+real-world standard types that otherwise satisfy this protocol (e.g.,
+:class:`io.FileIO`) fail to define this variable as a class variable: e.g.,
+
+.. code-block:: pycon
+
+   # Prove that "io.FileIO" fails to define the "name" non-method attribute as a
+   # class variable.
+   >>> from io import FileIO
+   >>> dir(FileIO)
+   ['__class__', '__del__', '__delattr__', '__dict__', '__dir__', '__doc__',
+   '__enter__', '__eq__', '__exit__', '__format__', '__ge__',
+   '__getattribute__', '__getstate__', '__gt__', '__hash__', '__init__',
+   '__init_subclass__', '__iter__', '__le__', '__lt__', '__module__', '__ne__',
+   '__new__', '__next__', '__reduce__', '__reduce_ex__', '__repr__',
+   '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '_blksize',
+   '_checkClosed', '_checkReadable', '_checkSeekable', '_checkWritable',
+   '_dealloc_warn', '_finalizing', '_isatty_open_only', 'close', 'closed',
+   'closefd', 'fileno', 'flush', 'isatty', 'mode', 'read', 'readable',
+   'readall', 'readinto', 'readline', 'readlines', 'seek', 'seekable', 'tell',
+   'truncate', 'writable', 'write', 'writelines']  # <-- no "name"!? wtf python
+   >>> FileIO('/dev/null').name
+   '/dev/null'  # <-- welp alrighty then
+
+Including this variable in this set would thus induce :mod:`beartype` to
+erroneously return false negatives for common use cases.
+'''
+
+# ....................{ PRIVATE ~ sets : textio            }....................
+_TEXTIO_PROPERTY_NAMES = frozenset((
     'encoding',
     'errors',
     'line_buffering',
     'newlines',
 ))
 '''
-Frozen set of the names of all non-method attributes (which, sadly, is literally
-*all* of them) required by the :class:`.TextIO` protocol.
+Frozen set of the names of all properties (which, sadly, is literally *all* of
+them) directly required by our non-standard :pep:`544`-compliant
+:class:`.TextIO` protocol.
 
 Caveats
 -------
-This set intentionally excludes the ``buffer`` non-method attribute required by
-the standard :pep:`484`-compliant :class:`typing.TextIO` generic and thus our .
+This set intentionally excludes the ``buffer`` instance variable required by
+the standard :pep:`484`-compliant :class:`typing.TextIO` generic and thus our
 non-standard :pep:`544`-compliant :class:`.TextIO` protocol. Why? Because
 real-world standard types that otherwise satisfy this protocol (e.g.,
-:class:`io.StringIO`) fail to define this attribute as a class variable: e.g.,
+:class:`io.StringIO`) fail to define this variable as a class variable: e.g.,
 
 .. code-block:: pycon
 
    # Prove that "io.StringIO" fails to define the "buffer" non-method attribute
    # as either a class or instance variable.
+   >>> from io import StringIO
    >>> dir(StringIO)
    dir(StringIO): ['__class__', '__del__', '__delattr__', '__dict__', '__dir__',
    '__doc__', '__enter__', '__eq__', '__exit__', '__format__', '__ge__',
@@ -519,13 +580,25 @@ real-world standard types that otherwise satisfy this protocol (e.g.,
    AttributeError: '_io.StringIO' object has no attribute 'buffer'
    # ^--- still no "buffer", huh? more le sigh
 
-Including this attribute in this set would thus induce :mod:`beartype` to
+Including this variable in this set would thus induce :mod:`beartype` to
 erroneously return false negatives for common use cases. Indeed, the standard
 :class:`io.TextIOBase` superclass of :class:`io.StringIO` explicitly documents
-that this attribute is only conditionally defined even as an instance variable:
+that this variable is only conditionally defined even as an instance variable:
 
     buffer
         The underlying binary buffer (a BufferedIOBase or RawIOBase instance)
         that TextIOBase deals with. This is not part of the TextIOBase API and
         may not exist in some implementations.
+'''
+
+
+_IO_TEXTIO_PROPERTY_NAMES = _IO_PROPERTY_NAMES | _TEXTIO_PROPERTY_NAMES
+'''
+Frozen set of the names of all properties (which, sadly, is literally *all* of
+them) directly required by both our non-standard :pep:`544`-compliant
+:class:`.IO` *and* :class:`.TextIO` protocols.
+
+This set thus encompasses the names of all properties transitively required by
+our :class:`.TextIO` protocol, which quietly inherits additional properties from
+the :class:`.IO` superclass it subclasses.
 '''

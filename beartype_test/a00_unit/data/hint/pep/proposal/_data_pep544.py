@@ -32,6 +32,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         HintSignPep484585GenericSubbed,
         HintSignPep484585GenericUnsubbed,
         HintSignTextIO,
+        HintSignType,
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
@@ -41,10 +42,17 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         PithUnsatisfiedMetadata,
     )
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import T
+    from io import (
+        BytesIO,
+        FileIO,
+        StringIO,
+    )
     from pathlib import Path
     from typing import (
         Any,
         AnyStr,
+        BinaryIO,
+        TextIO,
         runtime_checkable,
     )
 
@@ -56,40 +64,185 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # cross-platform IO testing purposes.
     SUBMODULE_FILENAME = __file__
 
-    # ..................{ CALLABLES                          }..................
-    def open_file_text():
+    # ..................{ FACTORIES ~ binary                 }..................
+    def open_binary_bytesio() -> BytesIO:
         '''
-        Function returning an open read-only file handle in text mode.
+        Factory returning an open read-only quasi-file handle in binary mode via
+        the standard C-based :class:`io.BytesIO` type.
         '''
 
-        return open(SUBMODULE_FILENAME, 'r', encoding='utf8')
+        return BytesIO()
 
 
-    def open_file_binary():
+    def open_binary_file() -> BinaryIO:
         '''
-        Function returning an open read-only file handle in binary mode.
+        Factory returning an open read-only file handle in binary mode via the
+        :func:`open` builtin.
         '''
 
         return open(SUBMODULE_FILENAME, 'rb')
 
 
+    def open_binary_fileio() -> BinaryIO:
+        '''
+        Factory returning an open read-only file handle in binary mode via the
+        standard C-based :class:`io.FileIO` type.
+        '''
+
+        return FileIO(SUBMODULE_FILENAME, 'rb')
+
+    # ..................{ FACTORIES ~ text                   }..................
+    def open_text_file() -> TextIO:
+        '''
+        Factory returning an open read-only file handle in text mode via the
+        :func:`open` builtin.
+        '''
+
+        return open(SUBMODULE_FILENAME, 'r', encoding='utf8')
+
+
+    def open_text_stringio() -> StringIO:
+        '''
+        Factory returning an open read-only quasi-file handle in text mode via
+        the standard C-based :class:`io.StringIO` type.
+        '''
+
+        return StringIO()
+
+    # ..................{ GENERICS                           }..................
+    class BinaryIOFile(BinaryIO):
+        '''
+        Useful concrete subclass of the mostly useless standard pure-Python
+        :pep:`484`-compliant :class:`typing.BinaryIO` generic, implementing all
+        abstract methods and properties defined by the latter in terms of the
+        standard C-based :class:`io.FileIO` type.
+
+        Attributes
+        ----------
+        _file_io : FileIO
+            :class:`io.FileIO` object underlying this concrete implementation.
+        '''
+
+        def __init__(self, *args, **kwargs) -> None:
+            '''
+            Initialize this object by passing all parameters as is to the
+            :meth:`FileIO.__init__` constructor.
+            '''
+
+            # Note that this instance variable is currently intentionally left
+            # undefined (to avoid unnecessary complications with respect to
+            # open file handles left unclosed).
+
+            # # Object to which this concrete subclass proxies *ALL* logic. \o/
+            # self._file_io = FileIO(*args, **kwargs)
+
+        @property
+        def mode(self) -> str:
+            return self._file_io.mode
+
+        @property
+        def name(self) -> str:
+            return self._file_io.name
+
+        def close(self) -> None:
+            return self._file_io.close()
+
+        @property
+        def closed(self) -> bool:
+            return self._file_io.closed
+
+        def fileno(self) -> int:
+            return self._file_io.fileno()
+
+        def flush(self) -> None:
+            return self._file_io.flush()
+
+        def isatty(self) -> bool:
+            return self._file_io.isatty()
+
+        def read(self, n: int = -1) -> AnyStr:
+            return self._file_io.read(n)
+
+        def readable(self) -> bool:
+            return self._file_io.readable()
+
+        def readline(self, limit: int = -1) -> AnyStr:
+            return self._file_io.readline(limit)
+
+        def readlines(self, hint: int = -1) -> list[AnyStr]:
+            return self._file_io.readlines(hint)
+
+        def seek(self, offset: int, whence: int = 0) -> int:
+            return self._file_io.seek(offset, whence)
+
+        def seekable(self) -> bool:
+            return self._file_io.seekable()
+
+        def tell(self) -> int:
+            return self._file_io.tell()
+
+        def truncate(self, size: int | None = None) -> int:
+            return self._file_io.truncate(size)
+
+        def writable(self) -> bool:
+            return self._file_io.writable()
+
+        def write(self, s: bytes | bytearray) -> int:
+            return self._file_io.write(s)
+
+        def writelines(self, lines: list[AnyStr]) -> None:
+            return self._file_io.writelines(lines)
+
+        # Note that the following context manager-specific methods are currently
+        # intentionally left as noops (to avoid issues inside our test
+        # automation, which does actually invoke these methods).
+        def __enter__(self) -> BinaryIO:
+            # return self._file_io.__enter__()
+            return self
+
+        def __exit__(self, cls, value, traceback) -> None:
+            # return self._file_io.__exit__(cls, value, traceback)
+            pass
+
+    # Instance of the concrete "BinaryIO" subclass defined above, referring to
+    # this submodule itself. Note that it probably does *not* matter. We never
+    # actually call methods on this instance and thus *never* open this
+    # submodule via this instance.
+    binary_io_file = BinaryIOFile(SUBMODULE_FILENAME)
+
+    # ..................{ TUPLES                             }..................
     # Tuple of one or more "PithUnsatisfiedMetadata" instances validating
     # objects *NOT* satisfied by either "typing.BinaryIO" *OR*
     # "typing.IO[bytes]".
-    BINARYIO_PITHS_META = (
-        # Open read-only binary file handle to this submodule.
-        PithSatisfiedMetadata(pith=open_file_binary, is_pith_factory=True),
+    PITHS_META_BINARYIO = (
+        # Instance of the concrete "BinaryIO" subclass defined above.
+        PithSatisfiedMetadata(binary_io_file),
+        # Open read-only binary file handle instantiated by the open() builtin.
+        PithSatisfiedMetadata(pith=open_binary_file, is_pith_factory=True),
+        # Open read-only binary file handle instantiated by the standard C-based
+        # "io.FileIO" type.
+        PithSatisfiedMetadata(pith=open_binary_fileio, is_pith_factory=True),
+
         # Bytestring constant.
         PithUnsatisfiedMetadata(b"Of a thieved imagination's reveries"),
-        # "PithUnsatisfiedMetadata" instance validating that open read-only text
-        # file handles violate both "typing.BinaryIO" *AND* "typing.IO[bytes]"
-        # type hints. This validation requires dynamism and thus either
-        # beartype-specific validators *OR* beartype-agnostic PEP 3119-compliant
-        # metaclasses defining the __instancecheck__() dunder method, as the
-        # only means of differentiating objects satisfying the "typing.BinaryIO"
-        # protocol from those satisfying the "typing.IO" protocol is with an
-        # inverted instance check. Guess which beartype now prefers? *sigh*
-        PithUnsatisfiedMetadata(pith=open_file_text, is_pith_factory=True),
+        # Open read-only text file handle violating both "typing.BinaryIO" *AND*
+        # "typing.IO[bytes]" type hints. This validation requires dynamism and
+        # thus either beartype-specific validators *OR* beartype-agnostic PEP
+        # 3119-compliant metaclasses defining the __instancecheck__() dunder
+        # method, as the only means of differentiating objects satisfying the
+        # "typing.BinaryIO" protocol from those satisfying the "typing.IO"
+        # protocol is with an inverted instance check. Guess which beartype now
+        # prefers? *sigh*
+        PithUnsatisfiedMetadata(pith=open_text_file, is_pith_factory=True),
+        # Unrelated C-based "io.BytesIO" object, which *ALMOST* satisfies the
+        # PEP 544-compliant protocol implied by the "BinaryIO" generic. Notably,
+        # "io.BytesIO" fails to define *ANY* of the properties required by that
+        # protocol (e.g., "closed", "mode", "name").
+        PithUnsatisfiedMetadata(pith=open_binary_bytesio, is_pith_factory=True),
+        # Unrelated C-based "io.StringIO" object, which satisfies the PEP
+        # 544-compliant protocol implied by the "TextIO" rather than "BinaryIO"
+        # generic. Is everybody suitably confused yet? *long sigh is heard*
+        PithUnsatisfiedMetadata(pith=open_text_stringio, is_pith_factory=True),
     )
 
     # ..................{ PROTOCOLS ~ structural             }..................
@@ -136,7 +289,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # Instance of the custom protocol defined above.
     protocol_custom_structural = ProtocolCustomStructural()
 
-    # ..................{ FACTORIES ~ Protocol               }..................
+    # ..................{ FACTORIES ~ protocol               }..................
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module...
     for Protocol in get_typing_attrs('Protocol'):
@@ -339,17 +492,46 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # importable "typing" module, add PEP-specific type hint metadata.
     for BinaryIO in get_typing_attrs('BinaryIO'):
         hints_piths_pep_meta.extend((
-            # ..............{ GENERICS ~ io : unsubscripted      }..............
-            # Unsubscripted "BinaryIO" abstract base class (ABC).
+            # ..............{ PEP 484                            }..............
+            # "BinaryIO" generic.
             HintPepMetadata(
                 hint=BinaryIO,
                 pep_sign=HintSignBinaryIO,
                 generic_type=BinaryIO,
-                piths_meta=BINARYIO_PITHS_META,
+                piths_meta=PITHS_META_BINARYIO,
             ),
 
             # ................{ PEP 585 ~ subclass             }................
-            # The "BinaryIO" ABC is...
+            # Any subclass of the "BinaryIO" generic.
+            HintPepMetadata(
+                hint=type[BinaryIO],
+                pep_sign=HintSignType,
+                isinstanceable_type=type,
+                is_pep585_builtin_subbed=True,
+                piths_meta=(
+                    # "BinaryIO" generic.
+                    PithSatisfiedMetadata(BinaryIO),
+                    # Arbitrary concrete subclass of the "BinaryIO" generic.
+                    PithSatisfiedMetadata(BinaryIOFile),
+                    # Unrelated C-based "io.FileIO" type.
+                    PithSatisfiedMetadata(FileIO),
+                    # String constant.
+                    PithUnsatisfiedMetadata(
+                        'Distinct, and visible; symbols divine'),
+                    # Instance of that arbitrary concrete subclass.
+                    PithUnsatisfiedMetadata(binary_io_file),
+                    # Unrelated C-based "io.BytesIO" type, which *ALMOST*
+                    # satisfies the PEP 544-compliant protocol implied by the
+                    # "BinaryIO" generic. Notably, "io.BytesIO" fails to define
+                    # *ANY* of the properties required by that protocol (e.g.,
+                    # "closed", "mode", "name").
+                    PithUnsatisfiedMetadata(BytesIO),
+                    # Unrelated C-based "io.StringIO" type, which satisfies the
+                    # PEP 544-compliant protocol implied by the "TextIO" rather
+                    # than "BinaryIO" generic. Is everybody suitably confused?
+                    PithUnsatisfiedMetadata(StringIO),
+                ),
+            ),
         ))
 
     # ..................{ FACTORIES ~ TextIO                 }..................
@@ -366,13 +548,13 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
                     PithSatisfiedMetadata(
-                        pith=open_file_text, is_pith_factory=True),
+                        pith=open_text_file, is_pith_factory=True),
                     # String constant.
                     PithUnsatisfiedMetadata(
                         'Statistician’s anthemed meme athame'),
                     # Open read-only binary file handle to this submodule.
                     PithUnsatisfiedMetadata(
-                        pith=open_file_binary, is_pith_factory=True),
+                        pith=open_binary_file, is_pith_factory=True),
                 ),
             ),
         ))
@@ -392,10 +574,10 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
                     PithSatisfiedMetadata(
-                        pith=open_file_text, is_pith_factory=True),
+                        pith=open_text_file, is_pith_factory=True),
                     # Open read-only binary file handle to this submodule.
                     PithSatisfiedMetadata(
-                        pith=open_file_binary, is_pith_factory=True),
+                        pith=open_binary_file, is_pith_factory=True),
                     # String constant.
                     PithUnsatisfiedMetadata(
                         'To piously magistrate, dis‐empower, and'),
@@ -411,10 +593,10 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
                     PithSatisfiedMetadata(
-                        pith=open_file_binary, is_pith_factory=True),
+                        pith=open_binary_file, is_pith_factory=True),
                     # Open read-only text file handle to this submodule.
                     PithSatisfiedMetadata(
-                        pith=open_file_text, is_pith_factory=True),
+                        pith=open_text_file, is_pith_factory=True),
                     # String constant.
                     PithUnsatisfiedMetadata(
                         'Stoicly Anti‐heroic, synthetic'),
@@ -424,7 +606,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 hint=IO[bytes],
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
-                piths_meta=BINARYIO_PITHS_META,
+                piths_meta=PITHS_META_BINARYIO,
             ),
             HintPepMetadata(
                 hint=IO[str],
@@ -433,7 +615,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
                     PithSatisfiedMetadata(
-                        pith=open_file_text, is_pith_factory=True),
+                        pith=open_text_file, is_pith_factory=True),
                     # String constant.
                     PithUnsatisfiedMetadata(
                         'Thism‐predestined City’s pestilentially '
@@ -441,7 +623,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                     ),
                     # Open read-only binary file handle to this submodule.
                     PithUnsatisfiedMetadata(
-                        pith=open_file_binary, is_pith_factory=True),
+                        pith=open_binary_file, is_pith_factory=True),
                 ),
             ),
 
@@ -454,10 +636,10 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
                     PithSatisfiedMetadata(
-                        pith=open_file_binary, is_pith_factory=True),
+                        pith=open_binary_file, is_pith_factory=True),
                     # Open read-only text file handle to this submodule.
                     PithSatisfiedMetadata(
-                        pith=open_file_text, is_pith_factory=True),
+                        pith=open_text_file, is_pith_factory=True),
                     # String constant.
                     PithUnsatisfiedMetadata('Starkness'),
                 ),
