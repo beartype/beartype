@@ -136,3 +136,42 @@ def test_decor_pep612() -> None:
     with raises(BeartypeDecorHintPep612Exception):
         is_bearable(
             'Sends from its woods of musk-rose, twined with jasmine,', P.kwargs)
+
+
+@skip_if_python_version_less_than('3.12.0')
+def test_decor_pep612_paramspec_subscripted_generic_return() -> None:
+    '''
+    Test :pep:`612` parameter specifications subscripting a generic return hint
+    produced by :pep:`695` generic function syntax.
+    '''
+
+    # PEP 695 syntax is only parseable under Python >= 3.12. Defer parsing this
+    # snippet until after the version-gated skip above.
+    scope = {}
+    exec(
+        '''
+from collections.abc import Callable
+from typing import Generic, ParamSpec, TypeVar
+
+from beartype import beartype
+
+P = ParamSpec('P')
+R = TypeVar('R')
+
+class ThroughTheTransparentShadows(Generic[P, R]):
+    pass
+
+@beartype
+def of_the_youth[**Q, T](
+    and_the_sweet_temper_of_the_heart: Callable[Q, T],
+) -> ThroughTheTransparentShadows[Q, T]:
+    return ThroughTheTransparentShadows()
+''',
+        scope,
+    )
+
+    assert isinstance(
+        scope['of_the_youth'](
+            lambda: 'Greener than emeralds on the enchanted mount'),
+        scope['ThroughTheTransparentShadows'],
+    )
