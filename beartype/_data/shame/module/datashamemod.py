@@ -26,6 +26,27 @@ This private submodule is *not* intended for importation by downstream callers.
 #  tester returning True *ONLY* if the passed callable has a "__module__" dunder
 #  attribute whose value is a string residing in this frozenset.
 BLACKLIST_PACKAGE_NAMES = frozenset((
+    # ....................{ ANTIPATTERN ~ stdlib           }....................
+    # These first-party packages and modules residing in the standard Python
+    # library employ the "if False:" antipattern and are thus runtime-hostile.
+
+    # The private pure-Python "_colorize" module introduced by Python 3.15
+    # employs the "if False:" antipattern: e.g.,
+    #     # types
+    #     if False:
+    #         from typing import IO, Literal, Self, ClassVar
+    #         _theme: Theme
+    #
+    # That should instead read:
+    #     # types
+    #     lazy from typing import IO, Literal, Self, ClassVar
+    #     if False:
+    #         _theme: Theme
+    #
+    # See also the following issue resolved by this blacklist:
+    #     https://github.com/beartype/beartype/issues/656
+    '_colorize',
+
     # ....................{ ANTIPATTERN ~ forward ref      }....................
     # These third-party packages and modules widely employ the forward reference
     # antipattern throughout their codebases and are thus runtime-hostile.
