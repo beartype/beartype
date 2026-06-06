@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-:pep:`484`-compliant **callable utility unit tests.**
+:pep:`702`-compliant **callable utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.utilfunc.pep.utilpep484func` submodule.
+:mod:`beartype._util.utilfunc.pep.utilpep702` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -15,47 +15,47 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                              }....................
-def test_is_func_pep484_notypechecked() -> None:
+@skip_if_python_version_less_than('3.13.0')
+def test_is_func_pep702() -> None:
     '''
-    Test the
-    :func:`beartype._util.func.pep.utilpep484func.is_func_pep484_notypechecked`
-    tester.
+    Test the :func:`beartype._util.func.pep.utilpep702func.is_func_pep702`
+    tester if the active Python interpreter targets Python >= 3.13 and thus
+    supports :pep:`702` *or* silently reduce to a noop otherwise.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.func.pep.utilpep484func import (
-        is_func_pep484_notypechecked)
-    from typing import no_type_check
+    from beartype._util.func.pep.utilpep702 import is_func_pep702
+    from warnings import deprecated
 
     # ....................{ CALLABLES                      }....................
-    @no_type_check
-    def now_float_above_thy_darkness() -> None:
+    @deprecated('Manifestations of that beauteous life')
+    def manifestations_of_that() -> None:
         '''
         Arbitrary callable decorated by the
-        :pep:`484`-compliant :func:`typing.no_type_check` decorator.
+        :pep:`702`-compliant :func:`warnings.deprecated` decorator.
         '''
 
         pass
 
 
-    def and_now_rest() -> None:
+    def beauteous_life() -> None:
         '''
         Arbitrary callable *not* decorated by the
-        :pep:`484`-compliant :func:`typing.no_type_check` decorator.
+        :pep:`702`-compliant :func:`warnings.deprecated` decorator.
         '''
 
         pass
 
     # ....................{ PASS                           }....................
     # Assert that this tester accepts an arbitrary callable decorated by the
-    # @typing.no_type_check decorator.
-    assert is_func_pep484_notypechecked(
-        now_float_above_thy_darkness) is True
+    # @warnings.deprecated decorator.
+    assert is_func_pep702(manifestations_of_that) is True
 
     # ....................{ FAIL                           }....................
     # Assert that this tester rejects an arbitrary callable *NOT* decorated by
-    # the @typing.no_type_check decorator.
-    assert is_func_pep484_notypechecked(and_now_rest) is False
+    # the @warnings.deprecated decorator.
+    assert is_func_pep702(beauteous_life) is False

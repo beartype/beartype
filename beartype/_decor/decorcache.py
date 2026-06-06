@@ -22,11 +22,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-# from beartype.roar import BeartypeConfException
-from beartype.typing import (
-    Dict,
-    Optional,
-)
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.conftest import die_unless_conf
@@ -38,10 +33,14 @@ from beartype._data.typing.datatyping import (
 from beartype._decor.decorcore import beartype_object
 from collections.abc import Callable
 
-# Intentionally import the standard mypy-friendly @typing.overload decorator
-# rather than a possibly mypy-unfriendly @beartype.typing.overload decorator --
-# which, in any case, would be needlessly inefficient and thus bad.
-from typing import overload
+from typing import (
+    Optional,
+
+    # Intentionally import the standard mypy-friendly @typing.overload decorator
+    # rather than a possibly mypy-unfriendly @beartype.typing.overload decorator
+    # -- which, in any case, would be needlessly inefficient and thus bad.
+    overload,
+)
 
 # ....................{ OVERLOADS                          }....................
 # Declare PEP 484-compliant overloads to avoid breaking downstream code
@@ -158,8 +157,8 @@ def beartype(
     # Return this private decorator.
     return _beartype_confed
 
-# ....................{ SINGLETONS                         }....................
-_bear_conf_to_decor: Dict[BeartypeConf, BeartypeConfedDecorator] = {}
+# ....................{ PRIVATE ~ dicts                    }....................
+_bear_conf_to_decor: dict[BeartypeConf, BeartypeConfedDecorator] = {}
 '''
 Non-thread-safe **beartype decorator cache.**
 

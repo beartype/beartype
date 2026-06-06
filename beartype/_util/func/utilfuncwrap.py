@@ -12,13 +12,206 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableWrapperException
-from beartype.typing import (
+from beartype._cave._cavefast import MethodBoundInstanceOrClassType
+from beartype._data.typing.datatyping import TypeException
+from beartype._data.typing.datatypingport import TypeIs
+from beartype._util.func.arg.utilfuncarglen import (
+    get_func_args_nonvariadic_len)
+from beartype._util.func.arg.utilfuncargtest import (
+    is_func_arg_variadic_positional,
+    is_func_arg_variadic_keyword,
+)
+from collections.abc import Callable
+from typing import (
+    Any,
     Optional,
     Union,
 )
-from beartype._cave._cavefast import MethodBoundInstanceOrClassType
-from beartype._data.typing.datatyping import TypeException
-from collections.abc import Callable
+
+# ....................{ TESTERS                            }....................
+def is_func_wrapper(func: Any) -> TypeIs[Callable]:
+    '''
+    :data:`True` only if the passed object is a **callable wrapper** (i.e.,
+    callable decorated by the standard :func:`functools.wraps` decorator for
+    wrapping a pure-Python callable with additional functionality defined by a
+    higher-level decorator).
+
+    Note that this tester returns :data:`True` for both pure-Python and C-based
+    callable wrappers. As an example of the latter, the standard
+    :func:`functools.lru_cache` decorator creates and returns low-level C-based
+    callable wrappers of the private type :class:`functools._lru_cache_wrapper`
+    wrapping pure-Python callables.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a callable wrapper.
+    '''
+
+    # Return true only if this object defines a dunder attribute uniquely
+    # specific to the @functools.wraps decorator.
+    #
+    # Technically, *ANY* callable (including non-wrappers *NOT* created by the
+    # @functools.wraps decorator) could trivially define this attribute; ergo,
+    # this invites the possibility of false positives. Pragmatically, doing so
+    # would violate ad-hoc standards and real-world practice across the
+    # open-source ecosystem; ergo, this effectively excludes false positives.
+    return hasattr(func, '__wrapped__')
+
+
+def is_func_wrapper_isomorphic(
+    # Mandatory parameters.
+    func: Any,
+
+    # Optional parameters.
+    wrapper: Optional[Callable] = None,
+) -> TypeIs[Callable]:
+    '''
+    :data:`True` only if the passed object is an **isomorphic wrapper** (i.e.,
+    callable decorated by the standard :func:`functools.wraps` decorator for
+    wrapping a pure-Python callable with additional functionality defined by a
+    higher-level decorator such that that wrapper isomorphically preserves both
+    the number and types of all passed parameters and returns by accepting only
+    a variadic positional argument and a variadic keyword argument).
+
+    This tester enables callers to detect when a user-defined callable has been
+    decorated by an isomorphic decorator, which constitutes *most* real-world
+    decorators of interest.
+
+    This tester is currently *not* memoized for efficiency, despite performing a
+    relatively non-trivial (albeit technically :math:`O(1)`) operation. Why?
+    Because this tester should typically be called at most once by the parent
+    :func:`beartype._util.func.utilfuncwrap.unwrap_func_all_isomorphic`
+    function, which is currently:
+
+    * The *only* other function calling this tester.
+    * Itself currently unmemoized.
+
+    Caveats
+    -------
+    **This tester is merely a heuristic** -- albeit a reasonably robust
+    heuristic likely to succeed in almost all real-world use cases. Nonetheless,
+    this tester *could* return false positives and negatives in edge cases.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+    wrapper : Optional[Callable]
+        Wrapper callable to be unwrapped in the event that the callable to be
+        inspected for isomorphism differs from the callable to be unwrapped.
+        Typically, these two callables are the same. Edge cases in which these
+        two callables differ include:
+
+        * When ``wrapper`` is a **pseudo-callable** (i.e., otherwise uncallable
+          object whose type renders that object callable by defining the
+          ``__call__()`` dunder method) *and* ``func`` is that ``__call__()``
+          dunder method. If that pseudo-callable wraps a lower-level callable,
+          then that pseudo-callable (rather than ``__call__()`` dunder method)
+          defines the ``__wrapped__`` instance variable providing that callable.
+
+        Defaults to :data:`None`, in which case this parameter *actually*
+        defaults to ``func``.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is an isomorphic decorator wrapper.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunccodeobj import get_func_codeobject_or_none
+    from beartype._util.func.utilfunctest import (
+        is_func_boundmethod)
+
+    # ....................{ NOOP                           }....................
+    # If the caller failed to explicitly pass a callable to be unwrapped,
+    # default the callable to be unwrapped to the passed callable.
+    if wrapper is None:
+        wrapper = func
+    # Else, the caller explicitly passed a callable to be unwrapped. In this
+    # case, preserve that callable as is.
+
+    # If that callable is *NOT* a wrapper, immediately return false.
+    if not is_func_wrapper(wrapper):
+        return False
+    # Else, that callable is a wrapper.
+
+    # ....................{ LOCALS                         }....................
+    # Number of non-variadic arguments permitted for this wrapper if isomorphic,
+    # defaulting to 0.
+    func_args_nonvariadic_len = 0
+
+    # ....................{ TEST                           }....................
+    # If this object is a C-based bound method descriptor...
+    if is_func_boundmethod(func):
+        # print(f'Detecting bound method f{repr(func)} isomorphism...')
+
+        # Unwrap this descriptor to the pure-Python callable encapsulated by
+        # this descriptor.
+        func = unwrap_func_boundmethod_once(func)
+
+        # Permit this pure-Python callable to accept exactly one non-variadic
+        # argument, typically named "self" whose value is the object to which
+        # this bound method descriptor was bound at object instantiation time.
+        func_args_nonvariadic_len = 1
+    # Else, this object is *NOT* a C-based bound method descriptor.
+
+    # Code object underlying that callable as is (rather than possibly unwrapped
+    # to another code object entirely) if that callable is pure-Python *OR*
+    # "None" otherwise (i.e., if that callable is C-based).
+    func_codeobj = get_func_codeobject_or_none(func)
+
+    # If that callable is C-based...
+    if not func_codeobj:  # pragma: no cover
+        # print(f'Detecting C-based callable {repr(func)} isomorphism...')
+
+        # Return true only if that C-based callable is the __call__() dunder
+        # method of a pseudo-callable parent object. Although this tester
+        # *CANNOT* positively decide whether that object is isomorphic or not,
+        # *ALMOST* all __call__() dunder methods are C-based. Technically, this
+        # *COULD* constitute a false positive in various edge cases.
+        # Pragmatically, the alternatives are all worse. Blindly rejecting *ALL*
+        # C-based __call__() dunder methods as non-isomorphic would effectively
+        # prevent @beartype from decorating numerous pseudo-callable objects of
+        # interest, including:
+        # * Pseudo-callables dynamically generated by the third-party
+        #   "@jax.jit" decorator: e.g.,
+        #       from beartype import beartype
+        #       from jax import jit
+        #
+        #       # The @jax.jit decorator creates and returns a C-based
+        #       # pseudo-callable object defining an isomorphic __call__()
+        #       # dunder method. If this tester erroneously rejected that method
+        #       # as non-isomorphic, @beartype would be unable to decorate these
+        #       # pseudo-callable objects! Clearly, that would be bad.
+        #       @beartype
+        #       @jit
+        #       def muh_func(muh_arg: int) -> int:
+        #           return muh_arg
+        return func.__name__ == '__call__'
+    # Else, that callable is pure-Python.
+
+    # ....................{ RETURN                         }....................
+    # Return true only if...
+    return (
+        # That callable accepts no non-variadic arguments *AND*...
+        (
+            get_func_args_nonvariadic_len(func_codeobj) ==
+            func_args_nonvariadic_len
+        ) and
+        # That callable accepts variadic positional and/or keyword arguments.
+        (
+            is_func_arg_variadic_positional(func_codeobj) or
+            is_func_arg_variadic_keyword(func_codeobj)
+        )
+    )
 
 # ....................{ UNWRAPPERS ~ once                  }....................
 #FIXME: Unit test us up, please.
@@ -406,13 +599,11 @@ def unwrap_func_all_isomorphic(
         * Else, the passed callable as is.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunctest import (
-        # is_func_boundmethod,
-        is_func_codeobjable,
-        is_func_wrapper_isomorphic,
-    )
+    from beartype._util.func.utilfunctest import is_func_codeobjable
 
+    # ....................{ LOCALS                         }....................
     # If the caller failed to explicitly pass a callable to be unwrapped,
     # default the callable to be unwrapped to the passed callable.
     if wrapper is None:
@@ -420,6 +611,7 @@ def unwrap_func_all_isomorphic(
     # Else, the caller explicitly passed a callable to be unwrapped. In this
     # case, preserve that callable as is.
 
+    # ....................{ UNWRAP                         }....................
     # While...
     while True:
         # This wrappee callable remains a higher-level wrapper callable
@@ -483,6 +675,7 @@ def unwrap_func_all_isomorphic(
         # Reduce this higher-level wrapper to this lower-level wrappee.
         func = wrapper = func_wrapped
 
+    # ....................{ RETURN                         }....................
     # Return this wrappee, which is now guaranteed to *NOT* be an isomorphic
     # wrapper but might very well still be a wrapper, which is fine.
     return func

@@ -44,13 +44,15 @@ from beartype._util.api.standard.utilfunctools import (
     beartype_functools_lru_cache,
     is_func_functools_lru_cache,
 )
+from beartype._util.func.pep.utilpep702 import is_func_pep702
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.func.utilfuncscope import get_func_globals
-from beartype._util.func.utilfunctest import (
-    is_func_codeobjable,
+from beartype._util.func.utilfunctest import is_func_codeobjable
+from beartype._util.func.utilfuncwrap import (
     is_func_wrapper,
+    unwrap_func_once,
+    # unwrap_func_all_isomorphic,
 )
-from beartype._util.func.utilfuncwrap import unwrap_func_once
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
@@ -89,6 +91,100 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # print(f'{obj.__code__.co_name}')
     # print(f'{obj.__code__.co_names}')
     # print(f'{obj.__code__.co_qualname}')
+
+    # ....................{ PASS 0 ~ validate              }....................
+    # If this object is the isomorphic wrapper closure created and returned
+    # by the PEP 702-compliant @warnings.deprecated decorator, this object is a
+    # @warnings.deprecated-decorated callable. In this case...
+    if is_func_pep702(obj):  # type: ignore[arg-type]
+        #FIXME: Validate PEP 702-compliant sanity here. This is non-trivial, yo.
+        #There are basically two code paths:
+        #* *NON-IDEAL CASE*. In the non-ideal case, we *CANNOT* safely preserve
+        #  this callable as is. See below for what exactly differentiates these
+        #  ideal and non-ideal cases. The point for this case, though, is that
+        #  we have to:
+        #  * Issue a non-fatal deprecation warning resembling:
+        #        BeartypeDecorFuncPep702Warning: PEP 702-compliant
+        #        @warnings.deprecated()-decorated callable muh_func() not safely
+        #        decoratable by @beartype. Please reorder the
+        #        @warnings.deprecated() decorator decorating this decorator
+        #        *BELOW* all other decorators decorating this decorator: e.g.,
+        #
+        #            # Instead of ordering @warnings.deprecated() *ABOVE* all
+        #            # other decorators (which @beartype irrationally hates)...
+        #            @deprecated('Muh awesome deprecation message, yo!')  <-- too high
+        #            @contextmanager
+        #            def muh_func(...) -> ...: ...
+        #
+        #            # Order @warnings.deprecated() *BELOW* all other decorators
+        #            # (which @beartype irrationally loves)! You love to see it:
+        #            @contextmanager
+        #            @deprecated('Muh awesome deprecation message, yo!')  <-- aww yeah
+        #            def muh_func(...) -> ...: ...
+        #
+        #       The Bear apologizes for this disruption to the natural plenum.
+        #* *IDEAL CASE*. In the ideal case, we can safely preserve this callable
+        #   as is. The ideal case arises when *ALL* lower-level objects on this
+        #   decoration chain require *NO* recreation by the @beartype decorator.
+        #   Of course, detecting whether *ANY* lower-level objects on this
+        #   decoration chain require recreation by the @beartype decorator is...
+        #   non-trivial. That's exactly what we do below. Recreating *ALL* of
+        #   the non-trivial detection logic below just to detect this extreme
+        #   edge case both violates DRY and is *REALLY* out-of-scope here.
+        #
+        #   A vastly simpler alternative (which erroneously detects cases that
+        #   should be ideal but are non-ideal and thus emits false positives,
+        #   technically, but who cares, 'cause ain't nobody payin' nobody to
+        #   make any of this happen) that more or less "suffices" is to simply:
+        #
+        #       #FIXME: Define a new callable encapsulating this logic in our
+        #       #new "utilfuncpep702" submodule, please. *sigh*
+        #       # If this condition holds, activate the *NON-IDEAL* case! Ugh.
+        #       # Seems vaguely relevant. If...
+        #       #
+        #       # *WAIT*. Guess we're doing full-blown detection after all, huh?
+        #       # Or almost full-blown, anyway. Actually, not full-blown at all.
+        #       # Super heuristicy. Oh, well. It's better this way. *shrug*
+        #       obj_wrappee = unwrap_func_once(obj)
+        #       if (
+        #           # The decorated callable is not a pure-Python function *OR*...
+        #           #
+        #           # This implicitly detects all bound method, @classmethod,
+        #           # @staticmethod, and @property types.
+        #           not isinstance(obj_wrappee, FunctionType) or
+        #           # The decorated callable is a pure-Python function but...
+        #           #
+        #           # The decorated callable is itself a higher-level
+        #           # @functools.wrap-decorated wrapper...
+        #           #
+        #           # This implicitly detects @contextlib.contextmanager. Should we just
+        #           # detect that explicitly, though? The current approach
+        #           # induces false positives. *shrug*
+        #           is_func_wrapper(obj_wrappee)
+        #
+        #           #FIXME: Probably want to call isinstance() instead with the
+        #           #set of all bound method, classmethod, staticmethod, and
+        #           #property types. Check out "_cavefast", yo. *shrug*
+        #           #FIXME: Oh, nevermind. Already handled by the trivial
+        #           #"not isinstance(obj_wrappee, FunctionType)" check above.
+        #           #hasattr(obj, '__func__') or
+        #       ):
+        #           # Then this object possibly requires decoration reordering
+        #           # by the @beartype decorator. However, this object *CANNOT*
+        #           # be safely decoration-reordered, because the isomorphic
+        #           # wrapper closures created and returned by the
+        #           # @warnings.deprecated() decorator fail to store all
+        #           # decoration-time parameters required to do so (e.g.,
+        #           # "category", "stacklevel"). In this case...
+        #           #FIXME: Issue deprecation warning above and then...
+        #
+        #           # Trivially preserve this undecoratable object as is.
+        #           return obj
+        #       # Else, that condition does *NOT* hold. In this case, continue
+        #       # decorating this object as is.
+
+        pass
+    # Else, this object is *NOT* a @warnings.deprecated-decorated callable.
 
     # ....................{ PASS 1 ~ dispatch : O(1)       }....................
     # First-pass logic efficiently dispatching a beartype decorator unique to
@@ -229,6 +325,9 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # does *NOT* reduce to a trivial check against the fully-qualified name of
     # the type of this callable and thus *CANNOT* be integrated into the
     # efficient mapping-based O(1) dispatch employed above.
+    # print(f'@beartype non-type PASS 3: {repr(obj)}')
+    # print(f'type(obj): {type(obj)}')
+    # print(f'dir(obj): {dir(obj)}')
 
     # If this object is beartype-blacklisted (i.e., defined in a third-party
     # package or module that is hostile to runtime type-checking), silently
@@ -246,7 +345,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
             f'Uncallable {represent_object(obj)} not decoratable by @beartype.')
     # Else, this object is callable.
     #
-    # If this object is *NOT* a pure-Python function, this object is a
+    # If this object is *NOT* a pure-Python function, then this object is a
     # pseudo-callable (i.e., arbitrary pure-Python *OR* C-based object whose
     # class defines the __call__() dunder method enabling this object to be
     # called like a standard callable). In this case, attempt to monkey-patch
@@ -255,6 +354,8 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # dunder method with a comparable descriptor calling a @beartype-generated
     # runtime type-checking wrapper function. Go with it.
     elif not is_func_codeobjable(obj):
+        #FIXME: Almost certainly incorrect if the decorated callable is
+        #decorated by @warnings.deprecated. Oh, well. No time. No cares. *BLEGH*
         return _beartype_pseudofunc(obj, **kwargs)  # type: ignore[return-value]
     # Else, this object is a pure-Python function.
 
@@ -314,6 +415,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # closure. By elimination, that function *MUST* be a standard pure-Python
     # function.
 
+    # ....................{ PASS 4 ~ function              }....................
     # Decorate that pure-Python function with runtime type-checking.
     return beartype_func(obj, **kwargs)  # type: ignore[return-value]
 
@@ -361,6 +463,8 @@ def beartype_func(
     BeartypeableT
         New pure-Python callable wrapping this callable with type-checking.
     '''
+    # wrapper = None
+    # kwargs = {}
 
     # ....................{ PREAMBLE                       }....................
     # If the caller failed to pass a callable to be unwrapped, default that to
@@ -557,10 +661,8 @@ def beartype_func(
 
 # ....................{ PRIVATE ~ decorators : pure-python }....................
 def _beartype_func_contextlib_contextmanager(
-    func: BeartypeableT,
-    func_contextmanager: Callable,
-    **kwargs
-) -> BeartypeableT:
+    func: BeartypeableT, func_contextmanager: Callable, **kwargs) -> (
+    BeartypeableT):
     '''
     Decorate the passed :mod:`contextlib`-based **isomorphic decorator closure**
     (i.e., closure both defined and returned by either the standard
@@ -710,8 +812,9 @@ def _beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
         # print(f'Pseudo-callable wrapper {repr(pseudofunc)} identified!')
 
         # Transitively pass the optional "wrapper" parameter to the
-        # BeartypeCallDecorMeta.reinit() method, ensuring that this pseudo-callable
-        # wrapper object is correctly unwrapped.
+        # beartype_func() decorator (and thus the BeartypeCallDecorMeta.reinit()
+        # method transitively called by that decorator) called below, ensuring
+        # that this pseudo-callable wrapper object is correctly unwrapped.
         #
         # This edge case handles edge-case pseudo-callable wrapper objects
         # defined by popular third-party packages, including:

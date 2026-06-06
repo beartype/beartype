@@ -11,25 +11,18 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Any,
-    Optional,
-)
 from beartype._util.func.utilfunccodeobj import (
     get_codeobject_basename,
     get_func_codeobject_or_none,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_10
 from collections.abc import Callable
+from typing import (
+    Any,
+    Optional,
+)
 
 # ....................{ GETTERS                            }....................
-#FIXME: Generalize into a new get_func_contextlib_contextmanager_or_none()
-#function behaving as follows:
-#* If the passed callable is decorated by @contextlib.contextmanager, return
-#  the contextlib.contextmanager() decorator function.
-#* If the passed callable is decorated by @contextlib.asynccontextmanager, return
-#  the contextlib.asynccontextmanager() decorator function.
-#* Else, return "None".
 #FIXME: Unit test us up, please.
 def get_func_contextlib_contextmanager_or_none(func: Any) -> Optional[Callable]:
     '''
@@ -88,12 +81,14 @@ def get_func_contextlib_contextmanager_or_none(func: Any) -> Optional[Callable]:
         Further discussion.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunctest import is_func_closure
 
+    # ....................{ NOOP                           }....................
     # If either...
     if (
-        # The active Python interpreter targets Python < 3.10 and thus fails to
+        # The active Python interpreter targets Python <= 3.10 and thus fails to
         # define the "co_qualname" attribute on code objects required to
         # robustly implement this test *OR*...
         IS_PYTHON_AT_MOST_3_10 or
@@ -114,11 +109,13 @@ def get_func_contextlib_contextmanager_or_none(func: Any) -> Optional[Callable]:
         return None
     # Else, that callable is pure-Python.
 
+    # ....................{ IMPORTS ~ heavy                }....................
     # Defer heavyweight getter-specific imports with potential side effects --
     # notably, increased costs to space and time complexity.
     from beartype._data.api.standard.datacontextlib import (
         CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME_TO_DECORATOR)
 
+    # ....................{ RETURN                         }....................
     # Unqualified basename of this code object.
     func_codeobj_name = get_codeobject_basename(func_codeobj)
 
@@ -135,5 +132,5 @@ def get_func_contextlib_contextmanager_or_none(func: Any) -> Optional[Callable]:
     #
     # Note that we *COULD* technically also explicitly test whether that
     # callable satisfies the is_func_wrapper_isomorphic() getter -- but that
-    # there's no benefit and a minor efficiency cost to doing so.
+    # there's no benefit and a minor efficiency cost to doing so. We are shrug.
     return contextlib_decorator  # type: ignore[return-value]

@@ -60,6 +60,20 @@ def beartype_object(
 
     All remaining keyword parameters are passed as is to whichever lower-level
     decorator this higher-level decorator calls on the passed beartypeable.
+    However, note that external callers are implicitly prohibited from passing
+    any remaining keyword parameters. Why? Because the higher-level
+    :func:`beartype._decor.decorcache.beartype` decorator identical to the
+    :func:`beartype.beartype` decorator (which calls this lower-level decorator)
+    neither accepts nor passes this lower-level decorator any variadic keyword
+    parameters. Therefore, this lower-level decorator accepts variadic keyword
+    parameters *only* as a convenience to other low-level private functionality
+    distributed throughout the :mod:`beartype` codebase, which can occasionally
+    pass such keyword-only parameters. Look. It's complicated. Like everything.
+
+    Examples of lower-level decorators that do this include:
+
+    * :func:`beartype._decor._nontype.decornontype._beartype_pseudofunc`.
+    * :func:`beartype._decor._type.decortype.beartype_type`.
 
     Returns
     -------
