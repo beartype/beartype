@@ -67,6 +67,7 @@ from beartype._check.pep.pep484.checkpep484typevar import (
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsigns import (
+    HintSignParamSpec,
     HintSignTypeVar,
     HintSignPep646TypeVarTupleUnpacked,
 )
@@ -722,7 +723,8 @@ def _die_unless_hint_pep484_typevar_bound_bearable(
     * The passed type parameter is a :pep:`484`-compliant type variable *and*
       the passed child hint violates this type variable's bounds and/or
       constraints.
-    * The passed type parameter is *not* a :pep:`484`-compliant type variable.
+    * The passed type parameter is neither a :pep:`484`-compliant type variable
+      nor a :pep:`612`-compliant parameter specification.
 
     Parameters
     ----------
@@ -746,7 +748,8 @@ def _die_unless_hint_pep484_typevar_bound_bearable(
     Raises
     ------
     BeartypeDecorHintPep484612646Exception
-        If this type parameter is *not* a :pep:`484`-compliant type variable.
+        If this type parameter is neither a :pep:`484`-compliant type variable
+        nor a :pep:`612`-compliant parameter specification.
     BeartypeDecorHintPep484TypeVarViolation
         If this type parameter is a :pep:`484`-compliant type variable *and*
         this child hint violates this type variable's bounds and/or constraints.
@@ -764,8 +767,15 @@ def _die_unless_hint_pep484_typevar_bound_bearable(
         )
         # Else, this child hint satisfies this type variable's bounds and/or
         # constraints.
-    # Else, this type parameter is *NOT* a PEP 484-compliant type variable.
-    # Ergo, this type parameter is *NOT* an unpacked type parameter! *ROAR*.
+    # Else if this type parameter is a PEP 612-compliant parameter
+    # specification, this type parameter accepts any child hint accepted by the
+    # underlying "typing" machinery and defines no bounds or constraints to
+    # validate here.
+    elif hint_typearg_sign is HintSignParamSpec:
+        pass
+    # Else, this type parameter is *NOT* a PEP 484-compliant type variable or a
+    # PEP 612-compliant parameter specification. Ergo, this type parameter is
+    # *NOT* an unpacked type parameter! *ROAR*.
     #
     # Note that this should *NEVER* occur. Python itself syntactically
     # guarantees *ALL* child hints parametrizing a PEP-compliant subscripted
