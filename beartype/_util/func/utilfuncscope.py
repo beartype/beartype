@@ -54,14 +54,9 @@ def get_func_globals(
     ----------
     func : Callable
         Callable to be inspected.
-    ignore_frames : int, default: 0
-        Number of frames on the call stack to be ignored (i.e., silently
-        incremented past), such that the next non-ignored frame following the
-        last ignored frame is the parent callable or module directly declaring
-        the passed callable. Defaults to 0.
     exception_cls : Type[Exception], default: _BeartypeUtilCallableScopeException
         Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`._BeartypeUtilCallableScopeException`.
+        to :exc:`._BeartypeUtilCallableScopeException`.
     exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
@@ -123,6 +118,122 @@ def get_func_globals(
     # (and thus different global scopes) by different module authors.
     return func_globals
 
+
+#FIXME: Unit test us up, please. *sigh*
+def get_func_freevars(
+    # Mandatory parameters.
+    func: Callable,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableScopeException,
+    exception_prefix: str = '',
+) -> LexicalScope:
+    '''
+    **Closure scope** (i.e., dictionary mapping from the name to value of each
+    closure-scoped attribute declared by the parent callable both defining and
+    returning the passed pure-Python callable) for this callable.
+
+    This getter is intentionally named ``"get_func_freevars"``, as
+    closure-scoped attributes are officially referred to as "free variables" in
+    CPython documentation and API.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), as callers are expected to manually call
+    this getter at most once per :func:`beartype.beartype` decoration.
+
+    Caveats
+    -------
+    **This getter is inefficient and should thus only be called if necessary.**
+    Deciding the closure scope for any callable exhibits worst-case linear time
+    complexity :math:`O(n)` for the total number of free variables :math:`n`
+    required by that closure.
+
+    **This getter raises an exception if passed a non-closure nested callable.**
+    The distinction between closures and non-closure nested callables is fine,
+    yet critical:
+
+    * A closure is a nested callable defined inside a parent callable such that
+      the body of that closure refers to one or more local variables also
+      defined inside that parent callable.
+    * A non-closure nested callable is a nested callable defined inside a parent
+      callable such that the body of that nested callable refers to *no* local
+      variables also defined inside that parent callable.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+    exception_cls : Type[Exception], default: _BeartypeUtilCallableScopeException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilCallableScopeException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Closure scope for this callable.
+
+    Raises
+    ------
+    exception_cls
+        If the passed callable is *not* actually a closure.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunctest import die_unless_func_closure
+    from beartype._util.func.utilfunccodeobj import get_func_codeobject
+
+    # If the passed callable is *NOT* actually a closure, raise an exception.
+    die_unless_func_closure(
+        func=func,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # Else, the passed callable is a closure.
+
+    # C-based code object underlying this closure.
+    #
+    # Note that *ALL* closures are necessarily pure-Python and thus have
+    # associated code objects. Ergo, this is guaranteed to succeed.
+    func_codeobj = get_func_codeobject(
+        func=func,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # Tuple of the names of all free variables accessed by this closure.
+    func_closure_freevar_names = func_codeobj.co_freevars
+
+    # Tuple of cell objects whose "cell_contents" instance variables provide
+    # the values of all free variables accessed by this closure, in the same
+    # order as the "func_closure_freevar_names" tuple localized above.
+    func_closure_freevar_cell_to_value = func.__closure__
+
+    # Closure scope to be returned.
+    #
+    # Note that:
+    # * This logic is strongly inspired by similar logic in the standard
+    #   inspect.getclosurevars() getter. Sadly, that getter performs *MUCH* more
+    #   work than is desired here and is thus *MUCH* slower. Curses, "inspect"!
+    # * The zip() builtin has been quantitatively profiled to be approximately
+    #   as fast as manual iteration (e.g., leveraging some combination of the
+    #   enumerate(), len(), and range() builtins). Since zip() is likely to be
+    #   optimized even further *AND* since this approach is substantially more
+    #   concise, let's go. See also:
+    #       https://stackoverflow.com/a/62479781/2809027
+    func_freevars = {
+        freevar_name: freevar_cell.cell_contents
+        for freevar_name, freevar_cell in zip(
+            func_closure_freevar_names,
+            func_closure_freevar_cell_to_value,  # type: ignore[arg-type]
+        )
+    }
+
+    # Return this closure scope.
+    return func_freevars
+
 # ....................{ FINDERS                            }....................
 def find_func_locals_frame(
     # Mandatory parameters.
@@ -143,6 +254,10 @@ def find_func_locals_frame(
     dictionary and :data:`None` otherwise (i.e., if that callable is a global
     function directly declared by a module).
 
+    This finder is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), as callers are expected to manually call
+    this finder at most once per :func:`beartype.beartype` decoration.
+
     Caveats
     -------
     **This getter calls the low-level** :func:`sys._getframe` **getter.** If
@@ -150,6 +265,13 @@ def find_func_locals_frame(
     module-scoped by returning the empty dictionary rather than raising an
     exception. Since all standard Python implementations (e.g., CPython, PyPy)
     define that getter, this should typically *not* be a real-world concern.
+
+    **This getter is inefficient and should thus only be called if necessary.**
+    Deciding the local scope for any callable exhibits worst-case linear time
+    complexity :math:`O(k)` for the distance :math:`k` in call stack frames from
+    the call of the current function to the call of the top-most parent scope
+    transitively declaring the passed callable in its submodule. To minimize
+    space and time consumption, defer doing so as long as feasible.
 
     **This getter returns either the immutable empty frozen dictionary** (i.e.,
     :class:`.FROZENDICT_EMPTY** singleton) **or a new mutable non-empty
@@ -219,13 +341,6 @@ def find_func_locals_frame(
       objects are thus ignored rather than yielded.
     * Originate outside a module. Ergo, objects only dynamically defined
       in-memory with *no* parent module are thus ignored rather than yielded.
-
-    **This getter is inefficient and should thus only be called if necessary.**
-    Deciding the local scope for any callable exhibits worst-case linear time
-    complexity :math:`O(k)` for the distance :math:`k` in call stack frames from
-    the call of the current function to the call of the top-most parent scope
-    transitively declaring the passed callable in its submodule. To minimize
-    space and time consumption, defer doing so as long as feasible.
 
     Parameters
     ----------
@@ -400,8 +515,8 @@ def find_func_locals_frame(
     #     >>> muh_func.__qualname__ = '<locals>.muh_func'  # <-- curse ye!
     if func_scope_names_len < 2:
         raise exception_cls(
-            f'{func_name_unqualified}() fully-qualified basename '
-            f'{func_name_qualified}() invalid (e.g., placeholder substring '
+            f'Callable {func_name_unqualified}() fully-qualified basename '
+            f'"{func_name_qualified}" invalid (e.g., placeholder substring '
             f'"<locals>" not preceded by parent callable name).'
         )
     # Else, that nested callable is encapsulated by at least two lexical scopes
@@ -414,8 +529,8 @@ def find_func_locals_frame(
     # In this case, raise an exception. Again, Python permits this. *sigh*
     elif func_scope_names[-1] != func_name_unqualified:
         raise exception_cls(
-            f'{func_name_unqualified}() fully-qualified basename '
-            f'{func_name_qualified}() invalid (i.e., last lexical scope '
+            f'Callable {func_name_unqualified}() fully-qualified basename '
+            f'"{func_name_qualified}" invalid (i.e., last lexical scope '
             f'"{func_scope_names[-1]}" != unqualified basename '
             f'"{func_name_unqualified}").'
         )

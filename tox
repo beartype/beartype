@@ -26,7 +26,8 @@ set -e
 # PYTHON_ARGS=( command python3.9 )
 # PYTHON_ARGS=( command python3.10 )
 # PYTHON_ARGS=( command python3.11 )
-PYTHON_ARGS=( command python3.14 )
+# PYTHON_ARGS=( command python3.14 )
+PYTHON_ARGS=( command python3.15 )
 # PYTHON_ARGS=( command pypy3.7 )
 
 # ....................{ FUNCTIONS                          }....................

@@ -149,25 +149,33 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
         #       if (
         #           # The decorated callable is not a pure-Python function *OR*...
         #           #
-        #           # This implicitly detects all bound method, @classmethod,
-        #           # @staticmethod, and @property types.
+        #           # This implicitly detects C-based objects (which are
+        #           # typically non-data or data descriptors) created for:
+        #           # * Bound methods, which unconditionally require redecoration.
+        #           # * The standard @classmethod decorator.
+        #           # * The standard @staticmethod decorator.
+        #           # * The standard @property decorator.
+        #           # * The standard @functools.lru_cache decorator.
+        #           # * Non-standard third-party decorators (e.g.,
+        #           #   @click.command), which typically but *NOT* necessarily
+        #           #   require redecoration. Although this test induces false
+        #           #   positives for C-based objects created for non-standard
+        #           #   third-party decorators that do *NOT* require
+        #           #   redecoration, the cost of false positives here is
+        #           #   negligible (namely, an unnecessary non-fatal warning and
+        #           #   failure to apply type-checking) while the cost of
+        #           #   detecting third-party decorators that do require
+        #           #   redecoration is fatal.
         #           not isinstance(obj_wrappee, FunctionType) or
-        #           # The decorated callable is a pure-Python function but...
-        #           #
-        #           # The decorated callable is itself a higher-level
+        #           # The decorated callable is a pure-Python function, however
+        #           # the decorated callable is itself a higher-level
         #           # @functools.wrap-decorated wrapper...
         #           #
-        #           # This implicitly detects @contextlib.contextmanager. Should we just
+        #           # This implicitly detects pure-Python functions created for:
+        #           # * The standard @contextlib.contextmanager decorator.
+        #           is_func_wrapper(obj_wrappee)
         #           # detect that explicitly, though? The current approach
         #           # induces false positives. *shrug*
-        #           is_func_wrapper(obj_wrappee)
-        #
-        #           #FIXME: Probably want to call isinstance() instead with the
-        #           #set of all bound method, classmethod, staticmethod, and
-        #           #property types. Check out "_cavefast", yo. *shrug*
-        #           #FIXME: Oh, nevermind. Already handled by the trivial
-        #           #"not isinstance(obj_wrappee, FunctionType)" check above.
-        #           #hasattr(obj, '__func__') or
         #       ):
         #           # Then this object possibly requires decoration reordering
         #           # by the @beartype decorator. However, this object *CANNOT*

@@ -277,15 +277,20 @@ def closure_factory():
     Arbitrary pure-Python closure factory function.
     '''
 
-    # Arbitrary non-local variable.
-    outer_variable = 42
+    # Arbitrary local variables required by the closure defined below.
+    outer_freevar_one = "Diffus'd unseen throughout eternal space"
+    outer_freevar_two = "Of these new-form'd art thou, oh brightest child!"
 
     def closure():
         '''
         Arbitrary pure-Python closure.
         '''
 
-        nonlocal outer_variable
+        # Require the local variables defined by the parent callable, thus
+        # implicitly augmenting these variables into so-called "free" variables.
+        # Why? No idea, honestly. They're the opposite of free. We hardly shrug.
+        nonlocal outer_freevar_one
+        nonlocal outer_freevar_two
 
     # Return this closure.
     return closure
@@ -296,17 +301,10 @@ def closure_cell_factory():
     Arbitrary pure-Python closure cell factory function.
     '''
 
-    # Arbitrary non-local variable.
-    outer_variable = 1337
+    # Arbitrary closure.
+    closure = closure_factory()
 
-    def closure():
-        '''
-        Arbitrary pure-Python closure.
-        '''
-
-        nonlocal outer_variable
-
-    # Return this closure's first and only cell variable.
+    # Return an arbitrary cell variable associated with this closure.
     return closure.__closure__[0]
 
 # ....................{ CALLABLES ~ sync : generator       }....................

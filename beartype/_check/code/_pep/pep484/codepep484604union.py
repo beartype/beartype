@@ -443,7 +443,7 @@ def _get_hint_pep484604_union_args_flattened(
     #   "n" repetitions of this root union hint, where n is the number of child
     #   hints subscripting this root union hint.
     # * This call to the zip() builtin creates an iterable of 2-tuples
-    #   (hint_child_insane, union_hint_sane) for each such child hint.
+    #   "(hint_child_insane, union_hint_sane)" for each such child hint.
     hint_childs_insane_unflattened.extend(zip(
         hint_childs, (union_hint_sane,)*hint_childs_len))
 

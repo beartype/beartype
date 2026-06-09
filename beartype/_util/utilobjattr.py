@@ -108,7 +108,7 @@ def is_object_attr_names_any(
     obj : object
         Object to be introspected.
     attr_names_any : FrozenSetStrs
-        Minimal frozen set of the names of any **requisite attributes** (i.e.,
+        Minimal frozen set of the names of any **requisite attribute** (i.e.,
         minimum subset of attributes that *must* be bound to this object).
     obj_dir : Optional[list[str]], default: None
         List of the names of all relevant attributes bound to this object to be

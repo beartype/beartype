@@ -161,11 +161,50 @@ def long_past_their_woodland_days():
 #     assert get_func_wrappee(on_the_stones_that_we_walk) is (
 #         the_journey_begins_with_curiosity)
 
-# ....................{ TESTS ~ getter : local             }....................
-def test_get_func_locals() -> None:
+# ....................{ TESTS ~ getter                     }....................
+def test_get_func_freevars() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfuncscope.find_func_locals_frame` getter.
+    :func:`beartype._util.func.utilfuncscope.get_func_freevars` getter.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
+    from beartype._util.func.utilfuncscope import get_func_freevars
+    from beartype_test.a00_unit.data.data_type import (
+        closure_factory,
+        func_nested_nonclosure_factory,
+    )
+    from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    # Closure created and returned by this factory.
+    func_closure = closure_factory()
+
+    # Nested non-closure callable created and returned by this factory.
+    func_nested_nonclosure = func_nested_nonclosure_factory()
+
+    # ....................{ PASS                           }....................
+    # Assert that this getter returns the expected closure scope associated with
+    # this closure.
+    assert get_func_freevars(func_closure) == {
+        'outer_freevar_one': "Diffus'd unseen throughout eternal space",
+        'outer_freevar_two': (
+            "Of these new-form'd art thou, oh brightest child!"),
+    }
+
+    # ..................{ FAIL                               }..................
+    # Assert that this getter raises the expected exception when passed a nested
+    # non-closure callable.
+    with raises(_BeartypeUtilCallableException):
+        get_func_freevars(func_nested_nonclosure)
+
+# ....................{ TESTS ~ finder                     }....................
+def test_find_func_locals_frame() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfuncscope.find_func_locals_frame` finder.
     '''
 
     # ..................{ IMPORTS                            }..................

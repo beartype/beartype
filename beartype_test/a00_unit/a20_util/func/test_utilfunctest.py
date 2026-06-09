@@ -471,30 +471,30 @@ def test_is_func_local() -> None:
     ClassNestedNonclosure = class_nested_nonclosure_factory()
 
     # ....................{ PASS                           }....................
-    # Assert this tester accepts all possible kinds of nested methods.
+    # Assert that this tester accepts all possible kinds of nested methods.
     assert is_func_local(ClassNestedNonclosure.instance_method) is True
     assert is_func_local(ClassNestedNonclosure.class_method) is True
     assert is_func_local(ClassNestedNonclosure.static_method) is True
 
-    # Assert this tester accepts closures.
+    # Assert that this tester accepts closures.
     # print(f'__nested__: {repr(when_the_ash_and_oak_and_the_birch_and_yew.__nested__)}')
     assert is_func_local(func_closure) is True
 
-    # Assert this tester accepts nested non-closure callables.
+    # Assert that this tester accepts nested non-closure callables.
     # print(f'__nested__: {repr(when_the_ash_and_oak_and_the_birch_and_yew.__nested__)}')
     assert is_func_local(func_nested_nonclosure) is True
 
     # ....................{ FAIL                           }....................
-    # Assert this tester rejects all possible kinds of non-nested methods.
+    # Assert that this tester rejects all possible kinds of non-nested methods.
     assert is_func_local(Class.instance_method) is False
     assert is_func_local(Class.class_method) is False
     assert is_func_local(Class.static_method) is False
 
-    # Assert this tester rejects all other kinds of callables.
+    # Assert that this tester rejects all other kinds of callables.
     # print(f'__nested__: {repr(when_in_the_springtime_of_the_year.__nested__)}')
     assert is_func_local(closure_factory) is False
 
-    # Assert this tester rejects C-based builtins.
+    # Assert that this tester rejects C-based builtins.
     assert is_func_local(iter) is False
 
 

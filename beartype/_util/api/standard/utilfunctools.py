@@ -13,10 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorWrappeeException
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Any,
-    Tuple,
-)
 from beartype._cave._cavefast import (
     CallableFunctoolsLruCacheType,
     CallableFunctoolsPartialType,
@@ -29,6 +25,7 @@ from beartype._data.typing.datatyping import (
 )
 from collections.abc import Callable
 from functools import lru_cache
+from typing import Any
 
 # ....................{ TESTERS                            }....................
 def is_func_functools_lru_cache(func: Any) -> TypeIs[Callable]:
@@ -89,7 +86,7 @@ def is_func_functools_partial(func: Any) -> TypeIs[
 
 # ....................{ GETTERS                            }....................
 def get_func_functools_partial_args(
-    func: CallableFunctoolsPartialType) -> Tuple[tuple, DictStrToAny]:
+    func: CallableFunctoolsPartialType) -> tuple[tuple, DictStrToAny]:
     '''
     2-tuple ``(args, kwargs)`` providing the positional and keyword parameters
     with which the passed **partial** (i.e., pure-Python callable

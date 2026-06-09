@@ -431,10 +431,10 @@ def die_unless_func_staticmethod(
     ----------
     func : Any
         Object to be inspected.
-    exception_cls : TypeException, optional
+    exception_cls : TypeException, default: _BeartypeUtilCallableException
         Type of exception to be raised. Defaults to
-        :static:`_BeartypeUtilCallableException`.
-    exception_prefix : str, optional
+        :exc:`_BeartypeUtilCallableException`.
+    exception_prefix : str, default: ''
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
@@ -464,6 +464,56 @@ def die_unless_func_staticmethod(
             f'C-based unbound static method descriptor.'
         )
     # Else, this object is a static method descriptor.
+
+# ....................{ RAISERS ~ nested                   }....................
+#FIXME: Unit test us up, please. *sigh*
+def die_unless_func_closure(
+    # Mandatory parameters.
+    func: Callable,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed object is a **closure** (i.e.,
+    pure-Python nested callable accessing one or more local variables defined by
+    the parent pure-Python callable also declaring that callable).
+
+    Parameters
+    ----------
+    func : Callable
+        Object to be inspected.
+    exception_cls : TypeException, default: _BeartypeUtilCallableException
+        Type of exception to be raised. Defaults to
+        :exc:`_BeartypeUtilCallableException`.
+    exception_prefix : str, default: ''
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Raises
+    ------
+    exception_cls
+         If the passed object is *not* a closure.
+
+    See Also
+    --------
+    :func:`.is_func_closure`
+        Further details.
+    '''
+
+    # If this object is *NOT* a closure, raise an exception.
+    if not is_func_closure(func):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception subclass.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise a human-readable exception.
+        raise exception_cls(f'{exception_prefix}{repr(func)} not closure.')
+    # Else, this object is a closure.
 
 # ....................{ TESTERS                            }....................
 def is_func_codeobjable(func: object) -> TypeIs[Callable]:
@@ -916,9 +966,9 @@ def is_func_sync_generator(func: object) -> TypeIs[Callable]:
 # ....................{ TESTERS : nested                   }....................
 def is_func_closure(func: Any) -> TypeIs[Callable]:
     '''
-    :data:`True` only if the passed callable is a **closure** (i.e., nested
-    callable accessing one or more variables declared by the parent callable
-    also declaring that callable).
+    :data:`True` only if the passed callable is a **closure** (i.e., pure-Python
+    nested callable accessing one or more local variables defined by the parent
+    pure-Python callable also declaring that callable).
 
     Note that all closures are necessarily nested callables but that the
     converse is *not* necessarily the case. In particular, a nested callable
