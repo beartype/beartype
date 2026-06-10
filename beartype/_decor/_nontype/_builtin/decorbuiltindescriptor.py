@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Unmemoized beartype builtin descriptor decorators** (i.e., low-level
-decorators decorating low-level C-based objects produced by **builtin
-decorators** (i.e., :class:`classmethod`, :class:`property`,
-:class:`staticmethod`)).
+Beartype **builtin descriptor decorators** (i.e., low-level private decorators
+internally called by the high-level public :mod:`beartype` decorator to decorate
+low-level C-based objects created and returned by **builtin decorators** (i.e.,
+:class:`classmethod`, :class:`property`, :class:`staticmethod`)).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

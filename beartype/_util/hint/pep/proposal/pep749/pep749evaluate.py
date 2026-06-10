@@ -490,7 +490,7 @@ if IS_PYTHON_AT_LEAST_3_14:
             # Else, this evaluator is *NOT* the null value.
 
         # Return this evaluator.
-        return evaluator_value
+        return evaluator_value  # pyright: ignore
 # Else, the active Python interpreter targets Python <= 3.13. In this case,
 # trivially defer to the PEP 484-compliant "__annotations__" dunder attribute.
 else:

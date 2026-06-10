@@ -33,14 +33,12 @@ def test_decor_contextlib_contextmanager() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
-    from beartype.typing import (
-        Iterator,
-        Union,
-    )
+    from collections.abc import Iterator
     from contextlib import contextmanager
     from pytest import raises
+    from typing import Union
 
-    # ....................{ CONTEXTS                       }....................
+    # ....................{ CALLABLES                      }....................
     @contextmanager
     @beartype
     def and_motions_of(
@@ -65,8 +63,8 @@ def test_decor_contextlib_contextmanager() -> None:
         yield murmurs_of_the_air
 
     # ....................{ PASS                           }....................
-    # Assert that the ideal context manager when passed a valid parameter
-    # returns the expected return.
+    # Assert that the ideal context manager when passed a valid parameter yields
+    # the expected value.
     with and_motions_of(len(
         'Of night and day, and the deep heart of man.')) as (
         deep_heart_of_man):
@@ -74,7 +72,7 @@ def test_decor_contextlib_contextmanager() -> None:
             'Of night and day, and the deep heart of man.')
 
     # Assert that the non-ideal context manager when passed a valid parameter
-    # returns the expected return.
+    # yields the expected value.
     with may_modulate_with(
         'And voice of living beings, and woven hymns') as and_woven_hymns:
         assert and_woven_hymns == 'And voice of living beings, and woven hymns'

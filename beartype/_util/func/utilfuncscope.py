@@ -130,8 +130,8 @@ def get_func_freevars(
 ) -> LexicalScope:
     '''
     **Closure scope** (i.e., dictionary mapping from the name to value of each
-    closure-scoped attribute declared by the parent callable both defining and
-    returning the passed pure-Python callable) for this callable.
+    closure-scoped local attribute defined in the body of the parent callable
+    also defining and returning the passed closure) for this closure.
 
     This getter is intentionally named ``"get_func_freevars"``, as
     closure-scoped attributes are officially referred to as "free variables" in

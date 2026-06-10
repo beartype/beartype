@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-:pep:`702`-compliant **callable utility unit tests.**
+Project-wide :mod:`warnings` utility unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.utilfunc.pep.utilpep702` submodule.
+:mod:`beartype._util.api.standard.utilwarnings` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,16 +19,19 @@ from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                              }....................
 @skip_if_python_version_less_than('3.13.0')
-def test_is_func_pep702() -> None:
+def test_is_func_warnings_deprecated() -> None:
     '''
-    Test the :func:`beartype._util.func.pep.utilpep702func.is_func_pep702`
+    Test the
+    :func:`beartype._util.api.standard.utilwarnings.is_func_warnings_deprecated`
     tester if the active Python interpreter targets Python >= 3.13 and thus
     supports :pep:`702` *or* silently reduce to a noop otherwise.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.func.pep.utilpep702 import is_func_pep702
+    from beartype._util.api.standard.utilwarnings import (
+        is_func_warnings_deprecated)
+    from beartype._util.func.utilfuncwrap import unwrap_func_once
     from warnings import deprecated
 
     # ....................{ CALLABLES                      }....................
@@ -50,12 +53,21 @@ def test_is_func_pep702() -> None:
 
         pass
 
+    # ....................{ LOCALS                         }....................
+    # Original callable decorated by the @warnings.deprecated decorator above.
+    manifestations_of_that_func = unwrap_func_once(manifestations_of_that)
+
     # ....................{ PASS                           }....................
     # Assert that this tester accepts an arbitrary callable decorated by the
     # @warnings.deprecated decorator.
-    assert is_func_pep702(manifestations_of_that) is True
+    assert is_func_warnings_deprecated(manifestations_of_that) is True
 
     # ....................{ FAIL                           }....................
+    # Assert that this tester rejects the original callable decorated by the
+    # @warnings.deprecated decorator above. While seemingly senseless, this
+    # assertion validates a subtle edge case with respect to this decorator.
+    assert is_func_warnings_deprecated(manifestations_of_that_func) is False
+
     # Assert that this tester rejects an arbitrary callable *NOT* decorated by
     # the @warnings.deprecated decorator.
-    assert is_func_pep702(beauteous_life) is False
+    assert is_func_warnings_deprecated(beauteous_life) is False

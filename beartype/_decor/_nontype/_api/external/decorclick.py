@@ -4,8 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **Click utilities** (i.e., low-level callables handling the
-third-party :mod:`click` package).
+Beartype **Click decorators** (i.e., low-level private decorators
+internally called by the high-level public :mod:`beartype` decorator to decorate
+**Click commands** (i.e., objects created and returned by the third-party
+:func:`click.command` decorator decorating an arbitrary callable)).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -25,8 +27,8 @@ from beartype._data.typing.datatyping import BeartypeableT
 def beartype_click_command(
     click_command: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
-    Decorate the passed **Click command** (i.e., object produced by the
-    :func:`click.command` decorator decorating an arbitrary callable) with
+    Decorate the passed **Click command** (i.e., object created and returned by
+    the :func:`click.command` decorator decorating an arbitrary callable) with
     dynamically generated type-checking.
 
     Design

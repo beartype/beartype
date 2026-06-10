@@ -30,16 +30,15 @@ def get_func_contextlib_contextmanager_or_none(func: Any) -> Optional[Callable]:
     :mod:`contextlib`-based **isomorphic decorator closure** (i.e., closure both
     defined and returned by either the standard
     :func:`contextlib.contextmanager` or :func:`contextlib.asynccontextmanager`
-    decorators where that closure isomorphically preserves both the number and
-    types of all passed parameters and returns by accepting only a variadic
+    decorators such that that closure isomorphically preserves both the number
+    and types of all passed parameters and returns by accepting only a variadic
     positional argument and variadic keyword argument) *or* :data:`None`
     otherwise (i.e., if this object is *not* such a closure).
 
     Specifically, this getter returns either:
 
-    * If the passed object was produced by a prior call to the
-      :func:`contextlib.contextmanager` decorator, that decorator as a function.
-    * If the passed object was produced by a prior call to the
+    * If the passed object was produced by a prior call to either the
+      :func:`contextlib.contextmanager` *or*
       :func:`contextlib.asynccontextmanager` decorator, that decorator as a
       function.
     * Else, :data:`None`.
