@@ -26,7 +26,7 @@ Beartype import hooks extend the surprisingly sharp claws of `beartype` to your 
 Beartype import hooks implicitly perform both:
 
 - Standard **runtime type-checking** (ala the `beartype.beartype` decorator).
-- Standard **static type-checking** (ala [mypy](http://mypy-lang.org) and [pyright](https://github.com/Microsoft/pyright)) but **at runtime** – and that ain't standard.
+- Standard **static type-checking** (ala [mypy] and [pyright]) but **at runtime** – and that ain't standard.
 
 Automate the `beartype.beartype` decorator away today with magical import hooks published by the `beartype.claw` subpackage. When you install import hooks from beartype, you augment beartype from a `pure-runtime
 second-generation type-checker <faq:third>` into a `hybrid runtime-static
@@ -93,7 +93,7 @@ class BadClass(object):
 BadClass().bad_method()  # <-- raises exception
 ```
 
-By doing nothing, you saved five lines of extraneous boilerplate you no longer need to maintain, preserved [DRY (Don't Repeat Yourself)](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself), and mended your coworker's career, who you would have blamed for all this. You had nothing to do with that code. It's a nothingburger!
+By doing nothing, you saved five lines of extraneous boilerplate you no longer need to maintain, preserved [DRY (Don't Repeat Yourself)][DRY], and mended your coworker's career, who you would have blamed for all this. You had nothing to do with that code. It's a nothingburger!
 
 Beartype believes you. This is why we `beartype_this_package`.
 
