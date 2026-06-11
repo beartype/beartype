@@ -198,24 +198,101 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         # automation, which does actually invoke these methods).
         def __enter__(self) -> BinaryIO:
             # return self._file_io.__enter__()
-            return self
+            return self  # <-- pretend this makes sense
 
         def __exit__(self, cls, value, traceback) -> None:
             # return self._file_io.__exit__(cls, value, traceback)
             pass
 
+
+    class TextIOConcrete(TextIO):
+        '''
+        Concrete subclass of the mostly useless standard pure-Python
+        :pep:`484`-compliant :class:`typing.TextIO` abstract generic.
+
+        This subclass is useless in practice and thus *only* defined to
+        superficially test that :mod:`beartype` handles this abstract generic in
+        the expected manner. Since there exists *no* existing type in Python's
+        standard library that could be used to trivially implement this abstract
+        generic, this concrete subclass trivially defines all abstract methods
+        and properties defined by :class:`typing.TextIO` to be empty noops.
+        '''
+
+        @property
+        def mode(self) -> str:
+            pass
+
+        @property
+        def name(self) -> str:
+            pass
+
+        def close(self) -> None: ...
+
+        @property
+        def closed(self) -> bool:
+            pass
+
+        def fileno(self) -> int: ...
+        def flush(self) -> None: ...
+        def isatty(self) -> bool: ...
+        def read(self, n: int = -1) -> AnyStr: ...
+        def readable(self) -> bool: ...
+        def readline(self, limit: int = -1) -> AnyStr: ...
+        def readlines(self, hint: int = -1) -> list[AnyStr]: ...
+        def seek(self, offset: int, whence: int = 0) -> int: ...
+        def seekable(self) -> bool: ...
+        def tell(self) -> int: ...
+        def truncate(self, size: int | None = None) -> int: ...
+        def writable(self) -> bool: ...
+        def write(self, s: bytes | bytearray) -> int: ...
+        def writelines(self, lines: list[AnyStr]) -> None: ...
+
+        # Note that the following context manager-specific methods are currently
+        # intentionally left as noops (to avoid issues inside our test
+        # automation, which does actually invoke these methods).
+        def __enter__(self) -> TextIO:
+            return self  # <-- pretend this makes sense
+
+        def __exit__(self, cls, value, traceback) -> None: ...
+
+        @property
+        def buffer(self) -> BinaryIO:
+            pass
+
+        @property
+        def encoding(self) -> str:
+            pass
+
+        @property
+        def errors(self) -> str | None:
+            pass
+
+        @property
+        def line_buffering(self) -> bool:
+            pass
+
+        @property
+        def newlines(self) -> Any:
+            pass
+
+    # ..................{ INSTANCES                          }..................
     # Instance of the concrete "BinaryIO" subclass defined above, referring to
     # this submodule itself. Note that it probably does *not* matter. We never
     # actually call methods on this instance and thus *never* open this
     # submodule via this instance.
     binary_io_file = BinaryIOFile(SUBMODULE_FILENAME)
 
+    # Instance of the concrete "TextIO" subclass defined above. Note that we
+    # never actually call methods on this instance and thus *never* open this
+    # submodule via this instance.
+    text_io_concrete = TextIOConcrete()
+
     # ..................{ TUPLES                             }..................
     # Tuple of one or more "PithUnsatisfiedMetadata" instances validating
-    # objects *NOT* satisfied by either "typing.BinaryIO" *OR*
-    # "typing.IO[bytes]".
+    # objects either satisfying or violating either "typing.BinaryIO" *OR* its
+    # subscripted alias "typing.IO[bytes]".
     PITHS_META_BINARYIO = (
-        # Instance of the concrete "BinaryIO" subclass defined above.
+        # Instance of the concrete "BinaryIOFile" subclass defined above.
         PithSatisfiedMetadata(binary_io_file),
         # Open read-only binary file handle instantiated by the open() builtin.
         PithSatisfiedMetadata(pith=open_binary_file, is_pith_factory=True),
@@ -225,23 +302,53 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
 
         # Bytestring constant.
         PithUnsatisfiedMetadata(b"Of a thieved imagination's reveries"),
-        # Open read-only text file handle violating both "typing.BinaryIO" *AND*
-        # "typing.IO[bytes]" type hints. This validation requires dynamism and
-        # thus either beartype-specific validators *OR* beartype-agnostic PEP
-        # 3119-compliant metaclasses defining the __instancecheck__() dunder
-        # method, as the only means of differentiating objects satisfying the
-        # "typing.BinaryIO" protocol from those satisfying the "typing.IO"
-        # protocol is with an inverted instance check. Guess which beartype now
-        # prefers? *sigh*
+        # Instance of the concrete "TextIOConcrete" subclass defined above.
+        PithUnsatisfiedMetadata(text_io_concrete),
+        # Open read-only text file handle instantiated by the open() builtin.
+        # This validation requires dynamism and thus either beartype-specific
+        # validators *OR* beartype-agnostic PEP 3119-compliant metaclasses
+        # defining the __instancecheck__() dunder method, as the only means of
+        # differentiating objects satisfying the "typing.BinaryIO" protocol from
+        # those satisfying the "typing.IO" protocol is with an inverted instance
+        # check. Guess which beartype now prefers? *sigh*
         PithUnsatisfiedMetadata(pith=open_text_file, is_pith_factory=True),
         # Unrelated C-based "io.BytesIO" object, which *ALMOST* satisfies the
         # PEP 544-compliant protocol implied by the "BinaryIO" generic. Notably,
         # "io.BytesIO" fails to define *ANY* of the properties required by that
         # protocol (e.g., "closed", "mode", "name").
         PithUnsatisfiedMetadata(pith=open_binary_bytesio, is_pith_factory=True),
-        # Unrelated C-based "io.StringIO" object, which satisfies the PEP
-        # 544-compliant protocol implied by the "TextIO" rather than "BinaryIO"
-        # generic. Is everybody suitably confused yet? *long sigh is heard*
+        # Unrelated C-based "io.StringIO" object, which *ALMOST* satisfies the
+        # PEP 544-compliant protocol implied by the "TextIO" generic while
+        # obviously violating that implied by the "BinaryIO" generic. Is
+        # everybody suitably confused yet? *lengthy sighing is heard*
+        PithUnsatisfiedMetadata(pith=open_text_stringio, is_pith_factory=True),
+    )
+
+    #FIXME: Use us up below, please. *sigh*
+    # Tuple of one or more "PithUnsatisfiedMetadata" instances validating
+    # objects either satisfying or violating either "typing.TextIO" *OR* its
+    # subscripted alias "typing.IO[str]".
+    PITHS_META_TEXTIO = (
+        # Instance of the concrete "TextIO" subclass defined above.
+        PithSatisfiedMetadata(text_io_concrete),
+        # Open read-only text file handle instantiated by the open() builtin.
+        PithSatisfiedMetadata(pith=open_text_file, is_pith_factory=True),
+
+        # String constant.
+        PithUnsatisfiedMetadata('Statistician’s anthemed meme athame'),
+        # Instance of the concrete "BinaryIO" subclass defined above.
+        PithUnsatisfiedMetadata(binary_io_file),
+        # Open read-only binary file handle instantiated by the open() builtin.
+        PithUnsatisfiedMetadata(pith=open_binary_file, is_pith_factory=True),
+        # Unrelated C-based "io.BytesIO" object, which *ALMOST* satisfies the
+        # PEP 544-compliant protocol implied by the "BinaryIO" generic. Notably,
+        # "io.BytesIO" fails to define *ANY* of the properties required by that
+        # protocol (e.g., "closed", "mode", "name").
+        PithUnsatisfiedMetadata(pith=open_binary_bytesio, is_pith_factory=True),
+        # Unrelated C-based "io.StringIO" object, which *ALMOST* satisfies the
+        # PEP 544-compliant protocol implied by the "TextIO" generic. Notably,
+        # "io.StringIO" fails to define *ANY* of the file-oriented properties
+        # required by that protocol (e.g., "closed", "mode", "name").
         PithUnsatisfiedMetadata(pith=open_text_stringio, is_pith_factory=True),
     )
 
@@ -515,6 +622,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                     PithSatisfiedMetadata(BinaryIOFile),
                     # Unrelated C-based "io.FileIO" type.
                     PithSatisfiedMetadata(FileIO),
+
                     # String constant.
                     PithUnsatisfiedMetadata(
                         'Distinct, and visible; symbols divine'),
@@ -526,9 +634,10 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                     # *ANY* of the properties required by that protocol (e.g.,
                     # "closed", "mode", "name").
                     PithUnsatisfiedMetadata(BytesIO),
-                    # Unrelated C-based "io.StringIO" type, which satisfies the
-                    # PEP 544-compliant protocol implied by the "TextIO" rather
-                    # than "BinaryIO" generic. Is everybody suitably confused?
+                    # Unrelated C-based "io.StringIO" type, which *ALMOST*
+                    # satisfies the PEP 544-compliant protocol implied by the
+                    # "TextIO" generic while obviously violating that implied by
+                    # the "BinaryIO" generic. Is everybody suitably confused?
                     PithUnsatisfiedMetadata(StringIO),
                 ),
             ),
@@ -545,16 +654,36 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 hint=TextIO,
                 pep_sign=HintSignTextIO,
                 generic_type=TextIO,
+                piths_meta=PITHS_META_TEXTIO,
+            ),
+
+            # ................{ PEP 585 ~ subclass             }................
+            # Any subclass of the "TextIO" generic.
+            HintPepMetadata(
+                hint=type[TextIO],
+                pep_sign=HintSignType,
+                isinstanceable_type=type,
+                is_pep585_builtin_subbed=True,
                 piths_meta=(
-                    # Open read-only text file handle to this submodule.
-                    PithSatisfiedMetadata(
-                        pith=open_text_file, is_pith_factory=True),
+                    # "TextIO" generic.
+                    PithSatisfiedMetadata(TextIO),
+                    # Arbitrary concrete subclass of the "TextIO" generic.
+                    PithSatisfiedMetadata(TextIOConcrete),
+
                     # String constant.
-                    PithUnsatisfiedMetadata(
-                        'Statistician’s anthemed meme athame'),
-                    # Open read-only binary file handle to this submodule.
-                    PithUnsatisfiedMetadata(
-                        pith=open_binary_file, is_pith_factory=True),
+                    PithUnsatisfiedMetadata('Starkness'),
+                    # Instance of that arbitrary concrete subclass.
+                    PithUnsatisfiedMetadata(binary_io_file),
+                    # Unrelated C-based "io.FileIO" type.
+                    PithUnsatisfiedMetadata(FileIO),
+                    # Unrelated C-based "io.BytesIO" type.
+                    PithUnsatisfiedMetadata(BytesIO),
+                    # Unrelated C-based "io.StringIO" type, which *ALMOST*
+                    # satisfies the PEP 544-compliant protocol implied by the
+                    # "TextIO" generic. Notably, "io.StringIO" fails to define
+                    # *ANY* of the file-oriented properties required by that
+                    # protocol (e.g., "closed", "mode", "name").
+                    PithUnsatisfiedMetadata(StringIO),
                 ),
             ),
         ))
@@ -586,6 +715,8 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
 
             # ..............{ GENERICS ~ io : subscripted        }..............
             # All possible subscriptions of the "IO" abstract base class (ABC).
+
+            # "IO" subscripted by "Any", equivalent to merely that ABC.
             HintPepMetadata(
                 hint=IO[Any],
                 pep_sign=HintSignPep484585GenericSubbed,
@@ -602,32 +733,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                         'Stoicly Anti‐heroic, synthetic'),
                 ),
             ),
-            HintPepMetadata(
-                hint=IO[bytes],
-                pep_sign=HintSignPep484585GenericSubbed,
-                generic_type=IO,
-                piths_meta=PITHS_META_BINARYIO,
-            ),
-            HintPepMetadata(
-                hint=IO[str],
-                pep_sign=HintSignPep484585GenericSubbed,
-                generic_type=IO,
-                piths_meta=(
-                    # Open read-only text file handle to this submodule.
-                    PithSatisfiedMetadata(
-                        pith=open_text_file, is_pith_factory=True),
-                    # String constant.
-                    PithUnsatisfiedMetadata(
-                        'Thism‐predestined City’s pestilentially '
-                        'celestial dark of'
-                    ),
-                    # Open read-only binary file handle to this submodule.
-                    PithUnsatisfiedMetadata(
-                        pith=open_binary_file, is_pith_factory=True),
-                ),
-            ),
 
-            # Parametrization of the "IO" abstract base class (ABC).
+            # "IO" parametrized by the same type variable already parametrizing
+            # that ABC, equivalent to merely that ABC.
             HintPepMetadata(
                 hint=IO[AnyStr],
                 pep_sign=HintSignPep484585GenericSubbed,
@@ -641,11 +749,64 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                     PithSatisfiedMetadata(
                         pith=open_text_file, is_pith_factory=True),
                     # String constant.
-                    PithUnsatisfiedMetadata('Starkness'),
+                    PithUnsatisfiedMetadata(
+                        'Thism‐predestined City’s pestilentially '
+                        'celestial dark of'
+                    ),
                 ),
             ),
 
+            # "IO" subscripted by "bytes", equivalent to "BinaryIO".
+            HintPepMetadata(
+                hint=IO[bytes],
+                pep_sign=HintSignPep484585GenericSubbed,
+                generic_type=IO,
+                piths_meta=PITHS_META_BINARYIO,
+            ),
+
+            # "IO" subscripted by "str", equivalent to "TextIO".
+            HintPepMetadata(
+                hint=IO[str],
+                pep_sign=HintSignPep484585GenericSubbed,
+                generic_type=IO,
+                piths_meta=PITHS_META_TEXTIO,
+            ),
+
             # ................{ PEP 585 ~ subclass             }................
+            # Any subclass of the "IO" generic.
+            HintPepMetadata(
+                hint=type[IO],
+                pep_sign=HintSignType,
+                isinstanceable_type=type,
+                is_pep585_builtin_subbed=True,
+                piths_meta=(
+                    # "IO" generic.
+                    PithSatisfiedMetadata(IO),
+                    # Arbitrary concrete subclasses of the "IO" generic.
+                    PithSatisfiedMetadata(BinaryIOFile),
+                    PithSatisfiedMetadata(TextIOConcrete),
+                    # Unrelated C-based "io.FileIO" type.
+                    PithSatisfiedMetadata(FileIO),
+
+                    # String constant.
+                    PithUnsatisfiedMetadata(
+                        'Distinct, and visible; symbols divine'),
+                    # Instances of these arbitrary concrete subclasses.
+                    PithUnsatisfiedMetadata(binary_io_file),
+                    PithUnsatisfiedMetadata(text_io_concrete),
+                    # Unrelated C-based "io.BytesIO" type, which *ALMOST*
+                    # satisfies the PEP 544-compliant protocol implied by the
+                    # "IO" generic. Notably, "io.BytesIO" fails to define *ANY*
+                    # of the properties required by that protocol (e.g.,
+                    # "closed", "mode", "name").
+                    PithUnsatisfiedMetadata(BytesIO),
+                    # Unrelated C-based "io.StringIO" type, which *ALMOST*
+                    # satisfies the PEP 544-compliant protocol implied by the
+                    # "IO" generic while obviously violating that implied by the
+                    # "BinaryIO" generic. Is everybody suitably confused?
+                    PithUnsatisfiedMetadata(StringIO),
+                ),
+            ),
         ))
 
     # ..................{ FACTORIES ~ SupportsAbs            }..................
