@@ -4,95 +4,18 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **object utilities** (i.e., low-level callables handling arbitrary
-objects in a general-purpose manner).
+Project-wide **object getters** (i.e., low-level callables querying various
+properties of arbitrary objects in a general-purpose manner).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilObjectNameException
-from beartype.typing import (
+from typing import (
     Any,
     Optional,
 )
-from beartype._data.cls.datacls import TYPES_CONTEXTMANAGER_FAKE
-from contextlib import AbstractContextManager
-
-# ....................{ TESTERS                            }....................
-def is_object_context_manager(obj: object) -> bool:
-    '''
-    :data:`True` only if the passed object is a **context manager** (i.e.,
-    object defining both the ``__exit__`` and ``__enter__`` dunder methods
-    required to satisfy the context manager protocol).
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is a context manager.
-    '''
-
-    # Return true only if...
-    return (
-        # This object satisfies the context manager protocol (i.e., defines both
-        # the __enter__() and __exit__() dunder methods) *AND*...
-        isinstance(obj, AbstractContextManager) and
-        # This object is *NOT* a "fake" context manager (i.e., defines erroneous
-        # __enter__() and __exit__() dunder methods trivially reducing to noops
-        # and also emitting non-fatal deprecation warnings).
-        not isinstance(obj, TYPES_CONTEXTMANAGER_FAKE)
-    )
-
-
-# Note that this tester function *CANNOT* be memoized by the @callable_cached
-# decorator, which requires all passed parameters to already be hashable.
-def is_object_hashable(obj: object) -> bool:
-    '''
-    :data:`True` only if the passed object is **hashable** (i.e., passable to
-    the builtin :func:`hash` function *without* raising an exception and thus
-    usable in hash-based containers like dictionaries and sets).
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is hashable.
-    '''
-
-    # Attempt to hash this object. If doing so raises *any* exception
-    # whatsoever, this object is by definition unhashable.
-    #
-    # Note that there also exists a "collections.abc.Hashable" superclass.
-    # Sadly, this superclass is mostly useless for all practical purposes. Why?
-    # Because user-defined classes are free to subclass that superclass
-    # despite overriding the __hash__() dunder method implicitly called by the
-    # builtin hash() function to raise exceptions: e.g.,
-    #
-    #     from collections.abc import Hashable
-    #     class HashUmUp(Hashable):
-    #         def __hash__(self):
-    #             raise ValueError('uhoh')
-    #
-    # Note also that we catch all possible exceptions rather than merely the
-    # standard "TypeError" exception raised by unhashable builtin types (e.g.,
-    # dictionaries, lists, sets). Why? For the same exact reason as above.
-    try:
-        hash(obj)
-    # If this object is unhashable, return false.
-    except Exception:
-        return False
-
-    # Else, this object is hashable. Return true.
-    return True
 
 # ....................{ GETTERS ~ name                     }....................
 def get_object_name(obj: Any) -> str:
@@ -180,7 +103,7 @@ def get_object_name(obj: Any) -> str:
 #
 #        .. code-block:: python
 #
-#           >>> from beartype._util.utilobject import get_object_basename_scoped
+#           >>> from beartype._util.utilobjget import get_object_basename_scoped
 #           >>> def muh_func():
 #           ...     def muh_closure(): pass
 #           ...     return muh_closure()
@@ -294,7 +217,7 @@ def get_object_basename_scoped_or_none(obj: Any) -> Optional[str]:
 
        .. code-block:: python
 
-          >>> from beartype._util.utilobject import get_object_basename_scoped
+          >>> from beartype._util.utilobjget import get_object_basename_scoped
           >>> def muh_func():
           ...     def muh_closure(): pass
           ...     return muh_closure()

@@ -403,7 +403,7 @@ GetObjectAttrsDir = list[str] | None
 '''
 PEP-compliant type hint matching the ``obj_dir`` parameter accepted by all
 **object attribute getters** (e.g.,
-:func:`beartype._util.utilobject.get_object_attr_name_to_value`).
+:func:`beartype._util.utilobjget.get_object_attr_name_to_value`).
 '''
 
 
@@ -411,7 +411,7 @@ GetObjectAttrsPredicate = Callable[[str, object], bool] | None
 '''
 PEP-compliant type hint matching the ``predicate`` parameter accepted by all
 **object attribute getters** (e.g.,
-:func:`beartype._util.utilobject.get_object_attr_name_to_value`).
+:func:`beartype._util.utilobjget.get_object_attr_name_to_value`).
 '''
 
 # ....................{ PATH                               }....................

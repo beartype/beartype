@@ -22,7 +22,7 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDictStrToAny
-from beartype._util.utilobject import get_object_basename_scoped
+from beartype._util.utilobjget import get_object_basename_scoped
 from collections.abc import Callable
 from typing import Optional
 

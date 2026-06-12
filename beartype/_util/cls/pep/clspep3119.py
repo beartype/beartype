@@ -917,7 +917,7 @@ def _die_unless_object_builtin_checkable(
         from beartype._util.hint.pep.utilpepget import get_hint_pep_args
         from beartype._util.text.utiltextlabel import (
             label_exception_traceback)
-        from beartype._util.utilobject import (
+        from beartype._util.utilobjget import (
             get_object_type_basename,
             get_object_type_name,
         )

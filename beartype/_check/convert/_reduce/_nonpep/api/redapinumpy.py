@@ -30,7 +30,7 @@ from beartype._util.api.external.utilnumpy import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-from beartype._util.utilobject import is_object_hashable
+from beartype._util.utilobjtest import is_object_hashable
 from typing import (
     Annotated,
     Any,

@@ -33,7 +33,7 @@ from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_issubclassable,
 )
 from beartype._util.func.utilfuncscope import add_func_scope_attr
-from beartype._util.utilobject import get_object_name
+from beartype._util.utilobjget import get_object_name
 
 # ....................{ SUBCLASSES ~ instance              }....................
 class _IsInstanceFactory(_BeartypeValidatorFactoryABC):

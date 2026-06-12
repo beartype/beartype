@@ -24,7 +24,7 @@ from beartype._data.typing.datatypingport import (
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
-from beartype._util.utilobject import is_object_hashable
+from beartype._util.utilobjtest import is_object_hashable
 from beartype._util.utilobjmake import permute_object
 from collections.abc import Iterable
 from typing import (

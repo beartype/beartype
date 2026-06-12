@@ -67,7 +67,7 @@ def ignore_warnings(warning_cls: type) -> 'Callable':
     '''
 
     # Defer test-specific imports.
-    from beartype._util.utilobject import get_object_type_name
+    from beartype._util.utilobjget import get_object_type_name
     from beartype_test._util.pytroar import BeartypeTestMarkException
 
     # If this object is *NOT* a class, raise an exception.

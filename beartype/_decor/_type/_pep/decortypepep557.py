@@ -136,7 +136,7 @@ from beartype._util.cls.utilclsset import set_type_attr
 from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
     get_hintable_pep649749_annotations)
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
-from beartype._util.utilobject import get_object_type_name
+from beartype._util.utilobjget import get_object_type_name
 
 # ....................{ DECORATORS                         }....................
 #FIXME: Unit test against all possible dataclass edge cases, including:

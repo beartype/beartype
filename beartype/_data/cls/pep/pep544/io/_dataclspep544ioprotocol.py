@@ -4,7 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`544`-compliant **protocols.**
+Project-wide :pep:`544`-compliant **IO protocol type hierarchy** (i.e.,
+:class:`typing.Protocol` subclasses structurally matching the public API of both
+objects created by the :func:`open` builtin as well as the family of C-based
+``typing.*IO`` types and pure-Python ``typing.*IO`` generics).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -177,7 +180,7 @@ class Pep544TextIO(Pep544IO[str], Protocol):
     '''
 
     @property
-    def buffer(self) -> 'beartype._data.cls.pep.pep544.dataclspep544.BinaryIO':  # type: ignore[name-defined]
+    def buffer(self) -> 'beartype._data.cls.pep.pep544.io.dataclspep544io.BinaryIO':  # type: ignore[name-defined]
         ...
 
     @property

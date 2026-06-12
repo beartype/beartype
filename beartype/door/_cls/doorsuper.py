@@ -45,7 +45,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_or_none,
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
-from beartype._util.utilobject import get_object_type_basename
+from beartype._util.utilobjget import get_object_type_basename
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.

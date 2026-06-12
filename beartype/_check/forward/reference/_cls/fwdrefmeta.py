@@ -78,7 +78,7 @@ from beartype._util.module.utilmodimport import (
     import_module_attr_or_sentinel,
 )
 from beartype._util.text.utiltextidentifier import is_dunder
-from beartype._util.utilobject import get_object_name
+from beartype._util.utilobjget import get_object_name
 from typing import Optional
 
 # ....................{ PRIVATE ~ hints                    }....................

@@ -53,8 +53,9 @@ def beartype_func_contextlib_contextmanager(
           In this case, :func:`contextlib.contextmanager`.
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`.beartype_func` decorator internally called by this higher-level
-    decorator on the pure-Python function encapsulated in this descriptor.
+    :func:`beartype._decor._nontype.decornontype.beartype_nontype` decorator
+    internally called by this higher-level decorator on the pure-Python function
+    encapsulated in this descriptor.
 
     Returns
     -------
@@ -67,14 +68,14 @@ def beartype_func_contextlib_contextmanager(
     print(f'Redecorating {repr(func_contextmanager)}-decorated callable {repr(func)}...')
 
     # Avoid circular import dependencies.
-    from beartype._decor._nontype.decornontype import beartype_func
+    from beartype._decor._nontype.decornontype import beartype_nontype
 
     # Original pure-Python generator factory function decorated by either the
     # @contextlib.asynccontextmanager or @contextlib.contextmanager decorator.
     generator = unwrap_func_once(func)  # type: ignore[arg-type]
 
     # Decorate this generator factory function with type-checking.
-    generator_checked = beartype_func(func=generator, **kwargs)
+    generator_checked = beartype_nontype(obj=generator, **kwargs)
 
     # Re-decorate this generator factory function by the same decorator.
     generator_checked_contextmanager = func_contextmanager(generator_checked)
@@ -97,8 +98,9 @@ def beartype_func_functools_lru_cache(
         Pseudo-callable to be monkey-patched by :func:`beartype.beartype`.
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`.beartype_func` decorator internally called by this higher-level
-    decorator on the pure-Python function encapsulated in this descriptor.
+    :func:`beartype._decor._nontype.decornontype.beartype_nontype` decorator
+    internally called by this higher-level decorator on the pure-Python function
+    encapsulated in this descriptor.
 
     Returns
     -------
@@ -107,7 +109,7 @@ def beartype_func_functools_lru_cache(
     '''
 
     # Avoid circular and third-party import dependencies.
-    from beartype._decor._nontype.decornontype import beartype_func
+    from beartype._decor._nontype.decornontype import beartype_nontype
 
     # If this pseudo-callable is *NOT* actually a @functools.lru_cache-memoized
     # callable, raise an exception.
@@ -122,7 +124,7 @@ def beartype_func_functools_lru_cache(
     func = unwrap_func_once(pseudofunc)  # pyright: ignore
 
     # Decorate that callable with type-checking.
-    func_checked = beartype_func(func=func, **kwargs)
+    func_checked = beartype_nontype(obj=func, **kwargs)
 
     # Dictionary mapping the names to values of all parameters originally passed
     # by the caller to that decorator, enabling the re-decoration of that
@@ -165,8 +167,9 @@ def beartype_func_warnings_deprecated(
         Decorator closure to be decorated by :func:`beartype.beartype`.
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`.beartype_func` decorator internally called by this higher-level
-    decorator on the pure-Python function encapsulated by this closure.
+    :func:`beartype._decor._nontype.decornontype.beartype_nontype` decorator
+    internally called by this higher-level decorator on the pure-Python function
+    encapsulated in this descriptor.
 
     Returns
     -------
@@ -176,8 +179,6 @@ def beartype_func_warnings_deprecated(
     '''
     print(f'Redecorating @warnings.deprecated-decorated callable {repr(func)}...')
 
-    #FIXME: *CRITICAL*! All of the above calls to beartype_func() should instead
-    #call beartype_nontype() for generality! Make it so, please. *sigh*
     # Avoid circular and third-party import dependencies.
     from beartype._decor._nontype.decornontype import beartype_nontype
 

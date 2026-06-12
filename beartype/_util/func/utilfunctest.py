@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **callable testers** (i.e., utility functions dynamically
+Project-wide **callable testers** (i.e., low-level callables dynamically
 validating and inspecting various properties of passed callables).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -598,7 +598,7 @@ def is_func_python(func: object) -> TypeIs[FunctionType]:
     # Singular decomposition across this Singularity: "Engage!"
     return isinstance(func, FunctionType)
 
-# ....................{ TESTERS ~ descriptor               }....................
+# ....................{ TESTERS ~ descriptor : builtin     }....................
 #FIXME: Unit test us up, please.
 def is_func_boundmethod(func: object) -> TypeIs[MethodBoundInstanceOrClassType]:
     '''
@@ -634,7 +634,7 @@ def is_func_boundmethod(func: object) -> TypeIs[MethodBoundInstanceOrClassType]:
     # Only the penitent one-liner shall pass.
     return isinstance(func, MethodBoundInstanceOrClassType)
 
-# ....................{ TESTERS ~ descriptor : uncallable  }....................
+
 #FIXME: Unit test us up, please.
 #FIXME: Currently unused but preserved for posterity. We'll want this someday!
 # def is_func_class_property_or_static_method(func: Any)  -> TypeIs[

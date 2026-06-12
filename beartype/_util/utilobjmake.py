@@ -4,15 +4,14 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **object factory utilities** (i.e., low-level callables
-instantiating arbitrary objects in a general-purpose manner).
+Project-wide **object factories** (i.e., low-level callables instantiating
+arbitrary objects in various ways in a general-purpose manner).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilTypeException
-from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.typing.datatyping import (
     T,
@@ -21,6 +20,7 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._data.kind.datakindiota import SENTINEL
+from typing import Optional
 
 # ....................{ PERMUTERS                          }....................
 #FIXME: Unit test us up, please.

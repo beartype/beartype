@@ -18,7 +18,7 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._util.text.utiltextlabel import label_exception_message
 from beartype._util.text.utiltextmunge import number_str_lines
-from beartype._util.utilobject import get_object_name
+from beartype._util.utilobjget import get_object_name
 from collections.abc import Callable
 from functools import update_wrapper
 from linecache import cache as linecache_cache  # type: ignore[attr-defined]

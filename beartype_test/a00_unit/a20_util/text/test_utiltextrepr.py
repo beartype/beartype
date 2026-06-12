@@ -95,7 +95,7 @@ def test_represent_func() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.text.utiltextrepr import represent_func
-    from beartype._util.utilobject import get_object_basename_scoped
+    from beartype._util.utilobjget import get_object_basename_scoped
     from beartype_test.a00_unit.data.data_type import (
         function,
         function_lambda,

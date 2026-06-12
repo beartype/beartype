@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **object utility** unit tests.
+Project-wide **object getter utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.utilobject` submodule.
+:mod:`beartype._util.utilobjget` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -16,38 +16,17 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ tester                     }....................
-def test_is_object_hashable() -> None:
-    '''
-    Test the :func:`beartype._util.utilobject.is_object_hashable` tester.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.utilobject import is_object_hashable
-    from beartype_test.a00_unit.data.hint.data_hint import (
-        NOT_HINTS_HASHABLE,
-        NOT_HINTS_UNHASHABLE,
-    )
-
-    # Assert this tester accepts unhashable objects.
-    for object_hashable in NOT_HINTS_HASHABLE:
-        assert is_object_hashable(object_hashable) is True
-
-    # Assert this tester rejects unhashable objects.
-    for object_unhashable in NOT_HINTS_UNHASHABLE:
-        assert is_object_hashable(object_unhashable) is False
-
 # ....................{ TESTS ~ getter : name              }....................
 def test_get_object_basename_scoped() -> None:
     '''
-    Test the :func:`beartype._util.utilobject.get_object_basename_scoped`
+    Test the :func:`beartype._util.utilobjget.get_object_basename_scoped`
     getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilObjectNameException
-    from beartype._util.utilobject import get_object_basename_scoped
+    from beartype._util.utilobjget import get_object_basename_scoped
     from beartype_test.a00_unit.data.data_type import (
         CALLABLES,
         closure_factory,
@@ -76,12 +55,12 @@ def test_get_object_basename_scoped() -> None:
 
 def test_get_object_filename_or_none() -> None:
     '''
-    Test the :func:`beartype._util.utilobject.get_object_filename_or_none`
+    Test the :func:`beartype._util.utilobjget.get_object_filename_or_none`
     getter.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.utilobject import get_object_filename_or_none
+    from beartype._util.utilobjget import get_object_filename_or_none
     from beartype_test.a00_unit.data.data_type import (
         Class,
         function,
@@ -100,13 +79,13 @@ def test_get_object_filename_or_none() -> None:
 
 def test_get_object_name() -> None:
     '''
-    Test the :func:`beartype._util.utilobject.get_object_name` getter.
+    Test the :func:`beartype._util.utilobjget.get_object_name` getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilObjectNameException
-    from beartype._util.utilobject import get_object_name
+    from beartype._util.utilobjget import get_object_name
     from beartype_test.a00_unit.data.data_type import function_partial
     from pytest import raises
 
@@ -123,7 +102,7 @@ def test_get_object_name() -> None:
     # Assert this getter returns the expected name for a nested function.
     meet_in_the_vale_name = get_object_name(meet_in_the_vale)
     assert meet_in_the_vale_name == (
-        'beartype_test.a00_unit.a20_util.a00_core.test_utilobject.'
+        'beartype_test.a00_unit.a20_util.a00_core.test_utilobjget.'
         'test_get_object_name.meet_in_the_vale'
     )
 

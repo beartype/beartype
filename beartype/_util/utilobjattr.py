@@ -510,7 +510,7 @@ def _is_object_attr_callable_not_object_slot_wrapper(
     #   callables are unhashable. Examples of unhashable callables include:
     #   * Unhashable pseudo-callables (i.e., unhashable objects whose classes
     #     define the __call__() dunder methods).
-    # * The beartype._util.utilobject.is_object_hashable() tester is *NOT*
+    # * The beartype._util.utilobjget.is_object_hashable() tester is *NOT*
     #   necessarily safely importable here, due to chicken-and-egg issues. Ergo,
     #   we manually guard against unhashable callables.
     try:

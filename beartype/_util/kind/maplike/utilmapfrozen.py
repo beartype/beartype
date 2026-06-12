@@ -19,7 +19,7 @@ prohibiting modification).
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeKindFrozenDictException
 from beartype._data.typing.datatyping import S, T
-from beartype._util.utilobject import get_object_type_basename
+from beartype._util.utilobjget import get_object_type_basename
 from collections.abc import Mapping
 from typing import (
     TYPE_CHECKING,
@@ -127,7 +127,7 @@ class FrozenDict(dict[S, T]):
         # If this dictionary is unhashable, raise a human-readable exception.
         if self._hash is None:
             # Avoid circular import dependencies.
-            from beartype._util.utilobject import is_object_hashable
+            from beartype._util.utilobjtest import is_object_hashable
 
             # For each value of this dictionary...
             #

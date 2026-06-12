@@ -1755,7 +1755,7 @@
 #              #FIXME: We need to protect this both here and below with a
 #              #"try: ... except Exception: ..." block, where the body of the
 #              #"except Exception:" condition should probably just return
-#              #"beartype._util.utilobject.SENTINEL", as the only type hints
+#              #"beartype._util.utilobjget.SENTINEL", as the only type hints
 #              #that would ever satisfy are type hints *ALL* objects satisfy
 #              #(e.g., "Any", "object").
 #              mapping.__beartype_items_iter = iter(mapping.items())

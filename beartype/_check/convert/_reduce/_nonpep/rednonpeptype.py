@@ -30,7 +30,7 @@ from beartype._data.shame.datashamefunc import BLACKLIST_METHOD_NAMES_HINT_SELF
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.module.utilmodget import get_object_module_name_or_none
-from beartype._util.utilobject import is_object_hashable
+from beartype._util.utilobjtest import is_object_hashable
 from threading import (
     Lock,
     RLock,

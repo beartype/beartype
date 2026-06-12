@@ -187,7 +187,7 @@ def iter_hints_piths_meta(hints_piths_meta) -> (
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.utilobject import is_object_context_manager
+    from beartype._util.utilobjtest import is_object_context_manager
     from beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta import (
         HintPithMetadata)
     from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (

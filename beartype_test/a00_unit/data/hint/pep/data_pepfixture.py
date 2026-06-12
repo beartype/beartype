@@ -104,7 +104,7 @@ def hints_pep_hashable(hints_piths_pep_meta) -> frozenset:
     '''
 
     # Defer fixture-specific imports.
-    from beartype._util.utilobject import is_object_hashable
+    from beartype._util.utilobjtest import is_object_hashable
 
     # Yield this frozen set.
     yield frozenset(

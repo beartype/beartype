@@ -39,7 +39,7 @@ def test_conf_dataclass() -> None:
     )
     from beartype._conf._confoverrides import _hint_overrides_pep484_tower
     from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
-    from beartype._util.utilobject import get_object_type_basename
+    from beartype._util.utilobjget import get_object_type_basename
     from pytest import (
         raises,
         warns,

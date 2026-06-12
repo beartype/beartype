@@ -386,7 +386,7 @@ def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.utilobject import get_object_type_unless_type
+    from beartype._util.utilobjget import get_object_type_unless_type
 
     # Make it so, ensign.
     return get_object_module_name_or_none(get_object_type_unless_type(obj))

@@ -38,6 +38,7 @@ from functools import (
     wraps,
 )
 from sys import exc_info
+from typing import Optional
 
 # ....................{ CALLABLES ~ async : factory        }....................
 # Note that we intentionally avoid declaring a factory function for deprecated
@@ -611,8 +612,8 @@ class MasterlessDecreeVenomlessWhich(Enum):
 # ....................{ CLASSES ~ dunder : call            }....................
 class ClassCallable(object):
     '''
-    **Callable class** (i.e., pure-Python class defining the :meth:`__call__`
-    dunder method implicitly called by Python when instances of this class are
+    **Callable class** (i.e., pure-Python type defining the :meth:`.__call__`
+    dunder method implicitly called by Python when instances of this type are
     called using the standard calling convention).
     '''
 
@@ -623,13 +624,149 @@ class ClassCallable(object):
 
         return len(args) + len(kwargs)
 
+# ....................{ CLASSES ~ dunder : descriptor      }....................
+class NondataDescriptor(object):
+    '''
+    **Non-data descriptor** (i.e., pure-Python type defining the
+    :meth:`.__get__` dunder method implicitly called by Python when instances of
+    this type are assigned to class variables and then subsequently accessed via
+    those class variables on instances of those classes).
+
+    Non-data descriptors encapsulate immutable instance and class variables
+    whose values require dynamic computation but which cannot be externally
+    modified.
+
+    Attributes
+    ----------
+    _attr_name : str
+        Unqualified basename of the attribute that this descriptor dynamically
+        looks up on both classes and instances to which this descriptor is
+        bound.
+    '''
+
+    def __init__(self, attr_name: str) -> None:
+        '''
+        Initialize this non-data descriptor.
+
+        Parameters
+        ----------
+        attr_name : str
+            Unqualified basename of the attribute that this descriptor
+            dynamically looks up on both classes and instances to which this
+            descriptor is bound.
+        '''
+        assert isinstance(attr_name, str), f'{repr(attr_name)} not string.'
+
+        # Classify all passed parameters.
+        self._attr_name = attr_name
+
+
+    def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this non-data descriptor.
+        '''
+
+        return f'NondataDescriptor({repr(self._attr_name)})'
+
+
+    def __get__(
+        self,
+        obj: object,
+        obj_type_if_instance_lookup: Optional[type] = None,
+    ) -> object:
+        '''
+        Value of the attribute bound to the passed object whose unqualified
+        basename is that of the basename with which this descriptor was
+        initialized.
+
+        Parameters
+        ----------
+        obj : object
+            Object to retrieve this attribute from.
+        obj_type_if_instance_lookup : Optional[type], default: None
+            Either:
+
+            * If this attribute was looked up as an **instance variable** (i.e.,
+              on the instance of the pure-Python type to which this descriptor
+              was bound as a class variable), that type. 
+            * If this attribute was looked up as a **class variable** (i.e., on
+              the pure-Python type to which this descriptor was bound as a class
+              variable), :data:`None`.
+
+            This parameter thus enables this method to differentiate between
+            instance and class variable lookup. Defaults to :data:`None`.
+        '''
+
+        # Trivialize it with conviviality, one-liner!
+        return getattr(obj, self._attr_name)
+
+
+class DataDescriptor(NondataDescriptor):
+    '''
+    **Data descriptor** (i.e., pure-Python type defining both the
+    :meth:`.__get__` *and* :meth:`.__set__` dunder method implicitly called by
+    Python when instances of this type are assigned to class variables and then
+    subsequently accessed or modified respectively via those class variables on
+    instances of those classes).
+
+    Data descriptors encapsulate mutable instance and class variables whose
+    values require dynamic computation and which can be externally modified.
+    '''
+
+    def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this data descriptor.
+        '''
+
+        return f'DataDescriptor({repr(self._attr_name)})'
+
+
+    def __set__(self, obj: object, value: object) -> object:
+        '''
+        Set the value of the attribute bound to the passed object whose
+        unqualified basename is that of the basename with which this descriptor
+        was initialized to the passed value.
+
+        Parameters
+        ----------
+        obj : object
+            Object to modify this attribute on.
+        value : object
+            Value to modify this attribute to.
+        '''
+
+        # One-liner or it didn't happen.
+        return setattr(obj, self._attr_name, value)
+
+
+class DataAndNondataDescriptorStore(object):
+    '''
+    **Data and non-data descriptor store** (i.e., arbitrary class defining class
+    variables bound to instances of both data and non-data descriptors).
+    '''
+
+    var_readonly = NondataDescriptor(attr_name='attr_readonly')
+    '''
+    Arbitrary class variable bound to a data descriptor instance providing
+    immutable dynamic access to the attribute with the initialized name on both
+    this class and instances of this class.
+    '''
+
+    var_writable = DataDescriptor(attr_name='attr_writeable')
+    '''
+    Arbitrary class variable bound to a data descriptor instance providing
+    mutable dynamic access to the attribute with the initialized name on both
+    this class and instances of this class.
+    '''
+
 # ....................{ CLASSES ~ dunder : instancecheck   }....................
+#FIXME: Shift into a new "beartype_test.a00_unit.data.pep.pep3119" submodule.
 class NonIsinstanceableMetaclass(type):
     '''
-    Metaclass overriding the ``__instancecheck__()`` dunder method to
-    unconditionally raise an exception, preventing classes with this metaclass
-    from being passed as the second parameter to the :func:`isinstance`
-    builtin.
+    :pep:`3119`-compliant metaclass overriding the ``__instancecheck__()``
+    dunder method to unconditionally raise an exception, preventing classes with
+    this metaclass from being passed as the second parameter to the
+    :func:`isinstance` builtin.
     '''
 
     def __instancecheck__(self, obj: object) -> bool:
@@ -637,22 +774,25 @@ class NonIsinstanceableMetaclass(type):
             f'{self} not passable as second parameter to isinstance().')
 
 
+#FIXME: Shift into a new "beartype_test.a00_unit.data.pep.pep3119" submodule.
 class NonIsinstanceableClass(object, metaclass=NonIsinstanceableMetaclass):
     '''
-    Class whose metaclass overrides the ``__instancecheck__()`` dunder method
-    to unconditionally raise an exception, preventing this class from being
-    passed as the second parameter to the :func:`isinstance` builtin.
+    Class whose :pep:`3119`-compliant metaclass overrides the
+    ``__instancecheck__()`` dunder method to unconditionally raise an exception,
+    preventing this class from being passed as the second parameter to the
+    :func:`isinstance` builtin.
     '''
 
     pass
 
 # ....................{ CLASSES ~ dunder : subclasscheck   }....................
+#FIXME: Shift into a new "beartype_test.a00_unit.data.pep.pep3119" submodule.
 class NonIssubclassableMetaclass(type):
     '''
-    Metaclass overriding the ``__subclasscheck__()`` dunder method to
-    unconditionally raise an exception, preventing classes with this metaclass
-    from being passed as the second parameter to the :func:`issubclass`
-    builtin.
+    :pep:`3119`-compliant metaclass overriding the ``__subclasscheck__()``
+    dunder method to unconditionally raise an exception, preventing classes with
+    this metaclass from being passed as the second parameter to the
+    :func:`issubclass` builtin.
     '''
 
     def __subclasscheck__(self, obj: object) -> bool:
@@ -660,11 +800,13 @@ class NonIssubclassableMetaclass(type):
             f'{self} not passable as second parameter to issubclass().')
 
 
+#FIXME: Shift into a new "beartype_test.a00_unit.data.pep.pep3119" submodule.
 class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
     '''
-    Class whose metaclass overrides the ``__subclasscheck__()`` dunder method
-    to unconditionally raise an exception, preventing this class from being
-    passed as the second parameter to the :func:`issubclass` builtin.
+    Class whose :pep:`3119`-compliant metaclass overrides the
+    ``__subclasscheck__()`` dunder method to unconditionally raise an exception,
+    preventing this class from being passed as the second parameter to the
+    :func:`issubclass` builtin.
     '''
 
     pass
@@ -1015,7 +1157,7 @@ def _init() -> None:
     # Defer initialization-specific imports.
     import builtins, types
     from beartype._data.py.databuiltins import BUILTINS_MODULE_NAME
-    from beartype._util.utilobject import get_object_type_unless_type
+    from beartype._util.utilobjget import get_object_type_unless_type
 
     # Global variables assigned to below.
     global TYPES_BUILTIN_FAKE, TYPES_NONBUILTIN

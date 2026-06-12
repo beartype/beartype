@@ -4,14 +4,17 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`544`-compliant **type hint magical data** (i.e., global
-constants defining or otherwise describing :pep:`544`-compliant protocols).
+Project-wide **IO pseudo-protocol type hierarchy** (i.e., pure-Python types
+whose :pep:`3119`-compliant metaclasses define both the ``__instancecheck__()``
+and ``__subclasscheck__()`` dunder methods to structurally match the public API
+of objects created by the :func:`open` builtin as well as the family of 
+C-based ``typing.*IO`` types and pure-Python ``typing.*IO`` generics).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.cls.pep.pep544._dataclspep544protocol import (
+from beartype._data.cls.pep.pep544.io._dataclspep544ioprotocol import (
     Pep544IOMethodsOnly,
     Pep544IO,
     Pep544TextIO,
@@ -128,8 +131,8 @@ class IO(object, metaclass=_IOMeta):
     * A :pep:`3119`-compliant type hint matching file handles opened in either
       text or binary mode, typically via a call to the :func:`open` builtin.
     * The abstract base class (ABC) of the data-specific
-      :class:`beartype._data.cls.pep.pep544.dataclspep544.BinaryIO` and
-      :class:`beartype._data.cls.pep.pep544.dataclspep544.TextIO` protocol
+      :class:`beartype._data.cls.pep.pep544.io.dataclspep544io.BinaryIO` and
+      :class:`beartype._data.cls.pep.pep544.io.dataclspep544io.TextIO` protocol
       subclasses.
     '''
 

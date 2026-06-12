@@ -35,7 +35,7 @@ from beartype._util.cls.pep.clspep3119 import (
 )
 from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.func.utilfuncscope import add_func_scope_attr
-from beartype._util.utilobject import get_object_type_basename
+from beartype._util.utilobjget import get_object_type_basename
 from collections.abc import Set
 from typing import Optional
 

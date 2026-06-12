@@ -61,7 +61,7 @@ from beartype._data.typing.datatyping import (
     TypeWarning,
 )
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
-from beartype._util.utilobject import get_object_type_basename
+from beartype._util.utilobjget import get_object_type_basename
 from threading import Lock
 from typing import (
     TYPE_CHECKING,

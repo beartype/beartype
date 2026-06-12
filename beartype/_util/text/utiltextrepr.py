@@ -15,7 +15,7 @@ from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
 from beartype._cave._cavefast import NumberType
 from beartype._data.typing.datatyping import TypeWarning
 from beartype._data.kind.datakindtext import CHARS_PUNCTUATION
-from beartype._util.utilobject import get_object_basename_scoped_or_none
+from beartype._util.utilobjget import get_object_basename_scoped_or_none
 from collections.abc import Callable
 from pprint import saferepr
 

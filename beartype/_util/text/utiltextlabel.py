@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.typing.datatyping import BoolTristate
-from beartype._util.utilobject import (
+from beartype._util.utilobjget import (
     get_object_name,
     get_object_type_name,
 )
@@ -269,7 +269,7 @@ def label_object_context(obj: object) -> str:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.utilobject import get_object_filename_or_none
+    from beartype._util.utilobjget import get_object_filename_or_none
     from beartype._util.module.utilmodget import (
         get_object_module_line_number_begin)
 

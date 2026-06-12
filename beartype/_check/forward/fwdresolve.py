@@ -35,7 +35,7 @@ from beartype._util.text.utiltextlabel import (
     label_callable,
     label_exception_traceback,
 )
-from beartype._util.utilobject import (
+from beartype._util.utilobjget import (
     get_object_basename_scoped,
     get_object_name,
 )

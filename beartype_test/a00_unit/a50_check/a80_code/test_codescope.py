@@ -28,7 +28,7 @@ def test_add_func_scope_type() -> None:
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype._cave._cavefast import NoneType, RegexCompiledType
     from beartype._check.code.codescope import add_func_scope_type
-    from beartype._util.utilobject import get_object_type_basename
+    from beartype._util.utilobjget import get_object_type_basename
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
     from pytest import raises
 
@@ -99,7 +99,7 @@ def test_add_func_scope_types() -> None:
     from beartype._cave._cavefast import CallableTypes, ModuleOrStrTypes
     from beartype._cave._cavemap import NoneTypeOr
     from beartype._check.code.codescope import add_func_scope_types
-    from beartype._util.utilobject import get_object_type_basename
+    from beartype._util.utilobjget import get_object_type_basename
     from beartype_test.a00_unit.data.pep.pep484.forward.data_pep484ref_proxy import (
         type_ref_str_proxy_absolute,
         type_ref_str_proxy_relative,
