@@ -19,82 +19,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Note that the solution will almost certainly resemble something like the
 #following:
-#* Define a new reduce_hint_pep557_field_descriptor() reducer.
-#* Define a new is_type_descriptor_gettable() tester with signature resembling:
-#      def is_type_descriptor_gettable(cls: type) -> bool:
-#* Implement that tester to return true if and only if the passed type defines a
-#  __get__() method with a signature resembling:
-#      descr.__get__(self, obj, type=None)
-#
-#  Note that PEP 544-compliant "typing.Protocol" subclasses fail to validate
-#  method parameters. Ergo, use our iter_func_args() iterator (see "_wrapargs")
-#  to validate that:
-#  * The first parameter is flexible and mandatory.
-#  * The second parameter is flexible and optional.
-#
-#  That suffices to define a gettable descriptor. Note that gettable descriptors
-#  need *NOT* define the corresponding __set__() or __del__() fields.
-#* *OH. WAIT*. According to the official documentation, descriptor-type fields
-#  *MUST* be annotated by data descriptors (i.e., descriptors defining both
-#  __get__() and __set__() methods, but not necessarily __del__(), which seems
-#  to be irrelevant in the @dataclass context). Ergo, we'll need to instead
-#  define a new "def is_type_descriptor_data(cls: type) -> bool:" tester
-#  returning true if and only if the passed type defines at least these two
-#  methods with signatures resembling:
-#      descr.__get__(self, obj, type=None)
-#      descr.__set__(self, obj, value)
-#
-#  Again, call iter_func_args() to do so. Or maybe that's a bit overkill?
-#  Probably is. If a type defines both __get__() and __set__() (regardless of
-#  parameters), Python probably blindly considers that a data descriptor. So, so
-#  should we. In that case, is_type_descriptor_data() can be implemented by
-#  trivially performing an issubclass() call where the second parameter is a PEP
-#  544-compliant "typing.Protocol" subclass detecting data descriptors.
-#
-#  Alternately, a more efficient approach would be to just:
-#  * Define a private frozenset global as follows:
-#        _TYPE_DESCRIPTOR_DATA_DUNDER_NAMES = frozenset(('__get__', '__set__',))
-#  * Trivially intersect that frozenset with the "KeysView" of the unqualified
-#    basenames of all direct (i.e., *NOT* indirectly inherited) attributes of
-#    this class: e.g.,
-#        cls.__dict__.keys() & _TYPE_DESCRIPTOR_DATA_DUNDER_NAMES
-#
-#  Of course, that still fails to validate that those attributes are callable. I
-#  guess the following would be the fastest and most correct expression of all
-#  of the above constraints, I guess?
-#      def is_type_descriptor_data(cls: type) -> bool:
-#          assert isinstance(cls, type), f'{repr(cls)} not type.'
-#      
-#          # Set-like keys view of the unqualified basenames of all direct (i.e., *NOT*
-#          # indirectly inherited) attributes of this class.
-#          cls_attr_names = cls.__dict__.keys()
-#          ...
-#
-#  *WAIT*. Pretty sure descriptors can inherit their __get__() and __set__()
-#  methods. Welp. That's pretty much the nail in the coffin for silly ad-hoc
-#  microoptimization shenanigans. *JUST DEFINE* a 544-compliant
-#  "typing.Protocol" subclass detecting data descriptors already. It's trivial.
-#  It works. It's almost certainly the fastest reasonable implementation, too.
-#* See also:
-#  * Python's official descriptor-type dataclass fields guide:
-#    https://docs.python.org/3.13/library/dataclasses.html#descriptor-typed-fields
-#  * Python's official descriptor guide:
-#    https://docs.python.org/3/howto/descriptor.html
-#* Map from the "None" sign to this reducer in the "_redmap" submodule. Why
-#  "None"? Because arbitrary descriptor types are PEP-noncompliant
-#  isinstanceable types. Heh! Of course, we probably already map "None" to
-#  something. So, we'll need to instead manually call
-#  reduce_hint_pep557_field_descriptor() from within whatever existing reducer
-#  is already mapped to "None".
-#* Specifically, inside that existing reducer:
-#      type_decorated = call_curr.cls_stack[-1]
-#      if (
-#          type_decorated is not None and
-#          is_type_pep557_dataclass(type_decorated) and
-#          isinstance(hint, type) and
-#          is_type_descriptor_data(hint)
-#      ):
-#          reduce_hint_pep557_field_descriptor(*args, **kwargs)
 #* Vaguely implement reduce_hint_pep557_field_descriptor() as follows:
 #      def reduce_hint_pep557_field_descriptor(hint: type) -> Hint:
 #          descriptor_get = hint.__get__
@@ -537,8 +461,7 @@ def beartype_pep557_dataclass(
         # this parameter, which then applies the desired monkey-patch *WITHOUT*
         # raising an exception. In short, stupid kludges is always the answer.
         type.__setattr__
-        if is_pep557_dataclass_frozen(
-            datacls=datacls, exception_prefix=exception_prefix) else
+        if is_pep557_dataclass_frozen(datacls) else
         # Else, this dataclass is *NOT* frozen. In this case, the standard
         # setattr() builtin, which internally defers to the __setattr__() dunder
         # method guaranteed to be defined by all dataclasses (due to the

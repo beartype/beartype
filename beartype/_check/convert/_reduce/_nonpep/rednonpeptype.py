@@ -13,13 +13,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.forward.reference.fwdrefproxy import (
-    proxy_hint_pep484_ref_str_fake)
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,
     HintSane,
 )
+# from beartype._check.convert._reduce._pep.redpep557 import (
+#     reduce_hint_pep557_descriptor_data)
+from beartype._check.forward.reference.fwdrefproxy import (
+    proxy_hint_pep484_ref_str_fake)
 from beartype._cave._cavefast import (
     ThreadLockNonreentrantType,
     ThreadLockReentrantType,
@@ -28,6 +30,7 @@ from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.shame.datashamefunc import BLACKLIST_METHOD_NAMES_HINT_SELF
 from beartype._data.typing.datatypingport import Hint
+from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobjtest import is_object_hashable
@@ -191,7 +194,11 @@ def reduce_hint_nonpep(
     # the most deeply nested such type is also currently being decorated. In any
     # case, this hint *CANNOT* ignite such recursion and is thus preserved.
 
-    # ....................{ REDUCE                         }....................
+    # ....................{ PHASE ~ singleton              }....................
+    # In this first reduction phase, we attempt a general-purpose reduction
+    # efficiently mapping from this PEP-noncompliant hint to a semantically
+    # equivalent PEP-compliant hint.
+
     # If this hint is hashable...
     if is_object_hashable(hint):
         # Either:
@@ -207,6 +214,90 @@ def reduce_hint_nonpep(
             hint = hint_reduced  # pyright: ignore
         # Else, this hint is irreducible. In this case, preserve this hint.
     # Else, this hint is unhashable. In this case, preserve this hint as is.
+
+    # ....................{ PHASE ~ pep : 557              }....................
+    # In this next reduction phase, we conditionally attempt a PEP 557-specific
+    # reduction from a PEP-noncompliant runtime-hostile data descriptor-typed
+    # dataclass field to the equivalent PEP-compliant runtime-friendly return
+    # hint annotating that data descriptor's __get__() dunder method.
+    #
+    # Technically, data descriptor-typed dataclass fields have yet to be
+    # formally standardized by any PEP and are thus PEP-noncompliant.
+    # Pragmatically, however, official Python documentation informally describe
+    # these fields and thus require @beartype to at least offer a half-hearted
+    # show of support. See also this documentation:
+    #     https://docs.python.org/3.13/library/dataclasses.html#descriptor-typed-fields
+    #
+    # For example, consider the following trivial data descriptor and dataclass:
+    #     from dataclasses import dataclass
+    #
+    #     class MuhDataDescriptor(object):
+    #         def __get__(self, obj, objtype: type | None = None) -> str:
+    #             return obj.muh_string_field
+    #
+    #         def __set__(self, obj, value: str) -> None:
+    #             obj.muh_string_field = value
+    #
+    #     @dataclass
+    #     class MuhDataclass(object):
+    #         muh_string_field_alias: MuhDataDescriptor = MuhDataDescriptor()
+    #         muh_string_field: str = 'So string. So strong. So it goes!?'
+    #
+    # Since the "MuhDataclass.muh_string_field_alias" field defined above is
+    # bound to a data descriptor at class declaration time, the value of that
+    # field when accessed as an instance variable of instances of that dataclass
+    # is a string. Clearly, the type hint annotating that field violates its
+    # runtime value and is thus runtime-hostile.
+    #
+    # To circumvent this pseudo-standard runtime hostility, this reduction phase
+    # internally reduces the runtime-hostile dataclass defined above to this
+    # equivalent runtime-friendly dataclass actually supported by @beartype:
+    #     @dataclass
+    #     class MuhDataclass(object): # v------- see what @beartype did there?
+    #         muh_string_field_alias: str = MuhDataDescriptor()
+    #         muh_string_field: str = 'So string. So strong. So it goes!?'
+
+    #FIXME: Shift into a more appropriate submodule, please. *sigh*
+    #FIXME: *LOL*. is_type_descriptor_data() doesn't even exist. We sure messed
+    #that one up, huh? We now have the necessary joy of:
+    #* Defining a new "beartype._util.cls.pep.utilclspep252" submodule.
+    #* In that submodule:
+    #  * Shifting the existing is_object_descriptor_data() and
+    #    is_object_descriptor_nondata() testers defined in the existing
+    #    "beartype._util.utilobjtest" submodule into that new submodule.
+    #  * Defining two new is_type_descriptor_data() and
+    #    is_type_descriptor_nondata() testers. Thankfully, these are trivial.
+
+    # # If...
+    # if (
+    #     # This hint transitively annotates a class currently being decorated by
+    #     # @beartype *AND*...
+    #     call_curr.cls_stack is not None and
+    #     # This hint is a type and thus possibly a data descriptor type *AND*...
+    #     isinstance(hint, type) and
+    #     # The currently decorated class is a PEP 557-compliant dataclass
+    #     # *AND*...
+    #     #
+    #     # Note that this test is mildly inefficient and thus performed *AFTER*
+    #     # trivial tests known to be extremely efficient.
+    #     is_type_pep557_dataclass(call_curr.cls_stack[-1]) and
+    #     # This hint is a data descriptor type...
+    #     #
+    #     # Note that this test is even more inefficient (due to requiring
+    #     # protocol matching) and thus performed *AFTER* all other tests.
+    #     is_type_descriptor_data(hint)
+    # ):
+    #     # Then reduce this PEP-noncompliant runtime-hostile data
+    #     # descriptor-typed dataclass field to the equivalent PEP-compliant
+    #     # runtime-friendly return hint annotating this data descriptor's
+    #     # __get__() dunder method. We don't make the rules. We just yawn in
+    #     # horror at the rules living humans made.
+    #     hint = reduce_hint_pep557_descriptor_data(
+    #         call_curr=call_curr,
+    #         hint=hint,
+    #         hint_parent_sane=hint_parent_sane,
+    #         **kwargs
+    #     )
 
     # ....................{ VALIDATE                       }....................
     # If this hint was *NOT* reduced to sanified metadata above...

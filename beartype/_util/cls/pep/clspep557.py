@@ -12,9 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep557Exception
-from beartype._data.typing.datatyping import (
-    TypeException,
-)
+from beartype._data.typing.datatyping import TypeException
+from beartype._util.cache.utilcachecall import callable_cached
 from dataclasses import (  # type: ignore[attr-defined]
     # Public attributes of the "dataclasses" module.
     is_dataclass,
@@ -54,11 +53,7 @@ def die_unless_type_pep557_dataclass(
     '''
 
     # If this class is *NOT* a PEP 557-compliant dataclass...
-    if not is_type_pep557_dataclass(
-        cls=cls,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    ):
+    if not is_type_pep557_dataclass(cls):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception type.')
         assert isinstance(exception_prefix, str), (
@@ -71,6 +66,7 @@ def die_unless_type_pep557_dataclass(
         )
 
 # ....................{ TESTERS                            }....................
+@callable_cached
 def is_type_pep557_dataclass(
     # Mandatory parameters.
     cls: type,
@@ -84,9 +80,14 @@ def is_type_pep557_dataclass(
     :pep:`557`-compliant class decorated by the standard
     :func:`dataclasses.dataclass` decorator).
 
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    This tester is memoized for efficiency. Although the implementation
+    superficially appears to trivially reduce to an efficient one-liner, that
+    one-liner is, in fact, inefficient. Specifically, this tester internally
+    defers to the standard lower-level :func:`dataclasses.is_dataclass` tester,
+    which itself performs an ad-hoc heuristic calling the :func:`hasattr`
+    builtin, which leverages the well-known Easier to Ask for Permission than
+    Forgiveness (EAFP) paradigm, which performs inefficient exception handling
+    and is thus well-known to be inefficient.
 
     Parameters
     ----------
@@ -112,11 +113,7 @@ def is_type_pep557_dataclass(
     from beartype._util.cls.utilclstest import die_unless_type
 
     # If this object is *NOT* a type, raise an exception.
-    die_unless_type(
-        cls=cls,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
+    die_unless_type(cls=cls, exception_cls=BeartypeDecorHintPep557Exception)
     # Else, this object is a type.
 
     # Return true only if this type is a dataclass.
@@ -129,32 +126,21 @@ def is_type_pep557_dataclass(
     return is_dataclass(cls)
 
 
-def is_pep557_dataclass_frozen(
-    # Mandatory parameters.
-    datacls: type,
-
-    # Optional parameters.
-    exception_cls: TypeException = BeartypeDecorHintPep557Exception,
-    exception_prefix: str = '',
-) -> bool:
+@callable_cached
+def is_pep557_dataclass_frozen(datacls: type) -> bool:
     '''
     :data:`True` only if the passed **dataclass** (i.e.,
     :pep:`557`-compliant :func:`dataclasses.dataclass`-decorated class) is
     **frozen** (i.e., immutable due to being passed the ``frozen=True`` keyword
     parameter at decoration time).
 
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    This tester is memoized for efficiency for similar reasons that the
+    :func:`is_pep557_dataclass` tester is memoized.
 
     Parameters
     ----------
     datacls: type
         Dataclass to be inspected.
-    exception_cls : TypeException, default: BeartypeDecorHintPep557Exception
-        Type of exception to be raised.
-    exception_prefix : str, default: ''
-        Human-readable substring prefixing raised exceptions messages.
 
     Returns
     -------
@@ -163,16 +149,12 @@ def is_pep557_dataclass_frozen(
 
     Raises
     ------
-    exception_cls
+    BeartypeDecorHintPep557Exception
         If this dataclass is *not* actually a dataclass.
     '''
 
     # Object encapsulating all keyword parameters configuring this dataclass.
-    dataclass_kwargs = get_pep557_dataclass_kwargs(
-        datacls=datacls,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
+    dataclass_kwargs = get_pep557_dataclass_kwargs(datacls)
 
     # Return true only if this dataclass was configured to be frozen.
     return dataclass_kwargs.frozen  # type: ignore[attr-defined]

@@ -35,8 +35,7 @@ class Pep544DescriptorNondata(Protocol):
 # Note that PEP 544 explicitly requires *ALL* protocols (including protocols
 # subclassing protocols) to explicitly subclass the "Protocol" superclass, in
 # violation of both sanity and usability. (Thanks, guys.)
-# class Pep544DescriptorData(Pep544DescriptorNondata, Protocol):
-class Pep544DescriptorData(Protocol):
+class Pep544DescriptorData(Pep544DescriptorNondata, Protocol):
     '''
     :pep:`544`-compliant **data descriptor protocol** (i.e.,
     :class:`typing.Protocol` subclasses structurally matching the
@@ -48,5 +47,4 @@ class Pep544DescriptorData(Protocol):
         Python's official descriptor guide.
     '''
 
-    def __get__(self, obj: object, type: Optional[type] = None) -> object: ...
     def __set__(self, obj: object, value: object) -> None: ...
