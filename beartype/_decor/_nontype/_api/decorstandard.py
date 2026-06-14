@@ -22,6 +22,7 @@ from beartype._util.api.standard.utilwarnings import (
     make_func_warnings_deprecated,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_once
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_13
 from collections.abc import Callable
 from functools import lru_cache
 
@@ -177,7 +178,13 @@ def beartype_func_warnings_deprecated(
         New pure-Python callable wrapping this context manager with
         type-checking.
     '''
-    print(f'Redecorating @warnings.deprecated-decorated callable {repr(func)}...')
+    # This is ugly, but I'm not sure how else to do it without trying to import things
+    # or perform some other environmental inspection nonsense? See also a similar
+    # approach in the sister site in utilwarnings.py.
+    deprecated_source = "warnings" if IS_PYTHON_AT_LEAST_3_13 else "typing_extensions"
+    print(
+        f"Redecorating @{deprecated_source}.deprecated-decorated callable {repr(func)}..."
+    )
 
     # Avoid circular and third-party import dependencies.
     from beartype._decor._nontype.decornontype import beartype_nontype
@@ -186,8 +193,8 @@ def beartype_func_warnings_deprecated(
     # @warnings.deprecated decorator, raise an exception.
     if not is_func_warnings_deprecated(func):  # type: ignore[arg-type]
         raise BeartypeDecorWrappeeException(  # pragma: no cover
-            f'@warnings.deprecated-decorated callable {repr(func)} not  '
-            f'decorated by @warnings.deprecated.'
+            f"@{deprecated_source}.deprecated-decorated callable {repr(func)} not  "
+            f"decorated by @{deprecated_source}.deprecated."
         )
     # Else, this callable is a closure created and returned by the
     # @warnings.deprecated decorator.

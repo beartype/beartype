@@ -22,7 +22,10 @@ from beartype._util.func.utilfunccodeobj import (
 )
 from beartype._util.func.utilfuncscope import get_func_freevars
 from beartype._util.kind.maplike.utilmapset import remove_mapping_keys_except
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_11,
+    IS_PYTHON_AT_LEAST_3_13,
+)
 from collections.abc import Callable
 
 # ....................{ TESTERS                            }....................
@@ -154,15 +157,28 @@ def make_func_warnings_deprecated(
         f'{repr(exception_prefix)} not string.')
 
     # Defer Python version-specific imports. *sigh*
-    from warnings import deprecated  # type: ignore[attr-defined]
+    if IS_PYTHON_AT_LEAST_3_13:
+        # See: https://docs.python.org/3/library/warnings.html#warnings.deprecated
+        from warnings import deprecated  # type: ignore[attr-defined]
+    else:
+        # I *think* this is okay? Prior to 3.13, the deprecated decorator lived in
+        # typing_extensions, which means if you've encountered that decorator and you're
+        # in (e.g.) Python 3.11, it has to have come from there, right?
+        from typing_extensions import deprecated  # type: ignore[attr-defined]
 
     # If this callable is *NOT* a closure created and returned by the
     # @warnings.deprecated decorator, raise an exception.
     if not is_func_warnings_deprecated(func):  # pragma: no cover
+        # This is ugly, but I'm not sure how else to do it without trying to import
+        # things or perform some other environmental inspection nonsense? See also a
+        # similar approach in the sister site in decorstandard.py.
+        deprecated_source = (
+            "warnings" if IS_PYTHON_AT_LEAST_3_13 else "typing_extensions"
+        )
         raise exception_cls(
-            f'{exception_prefix}'
-            f'@warnings.deprecated-decorated callable {repr(func)} not  '
-            f'decorated by @warnings.deprecated.'
+            f"{exception_prefix}"
+            f"@{deprecated_source}.deprecated-decorated callable {repr(func)} not  "
+            f"decorated by @{deprecated_source}.deprecated."
         )
     # Else, this callable is a closure created and returned by the
     # @warnings.deprecated decorator.
