@@ -149,13 +149,17 @@ jobs:
         #   embedded in a single quoted version specifier. For example,
         #   selecting the Python 3.11 pre-release reduces to:
         #     python-version: "3.11.0-alpha - 3.11.0"
+        # * The key/value pair "experimental: true" is used below as
+        #   part of the "continue-on-error" setting so that a failure
+        #   in a job marked as experimental will not short-circuit
+        #   adjacent matrix jobs.
         include:
           - { python-version: "3.10",  tox-env: "py310-coverage" }
           - { python-version: "3.11",  tox-env: "py311-coverage" }
           - { python-version: "3.12",  tox-env: "py312-coverage" }
           - { python-version: "3.13",  tox-env: "py313-coverage" }
           - { python-version: "3.14",  tox-env: "py314-coverage" }
-          - { python-version: "3.15.0-alpha - 3.15.0", tox-env: "py315-coverage" }
+          - { python-version: "3.15.0-alpha - 3.15.0", tox-env: "py315-coverage", experimental: true }
 
           #FIXME: Actually, let's just avoid free-threading builds for now. It'd
           #be great to test them, but only 20% of all C extensions support them
@@ -203,6 +207,25 @@ jobs:
         #     tox-env: py313-coverage
 
     # ..................{ SETTINGS                           }..................
+    # Allow failures for items marked as experimental. To mark
+    # something as experimental, append the key/value pair
+    # "experimental: true" to the appropriate matrix mapping. E.g.:
+    #
+    #   include:
+    #     # ...
+    #     - { python-version: "3.17.0-alpha", tox-env: "py317-coverage", experimental: true }
+    #                                                                    ^^^^^^^^^^^^^^^^^^
+    # The following continue-on-error setting will record failures for
+    # jobs marked experimental, but not prematurely arrest adjacent
+    # matrix runners. This requires jobs to be explicitly marked as
+    # experimental to inherit this setting. Another approach (not used
+    # here) could include pattern matching. E.g.:
+    #
+    #   continue-on-error: ${{ contains(matrix.python-version, 'alpha') || matrix.experimental || false}}
+    #                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ^^^^^^^^^^^^^^^^^^^
+    #                              implicit based on version name                explicit
+    continue-on-error: ${{ matrix.experimental || false }}
+
     # Arbitrary human-readable description.
     name: "[${{ matrix.platform }}] Python ${{ matrix.python-version }} CI"
 
