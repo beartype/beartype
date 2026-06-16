@@ -255,6 +255,25 @@ def get_object_module_name(
 
 
 #FIXME: Unit test us up, please.
+#FIXME: Note that there's a significant caveat here: if the passed object is a
+#high-level wrapper callable created with the standard @functools.wraps
+#decorator, then the value of the "__module__" attribute will be that of the
+#lower-level wrappee callable wrapped by that callable rather than that of the
+#high-level wrapper callable. Sometimes, that is what is wanted. Sometimes,
+#however, that is *NOT* what is wanted. In the latter case, the "correct" module
+#name can still be safely retrieved with 100% accuracy by:
+#* Generalizing the existing get_func_globals() getter to accept a new
+#  "is_unwrap: bool = True" boolean, thus preserving backward compatibility.
+#* Generalizing this getter here to accept a similar "is_unwrap: bool = True"
+#  boolean, thus also preserving backward compatibility.
+#* Improve the body of this getter to resemble:
+#      if not is_unwrap and callable(obj):
+#          func_globals = get_func_globals(func=obj, is_unwrap=is_unwrap)
+#          obj_module_name = func_globals['__name__']
+#      else:
+#          obj_module_name = getattr(obj, '__module__', None)
+#
+#Looks good to me! Thumbs up, QA brethren. *arthritic thumb up*
 def get_object_module_name_or_none(
     # Mandatory parameters.
     obj: object,
@@ -270,9 +289,9 @@ def get_object_module_name_or_none(
     Caveats
     -------
     **The name returned by this getter should be assumed to be untrustworthy**
-    unless the optional ``is_module_importable_or_none=True`` parameter is passed.
-    Outlier objects may define ``__module__`` dunder attributes to refer to
-    non-existent or otherwise unimportable modules. Objects exhibiting this
+    unless the optional ``is_module_importable_or_none=True`` parameter is
+    passed. Outlier objects may define ``__module__`` dunder attributes to refer
+    to non-existent or otherwise unimportable modules. Objects exhibiting this
     behaviour include:
 
     * Well-intended objects defined only dynamically in-memory and thus

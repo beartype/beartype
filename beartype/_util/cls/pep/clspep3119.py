@@ -503,6 +503,16 @@ def is_object_isinstanceable(
     :data:`True` only if the passed object is **isinstanceable** (i.e., valid as
     the second parameter to the :func:`isinstance` builtin).
 
+    This tester is a higher-level generalization of the
+    :func:`is_type_isinstanceable` tester, which only supports a proper subset
+    of all objects permissible as the second parameter to that builtin (i.e.,
+    isinstanceable types). By compare, this tester supports *all* such objects.
+    This includes:
+
+    * An isinstanceable class.
+    * A tuple containing only isinstanceable classes.
+    * A :pep:`604`-compliant new union.
+
     This tester is memoized for efficiency.
 
     Parameters
@@ -616,6 +626,17 @@ def is_object_issubclassable(
     '''
     :data:`True` only if the passed object is **issubclassable** (i.e., valid as
     the second parameter to the :func:`issubclass` builtin).
+
+    This tester is a higher-level generalization of the
+    :func:`is_type_issubclassable` tester, which only supports a proper subset
+    of all objects permissible as the second parameter to that builtin (i.e.,
+    issubclassable types). By compare, this tester supports *all* such objects.
+    This includes:
+
+    * An isinstanceable class.
+    * A tuple containing only isinstanceable classes.
+    * A :pep:`604`-compliant new union.
+
 
     This tester is memoized for efficiency.
 

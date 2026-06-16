@@ -221,41 +221,6 @@ def reduce_hint_nonpep(
     # dataclass field to the equivalent PEP-compliant runtime-friendly return
     # hint annotating that data descriptor's __get__() dunder method.
     #
-    # Technically, data descriptor-typed dataclass fields have yet to be
-    # formally standardized by any PEP and are thus PEP-noncompliant.
-    # Pragmatically, however, official Python documentation informally describe
-    # these fields and thus require @beartype to at least offer a half-hearted
-    # show of support. See also this documentation:
-    #     https://docs.python.org/3.13/library/dataclasses.html#descriptor-typed-fields
-    #
-    # For example, consider the following trivial data descriptor and dataclass:
-    #     from dataclasses import dataclass
-    #
-    #     class MuhDataDescriptor(object):
-    #         def __get__(self, obj, objtype: type | None = None) -> str:
-    #             return obj.muh_string_field
-    #
-    #         def __set__(self, obj, value: str) -> None:
-    #             obj.muh_string_field = value
-    #
-    #     @dataclass
-    #     class MuhDataclass(object):
-    #         muh_string_field_alias: MuhDataDescriptor = MuhDataDescriptor()
-    #         muh_string_field: str = 'So string. So strong. So it goes!?'
-    #
-    # Since the "MuhDataclass.muh_string_field_alias" field defined above is
-    # bound to a data descriptor at class declaration time, the value of that
-    # field when accessed as an instance variable of instances of that dataclass
-    # is a string. Clearly, the type hint annotating that field violates its
-    # runtime value and is thus runtime-hostile.
-    #
-    # To circumvent this pseudo-standard runtime hostility, this reduction phase
-    # internally reduces the runtime-hostile dataclass defined above to this
-    # equivalent runtime-friendly dataclass actually supported by @beartype:
-    #     @dataclass
-    #     class MuhDataclass(object): # v------- see what @beartype did there?
-    #         muh_string_field_alias: str = MuhDataDescriptor()
-    #         muh_string_field: str = 'So string. So strong. So it goes!?'
 
     #FIXME: Shift into a more appropriate submodule, please. *sigh*
     #FIXME: *LOL*. is_type_descriptor_data() doesn't even exist. We sure messed

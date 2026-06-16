@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`557`-compliant **testers** (i.e., low-level callables testing
-various properties of dataclasses standardized by :pep:`557`).
+Project-wide :pep:`557`-compliant **dataclass utilities** (i.e., low-level
+callables introspecting various properties of user-defined
+:func:`dataclasses.dataclass`-decorated types standardized by :pep:`557`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

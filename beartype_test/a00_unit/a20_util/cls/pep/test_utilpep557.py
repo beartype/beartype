@@ -4,8 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`557`-compliant **class-specific utility function** unit
-tests.
+Project-wide :pep:`557`-compliant **dataclass utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.cls.pep.clspep557` submodule.
