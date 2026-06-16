@@ -12,10 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.cls.datacls import TYPES_CONTEXTMANAGER_FAKE
-from beartype._data.cls.pep.pep544.dataclspep544descriptor import (
-    Pep544DescriptorData,
-    Pep544DescriptorNondata,
-)
 from beartype._data.typing.datatypingport import TypeIs
 from collections.abc import Hashable
 from contextlib import AbstractContextManager
@@ -95,63 +91,3 @@ def is_object_hashable(obj: object) -> TypeIs[Hashable]:
 
     # Else, this object is hashable. Return true.
     return True
-
-# ....................{ TESTERS ~ descriptor               }....................
-def is_object_descriptor_data_instance(obj: object) -> bool:
-    '''
-    :data:`True` only if the passed object is a **data descriptor instance**
-    (i.e., object whose type defines both the ``__get__`` and ``__set__`` dunder
-    methods required to satisfy the data descriptor protocol).
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is a data descriptor.
-
-    See Also
-    --------
-    https://docs.python.org/3/howto/descriptor.html
-        Python's official descriptor guide.
-    '''
-
-    # Return true only if this object satisfies the data descriptor protocol by
-    # defining both the __get__() and __set__() dunder methods.
-    return isinstance(obj, Pep544DescriptorData)  # type: ignore[misc]
-
-
-def is_object_descriptor_nondata_instance(obj: object) -> bool:
-    '''
-    :data:`True` only if the passed object is a **non-data descriptor instance**
-    (i.e., object whose type defines only the ``__get__`` but *not* ``__set__``
-    dunder methods required to satisfy the non-data descriptor protocol).
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is a non-data descriptor.
-
-    See Also
-    --------
-    https://docs.python.org/3/howto/descriptor.html
-        Python's official descriptor guide.
-    '''
-
-    # Return true only if...
-    return (
-        # This object satisfies the non-data descriptor protocol by defining at
-        # least the __get__() dunder method *AND*...
-        isinstance(obj, Pep544DescriptorNondata) and not  # type: ignore[misc]
-        # This object violates the data descriptor protocol by failing to also
-        # define the __set__() dunder method.
-        isinstance(obj, Pep544DescriptorData)  # type: ignore[misc]
-    )

@@ -13,10 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeModuleUnimportableWarning
 from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype.typing import (
-    Any,
-    Optional,
-)
 from beartype._cave._cavefast import ModuleType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.py.databuiltins import BUILTIN_NAME_TO_TYPE
@@ -25,6 +21,10 @@ from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype._data.kind.datakindiota import SENTINEL
 from importlib import import_module as importlib_import_module
+from typing import (
+    Any,
+    Optional,
+)
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Preserved until requisite, which shouldn't be long.
@@ -400,6 +400,7 @@ def import_module_attr_or_sentinel(
     assert isinstance(module_name, NoneTypeOr[str]), (
         f'{repr(module_name)} neither string nor "None".')
 
+    # ....................{ VALIDATE                       }....................
     # If this attribute name is *NOT* a syntactically valid Python identifier,
     # raise an exception.
     die_unless_identifier(
@@ -409,6 +410,7 @@ def import_module_attr_or_sentinel(
     )
     # Else, this attribute name is a syntactically valid Python identifier.
 
+    # ....................{ LOCALS                         }....................
     # True only if this attribute name contains *NO* "." characters and is thus
     # an unqualified basename relative to this module name.
     is_attr_name_unqualified = '.' not in attr_name
@@ -445,6 +447,7 @@ def import_module_attr_or_sentinel(
     # * "module_name" is now a non-empty string.
     # * "attr_basename" is now an unqualified basename.
 
+    # ....................{ IMPORT                         }....................
     # Module with this fully-qualified name if importable *OR* "None" otherwise.
     module = import_module_or_none(module_name)
 
@@ -483,6 +486,7 @@ def import_module_attr_or_sentinel(
     # is fully-qualified and thus not the name of a builtin type. In either
     # case, return this attribute as is.
 
+    # ....................{ RETURN                         }....................
     # Return this attribute.
     return module_attr
 
