@@ -66,7 +66,7 @@ def beartype_func_contextlib_contextmanager(
     '''
     assert callable(func_contextmanager), (
         f'{repr(func_contextmanager)} uncallable.')
-    print(f'Redecorating {repr(func_contextmanager)}-decorated callable {repr(func)}...')
+    # print(f'Redecorating {repr(func_contextmanager)}-decorated callable {repr(func)}...')
 
     # Avoid circular import dependencies.
     from beartype._decor._nontype.decornontype import beartype_nontype
@@ -178,13 +178,12 @@ def beartype_func_warnings_deprecated(
         New pure-Python callable wrapping this context manager with
         type-checking.
     '''
+
     # This is ugly, but I'm not sure how else to do it without trying to import things
     # or perform some other environmental inspection nonsense? See also a similar
     # approach in the sister site in utilwarnings.py.
     deprecated_source = "warnings" if IS_PYTHON_AT_LEAST_3_13 else "typing_extensions"
-    print(
-        f"Redecorating @{deprecated_source}.deprecated-decorated callable {repr(func)}..."
-    )
+    # print(f"Redecorating @{deprecated_source}.deprecated-decorated callable {repr(func)}...")
 
     # Avoid circular and third-party import dependencies.
     from beartype._decor._nontype.decornontype import beartype_nontype
