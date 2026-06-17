@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._util.api.external.utiljaxtyping import is_func_jaxtyped
 from beartype._util.api.external.utilsphinx import is_sphinx_autodocing
 from beartype._util.bear.utilbearblack import is_object_blacklisted
-from beartype._util.func.pep.utilpep484func import (
+from beartype._util.func.pep.utilfuncpep484 import (
     is_func_pep484_notypechecked)
 from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
     get_hintable_pep649749_annotations_or_none)

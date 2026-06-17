@@ -32,16 +32,15 @@ def test_decor_warnings_deprecated() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
+    from beartype._util.module.utilmodimport import import_module_or_none
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_13
     from collections.abc import Generator
     from contextlib import contextmanager
     from pytest import (
         raises,
         warns,
     )
-    from warnings import (
-        deprecated,
-        simplefilter,
-    )
+    from warnings import simplefilter, deprecated
 
     # ....................{ MAIN                           }....................
     # Force pytest to temporarily allow deprecation warnings to be caught by the

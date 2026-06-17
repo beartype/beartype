@@ -17,9 +17,9 @@ from beartype.roar import BeartypeDecorWrappeeException
 from beartype._data.typing.datatyping import BeartypeableT
 from beartype._util.api.standard.utilfunctools import (
     is_func_functools_lru_cache)
-from beartype._util.api.standard.utilwarnings import (
-    is_func_warnings_deprecated,
-    make_func_warnings_deprecated,
+from beartype._util.func.pep.utilfuncpep702 import (
+    is_func_pep702_deprecated,
+    make_func_pep702_deprecated,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_once
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_13
@@ -190,7 +190,7 @@ def beartype_func_warnings_deprecated(
 
     # If this callable is *NOT* a closure created and returned by the
     # @warnings.deprecated decorator, raise an exception.
-    if not is_func_warnings_deprecated(func):  # type: ignore[arg-type]
+    if not is_func_pep702_deprecated(func):  # type: ignore[arg-type]
         raise BeartypeDecorWrappeeException(  # pragma: no cover
             f"@{deprecated_source}.deprecated-decorated callable {repr(func)} not  "
             f"decorated by @{deprecated_source}.deprecated."
@@ -206,7 +206,7 @@ def beartype_func_warnings_deprecated(
 
     # @warnings.deprecated decorator initialized with all parameters originally
     # passed to the passed @warnings.deprecated-based closure.
-    deprecated_configured = make_func_warnings_deprecated(
+    deprecated_configured = make_func_pep702_deprecated(
         func=func, exception_cls=BeartypeDecorWrappeeException)  # type: ignore[arg-type]
 
     # Re-decorate that callable by @warnings.deprecated with the same parameters

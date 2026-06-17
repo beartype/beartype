@@ -7,7 +7,7 @@
 :pep:`484`-compliant **callable utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.utilfunc.pep.utilpep484func` submodule.
+:mod:`beartype._util.utilfunc.pep.utilfuncpep484` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,13 +20,13 @@ This submodule unit tests the public API of the private
 def test_is_func_pep484_notypechecked() -> None:
     '''
     Test the
-    :func:`beartype._util.func.pep.utilpep484func.is_func_pep484_notypechecked`
+    :func:`beartype._util.func.pep.utilfuncpep484.is_func_pep484_notypechecked`
     tester.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.func.pep.utilpep484func import (
+    from beartype._util.func.pep.utilfuncpep484 import (
         is_func_pep484_notypechecked)
     from typing import no_type_check
 

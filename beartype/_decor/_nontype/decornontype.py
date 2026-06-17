@@ -47,8 +47,8 @@ from beartype._util.api.standard.utilcontextlib import (
     get_func_contextlib_contextmanager_or_none)
 from beartype._util.api.standard.utilfunctools import (
     is_func_functools_lru_cache)
-from beartype._util.api.standard.utilwarnings import (
-    is_func_warnings_deprecated)
+from beartype._util.func.pep.utilfuncpep702 import (
+    is_func_pep702_deprecated)
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.func.utilfuncscope import get_func_globals
 from beartype._util.func.utilfunctest import is_func_codeobjable
@@ -320,7 +320,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # Note that @warnings.deprecated handling *MUST* be performed before the
     # comparable "contextlib" handling performed below, for uninteresting [read:
     # unintelligible] reasons we cannot possibly explain.
-    elif is_func_warnings_deprecated(obj):  # type: ignore[arg-type]
+    elif is_func_pep702_deprecated(obj):  # type: ignore[arg-type]
         return beartype_func_warnings_deprecated(func=obj, **kwargs)
 
     # Either:
