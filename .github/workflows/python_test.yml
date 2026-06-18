@@ -274,7 +274,7 @@ jobs:
     steps:
       # ..................{ SETUP                            }..................
       - name: 'Checking out repository...'
-        uses: 'actions/checkout@v6'
+        uses: 'actions/checkout@v7'
       - name: "Installing Python ${{ matrix.python-version }}..."
         uses: 'actions/setup-python@v6'
         with:
