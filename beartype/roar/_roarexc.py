@@ -515,6 +515,19 @@ class BeartypeDecorException(BeartypeException):
 
     pass
 
+
+class BeartypeDecorWrapperException(BeartypeDecorException):
+    '''
+    **Beartype decorator wrapper exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on accidentally generating an **invalid
+    wrapper** (i.e., syntactically invalid new callable to wrap the original
+    callable).
+    '''
+
+    pass
+
 # ....................{ DECORATOR ~ wrapp[ee|er]           }....................
 class BeartypeDecorWrappeeException(BeartypeDecorException):
     '''
@@ -528,14 +541,14 @@ class BeartypeDecorWrappeeException(BeartypeDecorException):
     pass
 
 
-class BeartypeDecorWrapperException(BeartypeDecorException):
+class BeartypeDecorWrappeePep702Exception(BeartypeDecorWrappeeException):
     '''
-    **Beartype decorator parse exception.**
+    **Beartype decorator** :pep:`702`-compliant **wrappee exception.**
 
     This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on accidentally generating an **invalid
-    wrapper** (i.e., syntactically invalid new callable to wrap the original
-    callable).
+    :func:`beartype.beartype` decorator when passed a **wrappee** (i.e., object
+    to be decorated by this decorator) either violating :pep:`702` *or* this
+    decorator's implementation of :pep:`702`.
     '''
 
     pass
@@ -2133,11 +2146,10 @@ class _BeartypeUtilPathDirException(_BeartypeUtilPathException):
     '''
     **Beartype directory utility exception.**
 
-    This exception is raised by private submodules of the 
-    private :mod:`beartype._util.path` subpackage pertaining to
-    directory-handling. This exception denotes a critical internal issue and
-    should thus *never* be raised -- let alone allowed to percolate up the call
-    stack to end users.
+    This exception is raised by private submodules of the private
+    :mod:`beartype._util.path` subpackage pertaining to directory-handling. This
+    exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
     pass
@@ -2147,9 +2159,9 @@ class _BeartypeUtilPathFileException(_BeartypeUtilPathException):
     '''
     **Beartype file utility exception.**
 
-    This exception is raised by private submodules of the 
-    private :mod:`beartype._util.path` subpackage pertaining to file-handling.
-    This exception denotes a critical internal issue and should thus *never* be
+    This exception is raised by private submodules of the private
+    :mod:`beartype._util.path` subpackage pertaining to file-handling. This
+    exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 

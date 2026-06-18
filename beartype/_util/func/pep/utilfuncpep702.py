@@ -12,21 +12,87 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.roar._roarexc import BeartypeDecorWrappeePep702Exception
 from beartype._data.typing.datatyping import TypeException
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfunccodeobj import (
     get_codeobject_basename,
     get_func_codeobject_or_none,
 )
 from beartype._util.func.utilfuncscope import get_func_freevars
 from beartype._util.kind.maplike.utilmapset import remove_mapping_keys_except
-from beartype._util.module.utilmodimport import import_module_or_none
+from beartype._util.module.utilmodimport import import_module_attr_or_none
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_11,
     IS_PYTHON_AT_LEAST_3_13,
 )
 from collections.abc import Callable
 from typing import Optional
+
+# ....................{ RAISERS                            }....................
+#FIXME: Basically call everywhere we currently call is_func_pep702_deprecated()!
+def die_unless_func_pep702_deprecated(
+    # Mandatory parameters.
+    func: Callable,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorWrappeePep702Exception,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed callable is a :pep:`702`-compliant
+    :class:`warnings.deprecated`-based **isomorphic decorator closure** (i.e.,
+    closure created and returned by the standard :func:`warnings.deprecated`
+    decorator such that that closure isomorphically preserves both the number
+    and types of all passed parameters and returns by accepting only a variadic
+    positional argument and variadic keyword argument).
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+    exception_cls : type[Exception], default: BeartypeDecorWrappeePep702Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorWrappeePep702Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    exception_cls
+        If that callable is *not* a :pep:`702`-compliant
+        :class:`warnings.deprecated`-based isomorphic decorator closure.
+
+    See Also
+    --------
+    :func:`.is_func_pep702_deprecated`
+        Further details.
+    '''
+
+    # If this callable is *NOT* a closure created and returned by the
+    # @warnings.deprecated decorator, raise an exception.
+    if not is_func_pep702_deprecated(func):  # pragma: no cover
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Name of the package defining the @warnings.deprecated decorator type
+        # called instantiated below to redecorate the passed callable. See also:
+        # * Logic below for details on why this pretends to make sense.
+        # * A similar approach in our sibling "decorstandard" submodule.
+        decorator_package_name = (
+            'warnings' if IS_PYTHON_AT_LEAST_3_13 else 'typing_extensions')
+
+        # Raise a exception embedding this package name.
+        raise exception_cls(
+            f'{exception_prefix}'
+            f'PEP 702 deprecated callable {repr(func)} not decorated by '
+            f'@{decorator_package_name}.deprecated.'
+        )
+    # Else, this callable is a closure created and returned by the
+    # @warnings.deprecated decorator.
 
 # ....................{ TESTERS                            }....................
 def is_func_pep702_deprecated(func: Callable) -> bool:
@@ -74,14 +140,15 @@ def is_func_pep702_deprecated(func: Callable) -> bool:
     # that dunder attribute and whether or not any given pure-Python function is
     # that isomorphic wrapper closure. The following logic that superficially
     # seems sensible thus fails to disambiguate between these two callables:
-    #    # Dunder attribute hopefully *ONLY* declared on by the @warnings.deprecated
-    #    # decorator if the passed callable is an isomorphic wrapper closure created
-    #    # and returned by that decorator *OR* "None" otherwise (i.e., if the passed
-    #    # callable is *NOT* such a closure).
+    #    # Dunder attribute hopefully *ONLY* declared on by the
+    #    # @warnings.deprecated decorator if the passed callable is an
+    #    # isomorphic wrapper closure created and returned by that decorator
+    #    # *OR* "None" otherwise (i.e., if the passed callable is *NOT* such a
+    #    # closure).
     #    func_deprecated = getattr(func, '__deprecated__', None)
     #
-    #    # Return true *ONLY* if the value of this attribute is a string, as mandated
-    #    # by PEP 702.
+    #    # Return true *ONLY* if the value of this attribute is a string, as
+    #    # mandated by PEP 702.
     #    return isinstance(func_deprecated, str)
     #
     # Disambiguating between the above two callables thus requires considerably
@@ -129,17 +196,28 @@ def is_func_pep702_deprecated(func: Callable) -> bool:
 # ....................{ GETTERS                            }....................
 #FIXME: Reduce to "from warnings import deprecated" after dropping 3.12! \o/
 #FIXME: Unit test us up, please. *sigh*
-#FIXME: Actually call elsewhere, please. This includes:
-#* make_func_pep702_deprecated() below.
-#* beartype_func_warnings_deprecated() elsewhere.
-#* test_is_func_pep702_deprecated() elsewhere.
-#* test_decor_warnings_deprecated() elsewhere.
-#FIXME: Docstring us up, please. *sigh*
-def get_pep702_decorator_type_or_none() -> Optional[type]:
+@callable_cached
+def get_pep702_deprecated_decorator_or_none() -> Optional[type]:
     '''
+    :pep:`702`-compliant :class:`warnings.deprecated` decorator importable under
+    the active Python interpreter if such a decorator is importable *or*
+    :data:`None` otherwise (i.e., if no such decorator is importable).
+
+    This getter specifically returns either:
+
+    * If the active Python interpreter targets Python >= 3.13 (and thus supports
+      :pep:`702`), the standard :class:`warnings.deprecated` decorator.
+    * If both the active Python interpreter targets Python <= 3.12 *and* the
+      third-party :mod:`typing_extensions` module is importable, the
+      non-standard :class:`typing_extensions.deprecated` decorator backported
+      from that module.
+    * Else, :data:`None`.
+
+    This getter is memoized for efficiency.
     '''
 
-    #FIXME: Comment us up, please. *sigh*
+    # Importable @warnings.deprecated decorator if any *OR* "None", defaulting
+    # to "None" for safety.
     deprecated: Optional[type] = None
 
     # If the active Python interpreter targets Python >= 3.13, then:
@@ -157,21 +235,16 @@ def get_pep702_decorator_type_or_none() -> Optional[type]:
     # * The third-party @typing_extensions.deprecated decorator exists if and
     #   only if the "typing_extensions" module itself is importable.
     else:
-        # Third-party "typing_extensions" module if importable *OR* "None"
-        # otherwise (i.e., if that module is unimportable).
-        typing_extensions = import_module_or_none('typing_extensions')
-
-        # If the "typing_extensions" module is importable, fallback to the
-        # @typing_extensions_deprecated backport.
-        #
-        # I *think* this is okay? Prior to 3.13, the deprecated decorator lived
-        # in typing_extensions, which means if you've encountered that decorator
-        # and you're in (e.g.) Python 3.11, it has to have come from there,
-        # right? Right? RIGHT!?!? *sigh*
-        if typing_extensions:
-            deprecated = typing_extensions.deprecated  # type: ignore[misc]
-        # Else, the "typing_extensions" module is unimportable. In this case,
-        # return "None" out of mere diabolical desperation.
+        # Third-party @typing_extensions.deprecated decorator if both the
+        # third-party "typing_extensions" module is importable and that module
+        # defines this decorator *OR* "None" otherwise (i.e., if either that
+        # module is unimportable or is importable but fails to define this
+        # decorator, presumably due to being an obsolete module version).
+        deprecated = import_module_attr_or_none(
+            module_name='typing_extensions',
+            attr_name='deprecated',
+            exception_cls=BeartypeDecorWrappeePep702Exception,
+        )
 
     # Return this decorator type.
     return deprecated
@@ -183,7 +256,7 @@ def make_func_pep702_deprecated(
     func: Callable,
 
     # Optional parameters.
-    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_cls: TypeException = BeartypeDecorWrappeePep702Exception,
     exception_prefix: str = '',
 ) -> 'warnings.deprecated':  # type: ignore[name-defined]
     '''
@@ -203,9 +276,9 @@ def make_func_pep702_deprecated(
     ----------
     func : Callable
         :func:`warnings.deprecated`-based isomorphic decorator to be inspected.
-    exception_cls : type[Exception], default: _BeartypeUtilCallableException
+    exception_cls : type[Exception], default: BeartypeDecorWrappeePep702Exception
         Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`._BeartypeUtilCallableException`.
+        to :exc:`.BeartypeDecorWrappeePep702Exception`.
     exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
@@ -220,75 +293,33 @@ def make_func_pep702_deprecated(
     # print(f'Redecorating @warnings.deprecated-decorated {func}...')
 
     # ....................{ VALIDATE                       }....................
-    # If this callable is *NOT* a closure created and returned by the
+    # If that callable is *NOT* a closure created and returned by the
     # @warnings.deprecated decorator, raise an exception.
-    if not is_func_pep702_deprecated(func):  # pragma: no cover
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not type.')
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
-
-        # Name of the package defining the @warnings.deprecated decorator type
-        # called instantiated below to redecorate the passed callable. See also:
-        # * Logic below for details on why this pretends to make sense.
-        # * A similar approach in our sibling "decorstandard" submodule.
-        decorator_package_name = (
-            'warnings' if IS_PYTHON_AT_LEAST_3_13 else 'typing_extensions')
-
-        # Raise a exception embedding this package name.
-        raise exception_cls(
-            f'{exception_prefix}'
-            f'PEP 702 deprecated callable {repr(func)} not decorated by '
-            f'@{decorator_package_name}.deprecated.'
-        )
-    # Else, this callable is a closure created and returned by the
+    die_unless_func_pep702_deprecated(
+        func=func,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # Else, that callable is a closure created and returned by the
     # @warnings.deprecated decorator.
 
-    # ....................{ IMPORTS                        }....................
-    # Defer Python version-specific imports.
-
-    # If the active Python interpreter targets Python >= 3.13, then:
-    # * The standard PEP 702-compliant @warnings.deprecated decorator exists.
-    # * The third-party @typing_extensions.deprecated decorator is actually just
-    #   a trivial alias of the standard @warnings.deprecated decorator.
-    #
-    # In any case, the only @warnings.deprecated decorator that exists under
-    # Python >= 3.13 is this decorator itself. Import this decorator directly.
-    if IS_PYTHON_AT_LEAST_3_13:
-        from warnings import deprecated  # type: ignore[attr-defined]
-    # Else, the active Python interpreter targets Python <= 3.12. In this case:
-    # * The standard PEP 702-compliant @warnings.deprecated decorator does *NOT*
-    #   exist.
-    # * The third-party @typing_extensions.deprecated decorator exists if and
-    #   only if the "typing_extensions" module itself is importable.
-    else:
-        # Third-party "typing_extensions" module if importable *OR* "None"
-        # otherwise (i.e., if that module is unimportable).
-        typing_extensions = import_module_or_none('typing_extensions')
-
-        # If the "typing_extensions" module is importable, fallback to the
-        # @typing_extensions_deprecated backport.
-        #
-        # I *think* this is okay? Prior to 3.13, the deprecated decorator lived
-        # in typing_extensions, which means if you've encountered that decorator
-        # and you're in (e.g.) Python 3.11, it has to have come from there,
-        # right? Right? RIGHT!?!? *sigh*
-        if typing_extensions:
-            deprecated = typing_extensions.deprecated  # type: ignore[misc]
-        # Else, the "typing_extensions" module is unimportable. In this case,
-        # raise an exception.
-        #
-        # Note that this should *NEVER* be the case. Ergo, we invest *NO* effort
-        # in raising a readable exception. Why? Because the caller only calls
-        # this factory when the passed callable has already been validated to be
-        # a PEP 702-compliant closure, in which case either:
-        # * The active Python interpreter targets >= Python 3.13.
-        # * The "typing_extensions" module is importable.
-        else:  # pragma: no cover
-            raise _BeartypeUtilCallableException(
-                '"typing_extensions" unimportable.')
-
     # ....................{ LOCALS                         }....................
+    # PEP 702-compliant @warnings.deprecated decorator importable under the
+    # active Python interpreter if such a decorator is importable *OR* "None"
+    # otherwise (i.e., if no such decorator is importable).
+    deprecated = get_pep702_deprecated_decorator_or_none()
+
+    # If no such decorator is importable, raise an exception.
+    #
+    # Note that this should *NEVER* be the case. Ergo, we invest *NO* effort in
+    # raising a readable exception. Why? Because the caller only calls this
+    # factory when the passed callable has already been validated to be a PEP
+    # 702-compliant closure, in which case either:
+    # * The active Python interpreter targets >= Python 3.13.
+    # * The "typing_extensions" module is importable.
+    assert deprecated is not None, 'Module "typing_extensions" unimportable.'
+    # Else, such a decorator is importable.
+
     # This closure's scope (i.e., dictionary mapping from the name to value of
     # each closure-scoped local attribute defined in the body of the parent
     # warnings.deprecated.__call__() dunder method also defining and returning

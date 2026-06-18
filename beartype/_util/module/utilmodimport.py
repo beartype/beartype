@@ -359,7 +359,7 @@ def import_module_attr_or_sentinel(
     ----------
     attr_name : str
         Possibly unqualified name of the module attribute to be imported.
-    module_name: Optional[str]
+    module_name: Optional[str], default: None
         Either:
 
         * If this attribute name is unqualified (i.e., contains *no* ``.``
@@ -369,12 +369,12 @@ def import_module_attr_or_sentinel(
 
         Defaults to :data:`None`, in which case ``attr_name`` must be either
         fully-qualified *or* the unqualified name of a builtin type.
-    exception_cls : Type[Exception]
-        Type of exception to be raised by this function. Defaults to
-        :class:`._BeartypeUtilModuleException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+    exception_cls : type[Exception], default: _BeartypeUtilModuleException
+        Type of exception to be raised in the event of a fatal error. Defaults to
+        :exc:`._BeartypeUtilModuleException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------

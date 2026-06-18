@@ -18,29 +18,51 @@ the standard :mod:`warnings` module.
 from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                              }....................
-@skip_if_python_version_less_than('3.13.0')
+@skip_if_python_version_less_than('3.11.0')
 def test_decor_warnings_deprecated() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on
     :func:`warnings.contextmanager`-decorated **synchronous context managers**
     (i.e., generator factory functions decorated by that standard decorator) if
-    the active Python interpreter targets Python >= 3.13 and thus supports
-    :pep:`702` *or* silently reduce to a noop otherwise.
+    the active Python interpreter targets Python >= 3.11 and thus supports:
+
+    * The standard :func:`contextlib.contextmanager` decorator, which the
+      :func:`beartype.beartype` decorator only conditionally supports under
+      Python >= 3.11 due to various... uh, "reasons." We are sighing.
+    * :pep:`702` via either:
+
+      * The standard :class:`warnings.deprecated` decorator introduced under
+        Python >= 3.13.
+      * The third-party :class:`typing_extensions.deprecated` decorator
+        available under older Python interpreters.
+
+    Silently reduce to a noop otherwise.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
-    from beartype._util.module.utilmodimport import import_module_or_none
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_13
+    from beartype._util.func.pep.utilfuncpep702 import (
+        get_pep702_deprecated_decorator_or_none)
     from collections.abc import Generator
     from contextlib import contextmanager
     from pytest import (
         raises,
         warns,
     )
-    from warnings import simplefilter, deprecated
+    from warnings import simplefilter
+
+    # ....................{ NOOP                           }....................
+    # PEP 702-compliant @warnings.deprecated decorator importable under the
+    # active Python interpreter if such a decorator is importable *OR* "None"
+    # otherwise (i.e., if no such decorator is importable).
+    deprecated = get_pep702_deprecated_decorator_or_none()
+
+    # If no such decorator is importable, silently reduce to a noop.
+    if deprecated is None:
+        return
+    # Else, such a decorator is importable.
 
     # ....................{ MAIN                           }....................
     # Force pytest to temporarily allow deprecation warnings to be caught by the

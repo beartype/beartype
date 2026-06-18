@@ -28,43 +28,21 @@ def test_is_func_pep702_deprecated() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.func.pep.utilfuncpep702 import (
-        is_func_pep702_deprecated)
+        get_pep702_deprecated_decorator_or_none,
+        is_func_pep702_deprecated,
+    )
     from beartype._util.func.utilfuncwrap import unwrap_func_once
-    from beartype._util.module.utilmodimport import import_module_or_none
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_13
 
-    # If the active Python interpreter targets Python >= 3.13, then:
-    # * The standard PEP 702-compliant @warnings.deprecated decorator exists.
-    # * The third-party @typing_extensions.deprecated decorator is actually just
-    #   a trivial alias of the standard @warnings.deprecated decorator.
-    #
-    # In any case, the only @warnings.deprecated decorator that exists under
-    # Python >= 3.13 is this decorator itself. Import this decorator directly.
-    if IS_PYTHON_AT_LEAST_3_13:
-        from warnings import deprecated  # type: ignore[attr-defined]
-    # Else, the active Python interpreter targets Python <= 3.12. In this case:
-    # * The standard PEP 702-compliant @warnings.deprecated decorator does *NOT*
-    #   exist.
-    # * The third-party @typing_extensions.deprecated decorator exists if and
-    #   only if the "typing_extensions" module itself is importable.
-    else:
-        # Third-party "typing_extensions" module if importable *OR* "None"
-        # otherwise (i.e., if that module is unimportable).
-        typing_extensions = import_module_or_none('typing_extensions')
+    # ....................{ NOOP                           }....................
+    # PEP 702-compliant @warnings.deprecated decorator importable under the
+    # active Python interpreter if such a decorator is importable *OR* "None"
+    # otherwise (i.e., if no such decorator is importable).
+    deprecated = get_pep702_deprecated_decorator_or_none()
 
-        # If the "typing_extensions" module is importable, fallback to the
-        # @typing_extensions_deprecated backport.
-        #
-        # I *think* this is okay? Prior to 3.13, the deprecated decorator lived
-        # in typing_extensions, which means if you've encountered that decorator
-        # and you're in (e.g.) Python 3.11, it has to have come from there,
-        # right? Right? RIGHT!?!? *sigh*
-        if typing_extensions:
-            deprecated = typing_extensions.deprecated  # type: ignore[attr-defined]
-        # Else, the "typing_extensions" module is unimportable. In this case,
-        # silently reduce to a noop.
-        else:
-            return
+    # If no such decorator is importable, silently reduce to a noop.
+    if deprecated is None:
+        return
+    # Else, such a decorator is importable.
 
     # ....................{ CALLABLES                      }....................
     @deprecated('Manifestations of that beauteous life')

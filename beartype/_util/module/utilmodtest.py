@@ -22,7 +22,6 @@ from beartype._util.text.utiltextversion import convert_str_version_to_tuple
 from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
 
 # ....................{ RAISERS                            }....................
-#FIXME: Excise us up. This function is no longer called anywhere. *sigh*
 def die_unless_module_attr_name(
     # Mandatory parameters.
     module_attr_name: str,
@@ -43,12 +42,12 @@ def die_unless_module_attr_name(
     ----------
     module_attr_name : str
         Fully-qualified name of the module attribute to be validated.
-    exception_cls : type, optional
+    exception_cls : type[Exception], default: _BeartypeUtilModuleException
         Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`._BeartypeUtilModuleException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to something reasonably sane.
+        to :exc:`._BeartypeUtilModuleException`.
+    exception_prefix : str, default: "Module attribute name "
+        Human-readable substring prefixing raised exception messages. Defaults
+        to something reasonably sane.
 
     Raises
     ------
