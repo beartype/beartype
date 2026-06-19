@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,
@@ -21,10 +22,8 @@ from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.cls.pep.clspep252 import (
-    TypePep252DescriptorData,
-    is_type_pep252_descriptor_data,
-)
+from beartype._util.cls.pep.clspep252 import is_type_pep252_descriptor_data
+from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
 from beartype._util.hint.pep.proposal.pep557 import get_hint_pep557_initvar_arg
 from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
     get_hintable_pep649749_annotations)
@@ -58,19 +57,22 @@ def reduce_hint_pep557_initvar(hint: Hint) -> Hint:
         hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
 
 
-#FIXME: Docstring us up, please. *sigh*
 #FIXME: Unit test us up, please. *sigh*
-def reduce_hint_pep557_descriptor_data(
-    hint: TypePep252DescriptorData,
+def reduce_hint_pep557_descriptor_data_if_able(
+    call_curr: BeartypeCallDataABC,
+    hint: Hint,
     exception_prefix: str,
     **kwargs
-) -> HintOrSane:
+) -> (
+    HintOrSane):
     '''
     Reduce the passed :pep:`252`-compliant runtime-hostile data descriptor
     (presumably annotating a PEP-noncompliant descriptor-typed field of some
     otherwise :pep:`557`-compliant dataclass) to the equivalent
     :pep:`557`-compliant runtime-friendly return hint annotating this data
-    descriptor's ``__get__()`` dunder method.
+    descriptor's ``__get__()`` dunder method if both a :pep:`557`-compliant
+    dataclass is currently being decorated and the passed hint is such a
+    descriptor *or* preserve this hint as is otherwise.
 
     Motivation
     ----------
@@ -117,7 +119,11 @@ def reduce_hint_pep557_descriptor_data(
 
     Parameters
     ----------
-    hint : HintPep695TypeAlias
+    call_curr : BeartypeCallDataABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
+    hint : Hint
         Data descriptor type to be reduced.
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
@@ -139,12 +145,38 @@ def reduce_hint_pep557_descriptor_data(
         Official Python documentation on descriptor-type dataclass fields.
     '''
 
-    #FIXME: Maybe define a new die_unless_type_descriptor_data() validator! \o/
-    assert is_type_pep252_descriptor_data(hint), (
-        f'Type hint {repr(hint)} not data descriptor type.')
+    # ....................{ NOOP                           }....................
+    # If it is *NOT* the case that...
+    if not (
+        # This hint transitively annotates a class currently being decorated by
+        # @beartype *AND*...
+        call_curr.cls_stack is not None and
+        # This hint is a type and thus possibly a data descriptor type *AND*...
+        isinstance(hint, type) and
+        # The currently decorated class is a PEP 557-compliant dataclass
+        # *AND*...
+        #
+        # Note that this test is mildly inefficient and thus performed *AFTER*
+        # trivial tests known to be extremely efficient above.
+        is_type_pep557_dataclass(call_curr.cls_stack[-1]) and
+        # This hint is a data descriptor type...
+        #
+        # Note that this test is even more inefficient (due to requiring
+        # protocol matching) and thus performed *AFTER* all other tests.
+        is_type_pep252_descriptor_data(hint)
+    ):
+    # Then either a PEP 557-compliant dataclass is not currently being decorated
+    # *OR* this hint is not a PEP 252-compliant runtime-hostile data descriptor.
+    # In either case, preserve this hint as is.
+        return hint
+    # Else, a PEP 557-compliant dataclass is currently being decorated *AND*
+    # this hint is a PEP 252-compliant runtime-hostile data descriptor
+    # presumably annotating a PEP-noncompliant descriptor-typed field of that
+    # dataclass.
 
+    # ....................{ LOCALS                         }....................
     # Unbound __get__() dunder method defined by this data descriptor type.
-    descriptor_get = hint.__get__
+    descriptor_get = hint.__get__  # pyright: ignore
 
     # Dictionary mapping from the name of each parameter or return of this
     # unbound __get__() dunder method to the type hint annotating that parameter
@@ -153,6 +185,7 @@ def reduce_hint_pep557_descriptor_data(
     descriptor_get_annotations = get_hintable_pep649749_annotations(
         hintable=descriptor_get, exception_prefix=exception_prefix)
 
+    # ....................{ RETURN                         }....................
     # If that method is annotated by one or more type hints...
     if descriptor_get_annotations:
         # Return hint annotating that method if any *OR* the sentinel

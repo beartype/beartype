@@ -18,8 +18,8 @@ from beartype._check.cls.hint.hintsane import (
     HintOrSane,
     HintSane,
 )
-# from beartype._check.convert._reduce._pep.redpep557 import (
-#     reduce_hint_pep557_descriptor_data)
+from beartype._check.convert._reduce._pep.redpep557 import (
+    reduce_hint_pep557_descriptor_data_if_able)
 from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_fake)
 from beartype._cave._cavefast import (
@@ -30,7 +30,6 @@ from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.shame.datashamefunc import BLACKLIST_METHOD_NAMES_HINT_SELF
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobjtest import is_object_hashable
@@ -112,8 +111,15 @@ def reduce_hint_nonpep(
         * Supported PEP-compliant type hint.
         * Supported PEP-noncompliant type hint.
     '''
+    assert isinstance(call_curr, BeartypeCallDataABC), (
+        f'{repr(call_curr)} not beartype call metadata.')
 
-    # ....................{ RECURSE                        }....................
+    # ....................{ PHASE ~ recursion              }....................
+    # In this first reduction phase, we attempt to guard against infinite
+    # recursion induced while subsequently executing the subsequently generated
+    # code type-checking this hint. Since preventing infinite recursion is
+    # mission-critical, this reduction is performed *BEFORE* all others.
+
     # If...
     if (
         # One or more types are currently being decorated by @beartype *AND*...
@@ -194,13 +200,47 @@ def reduce_hint_nonpep(
     # the most deeply nested such type is also currently being decorated. In any
     # case, this hint *CANNOT* ignite such recursion and is thus preserved.
 
-    # ....................{ PHASE ~ singleton              }....................
-    # In this first reduction phase, we attempt a general-purpose reduction
-    # efficiently mapping from this PEP-noncompliant hint to a semantically
-    # equivalent PEP-compliant hint.
+    # ....................{ PHASE ~ pep : 557              }....................
+    # In this next reduction phase, we conditionally attempt a PEP 557-specific
+    # reduction from a PEP-noncompliant runtime-hostile data descriptor-typed
+    # dataclass field to the equivalent PEP-compliant runtime-friendly return
+    # hint annotating that data descriptor's __get__() dunder method.
 
-    # If this hint is hashable...
-    if is_object_hashable(hint):
+    # If a PEP 557-compliant dataclass is currently being decorated *AND* this
+    # hint is a PEP 252-compliant runtime-hostile data descriptor presumably
+    # annotating a PEP-noncompliant descriptor-typed field of that dataclass,
+    # reduce this field to the equivalent PEP-compliant runtime-friendly return
+    # hint annotating this data descriptor's __get__() dunder method. We don't
+    # make the rules. Our rictus grin just smiles in horror at the rules.
+    hint = reduce_hint_pep557_descriptor_data_if_able(  # pyright: ignore
+        call_curr=call_curr,
+        hint=hint,
+        hint_parent_sane=hint_parent_sane,
+        **kwargs
+    )
+    # Else, either a PEP 557-compliant dataclass is not currently being
+    # decorated *OR* this hint is not a PEP 252-compliant runtime-hostile data
+    # descriptor. In either case, preserve this hint as is.
+
+    # ....................{ PHASE ~ singleton              }....................
+    # In this last reduction phase, we attempt a general-purpose reduction
+    # efficiently mapping from this PEP-noncompliant hint to a semantically
+    # equivalent PEP-compliant hint. This reduction implicitly performs critical
+    # transforms generally applicable to a wide variety of PEP-noncompliant
+    # hints and is thus performed *AFTER* all other reductions performed above.
+    # Doing so guarantees, for example, that:
+    # * The root "object" superclass is reduced to the ignorable
+    #   "HINT_SANE_IGNORABLE" singleton even if when a reduction performed above
+    #   reduces the passed hint to the root "object" superclass.
+
+    # If...
+    if (
+        # If this hint was not already reduced to sanified metadata above
+        # *AND*...
+        not isinstance(hint, HintSane) and
+        # This hint is hashable...
+        is_object_hashable(hint)
+    ):
         # Either:
         # * If this PEP-noncompliant hint is a singleton unsupported by
         #   @beartype but reducible to a possibly PEP-noncompliant hint that is
@@ -213,59 +253,11 @@ def reduce_hint_nonpep(
         if hint_reduced is not None:
             hint = hint_reduced  # pyright: ignore
         # Else, this hint is irreducible. In this case, preserve this hint.
-    # Else, this hint is unhashable. In this case, preserve this hint as is.
-
-    # ....................{ PHASE ~ pep : 557              }....................
-    # In this next reduction phase, we conditionally attempt a PEP 557-specific
-    # reduction from a PEP-noncompliant runtime-hostile data descriptor-typed
-    # dataclass field to the equivalent PEP-compliant runtime-friendly return
-    # hint annotating that data descriptor's __get__() dunder method.
-    #
-
-    #FIXME: Shift into a more appropriate submodule, please. *sigh*
-    #FIXME: *LOL*. is_type_descriptor_data() doesn't even exist. We sure messed
-    #that one up, huh? We now have the necessary joy of:
-    #* Defining a new "beartype._util.cls.pep.utilclspep252" submodule.
-    #* In that submodule:
-    #  * Shifting the existing is_object_descriptor_data() and
-    #    is_object_descriptor_nondata() testers defined in the existing
-    #    "beartype._util.utilobjtest" submodule into that new submodule.
-    #  * Defining two new is_type_descriptor_data() and
-    #    is_type_descriptor_nondata() testers. Thankfully, these are trivial.
-
-    # # If...
-    # if (
-    #     # This hint transitively annotates a class currently being decorated by
-    #     # @beartype *AND*...
-    #     call_curr.cls_stack is not None and
-    #     # This hint is a type and thus possibly a data descriptor type *AND*...
-    #     isinstance(hint, type) and
-    #     # The currently decorated class is a PEP 557-compliant dataclass
-    #     # *AND*...
-    #     #
-    #     # Note that this test is mildly inefficient and thus performed *AFTER*
-    #     # trivial tests known to be extremely efficient.
-    #     is_type_pep557_dataclass(call_curr.cls_stack[-1]) and
-    #     # This hint is a data descriptor type...
-    #     #
-    #     # Note that this test is even more inefficient (due to requiring
-    #     # protocol matching) and thus performed *AFTER* all other tests.
-    #     is_type_descriptor_data(hint)
-    # ):
-    #     # Then reduce this PEP-noncompliant runtime-hostile data
-    #     # descriptor-typed dataclass field to the equivalent PEP-compliant
-    #     # runtime-friendly return hint annotating this data descriptor's
-    #     # __get__() dunder method. We don't make the rules. We just yawn in
-    #     # horror at the rules living humans made.
-    #     hint = reduce_hint_pep557_descriptor_data(
-    #         call_curr=call_curr,
-    #         hint=hint,
-    #         hint_parent_sane=hint_parent_sane,
-    #         **kwargs
-    #     )
+    # Else, this hint either was already reduced to sanified metadata above *OR*
+    # is unhashable. In either case, preserve this hint as is.
 
     # ....................{ VALIDATE                       }....................
-    # If this hint was *NOT* reduced to sanified metadata above...
+    # If this hint was *NOT* already reduced to sanified metadata above...
     if not isinstance(hint, HintSane):
         # If this hint is unsupported by @beartype (after possibly reducing
         # this hint to a supported hint above), raise an exception.
