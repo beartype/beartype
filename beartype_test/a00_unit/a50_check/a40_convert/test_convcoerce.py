@@ -27,7 +27,7 @@ def test_coerce_func_hint_root() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import BeartypeConf
-    from beartype._check.cls.call.callmetadecor import BeartypeCallDecorMeta
+    from beartype._check.cls.call.callmetadecor import BeartypeCallDecorData
     from beartype._check.convert._convcoerce import coerce_func_hint_root
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 
@@ -40,15 +40,15 @@ def test_coerce_func_hint_root() -> None:
         return 'whose wandering wings'
 
     # Beartype dataclass describing this callable.
-    decor_meta = BeartypeCallDecorMeta()
-    decor_meta.reinit(func=one_legion_of_wild_thoughts, conf=BeartypeConf())
+    decor_curr = BeartypeCallDecorData()
+    decor_curr.reinit(func=one_legion_of_wild_thoughts, conf=BeartypeConf())
 
     # ..................{ CORE                               }..................
     # Assert this coercer preserves an isinstanceable type as is.
     assert coerce_func_hint_root(
         hint=str,
         pith_name=ARG_NAME_RETURN,
-        decor_meta=decor_meta,
+        decor_curr=decor_curr,
         exception_prefix='',
     ) is str
 

@@ -6,10 +6,10 @@
 '''
 Test-wide :pep:`557` **dataclasses data submodule.**
 
-This submodule exercises support for **dataclasses** (i.e., :pep:`557`-compliant
-:func:`dataclasses.dataclass`-decorated classes) implemented in the
-:func:`beartype.beartype` decorator. To do so, this submodule defines
-dataclasses configured with varying combinations of keyword parameters.
+This submodule defines :pep:`557`-compliant **dataclasses** (i.e.,
+:func:`dataclasses.dataclass`-decorated types) configured with varying
+combinations of keyword parameters validating known edge cases in the
+:func:`beartype.beartype` decorator.
 '''
 
 # ....................{ IMPORTS                            }....................

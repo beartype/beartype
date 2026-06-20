@@ -74,6 +74,10 @@ def reduce_hint_pep557_descriptor_data_if_able(
     dataclass is currently being decorated and the passed hint is such a
     descriptor *or* preserve this hint as is otherwise.
 
+    Note that descriptor-typed fields have yet to be standardized by any
+    peer-reviewed PEP and are thus technically PEP-noncompliant, despite being
+    officially documented in Python documentation.
+
     Motivation
     ----------
     Technically, data descriptor-typed dataclass fields have yet to be formally
@@ -197,6 +201,7 @@ def reduce_hint_pep557_descriptor_data_if_able(
         # runtime-hostile data descriptor type to the (hopefully)
         # runtime-friendly hint annotating that method's return.
         if descriptor_get_return_hint is not SENTINEL:
+            # print(f'Reducing descriptor-typed field {repr(hint)} to {repr(descriptor_get_return_hint)}!')
             return descriptor_get_return_hint
         # Else, that method's return is unannotated.
     # Else, that method is unannotated.
@@ -214,4 +219,5 @@ def reduce_hint_pep557_descriptor_data_if_able(
     # the __get__() methods bound to those descriptors. In the absence of any
     # return type hints annotating those methods, silently ignoring unannotated
     # descriptor-typed fields is @beartype's only sane recourse.
+    # print(f'Ignoring unannotated descriptor-typed field {repr(hint)}!')
     return HINT_SANE_IGNORABLE

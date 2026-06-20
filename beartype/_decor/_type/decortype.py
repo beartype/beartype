@@ -14,10 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Dict,
-    Set,
-)
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
@@ -226,6 +222,15 @@ def beartype_type(
     return cls  # type: ignore[return-value]
 
 # ....................{ PRIVATE ~ globals                  }....................
+_BEARTYPED_MODULE_TO_TYPE_NAME: dict[str, set[str]] = defaultdict(set)
+'''
+**Decorated classname registry (i.e., dictionary mapping from the
+fully-qualified name of each module defining one or more classes decorated by
+the :func:`beartype.beartype` decorator to the set of the unqualified basenames
+of all classes in that module decorated by that decorator).
+'''
+
+
 _TYPE_ATTR_NAME_IS_BEARTYPED = 'is_beartyped'
 '''
 Unique name of the **memoized type beartyped attribute** (i.e., attribute cached
@@ -235,15 +240,6 @@ neither require nor desire re-decoration by that decorator).
 
 The value of this attribute is equally arbitrary but typically :data:`True`,
 merely as a readability and debuggability aid.
-'''
-
-
-_BEARTYPED_MODULE_TO_TYPE_NAME: Dict[str, Set[str]] = defaultdict(set)
-'''
-**Decorated classname registry (i.e., dictionary mapping from the
-fully-qualified name of each module defining one or more classes decorated by
-the :func:`beartype.beartype` decorator to the set of the unqualified basenames
-of all classes in that module decorated by that decorator).
 '''
 
 # ....................{ PRIVATE ~ globals                  }....................

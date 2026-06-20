@@ -19,7 +19,7 @@ from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
 
 # ....................{ SUBCLASSES                         }....................
-class BeartypeCallExternalMeta(BeartypeCallDataABC):
+class BeartypeCallExternalData(BeartypeCallDataABC):
     '''
     **Beartype external call metadata** (i.e., dataclass encapsulating *all*
     metadata for the first external lexical scope on the call stack originating
@@ -86,15 +86,15 @@ class BeartypeCallExternalMeta(BeartypeCallDataABC):
         )
 
 # ....................{ GLOBALS                            }....................
-BEARTYPE_CALL_EXTERNAL_META = BeartypeCallExternalMeta()
+BEARTYPE_CALL_EXTERNAL_META = BeartypeCallExternalData()
 '''
 **Beartype external call metadata singleton** (i.e., public global constant
-:class:`.BeartypeCallExternalMeta` instance intended to be the *only*
-:class:`.BeartypeCallExternalMeta` instance instantiated for the life of the
+:class:`.BeartypeCallExternalData` instance intended to be the *only*
+:class:`.BeartypeCallExternalData` instance instantiated for the life of the
 active Python interpreter).
 
 See Also
 --------
-:class:`.BeartypeCallExternalMeta`
+:class:`.BeartypeCallExternalData`
     Further details.
 '''

@@ -22,7 +22,7 @@ from beartype._cave._cavefast import (
 )
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.cls.call.callmetadecormin import (
-    BeartypeCallDecorMinimalMeta)
+    BeartypeCallDecorMinimalData)
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import (
     LexicalScope,
@@ -69,7 +69,7 @@ def make_scope_forward_caller_external(
     module or package *except* those residing in the :mod:`beartype` package).
 
     This factory is internally memoized into the
-    :attr:`decor_metafunc_wrappee_wrappee_scope_forward` instance variable of the
+    :attr:`decor_currfunc_wrappee_wrappee_scope_forward` instance variable of the
     passed metadata.
 
     Parameters
@@ -128,7 +128,7 @@ def make_scope_forward_caller_external(
     # order of operation is *EXTREMELY* significant here.
     caller_scope.update(caller_globals)
     caller_scope.update(caller_locals)
-    # print(f'Forward scope: {decor_metafunc_wrappee_wrappee_scope_forward}')
+    # print(f'Forward scope: {decor_currfunc_wrappee_wrappee_scope_forward}')
 
     # ....................{ RETURN                         }....................
     # Return this forward scope.
@@ -136,9 +136,9 @@ def make_scope_forward_caller_external(
 
 # ....................{ FACTORIES ~ decorated              }....................
 #FIXME: Unit test us up, please.
-def make_scope_forward_decor_meta(
+def make_scope_forward_decor_curr(
     # Mandatory parameters.
-    decor_meta: BeartypeCallDecorMinimalMeta,
+    decor_curr: BeartypeCallDecorMinimalData,
     hint: str,
     func_is_nested: bool,
 
@@ -157,12 +157,12 @@ def make_scope_forward_decor_meta(
     decorated callable described by the passed metadata.
 
     This factory is internally memoized into the
-    :attr:`decor_metafunc_wrappee_wrappee_scope_forward` instance variable of the
+    :attr:`decor_currfunc_wrappee_wrappee_scope_forward` instance variable of the
     passed metadata.
 
     Parameters
     ----------
-    decor_meta : BeartypeCallDecorMinimalMeta
+    decor_curr : BeartypeCallDecorMinimalData
         **Beartype decorator call minimal metadata** (i.e., dataclass
         encapsulating the minimal metadata required to type-check the currently
         decorated callable at the time that callable is subsequently called).
@@ -187,27 +187,27 @@ def make_scope_forward_decor_meta(
     LexicalScope
         Forward scope relative to the currently decorated callable.
     '''
-    assert isinstance(decor_meta, BeartypeCallDecorMinimalMeta), (
-        f'{repr(decor_meta)} not beartype decorator call metadata.')
+    assert isinstance(decor_curr, BeartypeCallDecorMinimalData), (
+        f'{repr(decor_curr)} not beartype decorator call metadata.')
     assert isinstance(func_is_nested, bool), (
         f'{repr(func_is_nested)} not boolean.')
-    # print(f'Making forward scope for {repr(decor_meta.func)}...')
+    # print(f'Making forward scope for {repr(decor_curr.func)}...')
 
     # ....................{ PREAMBLE                       }....................
     # If the forward scope of the decorated callable has already been decided,
     # immediately return this scope as is.
-    if decor_meta.func_scope_forward is not None:
-        return decor_meta.func_scope_forward
+    if decor_curr.func_scope_forward is not None:
+        return decor_curr.func_scope_forward
     # Else, this forward scope has yet to be decided.
     #
     # If this decorator call metadata is minimal (i.e.,
-    # "BeartypeCallDecorMinimalMeta" object) rather maximal (i.e.,
-    # "BeartypeCallDecorMeta" object), this forward scope should have already
+    # "BeartypeCallDecorMinimalData" object) rather maximal (i.e.,
+    # "BeartypeCallDecorData" object), this forward scope should have already
     # been decided by (in order):
     # * Repeated calls to the
-    #   BeartypeCallDecorMeta.resolve_hint_pep484_ref_str() method of the
+    #   BeartypeCallDecorData.resolve_hint_pep484_ref_str() method of the
     #   original maximal metadata.
-    # * A call to the BeartypeCallDecorMeta.minify() method, propagating the
+    # * A call to the BeartypeCallDecorData.minify() method, propagating the
     #   forward scope from that maximal to this minimal metadata.
     #
     # But this forward scope is still undecided! Ergo, beartype failed to follow
@@ -222,25 +222,25 @@ def make_scope_forward_decor_meta(
     # Ergo, this forward scope *CANNOT* be reconstructed.
     #
     # Note that this should *NEVER* occur. Naturally, this just occurred.
-    elif decor_meta.__class__ is BeartypeCallDecorMinimalMeta:  # pragma: no cover
+    elif decor_curr.__class__ is BeartypeCallDecorMinimalData:  # pragma: no cover
         # Raise this exception.
         raise exception_cls(
             f'{exception_prefix}'
             f'PEP 484 forward reference type hint "{hint}" unresolvable, as '
-            f'callable {repr(decor_meta.func)} forward reference scope not '
+            f'callable {repr(decor_curr.func)} forward reference scope not '
             f'propagated onto wrapper function at decoration time. '
             f'Beartype has failed us all... but kinda mostly just you.'
         )
     # Else, this decorator call metadata is maximal (i.e.,
-    # "BeartypeCallDecorMeta" object) rather than minimal (i.e.,
-    # "BeartypeCallDecorMinimalMeta" object). In this case, this forward scope
+    # "BeartypeCallDecorData" object) rather than minimal (i.e.,
+    # "BeartypeCallDecorMinimalData" object). In this case, this forward scope
     # is decidable as documented above. We do so now.
 
     # ....................{ LOCALS                         }....................
     # Decorated callable and metadata associated with that callable, localized
     # to improve both readability and negligible efficiency when accessed below.
-    func = decor_meta.func
-    cls_stack = decor_meta.cls_stack
+    func = decor_curr.func
+    cls_stack = decor_curr.cls_stack
 
     # Stack frame on the current call stack embodying the parent callable or
     # type locally declaring the decorated callable if any *OR* "None",
@@ -256,7 +256,7 @@ def make_scope_forward_decor_meta(
     # Fully-qualified name of the module declaring the decorated callable if
     # that callable defines the "__module__" dunder attribute.
     #
-    # Note the parent resolve_hint_pep484_ref_str_decor_meta() call already
+    # Note the parent resolve_hint_pep484_ref_str_decor_curr() call already
     # guarantees this attribute to be non-"None" and thus raise *NO* exception.
     func_module_name = get_object_module_name(func)
 
@@ -272,7 +272,7 @@ def make_scope_forward_decor_meta(
 
     # ..................{ SCOPE ~ locals                     }..................
     #FIXME: Shift this entire "if: ... else: ..." construct into a new private
-    #_get_decor_meta_scope_forward_locals() getter for maintainability, please.
+    #_get_decor_curr_scope_forward_locals() getter for maintainability, please.
     # If the decorated callable is nested (rather than global) and thus *MAY*
     # have a non-empty local nested scope...
     if func_is_nested:
@@ -328,7 +328,7 @@ def make_scope_forward_decor_meta(
                 # Note that, for safety, we currently avoid ignoring additional
                 # frames that we could technically ignore. These include:
                 # * The call to the parent
-                #   beartype._check.cls.call.callmetadecor.BeartypeCallDecorMeta.reinit()
+                #   beartype._check.cls.call.callmetadecor.BeartypeCallDecorData.reinit()
                 #   method.
                 # * The call to the parent @beartype.beartype() decorator.
                 #
@@ -493,7 +493,7 @@ def make_scope_forward_decor_meta(
     #     def muh_func(muh_arg: 'Dict[str, MuhGeneric[int]]') -> None: ...
     #
     #     class MuhGeneric(Generic[T]): ...
-    func_scope = decor_meta.func_scope_forward = BeartypeForwardScope(
+    func_scope = decor_curr.func_scope_forward = BeartypeForwardScope(
         scope_name=func_module_name,
         func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
         exception_prefix=exception_prefix,
@@ -548,7 +548,7 @@ def make_scope_forward_decor_meta(
     # forward scope with each local attribute of the same name. Locals *ALWAYS*
     # assume precedence over globals.
     func_scope.update(func_locals)
-    # print(f'Forward scope: {decor_metafunc_wrappee_wrappee_scope_forward}')
+    # print(f'Forward scope: {decor_currfunc_wrappee_wrappee_scope_forward}')
 
     # If the decorated callable resides in one or more PEP 695-compliant type
     # parameter scopes, composite these scopes into this forward scope *AFTER*

@@ -12,62 +12,56 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Descriptor-typed dataclass fields. This is currently known to be broken
-#and thus a hard prerequisite to globally enabling "is_check_pep557". See also
-#this currently open feature request:
-#    https://github.com/beartype/beartype/issues/641
-#
-#Note that the solution will almost certainly resemble something like the
-#following:
-#* Vaguely implement reduce_hint_pep557_field_descriptor() as follows:
-#      def reduce_hint_pep557_field_descriptor(hint: type) -> Hint:
-#          descriptor_get = hint.__get__
-#          descriptor_get_annotations = get_hintable_pep649749_annotations(
-#              hintable=descriptor_get)
-#
-#          if descriptor_get_annotations:
-#              descriptor_get_return_hint = descriptor_get_annotations.get(
-#                  ARG_NAME_RETURN)
-#              if descriptor_get_return_hint:
-#                  return descriptor_get_return_hint
-#
-#          # Better than nuthin'. Descriptor-typed fields are *NOT* actually
-#          # valid runtime type hints, because the values of the fields they
-#          # annotate are *NOT* themselves instances of these descriptors but
-#          # rather arbitrary objects returned by the __get__() methods bound to
-#          # those descriptors. In the absence of any return type hints annotating
-#          # those methods, silently ignoring unannotated descriptor-typed fields
-#          # is @beartype's only sane recourse.
-#          return HINT_SANE_IGNORABLE
-#
-#*SHOULD WORK*. Looks sensible to me, anyway. *shrug*
-
-# ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeCallHintPep557FieldViolation
-from beartype._conf.confmain import BeartypeConf
-from beartype._data.typing.datatypingport import (
-    DictStrToHint,
-    Hint,
-)
-from beartype._data.hint.sign.datahintsignset import (
-    HINT_SIGNS_PEP557_DATACLASS_NONFIELDS)
-from beartype._data.kind.datakindiota import SENTINEL
-from beartype._util.cls.pep.clspep557 import (
-    die_unless_type_pep557_dataclass,
-    is_pep557_dataclass_frozen,
-)
-from beartype._util.cls.utilclsset import set_type_attr
-from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
-    get_hintable_pep649749_annotations)
-from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
-from beartype._util.utilobjget import get_object_type_name
-
-# ....................{ DECORATORS                         }....................
 #FIXME: Unit test against all possible dataclass edge cases, including:
 #* "typing.Self". We're *NOT* passing "cls_stack" to either the is_bearable() or
 #  die_if_unbearable() functions, because those functions currently fail to
 #  accept an optional "cls_stack" parameter. We should probably generalize both
-#  of those functions to accept that parameter, huh? *sigh*
+#  of those functions to accept that parameter, huh? Both already accept
+#  optional undocumented "exception_prefix" parameters, for example. Yet another
+#  optional undocumented parameter mostly only of interest to @beartype is no
+#  significant hardship. That said:
+#  * Each additional optional parameter accepted by a callable probably *DOES*
+#    slow that callable down. Test this. If performance degrades as the number
+#    of optional parameters increases, we should instead:
+#    * Define a new "beartype._check.checktest" submodule. In this submodule:
+#      * Define a new pair of lower-level is_obj_satisfies_hint() and
+#        die_unless_obj_satisfies_hint() functions, initially just copy-pasted
+#        from the existing is_bearable() and die_if_unbearable() functions.
+#      * Grep the codebase for everywhere we currently pass that optional
+#        "exception_prefix" parameter to either is_bearable() or
+#        die_if_unbearable().
+#      * Refactor each such call to instead call is_obj_satisfies_hint() or
+#        die_unless_obj_satisfies_hint().
+#      * Remove that optional "exception_prefix" parameter from both
+#        is_bearable() and die_if_unbearable(). *NOTE THAT THIS IS SOMEWHAT
+#        NON-TRIVIAL*. The exact details elude me at the moment, but we'll
+#        basically need to do something resembling:
+#        * Rename the existing make_func_checker() factory in the existing
+#          "beartype._check.checkmake" submodule to make_func_checker_bearable()
+#          for disambiguity.
+#        * Define a new make_func_checker_satisfies() factory in that submodule,
+#          initially just copy-pasted from make_func_checker_bearable().
+#        * Remove *ALL* reference to "exception_prefix" from
+#          make_func_checker_bearable() (while of course preserving those same
+#          references in make_func_checker_satisfies()).
+#        * Restore DRY by refactoring both make_func_checker_bearable() and
+#          make_func_checker_satisfies() to defer to a new lower-level private
+#          _make_func_checker() factory (or something something).
+#        * At this point, the "checkmake" submodule has almost certainly
+#          exploded into 10,000,000 lines of madness. Consequently:
+#          * Define a new "beartype._check.make" subpackage.
+#          * Rename "beartype._check.checkmake" to
+#            "beartype._check.make.checkmakefunc".
+#          * Split up "beartype._check.make.checkmakefunc" into appropriate new
+#            submodules. *shrugs nonchalantly*
+#      * Add a new optional "cls_stack" parameter to both
+#        is_obj_satisfies_hint() and die_unless_obj_satisfies_hint().
+#
+#  *INDEED*. Performance almost certainly degrades as the number of optional
+#  parameters increases, based on the implementation of our
+#  "beartype._check.checkmake.make_func_checker() factory alone. Why? Because
+#  the tuple size of "CACHE_KEY" increases. Ergo, we should have *ALREADY* done
+#  this. So much sighing can be distantly heard.
 #* Dataclass subclasses. Does each dataclass subclass in a hierarchy have its
 #  own unique "__annotations__" dunder dictionary *OR* does each such subclass
 #  composite the "__annotations__" of both itself and its superclasses? Probably
@@ -93,6 +87,43 @@ from beartype._util.utilobjget import get_object_type_name
 #  stringified type hints against each such superclass "__annotations__" as
 #  well. Jeez. This sure got ugly fast, huh? So much sighing! *sigh sigh*
 
+#FIXME: [SPEED] One possible blocker remains to globally enabling
+#"is_pep557_fields=True": efficiency. Profile whether enabling
+#"is_pep557_fields=True" reduces efficiency when setting arbitrary dataclass
+#fields and, if so, by how much. A negligible amount of degradation is, of
+#course, acceptable. It's negligible, after all! If the degradation is
+#meaningfully measurable, however, then our current approach is a no-go. We
+#almost don't need to profile this, do we? It's almost certainly a speed drag.
+#
+#The obvious solution (which is also the non-trivial solution) is to replace our
+#currently unoptimized one-size-fits-all check_pep557_dataclass_field() closure
+#defined below with *A DYNAMICALLY GENERATED __SETATTR__ FUNCTION SPECIFIC TO
+#THE CURRENTLY DECORATED DATACLASS AND THE TYPE HINTS ANNOTATING THE FIELDS OF
+#THAT DATACLASS.* I'm shouting in all caps because it's important. It's also
+#nigh impossible, probably. To be sure, it would be a veritable ton of work. To
+#be sure, that work would also be fun. And fun is entirely why we are here.
+
+# ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeCallHintPep557FieldViolation
+from beartype._conf.confmain import BeartypeConf
+from beartype._data.typing.datatypingport import (
+    DictStrToHint,
+    Hint,
+)
+from beartype._data.hint.sign.datahintsignset import (
+    HINT_SIGNS_PEP557_DATACLASS_NONFIELDS)
+from beartype._data.kind.datakindiota import SENTINEL
+from beartype._util.cls.pep.clspep557 import (
+    die_unless_type_pep557_dataclass,
+    is_pep557_dataclass_frozen,
+)
+from beartype._util.cls.utilclsset import set_type_attr
+from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
+    get_hintable_pep649749_annotations)
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+from beartype._util.utilobjget import get_object_type_name
+
+# ....................{ DECORATORS                         }....................
 def beartype_pep557_dataclass(
     # Mandatory parameters.
     #
@@ -266,38 +297,40 @@ def beartype_pep557_dataclass(
         #issues arise. Why? Because the sanify_hint_root_func() function is
         #inappropriate here. Instead:
         #* Define a new sanify_hint_root_type() getter. This could prove
-        #  non-trivial. sanify_hint_root_func() accepts a "decor_meta"
+        #  non-trivial. sanify_hint_root_func() accepts a "decor_curr"
         #  parameter, which currently only applies to decorated *CALLABLES*
-        #  rather than *TYPES*. We probably want to generalize "decor_meta" to
+        #  rather than *TYPES*. We probably want to generalize "decor_curr" to
         #  support both... maybe? Maybe not? To do this properly, we probably
         #  first want to:
-        #  * Create a new "decor_meta" type hierarchy resembling:
+        #  * Create a new "decor_curr" type hierarchy resembling:
         #        class BeartypeDecorMetaABC(metaclass=ABCMeta): ...
         #        class BeartypeDecorMetaFunc(BeartypeDecorMetaABC): ...
         #        class BeartypeDecorMetaType(BeartypeDecorMetaABC): ...
-        #  * Refactor references to "BeartypeCallDecorMeta" to either
+        #  * Refactor references to "BeartypeCallDecorData" to either
         #    "BeartypeDecorMetaABC" *OR* ""BeartypeDecorMetaFunc" depending on
         #    context. Most probably require the latter. Any that don't should
         #    simply reference "BeartypeDecorMetaABC" for generality.
-        #  * Remove all references to "BeartypeCallDecorMeta".
-        #FIXME: Consider:
-        #* If sanifying this hint so reduced this hint to "Any", remove this
-        #  hint from this dictionary entirely. Doing so speeds up closure logic
-        #  below, which is critical.
-        #* Actually... this could be a problematic approach. Why?
-        #  "hint_or_sane", of course. is_bearable() and die_if_unbearable() only
-        #  accept actual type hints. But "hint_or_sane" could be a
-        #  @beartype-specific type hint dataclass! So... that doesn't quite
-        #  work. I suppose what we could do is an optimization resembling:
-        #  * If sanifying this hint produced a different type hint than the
-        #    original type hint *AND* this new type hint is *NOT* simply a
-        #    "HintSane" object, replace this old hint with this new hint
-        #    in the "field_name_to_hint" dictionary.
-        #  * Else, preserve this existing hint in this dictionary as is. If a
-        #    "HintSane" object was produced, we'll just have to throw
-        #    that away for the moment. Alternately, we could *TRY* to generalize
-        #    is_bearable() and die_if_unbearable() to accept these objects.
-        #    But... probably not worth it for the moment. It is what it is.
+        #  * Remove all references to "BeartypeCallDecorData".
+        #FIXME: If sanifying this hint so reduced this hint to
+        #"HINT_SANE_IGNORABLE", remove this hint from this dictionary entirely.
+        #Doing so speeds up closure logic below, which is critical. Obviously,
+        #we'll also need to:
+        #* Actually test this reduction by defining a new dataclass field in our
+        #  test suite annotated by an ignorable type hint (e.g., "object").
+        #FIXME: Actually... this could be a problematic approach. Why?
+        #"hint_or_sane", of course. is_bearable() and die_if_unbearable() only
+        #accept actual type hints. But "hint_or_sane" could be a
+        #@beartype-specific "HintSane" dataclass object! So... that doesn't
+        #quite work. I suppose what we could do is an optimization resembling:
+        #* If sanifying this hint produced a different type hint than the
+        #  original type hint *AND* this new type hint is *NOT* simply a
+        #  "HintSane" object, replace this old hint with this new hint
+        #  in the "field_name_to_hint" dictionary.
+        #* Else, preserve this existing hint in this dictionary as is. If a
+        #  "HintSane" object was produced, we'll just have to throw
+        #  that away for the moment. Alternately, we could *TRY* to generalize
+        #  is_bearable() and die_if_unbearable() to accept these objects.
+        #  But... probably not worth it for the moment. It is what it is.
         #FIXME: Actually... we can do something even better! There's no
         #particular reason we have to call the public-facing is_bearable() and
         #die_if_unbearable() functions. Instead:
@@ -308,6 +341,13 @@ def beartype_pep557_dataclass(
         #  In theory, this shouldn't be *TOO* hard.
         #* Call these private- rather than public-facing variants below.
         #  Voila! Problem transparently resolved.
+        #
+        #Right. Obviously. We suggested is_obj_satisfies_hint() and
+        #die_unless_obj_satisfies_hint() functions above. Ergo, these should
+        #instead be called is_obj_satisfies_hint_sane() and
+        #die_unless_obj_satisfies_hint_sane(). Indeed, the "HintSane" dataclass
+        #itself could just define a pair of new is_satisfied() and
+        #die_unless_satisfied() methods. Probably the best idea. *shrug*
 
         # Add this field back to this sanified dictionary.
         field_name_to_hint[field_name] = field_hint
@@ -350,10 +390,11 @@ def beartype_pep557_dataclass(
                 #_die_if_arg_default_unbearable() validator, which we will
                 #almost certainly re-enable at some point. Instead:
                 #* Just add a new optional "exception_cls" parameter to the
-                #  die_if_unbearable() validator called below. If necessary, the
-                #  initial implementation of this parameter could just do what
-                #  we currently do here. Not great, but at least that logic
-                #  would be centralized away from prying eyes in the same API.
+                #  die_unless_obj_satisfies_hint() raiser called below. If
+                #  necessary, the initial implementation of this parameter could
+                #  just do what we currently do here. Not great, but at least
+                #  that logic would be centralized away from prying eyes in the
+                #  same API.
 
                 # Modifiable keyword dictionary encapsulating this beartype
                 # configuration.

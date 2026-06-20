@@ -76,7 +76,7 @@ from beartype.roar._roarexc import (
 )
 from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
 from beartype._check.cls.call.callmetadecormin import (
-    BeartypeCallDecorMinimalMeta)
+    BeartypeCallDecorMinimalData)
 from beartype._check.cls.hint.data.hintdataerror import HintDataError
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.convert.convmain import sanify_hint_any
@@ -108,7 +108,7 @@ from typing import Optional
 # ....................{ GETTERS ~ exception                }....................
 def get_func_pith_violation(
     # Mandatory parameters.
-    call_curr: BeartypeCallDecorMinimalMeta,
+    call_curr: BeartypeCallDecorMinimalData,
     pith_name: str,
     pith_value: object,
 
@@ -123,7 +123,7 @@ def get_func_pith_violation(
 
     Parameters
     ----------
-    call_curr : BeartypeCallDecorMinimalMeta
+    call_curr : BeartypeCallDecorMinimalData
         **Beartype type-check call metadata** (i.e., object encapsulating *all*
         metadata required by the current call to the wrapper function
         type-checking a :func:`beartype.beartype`-decorated callable).
@@ -163,7 +163,7 @@ def get_func_pith_violation(
     :func:`.get_hint_object_violation`
         Further details.
     '''
-    assert isinstance(call_curr, BeartypeCallDecorMinimalMeta), (
+    assert isinstance(call_curr, BeartypeCallDecorMinimalData), (
         f'{repr(call_curr)} not type-checking call metadata.')
     assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
 

@@ -44,7 +44,7 @@ ARG_NAME_CALL_META = f'{NAME_PREFIX}call_curr'
 '''
 Name of the **private beartype type-checking call metadata** (i.e.,
 :mod:`beartype`-specific hidden parameter whose default value is the
-:class:`beartype._check.cls.call.callmetadecormin.BeartypeCallDecorMinimalMeta` dataclass instance
+:class:`beartype._check.cls.call.callmetadecormin.BeartypeCallDecorMinimalData` dataclass instance
 encapsulating *all* metadata required by each call to the wrapper function
 type-checking a :func:`beartype.beartype`-decorated callable).
 '''

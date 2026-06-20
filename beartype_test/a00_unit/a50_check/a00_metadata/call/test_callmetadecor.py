@@ -20,7 +20,7 @@ This submodule unit tests the
 def test_callmetadecor() -> None:
     '''
     Test the
-    :func:`beartype._check.cls.call.callmetadecor.BeartypeCallDecorMeta`
+    :func:`beartype._check.cls.call.callmetadecor.BeartypeCallDecorData`
     dataclass.
     '''
 
@@ -29,13 +29,13 @@ def test_callmetadecor() -> None:
     from beartype import BeartypeConf
     from beartype.roar import BeartypeDecorWrappeeException
     from beartype._check.cls.call.callmetadecor import (
-        BeartypeCallDecorMeta)
+        BeartypeCallDecorData)
     from beartype_test.a00_unit.data.data_type import function_lambda
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
     # Arbitrary beartype decorator call metadata.
-    bear_data = BeartypeCallDecorMeta()
+    bear_data = BeartypeCallDecorData()
 
     # ....................{ FAIL                           }....................
     # Assert this metadata to be unhashable.

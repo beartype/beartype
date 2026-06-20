@@ -28,7 +28,7 @@ def test_make_check_expr() -> None:
     from beartype._check.convert.convmain import sanify_hint_any
     from beartype._check.cls.hint.hintsane import HintSane
     from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
-    from beartype._check.cls.call.callmetadecor import new_decor_meta
+    from beartype._check.cls.call.callmetadecor import new_decor_curr
     from beartype._check.cls.call.callmetaexternal import (
         BEARTYPE_CALL_EXTERNAL_META)
     from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
@@ -148,12 +148,12 @@ def test_make_check_expr() -> None:
         # With beartype decorator call metadata encapsulating the implicit
         # decoration of an arbitrary method of an arbitrary type, itself
         # decorated explicitly via a type stack.
-        with new_decor_meta(
+        with new_decor_curr(
             cls_stack=(Class,),
             conf=BEARTYPE_CONF_DEFAULT,
             func=Class.instance_method,
-        ) as decor_meta_pep673:
+        ) as decor_curr_pep673:
             # Assert that the make_check_expr() code factory avoids memoizing
             # PEP 673-compliant self root hints.
             assert_hint_check_expr_is_uncached(
-                call_curr=decor_meta_pep673, hint=Self)
+                call_curr=decor_curr_pep673, hint=Self)

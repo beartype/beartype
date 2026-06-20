@@ -33,7 +33,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     from beartype.roar import BeartypePlugInstancecheckStrException
     from beartype._check.error.errmain import get_func_pith_violation
     from beartype._check.cls.call.callmetadecormin import (
-        minify_decor_meta_kwargs)
+        minify_decor_curr_kwargs)
     from beartype_test._util.error.pyterrraise import raises_uncached
     from typing import Any
 
@@ -104,7 +104,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
 
     # Keyword arguments to be unconditionally passed to *ALL* calls of the
     # get_func_pith_violation() getter below.
-    kwargs = dict(call_curr=minify_decor_meta_kwargs(
+    kwargs = dict(call_curr=minify_decor_curr_kwargs(
         func=of_yesternight, conf=BeartypeConf()))
 
     # Arbitrary non-empty string.

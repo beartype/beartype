@@ -17,7 +17,7 @@ from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._check.cls.call.callmetadecormin import (
-    BeartypeCallDecorMinimalMeta)
+    BeartypeCallDecorMinimalData)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_NORMAL_RETURN_CHECKED,
@@ -71,7 +71,7 @@ from typing import (
 )
 
 # ....................{ SUBCLASSES                         }....................
-class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
+class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
     '''
     **Beartype decorator call metadata** (i.e., dataclass encapsulating *all*
     metadata for the callable currently being decorated by the
@@ -424,7 +424,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # If this configuration is *NOT* a configuration, raise an exception.
         elif not isinstance(conf, BeartypeConf):
             raise BeartypeDecorWrappeeException(
-                f'BeartypeCallDecorMeta.reinit() method "conf" parameter '
+                f'BeartypeCallDecorData.reinit() method "conf" parameter '
                 f'{repr(conf)} not beartype configuration.'
             )
         # Else, this configuration is a configuration.
@@ -433,7 +433,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # exception.
         elif not isinstance(cls_stack, NoneTypeOr[tuple]):
             raise BeartypeDecorWrappeeException(
-                f'BeartypeCallDecorMeta.reinit() method "cls_stack" parameter '
+                f'BeartypeCallDecorData.reinit() method "cls_stack" parameter '
                 f'{repr(cls_stack)} neither tuple nor "None".'
             )
         # Else, this class stack is either a tuple *OR* "None".
@@ -445,7 +445,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
                 # If this item is *NOT* a type, raise an exception.
                 if not isinstance(cls_stack_item, type):
                     raise BeartypeDecorWrappeeException(
-                        f'BeartypeCallDecorMeta.reinit() method "cls_stack" item '
+                        f'BeartypeCallDecorData.reinit() method "cls_stack" item '
                         f'{repr(cls_stack_item)} not type.'
                     )
                 # Else, this item is a type.
@@ -480,8 +480,8 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # Note that this "func" instance variable is intentionally aliased to
         # this "func_wrappee_wrappee" rather than the passed "func_wrappee".
         # Why? Specifically, because the
-        # resolve_hint_pep484_ref_str_decor_meta() function accepting a
-        # general-purpose "decor_meta: BeartypeCallDecorMinimalMeta" parameter
+        # resolve_hint_pep484_ref_str_decor_curr() function accepting a
+        # general-purpose "decor_curr: BeartypeCallDecorMinimalData" parameter
         # *MUST* dynamically resolve type hints against the original local and
         # global scope of the original callable decorated by @beartype (rather
         # than a differing local and global scope of a differing callable
@@ -552,7 +552,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # function onto the pseudo-callable "cheating_object" object.
         #
         # In this case, the caller would have called this method as:
-        #     decor_meta.reinit(
+        #     decor_curr.reinit(
         #         func=cheating_object.__call__, wrapper=cheating_object)
         #
         # Note that "func" (i.e., the callable to be type-checked) is only a
@@ -808,7 +808,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         # passed name, raise an exception.
         if pith_name not in self.func_annotations:
             raise BeartypeDecorWrappeeException(
-                f'{prefix_decor_meta_callable_pith(decor_meta=self, pith_name=pith_name)}'
+                f'{prefix_decor_curr_callable_pith(decor_curr=self, pith_name=pith_name)}'
                 f'unrecognized.'
             )
         # Else, the decorated callable accepts this parameter or return.
@@ -821,7 +821,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
         self.func_annotations[pith_name] = hint
 
     # ..................{ MINIFIERS                          }..................
-    def minify(self) -> BeartypeCallDecorMinimalMeta:
+    def minify(self) -> BeartypeCallDecorMinimalData:
         '''
         **Beartype decorator call minimal metadata** (i.e., dataclass
         encapsulating the minimal metadata required to type-check the callable
@@ -831,7 +831,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
 
         Returns
         -------
-        BeartypeCallDecorMinimalMeta
+        BeartypeCallDecorMinimalData
             Minimal metadata minified from this maximal metadata.
         '''
 
@@ -857,7 +857,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
 
         # Create and return a new instance of this minimal dataclass minified
         # from the passed maximal dataclass.
-        return BeartypeCallDecorMinimalMeta(
+        return BeartypeCallDecorMinimalData(
             conf=self.conf,
             cls_stack=self.cls_stack,
             func=self.func_wrappee,
@@ -884,7 +884,7 @@ class BeartypeCallDecorMeta(BeartypeCallDecorMinimalMeta):
 
 # ....................{ CONTEXTS                           }....................
 @contextmanager
-def new_decor_meta(**kwargs) -> Iterator[BeartypeCallDecorMeta]:
+def new_decor_curr(**kwargs) -> Iterator[BeartypeCallDecorData]:
     '''
     :func:`contextlib.contextmanager`-based context manager encapsulating the
     temporary instantiation (and subsequent finalization) of **beartype call
@@ -898,29 +898,29 @@ def new_decor_meta(**kwargs) -> Iterator[BeartypeCallDecorMeta]:
     Parameters
     ----------
     All keyword parameters are passed as is to the
-    :meth:`.BeartypeCallDecorMeta.reinit` method.
+    :meth:`.BeartypeCallDecorData.reinit` method.
 
     Yields
     ------
-    BeartypeCallDecorMeta
+    BeartypeCallDecorData
         Beartype call metadata describing this callable.
     '''
 
     # Beartype call metadata initialized with these parameters.
-    decor_meta = make_decor_meta(**kwargs)
+    decor_curr = make_decor_curr(**kwargs)
 
     # Attempt to yield this metadata to the caller, typically accessible as:
-    #     with new_decor_meta(...) as decor_meta:
+    #     with new_decor_curr(...) as decor_curr:
     try:
-        yield decor_meta
+        yield decor_curr
     # Regardless of whether the caller raises an exception from within the body
     # of that "with" block, deinitialize this metadata.
     finally:
-        cull_decor_meta(decor_meta)
+        cull_decor_curr(decor_curr)
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
-def make_decor_meta(**kwargs) -> BeartypeCallDecorMeta:
+def make_decor_curr(**kwargs) -> BeartypeCallDecorData:
     '''
     Deinitialize the passed **beartype decorator call metadata** (i.e.,
     dataclass encapsulating *all* metadata for the passed callable currently
@@ -929,10 +929,10 @@ def make_decor_meta(**kwargs) -> BeartypeCallDecorMeta:
     Caveats
     -------
     **This higher-level factory function should always be called in lieu of
-    instantiating the** :class:`.BeartypeCallDecorMeta` **class directly.** Why?
+    instantiating the** :class:`.BeartypeCallDecorData` **class directly.** Why?
     Brute-force efficiency. This factory efficiently reuses previously
-    instantiated :class:`.BeartypeCallDecorMeta` objects rather than
-    inefficiently instantiating new :class:`.BeartypeCallDecorMeta` objects.
+    instantiated :class:`.BeartypeCallDecorData` objects rather than
+    inefficiently instantiating new :class:`.BeartypeCallDecorData` objects.
 
     **The caller must pass the metadata returned by this factory back to the**
     :func:`beartype._util.cache.pool.utilcachepoolinstance.release_instance`
@@ -944,26 +944,26 @@ def make_decor_meta(**kwargs) -> BeartypeCallDecorMeta:
     Parameters
     ----------
     All keyword parameters are passed as is to the
-    :meth:`.BeartypeCallDecorMeta.reinit` method.
+    :meth:`.BeartypeCallDecorData.reinit` method.
 
     Returns
     -------
-    BeartypeCallDecorMeta
+    BeartypeCallDecorData
         Beartype decorator call metadata describing this callable.
     '''
 
     # Acquire previously cached beartype call metadata from its object pool.
-    decor_meta = acquire_instance(BeartypeCallDecorMeta)
+    decor_curr = acquire_instance(BeartypeCallDecorData)
 
     # Reinitialize this metadata with the passed keyword parameters.
-    decor_meta.reinit(**kwargs)
+    decor_curr.reinit(**kwargs)
 
     # Return this metadata.
-    return decor_meta
+    return decor_curr
 
 
 #FIXME: Unit test us up, please.
-def cull_decor_meta(decor_meta: BeartypeCallDecorMeta) -> None:
+def cull_decor_curr(decor_curr: BeartypeCallDecorData) -> None:
     '''
     Deinitialize the passed **beartype decorator call metadata** (i.e.,
     dataclass encapsulating *all* metadata for the callable currently being
@@ -971,27 +971,27 @@ def cull_decor_meta(decor_meta: BeartypeCallDecorMeta) -> None:
 
     Parameters
     ----------
-    decor_meta : BeartypeCallDecorMeta
+    decor_curr : BeartypeCallDecorData
         Beartype decorator call metadata to be deinitialized.
     '''
-    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
-        f'{repr(decor_meta)} not beartype decorator call metadata.')
+    assert isinstance(decor_curr, BeartypeCallDecorData), (
+        f'{repr(decor_curr)} not beartype decorator call metadata.')
 
     # If the type hint dictionary associated with the decorated callable is
     # dirty (i.e., changed from the original "__annotations__" dunder dictionary
     # annotating that callable), register these changes in a manner compliant
     # with both PEP 649 and Python >= 3.14 *BEFORE* nullifying these type hints.
-    decor_meta.set_func_annotations_if_dirty()
+    decor_curr.set_func_annotations_if_dirty()
 
     # Deinitialize this beartype call metadata.
-    decor_meta.deinit()
+    decor_curr.deinit()
 
     # Release this beartype call metadata back to its object pool.
-    release_instance(decor_meta)
+    release_instance(decor_curr)
 
 # ....................{ PREFIXERS                          }....................
-def prefix_decor_meta_callable_pith(
-    decor_meta: BeartypeCallDecorMeta, pith_name: str) -> str:
+def prefix_decor_curr_callable_pith(
+    decor_curr: BeartypeCallDecorData, pith_name: str) -> str:
     '''
     Human-readable label describing either the parameter with the passed name
     *or* return value if this name is ``"return"`` of the currently decorated
@@ -1015,19 +1015,19 @@ def prefix_decor_meta_callable_pith(
         Human-readable label describing either the name of this parameter *or*
         this return value.
     '''
-    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
-        f'{repr(decor_meta)} not beartype decorator call metadata.')
+    assert isinstance(decor_curr, BeartypeCallDecorData), (
+        f'{repr(decor_curr)} not beartype decorator call metadata.')
 
     # Let there be one-liner!
     return prefix_callable_pith(
-        func=decor_meta.func_wrappee,
+        func=decor_curr.func_wrappee,
         pith_name=pith_name,
-        is_color=decor_meta.conf.is_color,
+        is_color=decor_curr.conf.is_color,
     )
 
 
-def prefix_decor_meta_callable_arg_name(
-    decor_meta: BeartypeCallDecorMeta, arg_name: str) -> str:
+def prefix_decor_curr_callable_arg_name(
+    decor_curr: BeartypeCallDecorData, arg_name: str) -> str:
     '''
     Human-readable label describing the parameter with the passed name of the
     currently decorated callable encapsulated by the passed :mod:`beartype`
@@ -1035,7 +1035,7 @@ def prefix_decor_meta_callable_arg_name(
 
     Parameters
     ----------
-    decor_meta : BeartypeCallDecorMeta
+    decor_curr : BeartypeCallDecorData
         Beartype decorator call metadata encapsulating the currently decorated
         callable to be labelled.
     arg_name : str
@@ -1046,18 +1046,18 @@ def prefix_decor_meta_callable_arg_name(
     str
         Human-readable label describing that parameter's name.
     '''
-    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
-        f'{repr(decor_meta)} not beartype decorator call metadata.')
+    assert isinstance(decor_curr, BeartypeCallDecorData), (
+        f'{repr(decor_curr)} not beartype decorator call metadata.')
 
     # Let there be one-liner!
     return prefix_callable_arg_name(
-        func=decor_meta.func_wrappee,
+        func=decor_curr.func_wrappee,
         arg_name=arg_name,
-        is_color=decor_meta.conf.is_color,
+        is_color=decor_curr.conf.is_color,
     )
 
 
-def prefix_decor_meta_callable_return(decor_meta: BeartypeCallDecorMeta) -> str:
+def prefix_decor_curr_callable_return(decor_curr: BeartypeCallDecorData) -> str:
     '''
     Human-readable label describing the return of the currently decorated
     callable encapsulated by the passed :mod:`beartype` decorator call metadata,
@@ -1065,7 +1065,7 @@ def prefix_decor_meta_callable_return(decor_meta: BeartypeCallDecorMeta) -> str:
 
     Parameters
     ----------
-    decor_meta : BeartypeCallDecorMeta
+    decor_curr : BeartypeCallDecorData
         Beartype decorator call metadata encapsulating the currently decorated
         callable to be labelled.
 
@@ -1074,9 +1074,9 @@ def prefix_decor_meta_callable_return(decor_meta: BeartypeCallDecorMeta) -> str:
     str
         Human-readable label describing this return.
     '''
-    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
-        f'{repr(decor_meta)} not beartype decorator call metadata.')
+    assert isinstance(decor_curr, BeartypeCallDecorData), (
+        f'{repr(decor_curr)} not beartype decorator call metadata.')
 
     # I came. I saw. I one-linered.
     return prefix_callable_return(
-        func=decor_meta.func_wrappee, is_color=decor_meta.conf.is_color)
+        func=decor_curr.func_wrappee, is_color=decor_curr.conf.is_color)

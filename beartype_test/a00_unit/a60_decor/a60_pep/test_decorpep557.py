@@ -35,6 +35,8 @@ def test_decor_pep557() -> None:
         BeartypeCallHintParamViolation,
     )
     from beartype_test._util.error.pyterrraise import raises_uncached
+    from beartype_test.a00_unit.data.pep.data_pep252 import (
+        DataDescriptorStrSelfSwapCase)
     from dataclasses import (
         FrozenInstanceError,
         InitVar,
@@ -95,7 +97,7 @@ def test_decor_pep557() -> None:
             :meth:`__init__` method synthesized for this dataclass.
             '''
 
-
+            # ..................{ OPTIONAL ~ pep : 484 : ref }..................
             glowed_through: Optional['TheMufflingDark'] = None
             '''
             Optional field annotated by a :pep:`484`-compliant stringified
@@ -114,6 +116,44 @@ def test_decor_pep557() -> None:
             external type, passed by the :func:`.dataclass` decorator to the
             implicit :meth:`__init__` method synthesized for this dataclass.
             '''
+
+            # ..................{ OPTIONAL ~ non-pep         }..................
+            #FIXME: Uncomment once this actually works. This is currently
+            #failing because we obviously forgot to actually sanify type hints.
+            #Which... is insane, honestly. Srsly! *sigh*
+            #FIXME: Also, this currently works when @beartype is *NOT*
+            #configured by "is_pep557_fields=True". Ergo, we now want to:
+            #* Generalize this test with yet another exterior "for" loop over
+            #  all relevant beartype configurations: e.g.,
+            #    bear_conf_pep557 = BeartypeConf(is_pep557_fields=True)
+            #    bear_confs = (BeartypeConf(), bear_conf_pep557,)
+            #
+            #    for bear_conf in bear_confs:
+            #        beartype_decor = beartype(conf=bear_conf)
+            #* Replace usage of @beartype_pep557 with @beartype_decor.
+            #* Excise up @beartype_pep557.
+            #* Generalize logic below to *ONLY* test field modification when
+            #  "bear_conf is bear_conf_pep557". Trivial. Just gotta do it! \o/
+
+            # to_me_his_arms: DataDescriptorStrSelfSwapCase = (
+            #     DataDescriptorStrSelfSwapCase(text_default=(
+            #         'To me his arms were spread, to me his voice')))
+            # '''
+            # Optional descriptor-typed field annotated by a PEP-noncompliant
+            # data descriptor and assigned an instance of the same descriptor,
+            # itself initialized with a suitable default value for this field
+            # passed by the :func:`.dataclass` decorator to the implicit
+            # :meth:`__init__` method synthesized for this dataclass.
+            #
+            # Note that descriptor-typed fields have yet to be standardized by any
+            # peer-reviewed PEP and are thus technically PEP-noncompliant, despite
+            # being officially documented in Python documentation.
+            #
+            # See Also
+            # --------
+            # https://docs.python.org/3/library/dataclasses.html#descriptor-typed-fields
+            #     Official Python documentation on descriptor-typed fields.
+            # '''
 
             # ..................{ NON-INIT ~ pep : 526       }..................
             with_nature_reconciled: ClassVar[bool] = True
@@ -137,8 +177,12 @@ def test_decor_pep557() -> None:
                 '''
                 :func:`dataclasses.dataclass`-specific dunder method implicitly
                 called by the :meth:`__init__` method synthesized for this
-                class, explicitly type-checked by :func:`beartype.beartype` for
-                testing.
+                class, passed *only* the set of all :pep:`557`-compliant
+                **dataclass init vars** (i.e., fields annotated by
+                ``typing.InitVar[...]`` type hints).
+
+                This dunder method is intentionally type-checked by the
+                :func:`beartype.beartype` decorator to improve test coverage.
                 '''
 
                 # If the caller failed to pass this optional field to the
@@ -189,9 +233,9 @@ def test_decor_pep557() -> None:
 
         # ..................{ ASSERTS ~ forward : define     }..................
         # Defer the importation of this type until *AFTER* accessing the
-        # "SoSolemnSoSerene.sweet_shaped_lightnings" optional field annotated by
-        # a PEP 484-compliant stringified absolute forward reference type hint
-        # referring to this type.
+        # "SoSolemnSoSerene.sweet_shaped_lightnings" optional field, annotated
+        # by a PEP 484-compliant stringified absolute forward reference type
+        # hint referring to this type.
         from beartype_test.a00_unit.data.data_type import Class
 
         class TheMufflingDark(object):

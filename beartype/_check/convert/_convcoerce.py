@@ -55,8 +55,8 @@ from beartype._cave._cavefast import NotImplementedType
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
-from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str_decor_meta
-from beartype._check.cls.call.callmetadecor import BeartypeCallDecorMeta
+from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str_decor_curr
+from beartype._check.cls.call.callmetadecor import BeartypeCallDecorData
 from beartype._util.cache.map.utilmapunbounded import CacheUnboundedStrong
 from beartype._util.hint.pep.proposal.pep484.pep484union import (
     make_hint_pep484_union)
@@ -67,7 +67,7 @@ from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
 def coerce_func_hint_root(
     hint: Hint,
-    decor_meta: BeartypeCallDecorMeta,
+    decor_curr: BeartypeCallDecorData,
     pith_name: str,
     exception_prefix: str,
 ) -> Hint:
@@ -97,7 +97,7 @@ def coerce_func_hint_root(
     ----------
     hint : Hint
         Possibly PEP-noncompliant type hint to be possibly coerced.
-    decor_meta : BeartypeCallDecorMeta
+    decor_curr : BeartypeCallDecorData
         Decorated callable directly annotated by this hint.
     pith_name : str
         Either:
@@ -119,8 +119,8 @@ def coerce_func_hint_root(
     '''
     assert isinstance(pith_name, str), (
         f'{repr(pith_name)} not string.')
-    assert isinstance(decor_meta, BeartypeCallDecorMeta), (
-        f'{repr(decor_meta)} not @beartype metadata.')
+    assert isinstance(decor_curr, BeartypeCallDecorData), (
+        f'{repr(decor_curr)} not @beartype metadata.')
     # print(f'Coercing pith "{pith_name}" annotated by type hint {repr(hint)}...')
 
     # ..................{ FORWARD REFERENCE                  }..................
@@ -128,7 +128,7 @@ def coerce_func_hint_root(
     #reduce_hint_pep484_ref()) already efficiently reduce forward references to
     #more useful objects across a variety of common use cases. We *REALLY* don't
     #want to duplicate that logic across both those reducers *AND* the
-    #resolve_hint_pep484_ref_str_decor_meta() function called below.
+    #resolve_hint_pep484_ref_str_decor_curr() function called below.
     #
     #Ideally, this code path should *ONLY* be performed to resolve PEP
     #563-compliant forward references. Even in that case, though, shouldn't we
@@ -145,8 +145,8 @@ def coerce_func_hint_root(
     # which assumes this hint to be a non-string hint.
     if isinstance(hint, str):
         # print(f'Coercing forward ref hint {repr(hint)} to...')
-        hint = resolve_hint_pep484_ref_str_decor_meta(
-            hint=hint, decor_meta=decor_meta, exception_prefix=exception_prefix)  # pyright: ignore
+        hint = resolve_hint_pep484_ref_str_decor_curr(
+            hint=hint, decor_curr=decor_curr, exception_prefix=exception_prefix)  # pyright: ignore
         # print(f'...non-forward ref hint {repr(hint)}!')
     # Else, this hint is *NOT* stringified.
     #
@@ -158,7 +158,7 @@ def coerce_func_hint_root(
         # This hint annotates the return for the decorated callable *AND*...
         pith_name == ARG_NAME_RETURN and
         # The decorated callable is a binary dunder method (e.g., __eq__())...
-        decor_meta.func_wrapper_name in METHOD_NAMES_DUNDER_BINARY
+        decor_curr.func_wrapper_name in METHOD_NAMES_DUNDER_BINARY
     ):
         # Expand this hint to accept both this hint *AND* the "NotImplemented"
         # singleton as valid returns from this method. Why? Because this

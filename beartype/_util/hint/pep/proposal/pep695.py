@@ -582,7 +582,7 @@ def resolve_func_scope_pep695(
     # interpreter supports PEP 695.
 
     # PEP 695-specific lexical scope. Ideally, we'd simply reuse the existing
-    # "decor_metafunc_wrappee_wrappee_scope_forward" scope rather than instantiate a
+    # "decor_currfunc_wrappee_wrappee_scope_forward" scope rather than instantiate a
     # PEP 695-specific lexical scope. Although both trivial and efficient, such
     # reuse would violate PEP 695. PEP 695 mandates that type-checkers:
     # * Raise errors when PEP 695-compliant type parameters parametrizing parent

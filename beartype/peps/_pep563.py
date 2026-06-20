@@ -29,10 +29,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypePep563Exception
-from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str_decor_meta
+from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str_decor_curr
 from beartype._check.cls.call.callmetadecor import (
-    cull_decor_meta,
-    make_decor_meta,
+    cull_decor_curr,
+    make_decor_curr,
 )
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
@@ -240,7 +240,7 @@ def resolve_pep563(
 
     # ..................{ LOCALS                             }..................
     # Beartype call metadata describing the passed callable.
-    decor_meta = make_decor_meta(func=func, conf=conf, cls_stack=cls_stack)
+    decor_curr = make_decor_curr(func=func, conf=conf, cls_stack=cls_stack)
 
     # Shallow copy of the dictionary to be returned. Why? Because the
     # "func.__annotations__" dictionary *CANNOT* be safely directly assigned to
@@ -262,16 +262,16 @@ def resolve_pep563(
     #   sizes, as "func.__annotations__" usually is).
     for pith_name, hint in func_annotations.items():
         # Non-string hint to which this stringified hint refers
-        hint = resolve_hint_pep484_ref_str_decor_meta(
+        hint = resolve_hint_pep484_ref_str_decor_curr(
             hint=hint,
-            decor_meta=decor_meta,
+            decor_curr=decor_curr,
             exception_cls=BeartypePep563Exception,
         )
 
         # Safely set the hint annotating the parameter or return with the passed
         # name of the decorated callable to the passed hint in a portable manner
         # consistent with both PEP 649 and Python >= 3.14.
-        decor_meta.set_func_pith_hint(pith_name=pith_name, hint=hint)
+        decor_curr.set_func_pith_hint(pith_name=pith_name, hint=hint)
 
     # ..................{ RETURN                             }..................
     # Deinitialize this beartype call metadata.
@@ -283,7 +283,7 @@ def resolve_pep563(
     # generically resolving postponed annotations for all downstream third-party
     # callers is justified. Everyone benefits from replacing useless postponed
     # annotations with useful real annotations; so, do so.
-    cull_decor_meta(decor_meta)
+    cull_decor_curr(decor_curr)
 
     # print(
     #     f'{func.__name__}() PEP 563-postponed annotations resolved:'

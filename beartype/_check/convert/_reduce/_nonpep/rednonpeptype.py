@@ -206,21 +206,22 @@ def reduce_hint_nonpep(
     # dataclass field to the equivalent PEP-compliant runtime-friendly return
     # hint annotating that data descriptor's __get__() dunder method.
 
-    # If a PEP 557-compliant dataclass is currently being decorated *AND* this
-    # hint is a PEP 252-compliant runtime-hostile data descriptor presumably
-    # annotating a PEP-noncompliant descriptor-typed field of that dataclass,
-    # reduce this field to the equivalent PEP-compliant runtime-friendly return
-    # hint annotating this data descriptor's __get__() dunder method. We don't
-    # make the rules. Our rictus grin just smiles in horror at the rules.
+    # Either:
+    # * If a PEP 557-compliant dataclass is currently being decorated *AND* this
+    #   hint is a PEP 252-compliant runtime-hostile data descriptor presumably
+    #   annotating a PEP-noncompliant descriptor-typed field of that dataclass,
+    #   reduce this field to the equivalent PEP-compliant runtime-friendly
+    #   return hint annotating this data descriptor's __get__() dunder method.
+    #   We don't make rules. Our rictus grin just smiles in horror at rules.
+    # * Else, either a PEP 557-compliant dataclass is not currently being
+    #   decorated *OR* this hint is not a PEP 252-compliant runtime-hostile data
+    #   descriptor. In either case, preserve this hint as is.
     hint = reduce_hint_pep557_descriptor_data_if_able(  # pyright: ignore
         call_curr=call_curr,
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         **kwargs
     )
-    # Else, either a PEP 557-compliant dataclass is not currently being
-    # decorated *OR* this hint is not a PEP 252-compliant runtime-hostile data
-    # descriptor. In either case, preserve this hint as is.
 
     # ....................{ PHASE ~ singleton              }....................
     # In this last reduction phase, we attempt a general-purpose reduction

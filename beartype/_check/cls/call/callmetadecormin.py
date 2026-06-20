@@ -28,7 +28,7 @@ from typing import Optional
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
-class BeartypeCallDecorMinimalMeta(BeartypeCallDataABC):
+class BeartypeCallDecorMinimalData(BeartypeCallDataABC):
     '''
     **Beartype decorator call minimal metadata** (i.e., dataclass
     encapsulating the minimal metadata required to type-check the callable
@@ -38,7 +38,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallDataABC):
     This type-checking-time dataclass is effectively the proper subset of the
     comparable -- but *much* more complex in both space, time, and code
     complexity -- **decoration call metadata dataclass** (i.e.,
-    :class:`beartype._check.cls.call.callmetadecor.BeartypeCallDecorMeta`).
+    :class:`beartype._check.cls.call.callmetadecor.BeartypeCallDecorData`).
     Theoretically, this type-checking-time dataclass is thus redundant; the
     existing decoration call metadata dataclass could simply be used in lieu of
     this type-checking-time dataclass. Pragmatically, this type-checking-time
@@ -112,7 +112,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallDataABC):
         -------
         **Avoid instantiating this low-level dataclass directly.** Instead,
         instantiate this dataclass by calling the higher-level
-        :meth:`beartype._check.cls.call.callmetadecor.BeartypeCallDecorMeta.minify`
+        :meth:`beartype._check.cls.call.callmetadecor.BeartypeCallDecorData.minify`
         method. Doing so reduces existing instances of the parent dataclass to
         instances of this child dataclass.
 
@@ -150,7 +150,7 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallDataABC):
 
         # Avoid circular import dependencies.
         from beartype._check.forward.fwdresolve import (
-            resolve_hint_pep484_ref_str_decor_meta)
+            resolve_hint_pep484_ref_str_decor_curr)
 
         # Validate sanity. Since this dataclass already internally persists the
         # relevant configuration, this subclass method *ONLY* accepts a
@@ -159,22 +159,22 @@ class BeartypeCallDecorMinimalMeta(BeartypeCallDataABC):
         assert conf is self.conf, f'{repr(conf)} != {repr(self.conf)}.'
 
         # Defer to this low-level resolver.
-        return resolve_hint_pep484_ref_str_decor_meta(
-            decor_meta=self,
+        return resolve_hint_pep484_ref_str_decor_curr(
+            decor_curr=self,
             hint=hint,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )
 
 # ....................{ MINIFIERS                          }....................
-def minify_decor_meta_kwargs(**kwargs) -> BeartypeCallDecorMinimalMeta:
+def minify_decor_curr_kwargs(**kwargs) -> BeartypeCallDecorMinimalData:
     '''
     **Beartype decorator call minimal metadata** (i.e., dataclass
     encapsulating the minimal metadata required to type-check the callable
     currently being decorated by the :func:`beartype.beartype` decorator at
     the post-decoration time that callable is subsequently called) minified
     from passed **beartype decorator call maximal metadata keyword parameters**
-    (i.e., to be passed to the :meth:`BeartypeCallDecorMeta.reinit` method).
+    (i.e., to be passed to the :meth:`BeartypeCallDecorData.reinit` method).
 
     This factory method is a high-level convenience principally intended to
     be called from unit tests. For that reason, efficiency is irrelevant.
@@ -182,21 +182,21 @@ def minify_decor_meta_kwargs(**kwargs) -> BeartypeCallDecorMinimalMeta:
     Parameters
     ----------
     All passed keyword parameters are passed as is to the
-    :meth:`BeartypeCallDecorMeta.reinit` method.
+    :meth:`BeartypeCallDecorData.reinit` method.
 
     Returns
     -------
-    BeartypeCallDecorMinimalMeta
+    BeartypeCallDecorMinimalData
         Minimal metadata minified from this maximal metadata.
     '''
 
     # Avoid circular import dependencies.
-    from beartype._check.cls.call.callmetadecor import new_decor_meta
+    from beartype._check.cls.call.callmetadecor import new_decor_curr
 
     # With maximal metadata initialized by these parameters...
-    with new_decor_meta(**kwargs) as decor_meta:  # type: ignore[var-annotated]
+    with new_decor_curr(**kwargs) as decor_curr:  # type: ignore[var-annotated]
         # Minimal metadata reduced from this maximal metadata.
-        decor_meta_min = decor_meta.minify()
+        decor_curr_min = decor_curr.minify()
 
     # Return this metadata.
-    return decor_meta_min
+    return decor_curr_min

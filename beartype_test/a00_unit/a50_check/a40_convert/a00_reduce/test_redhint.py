@@ -38,7 +38,7 @@ def test_reduce_hint(
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype._check.convert._reduce.redmain import reduce_hint
-    from beartype._check.cls.call.callmetadecor import new_decor_meta
+    from beartype._check.cls.call.callmetadecor import new_decor_curr
     from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
         HintReductionInvalid,
         HintReductionValid,
@@ -51,7 +51,7 @@ def test_reduce_hint(
         # With beartype decorator call metadata encapsulating the implicit
         # decoration of an arbitrary method of an arbitrary type, itself
         # decorated explicitly via a type stack.
-        with new_decor_meta(
+        with new_decor_curr(
             cls_stack=hint_reduction_meta.cls_stack,
             conf=hint_reduction_meta.conf,
 

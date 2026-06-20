@@ -26,7 +26,7 @@ def test_is_type_pep252_descriptor_data() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.cls.pep.clspep252 import is_type_pep252_descriptor_data
-    from beartype_test.a00_unit.data.data_type import (
+    from beartype_test.a00_unit.data.pep.data_pep252 import (
         DataDescriptor,
         NondataDescriptor,
     )
@@ -54,7 +54,7 @@ def test_is_type_pep252_descriptor_nondata() -> None:
     # Defer test-specific imports.
     from beartype._util.cls.pep.clspep252 import (
         is_type_pep252_descriptor_nondata)
-    from beartype_test.a00_unit.data.data_type import (
+    from beartype_test.a00_unit.data.pep.data_pep252 import (
         DataDescriptor,
         NondataDescriptor,
     )
@@ -74,7 +74,8 @@ def test_is_type_pep252_descriptor_nondata() -> None:
 def test_is_object_pep252_descriptor_instance_all() -> None:
     '''
     Test both the
-    :func:`beartype._util.cls.pep.clspep252.is_object_pep252_descriptor_data` *and*
+    :func:`beartype._util.cls.pep.clspep252.is_object_pep252_descriptor_data`
+    *and*
     :func:`beartype._util.cls.pep.clspep252.is_object_pep252_descriptor_nondata`
     testers, whose validation is similar enough to warrant centralization into
     this single unit test.
@@ -86,7 +87,7 @@ def test_is_object_pep252_descriptor_instance_all() -> None:
         is_object_pep252_descriptor_data_instance,
         is_object_pep252_descriptor_nondata_instance,
     )
-    from beartype_test.a00_unit.data.data_type import (
+    from beartype_test.a00_unit.data.pep.data_pep252 import (
         DataAndNondataDescriptorStore,
         DataDescriptor,
         NondataDescriptor,
