@@ -47,9 +47,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #Checkmate, "typing". Checkmate.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Union,
-)
 from beartype._cave._cavefast import NotImplementedType
 # from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
@@ -62,6 +59,7 @@ from beartype._util.hint.pep.proposal.pep484.pep484union import (
     make_hint_pep484_union)
 from beartype._util.hint.utilhintget import get_hint_repr
 from beartype._util.hint.utilhinttest import is_hint_cacheworthy
+from typing import Union
 
 # ....................{ COERCERS ~ root                    }....................
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
@@ -206,8 +204,12 @@ def coerce_func_hint_root(
         # performed here. *applause*
         return Union[hint, NotImplementedType]  # type: ignore[return-value]  # pyright: ignore
 
+    # ..................{ COERCE                             }..................
     # Defer to the function-agnostic root hint coercer as a generic fallback.
-    return coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
+    hint = coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
+
+    # Return this possibly coerced root hint.
+    return hint
 
 
 def coerce_hint_root(hint: Hint, exception_prefix: str) -> Hint:
@@ -246,8 +248,7 @@ def coerce_hint_root(hint: Hint, exception_prefix: str) -> Hint:
     hint : object
         Possibly PEP-noncompliant type hint to be possibly coerced.
     exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -268,6 +269,7 @@ def coerce_hint_root(hint: Hint, exception_prefix: str) -> Hint:
         return make_hint_pep484_union(hint)
     # Else, this hint is *NOT* a PEP-noncompliant tuple union.
 
+    # ..................{ RETURN                             }..................
     # Since none of the above conditions applied, this hint could *NOT* be
     # specifically coerced as a root type hint. Nonetheless, this hint may
     # still be generically coercible as a hint irrespective of its contextual
@@ -398,7 +400,7 @@ def coerce_hint_any(hint: Hint) -> Hint:
         * Else, this hint as is unmodified.
     '''
 
-    # ..................{ NON-SELF-CACHING                   }..................
+    # ..................{ CACHE                              }..................
     # If this hint is *NOT* self-caching, this hint *MUST* thus be explicitly
     # cached here. Failing to do so would disable subsequent memoization,
     # reducing decoration- and call-time efficiency when decorating callables
@@ -416,11 +418,12 @@ def coerce_hint_any(hint: Hint) -> Hint:
         #FIXME: [SPEED] Globalize the
         #_hint_repr_to_hint.cache_or_get_cached_value() bound method and call
         #that globalized bound method here instead as a negligible speedup.
-        return _hint_repr_to_hint.cache_or_get_cached_value(  # type: ignore[return-value]
+        hint = _hint_repr_to_hint.cache_or_get_cached_value(  # type: ignore[return-value]
             key=get_hint_repr(hint), value=hint)
     # Else, this hint is (hopefully) self-caching.
 
-    # Return this uncoerced hint as is.
+    # ..................{ RETURN                             }..................
+    # Return this possibly coerced hint.
     return hint
 
 # ....................{ PRIVATE ~ mappings                 }....................

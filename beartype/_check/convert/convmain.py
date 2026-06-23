@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert._convcoerce import (
     coerce_func_hint_root,
@@ -34,6 +33,7 @@ from beartype._data.typing.datatyping import HintSignOrNoneOrSentinel
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
     reduce_hint_pep484585_func_return)
+from typing import Optional
 
 # ....................{ SANIFIERS ~ root                   }....................
 #FIXME: Unit test us up, please.
@@ -136,6 +136,7 @@ def sanify_hint_root_func(
     # CAUTION: Synchronize with the sanify_hint_root_statement() sanitizer.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    # ....................{ COERCE                         }....................
     # PEP-compliant hint coerced from this possibly PEP-noncompliant hint if
     # this hint is coercible *OR* this hint as is otherwise. Since the passed
     # hint is *NOT* necessarily PEP-compliant, perform this coercion *BEFORE*
@@ -161,6 +162,7 @@ def sanify_hint_root_func(
     # Else, this possibly PEP-noncompliant hint was *NOT* coerced into a
     # PEP-compliant hint, implying this hint to already be PEP-compliant.
 
+    # ....................{ REDUCE                         }....................
     # If this hint annotates the return, then (in order):
     # * If this hint is contextually invalid for this callable (e.g., generator
     #   whose return is not annotated as "Generator[...]"), raise an exception.
@@ -211,6 +213,7 @@ def sanify_hint_root_func(
         exception_prefix=exception_prefix,
     )
 
+    # ....................{ RETURN                         }....................
     # Return this hint if this hint is unignorable *OR* "typing.Any" otherwise.
     return hint_sane
 

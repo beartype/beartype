@@ -62,6 +62,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #  "beartype._check.checkmake.make_func_checker() factory alone. Why? Because
 #  the tuple size of "CACHE_KEY" increases. Ergo, we should have *ALREADY* done
 #  this. So much sighing can be distantly heard.
+#
+#  *WAIT*. Does any of the above actually apply? Probably not. @beartype
+#  resolves "typing.Self" at decoration time. So... uh. This should already just
+#  work out-of-the-box. Test us up, yo! *lolface*
 #* Dataclass subclasses. Does each dataclass subclass in a hierarchy have its
 #  own unique "__annotations__" dunder dictionary *OR* does each such subclass
 #  composite the "__annotations__" of both itself and its superclasses? Probably
@@ -105,6 +109,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintPep557FieldViolation
+from beartype._check.convert._reduce.redmain import reduce_hint
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatypingport import (
     DictStrToHint,
@@ -348,6 +353,16 @@ def beartype_pep557_dataclass(
         #die_unless_obj_satisfies_hint_sane(). Indeed, the "HintSane" dataclass
         #itself could just define a pair of new is_satisfied() and
         #die_unless_satisfied() methods. Probably the best idea. *shrug*
+        #FIXME: *WAAAAAAAAAAAAAAAAAAAIT!* Oh, boy. Should've realized this
+        #sooner. "HintSane" objects *PROBABLY* aren't an issue when we're
+        #dealing with root type hints, which we are. Probably. Just strip the
+        #"hint" instance variable out and ignore all of their other metadata.
+        #FIXME: Calling reduce_hint() here almost certainly suffices. That said,
+        #the larger issue now is that this beartype_pep557_dataclass() basically
+        #accepts *NONE* of the parameters it needs to pass on to reduce_hint().
+        #Should be a trivial refactoring. Sadly, we're outta time tonight. Ugh!
+
+        # reduce_hint()  <-- UGH WHAT PARAMETERS YO
 
         # Add this field back to this sanified dictionary.
         field_name_to_hint[field_name] = field_hint
