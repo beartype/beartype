@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintRecursionException
-from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
-from beartype._check.cls.call.callmetaexternal import (
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
+from beartype._check.cls.call.calldataexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.cls.hint.data.hintdatacode import HintDataCode
 from beartype._check.cls.hint.hintsane import HintSane

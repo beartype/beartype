@@ -74,8 +74,8 @@ from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseDesynchronizationException,
     _BeartypeCallHintPepRaiseException,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
-from beartype._check.cls.call.callmetadecormin import (
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
+from beartype._check.cls.call.calldatadecormin import (
     BeartypeCallDecorMinimalData)
 from beartype._check.cls.hint.data.hintdataerror import HintDataError
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError

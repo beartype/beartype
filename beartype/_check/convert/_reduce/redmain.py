@@ -26,8 +26,8 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
-from beartype._check.cls.call.callmetaexternal import (
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
+from beartype._check.cls.call.calldataexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.cls.hint.hintsane import (
     HINT_IGNORABLE,
@@ -147,18 +147,18 @@ def reduce_hint(
     is_hint_ignorable_preserved : bool, default: False
         Either:
 
-        * If the caller prefers that ignorable hints reduced to a unique
-          :data:`.HintSane` object *not* equal to the standard
+        * If data:`True`, then the caller prefers that ignorable hints reduced
+          to a unique :data:`.HintSane` object *not* equal to the standard
           :data:`.HINT_SANE_IGNORABLE` singleton but instead encapsulating the
           :data:`.HINT_IGNORABLE` type hint and unique metadata describing the
           ignored hint reduce to that :data:`.HintSane` object rather than the
-          :data:`.HINT_SANE_IGNORABLE` singleton, data:`True`.
-        * If the caller prefers that ignorable hints reduced to a unique
-          :data:`.HintSane` object *not* equal to the standard
+          :data:`.HINT_SANE_IGNORABLE` singleton.
+        * If data:`False`, then the caller prefers that ignorable hints reduced
+          to a unique :data:`.HintSane` object *not* equal to the standard
           :data:`.HINT_SANE_IGNORABLE` singleton be transparently reduced to the
-          :data:`.HINT_SANE_IGNORABLE` singleton, data:`False`. This preference
-          is substantially easier for callers to handle but also technically
-          lossy, as all unique metadata associated with this reduction is lost.
+          :data:`.HINT_SANE_IGNORABLE` singleton. This preference is
+          substantially easier for callers to handle but also technically lossy,
+          as all unique metadata associated with this reduction is lost.
 
         Defaults to :data:`False`, as most callers neither require nor desire
         this distinction and are thus incapable of handling ignorable hints

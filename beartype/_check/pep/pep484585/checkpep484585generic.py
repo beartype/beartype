@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,

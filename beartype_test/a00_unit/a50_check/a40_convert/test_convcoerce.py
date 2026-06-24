@@ -27,7 +27,7 @@ def test_coerce_func_hint_root() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import BeartypeConf
-    from beartype._check.cls.call.callmetadecor import BeartypeCallDecorData
+    from beartype._check.cls.call.calldatadecor import BeartypeCallDecorData
     from beartype._check.convert._convcoerce import coerce_func_hint_root
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 

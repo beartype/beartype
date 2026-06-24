@@ -33,7 +33,7 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.cls.hint.data.hintdataabc import HintDataABC
 from beartype._conf.confmain import BeartypeConf

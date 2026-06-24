@@ -59,7 +59,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.cls.scope.checkexprscope import BeartypeCheckExprScope
 from beartype._conf.confmain import BeartypeConf

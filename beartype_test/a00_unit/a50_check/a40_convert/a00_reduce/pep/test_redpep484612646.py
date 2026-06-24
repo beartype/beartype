@@ -282,7 +282,7 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     from beartype.typing import Generic
     from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
         reduce_hint_pep484612646_subbed_typeargs_to_hints)
-    from beartype._check.cls.call.callmetaexternal import (
+    from beartype._check.cls.call.calldataexternal import (
         BEARTYPE_CALL_EXTERNAL_META)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (

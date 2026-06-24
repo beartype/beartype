@@ -25,12 +25,12 @@ from beartype._check.error.errmain import (
 )
 from beartype._check.forward.reference.fwdrefset import (
     set_beartype_ref_proxies_exception_prefix)
-from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
-from beartype._check.cls.call.callmetadecor import (
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
+from beartype._check.cls.call.calldatadecor import (
     BeartypeCallDecorData,
     prefix_decor_curr_callable_pith,
 )
-from beartype._check.cls.call.callmetaexternal import (
+from beartype._check.cls.call.calldataexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,

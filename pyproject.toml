@@ -49,7 +49,8 @@ description = """\
 # has any idea what SPDX means (and neither do I). Bike-shedding: "Begone!"
 license = "MIT"
 
-# Relative filename of the top-level file describing project licensing.
+# List of the relative filenames of all top-level files describing project
+# licensing.
 #
 # Note that PEP 621 prohibits this table (i.e., dictionary) from defining both
 # the "file" and "text" keys (e.g., 'text = "MIT"'). While defining both would
@@ -202,7 +203,11 @@ dependencies = []
 #FIXME: Most of these "extras" should be transformed into PEP 735-compliant
 #"[dependency-groups]" instead. Since the current approach "just works," we
 #can't really be bothered to do the right thing at the moment. See also:
-#    https://peps.python.org/pep-0735
+#* "uv"-specific documentation on "[dependency-groups]", which is probably more
+#  readable (and useful) than that of the original PEP:
+#      https://docs.astral.sh/uv/concepts/projects/dependencies/#development-dependencies
+#* Official PEP 735 proposal:
+#      https://peps.python.org/pep-0735
 
 # GitHub Pages (GHP)-specific documentation-time package dependencies required
 # to automatically build documentation for this project from GitHub's homegrown

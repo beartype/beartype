@@ -19,7 +19,7 @@ from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
 from beartype._check.forward.scope.fwdscopemake import (
     make_scope_forward_decor_curr)
-from beartype._check.cls.call.callmetadecormin import (
+from beartype._check.cls.call.calldatadecormin import (
     BeartypeCallDecorMinimalData)
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
@@ -257,7 +257,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
         #   case in which a forward reference annotates a nested callable
         #   directly decorated by @beartype, which rarely even occurs anymore.
         #   Why? Because if a callable is nested, that callable is probably a
-        #   method. That method's high-level class (rather that low-level
+        #   method. That method's high-level class (rather than that low-level
         #   method itself) should have been decorated by @beartype. Decorating
         #   methods directly by @beartype is heavily frowned upon.
         func_basenames_scoped = frozenset(
@@ -436,8 +436,8 @@ def resolve_hint_pep484_ref_str_decor_curr(
     # print(f'Resolving string hint {repr(hint)} against {repr(decor_currfunc_wrappee_wrappee_scope_forward)}...')
 
     # ..................{ RESOLVE                            }..................
-    # Non-string type hint resolved from this stringified type hint. against
-    # both the global and local scopes of the decorated callable.
+    # Non-string type hint resolved from this stringified type hint against both
+    # the global and local scopes of the decorated callable.
     hint_resolved = _resolve_hint_pep484_ref_str(
         hint=hint,
         conf=decor_curr.conf,

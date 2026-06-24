@@ -604,7 +604,7 @@ class BeartypeForwardRefMeta(type):
         # Avoid circular import dependencies.
         from beartype._check.error.errmain import (
             get_hint_object_violation_message)
-        from beartype._check.cls.call.callmetaexternal import (
+        from beartype._check.cls.call.calldataexternal import (
             BEARTYPE_CALL_EXTERNAL_META)
 
         # ....................{ RESOLVE                    }....................

@@ -1090,6 +1090,7 @@ def is_func_nested(func: Callable) -> bool:
     bool
         :data:`True` only if this callable is nested.
     '''
+    assert callable(func), f'{repr(func)} uncallable.'
 
     # Return true only if either...
     return (

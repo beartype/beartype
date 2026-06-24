@@ -26,7 +26,7 @@ from beartype._cave._cavefast import (
     ThreadLockNonreentrantType,
     ThreadLockReentrantType,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.shame.datashamefunc import BLACKLIST_METHOD_NAMES_HINT_SELF
 from beartype._data.typing.datatypingport import Hint

@@ -97,6 +97,9 @@ nav = [
   {Code = "code.md"},
   {Math = "math.md"},
   {FAQ = "faq.md"},
+
+  #FIXME: *OMG*! "Moar" would be such an appropriate page title for this: e.g.,
+  #    {"Moar" = "moar.md"},
   {"See Also" = "moar.md"},
 ]
 
@@ -336,9 +339,8 @@ features = [
 ]
 
 # Theme-specific color scheme(s). See also:
-#     https://zensical.org/docs/setup/colors/
-# See also:
-#   https://zensical.org/docs/setup/logo-and-icons/
+# * https://zensical.org/docs/setup/colors/
+# * https://zensical.org/docs/setup/logo-and-icons/
 [project.theme.icon]
 repo = "fontawesome/brands/github"
 

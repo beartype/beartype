@@ -302,7 +302,7 @@ def unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695() -> 
     from beartype.roar import BeartypeDecorHintPep484612646Exception
     from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
         reduce_hint_pep484612646_subbed_typeargs_to_hints)
-    from beartype._check.cls.call.callmetaexternal import (
+    from beartype._check.cls.call.calldataexternal import (
         BEARTYPE_CALL_EXTERNAL_META)
     from beartype._check.cls.hint.hintsane import HintSane
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed

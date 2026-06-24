@@ -71,7 +71,7 @@ from beartype.roar import (
 )
 from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convmain import sanify_hint_root_func
-from beartype._check.cls.call.callmetadecor import (
+from beartype._check.cls.call.calldatadecor import (
     BeartypeCallDecorData,
     prefix_decor_curr_callable_arg_name,
 )

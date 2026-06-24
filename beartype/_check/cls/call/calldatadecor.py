@@ -16,7 +16,7 @@ from beartype.roar import BeartypeDecorWrappeeException
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
-from beartype._check.cls.call.callmetadecormin import (
+from beartype._check.cls.call.calldatadecormin import (
     BeartypeCallDecorMinimalData)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.func.datacodefuncwrap import (
@@ -892,8 +892,8 @@ def new_decor_curr(**kwargs) -> Iterator[BeartypeCallDecorData]:
     user-defined callable, typically currently being decorated by the
     :func:`beartype.beartype` decorator) isolated to the body of this manager.
 
-    This context manager is a high-level convenience principally intended to
-    be called from unit tests. For that reason, efficiency is irrelevant.
+    This context manager is a high-level convenience principally intended to be
+    called from unit tests. Efficiency is irrelevant, therefore.
 
     Parameters
     ----------

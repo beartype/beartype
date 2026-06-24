@@ -38,7 +38,7 @@ def test_reduce_hint(
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype._check.convert._reduce.redmain import reduce_hint
-    from beartype._check.cls.call.callmetadecor import new_decor_curr
+    from beartype._check.cls.call.calldatadecor import new_decor_curr
     from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
         HintReductionInvalid,
         HintReductionValid,

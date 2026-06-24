@@ -361,6 +361,102 @@ def beartype_pep557_dataclass(
         #the larger issue now is that this beartype_pep557_dataclass() basically
         #accepts *NONE* of the parameters it needs to pass on to reduce_hint().
         #Should be a trivial refactoring. Sadly, we're outta time tonight. Ugh!
+        #FIXME: *OH, HO*. Indeed, the core issue *NOW* is that we have no
+        #type-centric concrete subclass implementing the "BeartypeCallDataABC"
+        #ABC. Consequently, we'll sadly need to:
+        #* In the existing "calldatadecorabc" submodule:
+        #  * *DO NOT GLOBALLY* but instead *CAREFULLY MANUALLY* rename the
+        #    "func_annotations" instance variable to "hintable_annotations",
+        #    which will now need to generically apply to both callables *AND*
+        #    types. I sigh. This requires some care. We'll need to grep the
+        #    codebase for "func_annotations" and manually modify all hits that
+        #    apply to "decoratee_annotations". Probably most of those will be
+        #    forward reference-specific, we assume. We also sigh. *sighing*
+        #  * Apply a similar careful manual renaming of "func" to "hintable".
+        #    For obvious reasons, this one should be even more careful. With any
+        #    luck, tests will pick up any residual badness here. Ugh! Ugh! The
+        #    safest way to do this would probably be to grep for:
+        #    * '\bcall_curr\.func\b'.
+        #    * '\bdecor_curr\.func\b'.
+        #    Most other '\.func\b' matches *SHOULD* be ignorable here. Should.
+        #* In the existing "calldatadecormin" submodule:
+        #  * *GLOBALLY* rename the "func_scope_forward" instance variable to
+        #    "hintable_scope_forward", which will now need to generically apply
+        #    to both callables *AND* types. Unlike the prior rename, it is
+        #    probably safe to do this globally. We still sigh. *sighing*
+        #* Rename the "calldatadecor" submodule to
+        #  "calldatadecorfunc". In that submodule:
+        #  * Rename the "BeartypeCallDecorData" class to
+        #    "BeartypeCallDecorFuncData".
+        #* Define a new "calldatadecortype" submodule, probably copy-pasted from
+        #  the existing "calldatadecorfunc" submodule. In this new submodule:
+        #  * Define a new "BeartypeCallDecorTypeData" subclass, also subclassing
+        #    the existing "BeartypeCallDecorMinimalData" subclass. The
+        #    implementation should probably just define the trivial __init__()
+        #    method accepting a mandatory "cls" parameter and whatever else
+        #    (e.g., "cls_stack"). That should be it for now. Probably. Ugh!
+        #* The big issue here is generalizing our currently callable-specific
+        #  resolve_hint_pep484_ref_str_decor_curr() reducer to support both
+        #  callables *AND* types. That's gonna be a bit non-trivial, folks.
+        #  Specifically, we'll need to:
+        #  * In the existing "beartype._util.cls.utilclstest" submodule:
+        #    * Define a new is_cls_nested() tester, whose implementation
+        #      should resemble:
+        #          #FIXME: *DEFINITELY UNIT TEST THIS IMMEDIATELY.* Should be
+        #          #trivial. Just make sure we test nested classes, obviously!
+        #          @callable_cached
+        #          def is_cls_nested(cls: type) -> bool:
+        #              assert isinstance(cls, type), f'{repr(cls)} not class.'
+        #              return '.' in cls.__qualname__
+        #  * In the existing "beartype._util.utilobjtest" submodule:
+        #    * Define a new is_obj_nested() tester, whose implementation
+        #      should resemble:
+        #          def is_obj_nested(obj: object) -> bool:
+        #              # Avoid circular import dependencies.
+        #              from beartype._util.cls.utilclstest import is_cls_nested
+        #              from beartype._util.func.utilfunctest import is_func_nested
+        #
+        #              return (
+        #                  is_cls_nested(obj)
+        #                  if isinstance(obj, type) else
+        #                  is_func_nested(obj)
+        #                  if callable(obj) else
+        #                  False
+        #              )
+        #* In the existing "fwdresolve" submodule:
+        #  * Refactor resolve_hint_pep484_ref_str_decor_curr() to internally:
+        #    * Refactor the call to is_func_nested() to instead call
+        #      is_obj_nested() as follows:
+        #          is_hintable_nested = bool(cls_stack) or is_obj_nested(hintable)
+        #    * Locally rename "func_module_name" to "hintable_module_name".
+        #    * Patch up everything else still referring to "func*". Ugh! Ugh!
+        #* In the existing "fwdscopemake" submodule:
+        #  * Refactor make_scope_forward_decor_curr() to internally:
+        #    * Rename the "func_is_nested" parameter to "is_hintable_nested".
+        #    * *SO MUCH BRUTALITY HERE*. This is the huge pain point. All of the
+        #      introspection here assumes callables. Generalizing to also
+        #      support types is definitely doable... and *MUST* be done. But
+        #      it's also super non-trivial to the max. Guess we have no
+        #      alternative except to slowly generalize each section piecemeal.
+        #* Instantiate a new "decor_curr" local variable like so below:
+        #      decor_curr = BeartypeCallDecorTypeData(
+        #          cls=datacls,
+        #          #FIXME: This beartype_pep557_dataclass() decorator will need
+        #          #to be generalized to accept this new mandatory parameter!
+        #          cls_stack=cls_stack,
+        #          conf=conf,
+        #      )
+        #* Pass that to the reduce_hint() call below like so. Note that we've
+        #  inspected the reduce_hint() API and are confident that this is all
+        #  that's needed:
+        #      reduce_hint(
+        #          call_meta=decor_curr,
+        #          hint=hint,
+        #          conf=conf,
+        #      )
+        #* Add a unit test (or improve an existing one) to test that a dataclass
+        #  nested inside another class can define a field annotated by a
+        #  relative stringified forward reference to that outermost class. Ugh!
 
         # reduce_hint()  <-- UGH WHAT PARAMETERS YO
 

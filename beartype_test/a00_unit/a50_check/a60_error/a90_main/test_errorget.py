@@ -39,7 +39,7 @@ def test_get_func_pith_violation() -> None:
     )
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.cls.call.callmetadecormin import (
+    from beartype._check.cls.call.calldatadecormin import (
         minify_decor_curr_kwargs)
     from pytest import raises
 
@@ -161,7 +161,7 @@ def test_get_func_pith_violation_conf_is_color() -> None:
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.cls.call.callmetadecormin import (
+    from beartype._check.cls.call.calldatadecormin import (
         minify_decor_curr_kwargs)
     from beartype._util.os.utilostty import is_stdout_terminal
     from beartype._util.text.utiltextansi import is_str_ansi
@@ -229,7 +229,7 @@ def test_get_func_pith_violation_conf_violation_types() -> None:
     from beartype import BeartypeConf
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.cls.call.callmetadecormin import (
+    from beartype._check.cls.call.calldatadecormin import (
         minify_decor_curr_kwargs)
     from typing import Union
 
@@ -302,7 +302,7 @@ def test_get_func_pith_violation_conf_violation_verbosity() -> None:
         Union,
     )
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.cls.call.callmetadecormin import (
+    from beartype._check.cls.call.calldatadecormin import (
         minify_decor_curr_kwargs)
 
     # ..................{ LOCALS                             }..................
@@ -361,7 +361,7 @@ def test_get_hint_object_violation() -> None:
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
     from beartype._check.error.errmain import get_hint_object_violation
-    from beartype._check.cls.call.callmetaexternal import (
+    from beartype._check.cls.call.calldataexternal import (
         BEARTYPE_CALL_EXTERNAL_META)
     from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN

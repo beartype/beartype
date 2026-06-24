@@ -17,7 +17,7 @@ from beartype.roar import (
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
-from beartype._check.cls.call.callmetadecor import (
+from beartype._check.cls.call.calldatadecor import (
     cull_decor_curr,
     make_decor_curr,
 )
@@ -417,7 +417,7 @@ def beartype_func(
         defaults to ``func``.
 
     All remaining keyword parameters are passed as is to the
-    :meth:`beartype._check.cls.call.callmetadecor.BeartypeCallDecorData.reinit` method.
+    :meth:`beartype._check.cls.call.calldatadecor.BeartypeCallDecorData.reinit` method.
 
     Returns
     -------

@@ -55,7 +55,7 @@ from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
 )
-from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HINT_SANE_RECURSIVE,

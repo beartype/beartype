@@ -54,7 +54,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convmain import sanify_hint_child
-from beartype._check.cls.call.callmetaabc import BeartypeCallDataABC
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
