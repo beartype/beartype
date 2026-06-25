@@ -24,13 +24,12 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
+    Decoratee,
     Pep649749HintableAnnotations,
     TypeException,
     TypeStack,
 )
-from beartype._data.typing.datatypingport import (
-    Hint,
-)
+from beartype._data.typing.datatypingport import Hint
 from collections.abc import Callable
 from typing import (
     TYPE_CHECKING,
@@ -66,19 +65,25 @@ class BeartypeCallDataABC(object, metaclass=ABCMeta):
 
         See also the parameter of the same name accepted by the
         :func:`beartype._decor.decorcore.beartype_object` function.
-    func : Optional[Callable]
-        **Decorated callable**, defined as either:
+    decoratee : Optional[Callable]
+        **Decoratee** (i.e., external callable or class currently being
+        decorated by the :func:`beartype.beartype` decorator if any), defined as
+        either:
 
-        * If an external callable is currently being decorated by the
-          :func:`beartype.beartype` decorator, that callable.
+        * If an external callable or class is currently being decorated by the
+          :func:`beartype.beartype` decorator, that callable or class.
         * Else, :data:`None`.
-    func_annotations : Optional[dict[str, Hint]]
-        **Type hint dictionary**, defined as either:
+    decoratee_annotations : Optional[dict[str, Hint]]
+        **Decoratee type hint dictionary**, defined as either:
 
         * If an external callable is currently being decorated by the
           :func:`beartype.beartype` decorator, the dictionary mapping from the
           name of each annotated parameter or return accepted by that callable
           to the type hint annotating that parameter or return.
+        * If an external class is currently being decorated by the
+          :func:`beartype.beartype` decorator, the dictionary mapping from the
+          name of each annotated class variable defined on that class to the
+          type hint annotating that class variable.
         * Else, :data:`None`.
 
     These attributes are sufficiently ubiquitous to warrant their unconditional
@@ -93,16 +98,16 @@ class BeartypeCallDataABC(object, metaclass=ABCMeta):
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'cls_stack',
-        'func',
-        'func_annotations',
+        'decoratee',
+        'decoratee_annotations',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         cls_stack: TypeStack
-        func: Optional[Callable]
-        func_annotations: Optional[Pep649749HintableAnnotations]
+        decoratee: Optional[Decoratee]
+        decoratee_annotations: Optional[Pep649749HintableAnnotations]
 
     # Coerce instances of this class to be unhashable, preventing spurious
     # issues when accidentally passing these instances to memoized callables by
@@ -125,8 +130,8 @@ class BeartypeCallDataABC(object, metaclass=ABCMeta):
 
         # Optional parameters.
         cls_stack: TypeStack = None,
-        func: Optional[Callable] = None,
-        func_annotations: Optional[Pep649749HintableAnnotations] = None,
+        decoratee: Optional[Decoratee] = None,
+        decoratee_annotations: Optional[Pep649749HintableAnnotations] = None,
     ) -> None:
         '''
         Initialize this metadata with the passed parameters.
@@ -138,15 +143,15 @@ class BeartypeCallDataABC(object, metaclass=ABCMeta):
         '''
         assert isinstance(cls_stack, NoneTypeOr[tuple]), (
             f'{repr(cls_stack)} neither tuple nor "None".')
-        assert isinstance(func, NoneTypeOr[Callable]), (
-            f'{repr(func)} neither callable nor "None".')
-        assert isinstance(func_annotations, NoneTypeOr[dict]), (
-            f'{repr(func_annotations)} neither dictionary nor "None".')
+        assert isinstance(decoratee, NoneTypeOr[_DecorateeTypes]), (
+            f'{repr(decoratee)} neither callable, class, nor "None".')
+        assert isinstance(decoratee_annotations, NoneTypeOr[dict]), (
+            f'{repr(decoratee_annotations)} neither dictionary nor "None".')
 
         # Classify all passed parameters as instance variables.
         self.cls_stack = cls_stack
-        self.func = func
-        self.func_annotations = func_annotations
+        self.decoratee = decoratee
+        self.decoratee_annotations = decoratee_annotations
 
     # ..................{ RESOLVERS                          }..................
     @abstractmethod
@@ -203,3 +208,11 @@ class BeartypeCallDataABC(object, metaclass=ABCMeta):
         '''
 
         pass
+
+# ....................{ PRIVATE ~ constants                }....................
+_DecorateeTypes = (type, Callable)
+'''
+Tuple of the types of all possible **decoratees** (i.e., pure-Python callables
+and classes currently being directly decorated by the :mod:`beartype.beartype`
+decorator).
+'''

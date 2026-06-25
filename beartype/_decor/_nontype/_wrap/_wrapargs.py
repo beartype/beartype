@@ -417,6 +417,7 @@ def code_check_args(decor_curr: BeartypeCallDecorData) -> str:
                 # Merge the local scope required to check this parameter into
                 # the local scope required by the current wrapper function.
                 update_mapping(decor_curr.func_wrapper_locals, func_scope)
+
             # If one or more warnings were issued, reissue these warnings with
             # each placeholder substring (i.e., "EXCEPTION_PLACEHOLDER"
             # instance) replaced by a human-readable description of this

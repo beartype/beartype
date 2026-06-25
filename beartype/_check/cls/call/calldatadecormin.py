@@ -13,27 +13,30 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype.typing import TYPE_CHECKING
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
+    Decoratee,
     LexicalScope,
     Pep649749HintableAnnotations,
     TypeException,
     TypeStack,
 )
 from beartype._data.typing.datatypingport import Hint
-from collections.abc import Callable
-from typing import Optional
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+)
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
 class BeartypeCallDecorMinimalData(BeartypeCallDataABC):
     '''
     **Beartype decorator call minimal metadata** (i.e., dataclass
-    encapsulating the minimal metadata required to type-check the callable
-    currently being decorated by the :func:`beartype.beartype` decorator at the
-    post-decoration time that callable is subsequently called).
+    encapsulating the minimal metadata required to type-check the callable or
+    class currently being decorated by the :func:`beartype.beartype` decorator
+    at the post-decoration time that callable is subsequently called).
 
     This type-checking-time dataclass is effectively the proper subset of the
     comparable -- but *much* more complex in both space, time, and code
@@ -52,28 +55,28 @@ class BeartypeCallDecorMinimalData(BeartypeCallDataABC):
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
         current decoration of the currently decorated callable).
-    func_scope_forward : Optional[LexicalScope]
+    decoratee_scope_forward : Optional[LexicalScope]
         Either:
-    
-        * If this wrappee callable is annotated by at least one **stringified
-          type hint** (i.e., declared as a :pep:`484`- or :pep:`563`-compliant
+
+        * If the decoratee is annotated by at least one **stringified type
+          hint** (i.e., declared as a :pep:`484`- or :pep:`563`-compliant
           forward reference referring to an actual type hint that has yet to be
           declared in the local and global scopes declaring this callable) that
-          :mod:`beartype` has already resolved to its referent, this wrappee
-          callable's **forward scope** (i.e., dictionary mapping from the name
-          to value of each locally and globally accessible attribute in the
-          local and global scope of this wrappee callable as well as deferring
-          the resolution of each currently undeclared attribute in that scope by
-          replacing that attribute with a forward reference proxy resolved only
-          when that attribute is passed as the second parameter to an
-          :func:`isinstance`- and :func:`issubclass`-based runtime type-check).
+          :mod:`beartype` has already resolved to its referent, this decoratee's
+          **forward scope** (i.e., dictionary mapping from the name to value of
+          each locally and globally accessible attribute in the local and global
+          scope of this decoratee as well as deferring the resolution of each
+          currently undeclared attribute in that scope by replacing that
+          attribute with a forward reference proxy resolved only when that
+          attribute is passed as the second parameter to an :func:`isinstance`-
+          and :func:`issubclass`-based runtime type-check).
         * Else, :data:`None`.
-    
+
         Note that:
-    
+
         * The reconstruction of this scope is computationally expensive and thus
           deferred until needed to resolve the first stringified type hint
-          annotating this wrappee callable.
+          annotating this decoratee.
         * All callables have local scopes *except* global functions, whose local
           scopes are by definition the empty dictionary.
     '''
@@ -85,25 +88,23 @@ class BeartypeCallDecorMinimalData(BeartypeCallDataABC):
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'conf',
-        'func_scope_forward',
+        'decoratee_scope_forward',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         conf: BeartypeConf  # pyright: ignore
-        func: Callable  # pyright: ignore
-        func_annotations: Pep649749HintableAnnotations  # pyright: ignore
-        func_scope_forward: Optional[LexicalScope]  # pyright: ignore
+        decoratee_scope_forward: Optional[LexicalScope]  # pyright: ignore
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
         cls_stack: TypeStack,
         conf: BeartypeConf,
-        func: Callable,
-        func_annotations: Pep649749HintableAnnotations,
-        func_scope_forward: Optional[LexicalScope],
+        decoratee: Decoratee,
+        decoratee_annotations: Pep649749HintableAnnotations,
+        decoratee_scope_forward: Optional[LexicalScope],
     ) -> None:
         '''
         Initialize this metadata with the passed parameters.
@@ -123,17 +124,19 @@ class BeartypeCallDecorMinimalData(BeartypeCallDataABC):
         '''
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not beartype configuration.')
+        assert isinstance(decoratee_scope_forward, NoneTypeOr[dict]), (
+            f'{repr(decoratee_scope_forward)} neither dictionary nor "None".')
 
         # Initialize our superclass.
         super().__init__(
             cls_stack=cls_stack,
-            func=func,
-            func_annotations=func_annotations,
+            decoratee=decoratee,
+            decoratee_annotations=decoratee_annotations,
         )
 
         # Classify all remaining passed parameters.
         self.conf = conf
-        self.func_scope_forward = func_scope_forward
+        self.decoratee_scope_forward = decoratee_scope_forward
 
     # ..................{ RESOLVERS                          }..................
     def resolve_hint_pep484_ref_str(
@@ -176,13 +179,14 @@ def minify_decor_curr_kwargs(**kwargs) -> BeartypeCallDecorMinimalData:
     from passed **beartype decorator call maximal metadata keyword parameters**
     (i.e., to be passed to the :meth:`BeartypeCallDecorData.reinit` method).
 
-    This factory method is a high-level convenience principally intended to
-    be called from unit tests. For that reason, efficiency is irrelevant.
+    This factory method is a high-level convenience principally intended to be
+    called *only* from unit tests. Ergo, efficiency is irrelevant.
 
     Parameters
     ----------
     All passed keyword parameters are passed as is to the
-    :meth:`BeartypeCallDecorData.reinit` method.
+    :meth:`beartype._check.cls.call.calldatadecor.BeartypeCallDecorData.reinit`
+    method.
 
     Returns
     -------

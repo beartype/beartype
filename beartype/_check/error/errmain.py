@@ -236,18 +236,18 @@ def get_hint_object_violation(
       satisfies a PEP-compliant annotation on that callable; that code does
       *not* raise human-readable exceptions in the event that value fails to
       satisfy that annotation. Instead, that code defers to...
-    * This function, performing unoptimized PEP-compliant runtime type-checking
-      generically applicable to all wrapper functions. The aforementioned
-      code calls this function only in the event that value fails to satisfy
-      that annotation, in which case this function then returns a human-readable
+    * This getter, performing unoptimized PEP-compliant runtime type-checking
+      generically applicable to all wrapper functions. The aforementioned code
+      calls this getter only in the event that value fails to satisfy that
+      annotation, in which case this getter then returns a human-readable
       exception after discovering the underlying cause of this type failure by
       recursively traversing that value and annotation. While efficiency is the
-      foremost focus of this package, efficiency is irrelevant during exception
-      handling -- which typically only occurs under infrequent edge cases.
-      Likewise, while raising this exception *would* technically be feasible
-      from the aforementioned code, doing so proved sufficiently non-trivial,
-      fragile, and ultimately unmaintainable to warrant offloading to this
-      function universally callable from all wrapper functions.
+      foremost focus of the :mod:`beartype` package, efficiency is irrelevant
+      during exception handling -- which typically only occurs under infrequent
+      edge cases. Likewise, while raising this exception *would* technically be
+      feasible from the aforementioned code, doing so proved sufficiently
+      non-trivial, fragile, and ultimately unmaintainable to warrant offloading
+      to this getter universally callable from all wrapper functions.
 
     Parameters
     ----------
@@ -263,14 +263,6 @@ def get_hint_object_violation(
         Type hint against which to type-check this object.
     obj : object
         Arbitrary object to be type-checked against this type hint.
-    func : Optional[CallableABC]
-        Either:
-
-        * If this violation originates from a decorated callable, that
-          callable.
-        * Else, :data:`None`.
-
-        Defaults to :data:`None`.
     pith_name : Optional[str], default: None
         Either:
 

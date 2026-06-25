@@ -12,8 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.sign.datahintsigns import HintSignNoReturn
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
+from beartype._data.hint.sign.datahintsigns import HintSignNoReturn
 from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextlabel import label_callable
 from beartype._util.text.utiltextrepr import represent_pith
@@ -41,7 +41,7 @@ def find_cause_pep484_noreturn(cause: HintTreeError) -> HintTreeError:
         f'{repr(cause.hint_curr_sanified)} not "HintSignNoReturn".')
 
     # Decorated callable originating this violation.
-    func: Callable = cause.call_curr.func  # type: ignore[assignment]
+    func: Callable = cause.call_curr.decoratee  # type: ignore[assignment]
 
     # Output cause to be returned, permuted from this input cause such that the
     # justification is a human-readable string describing this failure.

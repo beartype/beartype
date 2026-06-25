@@ -33,6 +33,7 @@ from beartype._data.check.code.pep.datacodepep525 import (
     CODE_PEP525_RETURN_UNCHECKED,
 )
 from beartype._data.typing.datatyping import (
+    Pep649749HintableAnnotations,
     LexicalScope,
     TypeStack,
 )
@@ -117,22 +118,31 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         all flags, options, settings, and other metadata configuring the
         current decoration of the decorated callable).
     func_annotations : dict[str, Hint]
-        **Type hint dictionary** mapping from the name of each annotated
-        parameter and return accepted by the decorated callable to the type hint
-        annotating that parameter or return.
+        **Decoratee type hint dictionary** mapping from the name of each
+        annotated parameter and return accepted by the decorated callable to the
+        type hint annotating that parameter or return.
 
-        Note that this dictionary is *not* directly mutable. When the active
-        Python interpreter targets Python >= 3.14, :pep:`649`-compliant type
-        hint dictionaries are *not* directly mutable. Attempting to do so will
-        superficially appear to succeed but ultimately reduce to a silent noop.
-        This particular dictionary is only indirectly mutable by calling the
-        high-level :meth:`set_func_pith_hint` setter method, which mutates the
-        type hint annotating the name of the passed parameter or return in a
-        portable manner consistent with both :pep:`649` and Python >= 3.14.
-        Although this constraint *could* be enforced by encapsulating this
-        dictionary in a :class:`beartype.FrozenDict` instance, doing so would
-        simply reduce space and time efficiency for little to no actual gain.
-        Simply call :meth:`set_func_pith_hint` instead.
+        Note that:
+
+        * This dictionary is a trivial alias of the
+          :attr:`.decoratee_annotations` dictionary defined by our superclass.
+          Although trivial, this alias:
+
+          * Has a more appropriate name suitable for this subclass.
+          * Is annotated by a more constrained type hint than that dictionary.
+
+        * This dictionary is *not* directly mutable. When the active Python
+          interpreter targets Python >= 3.14, :pep:`649`-compliant type hint
+          dictionaries are *not* directly mutable. Attempting to do so will
+          superficially appear to succeed but ultimately reduce to a silent
+          noop. This particular dictionary is only indirectly mutable by calling
+          the high-level :meth:`set_func_pith_hint` setter method, which mutates
+          the type hint annotating the name of the passed parameter or return in
+          a portable manner consistent with both :pep:`649` and Python >= 3.14.
+          Although this constraint *could* be enforced by encapsulating this
+          dictionary in a :class:`beartype.FrozenDict` instance, doing so would
+          simply reduce space and time efficiency for little to no actual gain.
+          Simply call :meth:`.set_func_pith_hint` instead.
     func_annotations_get : Callable[[str, object], object]
         :meth:`dict.get` method bound to the :attr:`func_annotations`
         dictionary, localized as a negligible microoptimization. Blame Guido.
@@ -220,6 +230,7 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
+        'func_annotations',
         'func_annotations_get',
         'func_wrappee',
         'func_wrappee_wrappee',
@@ -237,6 +248,7 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
+        func_annotations: Pep649749HintableAnnotations
         func_annotations_get: Callable[[str, object], object]
         func_scope_forward: Optional[BeartypeForwardScope]
         func_wrappee: Callable
@@ -319,7 +331,8 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         # Nullify all remaining instance variables for safety.
         self.cls_stack = (  # type: ignore[assignment]
         self.conf) = (  # pyright: ignore
-        self.func) = (  # pyright: ignore
+        self.decoratee) = (  # pyright: ignore
+        self.decoratee_annotations) = (  # pyright: ignore
         self.func_annotations) = (  # pyright: ignore
         self.func_annotations_get) = (  # pyright: ignore
         self.func_scope_forward) = (  # pyright: ignore
@@ -486,7 +499,8 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         # global scope of the original callable decorated by @beartype (rather
         # than a differing local and global scope of a differing callable
         # created and returned by other intermediary third-party decorators).
-        self.func = self.func_wrappee_wrappee = unwrap_func_all_isomorphic(
+        self.decoratee = (
+        self.func_wrappee_wrappee) = unwrap_func_all_isomorphic(
             func=func, wrapper=wrapper)
         # print(f'func_wrappee: {self.func_wrappee}')
         # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')
@@ -559,7 +573,8 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         # thin isomorphic wrapper deferring to "wrapper" (i.e., the callable to
         # be unwrapped). Even if "func" were annotated with type hints, those
         # type hints would be useless for most intents and purposes.
-        self.func_annotations = get_hintable_pep649749_annotations(
+        self.decoratee_annotations = (
+        self.func_annotations) = get_hintable_pep649749_annotations(
             hintable=wrapper, exception_cls=BeartypeDecorWrappeeException)
         # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)} w/ annotations {self.func_annotations}...')
 
@@ -744,7 +759,7 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         # needed to reasonably describe this metadata.
         return (
             f'{self.__class__.__name__}('
-            f'func={repr(self.func)}, '
+            f'func={repr(self.func_wrappee)}, '
             f'conf={repr(self.conf)}'
             f')'
         )
@@ -860,9 +875,9 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         return BeartypeCallDecorMinimalData(
             conf=self.conf,
             cls_stack=self.cls_stack,
-            func=self.func_wrappee,
-            func_annotations=self.func_annotations,
-            func_scope_forward=func_scope_forward_min,
+            decoratee=self.func_wrappee,
+            decoratee_annotations=self.func_annotations,
+            decoratee_scope_forward=func_scope_forward_min,
         )
 
     # ..................{ LABELLERS                          }..................

@@ -175,11 +175,21 @@ BeartypeableT = TypeVar(
 
         # C-based unbound property method descriptor (i.e., a pure-Python
         # unbound function decorated by the builtin @property decorator) *OR*...
-        MethodDecoratorPropertyType |
+        MethodDecoratorPropertyType,
 
         # C-based unbound static method descriptor (i.e., a pure-Python
         # unbound function decorated by the builtin @staticmethod decorator).
         MethodDecoratorStaticType,
+
+        #FIXME: There's a *TON* more that we can and should list here now,
+        #including:
+        #* The PEP 702-compliant "warnings.deprecated" type.
+        #* Whatever type underlies the context managers created and returned by
+        #  the @contextlib.contextmanager decorator.
+        #* Whatever type underlies the callables created and returned by the
+        #  @functools.lru_cache decorator.
+        #* Probably heaps more, too! Inspect the "beartype._decor._nontype"
+        #  subpackage to fully grep everything @beartype now supports.
 
         #FIXME: Currently unused, but preserved for posterity.
         # # C-based bound method descriptor (i.e., a pure-Python unbound
@@ -590,10 +600,30 @@ Equivalently, this hint matches all tuples passable as the second parameters to
 the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
+# ....................{ TYPE ~ or                          }....................
+Decoratee = type | FunctionType
+'''
+:pep:`585`-compliant type hint matching a **decoratee** (i.e., pure-Python
+object being directly decorated by some pure-Python decorator).
+
+Equivalently, this hint matches all pure-Python callables and classes.
+Technically, other objects *can* be indirectly decorated by a decorator (e.g.,
+by that decorator internally reversing the order of decorator chaining such that
+that decorator is effectively repositioned below those objects in some chain of
+decorators). Pragmatically, decorators can only directly decorate pure-Python
+callables and classes.
+'''
+
 
 SetOrTupleTypes = TupleTypes | AbstractSetTypes
 '''
 PEP-compliant type hint matching a set *or* tuple of zero or more types.
+'''
+
+
+TypeOrCallable = type | Callable
+'''
+:pep:`585`-compliant type hint matching a callable *or* type.
 '''
 
 

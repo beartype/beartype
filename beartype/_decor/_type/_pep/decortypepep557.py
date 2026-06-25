@@ -370,7 +370,7 @@ def beartype_pep557_dataclass(
         #    which will now need to generically apply to both callables *AND*
         #    types. I sigh. This requires some care. We'll need to grep the
         #    codebase for "func_annotations" and manually modify all hits that
-        #    apply to "decoratee_annotations". Probably most of those will be
+        #    apply to "hintable_annotations". Probably most of those will be
         #    forward reference-specific, we assume. We also sigh. *sighing*
         #  * Apply a similar careful manual renaming of "func" to "hintable".
         #    For obvious reasons, this one should be even more careful. With any
@@ -446,14 +446,51 @@ def beartype_pep557_dataclass(
         #          cls_stack=cls_stack,
         #          conf=conf,
         #      )
-        #* Pass that to the reduce_hint() call below like so. Note that we've
+        #* Pass that to the sanify_hint_any() call below like so. Note that we've
         #  inspected the reduce_hint() API and are confident that this is all
         #  that's needed:
-        #      reduce_hint(
-        #          call_meta=decor_curr,
-        #          hint=hint,
-        #          conf=conf,
-        #      )
+        #      from beartype._util.error.utilerrraise import reraise_exception_placeholder
+        #
+        #      # Attempt to...
+        #      try:
+        #          # With a context manager "catching" *ALL* non-fatal warnings issued
+        #          # during this logic for subsequent "playback" below...
+        #          with catch_warnings(record=True) as warnings_issued:
+        #              # Metadata encapsulating the sanification of this hint.
+        #              hint_sane = sanify_hint_any(
+        #                  call_meta=decor_curr,
+        #                  hint=hint,
+        #                  conf=conf,
+        #                  exception_prefix=EXCEPTION_PLACEHOLDER,
+        #              )
+        #
+        #          # If one or more warnings were issued, reissue these warnings with
+        #          # each placeholder substring (i.e., "EXCEPTION_PLACEHOLDER"
+        #          # instance) replaced by a human-readable description of this
+        #          # callable and annotated parameter.
+        #          if warnings_issued:
+        #              # print(f'warnings_issued: {warnings_issued}')
+        #              reissue_warnings_placeholder(
+        #                  warnings=warnings_issued,
+        #                  #FIXME: Obviously not right. *shrug*
+        #                  target_str=prefix_decor_curr_callable_arg_name(
+        #                      decor_curr=decor_curr, arg_name=arg_name),
+        #              )
+        #          # Else, *NO* warnings were issued.
+        #      # If any exception was raised, reraise this exception with each
+        #      # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
+        #      # replaced by a human-readable description of this callable and
+        #      # annotated parameter.
+        #      except Exception as exception:
+        #          reraise_exception_placeholder(
+        #              exception=exception,
+        #              #FIXME: Obviously not right. *shrug*
+        #              target_str=prefix_decor_curr_callable_arg_name(
+        #                  decor_curr=decor_curr, arg_name=arg_name),
+        #          )
+        #
+        #      # Sanified hint encapsulated by this metadata.
+        #      field_hint = hint_sane.hint
         #* Add a unit test (or improve an existing one) to test that a dataclass
         #  nested inside another class can define a field annotated by a
         #  relative stringified forward reference to that outermost class. Ugh!
