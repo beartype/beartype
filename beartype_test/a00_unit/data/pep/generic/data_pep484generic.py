@@ -15,6 +15,8 @@ from beartype_test.a00_unit.data.data_type import Class
 from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
     S,
     T,
+    U,
+    V,
 )
 from collections.abc import (
     Sized as SizedABC,
@@ -119,6 +121,23 @@ class Pep484GenericIntInt(Pep484GenericST[int, int]):
     :pep:`484`-compliant concrete generic subclass inheriting a
     :pep:`484`-compliant generic superclass subscripted twice by the
     builtin :class:`int` type.
+    '''
+
+    pass
+
+
+class Pep484GenericSTU_ST(Pep484GenericST[S, U], Generic[S, T, U]):
+    '''
+    :pep:`484`-compliant generic subclass parametrized by three type variables
+    but inheriting a :pep:`484`-compliant generic superclass subscripted by
+    only two of those type variables in **non-sequential** order (i.e., the
+    first and third type variables ``S`` and ``U``, skipping the second ``T``).
+
+    This class exercises the edge case where a child class uses its type
+    parameters in a non-sequential order when subscripting a parent class,
+    requiring :func:`beartype.door.is_subhint` to correctly resolve type
+    parameters by their position in ``__parameters__`` rather than by the
+    encounter order of the depth-first search traversal.
     '''
 
     pass
