@@ -17,9 +17,9 @@ from beartype.roar import (
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
-from beartype._check.cls.call.calldatadecor import (
-    cull_decor_curr,
-    make_decor_curr,
+from beartype._check.cls.call.calldatadecorfunc import (
+    cull_decor_func,
+    make_decor_func,
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
@@ -417,7 +417,7 @@ def beartype_func(
         defaults to ``func``.
 
     All remaining keyword parameters are passed as is to the
-    :meth:`beartype._check.cls.call.calldatadecor.BeartypeCallDecorData.reinit` method.
+    :meth:`beartype._check.cls.call.calldatadecorfunc.BeartypeCallDecorFuncData.reinit` method.
 
     Returns
     -------
@@ -467,13 +467,13 @@ def beartype_func(
 
     # ....................{ CODE                           }....................
     # Beartype call metadata describing that callable.
-    decor_curr = make_decor_curr(
+    decor_func = make_decor_func(
         func=func, conf=conf, wrapper=wrapper, **kwargs)  # pyright: ignore
-    # print(f'Decorating {repr(decor_curr)} with wrapper {repr(wrapper)}...')
+    # print(f'Decorating {repr(decor_func)} with wrapper {repr(wrapper)}...')
 
     # Dynamically generated Pure-Python code snippet fully defining both the
     # signature and body of the wrapper function type-checking that callable.
-    func_wrapper_code = generate_code(decor_curr)
+    func_wrapper_code = generate_code(decor_func)
     # print(f'func_wrapper_code: {func_wrapper_code}')
 
     # If that callable requires *NO* type-checking, silently reduce to a noop
@@ -487,9 +487,9 @@ def beartype_func(
     # annotating that callable), register these changes in a manner compliant
     # with both PEP 649 and Python >= 3.14 *BEFORE* calling the make_func()
     # factory function below, which internally propagates these changes from the
-    # "decor_curr.func_wrapper" callable into the created type-checking wrapper
+    # "decor_func.func_wrapper" callable into the created type-checking wrapper
     # function returned by the @beartype decorator. Look. It's complicated.
-    decor_curr.set_func_annotations_if_dirty()
+    decor_func.set_func_annotations_if_dirty()
 
     # ....................{ SCOPE                          }....................
     # Global scope of the type-checking wrapper function to be defined below,
@@ -528,7 +528,7 @@ def beartype_func(
     #     type parameter scopes of parent callables of the currently decorated
     #     closure. See also unit tests in the
     #     test-specific "data_pep484ref_decor_pep695" data submodule.
-    func_wrapper_globals = get_func_globals(decor_curr.func_wrappee_wrappee)
+    func_wrapper_globals = get_func_globals(decor_func.func_wrappee_wrappee)
 
     # If the global scope of the currently decorated unwrapped callable either
     # fails to define the builtins scope under the standard dunder name expected
@@ -590,7 +590,7 @@ def beartype_func(
     # attributes are *ALWAYS* first looked up as local attributes before falling
     # back to being looked up as global attributes.
     func_wrapper = make_func(
-        func_name=decor_curr.func_wrapper_name,
+        func_name=decor_func.func_wrapper_name,
         func_code=func_wrapper_code,
         func_globals=func_wrapper_globals,
 
@@ -601,9 +601,9 @@ def beartype_func(
         #unified scope -- with our fake local scope taking precedence. Since the
         #latter *ONLY* defines "__beartype_"-prefixed variables, there should be
         #*NO* conflict. Maybe? Let's give it a go, yo.
-        func_locals=decor_curr.func_wrapper_locals,
-        func_wrapped=decor_curr.func_wrapper,  # pyright: ignore
-        func_labeller=decor_curr.label_func_wrapper,
+        func_locals=decor_func.func_wrapper_locals,
+        func_wrapped=decor_func.func_wrapper,  # pyright: ignore
+        func_labeller=decor_func.label_func_wrapper,
         is_debug=conf.is_debug,
         exception_cls=BeartypeDecorWrapperException,
     )
@@ -615,7 +615,7 @@ def beartype_func(
 
     # ....................{ RETURN                         }....................
     # Deinitialize this beartype call metadata.
-    cull_decor_curr(decor_curr)
+    cull_decor_func(decor_func)
 
     # Return this wrapper.
     return func_wrapper  # type: ignore[return-value]
@@ -720,7 +720,7 @@ def _beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
         # print(f'Pseudo-callable wrapper {repr(pseudofunc)} identified!')
 
         # Transitively pass the optional "wrapper" parameter to the
-        # beartype_func() decorator (and thus the BeartypeCallDecorData.reinit()
+        # beartype_func() decorator (and thus the BeartypeCallDecorFuncData.reinit()
         # method transitively called by that decorator) called below, ensuring
         # that this pseudo-callable wrapper object is correctly unwrapped.
         #

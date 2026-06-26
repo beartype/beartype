@@ -129,7 +129,7 @@ this arises include:
 
 The caller is thus responsible for mapping parameters to type hints. Thankfully,
 the existing
-:attr:`beartype._check.meta.checkdecor.BeartypeCallDecorData.func_annotations`
+:attr:`beartype._check.meta.checkdecor.BeartypeCallDecorFuncData.func_annotations`
 dictionary makes this trivial for most use cases.
 '''
 

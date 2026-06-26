@@ -20,7 +20,7 @@ from beartype._check.convert._convcoerce import (
 from beartype._check.convert._reduce.redmain import reduce_hint
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
-from beartype._check.cls.call.calldatadecor import BeartypeCallDecorData
+from beartype._check.cls.call.calldatadecorfunc import BeartypeCallDecorFuncData
 from beartype._check.cls.call.calldataexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._conf.confmain import BeartypeConf
@@ -39,7 +39,7 @@ from typing import Optional
 #FIXME: Unit test us up, please.
 def sanify_hint_root_func(
     # Mandatory parameters.
-    decor_curr: BeartypeCallDecorData,
+    decor_func: BeartypeCallDecorFuncData,
     hint: Hint,
     pith_name: str,
 
@@ -86,7 +86,7 @@ def sanify_hint_root_func(
 
     Parameters
     ----------
-    decor_curr : BeartypeCallDecorData
+    decor_func : BeartypeCallDecorFuncData
         **Beartype decorator call metadata** (i.e., dataclass aggregating *all*
         metadata encapsulating the currently decorated callable).
     hint : Hint
@@ -142,7 +142,7 @@ def sanify_hint_root_func(
     # hint is *NOT* necessarily PEP-compliant, perform this coercion *BEFORE*
     # validating this hint to be PEP-compliant.
     hint_coerced = coerce_func_hint_root(
-        decor_curr=decor_curr,
+        decor_func=decor_func,
         hint=hint,
         pith_name=pith_name,
         exception_prefix=exception_prefix,
@@ -158,7 +158,7 @@ def sanify_hint_root_func(
         # Safely set the hint annotating the parameter or return with the passed
         # name of the decorated callable to the passed hint in a portable manner
         # consistent with both PEPs 649 and 749 under Python >= 3.14.
-        decor_curr.set_func_pith_hint(pith_name=pith_name, hint=hint)
+        decor_func.set_func_pith_hint(pith_name=pith_name, hint=hint)
     # Else, this possibly PEP-noncompliant hint was *NOT* coerced into a
     # PEP-compliant hint, implying this hint to already be PEP-compliant.
 
@@ -176,8 +176,8 @@ def sanify_hint_root_func(
     # thus *NOT* performed by the sanify_hint_root_statement() sanitizer.
     if pith_name == ARG_NAME_RETURN:
         hint = reduce_hint_pep484585_func_return(
-            func=decor_curr.func_wrappee,
-            func_annotations=decor_curr.func_annotations,
+            func=decor_func.func_wrappee,
+            func_annotations=decor_func.func_annotations,
             exception_prefix=exception_prefix,
         )
     # Else, this hint annotates a parameter.
@@ -206,8 +206,8 @@ def sanify_hint_root_func(
     # convenient form for beartype-specific type-checking elsewhere.
     hint_sane = reduce_hint(
         arg_kind=arg_kind,
-        call_curr=decor_curr,
-        conf=decor_curr.conf,
+        call_curr=decor_func,
+        conf=decor_func.conf,
         hint=hint,
         pith_name=pith_name,
         exception_prefix=exception_prefix,

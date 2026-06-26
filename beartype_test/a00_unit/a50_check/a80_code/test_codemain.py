@@ -28,7 +28,7 @@ def test_make_check_expr() -> None:
     from beartype._check.convert.convmain import sanify_hint_any
     from beartype._check.cls.hint.hintsane import HintSane
     from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
-    from beartype._check.cls.call.calldatadecor import new_decor_curr
+    from beartype._check.cls.call.calldatadecorfunc import new_decor_func
     from beartype._check.cls.call.calldataexternal import (
         BEARTYPE_CALL_EXTERNAL_META)
     from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
@@ -148,7 +148,7 @@ def test_make_check_expr() -> None:
         # With beartype decorator call metadata encapsulating the implicit
         # decoration of an arbitrary method of an arbitrary type, itself
         # decorated explicitly via a type stack.
-        with new_decor_curr(
+        with new_decor_func(
             cls_stack=(Class,),
             conf=BEARTYPE_CONF_DEFAULT,
             func=Class.instance_method,

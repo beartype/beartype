@@ -21,8 +21,8 @@ from beartype._cave._cavefast import (
     WeakrefCallableType,
 )
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
-from beartype._check.cls.call.calldatadecormin import (
-    BeartypeCallDecorMinimalData)
+from beartype._check.cls.call.calldatadecorabc import (
+    BeartypeCallDecorDataABC)
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import (
     LexicalScope,
@@ -138,7 +138,7 @@ def make_scope_forward_caller_external(
 #FIXME: Unit test us up, please.
 def make_scope_forward_decor_curr(
     # Mandatory parameters.
-    decor_curr: BeartypeCallDecorMinimalData,
+    decor_func: BeartypeCallDecorDataABC,
     hint: str,
     func_is_nested: bool,
 
@@ -162,7 +162,7 @@ def make_scope_forward_decor_curr(
 
     Parameters
     ----------
-    decor_curr : BeartypeCallDecorMinimalData
+    decor_func : BeartypeCallDecorDataABC
         **Beartype decorator call minimal metadata** (i.e., dataclass
         encapsulating the minimal metadata required to type-check the currently
         decorated callable at the time that callable is subsequently called).
@@ -187,27 +187,27 @@ def make_scope_forward_decor_curr(
     LexicalScope
         Forward scope relative to the currently decorated callable.
     '''
-    assert isinstance(decor_curr, BeartypeCallDecorMinimalData), (
-        f'{repr(decor_curr)} not beartype decorator call metadata.')
+    assert isinstance(decor_func, BeartypeCallDecorDataABC), (
+        f'{repr(decor_func)} not beartype decorator call metadata.')
     assert isinstance(func_is_nested, bool), (
         f'{repr(func_is_nested)} not boolean.')
-    # print(f'Making forward scope for {repr(decor_curr.func)}...')
+    # print(f'Making forward scope for {repr(decor_func.func)}...')
 
     # ....................{ PREAMBLE                       }....................
     # If the forward scope of the decorated callable has already been decided,
     # immediately return this scope as is.
-    if decor_curr.func_scope_forward is not None:
-        return decor_curr.func_scope_forward
+    if decor_func.decoratee_scope_forward is not None:
+        return decor_func.decoratee_scope_forward
     # Else, this forward scope has yet to be decided.
     #
     # If this decorator call metadata is minimal (i.e.,
-    # "BeartypeCallDecorMinimalData" object) rather maximal (i.e.,
-    # "BeartypeCallDecorData" object), this forward scope should have already
+    # "BeartypeCallDecorDataABC" object) rather maximal (i.e.,
+    # "BeartypeCallDecorFuncData" object), this forward scope should have already
     # been decided by (in order):
     # * Repeated calls to the
-    #   BeartypeCallDecorData.resolve_hint_pep484_ref_str() method of the
+    #   BeartypeCallDecorFuncData.resolve_hint_pep484_ref_str() method of the
     #   original maximal metadata.
-    # * A call to the BeartypeCallDecorData.minify() method, propagating the
+    # * A call to the BeartypeCallDecorFuncData.minify() method, propagating the
     #   forward scope from that maximal to this minimal metadata.
     #
     # But this forward scope is still undecided! Ergo, beartype failed to follow
@@ -222,25 +222,25 @@ def make_scope_forward_decor_curr(
     # Ergo, this forward scope *CANNOT* be reconstructed.
     #
     # Note that this should *NEVER* occur. Naturally, this just occurred.
-    elif decor_curr.__class__ is BeartypeCallDecorMinimalData:  # pragma: no cover
+    elif decor_func.__class__ is BeartypeCallDecorDataABC:  # pragma: no cover
         # Raise this exception.
         raise exception_cls(
             f'{exception_prefix}'
             f'PEP 484 forward reference type hint "{hint}" unresolvable, as '
-            f'callable {repr(decor_curr.func)} forward reference scope not '
+            f'callable {repr(decor_func.func)} forward reference scope not '
             f'propagated onto wrapper function at decoration time. '
             f'Beartype has failed us all... but kinda mostly just you.'
         )
     # Else, this decorator call metadata is maximal (i.e.,
-    # "BeartypeCallDecorData" object) rather than minimal (i.e.,
-    # "BeartypeCallDecorMinimalData" object). In this case, this forward scope
+    # "BeartypeCallDecorFuncData" object) rather than minimal (i.e.,
+    # "BeartypeCallDecorDataABC" object). In this case, this forward scope
     # is decidable as documented above. We do so now.
 
     # ....................{ LOCALS                         }....................
     # Decorated callable and metadata associated with that callable, localized
     # to improve both readability and negligible efficiency when accessed below.
-    func = decor_curr.func
-    cls_stack = decor_curr.cls_stack
+    func = decor_func.func
+    cls_stack = decor_func.cls_stack
 
     # Stack frame on the current call stack embodying the parent callable or
     # type locally declaring the decorated callable if any *OR* "None",
@@ -328,7 +328,7 @@ def make_scope_forward_decor_curr(
                 # Note that, for safety, we currently avoid ignoring additional
                 # frames that we could technically ignore. These include:
                 # * The call to the parent
-                #   beartype._check.cls.call.calldatadecor.BeartypeCallDecorData.reinit()
+                #   beartype._check.cls.call.calldatadecorfunc.BeartypeCallDecorFuncData.reinit()
                 #   method.
                 # * The call to the parent @beartype.beartype() decorator.
                 #
@@ -493,7 +493,7 @@ def make_scope_forward_decor_curr(
     #     def muh_func(muh_arg: 'Dict[str, MuhGeneric[int]]') -> None: ...
     #
     #     class MuhGeneric(Generic[T]): ...
-    func_scope = decor_curr.func_scope_forward = BeartypeForwardScope(
+    func_scope = decor_func.decoratee_scope_forward = BeartypeForwardScope(
         scope_name=func_module_name,
         func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
         exception_prefix=exception_prefix,

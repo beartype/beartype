@@ -16,8 +16,8 @@ from beartype.roar import BeartypeDecorWrappeeException
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
-from beartype._check.cls.call.calldatadecormin import (
-    BeartypeCallDecorMinimalData)
+from beartype._check.cls.call.calldatadecorfuncmin import (
+    BeartypeCallDecorFuncMinimalData)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_NORMAL_RETURN_CHECKED,
@@ -33,7 +33,6 @@ from beartype._data.check.code.pep.datacodepep525 import (
     CODE_PEP525_RETURN_UNCHECKED,
 )
 from beartype._data.typing.datatyping import (
-    Pep649749HintableAnnotations,
     LexicalScope,
     TypeStack,
 )
@@ -72,10 +71,10 @@ from typing import (
 )
 
 # ....................{ SUBCLASSES                         }....................
-class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
+class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
     '''
-    **Beartype decorator call metadata** (i.e., dataclass encapsulating *all*
-    metadata for the callable currently being decorated by the
+    **Beartype callable decorator call metadata** (i.e., dataclass encapsulating
+    *all* metadata for the callable currently being decorated by the
     :func:`beartype.beartype` decorator).
 
     This dataclass aggregates specific metadata unique to the high-level public
@@ -108,45 +107,29 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
     fail with difficult-to-diagnose issues. See also `<issue #5_>`__, which
     exhibited this very complaint.
 
+    **The decoratee type hint dictionary** (i.e., :attr:`.decoratee_annotations`
+    instance variable) **is not directly mutable.** When the active Python
+    interpreter targets Python >= 3.14, :pep:`649`-compliant type hint
+    dictionaries are *not* directly mutable. Attempting to do so will
+    superficially appear to succeed but ultimately reduce to a silent noop. This
+    dictionary is only indirectly mutable by calling the high-level
+    :meth:`.set_func_pith_hint` setter method, which mutates the type hint
+    annotating the name of the passed parameter or return in a portable manner
+    consistent with both :pep:`649` and Python >= 3.14. Although this constraint
+    *could* be enforced by encapsulating this dictionary in a
+    :class:`beartype.FrozenDict` instance, doing so would simply reduce space
+    and time efficiency for little to no actual gain. Simply call
+    :meth:`.set_func_pith_hint` instead, please. We're sighing so hard.
+
     .. _issue #5:
        https://github.com/beartype/beartype/issues/5
 
     Attributes
     ----------
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all flags, options, settings, and other metadata configuring the
-        current decoration of the decorated callable).
-    func_annotations : dict[str, Hint]
-        **Decoratee type hint dictionary** mapping from the name of each
-        annotated parameter and return accepted by the decorated callable to the
-        type hint annotating that parameter or return.
-
-        Note that:
-
-        * This dictionary is a trivial alias of the
-          :attr:`.decoratee_annotations` dictionary defined by our superclass.
-          Although trivial, this alias:
-
-          * Has a more appropriate name suitable for this subclass.
-          * Is annotated by a more constrained type hint than that dictionary.
-
-        * This dictionary is *not* directly mutable. When the active Python
-          interpreter targets Python >= 3.14, :pep:`649`-compliant type hint
-          dictionaries are *not* directly mutable. Attempting to do so will
-          superficially appear to succeed but ultimately reduce to a silent
-          noop. This particular dictionary is only indirectly mutable by calling
-          the high-level :meth:`set_func_pith_hint` setter method, which mutates
-          the type hint annotating the name of the passed parameter or return in
-          a portable manner consistent with both :pep:`649` and Python >= 3.14.
-          Although this constraint *could* be enforced by encapsulating this
-          dictionary in a :class:`beartype.FrozenDict` instance, doing so would
-          simply reduce space and time efficiency for little to no actual gain.
-          Simply call :meth:`.set_func_pith_hint` instead.
-    func_annotations_get : Callable[[str, object], object]
-        :meth:`dict.get` method bound to the :attr:`func_annotations`
+    decoratee_annotations_get : Callable[[str, object], object]
+        :meth:`dict.get` method bound to the :attr:`.decoratee_annotations`
         dictionary, localized as a negligible microoptimization. Blame Guido.
-    _is_func_annotations_dirty : bool
+    _is_decoratee_annotations_dirty : bool
         :data:`True` only if this type hint dictionary is **dirty** (i.e.,
         modified from the original type hint dictionary annotating the decorated
         callable by a prior call to the :meth:`set_func_pith_hint` setter).
@@ -230,8 +213,8 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'func_annotations',
-        'func_annotations_get',
+        'decoratee_annotations_get',
+        '_is_decoratee_annotations_dirty',
         'func_wrappee',
         'func_wrappee_wrappee',
         'func_wrappee_wrappee_codeobj',
@@ -242,15 +225,13 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         'func_wrapper_code_signature_prefix',
         'func_wrapper_name',
         'func_wrapper_locals',
-        '_is_func_annotations_dirty',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        func_annotations: Pep649749HintableAnnotations
-        func_annotations_get: Callable[[str, object], object]
-        func_scope_forward: Optional[BeartypeForwardScope]
+        decoratee_annotations_get: Callable[[str, object], object]
+        _is_decoratee_annotations_dirty: bool
         func_wrappee: Callable
         func_wrappee_wrappee: Callable
         func_wrappee_wrappee_codeobj: CallableCodeObjectType
@@ -261,7 +242,10 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         func_wrapper_code_signature_prefix: str
         func_wrapper_name: str
         func_wrapper_locals: LexicalScope
-        _is_func_annotations_dirty: bool
+
+        # Re-annotate these class variables defined by a superclass with tighter
+        # bounds more suitable to this subclass.
+        decoratee_scope_forward: Optional[BeartypeForwardScope]
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self) -> None:
@@ -275,15 +259,15 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
 
         #. Acquire cached instances of this class via the
            :mod:`beartype._util.cache.pool.utilcachepoolinstance` submodule.
-        #. Call the :meth:`reinit` method on these instances to properly
+        #. Call the :meth:`.reinit` method on these instances to properly
            initialize these instances.
         '''
 
         # Avoid explicitly initializing our superclass. The public API of this
         # subclass cleanly conforms with the public API of our superclass in
         # everything except instantiation. Clean object-oriented design
-        # frequently breaks down in the margins. This is such a margin. Although
-        # this design flaw *COULD* be rectified by defining a new
+        # frequently breaks down in the margins. This is that margin. While this
+        # design flaw *COULD* be rectified by defining a new
         # "BeartypeCallDecorABC" superclass at the root of these two classes,
         # doing so would only uselessly increase space and time consumption for
         # literally *NO* gain whatsoever. OO: it is what it is.
@@ -310,12 +294,12 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
 
         # Defer the resolution of the global and local scope for the currently
         # decorated callable until needed to resolve stringified type hints.
-        self.func_scope_forward = None  # pyright: ignore
+        self.decoratee_scope_forward = None  # pyright: ignore
 
-        # Empty the set of all hidden parameters required by this type-checking
-        # wrapper function.
+        # Nullify this dictionary of hidden parameters passed to the
+        # type-checking wrapper function generated for this decorator call.
         self.func_wrapper_locals: LexicalScope = {}
-        self._is_func_annotations_dirty = False
+        self._is_decoratee_annotations_dirty = False
 
         # Default the same code snippets set by the reinit() method to those
         # returning values from normal (i.e., non-generator) synchronous
@@ -333,9 +317,8 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         self.conf) = (  # pyright: ignore
         self.decoratee) = (  # pyright: ignore
         self.decoratee_annotations) = (  # pyright: ignore
-        self.func_annotations) = (  # pyright: ignore
-        self.func_annotations_get) = (  # pyright: ignore
-        self.func_scope_forward) = (  # pyright: ignore
+        self.decoratee_annotations_get) = (  # pyright: ignore
+        self.decoratee_scope_forward) = (  # pyright: ignore
         self.func_wrappee) = (  # pyright: ignore
         self.func_wrappee_wrappee) = (  # pyright: ignore
         self.func_wrappee_wrappee_codeobj) = (  # pyright: ignore
@@ -437,7 +420,7 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         # If this configuration is *NOT* a configuration, raise an exception.
         elif not isinstance(conf, BeartypeConf):
             raise BeartypeDecorWrappeeException(
-                f'BeartypeCallDecorData.reinit() method "conf" parameter '
+                f'BeartypeCallDecorFuncData.reinit() method "conf" parameter '
                 f'{repr(conf)} not beartype configuration.'
             )
         # Else, this configuration is a configuration.
@@ -446,7 +429,7 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         # exception.
         elif not isinstance(cls_stack, NoneTypeOr[tuple]):
             raise BeartypeDecorWrappeeException(
-                f'BeartypeCallDecorData.reinit() method "cls_stack" parameter '
+                f'BeartypeCallDecorFuncData.reinit() method "cls_stack" parameter '
                 f'{repr(cls_stack)} neither tuple nor "None".'
             )
         # Else, this class stack is either a tuple *OR* "None".
@@ -458,7 +441,7 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
                 # If this item is *NOT* a type, raise an exception.
                 if not isinstance(cls_stack_item, type):
                     raise BeartypeDecorWrappeeException(
-                        f'BeartypeCallDecorData.reinit() method "cls_stack" item '
+                        f'BeartypeCallDecorFuncData.reinit() method "cls_stack" item '
                         f'{repr(cls_stack_item)} not type.'
                     )
                 # Else, this item is a type.
@@ -494,7 +477,7 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         # this "func_wrappee_wrappee" rather than the passed "func_wrappee".
         # Why? Specifically, because the
         # resolve_hint_pep484_ref_str_decor_curr() function accepting a
-        # general-purpose "decor_curr: BeartypeCallDecorMinimalData" parameter
+        # general-purpose "decor_func: BeartypeCallDecorDataABC" parameter
         # *MUST* dynamically resolve type hints against the original local and
         # global scope of the original callable decorated by @beartype (rather
         # than a differing local and global scope of a differing callable
@@ -566,20 +549,19 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         # function onto the pseudo-callable "cheating_object" object.
         #
         # In this case, the caller would have called this method as:
-        #     decor_curr.reinit(
+        #     decor_func.reinit(
         #         func=cheating_object.__call__, wrapper=cheating_object)
         #
         # Note that "func" (i.e., the callable to be type-checked) is only a
         # thin isomorphic wrapper deferring to "wrapper" (i.e., the callable to
         # be unwrapped). Even if "func" were annotated with type hints, those
         # type hints would be useless for most intents and purposes.
-        self.decoratee_annotations = (
-        self.func_annotations) = get_hintable_pep649749_annotations(
+        self.decoratee_annotations = get_hintable_pep649749_annotations(
             hintable=wrapper, exception_cls=BeartypeDecorWrappeeException)
         # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)} w/ annotations {self.func_annotations}...')
 
         # dict.get() method bound to this dictionary.
-        self.func_annotations_get = self.func_annotations.get
+        self.decoratee_annotations_get = self.decoratee_annotations.get
 
         # ..................{ VARS ~ func : kind             }..................
         # If the wrappee callable currently being decorated is pure-Python...
@@ -779,16 +761,18 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         # dirty (i.e., changed from the original "__annotations__" dunder
         # dictionary annotating that callable), register these changes in a
         # manner compliant with both PEP 649 and Python >= 3.14. Specifically...
-        if self._is_func_annotations_dirty:
+        if self._is_decoratee_annotations_dirty:
             # print(f'Setting new function {self.func_wrapper} annotations {self.func_annotations}...')
 
             # Set these modified annotations on the decorated callable
             # originating these annotations.
             set_pep649749_hintable_annotations(
-                hintable=self.func_wrapper, annotations=self.func_annotations)
+                hintable=self.func_wrapper,
+                annotations=self.decoratee_annotations,
+            )
 
             # Note this type hint dictionary to now be clean.
-            self._is_func_annotations_dirty = False
+            self._is_decoratee_annotations_dirty = False
         # Else, the type hint dictionary associated with the decorated callable
         # is still clean (i.e., identical to the original "__annotations__"
         # dunder dictionary annotating that callable). In this case, silently
@@ -821,24 +805,24 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
 
         # If the decorated callable accepts *NO* parameter or return with the
         # passed name, raise an exception.
-        if pith_name not in self.func_annotations:
+        if pith_name not in self.decoratee_annotations:
             raise BeartypeDecorWrappeeException(
-                f'{prefix_decor_curr_callable_pith(decor_curr=self, pith_name=pith_name)}'
+                f'{prefix_decor_func_callable_pith(decor_func=self, pith_name=pith_name)}'
                 f'unrecognized.'
             )
         # Else, the decorated callable accepts this parameter or return.
 
         # Note that the type hint dictionary is now dirty (i.e., modified from
         # the original type hint dictionary annotating the decorated callable).
-        self._is_func_annotations_dirty = True
+        self._is_decoratee_annotations_dirty = True
 
         # Set the hint annotating this parameter or return to the passed hint.
-        self.func_annotations[pith_name] = hint
+        self.decoratee_annotations[pith_name] = hint
 
     # ..................{ MINIFIERS                          }..................
-    def minify(self) -> BeartypeCallDecorMinimalData:
+    def minify(self) -> BeartypeCallDecorFuncMinimalData:
         '''
-        **Beartype decorator call minimal metadata** (i.e., dataclass
+        **Beartype callable decorator call minimal metadata** (i.e., dataclass
         encapsulating the minimal metadata required to type-check the callable
         currently being decorated by the :func:`beartype.beartype` decorator at
         the post-decoration time that callable is subsequently called) minified
@@ -846,7 +830,7 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
 
         Returns
         -------
-        BeartypeCallDecorMinimalData
+        BeartypeCallDecorDataABC
             Minimal metadata minified from this maximal metadata.
         '''
 
@@ -856,28 +840,28 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
         # minimal subset of key-value pairs needed to resolve *ONLY* the
         # specific stringified forward reference type hints annotating the
         # currently decorated callable), defined as either...
-        func_scope_forward_min = (
+        decoratee_scope_forward_minimal = (
             # If *NO* forward scope was created and cached by a prior call to
             # the resolve_hint_pep484_ref_str() method created, implicitly
             # preserve this attribute as the "None" singleton;
             None
-            if self.func_scope_forward is None else
+            if self.decoratee_scope_forward is None else
             # Else, a forward scope was created and cached by such a call,
             # implying the currently decorated callable is annotated by one or
             # more stringified forward reference type hints. In this case,
             # minify this forward scope for efficiency and safety. See also the
             # BeartypeForwardScope.minify() docstring for further discussion.
-            self.func_scope_forward.minify()
+            self.decoratee_scope_forward.minify()
         )
 
         # Create and return a new instance of this minimal dataclass minified
         # from the passed maximal dataclass.
-        return BeartypeCallDecorMinimalData(
+        return BeartypeCallDecorFuncMinimalData(
             conf=self.conf,
             cls_stack=self.cls_stack,
             decoratee=self.func_wrappee,
-            decoratee_annotations=self.func_annotations,
-            decoratee_scope_forward=func_scope_forward_min,
+            decoratee_annotations=self.decoratee_annotations,
+            decoratee_scope_forward=decoratee_scope_forward_minimal,
         )
 
     # ..................{ LABELLERS                          }..................
@@ -899,7 +883,7 @@ class BeartypeCallDecorData(BeartypeCallDecorMinimalData):
 
 # ....................{ CONTEXTS                           }....................
 @contextmanager
-def new_decor_curr(**kwargs) -> Iterator[BeartypeCallDecorData]:
+def new_decor_func(**kwargs) -> Iterator[BeartypeCallDecorFuncData]:
     '''
     :func:`contextlib.contextmanager`-based context manager encapsulating the
     temporary instantiation (and subsequent finalization) of **beartype call
@@ -913,29 +897,29 @@ def new_decor_curr(**kwargs) -> Iterator[BeartypeCallDecorData]:
     Parameters
     ----------
     All keyword parameters are passed as is to the
-    :meth:`.BeartypeCallDecorData.reinit` method.
+    :meth:`.BeartypeCallDecorFuncData.reinit` method.
 
     Yields
     ------
-    BeartypeCallDecorData
+    BeartypeCallDecorFuncData
         Beartype call metadata describing this callable.
     '''
 
     # Beartype call metadata initialized with these parameters.
-    decor_curr = make_decor_curr(**kwargs)
+    decor_func = make_decor_func(**kwargs)
 
     # Attempt to yield this metadata to the caller, typically accessible as:
-    #     with new_decor_curr(...) as decor_curr:
+    #     with new_decor_func(...) as decor_func:
     try:
-        yield decor_curr
+        yield decor_func
     # Regardless of whether the caller raises an exception from within the body
     # of that "with" block, deinitialize this metadata.
     finally:
-        cull_decor_curr(decor_curr)
+        cull_decor_func(decor_func)
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
-def make_decor_curr(**kwargs) -> BeartypeCallDecorData:
+def make_decor_func(**kwargs) -> BeartypeCallDecorFuncData:
     '''
     Deinitialize the passed **beartype decorator call metadata** (i.e.,
     dataclass encapsulating *all* metadata for the passed callable currently
@@ -944,10 +928,10 @@ def make_decor_curr(**kwargs) -> BeartypeCallDecorData:
     Caveats
     -------
     **This higher-level factory function should always be called in lieu of
-    instantiating the** :class:`.BeartypeCallDecorData` **class directly.** Why?
+    instantiating the** :class:`.BeartypeCallDecorFuncData` **class directly.** Why?
     Brute-force efficiency. This factory efficiently reuses previously
-    instantiated :class:`.BeartypeCallDecorData` objects rather than
-    inefficiently instantiating new :class:`.BeartypeCallDecorData` objects.
+    instantiated :class:`.BeartypeCallDecorFuncData` objects rather than
+    inefficiently instantiating new :class:`.BeartypeCallDecorFuncData` objects.
 
     **The caller must pass the metadata returned by this factory back to the**
     :func:`beartype._util.cache.pool.utilcachepoolinstance.release_instance`
@@ -959,26 +943,26 @@ def make_decor_curr(**kwargs) -> BeartypeCallDecorData:
     Parameters
     ----------
     All keyword parameters are passed as is to the
-    :meth:`.BeartypeCallDecorData.reinit` method.
+    :meth:`.BeartypeCallDecorFuncData.reinit` method.
 
     Returns
     -------
-    BeartypeCallDecorData
+    BeartypeCallDecorFuncData
         Beartype decorator call metadata describing this callable.
     '''
 
     # Acquire previously cached beartype call metadata from its object pool.
-    decor_curr = acquire_instance(BeartypeCallDecorData)
+    decor_func = acquire_instance(BeartypeCallDecorFuncData)
 
     # Reinitialize this metadata with the passed keyword parameters.
-    decor_curr.reinit(**kwargs)
+    decor_func.reinit(**kwargs)
 
     # Return this metadata.
-    return decor_curr
+    return decor_func
 
 
 #FIXME: Unit test us up, please.
-def cull_decor_curr(decor_curr: BeartypeCallDecorData) -> None:
+def cull_decor_func(decor_func: BeartypeCallDecorFuncData) -> None:
     '''
     Deinitialize the passed **beartype decorator call metadata** (i.e.,
     dataclass encapsulating *all* metadata for the callable currently being
@@ -986,27 +970,27 @@ def cull_decor_curr(decor_curr: BeartypeCallDecorData) -> None:
 
     Parameters
     ----------
-    decor_curr : BeartypeCallDecorData
+    decor_func : BeartypeCallDecorFuncData
         Beartype decorator call metadata to be deinitialized.
     '''
-    assert isinstance(decor_curr, BeartypeCallDecorData), (
-        f'{repr(decor_curr)} not beartype decorator call metadata.')
+    assert isinstance(decor_func, BeartypeCallDecorFuncData), (
+        f'{repr(decor_func)} not beartype decorator call metadata.')
 
     # If the type hint dictionary associated with the decorated callable is
     # dirty (i.e., changed from the original "__annotations__" dunder dictionary
     # annotating that callable), register these changes in a manner compliant
     # with both PEP 649 and Python >= 3.14 *BEFORE* nullifying these type hints.
-    decor_curr.set_func_annotations_if_dirty()
+    decor_func.set_func_annotations_if_dirty()
 
     # Deinitialize this beartype call metadata.
-    decor_curr.deinit()
+    decor_func.deinit()
 
     # Release this beartype call metadata back to its object pool.
-    release_instance(decor_curr)
+    release_instance(decor_func)
 
 # ....................{ PREFIXERS                          }....................
-def prefix_decor_curr_callable_pith(
-    decor_curr: BeartypeCallDecorData, pith_name: str) -> str:
+def prefix_decor_func_callable_pith(
+    decor_func: BeartypeCallDecorFuncData, pith_name: str) -> str:
     '''
     Human-readable label describing either the parameter with the passed name
     *or* return value if this name is ``"return"`` of the currently decorated
@@ -1030,19 +1014,19 @@ def prefix_decor_curr_callable_pith(
         Human-readable label describing either the name of this parameter *or*
         this return value.
     '''
-    assert isinstance(decor_curr, BeartypeCallDecorData), (
-        f'{repr(decor_curr)} not beartype decorator call metadata.')
+    assert isinstance(decor_func, BeartypeCallDecorFuncData), (
+        f'{repr(decor_func)} not beartype decorator call metadata.')
 
     # Let there be one-liner!
     return prefix_callable_pith(
-        func=decor_curr.func_wrappee,
+        func=decor_func.func_wrappee,
         pith_name=pith_name,
-        is_color=decor_curr.conf.is_color,
+        is_color=decor_func.conf.is_color,
     )
 
 
-def prefix_decor_curr_callable_arg_name(
-    decor_curr: BeartypeCallDecorData, arg_name: str) -> str:
+def prefix_decor_func_callable_arg_name(
+    decor_func: BeartypeCallDecorFuncData, arg_name: str) -> str:
     '''
     Human-readable label describing the parameter with the passed name of the
     currently decorated callable encapsulated by the passed :mod:`beartype`
@@ -1050,7 +1034,7 @@ def prefix_decor_curr_callable_arg_name(
 
     Parameters
     ----------
-    decor_curr : BeartypeCallDecorData
+    decor_func : BeartypeCallDecorFuncData
         Beartype decorator call metadata encapsulating the currently decorated
         callable to be labelled.
     arg_name : str
@@ -1061,18 +1045,19 @@ def prefix_decor_curr_callable_arg_name(
     str
         Human-readable label describing that parameter's name.
     '''
-    assert isinstance(decor_curr, BeartypeCallDecorData), (
-        f'{repr(decor_curr)} not beartype decorator call metadata.')
+    assert isinstance(decor_func, BeartypeCallDecorFuncData), (
+        f'{repr(decor_func)} not beartype decorator call metadata.')
 
     # Let there be one-liner!
     return prefix_callable_arg_name(
-        func=decor_curr.func_wrappee,
+        func=decor_func.func_wrappee,
         arg_name=arg_name,
-        is_color=decor_curr.conf.is_color,
+        is_color=decor_func.conf.is_color,
     )
 
 
-def prefix_decor_curr_callable_return(decor_curr: BeartypeCallDecorData) -> str:
+def prefix_decor_func_callable_return(
+    decor_func: BeartypeCallDecorFuncData) -> str:
     '''
     Human-readable label describing the return of the currently decorated
     callable encapsulated by the passed :mod:`beartype` decorator call metadata,
@@ -1080,7 +1065,7 @@ def prefix_decor_curr_callable_return(decor_curr: BeartypeCallDecorData) -> str:
 
     Parameters
     ----------
-    decor_curr : BeartypeCallDecorData
+    decor_func : BeartypeCallDecorFuncData
         Beartype decorator call metadata encapsulating the currently decorated
         callable to be labelled.
 
@@ -1089,9 +1074,9 @@ def prefix_decor_curr_callable_return(decor_curr: BeartypeCallDecorData) -> str:
     str
         Human-readable label describing this return.
     '''
-    assert isinstance(decor_curr, BeartypeCallDecorData), (
-        f'{repr(decor_curr)} not beartype decorator call metadata.')
+    assert isinstance(decor_func, BeartypeCallDecorFuncData), (
+        f'{repr(decor_func)} not beartype decorator call metadata.')
 
     # I came. I saw. I one-linered.
     return prefix_callable_return(
-        func=decor_curr.func_wrappee, is_color=decor_curr.conf.is_color)
+        func=decor_func.func_wrappee, is_color=decor_func.conf.is_color)

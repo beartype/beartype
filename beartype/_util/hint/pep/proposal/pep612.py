@@ -25,8 +25,8 @@ from beartype._cave._cavefast import (
     HintPep612ParamSpecKwargType,
 )
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
-from beartype._check.cls.call.calldatadecormin import (
-    BeartypeCallDecorMinimalData)
+from beartype._check.cls.call.calldatadecorabc import (
+    BeartypeCallDecorDataABC)
 from beartype._data.typing.datatypingport import (
     Hint,
     ListHints,
@@ -466,7 +466,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     # specification variadic positional and keyword parameter type hints *MUST*
     # directly annotate the variadic positional and keyword parameter
     # (respectively) of a callable decorated by the @beartype decorator.
-    if not isinstance(call_curr, BeartypeCallDecorMinimalData):
+    if not isinstance(call_curr, BeartypeCallDecorDataABC):
         raise BeartypeDecorHintPep612Exception(
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '

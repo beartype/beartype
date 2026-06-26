@@ -31,23 +31,12 @@ from typing import (
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
-class BeartypeCallDecorMinimalData(BeartypeCallDataABC):
+class BeartypeCallDecorDataABC(BeartypeCallDataABC):
     '''
-    **Beartype decorator call minimal metadata** (i.e., dataclass
-    encapsulating the minimal metadata required to type-check the callable or
-    class currently being decorated by the :func:`beartype.beartype` decorator
-    at the post-decoration time that callable is subsequently called).
-
-    This type-checking-time dataclass is effectively the proper subset of the
-    comparable -- but *much* more complex in both space, time, and code
-    complexity -- **decoration call metadata dataclass** (i.e.,
-    :class:`beartype._check.cls.call.calldatadecor.BeartypeCallDecorData`).
-    Theoretically, this type-checking-time dataclass is thus redundant; the
-    existing decoration call metadata dataclass could simply be used in lieu of
-    this type-checking-time dataclass. Pragmatically, this type-checking-time
-    dataclass significantly reduces the sheer quantity of metadata needed to
-    type-check :func:`beartype.beartype`-decorated callables and thus the space
-    consumption associated with that type-checking. In short, this is necessary.
+    **Beartype decorator call metadata superclass** (i.e., abstract base class
+    (ABC) of all dataclass subclasses encapsulating the minimal metadata
+    required to type-check the callable or type currently being decorated by the
+    :func:`beartype.beartype` decorator).
 
     Attributes
     ----------
@@ -97,6 +86,10 @@ class BeartypeCallDecorMinimalData(BeartypeCallDataABC):
         conf: BeartypeConf  # pyright: ignore
         decoratee_scope_forward: Optional[LexicalScope]  # pyright: ignore
 
+        # Re-annotate these class variables defined by a superclass with tighter
+        # bounds more suitable to this subclass.
+        decoratee_annotations: Pep649749HintableAnnotations
+
     # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
@@ -108,14 +101,6 @@ class BeartypeCallDecorMinimalData(BeartypeCallDataABC):
     ) -> None:
         '''
         Initialize this metadata with the passed parameters.
-
-        Caveats
-        -------
-        **Avoid instantiating this low-level dataclass directly.** Instead,
-        instantiate this dataclass by calling the higher-level
-        :meth:`beartype._check.cls.call.calldatadecor.BeartypeCallDecorData.minify`
-        method. Doing so reduces existing instances of the parent dataclass to
-        instances of this child dataclass.
 
         Parameters
         ----------
@@ -163,44 +148,8 @@ class BeartypeCallDecorMinimalData(BeartypeCallDataABC):
 
         # Defer to this low-level resolver.
         return resolve_hint_pep484_ref_str_decor_curr(
-            decor_curr=self,
+            decor_func=self,
             hint=hint,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )
-
-# ....................{ MINIFIERS                          }....................
-def minify_decor_curr_kwargs(**kwargs) -> BeartypeCallDecorMinimalData:
-    '''
-    **Beartype decorator call minimal metadata** (i.e., dataclass
-    encapsulating the minimal metadata required to type-check the callable
-    currently being decorated by the :func:`beartype.beartype` decorator at
-    the post-decoration time that callable is subsequently called) minified
-    from passed **beartype decorator call maximal metadata keyword parameters**
-    (i.e., to be passed to the :meth:`BeartypeCallDecorData.reinit` method).
-
-    This factory method is a high-level convenience principally intended to be
-    called *only* from unit tests. Ergo, efficiency is irrelevant.
-
-    Parameters
-    ----------
-    All passed keyword parameters are passed as is to the
-    :meth:`beartype._check.cls.call.calldatadecor.BeartypeCallDecorData.reinit`
-    method.
-
-    Returns
-    -------
-    BeartypeCallDecorMinimalData
-        Minimal metadata minified from this maximal metadata.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._check.cls.call.calldatadecor import new_decor_curr
-
-    # With maximal metadata initialized by these parameters...
-    with new_decor_curr(**kwargs) as decor_curr:  # type: ignore[var-annotated]
-        # Minimal metadata reduced from this maximal metadata.
-        decor_curr_min = decor_curr.minify()
-
-    # Return this metadata.
-    return decor_curr_min

@@ -26,9 +26,9 @@ from beartype._check.error.errmain import (
 from beartype._check.forward.reference.fwdrefset import (
     set_beartype_ref_proxies_exception_prefix)
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
-from beartype._check.cls.call.calldatadecor import (
-    BeartypeCallDecorData,
-    prefix_decor_curr_callable_pith,
+from beartype._check.cls.call.calldatadecorfunc import (
+    BeartypeCallDecorFuncData,
+    prefix_decor_func_callable_pith,
 )
 from beartype._check.cls.call.calldataexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
@@ -677,7 +677,7 @@ def make_code_raiser_func_pep484_noreturn_check(
 #called by this higher-level factory. That is exactly what the comparable
 #make_func_checker() factory now does, in fact! See the latter for details.
 def make_code_raiser_func_pith_check(
-    decor_curr: BeartypeCallDecorData,
+    decor_func: BeartypeCallDecorFuncData,
     hint_sane: HintSane,
     pith_name: str,
 ) -> CodeGenerated:
@@ -690,11 +690,11 @@ def make_code_raiser_func_pith_check(
 
     This factory is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator), due to accepting one or more unhashable
-    parameters (e.g., ``decor_curr``).
+    parameters (e.g., ``decor_func``).
 
     Parameters
     ----------
-    decor_curr : BeartypeCallDecorData
+    decor_func : BeartypeCallDecorFuncData
         **Beartype decorator call metadata** (i.e., dataclass aggregating *all*
         metadata encapsulating the currently decorated callable).
     hint_sane : HintSane
@@ -714,8 +714,8 @@ def make_code_raiser_func_pith_check(
     :func:`.make_check_expr`
         Further details.
     '''
-    assert isinstance(decor_curr, BeartypeCallDecorData), (
-        f'{repr(decor_curr)} not beartype decorator call metadata.')
+    assert isinstance(decor_func, BeartypeCallDecorFuncData), (
+        f'{repr(decor_func)} not beartype decorator call metadata.')
     assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -726,7 +726,7 @@ def make_code_raiser_func_pith_check(
     # Python code snippet comprising a single boolean expression type-checking
     # an arbitrary object against this hint.
     code_expr, func_scope_frozen = make_check_expr(
-        call_curr=decor_curr, hint_sane=hint_sane, conf=decor_curr.conf)
+        call_curr=decor_func, hint_sane=hint_sane, conf=decor_func.conf)
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with similar logic in make_func_checker() above.
@@ -746,8 +746,8 @@ def make_code_raiser_func_pith_check(
         # thus deferred until absolutely confirmed to be needed [read: *NOW*].
         set_beartype_ref_proxies_exception_prefix(
             ref_proxies=func_scope_frozen.beartype_ref_proxies,
-            exception_prefix=prefix_decor_curr_callable_pith(
-                decor_curr=decor_curr, pith_name=pith_name),
+            exception_prefix=prefix_decor_func_callable_pith(
+                decor_func=decor_func, pith_name=pith_name),
         )
     # Else, the decorated callable is annotated by *NO* such references.
 
@@ -774,7 +774,7 @@ def make_code_raiser_func_pith_check(
     # that violation as a fatal exception or emitting that violation as a
     # non-fatal warning.
     code_handle_violation = _make_code_raiser_violation(
-        conf=decor_curr.conf,
+        conf=decor_func.conf,
         func_scope=func_scope,
 
         #FIXME: *SUPER-SILLY*. This can be trivially deduced from the passed

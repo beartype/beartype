@@ -302,20 +302,20 @@ def beartype_pep557_dataclass(
         #issues arise. Why? Because the sanify_hint_root_func() function is
         #inappropriate here. Instead:
         #* Define a new sanify_hint_root_type() getter. This could prove
-        #  non-trivial. sanify_hint_root_func() accepts a "decor_curr"
+        #  non-trivial. sanify_hint_root_func() accepts a "decor_func"
         #  parameter, which currently only applies to decorated *CALLABLES*
-        #  rather than *TYPES*. We probably want to generalize "decor_curr" to
+        #  rather than *TYPES*. We probably want to generalize "decor_func" to
         #  support both... maybe? Maybe not? To do this properly, we probably
         #  first want to:
-        #  * Create a new "decor_curr" type hierarchy resembling:
+        #  * Create a new "decor_func" type hierarchy resembling:
         #        class BeartypeDecorMetaABC(metaclass=ABCMeta): ...
         #        class BeartypeDecorMetaFunc(BeartypeDecorMetaABC): ...
         #        class BeartypeDecorMetaType(BeartypeDecorMetaABC): ...
-        #  * Refactor references to "BeartypeCallDecorData" to either
+        #  * Refactor references to "BeartypeCallDecorFuncData" to either
         #    "BeartypeDecorMetaABC" *OR* ""BeartypeDecorMetaFunc" depending on
         #    context. Most probably require the latter. Any that don't should
         #    simply reference "BeartypeDecorMetaABC" for generality.
-        #  * Remove all references to "BeartypeCallDecorData".
+        #  * Remove all references to "BeartypeCallDecorFuncData".
         #FIXME: If sanifying this hint so reduced this hint to
         #"HINT_SANE_IGNORABLE", remove this hint from this dictionary entirely.
         #Doing so speeds up closure logic below, which is critical. Obviously,
@@ -379,19 +379,10 @@ def beartype_pep557_dataclass(
         #    * '\bcall_curr\.func\b'.
         #    * '\bdecor_curr\.func\b'.
         #    Most other '\.func\b' matches *SHOULD* be ignorable here. Should.
-        #* In the existing "calldatadecormin" submodule:
-        #  * *GLOBALLY* rename the "func_scope_forward" instance variable to
-        #    "hintable_scope_forward", which will now need to generically apply
-        #    to both callables *AND* types. Unlike the prior rename, it is
-        #    probably safe to do this globally. We still sigh. *sighing*
-        #* Rename the "calldatadecor" submodule to
-        #  "calldatadecorfunc". In that submodule:
-        #  * Rename the "BeartypeCallDecorData" class to
-        #    "BeartypeCallDecorFuncData".
         #* Define a new "calldatadecortype" submodule, probably copy-pasted from
         #  the existing "calldatadecorfunc" submodule. In this new submodule:
         #  * Define a new "BeartypeCallDecorTypeData" subclass, also subclassing
-        #    the existing "BeartypeCallDecorMinimalData" subclass. The
+        #    the existing "BeartypeCallDecorDataABC" subclass. The
         #    implementation should probably just define the trivial __init__()
         #    method accepting a mandatory "cls" parameter and whatever else
         #    (e.g., "cls_stack"). That should be it for now. Probably. Ugh!
@@ -438,8 +429,8 @@ def beartype_pep557_dataclass(
         #      support types is definitely doable... and *MUST* be done. But
         #      it's also super non-trivial to the max. Guess we have no
         #      alternative except to slowly generalize each section piecemeal.
-        #* Instantiate a new "decor_curr" local variable like so below:
-        #      decor_curr = BeartypeCallDecorTypeData(
+        #* Instantiate a new "decor_func" local variable like so below:
+        #      decor_func = BeartypeCallDecorTypeData(
         #          cls=datacls,
         #          #FIXME: This beartype_pep557_dataclass() decorator will need
         #          #to be generalized to accept this new mandatory parameter!
@@ -458,7 +449,7 @@ def beartype_pep557_dataclass(
         #          with catch_warnings(record=True) as warnings_issued:
         #              # Metadata encapsulating the sanification of this hint.
         #              hint_sane = sanify_hint_any(
-        #                  call_meta=decor_curr,
+        #                  call_meta=decor_func,
         #                  hint=hint,
         #                  conf=conf,
         #                  exception_prefix=EXCEPTION_PLACEHOLDER,
@@ -473,8 +464,8 @@ def beartype_pep557_dataclass(
         #              reissue_warnings_placeholder(
         #                  warnings=warnings_issued,
         #                  #FIXME: Obviously not right. *shrug*
-        #                  target_str=prefix_decor_curr_callable_arg_name(
-        #                      decor_curr=decor_curr, arg_name=arg_name),
+        #                  target_str=prefix_decor_func_callable_arg_name(
+        #                      decor_func=decor_func, arg_name=arg_name),
         #              )
         #          # Else, *NO* warnings were issued.
         #      # If any exception was raised, reraise this exception with each
@@ -485,8 +476,8 @@ def beartype_pep557_dataclass(
         #          reraise_exception_placeholder(
         #              exception=exception,
         #              #FIXME: Obviously not right. *shrug*
-        #              target_str=prefix_decor_curr_callable_arg_name(
-        #                  decor_curr=decor_curr, arg_name=arg_name),
+        #              target_str=prefix_decor_func_callable_arg_name(
+        #                  decor_func=decor_func, arg_name=arg_name),
         #          )
         #
         #      # Sanified hint encapsulated by this metadata.

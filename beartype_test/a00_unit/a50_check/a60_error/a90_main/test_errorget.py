@@ -32,24 +32,20 @@ def test_get_func_pith_violation() -> None:
         BeartypeDecorHintNonpepException,
     )
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-    from beartype.typing import (
-        List,
-        Tuple,
-        Union,
-    )
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.cls.call.calldatadecormin import (
-        minify_decor_curr_kwargs)
-    from pytest import raises
+    from beartype._check.cls.call.calldatadecorabc import (
+        minify_decor_func_kwargs)
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from typing import Union
 
     # ..................{ LOCALS                             }..................
     def forest_unknown(
-        secret_orchard: List[str],
+        secret_orchard: list[str],
         achromatic_voice,
         to_bid_you_farewell: str,
         amaranth_symbol: 42,
-    ) -> Union[int, Tuple[str, ...]]:
+    ) -> Union[int, tuple[str, ...]]:
         '''
         Arbitrary callable exercised below.
         '''
@@ -57,7 +53,7 @@ def test_get_func_pith_violation() -> None:
         return achromatic_voice
 
     # Beartype type-checking call metadata reduced from this decorator metadata.
-    call_curr = minify_decor_curr_kwargs(
+    call_curr = minify_decor_func_kwargs(
         func=forest_unknown, conf=BeartypeConf())
 
     # ..................{ PASS                               }..................
@@ -119,7 +115,7 @@ def test_get_func_pith_violation() -> None:
     # ..................{ FAIL                               }..................
     # Assert this function raises the expected exception when passed an
     # unannotated parameter.
-    with raises(_BeartypeCallHintPepRaiseException):
+    with raises_uncached(_BeartypeCallHintPepRaiseException):
         get_func_pith_violation(
             call_curr=call_curr,
             pith_name='achromatic_voice',
@@ -133,7 +129,7 @@ def test_get_func_pith_violation() -> None:
     # Assert this function raises the expected exception when passed a
     # parameter annotated by an object that is unsupported as a type hint
     # (i.e., is neither PEP-compliant nor -noncompliant).
-    with raises(BeartypeDecorHintNonpepException):
+    with raises_uncached(BeartypeDecorHintNonpepException):
         get_func_pith_violation(
             call_curr=call_curr,
             pith_name='amaranth_symbol',
@@ -161,8 +157,8 @@ def test_get_func_pith_violation_conf_is_color() -> None:
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.cls.call.calldatadecormin import (
-        minify_decor_curr_kwargs)
+    from beartype._check.cls.call.calldatadecorabc import (
+        minify_decor_func_kwargs)
     from beartype._util.os.utilostty import is_stdout_terminal
     from beartype._util.text.utiltextansi import is_str_ansi
     from typing import Union
@@ -190,7 +186,7 @@ def test_get_func_pith_violation_conf_is_color() -> None:
     # ..................{ PASS                               }..................
     # Violation configured to contain ANSI escape sequences.
     violation = get_func_pith_violation(
-        call_curr=minify_decor_curr_kwargs(
+        call_curr=minify_decor_func_kwargs(
             func=she_drew_back, conf=BeartypeConf(is_color=True)), **kwargs)
 
     # Assert this violation message contains ANSI escape sequences.
@@ -198,7 +194,7 @@ def test_get_func_pith_violation_conf_is_color() -> None:
 
     # Violation configured to contain *NO* ANSI escape sequences.
     violation = get_func_pith_violation(
-        call_curr=minify_decor_curr_kwargs(
+        call_curr=minify_decor_func_kwargs(
             func=she_drew_back, conf=BeartypeConf(is_color=False)), **kwargs)
 
     # Assert this violation message contains *NO* ANSI escape sequences.
@@ -207,7 +203,7 @@ def test_get_func_pith_violation_conf_is_color() -> None:
     # Violation configured to conditionally contain ANSI escape sequences only
     # when standard output is attached to an interactive terminal.
     violation = get_func_pith_violation(
-        call_curr=minify_decor_curr_kwargs(
+        call_curr=minify_decor_func_kwargs(
             func=she_drew_back, conf=BeartypeConf(is_color=None)), **kwargs)
 
     # Assert this violation message contains ANSI escape sequences only when
@@ -229,8 +225,8 @@ def test_get_func_pith_violation_conf_violation_types() -> None:
     from beartype import BeartypeConf
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.cls.call.calldatadecormin import (
-        minify_decor_curr_kwargs)
+    from beartype._check.cls.call.calldatadecorabc import (
+        minify_decor_func_kwargs)
     from typing import Union
 
     # ..................{ LOCALS                             }..................
@@ -253,7 +249,7 @@ def test_get_func_pith_violation_conf_violation_types() -> None:
     # ..................{ PASS                               }..................
     # Parameter violation configured to be a non-default exception subclass.
     param_violation = get_func_pith_violation(
-        call_curr=minify_decor_curr_kwargs(
+        call_curr=minify_decor_func_kwargs(
             func=now_blackness, conf=BeartypeConf(
                 violation_param_type=InvolvedAndSwallowed)),
         pith_name='veiled_his',
@@ -268,7 +264,7 @@ def test_get_func_pith_violation_conf_violation_types() -> None:
 
     # Return violation configured to be a non-default exception subclass.
     return_violation = get_func_pith_violation(
-        call_curr=minify_decor_curr_kwargs(
+        call_curr=minify_decor_func_kwargs(
             func=now_blackness, conf=BeartypeConf(
                 violation_return_type=InvolvedAndSwallowed)),
         pith_name=ARG_NAME_RETURN,
@@ -302,8 +298,8 @@ def test_get_func_pith_violation_conf_violation_verbosity() -> None:
         Union,
     )
     from beartype._check.error.errmain import get_func_pith_violation
-    from beartype._check.cls.call.calldatadecormin import (
-        minify_decor_curr_kwargs)
+    from beartype._check.cls.call.calldatadecorabc import (
+        minify_decor_func_kwargs)
 
     # ..................{ LOCALS                             }..................
     def like_a_dark_flood(
@@ -331,7 +327,7 @@ def test_get_func_pith_violation_conf_violation_verbosity() -> None:
     violations = tuple(
         # Violation whose message is configured to be this verbose...
         get_func_pith_violation(
-            call_curr=minify_decor_curr_kwargs(
+            call_curr=minify_decor_func_kwargs(
                 func=like_a_dark_flood, conf=BeartypeConf(
                     violation_verbosity=violation_verbosity)), **kwargs)
         # For each kind of violation verbosity.
@@ -365,7 +361,7 @@ def test_get_hint_object_violation() -> None:
         BEARTYPE_CALL_EXTERNAL_META)
     from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-    from pytest import raises
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ..................{ LOCALS                             }..................
     # Keyword arguments to be unconditionally passed to all getter calls below.
@@ -379,12 +375,12 @@ def test_get_hint_object_violation() -> None:
     # ..................{ FAIL                               }..................
     # Assert that this getter raises the expected exception when passed neither
     # an exception prefix *NOR* parameter name.
-    with raises(_BeartypeCallHintPepRaiseException):
+    with raises_uncached(_BeartypeCallHintPepRaiseException):
         get_hint_object_violation(**kwargs)
 
     # Assert that this getter raises the expected exception when passed both an
     # exception prefix *AND* parameter name.
-    with raises(_BeartypeCallHintPepRaiseException):
+    with raises_uncached(_BeartypeCallHintPepRaiseException):
         get_hint_object_violation(
             exception_prefix="O'er the wide aëry wilderness: thus driven",
             pith_name=ARG_NAME_RETURN,
