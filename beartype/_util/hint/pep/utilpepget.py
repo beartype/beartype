@@ -363,6 +363,9 @@ def get_hint_pep_typeargs_unpacked(hint: Hint) -> (
         from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
             make_hint_pep646_typevartuple_unpacked_subbed)
 
+        #FIXME: [SPEED] Optimize by calling "acquire_instance(list)" instead and
+        #then subsequently calling "release_instance(list)" below *AFTER*
+        #coercing this list into a tuple. *sigh*
         # List of all unpacked type parameters to be returned.
         hint_typeargs_unpacked = []
 
@@ -547,11 +550,13 @@ def get_hint_pep_typeargs_packed(hint: Hint) -> TuplePep484612646TypeArgsPacked:
        (T, S)
     '''
 
+    # ....................{ LOCALS                         }....................
     # Value of the "__parameters__" dunder attribute on this object if this
     # object defines this attribute (e.g., is *NOT* a PEP 585-compliant
     # unsubscripted generic) *OR* "None" otherwise (e.g., is such a generic).
     hint_typeargs = getattr(hint, '__parameters__', None)
 
+    # ....................{ PEP 585                        }....................
     # If this object defines *NO* such attribute, synthetically reconstruct this
     # attribute for PEP 585-compliant unsubscripted generics. Notably...
     if hint_typeargs is None:
@@ -568,6 +573,7 @@ def get_hint_pep_typeargs_packed(hint: Hint) -> TuplePep484612646TypeArgsPacked:
         )
     # Else, this object defines this attribute.
     #
+    # ....................{ PEP 484                        }....................
     # If this attribute is *NOT* a tuple...
     elif not isinstance(hint_typeargs, tuple):
         # If this hint is the unsubscripted "typing.Union" hint semantically
@@ -576,7 +582,7 @@ def get_hint_pep_typeargs_packed(hint: Hint) -> TuplePep484612646TypeArgsPacked:
         # implemented as a C-based slotted class attribute of some obscure type
         # under Python >= 3.14. Since unsubscripted "typing.Union" hints are
         # valid hints, this "__parameters__" implementation is *TECHNICALLY*
-        # also valid albeit semantically meaningless. In this case, simply
+        # also valid, albeit semantically meaningless. In this case, simply
         # return the empty tuple.
 
         # If this hint is...
@@ -588,7 +594,7 @@ def get_hint_pep_typeargs_packed(hint: Hint) -> TuplePep484612646TypeArgsPacked:
             # of PEP-compliant packed type parameters.
             hint in TYPES_NONPEP_TYPEARGS_PACKED
         ):
-            # Then is a probably an unsubscripted standard type hint factory
+            # Then this is probably an unsubscripted standard type hint factory
             # (e.g., "typing.Union") semantically equivalent to a valid hint
             # (e.g., "typing.Union[typing.Any]"). This factory is probably
             # implemented as a C-based type whose "__parameters__" dunder
@@ -611,7 +617,11 @@ def get_hint_pep_typeargs_packed(hint: Hint) -> TuplePep484612646TypeArgsPacked:
             f'invalid (i.e., not tuple of '
             f'PEP 484-, 612-, or PEP 646-compliant type parameters).'
         )
+    # Else, this attribute is a tuple.
+    #
+    # In any case, this attribute should now be a tuple of type parameters.
 
+    # ....................{ RETURN                         }....................
     # Return this attribute.
     return hint_typeargs
 

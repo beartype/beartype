@@ -9,12 +9,11 @@ returning various kinds of sequences, both mutable and immutable).
 '''
 
 # ....................{ IMPORTS                            }....................
-from collections.abc import (
-    Sequence as SequenceABC,
-)
+from beartype._data.typing.datatyping import T
+from collections.abc import Sequence
 
 # ....................{ FACTORIES                          }....................
-def make_stack(sequence: SequenceABC) -> list:
+def make_stack(sequence: Sequence[T]) -> list[T]:
     '''
     **Stack** (i.e., efficiently poppable list of all items in the passed
     sequence, intentionally reordered in reverse order such that the first item
@@ -22,15 +21,15 @@ def make_stack(sequence: SequenceABC) -> list:
 
     Parameters
     ----------
-    sequence : SequenceABC
+    sequence : Sequence[T]
         Sequence to be coerced into a stack.
 
     Returns
     -------
-    List
+    list[T]
         Stack coerced from this sequence.
     '''
-    assert isinstance(sequence, SequenceABC), f'{repr(sequence)} not sequence.'
+    assert isinstance(sequence, Sequence), f'{repr(sequence)} not sequence.'
 
     # Stack coerced from this sequence.
     stack: list = None  # type: ignore[assignment]

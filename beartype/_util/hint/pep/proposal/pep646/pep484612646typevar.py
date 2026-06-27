@@ -135,7 +135,7 @@ def die_unless_hint_pep484612646_typearg_packed(
 def is_hint_pep484612646_typearg_unpacked(
     hint: Hint) -> TypeIs[Pep484612646TypeArgUnpacked]:  # pyright: ignore
     '''
-    :data:`True` only if the passed type hint is a **unpacked type parameter**
+    :data:`True` only if the passed type hint is an **unpacked type parameter**
     (i.e., :pep:`484`-compliant type variable, :pep:`612`-compliant unpacked
     parameter specification, or :pep:`646`-compliant unpacked type variable
     tuple).
@@ -151,6 +151,7 @@ def is_hint_pep484612646_typearg_unpacked(
         :data:`True` only if this hint is a packed type parameter.
     '''
 
+    # ....................{ PEP 484                        }....................
     # If this hint is a PEP 484-compliant type variable, this hint is a type
     # parameter. In this case, immediately return true.
     if isinstance(hint, TypeVar):
@@ -158,6 +159,7 @@ def is_hint_pep484612646_typearg_unpacked(
     # Else, this hint is *NOT* a PEP 484-compliant type variable. This hint
     # could still be a PEP 646-compliant unpacked type variable tuple, though.
     #
+    # ....................{ PEP (646|692)                  }....................
     # If this hint is *NOT* a PEP 646-compliant or 692-compliant unpacked hint,
     # this hint *CANNOT* by extension be a PEP 646-compliant unpacked type
     # variable tuple. In this case, return false.
@@ -166,6 +168,7 @@ def is_hint_pep484612646_typearg_unpacked(
     # Else, this hint is a PEP 646-compliant or 692-compliant unpacked hint and
     # thus could be a PEP 646-compliant unpacked type variable tuple.
 
+    # ....................{ PEP 646                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
