@@ -227,6 +227,53 @@ def get_hint_pep484585_generic_args_full(
         is_hint_pep484585_generic_user)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
+    # ....................{ LOCALS ~ typevar ~ root        }....................
+    # Direct mapping from each type parameter (i.e., "typing.TypeVar" object)
+    # of the unsubscripted root generic to the corresponding concrete child hint
+    # directly subscripting the passed root generic, built from:
+    # * The "__parameters__" attribute of the unsubscripted root generic (i.e.,
+    #   the ordered tuple of all type parameters that generic is parametrized by).
+    # * The args directly subscripting the passed (possibly subscripted) root
+    #   generic (i.e., the concrete hints filling those type parameters).
+    #
+    # This mapping is the authoritative TypeVar -> concrete hint lookup for the
+    # root generic. The DFS "bubbling up" mechanism may assign incorrect values
+    # to "typearg_to_hint" when a child class uses its type parameters in a
+    # non-sequential order when subscripting a parent class: e.g.,
+    #     >>> class Parent(Generic[T, U]): pass
+    #     >>> class Child(Parent[T, V], Generic[T, U, V]): pass
+    #     >>> get_hint_pep484585_generic_args_full(Child[str, int, float], Parent)
+    #     (str, float)   # T=str, V=float, NOT (str, int)
+    #
+    # When the DFS encounters the TypeVar "V" bubbled up through "Parent[T, V]",
+    # sequential popping from Child's args_stack incorrectly maps V to "int"
+    # (the second arg) rather than "float" (the third arg). This mapping
+    # corrects that by providing the authoritative V -> float mapping.
+    hint_root_args = get_hint_pep_args(hint)
+    hint_root_params = getattr(
+        get_hint_pep484585_generic_type(  # pyright: ignore
+            hint=hint,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        ),
+        '__parameters__', ()
+    )
+
+    # Build the direct TypeVar -> concrete hint mapping for the root generic,
+    # but ONLY for type parameters paired with concrete (non-TypeVar) args.
+    # Mapping a TypeVar to another TypeVar would pollute this mapping and inhibit
+    # subsequent resolution of that TypeVar to a concrete hint.
+    hint_root_typearg_to_hint: Pep484612646TypeArgUnpackedToHint = (
+        {
+            hint_root_param: hint_root_arg  # type: ignore[misc]
+            for hint_root_param, hint_root_arg in zip(
+                hint_root_params, hint_root_args)
+            if not is_hint_pep484612646_typearg_unpacked(hint_root_arg)
+        }
+        if hint_root_args and len(hint_root_params) == len(hint_root_args) else
+        {}
+    )
+
     # ....................{ PREAMBLE                       }....................
     # If the caller explicitly passed a pseudo-superclass target...
     #
@@ -539,9 +586,46 @@ def get_hint_pep484585_generic_args_full(
                             elif hint_base_super_args_stack:
                                 # print(f'Bubbling hint {hint_base_super_args_stack[-1]} into...')
                                 # print(f'base {hint_base} typevar {hint_base_arg}!')
-                                hint_base_arg_full_new = (  # pyright: ignore
-                                hint_base_args_full[hint_base_arg_full_index]) = (
-                                    hint_base_super_args_stack.pop())  # type: ignore[assignment]
+                                #
+                                # If we are bubbling this type parameter directly
+                                # into the root generic AND the root generic's
+                                # authoritative TypeVar mapping already covers
+                                # this type parameter, use that mapping rather
+                                # than sequentially popping from the root's
+                                # args-stack. Sequential popping is incorrect
+                                # when a child class uses its type parameters in
+                                # a non-sequential order when subscripting a
+                                # parent class: e.g.,
+                                #     class Parent(Generic[T, U]): ...
+                                #     class Child(Parent[T, V], Generic[T, U, V]):
+                                #         ...
+                                # In Child[str, int, float], the DFS encounters
+                                # TypeVars T and V (in that order) when bubbling
+                                # from Parent[T,V] back to Child. Sequential
+                                # popping maps V -> "int" (the 2nd arg), but the
+                                # correct mapping via __parameters__ is V ->
+                                # "float" (the 3rd arg).
+                                if (
+                                    hint_base_super_data is hint_root_data and  # pyright: ignore
+                                    hint_base_arg_full in hint_root_typearg_to_hint
+                                ):
+                                    # Use the authoritative root mapping, which
+                                    # correctly resolves TypeVars by their
+                                    # position in the root generic's
+                                    # __parameters__ rather than by the encounter
+                                    # order of the DFS traversal.
+                                    # Do NOT pop from the args-stack: the stack
+                                    # may still be needed for other TypeVars
+                                    # whose concrete values come from inner-level
+                                    # subscriptions not present in the root's
+                                    # own __parameters__.
+                                    hint_base_arg_full_new = (  # pyright: ignore
+                                    hint_base_args_full[hint_base_arg_full_index]) = (
+                                        hint_root_typearg_to_hint[hint_base_arg_full])  # type: ignore[index]
+                                else:
+                                    hint_base_arg_full_new = (  # pyright: ignore
+                                    hint_base_args_full[hint_base_arg_full_index]) = (
+                                        hint_base_super_args_stack.pop())  # type: ignore[assignment]
 
                                 # If the currently unassigned child hint
                                 # directly subscripting this parent
@@ -702,18 +786,36 @@ def get_hint_pep484585_generic_args_full(
         for hint_arg_full_index, hint_arg_full in enumerate(hint_args_full):
             # If this hint is a type parameter...
             if is_hint_pep484612646_typearg_unpacked(hint_arg_full):
-                # Either:
-                # * If a child hint directly subscripting a sibling
-                #   pseudo-superclass of this target pseudo-superclass has
-                #   already been "bubbled up" into this type parameter, preserve
-                #   that bubbling by re-bubbling up the same child hint back
-                #   into this # type parameter. <-- lol
-                # * If *NO* child hint directly subscripting a sibling
-                #   pseudo-superclass of this target pseudo-superclass has
-                #   already been "bubbled up" into this type parameter, preserve
-                #   this type parameter as is.
-                hint_args_full[hint_arg_full_index] = typearg_to_hint.get(  # type: ignore[call-overload]
-                    hint_arg_full, hint_arg_full)  # type: ignore[arg-type]
+                # Resolve this type parameter to a concrete hint by consulting,
+                # in priority order:
+                # 1. The authoritative "hint_root_typearg_to_hint" mapping,
+                #    which directly maps each type parameter of the root generic
+                #    to its concrete subscription arg. This mapping is consulted
+                #    FIRST because it is always correct: e.g., in
+                #    "Child[str, int, float]" with "Child.__parameters__ ==
+                #    (T, U, V)", this mapping contains {T: str, U: int, V:
+                #    float}. The DFS "bubbling up" mechanism may corrupt
+                #    "typearg_to_hint" with incorrect values when a child class
+                #    uses its type parameters in a non-sequential order when
+                #    subscripting a parent class (e.g., "class Child(Parent[T,
+                #    V], Generic[T, U, V])": sequential popping maps V to "int"
+                #    rather than "float"), so we prefer this mapping.
+                # 2. The DFS-accumulated "typearg_to_hint" mapping, which
+                #    captures type parameters bubbled up through sibling
+                #    pseudo-superclasses. It covers type parameters of
+                #    intermediate generics not present in the root generic's
+                #    own "__parameters__".
+                # 3. The type parameter itself (i.e., no resolution), when
+                #    neither mapping has an entry for this type parameter.
+                hint_args_full[hint_arg_full_index] = (
+                    hint_root_typearg_to_hint.get(  # type: ignore[call-overload]
+                        hint_arg_full,
+                        typearg_to_hint.get(  # type: ignore[call-overload]
+                            hint_arg_full,
+                            hint_arg_full,  # type: ignore[arg-type]
+                        ),
+                    )
+                )
             # Else, this hint is *NOT* a type parameter.
     # Else, the caller did *NOT* pass a target pseudo-superclass.
     else:

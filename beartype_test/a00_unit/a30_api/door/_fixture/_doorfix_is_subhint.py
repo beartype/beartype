@@ -57,6 +57,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         Pep484GenericSubT,
         Pep484GenericST,
         Pep484GenericSInt,
+        Pep484GenericSTU_ST,
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
         Pep585SequenceT,
@@ -273,6 +274,19 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Pep484GenericSInt[str], Pep484GenericST[T_sequence, S], True),
         (Pep484GenericSInt[Sequence], Pep484GenericST[list, object], False),
         (Pep484GenericSInt[T_sequence], Pep484GenericST, True),
+
+        # PEP 484-compliant generic subclasses parametrized by three type
+        # variables but subscripting a two-parameter parent in non-sequential
+        # order (i.e., first and third type parameters, skipping the second).
+        # This exercises the fix for GitHub issue #612, where is_subhint()
+        # incorrectly mapped type parameters by sequential encounter order
+        # during the depth-first search traversal rather than by their
+        # authoritative position in the root generic's __parameters__.
+        (Pep484GenericSTU_ST, Pep484GenericST, True),
+        (Pep484GenericSTU_ST[str, int, float], Pep484GenericST, True),
+        (Pep484GenericSTU_ST[str, int, float], Pep484GenericST[str, float], True),
+        (Pep484GenericSTU_ST[str, int, float], Pep484GenericST[str, int], False),
+        (Pep484GenericSTU_ST[str, int, float], Pep484GenericST[str, str], False),
 
         # ..................{ PEP 484 ~ optional             }..................
         # "typing.Optional"-centric tests.
