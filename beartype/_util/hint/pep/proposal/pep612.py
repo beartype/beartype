@@ -498,7 +498,7 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     # ....................{ LOCALS                         }....................
     # Callable directly annotated by this hint, localized for no good reason.
-    func = call_curr.func
+    func = call_curr.decoratee
 
     # Metadata describing the other variadic parameter accepted by that callable
     # if that callable accepts the other variadic parameter *OR* "None"
@@ -553,7 +553,7 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     # Type hint subscripting the other variadic parameter if any *OR* the
     # sentinel placeholder otherwise.
-    other_arg_hint = call_curr.func_annotations.get(other_arg_name, SENTINEL)
+    other_arg_hint = call_curr.decoratee_annotations.get(other_arg_name, SENTINEL)
 
     # If the other variadic parameter is unannotated, raise an exception.
     if other_arg_hint is SENTINEL:

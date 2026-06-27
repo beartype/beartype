@@ -75,8 +75,8 @@ from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseException,
 )
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
-from beartype._check.cls.call.calldatadecorabc import (
-    BeartypeCallDecorDataABC)
+from beartype._check.cls.call.calldatadecorfuncmin import (
+    BeartypeCallDecorFuncMinimalData)
 from beartype._check.cls.hint.data.hintdataerror import HintDataError
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.convert.convmain import sanify_hint_any
@@ -108,7 +108,7 @@ from typing import Optional
 # ....................{ GETTERS ~ exception                }....................
 def get_func_pith_violation(
     # Mandatory parameters.
-    call_curr: BeartypeCallDecorDataABC,
+    decor_func: BeartypeCallDecorFuncMinimalData,
     pith_name: str,
     pith_value: object,
 
@@ -123,10 +123,10 @@ def get_func_pith_violation(
 
     Parameters
     ----------
-    call_curr : BeartypeCallDecorDataABC
-        **Beartype type-check call metadata** (i.e., object encapsulating *all*
-        metadata required by the current call to the wrapper function
-        type-checking a :func:`beartype.beartype`-decorated callable).
+    decor_func : BeartypeCallDecorFuncMinimalData
+        **Beartype callable decorator call minimal metadata** (i.e., object
+        encapsulating the minimal metadata required to type-check the currently
+        called :func:`beartype.beartype`-decorated callable).
     pith_name : str
         Either:
 
@@ -163,14 +163,14 @@ def get_func_pith_violation(
     :func:`.get_hint_object_violation`
         Further details.
     '''
-    assert isinstance(call_curr, BeartypeCallDecorDataABC), (
-        f'{repr(call_curr)} not type-checking call metadata.')
+    assert isinstance(decor_func, BeartypeCallDecorFuncMinimalData), (
+        f'{repr(decor_func)} not beartype decorator call minimal metadata.')
     assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
 
     # Hint annotating this parameter or return if this parameter or return is
     # annotated *OR* the placeholder sentinel otherwise (i.e., if this parameter
     # or return is unannotated).
-    hint = call_curr.func_annotations.get(pith_name, SENTINEL)
+    hint = decor_func.decoratee_annotations.get(pith_name, SENTINEL)
 
     # If this parameter or return is unannotated, raise an exception.
     #
@@ -180,17 +180,17 @@ def get_func_pith_violation(
     # knowledge or permission, precautions are warranted.
     if hint is SENTINEL:
         raise _BeartypeCallHintPepRaiseException(
-            f'{repr(call_curr.func)} parameter "{pith_name}" unannotated '
+            f'{repr(decor_func.decoratee)} parameter "{pith_name}" unannotated '
             f'(or originally annotated but since deleted) in '
             f'"__annotations__" dunder dictionary:\n'
-            f'{repr(call_curr.func_annotations)}'
+            f'{repr(decor_func.decoratee_annotations)}'
         )
     # Else, this parameter or return is annotated.
 
     # Defer to this lower-level violation factory.
     return get_hint_object_violation(
-        call_curr=call_curr,
-        conf=call_curr.conf,
+        call_curr=decor_func,
+        conf=decor_func.conf,
         hint=hint,  # type: ignore[arg-type]
         obj=pith_value,
         pith_name=pith_name,
@@ -569,7 +569,7 @@ def _find_hint_object_violation_cause(
             # Default these exception locals appropriately
             exception_cls = conf.violation_return_type
             exception_prefix = prefix_callable_return_value(
-                func=call_curr.func,  # type: ignore[arg-type]
+                func=call_curr.decoratee,  # type: ignore[arg-type]
                 return_value=obj,
                 is_color=conf.is_color,
             )
@@ -578,7 +578,7 @@ def _find_hint_object_violation_cause(
             # Default these exception locals appropriately
             exception_cls = conf.violation_param_type
             exception_prefix = prefix_callable_arg_value(
-                func=call_curr.func,  # type: ignore[arg-type]
+                func=call_curr.decoratee,  # type: ignore[arg-type]
                 arg_name=pith_name,
                 arg_value=obj,
                 is_color=conf.is_color,

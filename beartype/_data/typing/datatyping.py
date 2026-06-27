@@ -314,6 +314,20 @@ This hint specifically matches the value of:
   higher-level functions distributed throughout the codebase.
 '''
 
+# ....................{ CALLABLE ~ decorator               }....................
+Decoratee = type | Callable
+'''
+:pep:`585`-compliant type hint matching a **decoratee** (i.e., pure-Python
+object being directly decorated by some pure-Python decorator).
+
+Equivalently, this hint matches all pure-Python callables and classes.
+Technically, other objects *can* be indirectly decorated by a decorator (e.g.,
+by that decorator internally reversing the order of decorator chaining such that
+that decorator is effectively repositioned below those objects in some chain of
+decorators). Pragmatically, decorators can only directly decorate pure-Python
+callables and classes.
+'''
+
 # ....................{ CALLABLE ~ descriptor              }....................
 MethodDescriptorBuiltin = (
     # C-based unbound class method descriptor (i.e., a pure-Python unbound
@@ -601,27 +615,13 @@ the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
 # ....................{ TYPE ~ or                          }....................
-Decoratee = type | FunctionType
-'''
-:pep:`585`-compliant type hint matching a **decoratee** (i.e., pure-Python
-object being directly decorated by some pure-Python decorator).
-
-Equivalently, this hint matches all pure-Python callables and classes.
-Technically, other objects *can* be indirectly decorated by a decorator (e.g.,
-by that decorator internally reversing the order of decorator chaining such that
-that decorator is effectively repositioned below those objects in some chain of
-decorators). Pragmatically, decorators can only directly decorate pure-Python
-callables and classes.
-'''
-
-
 SetOrTupleTypes = TupleTypes | AbstractSetTypes
 '''
 PEP-compliant type hint matching a set *or* tuple of zero or more types.
 '''
 
 
-TypeOrCallable = type | Callable
+TypeOrCallable = Decoratee
 '''
 :pep:`585`-compliant type hint matching a callable *or* type.
 '''

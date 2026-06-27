@@ -120,7 +120,7 @@ This snippet expects to be formatted with these named interpolations:
 
 CODE_GET_FUNC_PITH_VIOLATION = f''':
             {VAR_NAME_VIOLATION} = {ARG_NAME_GET_VIOLATION}(
-                call_curr={ARG_NAME_CALL_META},
+                decor_func={ARG_NAME_CALL_META},
                 pith_name={{pith_name}},
                 pith_value={VAR_NAME_PITH_ROOT},{{arg_random_int}}
             )

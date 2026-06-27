@@ -39,9 +39,11 @@ def test_coerce_func_hint_root() -> None:
 
         return 'whose wandering wings'
 
+    # ..................{ LOCALS                             }..................
     # Beartype dataclass describing this callable.
     decor_func = BeartypeCallDecorFuncData()
-    decor_func.reinit(func=one_legion_of_wild_thoughts, conf=BeartypeConf())
+    decor_func.reinit(
+        conf=BeartypeConf(), func_wrappee=one_legion_of_wild_thoughts)
 
     # ..................{ CORE                               }..................
     # Assert this coercer preserves an isinstanceable type as is.

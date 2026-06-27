@@ -922,11 +922,11 @@ def _make_code_raiser_violation(
 
     Raises
     ------
-    All exceptions raised by the lower-level :func:`make_check_expr` factory.
+    All exceptions raised by the lower-level :func:`.make_check_expr` factory.
 
     Warns
     -----
-    All warnings emitted by the lower-level :func:`make_check_expr` factory.
+    All warnings emitted by the lower-level :func:`.make_check_expr` factory.
 
     See Also
     --------

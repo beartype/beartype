@@ -52,12 +52,11 @@ def test_reduce_hint(
         # decoration of an arbitrary method of an arbitrary type, itself
         # decorated explicitly via a type stack.
         with new_decor_func(
-            cls_stack=hint_reduction_meta.cls_stack,
             conf=hint_reduction_meta.conf,
-
+            cls_stack=hint_reduction_meta.cls_stack,
             # Arbitrary callable annotated by one or more arbitrary type hints,
             # passed purely to satisfy API constraints.
-            func=test_reduce_hint,
+            func_wrappee=test_reduce_hint,
         ) as call_curr:
             # If this is case encapsulates a valid reduction...
             if isinstance(hint_reduction_meta, HintReductionValid):

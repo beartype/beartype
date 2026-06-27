@@ -139,11 +139,11 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
     # efficiency for the common case of callables accepting either no
     # parameters *OR* one or more parameters, all of which are unannotated.
     if (
-        # That callable is annotated by only one type hint *AND*...
-        len(decor_func.func_annotations) == 1 and
+        # That callable is annotated by exactly one type hint *AND*...
+        len(decor_func.decoratee_annotations) == 1 and
         # That type hint annotates that callable's return rather than a
         # parameter accepted by that callable...
-        ARG_NAME_RETURN in decor_func.func_annotations
+        ARG_NAME_RETURN in decor_func.decoratee_annotations
     ):
         return ''
     # Else, one or more callable parameters are annotated.

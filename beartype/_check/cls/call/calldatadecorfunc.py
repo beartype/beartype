@@ -330,12 +330,12 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         self,
 
         # Mandatory parameters.
-        func: Callable,
+        func_wrappee: Callable,
         conf: BeartypeConf,
 
         # Optional parameters.
         cls_stack: TypeStack = None,
-        wrapper: Optional[Callable] = None,
+        func_wrapper: Optional[Callable] = None,
     ) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
@@ -358,7 +358,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
             **Type stack** (i.e., either tuple of zero or more arbitrary types
             *or* :data:`None`). See also the parameter of the same name accepted
             by the :func:`beartype._decor.decorcore.beartype_object` function.
-        wrapper : Optional[Callable]
+        func_wrapper : Optional[Callable]
             **Wrapper callable** to be unwrapped in the event that the callable
             currently being decorated by :func:`beartype.beartype` differs from
             the callable to be unwrapped. Typically, these two callables are the
@@ -402,25 +402,28 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         # ..................{ VALIDATE                       }..................
         # If the caller failed to pass a callable to be unwrapped, default that
         # to the callable to be type-checked.
-        if wrapper is None:
-            wrapper = func
+        if func_wrapper is None:
+            func_wrapper = func_wrappee
         # Else, the caller passed a callable to be unwrapped. Preserve it up!
         # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)}...')
 
         # If the callable to be type-checked is uncallable, raise an exception.
-        if not callable(func):
-            raise BeartypeDecorWrappeeException(f'{repr(func)} uncallable.')
+        if not callable(func_wrappee):
+            raise BeartypeDecorWrappeeException(
+                f'{repr(func_wrappee)} uncallable.')
         # Else, that callable is callable.
         #
         # If the callable to be unwrapped is uncallable, raise an exception.
-        elif not callable(wrapper):
-            raise BeartypeDecorWrappeeException(f'{repr(wrapper)} uncallable.')
+        elif not callable(func_wrapper):
+            raise BeartypeDecorWrappeeException(
+                f'{repr(func_wrapper)} uncallable.')
         # Else, that callable is callable.
         #
         # If this configuration is *NOT* a configuration, raise an exception.
         elif not isinstance(conf, BeartypeConf):
             raise BeartypeDecorWrappeeException(
-                f'BeartypeCallDecorFuncData.reinit() method "conf" parameter '
+                f'BeartypeCallDecorFuncData.reinit() method '
+                f'"conf" parameter '
                 f'{repr(conf)} not beartype configuration.'
             )
         # Else, this configuration is a configuration.
@@ -429,7 +432,8 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         # exception.
         elif not isinstance(cls_stack, NoneTypeOr[tuple]):
             raise BeartypeDecorWrappeeException(
-                f'BeartypeCallDecorFuncData.reinit() method "cls_stack" parameter '
+                f'BeartypeCallDecorFuncData.reinit() method '
+                f'"cls_stack" parameter '
                 f'{repr(cls_stack)} neither tuple nor "None".'
             )
         # Else, this class stack is either a tuple *OR* "None".
@@ -441,7 +445,8 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
                 # If this item is *NOT* a type, raise an exception.
                 if not isinstance(cls_stack_item, type):
                     raise BeartypeDecorWrappeeException(
-                        f'BeartypeCallDecorFuncData.reinit() method "cls_stack" item '
+                        f'BeartypeCallDecorFuncData.reinit() method '
+                        f'"cls_stack" parameter item '
                         f'{repr(cls_stack_item)} not type.'
                     )
                 # Else, this item is a type.
@@ -458,7 +463,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
 
         # ..................{ VARS ~ func : wrappee          }..................
         # Wrappee callable currently being decorated.
-        self.func_wrappee = func
+        self.func_wrappee = func_wrappee
 
         # Possibly wrapped wrappee code object (i.e., code object underlying the
         # callable currently being type-checked by the @beartype decorator) if
@@ -468,14 +473,14 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         # (i.e., "func_wrappee_wrappee") *MUST* be pure-Python and thus *MUST*
         # have a code object. This higher-level wrappee is permitted to be
         # C-based and thus need *NOT* have a code object.
-        func_wrappee_codeobj = get_func_codeobject_or_none(func)
+        func_wrappee_codeobj = get_func_codeobject_or_none(func_wrappee)
 
         # ..................{ VARS ~ func : wrappee wrappee  }..................
         # Possibly unwrapped callable unwrapped from this wrappee callable.
         #
-        # Note that this "func" instance variable is intentionally aliased to
-        # this "func_wrappee_wrappee" rather than the passed "func_wrappee".
-        # Why? Specifically, because the
+        # Note that the "decoratee" instance variable defined by our superclass
+        # is intentionally aliased to this "func_wrappee_wrappee" instance
+        # variable rather than the passed "func_wrappee" parameter. The
         # resolve_hint_pep484_ref_str_decor_curr() function accepting a
         # general-purpose "decor_func: BeartypeCallDecorDataABC" parameter
         # *MUST* dynamically resolve type hints against the original local and
@@ -484,7 +489,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         # created and returned by other intermediary third-party decorators).
         self.decoratee = (
         self.func_wrappee_wrappee) = unwrap_func_all_isomorphic(
-            func=func, wrapper=wrapper)
+            func=func_wrappee, wrapper=func_wrapper)
         # print(f'func_wrappee: {self.func_wrappee}')
         # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')
         # print(f'{dir(self.func_wrappee_wrappee)}')
@@ -496,12 +501,12 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         )
 
         # ..................{ VARS ~ func : wrapper          }..................
-        # Wrapper callable to be unwrapped in the event that the
-        # decorated callable differs from the callable to be unwrapped.
-        self.func_wrapper = wrapper
+        # Wrapper callable to be unwrapped in the event that the decorated
+        # callable differs from the callable to be unwrapped.
+        self.func_wrapper = func_wrapper
 
         # Machine-readable name of the wrapper function to be generated.
-        self.func_wrapper_name = func.__name__
+        self.func_wrapper_name = func_wrappee.__name__
 
         # ..................{ VARS ~ func : hints            }..................
         # Dictionary mapping from the name of each annotated parameter accepted
@@ -557,7 +562,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         # be unwrapped). Even if "func" were annotated with type hints, those
         # type hints would be useless for most intents and purposes.
         self.decoratee_annotations = get_hintable_pep649749_annotations(
-            hintable=wrapper, exception_cls=BeartypeDecorWrappeeException)
+            hintable=func_wrapper, exception_cls=BeartypeDecorWrappeeException)
         # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)} w/ annotations {self.func_annotations}...')
 
         # dict.get() method bound to this dictionary.

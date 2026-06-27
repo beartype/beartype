@@ -300,7 +300,7 @@ def reduce_hint_pep484612646_typearg(
         # *OR* the sentinel placeholder otherwise (i.e., if this type parameter
         # has *NO* default).
         hint_default = get_hint_pep484612646_typearg_packed_default_or_sentinel(
-            hintable=call_curr.func,
+            hintable=call_curr.decoratee,
             hint=hint_packed,
             exception_prefix=exception_prefix,
         )
@@ -325,7 +325,7 @@ def reduce_hint_pep484612646_typearg(
         # parametrizing this type parameter if any *OR* "None" otherwise (i.e.,
         # if this type parameter is both unbounded *AND* unconstrained).
         hint_reduced = get_hint_pep484_typevar_bounded_constraints_or_none(
-            hintable=call_curr.func,
+            hintable=call_curr.decoratee,
             hint=hint_reduced,  # pyright: ignore
             exception_prefix=exception_prefix,
         )
@@ -606,7 +606,7 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
         # Type parameter lookup table mapping from each of these type parameters
         # to each of these corresponding child hints.
         typearg_to_hint = _make_hint_pep484612646_typearg_to_hint(
-            hintable=call_curr.func,
+            hintable=call_curr.decoratee,
             hint=hint,
             hints_typearg=hints_typearg,
             hints_child=hints_child,

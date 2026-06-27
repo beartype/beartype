@@ -151,7 +151,7 @@ def test_make_check_expr() -> None:
         with new_decor_func(
             cls_stack=(Class,),
             conf=BEARTYPE_CONF_DEFAULT,
-            func=Class.instance_method,
+            func_wrappee=Class.instance_method,
         ) as decor_curr_pep673:
             # Assert that the make_check_expr() code factory avoids memoizing
             # PEP 673-compliant self root hints.

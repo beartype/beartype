@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator call metadata dataclass** unit tests.
+**Beartype callable decorator call metadata dataclass** unit tests.
 
 This submodule unit tests the
 :func:`beartype._check.cls.call.calldatadecorfunc` submodule.
@@ -46,43 +46,43 @@ def test_callmetadecor() -> None:
     # type-checked raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
-            func='The fields, the lakes, the forests, and the streams,',
             conf=BeartypeConf(),
+            func_wrappee='The fields, the lakes, the forests, and the streams,',
         )
 
     # Assert that reinitializing this metadata an uncallable object to be
     # unwrapped raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
-            func=function_lambda,
             conf=BeartypeConf(),
-            wrapper="Like serpents struggling in a vulture's grasp.",
+            func_wrappee=function_lambda,
+            func_wrapper="Like serpents struggling in a vulture's grasp.",
         )
 
     # Assert that reinitializing this metadata with a C-based builtin function
     # raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
-        bear_data.reinit(func=iter, conf=BeartypeConf())
+        bear_data.reinit(conf=BeartypeConf(), func_wrappee=iter)
 
     # Assert that reinitializing this metadata with an invalid configuration
     # raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
-            func=function_lambda,
             conf='Ocean, and all the living things that dwell',
+            func_wrappee=function_lambda,
         )
 
     # Assert that reinitializing this metadata with invalid class stacks raises
     # the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
-            func=function_lambda,
-            conf=BeartypeConf(),
             cls_stack="Shine in the rushing torrents' restless gleam,",
+            conf=BeartypeConf(),
+            func_wrappee=function_lambda,
         )
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
-            func=function_lambda,
-            conf=BeartypeConf(),
             cls_stack=('Which from those secret chasms in tumult welling',),
+            conf=BeartypeConf(),
+            func_wrappee=function_lambda,
         )

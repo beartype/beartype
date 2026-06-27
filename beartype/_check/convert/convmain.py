@@ -177,7 +177,7 @@ def sanify_hint_root_func(
     if pith_name == ARG_NAME_RETURN:
         hint = reduce_hint_pep484585_func_return(
             func=decor_func.func_wrappee,
-            func_annotations=decor_func.func_annotations,
+            func_annotations=decor_func.decoratee_annotations,
             exception_prefix=exception_prefix,
         )
     # Else, this hint annotates a parameter.

@@ -124,7 +124,7 @@ def resolve_hint_pep484_ref_str_caller_external(
 #FIXME: Unit test us up, please.
 def resolve_hint_pep484_ref_str_decor_curr(
     # Mandatory parameters.
-    decor_func: BeartypeCallDecorDataABC,
+    decor_curr: BeartypeCallDecorDataABC,
     hint: str,
 
     # Optional parameters.
@@ -146,7 +146,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
 
     Parameters
     ----------
-    decor_func : BeartypeCallDecorDataABC
+    decor_curr : BeartypeCallDecorDataABC
         **Beartype decorator call minimal metadata** (i.e., dataclass
         encapsulating the minimal metadata required to type-check the currently
         decorated callable at the time that callable is subsequently called).
@@ -171,8 +171,8 @@ def resolve_hint_pep484_ref_str_decor_curr(
         global and local scopes of the decorated callable raises an exception,
         typically due to this reference being syntactically invalid as Python.
     '''
-    assert isinstance(decor_func, BeartypeCallDecorDataABC), (
-        f'{repr(decor_func)} not beartype decorator call metadata.')
+    assert isinstance(decor_curr, BeartypeCallDecorDataABC), (
+        f'{repr(decor_curr)} not beartype decorator call metadata.')
     assert isinstance(hint, str), (
         f'{repr(hint)} not PEP 484 stringified forward reference type hint.')
     assert isinstance(exception_prefix, str), (
@@ -185,8 +185,8 @@ def resolve_hint_pep484_ref_str_decor_curr(
     # ..................{ LOCALS                             }..................
     # Decorated callable and metadata associated with that callable, localized
     # to improve both readability and negligible efficiency when accessed below.
-    func = decor_func.func
-    cls_stack = decor_func.cls_stack
+    func = decor_curr.decoratee
+    cls_stack = decor_curr.cls_stack
 
     # True only if that callable is nested. As a minor efficiency gain, we avoid
     # the slightly expensive call to is_func_nested() by noting that:
@@ -419,20 +419,20 @@ def resolve_hint_pep484_ref_str_decor_curr(
     #       # root type and is thus intentionally added *AFTER* the latter.
     #       func_locals[cls_root.__name__] = cls_root
     #       func_locals[cls_curr.__name__] = cls_curr
-    # * "not decor_func.func_wrappee_is_nested". That callable is *NOT* nested
+    # * "not decor_curr.func_wrappee_is_nested". That callable is *NOT* nested
     #   and *MUST* thus be a global function, implying this hint to already be
     #   globally unambiguous.
 
     # ..................{ SCOPE                              }..................
     # Decide the forward scope of the decorated callable.
     decoratee_scope_forward = make_scope_forward_decor_curr(
-        decor_func=decor_func,
+        decor_curr=decor_curr,
         hint=hint,
         func_is_nested=func_is_nested,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
-    # print(f'Resolving {repr(decor_func)} string hint {repr(hint)} to forward reference proxy...')
+    # print(f'Resolving {repr(decor_curr)} string hint {repr(hint)} to forward reference proxy...')
     # print(f'Resolving string hint {repr(hint)} against {repr(decor_currfunc_wrappee_wrappee_scope_forward)}...')
 
     # ..................{ RESOLVE                            }..................
@@ -440,7 +440,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
     # the global and local scopes of the decorated callable.
     hint_resolved = _resolve_hint_pep484_ref_str(
         hint=hint,
-        conf=decor_func.conf,
+        conf=decor_curr.conf,
         scope_forward=decoratee_scope_forward,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,

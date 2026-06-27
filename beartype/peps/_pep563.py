@@ -38,9 +38,7 @@ from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import TypeStack
 from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
-    get_hintable_pep649749_annotations,
-    set_pep649749_hintable_annotations,
-)
+    get_hintable_pep649749_annotations)
 from collections.abc import Callable
 
 # ....................{ RESOLVERS                          }....................
@@ -240,7 +238,8 @@ def resolve_pep563(
 
     # ..................{ LOCALS                             }..................
     # Beartype call metadata describing the passed callable.
-    decor_func = make_decor_func(func=func, conf=conf, cls_stack=cls_stack)
+    decor_func = make_decor_func(
+        cls_stack=cls_stack, conf=conf, func_wrappee=func)
 
     # Shallow copy of the dictionary to be returned. Why? Because the
     # "func.__annotations__" dictionary *CANNOT* be safely directly assigned to
@@ -263,8 +262,8 @@ def resolve_pep563(
     for pith_name, hint in func_annotations.items():
         # Non-string hint to which this stringified hint refers
         hint = resolve_hint_pep484_ref_str_decor_curr(
+            decor_curr=decor_func,
             hint=hint,
-            decor_func=decor_func,
             exception_cls=BeartypePep563Exception,
         )
 

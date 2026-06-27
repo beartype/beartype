@@ -144,7 +144,7 @@ def coerce_func_hint_root(
     if isinstance(hint, str):
         # print(f'Coercing forward ref hint {repr(hint)} to...')
         hint = resolve_hint_pep484_ref_str_decor_curr(
-            hint=hint, decor_func=decor_func, exception_prefix=exception_prefix)  # pyright: ignore
+            hint=hint, decor_curr=decor_func, exception_prefix=exception_prefix)  # pyright: ignore
         # print(f'...non-forward ref hint {repr(hint)}!')
     # Else, this hint is *NOT* stringified.
     #

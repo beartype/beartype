@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype type-check call metadata dataclass** (i.e., class aggregating *all*
-metadata required by the current call to the wrapper function type-checking a
-:func:`beartype.beartype`-decorated callable).
+**Beartype decorator call metadata dataclass superclass** (i.e., abstract base
+class (ABC) of all dataclass subclasses encapsulating the minimal metadata
+required to type-check the callable or type currently being decorated by the
+:func:`beartype.beartype` decorator).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -88,7 +89,8 @@ class BeartypeCallDecorDataABC(BeartypeCallDataABC):
 
         # Re-annotate these class variables defined by a superclass with tighter
         # bounds more suitable to this subclass.
-        decoratee_annotations: Pep649749HintableAnnotations
+        decoratee: Decoratee  # pyright: ignore
+        decoratee_annotations: Pep649749HintableAnnotations  # pyright: ignore
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
@@ -148,7 +150,7 @@ class BeartypeCallDecorDataABC(BeartypeCallDataABC):
 
         # Defer to this low-level resolver.
         return resolve_hint_pep484_ref_str_decor_curr(
-            decor_func=self,
+            decor_curr=self,
             hint=hint,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,

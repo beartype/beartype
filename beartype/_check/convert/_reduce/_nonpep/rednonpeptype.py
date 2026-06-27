@@ -126,7 +126,7 @@ def reduce_hint_nonpep(
         call_curr.cls_stack and
         # A method of the most deeply nested such type is also currently being
         # decorated by @beartype...
-        call_curr.func is not None
+        call_curr.decoratee is not None
     ):
     # Then there exists a negligible (albeit non-zero) probability that blindly
     # generating code type-checking this hint *COULD* accidentally ignite
@@ -139,8 +139,8 @@ def reduce_hint_nonpep(
         decor_type = call_curr.cls_stack[-1]
 
         # Unqualified basename of that method.
-        decor_type_method_name = call_curr.func.__name__
-        # print(f'Testing type {repr(decor_type)} dunder method {repr(call_curr.func)}...')
+        decor_type_method_name = call_curr.decoratee.__name__
+        # print(f'Testing type {repr(decor_type)} dunder method {repr(call_curr.decoratee)}...')
         # print(f'...hint {repr(hint)}...')
 
         # If...
@@ -171,7 +171,7 @@ def reduce_hint_nonpep(
         #   chance it, the negligible gain of type-checking self-hints of
         #   __getitem__() dunder methods of non-sequence types hardly seems
         #   worth the significant pain of infinitely recursive type-checking.
-            # print(f'Ignoring type {repr(decor_type)} dunder method {repr(call_curr.func)}...')
+            # print(f'Ignoring type {repr(decor_type)} dunder method {repr(call_curr.decoratee)}...')
             # print(f'...recursive hint {repr(hint)}!')
 
             # Fully-qualified name of the module declaring the currently

@@ -13,8 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.cls.call.calldatadecorabc import BeartypeCallDecorDataABC
-from beartype._cave._cavefast import FunctionType
-# from collections.abc import Callable
+# from beartype._cave._cavefast import FunctionType
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 # ....................{ SUBCLASSES                         }....................
@@ -52,7 +52,7 @@ class BeartypeCallDecorFuncMinimalData(BeartypeCallDecorDataABC):
     if TYPE_CHECKING:
         # Re-annotate these class variables defined by a superclass with tighter
         # bounds more suitable to this subclass.
-        decoratee: FunctionType
+        decoratee: Callable
 
 # ....................{ MINIFIERS                          }....................
 def minify_decor_func_kwargs(**kwargs) -> BeartypeCallDecorFuncMinimalData:
