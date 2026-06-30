@@ -5,7 +5,7 @@
 
 '''
 Test-wide :pep:`484`-compliant **generics** (i.e., subclasses of the standard
-:pep:`484`-compliant :class:`typing.Generic` superclass, exercising edge cases
+:pep:`484`-compliant :class:`typing.Generic` superclass, validating edge cases
 in unit tests requiring non-trivial generics).
 '''
 
@@ -15,6 +15,7 @@ from beartype_test.a00_unit.data.data_type import Class
 from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
     S,
     T,
+    U,
 )
 from collections.abc import (
     Sized as SizedABC,
@@ -119,6 +120,31 @@ class Pep484GenericIntInt(Pep484GenericST[int, int]):
     :pep:`484`-compliant concrete generic subclass inheriting a
     :pep:`484`-compliant generic superclass subscripted twice by the
     builtin :class:`int` type.
+    '''
+
+    pass
+
+# ....................{ PEP 484 : S, T, U                  }....................
+class Pep484GenericSU_STU(Pep484GenericST[S, U], Generic[S, T, U]):
+    '''
+    :pep:`484`-compliant generic subclass parametrized by three type variables
+    but inheriting a :pep:`484`-compliant generic superclass subscripted by only
+    two of those type variables **non-sequentially** (i.e., only the first type
+    variable ``S`` and third type variable ``U`` parametrizing this subclass,
+    thus excluding the second type variable ``T`` also parametrizing this
+    subclass).
+
+    This subclass validates edge cases in which generic subclasses subscript
+    generic superclasses by non-sequentially ordered type parameters, requiring
+    the :func:`beartype.door.is_subhint` tester to resolve type parameters by
+    their predefined ordering in the :pep:`484`-compliant ``__parameters__``
+    dunder tuple rather than their dynamic ordering while visiting generic
+    pseudo-superclasses in the depth-first search (DFS) underlying that tester.
+
+    See Also
+    --------
+    https://github.com/beartype/beartype/issues/612
+        GitHub issue partially validated by this subclass.
     '''
 
     pass
