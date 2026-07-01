@@ -125,7 +125,7 @@ class Pep484GenericIntInt(Pep484GenericST[int, int]):
     pass
 
 # ....................{ PEP 484 : S, T, U                  }....................
-class Pep484GenericSU_STU(Pep484GenericST[S, U], Generic[S, T, U]):
+class Pep484GenericSTToUU(Pep484GenericST[S, U], Generic[S, T, U]):
     '''
     :pep:`484`-compliant generic subclass parametrized by three type variables
     but inheriting a :pep:`484`-compliant generic superclass subscripted by only

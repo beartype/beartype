@@ -51,11 +51,15 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     import typing
     from abc import ABCMeta
     from beartype._util.cls.utilclstest import is_type_subclass_proper
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_13
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_12,
+        IS_PYTHON_AT_MOST_3_13,
+    )
     from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
         Pep484GenericT,
         Pep484GenericSubT,
         Pep484GenericST,
+        Pep484GenericSTToUU,
         Pep484GenericSInt,
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
@@ -274,6 +278,33 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Pep484GenericSInt[Sequence], Pep484GenericST[list, object], False),
         (Pep484GenericSInt[T_sequence], Pep484GenericST, True),
 
+        # PEP 484-compliant generic subclass parametrized by three type
+        # variables but inheriting a PEP 484-compliant generic superclass
+        # subscripted by only two of those type variables non-sequentially
+        # (i.e., only the first type variable "S" and third type variable "U"
+        # parametrizing this subclass, thus excluding the second type variable
+        # "T" also parametrizing this subclass).
+        (Pep484GenericSTToUU, Pep484GenericST, True),
+        (Pep484GenericSTToUU[str, int, float], Pep484GenericST, True),
+        #FIXME: Uncomment the following two cases after worky, please! *sigh*
+        #FIXME: Don't forget to also uncomment the similarly commented-out PEP
+        #695-compliant cases, too! *mega-sigh*
+        # (
+        #     Pep484GenericSTToUU[str, int, float],
+        #     Pep484GenericST[str, float],
+        #     True,
+        # ),
+        # (
+        #     Pep484GenericSTToUU[str, int, float],
+        #     Pep484GenericST[str, int],
+        #     False,
+        # ),
+        (
+            Pep484GenericSTToUU[str, int, float],
+            Pep484GenericST[str, str],
+            False,
+        ),
+
         # ..................{ PEP 484 ~ optional             }..................
         # "typing.Optional"-centric tests.
 
@@ -415,6 +446,49 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     ]
 
     # ..................{ LISTS ~ cases : version            }..................
+    # If the active Python interpreter targets Python >= 3.12 and thus supports
+    # PEP 612-compliant type parameter declaration syntax (which raises a
+    # "SyntaxError" under older Python interpreters)...
+    if IS_PYTHON_AT_LEAST_3_12:
+        # Defer version-specific imports.
+        from beartype_test.a00_unit.data.pep.generic.data_pep695generic import (
+            Pep695GenericST,
+            Pep695GenericSTToUU,
+        )
+
+        # Extend this list with...
+        HINT_SUBHINT_CASES.extend((
+            # ..................{ PEP 695 ~ generic          }..................
+            # "typing.Generic"-centric tests.
+
+            # PEP 695-compliant generic subclass implicitly parametrized by
+            # three type variables but inheriting a PEP 695-compliant generic
+            # superclass subscripted by only two of those type variables
+            # non-sequentially (i.e., only the first type variable "S" and third
+            # type variable "U" parametrizing this subclass, thus excluding the
+            # second type variable "T" also parametrizing this subclass).
+            (Pep695GenericSTToUU, Pep695GenericST, True),
+            (Pep695GenericSTToUU[str, int, float], Pep695GenericST, True),
+            #FIXME: Uncomment the following two cases after worky, please! *sigh*
+            # (
+            #     Pep695GenericSTToUU[str, int, float],
+            #     Pep695GenericST[str, float],
+            #     True,
+            # ),
+            # (
+            #     Pep695GenericSTToUU[str, int, float],
+            #     Pep695GenericST[str, int],
+            #     False,
+            # ),
+            (
+                Pep695GenericSTToUU[str, int, float],
+                Pep695GenericST[str, str],
+                False,
+            ),
+        ))
+    # Else, the active Python interpreter targets Python < 3.12 and thus fails
+    # to support PEP 612-compliant type parameter declaration syntax.
+
     # If the active Python interpreter targets Python <= 3.13...
     if IS_PYTHON_AT_MOST_3_13:
         # "collections.abc.ByteString", "typing.ByteString", and therefore
