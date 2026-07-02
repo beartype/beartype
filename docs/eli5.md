@@ -13,9 +13,9 @@ Child Markdown document gently introducing this project.
 > the simple bare necessities.
 >
 > Forget about your worries and your strife.  
-> — [The Jungle Book](https://www.gutenberg.org/files/236/236-h/236-h.htm).
+> — [The Jungle Book].
 
-Beartype is a novel first line of defense. In Python's vast arsenal of [software quality assurance (SQA)](https://en.wikipedia.org/wiki/Software_quality_assurance), beartype holds the [shield wall](https://en.wikipedia.org/wiki/Shield_wall) against breaches in type safety by improper parameter and return values violating developer expectations.
+Beartype is a novel first line of defense. In Python's vast arsenal of [software quality assurance (SQA)][SQA], beartype holds the [shield wall] against breaches in type safety by improper parameter and return values violating developer expectations.
 
 Beartype is unopinionated. Beartype inflicts *no* developer constraints beyond [importation and usage of a single configuration-free decorator](tldr.md). Beartype is trivially integrated into new and existing applications, stacks, modules, and scripts already annotating callables with [PEP-compliant industry-standard type hints](pep.md).
 
@@ -29,17 +29,17 @@ Beartype is zero-cost. Beartype inflicts *no* harmful developer tradeoffs, inste
 
 ### ...versus Static Type-checkers
 
-Like [competing static type-checkers](moar.md#static-type-checkers) operating at the coarse-grained application level via ad-hoc heuristic type inference (e.g., [Pyre](https://pyre-check.org), [mypy](http://mypy-lang.org), [pyright](https://github.com/Microsoft/pyright), [pytype](https://github.com/google/pytype)), beartype effectively [imposes no runtime overhead](math.md#nobody-expects-the-linearithmic-time). Unlike static type-checkers:
+Like [competing static type-checkers](moar.md#static-type-checkers) operating at the coarse-grained application level via ad-hoc heuristic type inference (e.g., [Pyre], [mypy], [pyright], [pytype]), beartype effectively [imposes no runtime overhead](math.md#nobody-expects-the-linearithmic-time). Unlike static type-checkers:
 
-- Beartype operates exclusively at the fine-grained callable level of pure-Python functions and methods via the standard decorator design pattern. This renders beartype natively compatible with *all* interpreters and compilers targeting the Python language – including [Brython](https://brython.info), [PyPy](https://www.pypy.org), [Numba](https://numba.pydata.org), [Nuitka](https://nuitka.net), and (wait for it) [CPython](https://github.com/python/cpython) itself.
+- Beartype operates exclusively at the fine-grained callable level of pure-Python functions and methods via the standard decorator design pattern. This renders beartype natively compatible with *all* interpreters and compilers targeting the Python language – including [Brython], [PyPy], [Numba][numba], [Nuitka], and (wait for it) [CPython] itself.
 - Beartype enjoys deterministic Turing-complete access to the actual callables, objects, and types being type-checked. This enables beartype to solve dynamic problems decidable only at runtime – including type-checking of arbitrary objects whose:
-  - Metaclasses [dynamically customize instance and subclass checks](https://docs.python.org/3/reference/datamodel.html#customizing-instance-and-subclass-checks) by implementing the `__instancecheck__()` and/or `__subclasscheck__()` dunder methods, including:
-    - [PEP 3119](https://peps.python.org/pep-3119)-compliant metaclasses (e.g., `abc.ABCMeta`).
-  - Pseudo-superclasses [dynamically customize the method resolution order (MRO) of subclasses](https://peps.python.org/pep-0560/#id20) by implementing the `__mro_entries__()` dunder method, including:
-    - [PEP 560](https://peps.python.org/pep-0560)-compliant pseudo-superclasses.
+  - Metaclasses [dynamically customize instance and subclass checks][isinstancecheck] by implementing the `__instancecheck__()` and/or `__subclasscheck__()` dunder methods, including:
+    - [PEP 3119]-compliant metaclasses (e.g., `abc.ABCMeta`).
+  - Pseudo-superclasses [dynamically customize the method resolution order (MRO) of subclasses][mro_entries] by implementing the `__mro_entries__()` dunder method, including:
+    - [PEP 560]-compliant pseudo-superclasses.
   - Classes dynamically register themselves with standard abstract base classes (ABCs), including:
-    - [PEP 3119](https://peps.python.org/pep-3119)-compliant third-party virtual base classes.
-    - [PEP 3141](https://peps.python.org/pep-3141)-compliant third-party virtual number classes (e.g., [SymPy](https://www.sympy.org)).
+    - [PEP 3119]-compliant third-party virtual base classes.
+    - [PEP 3141]-compliant third-party virtual number classes (e.g., [SymPy]).
   - Classes are dynamically constructed or altered, including by:
     - Class decorators.
     - Class factory functions and methods.
@@ -48,7 +48,7 @@ Like [competing static type-checkers](moar.md#static-type-checkers) operating at
 
 ### ...versus Runtime Type-checkers
 
-Unlike [comparable runtime type-checkers](moar.md#runtime-type-checkers) (e.g., [pydantic](https://docs.pydantic.dev), [typeguard](https://github.com/agronholm/typeguard)), beartype decorates callables with dynamically generated wrappers efficiently type-checking each parameter passed to and value returned from those callables in constant time. Since "performance by default" is our first-class concern, generated wrappers are guaranteed to:
+Unlike [comparable runtime type-checkers](moar.md#runtime-type-checkers) (e.g., [pydantic][Pydantic], [typeguard]), beartype decorates callables with dynamically generated wrappers efficiently type-checking each parameter passed to and value returned from those callables in constant time. Since "performance by default" is our first-class concern, generated wrappers are guaranteed to:
 
 - Exhibit [O(1) non-amortized worst-case time complexity with negligible constant factors](math.md#nobody-expects-the-linearithmic-time).
 - Be either more efficient (in the common case) or exactly as efficient minus the cost of an additional stack frame (in the worst case) as equivalent type-checking implemented by hand, *which no one should ever do.*
@@ -123,7 +123,7 @@ Let's type-check a `"Hello, Jungle!"` toy example. Just:
 
 #### Industrial Example
 
-Let's wrap the [third-party numpy.empty_like() function](https://numpy.org/doc/stable/reference/generated/numpy.empty_like.html) with automated runtime type checking to demonstrate beartype's support for non-trivial combinations of nested type hints compliant with different PEPs:
+Let's wrap the [third-party numpy.empty_like() function][numpy.empty_like] with automated runtime type checking to demonstrate beartype's support for non-trivial combinations of nested type hints compliant with different PEPs:
 
 ```python
 from beartype import beartype
@@ -142,7 +142,7 @@ def empty_like_bear(
     return np.empty_like(prototype, dtype, order, subok, shape)
 ```
 
-Note the non-trivial hint for the optional `shape` parameter, synthesized from a [PEP 484-compliant optional](https://docs.python.org/3/library/typing.html#typing.Optional) of a [PEP 484-compliant union](https://docs.python.org/3/library/typing.html#typing.Union) of a builtin type and a [PEP 585-compliant subscripted abstract base class (ABC)](https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence), accepting as valid either:
+Note the non-trivial hint for the optional `shape` parameter, synthesized from a [PEP 484-compliant optional][typing.Optional] of a [PEP 484-compliant union][typing.Union] of a builtin type and a [PEP 585-compliant subscripted abstract base class (ABC)][collections.abc.Sequence], accepting as valid either:
 
 - The `None` singleton.
 - An integer.
@@ -238,7 +238,7 @@ None
 
 Of course, the `beartype.cave` submodule also publishes types *not* accessible directly like `RegexCompiledType` (i.e., the type of all compiled regular expressions). All else being equal, `beartype.cave` is preferable.
 
-Good function! The type hints applied to this function now accurately document this function's API. All's well that ends typed well. Suck it, [Shere Khan](https://en.wikipedia.org/wiki/Shere_Khan).
+Good function! The type hints applied to this function now accurately document this function's API. All's well that ends typed well. Suck it, [Shere Khan].
 
 ### Arbitrary Types
 
@@ -322,7 +322,7 @@ def toomai_of_the_elephants(memory: Union[Integral, Mapping[Any, Any]]) -> (
     return memory if isinstance(memory, Integral) else lambda key: memory[key]
 ```
 
-For genericity, the `toomai_of_the_elephants()` function both accepts and returns *any* generic integer (via the standard `numbers.Integral` abstract base class (ABC) matching both builtin integers and third-party integers from frameworks like [NumPy](https://numpy.org) and [SymPy](https://www.sympy.org)) rather than an overly specific `int` type. The API you relax may very well be your own.
+For genericity, the `toomai_of_the_elephants()` function both accepts and returns *any* generic integer (via the standard `numbers.Integral` abstract base class (ABC) matching both builtin integers and third-party integers from frameworks like [NumPy] and [SymPy]) rather than an overly specific `int` type. The API you relax may very well be your own.
 
 Let's call that function with good types:
 
@@ -442,9 +442,9 @@ Behold! The terrifying power of the `typing.Optional` type hint, resplendent in 
 
 ## Would You Like to Know More?
 
-If you know [type hints](https://peps.python.org/pep-0484), you know beartype. Since beartype is driven by [tool-agnostic community standards](https://peps.python.org), the public API for beartype is *basically* just those standards. As the user, all you need to know is that decorated callables magically raise human-readable exceptions when you pass parameters or return values violating the PEP-compliant type hints annotating those parameters or returns.
+If you know [type hints][PEP 484], you know beartype. Since beartype is driven by [tool-agnostic community standards][PEPs], the public API for beartype is *basically* just those standards. As the user, all you need to know is that decorated callables magically raise human-readable exceptions when you pass parameters or return values violating the PEP-compliant type hints annotating those parameters or returns.
 
-If you don't know [type hints](https://peps.python.org/pep-0484), this is your moment to go deep on the hardest hammer in Python's [SQA](https://en.wikipedia.org/wiki/Software_quality_assurance) toolbox. Here are a few friendly primers to guide you on your maiden voyage through the misty archipelagos of type hinting:
+If you don't know [type hints][PEP 484], this is your moment to go deep on the hardest hammer in Python's [SQA] toolbox. Here are a few friendly primers to guide you on your maiden voyage through the misty archipelagos of type hinting:
 
-- ["Python Type Checking (Guide)"](https://realpython.com/python-type-checking), a comprehensive third-party introduction to the subject. Like most existing articles, this guide predates $O(1)$ runtime type checkers and thus discusses only static type-checking. Thankfully, the underlying syntax and semantics cleanly translate to runtime type-checking.
-- ["PEP 484 -- Type Hints"](https://peps.python.org/pep-0484), the defining standard, holy grail, and first testament of type hinting [personally authored by Python's former Benevolent Dictator for Life (BDFL) himself, Guido van Rossum](https://en.wikipedia.org/wiki/Guido_van_Rossum). Since it's surprisingly approachable and covers all the core conceits in detail, we recommend reading at least a few sections of interest. Since it's really a doctoral thesis by another name, we can't recommend reading it in entirety. *So it goes.*
+- ["Python Type Checking (Guide)"][RealPython], a comprehensive third-party introduction to the subject. Like most existing articles, this guide predates $O(1)$ runtime type checkers and thus discusses only static type-checking. Thankfully, the underlying syntax and semantics cleanly translate to runtime type-checking.
+- ["PEP 484 -- Type Hints"][PEP 484], the defining standard, holy grail, and first testament of type hinting [personally authored by Python's former Benevolent Dictator for Life (BDFL) himself, Guido van Rossum][Guido van Rossum]. Since it's surprisingly approachable and covers all the core conceits in detail, we recommend reading at least a few sections of interest. Since it's really a doctoral thesis by another name, we can't recommend reading it in entirety. *So it goes.*
