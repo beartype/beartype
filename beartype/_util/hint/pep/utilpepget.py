@@ -300,8 +300,8 @@ def get_hint_pep_typeargs_unpacked(hint: Hint) -> (
     TuplePep484612646TypeArgsUnpacked):
     '''
     Tuple of all :pep:`484`-, :pep:`612`-, and :pep:`646`-compliant **unique
-    unpacked type parameters** (i.e., :pep:`484`-compliant type variables,
-    :pep:`612`-compliant unpacked parameter specifications, and
+    transitive unpacked type parameters** (i.e., :pep:`484`-compliant type
+    variables, :pep:`612`-compliant unpacked parameter specifications, and
     :pep:`646`-compliant unpacked type variable tuples uniquely subscripting the
     passed PEP-compliant hint listed by the caller at hint declaration time,
     ignoring duplicates) if this hint is parametrized *or* the empty tuple
@@ -406,43 +406,15 @@ def get_hint_pep_typeargs_unpacked(hint: Hint) -> (
     return hint_typeargs  # type: ignore[return-value]
 
 
-#FIXME: This getter *DEFINITELY* isn't behaving correctly at the moment -- but
-#it's absolutely *NOT* our fault. It's CPython's and the "typing" module's
-#fault. The issue is the standard "typing.Generic[...]" type hint factory, which
-#is *NOT* correctly propagating type parameters onto subscripted generics: e.g.,
-#    from beartype.typing import Generic, TypeVar
-#    T = TypeVar('T')
-#    class Ugh(Generic[T]): pass
-#    print(get_hint_pep_typeargs_packed(Ugh))
-#    print(get_hint_pep_typeargs_packed(Ugh[int]))
-#
-#The above incorrectly outputs:
-#    (~T,)  # <-- this is good
-#    ()  # <----- THIS IS BAD. wtf, "typing"?
-#
-#Oddly, PEP 695 resolved this subtle issue. When you use the more succinct
-#syntax, get_hint_pep_typeargs_packed() behaves itself: e.g.,
-#    from beartype.typing import Generic
-#    class Ugh[T](): pass
-#    print(get_hint_pep_typeargs_packed(Ugh))
-#    print(get_hint_pep_typeargs_packed(Ugh[int]))
-#
-#The above incorrectly outputs:
-#    (~T,)  # <-- this is good
-#    (~T,)  # <-- this is good, too
-#
-#Thankfully, we're not sure anybody even cares about this. This has been an
-#open issue for literally a decade until I finally discovered this madness in
-#2025 Q2 while hacking on unrelated PEP 646 logic. Stupefying stuff. *sigh*
 def get_hint_pep_typeargs_packed(hint: Hint) -> TuplePep484612646TypeArgsPacked:
     '''
     Tuple of all :pep:`484`-, :pep:`612`-, and :pep:`646`-compliant **unique
-    packed type parameters** (i.e., :pep:`484`-compliant type variables,
-    :pep:`612`-compliant parameter specifications, or :pep:`646`-compliant type
-    variable tuples uniquely subscripting the passed PEP-compliant hint listed
-    by the caller at hint declaration time, ignoring duplicates) if this hint is
-    parametrized *or* the empty tuple otherwise (i.e., if this hint is
-    unparametrized).
+    transitive packed type parameters** (i.e., :pep:`484`-compliant type
+    variables, :pep:`612`-compliant parameter specifications, or
+    :pep:`646`-compliant type variable tuples uniquely subscripting the passed
+    PEP-compliant hint listed by the caller at hint declaration time, ignoring
+    duplicates) if this hint is parametrized *or* the empty tuple otherwise
+    (i.e., if this hint is unparametrized).
 
     This getter encapsulates the low-level ``__parameters__`` dunder attribute
     maintained by CPython and the :mod:`typing` module itself, intentionally

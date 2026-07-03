@@ -56,11 +56,13 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         IS_PYTHON_AT_MOST_3_13,
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
-        Pep484GenericT,
-        Pep484GenericSubT,
+        Pep484GenericIntUT,
+        Pep484GenericSInt,
         Pep484GenericST,
         Pep484GenericSTToUU,
-        Pep484GenericSInt,
+        Pep484GenericSubT,
+        Pep484GenericT,
+        Pep484GenericTS,
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
         Pep585SequenceT,
@@ -278,12 +280,23 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Pep484GenericSInt[Sequence], Pep484GenericST[list, object], False),
         (Pep484GenericSInt[T_sequence], Pep484GenericST, True),
 
-        # PEP 484-compliant generic subclass parametrized by three type
-        # variables but inheriting a PEP 484-compliant generic superclass
-        # subscripted by only two of those type variables non-sequentially
-        # (i.e., only the first type variable "S" and third type variable "U"
-        # parametrizing this subclass, thus excluding the second type variable
-        # "T" also parametrizing this subclass).
+        #FIXME: Generalize similar validation to PEP 695 below, please. *sigh!*
+        # PEP 484-compliant generic subclasses subclassing exactly two generic
+        # superclasses such that:
+        # * The first such generic superclass is subscripted by a subset of the
+        #   type variables subscripting the second such generic superclass.
+        # * Type variables are specified in a differing order between those two
+        #   generic superclass subscriptions.
+        (Pep484GenericTS, Pep484GenericST, True),
+        (Pep484GenericTS[str, int], Pep484GenericST, True),
+        #FIXME: Uncomment the following two cases after worky, please! *sigh*
+        # (Pep484GenericTS[str, int], Pep484GenericST[int, str], True),
+        # (Pep484GenericTS[str, int], Pep484GenericST[str, int], False),
+        (Pep484GenericIntUT, Pep484GenericST, True),
+        (Pep484GenericIntUT[str, int], Pep484GenericST, True),
+        #FIXME: Uncomment the following two cases after worky, please! *sigh*
+        # (Pep484GenericIntUT[str, float], Pep484GenericST[int, float], True),
+        # (Pep484GenericIntUT[str, float], Pep484GenericST[float, int], False),
         (Pep484GenericSTToUU, Pep484GenericST, True),
         (Pep484GenericSTToUU[str, int, float], Pep484GenericST, True),
         #FIXME: Uncomment the following two cases after worky, please! *sigh*
@@ -461,12 +474,13 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
             # ..................{ PEP 695 ~ generic          }..................
             # "typing.Generic"-centric tests.
 
-            # PEP 695-compliant generic subclass implicitly parametrized by
-            # three type variables but inheriting a PEP 695-compliant generic
-            # superclass subscripted by only two of those type variables
-            # non-sequentially (i.e., only the first type variable "S" and third
-            # type variable "U" parametrizing this subclass, thus excluding the
-            # second type variable "T" also parametrizing this subclass).
+            # PEP 695-compliant generic subclasses subclassing exactly two
+            # generic superclasses such that:
+            # * The first such generic superclass is subscripted by a subset of
+            #   the type variables subscripting the second such generic
+            #   superclass.
+            # * Type variables are specified in a differing order between those
+            #   two generic superclass subscriptions.
             (Pep695GenericSTToUU, Pep695GenericST, True),
             (Pep695GenericSTToUU[str, int, float], Pep695GenericST, True),
             #FIXME: Uncomment the following two cases after worky, please! *sigh*

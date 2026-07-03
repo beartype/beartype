@@ -228,6 +228,7 @@ def is_hint_pep585_generic_unsubbed(hint: Hint) -> bool:
         generic.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
     from beartype._util.hint.pep.proposal.pep560 import (
@@ -235,11 +236,13 @@ def is_hint_pep585_generic_unsubbed(hint: Hint) -> bool:
         iter_hint_pep560_bases_unerased,
     )
 
+    # ....................{ NOOP                           }....................
     # If it is *NOT* the case that...
     if not (
         # This hint is a type *AND*...
         isinstance(hint, type) and
-        # This type is PEP 560-compliant and thus subclasses one or more
+        # This type is PEP 560-compliant (i.e., defines the "__orig_bases__"
+        # dunder attribute) and thus subclasses one or more erased
         # pseudo-superclasses *AND*...
         is_hint_pep560(hint) and
         # Either...
@@ -280,6 +283,7 @@ def is_hint_pep585_generic_unsubbed(hint: Hint) -> bool:
     # pseudo-superclasses. Since this type *COULD* be a PEP 585-compliant
     # unsubscripted generic, continue testing.
 
+    # ....................{ SEARCH                         }....................
     #FIXME: [SPEED] Optimize into a "while" loop. *sigh*
     # For each transitive pseudo-superclass of this PEP 560-compliant hint...
     #
@@ -311,6 +315,7 @@ def is_hint_pep585_generic_unsubbed(hint: Hint) -> bool:
         # Else, this pseudo-superclass is *NOT* a PEP 585-compliant subscripted
         # generic. In this case, continue to the next pseudo-superclass.
 
+    # ....................{ RETURN                         }....................
     # Since *NO* such pseudo-superclasses are PEP 585-compliant subscripted
     # generics, this hint is *NOT* a PEP 585-compliant generic. In this case,
     # return false.

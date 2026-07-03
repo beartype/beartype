@@ -19,8 +19,15 @@ from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
 from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
     SubscriptedTypeHint as SubscriptedTypeHint)
 from beartype.roar import BeartypeDoorIsSubhintException
-from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-    get_hint_pep484585_generic_args_full)
+
+#FIXME: Drop the " as get_hint_pep484585_generic_args_full", obviously! \o/
+#FIXME: Uncomment once worky, please. *sigh*
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genfind import (
+    find_hint_pep484585_generic_args_full as get_hint_pep484585_generic_args_full)
+
+#FIXME: Excise us up, please. *sigh*
+# from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+#     get_hint_pep484585_generic_args_full)
 
 # ....................{ SUBCLASSES                         }....................
 class GenericTypeHint(TypeHint):

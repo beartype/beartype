@@ -105,9 +105,20 @@ class Pep484GenericST(Generic[S, T]):
     pass
 
 
+class Pep484GenericTS(Pep484GenericST[T, S], Generic[S, T]):
+    '''
+    :pep:`484`-compliant generic subclassing the root :class:`typing.Generic`
+    superclass parametrized by two type variables *and* another
+    :pep:`484`-compliant generic subclassing the same superclass parametrized by
+    the same type variables in a different order.
+    '''
+
+    pass
+
+
 class Pep484GenericSInt(Pep484GenericST[S, int]):
     '''
-    :pep:`484`-compliant partially concrete generic subclass inheriting a
+    :pep:`484`-compliant partially concrete generic subclassing a
     :pep:`484`-compliant generic superclass subscripted first by an
     unconstrained type variable and then by the builtin :class:`int` type.
     '''
@@ -117,14 +128,31 @@ class Pep484GenericSInt(Pep484GenericST[S, int]):
 
 class Pep484GenericIntInt(Pep484GenericST[int, int]):
     '''
-    :pep:`484`-compliant concrete generic subclass inheriting a
-    :pep:`484`-compliant generic superclass subscripted twice by the
-    builtin :class:`int` type.
+    :pep:`484`-compliant concrete generic subclassing a :pep:`484`-compliant
+    generic superclass subscripted twice by the builtin :class:`int` type.
     '''
 
     pass
 
 # ....................{ PEP 484 : S, T, U                  }....................
+class Pep484GenericIntUT(Pep484GenericST[int, T], Generic[U, T]):
+    '''
+    :pep:`484`-compliant partially concrete generic subclassing the root
+    :class:`typing.Generic` superclass parametrized by two type variables *and*
+    another :pep:`484`-compliant generic subclassing the same superclass
+    parametrized by one of the same type variables and a different type variable
+    but subscripted in this subclass first by the builtin :class:`int` type and
+    then by that same type variable.
+
+    This partially concrete generic is transitively parametrized by three type
+    variables, one of which (i.e., ``S``) are constrained to a concrete type
+    (i.e., :class:`int`) and  the remaining two of which (i.e., ``U`` and ``T``)
+    are free for subscription by downstream users.
+    '''
+
+    pass
+
+
 class Pep484GenericSTToUU(Pep484GenericST[S, U], Generic[S, T, U]):
     '''
     :pep:`484`-compliant generic subclass parametrized by three type variables
