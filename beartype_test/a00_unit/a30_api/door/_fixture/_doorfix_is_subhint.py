@@ -289,29 +289,26 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         #   generic superclass subscriptions.
         (Pep484GenericTS, Pep484GenericST, True),
         (Pep484GenericTS[str, int], Pep484GenericST, True),
-        #FIXME: Uncomment the following two cases after worky, please! *sigh*
-        # (Pep484GenericTS[str, int], Pep484GenericST[int, str], True),
-        # (Pep484GenericTS[str, int], Pep484GenericST[str, int], False),
+        (Pep484GenericTS[str, int], Pep484GenericST[int, str], True),
+        (Pep484GenericTS[str, int], Pep484GenericST[str, int], False),
         (Pep484GenericIntUT, Pep484GenericST, True),
         (Pep484GenericIntUT[str, int], Pep484GenericST, True),
-        #FIXME: Uncomment the following two cases after worky, please! *sigh*
-        # (Pep484GenericIntUT[str, float], Pep484GenericST[int, float], True),
-        # (Pep484GenericIntUT[str, float], Pep484GenericST[float, int], False),
+        (Pep484GenericIntUT[str, float], Pep484GenericST[int, float], True),
+        (Pep484GenericIntUT[str, float], Pep484GenericST[float, int], False),
         (Pep484GenericSTToUU, Pep484GenericST, True),
         (Pep484GenericSTToUU[str, int, float], Pep484GenericST, True),
-        #FIXME: Uncomment the following two cases after worky, please! *sigh*
         #FIXME: Don't forget to also uncomment the similarly commented-out PEP
         #695-compliant cases, too! *mega-sigh*
-        # (
-        #     Pep484GenericSTToUU[str, int, float],
-        #     Pep484GenericST[str, float],
-        #     True,
-        # ),
-        # (
-        #     Pep484GenericSTToUU[str, int, float],
-        #     Pep484GenericST[str, int],
-        #     False,
-        # ),
+        (
+            Pep484GenericSTToUU[str, int, float],
+            Pep484GenericST[str, float],
+            True,
+        ),
+        (
+            Pep484GenericSTToUU[str, int, float],
+            Pep484GenericST[str, int],
+            False,
+        ),
         (
             Pep484GenericSTToUU[str, int, float],
             Pep484GenericST[str, str],
@@ -483,17 +480,16 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
             #   two generic superclass subscriptions.
             (Pep695GenericSTToUU, Pep695GenericST, True),
             (Pep695GenericSTToUU[str, int, float], Pep695GenericST, True),
-            #FIXME: Uncomment the following two cases after worky, please! *sigh*
-            # (
-            #     Pep695GenericSTToUU[str, int, float],
-            #     Pep695GenericST[str, float],
-            #     True,
-            # ),
-            # (
-            #     Pep695GenericSTToUU[str, int, float],
-            #     Pep695GenericST[str, int],
-            #     False,
-            # ),
+            (
+                Pep695GenericSTToUU[str, int, float],
+                Pep695GenericST[str, float],
+                True,
+            ),
+            (
+                Pep695GenericSTToUU[str, int, float],
+                Pep695GenericST[str, int],
+                False,
+            ),
             (
                 Pep695GenericSTToUU[str, int, float],
                 Pep695GenericST[str, str],
