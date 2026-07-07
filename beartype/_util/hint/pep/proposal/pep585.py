@@ -11,10 +11,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep585Exception
-from beartype.typing import (
-    Dict,
-    TypeVar,
-)
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._data.typing.datatypingport import (
     Hint,
@@ -27,6 +23,7 @@ from beartype._data.typing.datatyping import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.maplike.utilmapset import update_mapping_keys
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
+from typing import TypeVar
 
 # ....................{ HINTS                              }....................
 HINT_PEP585_TUPLE_EMPTY = tuple[()]
@@ -371,11 +368,11 @@ def get_hint_pep585_generic_bases_unerased(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-        get_hint_pep484585_generic_type_or_none)
+        get_hint_pep484585_generic_unsubbed_type_or_none)
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
     # this hint if any. See the is_hint_pep484_generic() tester for details.
-    hint = get_hint_pep484585_generic_type_or_none(hint)  # type: ignore[assignment]
+    hint = get_hint_pep484585_generic_unsubbed_type_or_none(hint)  # type: ignore[assignment]
 
     # If this hint is *NOT* a PEP 585-compliant generic, raise an exception.
     die_unless_hint_pep585_generic(
@@ -427,16 +424,16 @@ def get_hint_pep585_generic_typeargs_packed(
     ----------
     hint : Hint
         Object to be inspected.
-    exception_cls : TypeException
-        Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep585Exception`.
-    exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
+    exception_cls : TypeException, default: BeartypeDecorHintPep585Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep585Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
-    Tuple[TypeVar, ...]
+    tuple[TypeVar, ...]
         Either:
 
         * If this :pep:`585`-compliant generic is:
@@ -465,6 +462,11 @@ def get_hint_pep585_generic_typeargs_packed(
         exception_prefix=exception_prefix,
     )
     # Else, this hint is a PEP 585-compliant generic.
+
+    #FIXME: *LOL*. Commenting this out fixes everything. Please now:
+    #* Comment why exactly we *MUST* ignore "__parameters__" for PEP
+    #  585-compliant generics. Namely, it's flat-out wrong.
+    #* Unit test this properly.
 
     # Tuple of all type variables parametrizing this generic if this is a PEP
     # 585-compliant subscripted generic *OR* "None" otherwise (i.e., is a PEP
@@ -499,7 +501,7 @@ def get_hint_pep585_generic_typeargs_packed(
     #   dictionary comprehension, as each get_hint_pep_typeargs_packed() call returns a
     #   tuple of type variables rather than a single type variable to be added
     #   to this dictionary.
-    hint_typevars_to_none: Dict[TypeVar, None] = dict()
+    hint_typevars_to_none: dict[TypeVar, None] = dict()
 
     # For each such pseudo-superclass...
     for hint_base in hint_bases:

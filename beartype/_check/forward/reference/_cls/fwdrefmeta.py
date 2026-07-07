@@ -63,7 +63,7 @@ from beartype._util.func.utilfuncframe import (
     find_frame_codeobject_or_none,
 )
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-    get_hint_pep484585_generic_type)
+    get_hint_pep484585_generic_unsubbed_type)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic)
 from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
@@ -936,7 +936,7 @@ class BeartypeForwardRefMeta(type):
         #     TypeError: issubclass() argument 2 cannot be a
         #     parameterized generic
         if is_hint_pep484585_generic(referent_type):  # pyright: ignore
-            referent_type = get_hint_pep484585_generic_type(
+            referent_type = get_hint_pep484585_generic_unsubbed_type(
                 hint=referent_type,  # pyright: ignore
                 exception_cls=BeartypeCallHintForwardRefException,
                 exception_prefix=cls.__exception_prefix_beartype__,

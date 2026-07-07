@@ -22,7 +22,7 @@ from beartype._check.error._nonpep.errnonpeptype import (
 from beartype._check.pep.pep484585.checkpep484585generic import (
     get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-    get_hint_pep484585_generic_type_isinstanceable)
+    get_hint_pep484585_generic_unsubbed_type_isinstanceable)
 from beartype._util.text.utiltextansi import color_hint
 
 # ....................{ FINDERS                            }....................
@@ -55,7 +55,7 @@ def find_cause_pep484585_generic_unsubbed(
     # ....................{ VIOLATE ~ shallow              }....................
     # Origin type originating this generic, deduced by stripping all child type
     # hints subscripting this hint from this hint.
-    hint_type = get_hint_pep484585_generic_type_isinstanceable(
+    hint_type = get_hint_pep484585_generic_unsubbed_type_isinstanceable(
         hint=cause.hint_curr_sanified, exception_prefix=cause.exception_prefix)
 
     # Shallow output cause to be returned, type-checking only whether this pith

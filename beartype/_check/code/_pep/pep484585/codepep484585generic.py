@@ -23,7 +23,7 @@ from beartype._data.check.code.pep.datacodepep484585 import (
 )
 from beartype._data.check.code.datacodelen import LINE_RSTRIP_INDEX_AND
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-    get_hint_pep484585_generic_type_isinstanceable)
+    get_hint_pep484585_generic_unsubbed_type_isinstanceable)
 
 # ....................{ FACTORIES                          }....................
 def make_hint_pep484585_generic_unsubbed_check_expr(
@@ -70,7 +70,7 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
     # defaulting to this generic. Although most generics are isinstanceable,
     # some are not. This type enables this code generator to transparently
     # support the subset of generics that are *NOT* isinstanceable.
-    hint_isinstanceable = get_hint_pep484585_generic_type_isinstanceable(
+    hint_isinstanceable = get_hint_pep484585_generic_unsubbed_type_isinstanceable(
         hint=hint, exception_prefix=hint_tree.exception_prefix)
 
     # ....................{ FORMAT                         }....................

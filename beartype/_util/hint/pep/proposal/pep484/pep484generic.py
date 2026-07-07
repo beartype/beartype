@@ -373,7 +373,7 @@ def get_hint_pep484_generic_bases_unerased(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-        get_hint_pep484585_generic_type_or_none)
+        get_hint_pep484585_generic_unsubbed_type_or_none)
 
     # Either the unsubscripted generic reduced from this possibly subscripted
     # generic if this hint is a generic *OR* "None". Specifically, either:
@@ -381,7 +381,7 @@ def get_hint_pep484_generic_bases_unerased(
     # * If this generic if subscripted, the unsubscripted generic underlying
     #   this subscripted generic.
     # * If this generic is *NOT* actually a generic, "None".
-    hint = get_hint_pep484585_generic_type_or_none(hint)  # pyright: ignore
+    hint = get_hint_pep484585_generic_unsubbed_type_or_none(hint)  # pyright: ignore
 
     # If this hint is *NOT* a PEP 484- or 544-compliant unsubscripted generic,
     # raise an exception.

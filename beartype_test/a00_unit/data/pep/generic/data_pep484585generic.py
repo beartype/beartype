@@ -17,15 +17,14 @@ from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
     Pep484GenericST,
 )
 from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
-    Pep585SequenceU,
-)
+    Pep585SequenceU)
 from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
     T,
     U,
 )
 
-# ....................{ PEP (484|585) ~ S, T               }....................
-class Pep484585GenericSTSequenceU(
+# ....................{ PEP (484|585) ~ T, U               }....................
+class Pep484585GenericIntTSequenceU(
     # Order is *EXTREMELY* significant. Avoid modifying, please.
     list[bool],
     Pep484GenericST[int, T],
@@ -33,22 +32,29 @@ class Pep484585GenericSTSequenceU(
     Pep585SequenceU,
 ):
     '''
-    :pep:`484`- or :pep:`585`-compliant generic list parametrized by three
-    unconstrained type variables.
+    :pep:`484`- or :pep:`585`-compliant generic list parametrized by two
+    unconstrained type variables:
+
+    * :data:`.T`, parametrizing the :pep:`484`-compliant
+      ``Pep484GenericST[int, T]`` subscripted generic pseudo-superclass.
+    * :data:`.U`, parametrizing the :pep:`585`-compliant
+      :class:`.Pep585SequenceU` unsubscripted generic superclass.
+    '''
+
+    pass
+
+
+class Pep484585GenericIntFloatSequenceU(Pep484585GenericIntTSequenceU[float]):
+    '''
+    :pep:`484`- or :pep:`585`-compliant generic list parametrized by one
+    unconstrained type variable: :data:`.U`, parametrizing the
+    :pep:`585`-compliant :class:`.Pep585SequenceU` unsubscripted generic
+    superclass.
     '''
 
     pass
 
 # ....................{ PEP (484|585) ~ S, T, U            }....................
-class Pep484585GenericIntTSequenceU(Pep484585GenericSTSequenceU[float]):
-    '''
-    :pep:`484`- or :pep:`585`-compliant generic list parametrized by two
-    unconstrained type variables.
-    '''
-
-    pass
-
-
 # Subclassing order is *EXTREMELY* significant. Avoid modifying, please.
 class Pep484585GenericUUST(Pep585SequenceU, Pep484GenericST, list[U]):
     '''

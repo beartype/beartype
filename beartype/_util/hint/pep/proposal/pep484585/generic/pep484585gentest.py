@@ -354,13 +354,13 @@ def _is_hint_pep484585_generic_blacklisted(hint: Hint) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-        get_hint_pep484585_generic_type)
+        get_hint_pep484585_generic_unsubbed_type)
 
     # Either:
     # * If this generic is already unsubscripted, this generic as is.
     # * Else, this generic is subscripted. In this case, the unsubscripted
     #   generic underlying this subscripted generic.
-    hint_type = get_hint_pep484585_generic_type(hint)
+    hint_type = get_hint_pep484585_generic_unsubbed_type(hint)
 
     # For each possibly erased superclass of this generic, arbitrarily iterated
     # according to the method resolution order (MRO) for this generic...

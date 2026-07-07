@@ -315,7 +315,7 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
 
     See Also
     --------
-    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_type_or_none`
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_unsubbed_type_or_none`
         Further details.
     '''
     # assert is_hint_pep484585_generic_unsubbed(hint_sane.hint)

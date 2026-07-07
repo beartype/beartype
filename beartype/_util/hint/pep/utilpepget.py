@@ -522,6 +522,13 @@ def get_hint_pep_typeargs_packed(hint: Hint) -> TuplePep484612646TypeArgsPacked:
        (T, S)
     '''
 
+    #FIXME: *LOL*. Enabling this fixes everything. Please now:
+    #* Uncomment this out.
+    #* Remove the corresponding logic below.
+    #* Unit test this properly.
+    # if is_hint_pep585_generic_unsubbed(hint):
+    #     return get_hint_pep585_generic_typeargs_packed(hint)
+
     # ....................{ LOCALS                         }....................
     # Value of the "__parameters__" dunder attribute on this object if this
     # object defines this attribute (e.g., is *NOT* a PEP 585-compliant
