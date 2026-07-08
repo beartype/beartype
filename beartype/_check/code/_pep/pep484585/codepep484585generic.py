@@ -89,7 +89,7 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
             hint_tree.exception_prefix,
         )
     ):
-        # print(f'Visiting generic type hint {hint_curr_sane} unerased base {hint_child_sane}...')
+        # print(f'Visiting generic type hint {hint_sane} unerased base {hint_child_sane}...')
 
         # Append code type-checking this pith against this pseudo-superclass.
         hint_tree.func_curr_code += CODE_PEP484585_GENERIC_CHILD_format(

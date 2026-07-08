@@ -136,7 +136,7 @@ def hints_pep484_meta() -> (
     from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
         Pep484ContextManagerTSequenceT,
         Pep484GenericST,
-        Pep484GenericSubTToS,
+        Pep484GenericTToSSubbed,
         Pep484IterableTContainerT,
         Pep484IterableTupleSTContainerTupleST,
         Pep484ListStr,
@@ -993,14 +993,14 @@ def hints_pep484_meta() -> (
         # subclassing the "typing.Generic" superclass parametrized by a
         # different type variable.
         HintPepMetadata(
-            hint=Pep484GenericSubTToS,
+            hint=Pep484GenericTToSSubbed,
             pep_sign=HintSignPep484585GenericUnsubbed,
-            generic_type=Pep484GenericSubTToS,
+            generic_type=Pep484GenericTToSSubbed,
             is_type_typing=False,
             typeargs_packed=(S,),
             piths_meta=(
                 # Subclass-specific generic.
-                PithSatisfiedMetadata(Pep484GenericSubTToS()),
+                PithSatisfiedMetadata(Pep484GenericTToSSubbed()),
                 # String constant.
                 PithUnsatisfiedMetadata(
                     'Saturn, sleep on:—O thoughtless, why did I'),
@@ -1036,7 +1036,7 @@ def hints_pep484_meta() -> (
             generic_type=Pep484GenericST,
             is_type_typing=True,
             is_typing=False,
-            typeargs_packed=(T, S,),
+            typeargs_packed=(S, T,),
             piths_meta=(
                 # Subclass-specific generic.
                 PithSatisfiedMetadata(Pep484GenericST()),
@@ -1054,7 +1054,7 @@ def hints_pep484_meta() -> (
             generic_type=Pep484GenericST,
             is_type_typing=True,
             is_typing=False,
-            typeargs_packed=(T,),
+            typeargs_packed=(S, T,),
             piths_meta=(
                 # Subclass-specific generic.
                 PithSatisfiedMetadata(Pep484GenericST()),
@@ -1073,21 +1073,21 @@ def hints_pep484_meta() -> (
         #     class Pep484GenericT(Generic[T]): pass
         #
         #     # This directly maps {T: S}.
-        #     class Pep484GenericSubTToS(Pep484GenericT[S]): pass
+        #     class Pep484GenericTToSSubbed(Pep484GenericT[S]): pass
         #
         #     # This directly maps {S: T}, which then combines with the above
         #     # mapping to indirectly map {S: T, T: S}. Clearly, this indirect
         #     # mapping provokes infinite recursion unless explicitly handled.
-        #     Pep484GenericSubTToS[T]
+        #     Pep484GenericTToSSubbed[T]
         HintPepMetadata(
-            hint=Pep484GenericSubTToS[T],
+            hint=Pep484GenericTToSSubbed[T],
             pep_sign=HintSignPep484585GenericSubbed,
-            generic_type=Pep484GenericSubTToS,
+            generic_type=Pep484GenericTToSSubbed,
             is_typing=False,
-            typeargs_packed=(T,),
+            typeargs_packed=(S,),
             piths_meta=(
                 # Subclass-specific generic.
-                PithSatisfiedMetadata(Pep484GenericSubTToS()),
+                PithSatisfiedMetadata(Pep484GenericTToSSubbed()),
                 # String constant.
                 PithUnsatisfiedMetadata(
                     'Thus violate thy slumbrous solitude?'),
@@ -1211,6 +1211,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
+            typeargs_packed=(T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 PithSatisfiedMetadata(Pep484IterableTContainerT((
@@ -1235,6 +1236,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
+            typeargs_packed=(T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 PithSatisfiedMetadata(Pep484ContextManagerTSequenceT((
@@ -1259,6 +1261,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
+            typeargs_packed=(S, T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 PithSatisfiedMetadata(Pep484IterableTupleSTContainerTupleST((

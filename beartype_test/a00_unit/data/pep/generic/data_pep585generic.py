@@ -62,10 +62,20 @@ class Pep585ListListStr(list[list[str]]):
 # generics are necessarily subscripted; when unsubscripted, the corresponding
 # subclasses are simply standard types.
 
-class Pep585SequenceT(Pep585Sequence[T]):
+class Pep585SequenceTSubbed(Pep585Sequence[T]):
     '''
     :pep:`585`-compliant generic sequence parametrized by one unconstrained type
     variable.
+    '''
+
+    pass
+
+
+class Pep585SequenceTUnsubbed(Pep585SequenceTSubbed):
+    '''
+    :pep:`585`-compliant generic subclass inheriting a :pep:`585`-compliant
+    generic superclass subscripted by *no* child hints and thus implicitly
+    parametrized by the same type variable parametrizing that superclass.
     '''
 
     pass

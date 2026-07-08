@@ -74,6 +74,80 @@ def die_unless_hint_pep484585_generic_unsubbed(
     # Else, this hint is an unsubscripted generic.
 
 # ....................{ TESTERS                            }....................
+@callable_cached
+def is_hint_pep484585_generic(hint: Hint) -> bool:
+    '''
+    :data:`True` only if the passed object is either a :pep:`484`- or
+    :pep:`585`-compliant **generic** (i.e., either a type originally subclassing
+    at least one subscripted :pep:`484`- or :pep:`585`-compliant
+    pseudo-superclass *or* an object subscripted by one or more child type hints
+    originating from such a type).
+
+    This tester returns :data:`True` only if this object is either:
+
+    * A :pep:`484`-compliant generic as tested by the lower-level
+      :func:`.is_hint_pep484_generic` function.
+    * A :pep:`585`-compliant generic as tested by the lower-level
+      :func:`.is_hint_pep585_generic` function.
+
+    This tester is memoized for efficiency.
+
+    Caveats
+    -------
+    **Generics are not necessarily classes,** despite originally being declared
+    as classes. Although *most* generics are classes, subscripting a generic
+    class usually produces a generic non-class that *must* nonetheless be
+    transparently treated as a generic class: e.g.,
+
+    .. code-block:: pycon
+
+       >>> from typing import Generic, TypeVar
+       >>> S = TypeVar('S')
+       >>> T = TypeVar('T')
+       >>> class MuhGeneric(Generic[S, T]): pass
+       >>> non_class_generic = MuhGeneric[S, T]
+       >>> isinstance(non_class_generic, type)
+       False
+
+    Parameters
+    ----------
+    hint : Hint
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a generic.
+
+    See Also
+    --------
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typeargs_packed`
+        Commentary on the relation between generics and parametrized hints.
+    '''
+
+    # Return true only if...
+    return (
+        # This hint is either a...
+        (
+            # PEP 484-compliant generic *OR*...
+            #
+            # Note these tests trivially reduce to fast O(1) operations and are
+            # thus tested first.
+            is_hint_pep484_generic_unsubbed(hint) or
+            is_hint_pep484_generic_subbed(hint) or
+            # PEP 585-compliant generic.
+            #
+            # Note this test is O(n) for n the number of pseudo-superclasses
+            # originally subclassed by this generic and is thus tested last.
+            is_hint_pep585_generic_unsubbed(hint) or
+            is_hint_pep585_generic_subbed(hint)
+        # *AND*...
+        ) and
+        # This generic is *NOT* beartype-blacklisted.
+        not _is_hint_pep484585_generic_blacklisted(hint)
+    )
+
+
 def is_hint_pep484585_generic_user(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed :pep:`484`- or :pep:`585`-compliant generic
@@ -154,87 +228,13 @@ def is_hint_pep484585_generic_user(hint: Hint) -> bool:
         )
     )
 
-# ....................{ TESTERS ~ kind                     }....................
-@callable_cached
-def is_hint_pep484585_generic(hint: Hint) -> bool:
-    '''
-    :data:`True` only if the passed object is either a :pep:`484`- or
-    :pep:`585`-compliant **generic** (i.e., either a type originally subclassing
-    at least one subscripted :pep:`484`- or :pep:`585`-compliant
-    pseudo-superclass *or* an object subscripted by one or more child type hints
-    originating from such a type).
-
-    This tester returns :data:`True` only if this object is either:
-
-    * A :pep:`484`-compliant generic as tested by the lower-level
-      :func:`.is_hint_pep484_generic` function.
-    * A :pep:`585`-compliant generic as tested by the lower-level
-      :func:`.is_hint_pep585_generic` function.
-
-    This tester is memoized for efficiency.
-
-    Caveats
-    -------
-    **Generics are not necessarily classes,** despite originally being declared
-    as classes. Although *most* generics are classes, subscripting a generic
-    class usually produces a generic non-class that *must* nonetheless be
-    transparently treated as a generic class: e.g.,
-
-    .. code-block:: pycon
-
-       >>> from typing import Generic, TypeVar
-       >>> S = TypeVar('S')
-       >>> T = TypeVar('T')
-       >>> class MuhGeneric(Generic[S, T]): pass
-       >>> non_class_generic = MuhGeneric[S, T]
-       >>> isinstance(non_class_generic, type)
-       False
-
-    Parameters
-    ----------
-    hint : Hint
-        Object to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is a generic.
-
-    See Also
-    --------
-    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typeargs_packed`
-        Commentary on the relation between generics and parametrized hints.
-    '''
-
-    # Return true only if...
-    return (
-        # This hint is either a...
-        (
-            # PEP 484-compliant generic *OR*...
-            #
-            # Note these tests trivially reduce to fast O(1) operations and are
-            # thus tested first.
-            is_hint_pep484_generic_unsubbed(hint) or
-            is_hint_pep484_generic_subbed(hint) or
-            # PEP 585-compliant generic.
-            #
-            # Note this test is O(n) for n the number of pseudo-superclasses
-            # originally subclassed by this generic and is thus tested last.
-            is_hint_pep585_generic_unsubbed(hint) or
-            is_hint_pep585_generic_subbed(hint)
-        # *AND*...
-        ) and
-        # This generic is *NOT* beartype-blacklisted.
-        not _is_hint_pep484585_generic_blacklisted(hint)
-    )
-
-
+# ....................{ TESTERS ~ (un)subbed               }....................
 def is_hint_pep484585_generic_subbed(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is either a :pep:`484`- or
     :pep:`585`-compliant **subscripted generic** (i.e., object subscripted by
     one or more child type hints originating from a type originally subclassing
-    at least one subscripted :pep:`484`- or :pep:`585`-compliant
+    at least one subscripted :pep:`484`- or :pep:`585`-compliant generic
     pseudo-superclass).
 
     This tester returns :data:`True` only if this object is either:

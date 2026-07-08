@@ -67,8 +67,8 @@ def hints_pep585_meta() -> (
         Pep585ListStr,
         Pep585ListT,
         # Pep585ListRootU,
-        # Pep585ListStemT,
-        # Pep585ListLeafS,
+        Pep585ListStemT,
+        Pep585ListLeafS,
         T_Pep585ListT,
     )
     from beartype_test.a00_unit.data.data_type import (
@@ -92,6 +92,7 @@ def hints_pep585_meta() -> (
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
+        U,
     )
     from collections import (
         ChainMap,
@@ -690,6 +691,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585ListT,
             is_pep585_generic=True,
+            typeargs_packed=(T,),
             piths_meta=(
                 # Subclass-specific recursive generic list.
                 PithSatisfiedMetadata(Pep585ListT_recursive),
@@ -710,7 +712,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585ListT,
             is_pep585_generic=True,
-            typeargs_packed=(T_Pep585ListT,),
+            typeargs_packed=(T,),
             piths_meta=(
                 # Subclass-specific recursive generic list.
                 PithSatisfiedMetadata(Pep585ListT_recursive),
@@ -724,50 +726,48 @@ def hints_pep585_meta() -> (
         ),
 
         # ................{ GENERICS ~ single : hierarchy      }................
-        #FIXME: Sadly broken at the moment. Resume us up tomorrow, please!
+        # Subscripted generic subclassing a parametrized generic subclassing a
+        # single parametrized builtin container type.
+        HintPepMetadata(
+            hint=Pep585ListStemT[str],
+            pep_sign=HintSignPep484585GenericSubbed,
+            generic_type=Pep585ListStemT,
+            is_pep585_generic=True,
+            typeargs_packed=(U,),
+            piths_meta=(
+                # Subclass-specific generic list of string constants.
+                PithSatisfiedMetadata(Pep585ListStemT((
+                    'Blazing Hyperion on', 'his orbed fire',))),
+                # Subclass-specific generic list of integer constants.
+                PithUnsatisfiedMetadata(Pep585ListStemT((
+                    len("From man to the sun's God;"), len('yet unsecure:'),))),
+                # String constant.
+                PithUnsatisfiedMetadata(
+                    "Still sat, still snuff'd the incense, teeming up"),
+            ),
+        ),
 
-        # # Subscripted generic subclassing a parametrized generic subclassing a
-        # # single parametrized builtin container type.
-        # HintPepMetadata(
-        #     hint=Pep585ListStemT[str],
-        #     pep_sign=HintSignPep484585GenericSubbed,
-        #     generic_type=Pep585ListStemT,
-        #     is_pep585_generic=True,
-        #     typeargs_packed=(T, U,),
-        #     piths_meta=(
-        #         # Subclass-specific generic list of string constants.
-        #         PithSatisfiedMetadata(Pep585ListStemT((
-        #             'Blazing Hyperion on', 'his orbed fire',))),
-        #         # Subclass-specific generic list of integer constants.
-        #         PithUnsatisfiedMetadata(Pep585ListStemT((
-        #             len("From man to the sun's God;"), len('yet unsecure:'),))),
-        #         # String constant.
-        #         PithUnsatisfiedMetadata(
-        #             "Still sat, still snuff'd the incense, teeming up"),
-        #     ),
-        # ),
-        #
-        # # Subscripted generic subclassing a parametrized generic subclassing
-        # # another parametrized generic subclassing a single parametrized builtin
-        # # container type. Type hierarchies go hard and so do we. \o/
-        # HintPepMetadata(
-        #     hint=Pep585ListLeafS[str],
-        #     pep_sign=HintSignPep484585GenericSubbed,
-        #     generic_type=Pep585ListLeafS,
-        #     is_pep585_generic=True,
-        #     typeargs_packed=(S, T, U,),
-        #     piths_meta=(
-        #         # Subclass-specific generic list of string constants.
-        #         PithSatisfiedMetadata(Pep585ListStemT((
-        #             'For as among us mortals', 'omens drear',))),
-        #         # Subclass-specific generic list of integer constants.
-        #         PithUnsatisfiedMetadata(Pep585ListStemT((
-        #             len('Fright and perplex,'), len('so also shuddered he—'),))),
-        #         # String constant.
-        #         PithUnsatisfiedMetadata(
-        #             "Not at dog's howl, or gloom-bird's hated screech,"),
-        #     ),
-        # ),
+        # Subscripted generic subclassing a parametrized generic subclassing
+        # another parametrized generic subclassing a single parametrized builtin
+        # container type. Type hierarchies go hard and so do we. \o/
+        HintPepMetadata(
+            hint=Pep585ListLeafS[str],
+            pep_sign=HintSignPep484585GenericSubbed,
+            generic_type=Pep585ListLeafS,
+            is_pep585_generic=True,
+            typeargs_packed=(U,),
+            piths_meta=(
+                # Subclass-specific generic list of string constants.
+                PithSatisfiedMetadata(Pep585ListLeafS((
+                    'For as among us mortals', 'omens drear',))),
+                # Subclass-specific generic list of integer constants.
+                PithUnsatisfiedMetadata(Pep585ListLeafS((
+                    len('Fright and perplex,'), len('so also shuddered he—'),))),
+                # String constant.
+                PithUnsatisfiedMetadata(
+                    "Not at dog's howl, or gloom-bird's hated screech,"),
+            ),
+        ),
 
         # ................{ GENERICS ~ multiple                }................
         # Generic subclassing multiple unparametrized "collection.abc" abstract
@@ -876,6 +876,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585IterableTContainerT,
             is_pep585_generic=True,
+            typeargs_packed=(T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 PithSatisfiedMetadata(Pep585IterableTContainerT((
@@ -898,6 +899,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585ContextManagerTSequenceT,
             is_pep585_generic=True,
+            typeargs_packed=(T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 PithSatisfiedMetadata(Pep585ContextManagerTSequenceT((
@@ -920,6 +922,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585IterableTupleSTContainerTupleST,
             is_pep585_generic=True,
+            typeargs_packed=(S, T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 PithSatisfiedMetadata(Pep585IterableTupleSTContainerTupleST((

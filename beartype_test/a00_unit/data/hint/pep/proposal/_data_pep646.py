@@ -53,9 +53,10 @@ def hints_pep646_meta() -> (
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep646generic import (
         Array,
+
         #FIXME: Test against these when time permits. So, never. *yawn*
-        # DType,
-        # Shape,
+        DType,
+        Shape,
     )
     from beartype_test.a00_unit.data.pep.data_pep646 import (
         Ts,
@@ -240,6 +241,7 @@ def hints_pep646_meta() -> (
             generic_type=Array,
             is_type_typing=True,
             is_typing=False,
+            typeargs_packed=(DType, Shape),
             piths_meta=(
                 # Generic instance.
                 PithSatisfiedMetadata(Array()),

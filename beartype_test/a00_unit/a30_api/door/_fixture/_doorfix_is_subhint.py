@@ -60,12 +60,12 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         Pep484GenericSInt,
         Pep484GenericST,
         Pep484GenericSTToUU,
-        Pep484GenericSubT,
+        Pep484GenericTSubbed,
         Pep484GenericT,
         Pep484GenericTS,
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
-        Pep585SequenceT,
+        Pep585SequenceTSubbed,
     )
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
@@ -239,7 +239,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize changes below by replacing all references in
-        # the first tuple item to "Pep484GenericT" with "Pep484GenericSubT".
+        # the first tuple item to "Pep484GenericT" with "Pep484GenericTSubbed".
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # PEP 484-compliant generic superclasses parametrized by one
         # unconstrained type variables.
@@ -258,15 +258,15 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # PEP 484-compliant generic subclasses parametrized by one unconstrained
         # type variables.
-        (Pep484GenericSubT, Pep484GenericT, True),
-        (Pep484GenericSubT, Pep484GenericT[int], False),
-        (Pep484GenericSubT[int], Pep484GenericT, True),
-        (Pep484GenericSubT[int], Pep484GenericT[T_sequence], False),
-        (Pep484GenericSubT[list], Pep484GenericT[T_sequence], True),
-        (Pep484GenericSubT[list], Pep484GenericT[Sequence], True),
-        (Pep484GenericSubT[str], Pep484GenericT[T_sequence], True),
-        (Pep484GenericSubT[Sequence], Pep484GenericT[list], False),
-        (Pep484GenericSubT[T_sequence], Pep484GenericT, True),
+        (Pep484GenericTSubbed, Pep484GenericT, True),
+        (Pep484GenericTSubbed, Pep484GenericT[int], False),
+        (Pep484GenericTSubbed[int], Pep484GenericT, True),
+        (Pep484GenericTSubbed[int], Pep484GenericT[T_sequence], False),
+        (Pep484GenericTSubbed[list], Pep484GenericT[T_sequence], True),
+        (Pep484GenericTSubbed[list], Pep484GenericT[Sequence], True),
+        (Pep484GenericTSubbed[str], Pep484GenericT[T_sequence], True),
+        (Pep484GenericTSubbed[Sequence], Pep484GenericT[list], False),
+        (Pep484GenericTSubbed[T_sequence], Pep484GenericT, True),
 
         # PEP 484-compliant generic subclasses parametrized by one unconstrained
         # type variables and one concrete type.
@@ -357,15 +357,15 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # PEP 484- or 585-compliant generic subclasses inheriting PEP 484- or
         # 585-compliant type hints parametrized by one unconstrained type
         # variables.
-        (Pep585SequenceT, Sequence[T], True),
-        (Pep585SequenceT, Sequence[int], False),
-        (Pep585SequenceT[int], Sequence[T], True),
-        (Pep585SequenceT[int], Sequence[T_sequence], False),
-        (Pep585SequenceT[list], Sequence[T_sequence], True),
-        (Pep585SequenceT[list], Sequence[Sequence], True),
-        (Pep585SequenceT[str], Sequence[T_sequence], True),
-        (Pep585SequenceT[Sequence], Sequence[list], False),
-        (Pep585SequenceT[T_sequence], Sequence[T], True),
+        (Pep585SequenceTSubbed, Sequence[T], True),
+        (Pep585SequenceTSubbed, Sequence[int], False),
+        (Pep585SequenceTSubbed[int], Sequence[T], True),
+        (Pep585SequenceTSubbed[int], Sequence[T_sequence], False),
+        (Pep585SequenceTSubbed[list], Sequence[T_sequence], True),
+        (Pep585SequenceTSubbed[list], Sequence[Sequence], True),
+        (Pep585SequenceTSubbed[str], Sequence[T_sequence], True),
+        (Pep585SequenceTSubbed[Sequence], Sequence[list], False),
+        (Pep585SequenceTSubbed[T_sequence], Sequence[T], True),
 
         # ..................{ PEP (484|585) ~ mapping        }..................
         # PEP 484-compliant mapping type hints.

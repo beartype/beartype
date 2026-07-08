@@ -224,7 +224,8 @@ def test_get_hint_pep484585_generic_base_in_module_first() -> None:
             )
 
 # ....................{ TESTS ~ type                       }....................
-def test_get_hint_pep484585_generic_unsubbed_type_or_none(hints_piths_pep_meta) -> None:
+def test_get_hint_pep484585_generic_unsubbed_type_or_none(
+    hints_piths_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_unsubbed_type_or_none`
@@ -238,7 +239,8 @@ def test_get_hint_pep484585_generic_unsubbed_type_or_none(hints_piths_pep_meta) 
     '''
 
     # Defer test-specific imports.
-    from beartype._data.hint.sign.datahintsigns import HintSignPep484585GenericUnsubbed
+    from beartype._data.hint.sign.datahintsigns import (
+        HintSignPep484585GenericUnsubbed)
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_unsubbed_type_or_none)
 

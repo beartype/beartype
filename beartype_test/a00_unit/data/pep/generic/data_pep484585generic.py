@@ -32,7 +32,7 @@ class Pep484585GenericIntTSequenceU(
     Pep585SequenceU,
 ):
     '''
-    :pep:`484`- or :pep:`585`-compliant generic list parametrized by two
+    :pep:`484`- and :pep:`585`-compliant generic list parametrized by two
     unconstrained type variables:
 
     * :data:`.T`, parametrizing the :pep:`484`-compliant
@@ -46,7 +46,7 @@ class Pep484585GenericIntTSequenceU(
 
 class Pep484585GenericIntFloatSequenceU(Pep484585GenericIntTSequenceU[float]):
     '''
-    :pep:`484`- or :pep:`585`-compliant generic list parametrized by one
+    :pep:`484`- and :pep:`585`-compliant generic list parametrized by one
     unconstrained type variable: :data:`.U`, parametrizing the
     :pep:`585`-compliant :class:`.Pep585SequenceU` unsubscripted generic
     superclass.

@@ -619,97 +619,6 @@ def get_hint_pep484585_generic_base_in_module_first(
 
 # ....................{ GETTERS ~ type                     }....................
 #FIXME: Unit test us up, please.
-def get_hint_pep484585_generic_unsubbed_type_isinstanceable(
-    # Mandatory parameters.
-    hint: Hint,
-
-    # Optional parameters.
-    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
-    exception_prefix: str = '',
-) -> type:
-    '''
-    Either the passed :pep:`484`- or :pep:`585`-compliant **isinstanceable
-    generic** (i.e., class superficially subclassing at least one PEP-compliant
-    type hint that is possibly *not* an actual class such that this class may be
-    passed as the second parameter to the :func:`isinstance` builtin) if
-    **unsubscripted** (i.e., indexed by *no* arguments or type parameters), the
-    unsubscripted isinstanceable generic underlying this generic if
-    **subscripted** (i.e., indexed by one or more child type hints and/or type
-    parameters), *or* raise an exception otherwise (i.e., if this hint is *not*
-    a generic).
-
-    Although most generics are isinstanceable, some are not. This getter enables
-    callers to transparently support the subset of generics that are *not*
-    implicitly isinstanceable.
-
-    This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : Hint
-        Generic type hint to be inspected.
-    exception_cls : TypeException, default: BeartypeDecorHintPep484585Exception
-        Type of exception to be raised. Defaults to
-        :exc:`.BeartypeDecorHintPep484585Exception`.
-    exception_prefix : str, default: ''
-        Human-readable substring prefixing raised exception messages. Defaults
-        to the empty string.
-
-    Returns
-    -------
-    type
-        Isinstanceable class originating this generic.
-
-    Raises
-    ------
-    exception_cls
-        If this hint is *not* a generic.
-
-    See Also
-    --------
-    :func:`.get_hint_pep484585_generic_unsubbed_type`
-        Further details.
-    '''
-
-    # This hint if this hint is an unsubscripted generic, the unsubscripted
-    # generic underlying this hint if this hint is a subscripted generic, *OR*
-    # raise an exception if this hint is not a generic.
-    hint_generic_type_isinstanceable = get_hint_pep484585_generic_unsubbed_type(hint)
-
-    # If the metaclass of this generic bound the __call__() dunder method to a
-    # type, *ALL* user-defined instances of this generic are necessarily
-    # instances of that type rather than instances of this generic. In this
-    # case, assume that type to be isinstanceable. Certainly, this generic
-    # itself is unlikely to be isinstanceable. Why? Because of the following
-    # PEP-compliant edge cases triggering this condition:
-    #
-    # * User-defined subclasses inheriting both the PEP 484-compliant
-    #   "typing.Generic" superclass *AND* the PEP 589-compliant
-    #   "typing.TypedDict" superclass, whose metaclass is the private
-    #   "typing._TypedDictMeta" metaclass, which:
-    #   * Explicitly prevents these user-defined subclasses from being passed as
-    #     the second parameters to the isinstance() and issubclass() builtins.
-    #   * Implements the typing._TypedDictMeta.__new__() constructor responsible
-    #     for dynamically creating and returning these user-defined subclasses
-    #     to forcefully monkey-patch the __call__() dunder method of these
-    #     subclasses to refer to the builtin "dict" type. By default, the
-    #     __call__() dunder method is bound to the type.__call__() method.
-    #     Replacing that method with "dict" ensures that *ALL*
-    #     "typing.TypedDict" instances are actually "dict" rather than
-    #     "typing.TypedDict" instances.
-    if isinstance(hint_generic_type_isinstanceable.__call__, type):  # pyright: ignore
-        hint_generic_type_isinstanceable = hint.__call__  # pyright: ignore
-        # print(f'generic {hint} hint.__call__ type detected: {hint_isinstanceable}')
-    # Else, the metaclass of this generic did *NOT* bind the __call__() dunder
-    # method to a type.
-
-    # Return this isinstanceable class.
-    return hint_generic_type_isinstanceable
-
-
-#FIXME: Unit test us up, please.
 def get_hint_pep484585_generic_unsubbed_type(
     # Mandatory parameters.
     hint: Hint,
@@ -791,7 +700,8 @@ def get_hint_pep484585_generic_unsubbed_type(
     return hint_generic_type
 
 
-def get_hint_pep484585_generic_unsubbed_type_or_none(hint: Hint) -> Optional[type]:
+def get_hint_pep484585_generic_unsubbed_type_or_none(
+    hint: Hint) -> Optional[type]:
     '''
     Either the passed :pep:`484`- or :pep:`585`-compliant **generic** (i.e.,
     class superficially subclassing at least one PEP-compliant type hint that is
@@ -862,3 +772,95 @@ def get_hint_pep484585_generic_unsubbed_type_or_none(hint: Hint) -> Optional[typ
 
     # Return the "None" singleton.
     return None
+
+
+#FIXME: Unit test us up, please.
+def get_hint_pep484585_generic_unsubbed_type_isinstanceable(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> type:
+    '''
+    Either the passed :pep:`484`- or :pep:`585`-compliant **isinstanceable
+    generic** (i.e., class superficially subclassing at least one PEP-compliant
+    type hint that is possibly *not* an actual class such that this class may be
+    passed as the second parameter to the :func:`isinstance` builtin) if
+    **unsubscripted** (i.e., indexed by *no* arguments or type parameters), the
+    unsubscripted isinstanceable generic underlying this generic if
+    **subscripted** (i.e., indexed by one or more child type hints and/or type
+    parameters), *or* raise an exception otherwise (i.e., if this hint is *not*
+    a generic).
+
+    Although most generics are isinstanceable, some are not. This getter enables
+    callers to transparently support the subset of generics that are *not*
+    implicitly isinstanceable.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : Hint
+        Generic type hint to be inspected.
+    exception_cls : TypeException, default: BeartypeDecorHintPep484585Exception
+        Type of exception to be raised. Defaults to
+        :exc:`.BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Returns
+    -------
+    type
+        Isinstanceable class originating this generic.
+
+    Raises
+    ------
+    exception_cls
+        If this hint is *not* a generic.
+
+    See Also
+    --------
+    :func:`.get_hint_pep484585_generic_unsubbed_type`
+        Further details.
+    '''
+
+    # This hint if this hint is an unsubscripted generic, the unsubscripted
+    # generic underlying this hint if this hint is a subscripted generic, *OR*
+    # raise an exception if this hint is not a generic.
+    hint_generic_type_isinstanceable = get_hint_pep484585_generic_unsubbed_type(
+        hint)
+
+    # If the metaclass of this generic bound the __call__() dunder method to a
+    # type, *ALL* user-defined instances of this generic are necessarily
+    # instances of that type rather than instances of this generic. In this
+    # case, assume that type to be isinstanceable. Certainly, this generic
+    # itself is unlikely to be isinstanceable. Why? Because of the following
+    # PEP-compliant edge cases triggering this condition:
+    #
+    # * User-defined subclasses inheriting both the PEP 484-compliant
+    #   "typing.Generic" superclass *AND* the PEP 589-compliant
+    #   "typing.TypedDict" superclass, whose metaclass is the private
+    #   "typing._TypedDictMeta" metaclass, which:
+    #   * Explicitly prevents these user-defined subclasses from being passed as
+    #     the second parameters to the isinstance() and issubclass() builtins.
+    #   * Implements the typing._TypedDictMeta.__new__() constructor responsible
+    #     for dynamically creating and returning these user-defined subclasses
+    #     to forcefully monkey-patch the __call__() dunder method of these
+    #     subclasses to refer to the builtin "dict" type. By default, the
+    #     __call__() dunder method is bound to the type.__call__() method.
+    #     Replacing that method with "dict" ensures that *ALL*
+    #     "typing.TypedDict" instances are actually "dict" rather than
+    #     "typing.TypedDict" instances.
+    if isinstance(hint_generic_type_isinstanceable.__call__, type):  # pyright: ignore
+        hint_generic_type_isinstanceable = hint.__call__  # pyright: ignore
+        # print(f'generic {hint} hint.__call__ type detected: {hint_isinstanceable}')
+    # Else, the metaclass of this generic did *NOT* bind the __call__() dunder
+    # method to a type.
+
+    # Return this isinstanceable class.
+    return hint_generic_type_isinstanceable

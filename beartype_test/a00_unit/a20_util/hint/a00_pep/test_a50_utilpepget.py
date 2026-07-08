@@ -20,13 +20,12 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ attr                       }....................
 def test_get_hint_pep_args(hints_piths_pep_meta) -> None:
     '''
-    Test the
-    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_args`
+    Test the :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_args`
     getter.
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -91,15 +90,16 @@ def test_get_hint_pep_args(hints_piths_pep_meta) -> None:
     with raises(BeartypeDecorHintPepException):
         get_hint_pep_args(TheWholeMammothBrood)
 
-
+# ....................{ TESTS ~ attr : typeargs            }....................
 def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
     '''
-    Test the :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typeargs_packed`
+    Test the
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typeargs_packed`
     getter.
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -111,6 +111,12 @@ def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
         is_hint_pep484612646_typearg_packed)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+    from beartype_test.a00_unit.data.pep.generic.data_pep484585generic import (
+        Pep484585GenericIntTSequenceU)
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
+        T,
+        U,
+    )
     from pytest import raises
 
     # ....................{ CLASSES                        }....................
@@ -123,10 +129,36 @@ def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
         __parameters__ = "His sov'reignty, and rule, and majesty;—"
 
     # ....................{ PASS                           }....................
+    # Assert that this getter when passed a PEP 484- and 585-compliant generic
+    # list parametrized by two type variables (i.e., "T", parametrizing the PEP
+    # 484-compliant "Pep484GenericST[int, T]" subscripted generic
+    # pseudo-superclass of this generic list; "U", parametrizing the PEP
+    # 585-compliant "Pep585SequenceU" unsubscripted generic superclass of this
+    # generic list) returns the 2-tuple of these type variables.
+
+    #FIXME: Non-ideal. Promote this to a proper "hint_pep_meta". *shrug*
+    #FIXME: Uncomment once worky. *sigh*
+    # hint_typeargs = get_hint_pep_typeargs_packed(Pep484585GenericIntTSequenceU)
+    # assert hint_typeargs == (T, U)
+
+    # ....................{ PASS ~ iterate                 }....................
+    # Assert this getter returns *NO* type parameters for non-"typing" hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert get_hint_pep_typeargs_packed(not_hint_pep) == ()
+
     # For each PEP-compliant test hint...
     for hint_pep_meta in hints_piths_pep_meta:
+        # This hint, localized purely to simplify debugging. *sigh*
+        hint = hint_pep_meta.hint
+
         # Tuple of all packed type parameters discovered by this getter.
-        hint_typeargs_packed = get_hint_pep_typeargs_packed(hint_pep_meta.hint)
+        hint_typeargs_packed = get_hint_pep_typeargs_packed(
+            hint=hint,
+            #FIXME: Kinda hacky. This parameter should probably be enabled
+            #by default, but currently can't be, because ancient behaviour
+            #elsewhere depends on the oldschool default of "False". *shrug*
+            is_hint_pep484585_generic_unsub=True,
+        )
         assert isinstance(hint_typeargs_packed, tuple)
 
         # Assert all items of this tuple are actually packed type parameters.
@@ -150,10 +182,6 @@ def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
         # assert this getter returns the empty tuple.
         else:
             assert hint_typeargs_packed == ()
-
-    # Assert this getter returns *NO* type parameters for non-"typing" hints.
-    for not_hint_pep in NOT_HINTS_PEP:
-        assert get_hint_pep_typeargs_packed(not_hint_pep) == ()
 
     # ....................{ FAIL                           }....................
     # Assert this getter when passed a PEP-noncompliant hint defining the
