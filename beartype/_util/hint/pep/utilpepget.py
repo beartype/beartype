@@ -41,6 +41,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_unsubbed_type)
 from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_typeargs_packed,
+    # is_hint_pep585_generic,
     is_hint_pep585_generic_unsubbed,
 )
 from typing import (
@@ -299,6 +300,8 @@ def get_hint_pep_args_of_len(
     )
 
 # ....................{ GETTERS ~ typeargs                 }....................
+#FIXME: Document the same distinction between free and non-free type parameters
+#as documented by the get_hint_pep_typeargs_unpacked() getter. *sigh*
 #FIXME: Unit test us up, please. *sigh*
 @callable_cached
 def get_hint_pep_typeargs_unpacked(hint: Hint) -> (
@@ -425,7 +428,7 @@ def get_hint_pep_typeargs_packed(
     hint: Hint,
 
     # Optional parameters.
-    is_hint_pep484585_generic_unsub: bool = False,
+    is_unsub: bool = False,
 ) -> TuplePep484612646TypeArgsPacked:
     '''
     Tuple of the one or more **unique transitive packed type parameters** (i.e.,
@@ -453,6 +456,34 @@ def get_hint_pep_typeargs_packed(
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
+
+    Design
+    ------
+    This getter returns a tuple containing one or more:
+
+    * **Unbound type parameters** (i.e., type parameters that have yet to be
+      assigned a corresponding child type hint subscripting a transitive
+      pseudo-superclass of the passed generic).
+    * **Bound type parameters (i.e., type parameters that have already been
+      assigned such a corresponding child type hint).
+
+    This getter has two similar modalities of operation with respect to bound
+    and unbound type parameters, depending on whether the passed optional
+    ``is_unsub`` parameter is either:
+
+    * :data:`False`. In this case, the tuple returned by this getter contains
+      *only* unbound type parameters. This is the common use case and thus the
+      default value for this optional parameter. Bound type parameters are
+      useless for most purposes and purposes. From the high-level semantic
+      perspective (but not the low-level syntactic perspective), bound type
+      parameters are semantically erased when replaced by the type hint to which
+      they are assigned -- at which time they no longer even exist.
+    * :data:`True`. In this case, the tuple returned by this getter contains a
+      heterogeneous admixture of both bound and unbound type parameters. This is
+      an uncommon use case and thus *must* be explicitly passed as a non-default
+      value for this optional parameter. Bound type parameters are of interest
+      when mapping bound type parameters to the type hints they were bound to.
+      Ergo, this remains a valid (albeit uncommon) use case.
 
     Caveats
     -------
@@ -504,39 +535,39 @@ def get_hint_pep_typeargs_packed(
     ----------
     hint : Hint
         Type hint to be inspected.
-    is_hint_pep484585_generic_unsub : bool, default: False
+    is_unsub : bool, default: False
         If this hint is a **subscripted generic** (i.e., object subscripted by
         one or more child hints originating from a type originally subclassing
         at least one subscripted :pep:`484`- or :pep:`585`-compliant generic
         pseudo-superclass) *and* the caller requests that this generic be
         stripped of all subscripting child hints, reduce this subscripted
         generic to the unsubscripted generic underlying this subscripted
-        generic. Doing so avoids (probably undocumented and mostly indefensible)
-        non-orthogonalities between how subscripted and unsubscripted generics
-        define the ``__parameters__`` dunder attribute. Specifically:
-
-        * :pep:`484`-compliant unsubscripted generics define `__parameters__` as
-          expected. No issues!
-        * :pep:`484`-compliant subscripted generics define `__parameters__`
-          unexpectedly. Big issues! For unknown reasons, these generics define
-          `__parameters__` to be the tuple of the zero or more type parameters
-          directly subscripting (rather than merely transitively parametrizing)
-          these generics. Whereas deciding the tuple of all type parameters
-          transitively parametrizing a generic is non-trivial, deciding the
-          tuple of all type parameters directly subscripting a generic is
-          trivial. Ergo, this non-orthogonality replaces a non-trivial result
-          with a trivial result. Ignoring the latter in favour of the former is
-          thus sensible.
-        
-        Defaults to :data:`False`. For example:
+        generic. Doing so forces this getter to return a tuple containing a
+        heterogeneous admixture of both bound and unbound type parameters
+        (rather than a tuple containing only unbound type parameters). Although
+        uncommon, this use case still has occasional merit (e.g., to mapping
+        bound type parameters to the type hints they were bound to). Defaults to
+        :data:`False`. For example:
 
         .. code-block:: python
 
-           >>> class Pep484Generic[T]: ...
-           >>> Pep484Generic.__parameters__
-           (~T,)  # <-- this is good
-           >>> Pep484Generic[int].__parameters__
-           ()  # <----- THIS IS KINDA BAD. wtf, "typing"?
+           >>> from beartype._util.hint.pep.utilpepget import (
+           ...     get_hint_pep_typeargs_packed)
+
+           # Define an arbitrary parametrized generic.
+           >>> class MuhGeneric[T]: ...
+
+           # Pass this getter this unsubscripted generic.
+           >>> get_hint_pep_typeargs_packed(MuhGeneric, is_unsub=False)
+           (~T,)  # <-- expected
+           >>> get_hint_pep_typeargs_packed(MuhGeneric, is_unsub=True)
+           (~T,)  # <-- expected, too
+
+           # Pass this getter this generic subscripted by a child type hint.
+           >>> get_hint_pep_typeargs_packed(MuhGeneric[int], is_unsub=False)
+           ()  # <----- unexpected, but surprisingly what you want (usually)
+           >>> get_hint_pep_typeargs_packed(MuhGeneric[int], is_unsub=True)
+           (~T,)  # <-- expected, but surprisingly *NOT* what you want (usually)
 
     Returns
     -------
@@ -576,8 +607,8 @@ def get_hint_pep_typeargs_packed(
        >>> get_hint_pep_typeargs_packed(typing.List[T, int, S, str, T])
        (T, S)
     '''
-    assert isinstance(is_hint_pep484585_generic_unsub, bool), (
-        f'{repr(is_hint_pep484585_generic_unsub)} not boolean.')
+    assert isinstance(is_unsub, bool), (
+        f'{repr(is_unsub)} not boolean.')
 
     # ....................{ UNSUBSCRIPT                    }....................
     # If this hint is a PEP 484- or PEP 585-compliant subscripted generic *AND*
@@ -585,59 +616,49 @@ def get_hint_pep_typeargs_packed(
     # child hints, reduce this subscripted generic to the unsubscripted generic
     # underlying this subscripted generic.
     if (
-        is_hint_pep484585_generic_unsub and
+        is_unsub and
         is_hint_pep484585_generic_subbed(hint)
     ):
+        # print(f'Unsubscripting subscripted generic {hint}...')
         hint = get_hint_pep484585_generic_unsubbed_type(hint)
     # Else, either this hint is not a PEP 484- or PEP 585-compliant subscripted
     # generic *OR* this hint is but the caller requested this subscripted
     # generic not be stripped of the child hints subscripting this generic. In
     # either case, preserve this hint as is.
 
-    #FIXME: *LOL*. Enabling this fixes everything. Please now:
-    #* Uncomment this out.
-    #* Remove the corresponding logic below.
-    #* Unit test this properly.
-
-    # If this hint is a PEP 585-compliant unsubscripted generic, 
-    if is_hint_pep585_generic_unsubbed(hint):
-        return get_hint_pep585_generic_typeargs_packed(
-            hint, is_hint_pep484585_generic_unsub)
-
-    # ....................{ LOCALS                         }....................
-    # Value of the "__parameters__" dunder attribute on this hint if this hint
-    # defines this attribute (e.g., is *NOT* a PEP 585-compliant unsubscripted
-    # generic) *OR* "None" otherwise (e.g., if this hint is such a generic).
-    hint_typeargs = getattr(hint, '__parameters__', None)
-
     # ....................{ PEP 585                        }....................
-    # If this hint defines *NO* such attribute, synthetically reconstruct this
-    # attribute for this PEP 585-compliant unsubscripted generic. Notably...
-    if hint_typeargs is None:
-        # Reconstruct this attribute as either...
-        hint_typeargs = (
-            # If this hint is a PEP 585-compliant unsubscripted generic, the
-            # tuple of all type variables parametrizing all pseudo-superclasses
-            # of this generic;
-            get_hint_pep585_generic_typeargs_packed(hint)
-            if is_hint_pep585_generic_unsubbed(hint) else
-            # Else, this hint is *NOT* a PEP 585-compliant unsubscripted
-            # generic. In this case, the empty tuple.
-            ()
-        )
-    # Else, this object defines this attribute.
+    # If this hint is a PEP 585-compliant unsubscripted generic, defer to the
+    # lower-level PEP 585-specific variant of this getter. Deciding this tuple
+    # is surprisingly non-trivial for PEP 585-compliant unsubscripted generics.
+    # Why? Because Python fails to correctly define the "__parameters__" dunder
+    # attribute deferred to below for PEP 585-compliant generics. This is why QA
+    # can't have Pythonic things, people.
+    #
+    # Note that we only do so for the proper subset of *UNSUBSCRIPTED* PEP
+    # 585-compliant generics (rather than both subscripted and unsubscripted PEP
+    # 585-compliant generics). No idea, honestly. It's all stupidly complicated,
+    # we're tired, and it's frankly late. The current approach produces somewhat
+    # saner results from unit tests and is thus the "correct" approach. *sigh*
+    if is_hint_pep585_generic_unsubbed(hint):
+        return get_hint_pep585_generic_typeargs_packed(hint)
+    # Else, this hint is *NOT* a PEP 585-compliant unsubscripted generic.
 
     # ....................{ PEP 484                        }....................
+    # Value of the "__parameters__" dunder attribute on this hint if this hint
+    # defines this attribute (e.g., is a PEP 484-compliant generic) *OR* the
+    # empty tuple otherwise (e.g., if this hint is *NOT* such a generic).
+    hint_typeargs = getattr(hint, '__parameters__', ())
+
     # If this attribute is *NOT* a tuple...
-    elif not isinstance(hint_typeargs, tuple):
+    if not isinstance(hint_typeargs, tuple):
         # If this hint is the unsubscripted "typing.Union" hint semantically
         # equivalent to the subscripted "typing.Union[typing.Any]" hint, this
         # hint is a C-based type whose "__parameters__" dunder attribute is
         # implemented as a C-based slotted class attribute of some obscure type
         # under Python >= 3.14. Since unsubscripted "typing.Union" hints are
         # valid hints, this "__parameters__" implementation is *TECHNICALLY*
-        # also valid, albeit semantically meaningless. In this case, simply
-        # return the empty tuple.
+        # valid, albeit semantically meaningless. In this case, simply return
+        # the empty tuple.
 
         # If this hint is...
         if (

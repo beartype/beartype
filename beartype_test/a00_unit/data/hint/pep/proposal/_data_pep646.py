@@ -113,7 +113,7 @@ def hints_pep646_meta() -> (
             is_args=True,
             is_ignorable=True,
             is_supported=False,
-            typeargs_packed=(Ts,),
+            typeargs_packed_unsubbed=(Ts,),
         ),
         HintPepMetadata(
             hint=Ts_unpacked_subbed,
@@ -121,7 +121,7 @@ def hints_pep646_meta() -> (
             is_args=True,
             is_ignorable=True,
             is_supported=False,
-            typeargs_packed=(Ts,),
+            typeargs_packed_unsubbed=(Ts,),
         ),
 
         # ................{ TUPLE ~ tuple                      }................
@@ -241,7 +241,7 @@ def hints_pep646_meta() -> (
             generic_type=Array,
             is_type_typing=True,
             is_typing=False,
-            typeargs_packed=(DType, Shape),
+            typeargs_packed_unsubbed=(DType, Shape),
             piths_meta=(
                 # Generic instance.
                 PithSatisfiedMetadata(Array()),

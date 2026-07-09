@@ -515,7 +515,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignContainer,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ContainerABC,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 PithSatisfiedMetadata({
@@ -668,7 +668,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignIterable,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=IterableABC,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 PithSatisfiedMetadata({
@@ -816,7 +816,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignCollection,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=CollectionABC,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 PithSatisfiedMetadata({
@@ -977,7 +977,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignPep484585GenericUnsubbed,
             generic_type=Pep484GenericST,
             is_type_typing=False,
-            typeargs_packed=(S, T,),
+            typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Subclass-specific generic.
                 PithSatisfiedMetadata(Pep484GenericST()),
@@ -997,7 +997,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignPep484585GenericUnsubbed,
             generic_type=Pep484GenericTToSSubbed,
             is_type_typing=False,
-            typeargs_packed=(S,),
+            typeargs_packed_unsubbed=(S,),
             piths_meta=(
                 # Subclass-specific generic.
                 PithSatisfiedMetadata(Pep484GenericTToSSubbed()),
@@ -1016,7 +1016,7 @@ def hints_pep484_meta() -> (
             generic_type=Pep484GenericST,
             is_type_typing=True,
             is_typing=False,
-            typeargs_packed=(S, T,),
+            typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Subclass-specific generic.
                 PithSatisfiedMetadata(Pep484GenericST()),
@@ -1036,7 +1036,7 @@ def hints_pep484_meta() -> (
             generic_type=Pep484GenericST,
             is_type_typing=True,
             is_typing=False,
-            typeargs_packed=(S, T,),
+            typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Subclass-specific generic.
                 PithSatisfiedMetadata(Pep484GenericST()),
@@ -1054,7 +1054,7 @@ def hints_pep484_meta() -> (
             generic_type=Pep484GenericST,
             is_type_typing=True,
             is_typing=False,
-            typeargs_packed=(S, T,),
+            typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Subclass-specific generic.
                 PithSatisfiedMetadata(Pep484GenericST()),
@@ -1084,7 +1084,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep484GenericTToSSubbed,
             is_typing=False,
-            typeargs_packed=(S,),
+            typeargs_packed_unsubbed=(S,),
             piths_meta=(
                 # Subclass-specific generic.
                 PithSatisfiedMetadata(Pep484GenericTToSSubbed()),
@@ -1103,7 +1103,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484ContextManagerTSequenceT,
             is_type_typing=False,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
                 PithSatisfiedMetadata(
@@ -1129,7 +1129,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484IterableTContainerT,
             is_type_typing=False,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Subclass-specific generic iterable of string constants.
                 PithSatisfiedMetadata(
@@ -1151,7 +1151,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484IterableTupleSTContainerTupleST,
             is_type_typing=False,
-            typeargs_packed=(S, T,),
+            typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Instance of this generic containing one or more items.
                 PithSatisfiedMetadata(
@@ -1211,7 +1211,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 PithSatisfiedMetadata(Pep484IterableTContainerT((
@@ -1236,7 +1236,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 PithSatisfiedMetadata(Pep484ContextManagerTSequenceT((
@@ -1261,7 +1261,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
-            typeargs_packed=(S, T,),
+            typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 PithSatisfiedMetadata(Pep484IterableTupleSTContainerTupleST((
@@ -1458,7 +1458,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignDict,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=dict,
-            typeargs_packed=(S, T,),
+            typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Dictionary mapping keys of one type to values of another.
                 PithSatisfiedMetadata({
@@ -2075,7 +2075,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignAbstractSet,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=SetABC,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 PithSatisfiedMetadata({
@@ -2198,7 +2198,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignDeque,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=deque,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Deque of items all of the same type.
                 PithSatisfiedMetadata(deque((
@@ -2321,7 +2321,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignFrozenSet,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=frozenset,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Frozen set of items all of the same type.
                 PithSatisfiedMetadata(frozenset((
@@ -2450,7 +2450,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignItemsView,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ItemsViewABC,
-            typeargs_packed=(S, T,),
+            typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Items view of items all of the same type.
                 PithSatisfiedMetadata({
@@ -2582,7 +2582,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignKeysView,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=KeysViewABC,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Keys view of items all of the same type.
                 PithSatisfiedMetadata({
@@ -2708,7 +2708,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignValuesView,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ValuesViewABC,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Values view of items all of the same type.
                 PithSatisfiedMetadata({
@@ -2828,7 +2828,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignMutableSet,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=MutableSetABC,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 PithSatisfiedMetadata({
@@ -2943,7 +2943,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignSet,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=set,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 PithSatisfiedMetadata({
@@ -3072,7 +3072,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignList,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Empty list.
                 PithSatisfiedMetadata([]),
@@ -3273,7 +3273,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignPep484585TupleFixed,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
-            typeargs_packed=(S, T,),
+            typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Tuple containing a floating-point number and string (in that
                 # exact order).
@@ -3329,7 +3329,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignTuple,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Tuple containing arbitrarily many string constants.
                 PithSatisfiedMetadata((
@@ -3446,7 +3446,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignType,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=type,
-            typeargs_packed=(T,),
+            typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Arbitrary class.
                 PithSatisfiedMetadata(int),

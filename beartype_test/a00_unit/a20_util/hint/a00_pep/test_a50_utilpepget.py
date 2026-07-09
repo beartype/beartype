@@ -152,36 +152,34 @@ def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
         hint = hint_pep_meta.hint
 
         # Tuple of all packed type parameters discovered by this getter.
-        hint_typeargs_packed = get_hint_pep_typeargs_packed(
-            hint=hint,
-            #FIXME: Kinda hacky. This parameter should probably be enabled
-            #by default, but currently can't be, because ancient behaviour
-            #elsewhere depends on the oldschool default of "False". *shrug*
-            is_hint_pep484585_generic_unsub=True,
-        )
-        assert isinstance(hint_typeargs_packed, tuple)
+        hint_typeargs_packed_unsubbed = get_hint_pep_typeargs_packed(
+            hint=hint, is_unsub=True)
+        assert isinstance(hint_typeargs_packed_unsubbed, tuple)
 
         # Assert all items of this tuple are actually packed type parameters.
-        for hint_typearg in hint_typeargs_packed:
+        for hint_typearg in hint_typeargs_packed_unsubbed:
             assert is_hint_pep484612646_typearg_packed(hint_typearg) is True
 
         # If this hint is parametrized by one or more type parameters...
         if hint_pep_meta.is_typeargs:
-            # Assert this getter returns one or more type parameters.
-            assert hint_typeargs_packed
+            # Assert this getter returned one or more type parameters.
+            assert hint_typeargs_packed_unsubbed
 
             # If the exact type parameters parametrizing this hint are known
             # at test time...
-            if hint_pep_meta.typeargs_packed:
+            if hint_pep_meta.typeargs_packed_unsubbed:
                 # Assert this getter returns only these type parameters.
-                assert hint_pep_meta.typeargs_packed == hint_typeargs_packed
+                assert (
+                    hint_pep_meta.typeargs_packed_unsubbed ==
+                    hint_typeargs_packed_unsubbed
+                )
             # Else, the exact type parameters parametrizing this hint are unknown
             # at test time. In this case, silently ignore the exact contents of
             # this tuple.
         # Else, this hint is unparametrized by type parameters. In this case,
         # assert this getter returns the empty tuple.
         else:
-            assert hint_typeargs_packed == ()
+            assert hint_typeargs_packed_unsubbed == ()
 
     # ....................{ FAIL                           }....................
     # Assert this getter when passed a PEP-noncompliant hint defining the

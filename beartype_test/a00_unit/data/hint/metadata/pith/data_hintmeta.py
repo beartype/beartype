@@ -196,7 +196,7 @@ class HintPepMetadata(HintNonpepMetadata):
     is_typeargs : bool, optional
         :data:`True` only if this hint is subscripted by one or more **type
         variables** (i.e., :class:`typing.TypeVar` instances). Defaults to
-        ``bool(typeargs_packed)``.
+        ``bool(typeargs_packed_unsubbed)``.
     is_type_typing : bool, optional
         :data:`True` only if this hint's class is defined by the :mod:`typing`
         module. If ``True``, then :attr:`is_pep585_builtin_subbed` and
@@ -222,7 +222,7 @@ class HintPepMetadata(HintNonpepMetadata):
 
         * If this hint is subscripted, :attr:`isinstanceable_type`.
         * Else, :data:`None`.
-    typeargs_packed : Tuple[TypeVar, ...], optional
+    typeargs_packed_unsubbed : Tuple[TypeVar, ...], optional
         Tuple of the zero or more :pep:`484`-compliant **type variables** (i.e.,
         :class:`typing.TypeVar` objects) parametrizing this hint. Defaults to
         the empty tuple, implying this hint to be parametrized by *no* type
@@ -253,7 +253,7 @@ class HintPepMetadata(HintNonpepMetadata):
         is_typing: Optional[bool] = None,
         isinstanceable_type: Optional[type] = None,
         generic_type: Optional[type] = None,
-        typeargs_packed: 'TuplePep484612646TypeArgsPacked' = (),
+        typeargs_packed_unsubbed: 'TuplePep484612646TypeArgsPacked' = (),
         typehint_cls: Optional[type['beartype.door.TypeHint']] = None,
         **kwargs
     ) -> None:
@@ -270,12 +270,12 @@ class HintPepMetadata(HintNonpepMetadata):
         assert isinstance(pep_sign, HintSign), f'{repr(pep_sign)} not sign.'
         assert isinstance(isinstanceable_type, _NoneTypeOrType), (
             f'{repr(isinstanceable_type)} neither class nor "None".')
-        assert isinstance(typeargs_packed, tuple), (
-            f'{repr(typeargs_packed)} not tuple.')
+        assert isinstance(typeargs_packed_unsubbed, tuple), (
+            f'{repr(typeargs_packed_unsubbed)} not tuple.')
         assert all(
             is_hint_pep484612646_typearg_packed(typevar)
-            for typevar in typeargs_packed
-        ), f'{repr(typeargs_packed)} not tuple of type variables.'
+            for typevar in typeargs_packed_unsubbed
+        ), f'{repr(typeargs_packed_unsubbed)} not tuple of type variables.'
 
         # Initialize our superclass with all remaining variadic parameters.
         super().__init__(**kwargs)
@@ -316,7 +316,7 @@ class HintPepMetadata(HintNonpepMetadata):
         # Default this parameter to true only if this hint is expected to be
         # parametrized by one or more type variables.
         if is_typeargs is None:
-            is_typeargs = bool(typeargs_packed)
+            is_typeargs = bool(typeargs_packed_unsubbed)
         # Default this parameter to true only if this hint's class is
         # defined by the "typing" module.
         if is_typing is None:
@@ -376,7 +376,7 @@ class HintPepMetadata(HintNonpepMetadata):
         self.isinstanceable_type = isinstanceable_type
         self.pep_sign = pep_sign
         self.typehint_cls = typehint_cls
-        self.typeargs_packed = typeargs_packed
+        self.typeargs_packed_unsubbed = typeargs_packed_unsubbed
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
@@ -398,7 +398,7 @@ class HintPepMetadata(HintNonpepMetadata):
             f'    is_type_typing={repr(self.is_type_typing)},',
             f'    is_typing={repr(self.is_typing)},',
             f'    piths_meta={repr(self.piths_meta)},',
-            f'    typeargs_packed={repr(self.typeargs_packed)},',
+            f'    typeargs_packed_unsubbed={repr(self.typeargs_packed_unsubbed)},',
             f'    warning_type={repr(self.warning_type)},',
             f')',
         ))

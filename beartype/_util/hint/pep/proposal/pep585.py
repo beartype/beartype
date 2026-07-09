@@ -436,7 +436,7 @@ def get_hint_pep585_generic_typeargs_packed(
         *and* the caller requests that this generic be stripped of all
         subscripting child hints, reduce this subscripted generic to the
         unsubscripted generic underlying this subscripted generic. See the
-        ``is_hint_pep484585_generic_unsub`` parameter accepted by the higher-level
+        ``is_unsub`` parameter accepted by the higher-level
         :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typeargs_packed`
         getter for further discussion.
     exception_cls : TypeException, default: BeartypeDecorHintPep585Exception
@@ -468,6 +468,20 @@ def get_hint_pep585_generic_typeargs_packed(
     '''
     assert isinstance(is_unsub, bool), f'{repr(is_unsub)} not boolean.'
 
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: The PEP 484-compliant "__parameters__" dunder attribute
+    # unconditionally correctly defined for *ALL* PEP 484-compliant generics is
+    # only conditionally defined for a subset of PEP 585-compliant generics.
+    # When conditionally defined for a given PEP 585-compliant generic, however,
+    # the value of the "__parameters__" dunder attribute is frequently
+    # incorrect. In other words, the "__parameters__" dunder attribute is
+    # fundamentally unreliable and *MUST* thus be unconditionally ignored for
+    # *ALL* PEP 585-compliant generics. This getter circumvents this
+    # unreliability by effectively dynamically deciding what the value of the
+    # "__parameters__" dunder attribute should have been for the passed PEP
+    # 585-compliant generic had Python correctly defined that attribute. *UGH*.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
@@ -494,26 +508,7 @@ def get_hint_pep585_generic_typeargs_packed(
     # Else, this hint is *NOT* a PEP 585-compliant subscripted generic. In this
     # case, preserve this hint as is.
 
-    # ....................{ NOOP                           }....................
-    #FIXME: *LOL*. Commenting this out fixes everything. Please now:
-    #* Comment why exactly we *MUST* ignore "__parameters__" for PEP
-    #  585-compliant generics. Namely, it's flat-out wrong.
-    #* Unit test this properly.
-
-    # # Tuple of all type parameters parametrizing this generic if this is a PEP
-    # # 585-compliant subscripted generic *OR* "None" otherwise (i.e., is a PEP
-    # # 585-compliant unsubscripted generic). For known reasons, the
-    # # "__parameters__" dunder attribute is defined correctly for PEP
-    # # 585-compliant subscripted (but *NOT* unsubscripted) generics. *shrug*
-    # hint_typeargs = getattr(hint, '__parameters__', None)
-    #
-    # # If this tuple is defined, return this tuple as is.
-    # if hint_typeargs is not None:
-    #     return hint_typeargs
-    # # Else, this tuple is undefined. In this case, synthetically reconstruct
-    # # this tuple for this PEP 585-compliant unsubscripted generic.
-
-    # ....................{ SEARCH                         }....................
+    # ....................{ RECURSE                        }....................
     # Tuple of all pseudo-superclasses of this unsubscripted generic.
     hint_bases = get_hint_pep585_generic_bases_unerased(hint)
 
@@ -538,12 +533,35 @@ def get_hint_pep585_generic_typeargs_packed(
     #   to be added to this dictionary.
     hint_typeargs_to_none: dict[TypeVar, None] = dict()
 
+    #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
     # For each such pseudo-superclass...
     for hint_base in hint_bases:
+        #FIXME: *LOL*. This recursion is super-slow, clunky, and almost
+        #certainly involves a great deal of recomputation. The only thing that
+        #makes any of this bearable is that this *DOES* appear to compute the
+        #correct tuple -- which, ultimately, is all that matters. Thus, we sigh
+        #and silently ignore something no one cares about for another year.
         # Tuple of the zero or more type parameters parametrizing this
         # pseudo-superclass.
         hint_base_typeargs = get_hint_pep_typeargs_packed(
-            hint=hint_base, is_hint_pep484585_generic_unsub=is_unsub)
+            hint=hint_base,
+            # Preserve the typically undesirable value of the low-level
+            # "__parameters__" dunder attribute defined on this
+            # pseudo-superclass (if any) rather than evaluating that attribute
+            # after stripping any child hints subscripting this
+            # pseudo-superclass. Why? Because the latter approach would
+            # erroneously return both:
+            # * Unbound type parameters (i.e., type parameters that have yet to
+            #   be bound to a child hint subscripting this pseudo-superclass).
+            # * Bound type parameters (i.e., type parameters that have already
+            #   been bound to a child hint subscripting this pseudo-superclass).
+            #
+            # The former approach returns *ONLY* unbound parameters, which is
+            # *ALWAYS* what the caller wants (regardless of whether the caller
+            # passed "is_unsub=True" or not, as that passed parameter is *ONLY*
+            # intended to unsubscript the passed generic itself).
+            is_unsub=False,
+        )
         # print(f'hint_base_typeargs: {hint_base} [{get_hint_pep_typeargs_packed(hint_base)}]')
 
         # Efficiently add these type parameters as new keys of this dictionary.

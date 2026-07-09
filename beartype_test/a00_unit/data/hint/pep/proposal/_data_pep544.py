@@ -537,7 +537,7 @@ def hints_pep544_meta() -> (
                 pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=ProtocolCustomTypevared,
                 is_type_typing=False,
-                typeargs_packed=(T,),
+                typeargs_packed_unsubbed=(T,),
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
                     PithSatisfiedMetadata(protocol_custom_structural),
@@ -553,7 +553,7 @@ def hints_pep544_meta() -> (
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=ProtocolCustomTypevared,
                 is_typing=False,
-                typeargs_packed=(T,),
+                typeargs_packed_unsubbed=(T,),
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
                     PithSatisfiedMetadata(protocol_custom_structural),
@@ -570,7 +570,7 @@ def hints_pep544_meta() -> (
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=ProtocolCustomTypevared,
                 is_typing=False,
-                typeargs_packed=(T,),
+                typeargs_packed_unsubbed=(T,),
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
                     PithSatisfiedMetadata(protocol_custom_structural),
@@ -701,7 +701,7 @@ def hints_pep544_meta() -> (
                 hint=IO,
                 pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=IO,
-                typeargs_packed=(AnyStr,),
+                typeargs_packed_unsubbed=(AnyStr,),
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
                     PithSatisfiedMetadata(
@@ -723,7 +723,7 @@ def hints_pep544_meta() -> (
                 hint=IO[Any],
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
-                typeargs_packed=(AnyStr,),
+                typeargs_packed_unsubbed=(AnyStr,),
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
                     PithSatisfiedMetadata(
@@ -743,7 +743,7 @@ def hints_pep544_meta() -> (
                 hint=IO[AnyStr],
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
-                typeargs_packed=(AnyStr,),
+                typeargs_packed_unsubbed=(AnyStr,),
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
                     PithSatisfiedMetadata(
@@ -764,7 +764,7 @@ def hints_pep544_meta() -> (
                 hint=IO[bytes],
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
-                typeargs_packed=(AnyStr,),
+                typeargs_packed_unsubbed=(AnyStr,),
                 piths_meta=PITHS_META_BINARYIO,
             ),
 
@@ -773,7 +773,7 @@ def hints_pep544_meta() -> (
                 hint=IO[str],
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
-                typeargs_packed=(AnyStr,),
+                typeargs_packed_unsubbed=(AnyStr,),
                 piths_meta=PITHS_META_TEXTIO,
             ),
 

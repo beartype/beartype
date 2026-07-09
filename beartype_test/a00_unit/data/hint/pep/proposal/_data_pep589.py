@@ -336,7 +336,7 @@ def hints_pep589_meta() -> 'list[HintPepMetadata]':
                     pep_sign=HintSignPep484585GenericUnsubbed,
                     generic_type=Pep589484TypedDictT,
                     is_type_typing=False,
-                    typeargs_packed=(T,),
+                    typeargs_packed_unsubbed=(T,),
                     piths_meta=(
                         # Non-empty generic instance containing the expected keys
                         # and values.
@@ -383,7 +383,7 @@ def hints_pep589_meta() -> 'list[HintPepMetadata]':
                     generic_type=Pep589484TypedDictT,
                     is_type_typing=True,
                     is_typing=False,
-                    typeargs_packed=(T,),
+                    typeargs_packed_unsubbed=(T,),
                     piths_meta=(
                         # Non-empty generic instance containing the expected keys
                         # and values.
