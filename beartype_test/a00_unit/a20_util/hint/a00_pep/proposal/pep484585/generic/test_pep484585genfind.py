@@ -36,6 +36,7 @@ def test_find_hint_pep484585_generic_args_full() -> None:
     from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
         Nongeneric,
         Pep484GenericST,
+        Pep484GenericSTToUU,
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
         Pep585ListT,
@@ -67,18 +68,28 @@ def test_find_hint_pep484585_generic_args_full() -> None:
         # ....................{ PEP ~ 484                  }....................
         (Pep484GenericST, (S, T,)),
         (Pep484GenericST[int, float], (int, float,)),
-        (Pep585SequenceU, (U,)),
-        (Pep585SequenceU[complex], (complex,)),
-        (Pep484585GenericIntTSequenceU, (bool, int, T, U,)),
-        (Pep484585GenericIntFloatSequenceU, (bool, int, float, U,)),
-        (Pep484585GenericUUST, (U, S, T, U,)),
-
-        #FIXME: Add additional use cases for the disordered
-        #"Pep484GenericSTToUU" test generic both here and below, please! *sigh*
+        (Pep484GenericSTToUU, (S, U, S, T, U)),
+        (
+            Pep484GenericSTToUU[int, float, complex],
+            (int, complex, int, float, complex),
+        ),
 
         # ....................{ PEP ~ 585                  }....................
-        (Pep484585GenericIntTSequenceU[float, complex], (bool, int, float, complex,)),
-        (Pep484585GenericIntFloatSequenceU[complex], (bool, int, float, complex,)),
+        (Pep585SequenceU, (U,)),
+        (Pep585SequenceU[complex], (complex,)),
+
+        # ....................{ PEP ~ (484|585)            }....................
+        (Pep484585GenericIntTSequenceU, (bool, int, T, U,)),
+        (
+            Pep484585GenericIntTSequenceU[float, complex],
+            (bool, int, float, complex,),
+        ),
+        (Pep484585GenericIntFloatSequenceU, (bool, int, float, U,)),
+        (
+            Pep484585GenericIntFloatSequenceU[complex],
+            (bool, int, float, complex,),
+        ),
+        (Pep484585GenericUUST, (U, S, T, U,)),
         (Pep484585GenericUUST[bool, int, float], (bool, int, float, bool,)),
         (Pep484585GenericUIntT, (U, int, T, U,)),
         (Pep484585GenericUIntT[bool, float], (bool, int, float, bool,)),

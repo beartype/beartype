@@ -58,20 +58,6 @@ def hints_pep585_meta() -> (
         HintSignValuesView,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_11
-    from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
-        Pep585ContextManagerTSequenceT,
-        Pep585IterableTContainerT,
-        Pep585IterableTupleSTContainerTupleST,
-        Pep585DictST,
-        Pep585ListListStr,
-        Pep585ListStr,
-        Pep585ListT,
-        # Pep585ListRootU,
-        Pep585ListStemT,
-        Pep585ListLeafS,
-        Pep585SequenceTUnsubbed,
-        T_Pep585ListT,
-    )
     from beartype_test.a00_unit.data.data_type import (
         Class,
         Subclass,
@@ -89,6 +75,24 @@ def hints_pep585_meta() -> (
     from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
+    )
+    from beartype_test.a00_unit.data.pep.generic.data_pep484585generic import (
+        Pep484585GenericIntTSequenceU,
+        Pep484585GenericIntFloatSequenceU,
+    )
+    from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
+        Pep585ContextManagerTSequenceT,
+        Pep585IterableTContainerT,
+        Pep585IterableTupleSTContainerTupleST,
+        Pep585DictST,
+        Pep585ListListStr,
+        Pep585ListStr,
+        Pep585ListT,
+        # Pep585ListRootU,
+        Pep585ListStemT,
+        Pep585ListLeafS,
+        Pep585SequenceTUnsubbed,
+        T_Pep585ListT,
     )
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
@@ -827,9 +831,9 @@ def hints_pep585_meta() -> (
             ),
         ),
 
-        # Generic subclassing multiple indirectly parametrized
-        # "collections.abc" abstract base classes (ABCs) *AND* an
-        # unparametrized "collections.abc" ABC.
+        # Generic subclassing multiple indirectly parametrized "collections.abc"
+        # abstract base classes (ABCs) *AND* an unparametrized "collections.abc"
+        # ABC.
         HintPepMetadata(
             hint=Pep585IterableTupleSTContainerTupleST,
             pep_sign=HintSignPep484585GenericUnsubbed,
@@ -852,6 +856,7 @@ def hints_pep585_meta() -> (
                 PithUnsatisfiedMetadata('Invitations'),
             ),
         ),
+
 
         # Nested list of PEP 585-compliant generics.
         HintPepMetadata(
@@ -878,6 +883,89 @@ def hints_pep585_meta() -> (
                         'Of a cannabis‐enthroning regency',
                     ),
                 ]),
+            ),
+        ),
+
+        # ................{ GENERICS ~ multiple : pep 484|585  }................
+        # PEP 484- and 585-compliant unsubscripted generic list parametrized by
+        # two unconstrained type variables:
+        # * "T", parametrizing the PEP 484-compliant "Pep484GenericST[int, T]"
+        #   subscripted generic pseudo-superclass of this generic list.
+        # * "U", parametrizing the PEP 585-compliant "Pep585SequenceU"
+        #   unsubscripted generic superclass of this generic list.
+        HintPepMetadata(
+            hint=Pep484585GenericIntTSequenceU,
+            pep_sign=HintSignPep484585GenericUnsubbed,
+            generic_type=Pep484585GenericIntTSequenceU,
+            is_pep585_generic=True,
+            typeargs_packed_unsubbed=(T, U,),
+            piths_meta=(
+                # Subclass-specific generic list of booleans.
+                PithSatisfiedMetadata(Pep484585GenericIntTSequenceU((
+                    True, False,))),
+                # Boolean.
+                PithUnsatisfiedMetadata(True),
+                # List of booleans.
+                PithUnsatisfiedMetadata([False, True,]),
+            ),
+        ),
+
+        # PEP 484- and 585-compliant subscripted generic list subscripted by two
+        # builtin types.
+        HintPepMetadata(
+            hint=Pep484585GenericIntTSequenceU[float, bool],
+            pep_sign=HintSignPep484585GenericSubbed,
+            generic_type=Pep484585GenericIntTSequenceU,
+            is_pep585_generic=True,
+            typeargs_packed_unsubbed=(T, U,),
+            piths_meta=(
+                # Subclass-specific generic list of booleans.
+                PithSatisfiedMetadata(Pep484585GenericIntTSequenceU((
+                    False, True,))),
+                # Boolean.
+                PithUnsatisfiedMetadata(False),
+                # List of booleans.
+                PithUnsatisfiedMetadata([True, False,]),
+            ),
+        ),
+
+        # PEP 484- and 585-compliant unsubscripted generic list subclass
+        # parametrized by the unconstrained type variable "U", parametrizing the
+        # PEP 585-compliant "Pep585SequenceU" unsubscripted generic superclass
+        # of this generic list.
+        HintPepMetadata(
+            hint=Pep484585GenericIntFloatSequenceU,
+            pep_sign=HintSignPep484585GenericUnsubbed,
+            generic_type=Pep484585GenericIntFloatSequenceU,
+            is_pep585_generic=True,
+            typeargs_packed_unsubbed=(U,),
+            piths_meta=(
+                # Subclass-specific generic list of booleans.
+                PithSatisfiedMetadata(Pep484585GenericIntFloatSequenceU((
+                    True, True,))),
+                # Boolean.
+                PithUnsatisfiedMetadata(False,),
+                # List of booleans.
+                PithUnsatisfiedMetadata([False, False,]),
+            ),
+        ),
+
+        # PEP 484- and 585-compliant subscripted generic list subclass
+        # subscripted by one builtin type.
+        HintPepMetadata(
+            hint=Pep484585GenericIntFloatSequenceU[bool],
+            pep_sign=HintSignPep484585GenericSubbed,
+            generic_type=Pep484585GenericIntFloatSequenceU,
+            is_pep585_generic=True,
+            typeargs_packed_unsubbed=(U,),
+            piths_meta=(
+                # Subclass-specific generic list of booleans.
+                PithSatisfiedMetadata(Pep484585GenericIntFloatSequenceU((
+                    False, False,))),
+                # Boolean.
+                PithUnsatisfiedMetadata(True),
+                # List of booleans.
+                PithUnsatisfiedMetadata([True, True,]),
             ),
         ),
 

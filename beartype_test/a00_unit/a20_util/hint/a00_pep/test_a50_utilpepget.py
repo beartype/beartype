@@ -111,12 +111,6 @@ def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
         is_hint_pep484612646_typearg_packed)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.pep.generic.data_pep484585generic import (
-        Pep484585GenericIntTSequenceU)
-    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
-        T,
-        U,
-    )
     from pytest import raises
 
     # ....................{ CLASSES                        }....................
@@ -127,19 +121,6 @@ def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
         '''
 
         __parameters__ = "His sov'reignty, and rule, and majesty;—"
-
-    # ....................{ PASS                           }....................
-    # Assert that this getter when passed a PEP 484- and 585-compliant generic
-    # list parametrized by two type variables (i.e., "T", parametrizing the PEP
-    # 484-compliant "Pep484GenericST[int, T]" subscripted generic
-    # pseudo-superclass of this generic list; "U", parametrizing the PEP
-    # 585-compliant "Pep585SequenceU" unsubscripted generic superclass of this
-    # generic list) returns the 2-tuple of these type variables.
-
-    #FIXME: Non-ideal. Promote this to a proper "hint_pep_meta". *shrug*
-    #FIXME: Uncomment once worky. *sigh*
-    # hint_typeargs = get_hint_pep_typeargs_packed(Pep484585GenericIntTSequenceU)
-    # assert hint_typeargs == (T, U)
 
     # ....................{ PASS ~ iterate                 }....................
     # Assert this getter returns *NO* type parameters for non-"typing" hints.

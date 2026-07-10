@@ -15,6 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# from beartype_test._util.mark.pytskip import skip
 
 # ....................{ TESTS ~ tester                     }....................
 def test_is_hint_pep585_builtin(hints_piths_pep_meta) -> None:
@@ -63,6 +64,7 @@ def test_is_hint_pep585_generic(hints_piths_pep_meta) -> None:
             hint_pep_meta.is_pep585_generic)
 
 # ....................{ TESTS ~ getter                     }....................
+# @skip("Currently brokey. lol <- it's sad, actually")
 def test_get_hint_pep585_generic_typeargs_packed(hints_piths_pep_meta) -> None:
     '''
     Test the

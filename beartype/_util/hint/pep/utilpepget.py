@@ -41,9 +41,11 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_unsubbed_type)
 from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_typeargs_packed,
-    # is_hint_pep585_generic,
+    is_hint_pep585_generic,
     is_hint_pep585_generic_unsubbed,
 )
+from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
+    make_hint_pep646_typevartuple_unpacked_subbed)
 from typing import (
     Any,
     Optional,
@@ -300,20 +302,25 @@ def get_hint_pep_args_of_len(
     )
 
 # ....................{ GETTERS ~ typeargs                 }....................
-#FIXME: Document the same distinction between free and non-free type parameters
-#as documented by the get_hint_pep_typeargs_unpacked() getter. *sigh*
 #FIXME: Unit test us up, please. *sigh*
 @callable_cached
-def get_hint_pep_typeargs_unpacked(hint: Hint) -> (
-    TuplePep484612646TypeArgsUnpacked):
+def get_hint_pep_typeargs_unpacked(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    is_unsub: bool = False,
+) -> TuplePep484612646TypeArgsUnpacked:
     '''
-    Tuple of all :pep:`484`-, :pep:`612`-, and :pep:`646`-compliant **unique
-    transitive unpacked type parameters** (i.e., :pep:`484`-compliant type
-    variables, :pep:`612`-compliant unpacked parameter specifications, and
-    :pep:`646`-compliant unpacked type variable tuples uniquely subscripting the
-    passed PEP-compliant hint listed by the caller at hint declaration time,
-    ignoring duplicates) if this hint is parametrized *or* the empty tuple
-    otherwise (i.e., if this hint is unparametrized).
+    Tuple of the one or more **unique transitive unpacked type parameters**
+    (i.e., :pep:`484`-compliant type variables, :pep:`612`-compliant unpacked
+    parameter specifications, or :pep:`646`-compliant unpacked type variable
+    tuples uniquely parametrizing both the passed :pep:`484`- or
+    :pep:`585`-compliant generic *and* all pseudo-superclasses of this generic
+    originally specified at the time these generics were declared, ignoring
+    duplicates) if this hint is a generic and thus necessarily parametrized by
+    one or more such type parameters *or* the empty tuple otherwise (i.e., if
+    this hint is *not* a generic and is thus unparametrized).
 
     This getter returns the tuple returned by the lower-level
     :func:`.get_hint_pep_typeargs_packed` getter, modified such that:
@@ -335,6 +342,15 @@ def get_hint_pep_typeargs_unpacked(hint: Hint) -> (
     ----------
     hint : Hint
         Type hint to be inspected.
+    is_unsub : bool, default: False
+        If this hint is a **subscripted generic** (i.e., object subscripted by
+        one or more child hints originating from a type originally subclassing
+        at least one subscripted :pep:`585`-compliant generic pseudo-superclass)
+        *and* the caller requests that this generic be stripped of all
+        subscripting child hints, reduce this subscripted generic to the
+        unsubscripted generic underlying this subscripted generic. See also the
+        parameter of the same name accepted by the lover-level
+        :func:`.get_hint_pep_typeargs_unpacked` getter for further discussion.
 
     Returns
     -------
@@ -364,20 +380,13 @@ def get_hint_pep_typeargs_unpacked(hint: Hint) -> (
     # ....................{ LOCALS                         }....................
     # Tuple of the zero or more type parameters parametrizing this hint if any
     # *OR* the empty tuple otherwise (i.e., if this hint is unparametrized).
-    hint_typeargs = get_hint_pep_typeargs_packed(hint)
+    hint_typeargs = get_hint_pep_typeargs_packed(hint=hint, is_unsub=is_unsub)
 
-    # ....................{ NOOP                           }....................
-    # If this tuple is empty, return this empty tuple as is.
+    # If this tuple is empty, reduce to a noop by returning this empty tuple.
     if not hint_typeargs:
         return hint_typeargs  # type: ignore[return-value]
-    # Else, this hint is parametrized.
+    # Else, this tuple is non-empty -- implying this hint to be parametrized.
 
-    # ....................{ IMPORTS                        }....................
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
-        make_hint_pep646_typevartuple_unpacked_subbed)
-
-    # ....................{ LOCALS ~ more                  }....................
     #FIXME: [SPEED] Optimize by calling "acquire_instance(list)" instead and
     #then subsequently calling "release_instance(list)" below *AFTER*
     #coercing this list into a tuple. *sigh*
@@ -607,18 +616,15 @@ def get_hint_pep_typeargs_packed(
        >>> get_hint_pep_typeargs_packed(typing.List[T, int, S, str, T])
        (T, S)
     '''
-    assert isinstance(is_unsub, bool), (
-        f'{repr(is_unsub)} not boolean.')
+    assert isinstance(is_unsub, bool), f'{repr(is_unsub)} not boolean.'
+    # print(f'Getting {hint} typevars...')
 
     # ....................{ UNSUBSCRIPT                    }....................
     # If this hint is a PEP 484- or PEP 585-compliant subscripted generic *AND*
     # the caller requests that this generic be stripped of all subscripting
     # child hints, reduce this subscripted generic to the unsubscripted generic
     # underlying this subscripted generic.
-    if (
-        is_unsub and
-        is_hint_pep484585_generic_subbed(hint)
-    ):
+    if is_unsub and is_hint_pep484585_generic_subbed(hint):
         # print(f'Unsubscripting subscripted generic {hint}...')
         hint = get_hint_pep484585_generic_unsubbed_type(hint)
     # Else, either this hint is not a PEP 484- or PEP 585-compliant subscripted
@@ -627,6 +633,7 @@ def get_hint_pep_typeargs_packed(
     # either case, preserve this hint as is.
 
     # ....................{ PEP 585                        }....................
+    #FIXME: Revise comment up, please. *sigh*
     # If this hint is a PEP 585-compliant unsubscripted generic, defer to the
     # lower-level PEP 585-specific variant of this getter. Deciding this tuple
     # is surprisingly non-trivial for PEP 585-compliant unsubscripted generics.
@@ -639,7 +646,8 @@ def get_hint_pep_typeargs_packed(
     # 585-compliant generics). No idea, honestly. It's all stupidly complicated,
     # we're tired, and it's frankly late. The current approach produces somewhat
     # saner results from unit tests and is thus the "correct" approach. *sigh*
-    if is_hint_pep585_generic_unsubbed(hint):
+    # if is_hint_pep585_generic_unsubbed(hint):
+    if is_hint_pep585_generic(hint):
         return get_hint_pep585_generic_typeargs_packed(hint)
     # Else, this hint is *NOT* a PEP 585-compliant unsubscripted generic.
 
@@ -679,24 +687,26 @@ def get_hint_pep_typeargs_packed(
             # PEP-compliant (for certain broad definitions) despite being
             # semantically meaningless. Silently coerce this PEP-noncompliance
             # into PEP-compliance by reducing to the empty tuple.
-            return ()
+            hint_typeargs = ()
         # Else, this hint either is not a type *OR* is a user-defined type. In
         # either case, this hint defines an invalid "__parameters__" dunder
-        # attribute and is thus PEP-noncompliant.
-
-        # Raise an exception as a necessary fallback for safety.
-        raise BeartypeDecorHintPepException(
-            f'PEP-noncompliant hint {repr(hint)} '
-            f'"__parameters__" dunder attribute value '
-            f'{repr(hint_typeargs)} '
-            f'invalid (i.e., not tuple of '
-            f'PEP 484-, 612-, or PEP 646-compliant type parameters).'
-        )
+        # attribute and is thus PEP-noncompliant. Then...
+        else:
+            # Raise an exception as a necessary fallback for safety.
+            raise BeartypeDecorHintPepException(
+                f'PEP-noncompliant hint {repr(hint)} '
+                f'"__parameters__" dunder attribute value '
+                f'{repr(hint_typeargs)} '
+                f'invalid (i.e., not tuple of '
+                f'PEP 484-, 612-, or PEP 646-compliant type parameters).'
+            )
     # Else, this attribute is a tuple.
     #
     # In any case, this attribute should now be a tuple of type parameters.
 
     # ....................{ RETURN                         }....................
+    # print(f'Got {hint} typevars {hint_typeargs}...')
+
     # Return this attribute.
     return hint_typeargs
 

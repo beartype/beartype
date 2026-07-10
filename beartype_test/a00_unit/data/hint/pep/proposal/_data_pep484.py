@@ -126,22 +126,24 @@ def hints_pep484_meta() -> (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
-    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
-        S,
-        T,
-        T_any,
-        T_int,
-        T_str_or_bytes,
-    )
     from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
         Pep484ContextManagerTSequenceT,
         Pep484GenericST,
+        Pep484GenericSTToUU,
         Pep484GenericTToSSubbed,
         Pep484IterableTContainerT,
         Pep484IterableTupleSTContainerTupleST,
         Pep484ListStr,
         Pep484ListListStr,
         Pep484ListUnsubscripted,
+    )
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
+        S,
+        T,
+        T_any,
+        T_int,
+        T_str_or_bytes,
+        U,
     )
     from collections import (
         ChainMap as ChainMapType,
@@ -878,7 +880,7 @@ def hints_pep484_meta() -> (
         # require a different syntax to that of standard callables; ergo,
         # generator type hints are tested elsewhere.
 
-        # ................{ GENERICS ~ single : unsubscripted  }................
+        # ................{ GENERICS ~ single : unsubbed       }................
         # Generic subclassing a single unsubscripted "typing" type hint factory.
         HintPepMetadata(
             hint=Pep484ListUnsubscripted,
@@ -971,7 +973,7 @@ def hints_pep484_meta() -> (
         ),
 
         # Generic subclassing the "typing.Generic" superclass parametrized by
-        # two type variables.
+        # two unconstrained type variables.
         HintPepMetadata(
             hint=Pep484GenericST,
             pep_sign=HintSignPep484585GenericUnsubbed,
@@ -1007,7 +1009,7 @@ def hints_pep484_meta() -> (
             ),
         ),
 
-        # ................{ GENERICS ~ single : subscripted    }................
+        # ................{ GENERICS ~ single : subbed         }................
         # Generic subclassing a single parametrized "typing" type, itself
         # parametrized by the same type variables in the same order.
         HintPepMetadata(
@@ -1094,7 +1096,29 @@ def hints_pep484_meta() -> (
             ),
         ),
 
-        # ................{ GENERICS ~ multiple : unsubscripted}................
+        # ................{ GENERICS ~ multiple : unsubbed     }................
+        # Generic subclassing a generic superclass subscripted by two type
+        # variables (exactly one of which differs from the type variable
+        # originally parametrizing that superclass) *AND* the "typing.Generic"
+        # superclass parametrized by those same two type variables interleaved
+        # by a different type variable, thus validating that beartype
+        # introspects the correct ordering of type variable parametrizations
+        # even despite a subscription altering the order of parametrizations.
+        HintPepMetadata(
+            hint=Pep484GenericSTToUU,
+            pep_sign=HintSignPep484585GenericUnsubbed,
+            generic_type=Pep484GenericSTToUU,
+            is_type_typing=False,
+            typeargs_packed_unsubbed=(S, T, U,),
+            piths_meta=(
+                # Subclass-specific generic.
+                PithSatisfiedMetadata(Pep484GenericSTToUU()),
+                # String constant.
+                PithUnsatisfiedMetadata(
+                    'Found way from forth the thunders round his head!'),
+            ),
+        ),
+
         # Generic subclassing multiple unparametrized "typing" types *AND* a
         # non-"typing" abstract base class (ABC).
         HintPepMetadata(
@@ -1200,7 +1224,7 @@ def hints_pep484_meta() -> (
             ),
         ),
 
-        # ................{ GENERICS ~ multiple : subscripted  }................
+        # ................{ GENERICS ~ multiple : subbed       }................
         # Generic subclassing multiple "typing" types directly parametrized by
         # the same type variable, then subscripted by a concrete child hint
         # mapping to that type variable.

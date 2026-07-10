@@ -520,8 +520,8 @@ def find_hint_pep484585_generic_args_full(
                 exception_prefix=exception_prefix,
             )
 
-            # Tuple of the one or more type parameters directly parametrizing
-            # this pseudo-superclass in unsubscripted form.
+            # Tuple of the one or more unbound type parameters transitively
+            # parametrizing this pseudo-superclass in unsubscripted form.
             #
             # Note that this tuple can differ from the tuple of the one or more
             # type parameters parametrizing this pseudo-superclass if this
@@ -540,42 +540,13 @@ def find_hint_pep484585_generic_args_full(
             # the empty tuple if this pseudo-superclass is unsubscripted.
             hint_base_args = get_hint_pep_args(hint_base)
 
+            #FIXME: Comment us up, please. *sigh*
             # 0-based index of the .
             hint_base_typearg_index = 0
 
             #FIXME: Comment us up, please. *sigh*
             hint_base_typeargs_len = len(hint_base_typeargs)
             hint_base_args_len = len(hint_base_args)
-
-            #FIXME: *FASCINATING*. Looks like this edge case is valid, albeit
-            #uncommon. Ideally, it would be the case that:
-            #    hint_base_args_len <= hint_base_typeargs_len
-            #
-            #However, note that get_hint_pep_typeargs_unpacked() only provides
-            #*DIRECT* parametrizations. Type parameters parametrizing transitive
-            #pseudo-superclasses (but not the currently visited generic) are
-            #omitted by the above call to get_hint_pep_typeargs_unpacked().
-            #Ergo, an obviously valid generic exhibiting this edge case is:
-            #    class Yo[U]: ...
-            #    class Ugh[T](Yo): ...
-            #FIXME: *NAH*. This edge case is totally invalid. We need to fix
-            #get_hint_pep_typeargs_unpacked() to correctly report
-            #parametrizations across the entire transitive type hierarchy. We
-            #kinda already do this for PEP 585-compliant generics, but clearly
-            #insufficiently. We suspect that is the issue:
-            #    def get_hint_pep585_generic_typeargs_packed(
-            #        ...
-            #
-            #        hint_typevars = getattr(hint, '__parameters__', None)
-            #
-            #        #FIXME: *PROBLEM RIGHT HERE*. The "__parameters__" dunder
-            #        #attribute isn't trustworthy. So, stop trusting it. In
-            #        #other words, consider just ignoring "__parameters__"
-            #        #entirely by removing all of this. It is what it is. Shrug!
-            #        # If this tuple is defined, return this tuple as is.
-            #        if hint_typevars is not None:
-            #            return hint_typevars
-            #FIXME: *YUP*. That was it. Let's go, yo!
 
             # If this pseudo-superclass is subscripted by more child hints than
             # this pseudo-superclass was parametrized by type parameters, this
