@@ -25,7 +25,7 @@ def test_get_hint_pep_args(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -91,7 +91,9 @@ def test_get_hint_pep_args(hints_piths_pep_meta) -> None:
         get_hint_pep_args(TheWholeMammothBrood)
 
 # ....................{ TESTS ~ attr : typeargs            }....................
-def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
+def test_get_hint_pep_typeargs_packed(
+    hints_piths_pep_meta: 'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]',
+) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typeargs_packed`
@@ -99,7 +101,7 @@ def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -107,8 +109,6 @@ def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
-        is_hint_pep484612646_typearg_packed)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from pytest import raises
@@ -132,35 +132,30 @@ def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
         # This hint, localized purely to simplify debugging. *sigh*
         hint = hint_pep_meta.hint
 
-        # Tuple of all packed type parameters discovered by this getter.
+        # Tuples of the one or more packed type parameters parametrizing the
+        # subscripted and unsubscripted forms of this generic if this hint is a
+        # PEP 484- or 585-compliant generic *OR* the empty tuple otherwise
+        # (e.g., if this hint is *NOT* such a generic).
+        hint_typeargs_packed_subbed = get_hint_pep_typeargs_packed(
+            hint=hint, is_unsub=False)
         hint_typeargs_packed_unsubbed = get_hint_pep_typeargs_packed(
             hint=hint, is_unsub=True)
-        assert isinstance(hint_typeargs_packed_unsubbed, tuple)
 
-        # Assert all items of this tuple are actually packed type parameters.
-        for hint_typearg in hint_typeargs_packed_unsubbed:
-            assert is_hint_pep484612646_typearg_packed(hint_typearg) is True
-
-        # If this hint is parametrized by one or more type parameters...
+        # If the unsubscripted form of this hint is parametrized by one or more
+        # type parameters, assert this getter returned one or more type
+        # parameters when passed the unsubscripted form of this hint.
         if hint_pep_meta.is_typeargs:
-            # Assert this getter returned one or more type parameters.
             assert hint_typeargs_packed_unsubbed
 
-            # If the exact type parameters parametrizing this hint are known
-            # at test time...
-            if hint_pep_meta.typeargs_packed_unsubbed:
-                # Assert this getter returns only these type parameters.
-                assert (
-                    hint_pep_meta.typeargs_packed_unsubbed ==
-                    hint_typeargs_packed_unsubbed
-                )
-            # Else, the exact type parameters parametrizing this hint are unknown
-            # at test time. In this case, silently ignore the exact contents of
-            # this tuple.
-        # Else, this hint is unparametrized by type parameters. In this case,
-        # assert this getter returns the empty tuple.
-        else:
-            assert hint_typeargs_packed_unsubbed == ()
+        # Assert that the contents of these tuples are as expected.
+        _assert_hint_typeargs_packed(
+            hint_typeargs_packed_actual=hint_typeargs_packed_subbed,
+            hint_typeargs_packed_expect=hint_pep_meta.typeargs_packed_subbed,
+        )
+        _assert_hint_typeargs_packed(
+            hint_typeargs_packed_actual=hint_typeargs_packed_unsubbed,
+            hint_typeargs_packed_expect=hint_pep_meta.typeargs_packed_unsubbed,
+        )
 
     # ....................{ FAIL                           }....................
     # Assert this getter when passed a PEP-noncompliant hint defining the
@@ -168,6 +163,51 @@ def test_get_hint_pep_typeargs_packed(hints_piths_pep_meta) -> None:
     # exception.
     with raises(BeartypeDecorHintPepException):
         get_hint_pep_typeargs_packed(HisSovereigntyAndRuleAndMajesty)
+
+
+def _assert_hint_typeargs_packed(
+    hint_typeargs_packed_actual: (
+        'beartype._data.typing.datatyping.TuplePep484612646TypeArgsPacked'),
+    hint_typeargs_packed_expect: (
+        'beartype._data.typing.datatyping.TuplePep484612646TypeArgsPacked'),
+) -> None:
+    '''
+    Assert that the passed actual tuple of the one or more packed type
+    parameters parametrizing the subscripted or unsubscripted form of this
+    generic if the passed hint is a :pep:`484`- or :pep:`585`-compliant generic
+    *or* the empty tuple otherwise (e.g., if this hint is *not* such a generic)
+    as returned by the
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typeargs_packed`
+    getter is equal to the passed expected tuple of these type parameters.
+
+    Parameters
+    ----------
+    hint_typeargs_packed_actual: TuplePep484612646TypeArgsPacked
+        Actual tuple of these type parameters returned by that getter when
+        passed this hint.
+    hint_typeargs_packed_expect: TuplePep484612646TypeArgsPacked
+        Expected tuple of these type parameters returned by that getter when
+        passed this hint.
+    '''
+    assert isinstance(hint_typeargs_packed_actual, tuple)
+    assert isinstance(hint_typeargs_packed_expect, tuple)
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
+        is_hint_pep484612646_typearg_packed)
+
+    # ....................{ ASSERTS                        }....................
+    # Assert all items of this tuple are actually packed type parameters.
+    for hint_typearg in hint_typeargs_packed_actual:
+        assert is_hint_pep484612646_typearg_packed(hint_typearg) is True
+
+    # If the type parameters parametrizing this hint are known at test time,
+    # assert that this getter returns only these type parameters.
+    if hint_typeargs_packed_expect:
+        assert hint_typeargs_packed_actual == hint_typeargs_packed_expect
+    # Else, the type parameters parametrizing this hint are unknown at test
+    # time. In this case, silently ignore the contents of this tuple.
 
 # ....................{ TESTS ~ origin : type              }....................
 def test_get_hint_pep_type_isinstanceable(hints_piths_pep_meta) -> None:
@@ -178,7 +218,7 @@ def test_get_hint_pep_type_isinstanceable(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -217,7 +257,7 @@ def test_get_hint_pep_type_isinstanceable_or_none(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''

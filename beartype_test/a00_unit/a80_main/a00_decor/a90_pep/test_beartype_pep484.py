@@ -44,7 +44,7 @@ def test_beartype_pep484_ref_str(iter_hints_piths_meta) -> None:
 
     Parameters
     ----------
-    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPithMetadata]]
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPithMetadata]]
         Factory function creating and returning a generator iteratively yielding
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a

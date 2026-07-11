@@ -9,11 +9,11 @@ Project-wide :pep:`585`-compliant **type hint test data.**
 
 # ....................{ FIXTURES                           }....................
 def hints_pep585_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]'):
+    'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]'):
     '''
     Session-scoped fixture returning a list of :pep:`585`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata`
     instances describing test-specific :pep:`585`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -70,9 +70,9 @@ def hints_pep585_meta() -> (
         default_dict_str_to_str,
         sync_generator,
     )
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintPepMetadata)
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
@@ -647,6 +647,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585DictST,
             is_pep585_generic=True,
+            typeargs_packed_subbed=(S, T,),
             typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Subclass-specific generic dictionary of string constants.
@@ -709,6 +710,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585ListT,
             is_pep585_generic=True,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Subclass-specific recursive generic list.
@@ -730,6 +732,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585ListT,
             is_pep585_generic=True,
+            typeargs_packed_subbed=(T_Pep585ListT,),
             typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Subclass-specific recursive generic list.
@@ -751,6 +754,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585ListStemT,
             is_pep585_generic=True,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Subclass-specific generic list of string constants.
@@ -773,6 +777,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585ListLeafS,
             is_pep585_generic=True,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(S,),
             piths_meta=(
                 # Subclass-specific generic list of string constants.
@@ -910,13 +915,37 @@ def hints_pep585_meta() -> (
             ),
         ),
 
+        # PEP 484- and 585-compliant subscripted generic list subscripted by
+        # only one builtin types and thus consuming only one available type
+        # parameters (i.e., "T"), leaving the remaining type parameter unbound
+        # (i.e., "U"). One cannot possibly imagine how excruciating this
+        # uncommon (albeit valid) edge case is to handle at runtime. MUCHO PAIN.
+        HintPepMetadata(
+            hint=Pep484585GenericIntTSequenceU[float],
+            pep_sign=HintSignPep484585GenericSubbed,
+            generic_type=Pep484585GenericIntTSequenceU,
+            is_pep585_generic=True,
+            typeargs_packed_subbed=(U,),
+            typeargs_packed_unsubbed=(T, U,),
+            piths_meta=(
+                # Subclass-specific generic list of booleans.
+                PithSatisfiedMetadata(Pep484585GenericIntTSequenceU((
+                    False, False,))),
+                # Boolean.
+                PithUnsatisfiedMetadata(True),
+                # List of booleans.
+                PithUnsatisfiedMetadata([True, True,]),
+            ),
+        ),
+
         # PEP 484- and 585-compliant subscripted generic list subscripted by two
-        # builtin types.
+        # builtin types and thus consuming all available type parameters.
         HintPepMetadata(
             hint=Pep484585GenericIntTSequenceU[float, bool],
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep484585GenericIntTSequenceU,
             is_pep585_generic=True,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(T, U,),
             piths_meta=(
                 # Subclass-specific generic list of booleans.
@@ -957,6 +986,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep484585GenericIntFloatSequenceU,
             is_pep585_generic=True,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(U,),
             piths_meta=(
                 # Subclass-specific generic list of booleans.
@@ -978,6 +1008,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585IterableTContainerT,
             is_pep585_generic=True,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
@@ -1001,6 +1032,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585ContextManagerTSequenceT,
             is_pep585_generic=True,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
@@ -1024,6 +1056,7 @@ def hints_pep585_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep585IterableTupleSTContainerTupleST,
             is_pep585_generic=True,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.

@@ -17,18 +17,18 @@ from pytest import fixture
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
 def hints_piths_nonpep_meta() -> (
-    'tuple[beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta.HintNonpepMetadata]'):
+    'tuple[beartype_test.a00_unit.data.hint.cls.pith.data_clshint.HintNonpepMetadata]'):
     '''
     Session-scoped fixture yielding a tuple of **PEP-noncompliant type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta.HintNonpepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshint.HintNonpepMetadata`
     instances, each describing a sample PEP-noncompliant type hint exercising an
     edge case in the :mod:`beartype` codebase).
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintNonpepMetadata)
     from beartype_test._util.kind.pytkindmake import make_container_from_funcs
 

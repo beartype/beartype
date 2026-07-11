@@ -20,7 +20,7 @@ PEP-noncompliant type hints include:
 def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
     '''
     List of :pep:`484`-sorta-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintNonpepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintNonpepMetadata`
     instances describing test-specific :pep:`484`-sorta-compliant sample type
     hints with metadata generically leveraged by various PEP-agnostic unit
     tests).
@@ -40,9 +40,9 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
         NotImplementedType,
     )
     from beartype_test.a00_unit.data.data_type import Class
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintNonpepMetadata)
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )

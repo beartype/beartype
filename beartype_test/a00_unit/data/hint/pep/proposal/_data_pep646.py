@@ -9,10 +9,10 @@ Project-wide :pep:`646`-compliant **type hint test data.**
 
 # ....................{ FIXTURES ~ meta                    }....................
 def hints_pep646_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]'):
+    'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]'):
     '''
     List of :pep:`646`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata`
     instances describing test-specific :pep:`646`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -45,9 +45,9 @@ def hints_pep646_meta() -> (
         # make_hint_pep646_typevartuple_unpacked_prefix,
         # make_hint_pep646_typevartuple_unpacked_subbed,
     )
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintPepMetadata)
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
@@ -241,6 +241,7 @@ def hints_pep646_meta() -> (
             generic_type=Array,
             is_type_typing=True,
             is_typing=False,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(DType, Shape),
             piths_meta=(
                 # Generic instance.
@@ -258,10 +259,10 @@ def hints_pep646_meta() -> (
 
 
 def hints_pep646_reduction_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]'):
+    'list[beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC]'):
     '''
     List of :pep:`646`-compliant **type hint reduction metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC`
+    :class:`beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC`
     instances describing test-specific :pep:`646`-compliant sample type hints
     with metadata generically leveraged by PEP-agnostic unit tests validating
     the :func:`beartype._check.convert.reduce.redmain.reduce_hint` function).
@@ -290,7 +291,7 @@ def hints_pep646_reduction_meta() -> (
         # ....................{ IMPORTS                    }....................
         # Defer version-specific imports.
         from beartype.roar import BeartypeDecorHintPep646Exception
-        from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+        from beartype_test.a00_unit.data.hint.cls.data_clshintreduce import (
             HintReductionInvalid,
             HintReductionValid,
         )

@@ -16,11 +16,11 @@ contained in containers yielded by session-scoped fixtures defined by the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
     PithSatisfiedMetadata,
     PithUnsatisfiedMetadata,
 )
-from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
     HintNonpepMetadata)
 from contextlib import contextmanager
 

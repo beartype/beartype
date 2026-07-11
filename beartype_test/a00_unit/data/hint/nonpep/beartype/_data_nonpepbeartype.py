@@ -19,7 +19,7 @@ These hints include:
 def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
     '''
     List of :mod:`beartype`-specific **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintNonpepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintNonpepMetadata`
     instances describing test-specific :mod:`beartype`-specific PEP-noncompliant
     sample type hints with metadata generically leveraged by various
     PEP-agnostic unit tests).
@@ -30,9 +30,9 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
     # from beartype.plug import BeartypeHintable
     # from beartype.vale import Is
     # from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintNonpepMetadata)
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )

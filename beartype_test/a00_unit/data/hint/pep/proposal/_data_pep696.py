@@ -11,7 +11,7 @@ Project-wide :pep:`696`-compliant **type hint test data.**
 def hints_pep696_meta() -> 'list[HintPepMetadata]':
     '''
     List of :pep:`696`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata`
     instances describing test-specific :pep:`696`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -34,9 +34,9 @@ def hints_pep696_meta() -> 'list[HintPepMetadata]':
     # Defer version-specific imports.
     from beartype.door import TypeVarTypeHint
     from beartype._data.hint.sign.datahintsigns import HintSignTypeVar
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintPepMetadata)
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )

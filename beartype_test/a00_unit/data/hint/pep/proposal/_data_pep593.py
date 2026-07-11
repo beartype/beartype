@@ -12,7 +12,7 @@ def hints_pep593_meta() -> 'list[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`593`-compliant **type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata`
     instances describing test-specific :pep:`593`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -40,9 +40,9 @@ def hints_pep593_meta() -> 'list[HintPepMetadata]':
         Subclass,
         SubclassSubclass,
     )
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintPepMetadata)
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
@@ -809,10 +809,10 @@ def hints_pep593_meta() -> 'list[HintPepMetadata]':
 
 # ....................{ FIXTURES ~ reduce                  }....................
 def hints_pep593_reduction_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]'):
+    'list[beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC]'):
     '''
     List of :pep:`593`-compliant **type hint reduction metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC`
+    :class:`beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC`
     instances describing test-specific :pep:`593`-compliant sample type hints
     with metadata generically leveraged by PEP-agnostic unit tests validating
     the :func:`beartype._check.convert.reduce.redmain.reduce_hint` function).
@@ -822,7 +822,7 @@ def hints_pep593_reduction_meta() -> (
     # Defer fixture-specific imports.
     from beartype.vale import IsEqual
     from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+    from beartype_test.a00_unit.data.hint.cls.data_clshintreduce import (
         HintReductionValid)
 
     # ..................{ LOCALS                             }..................

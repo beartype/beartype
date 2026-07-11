@@ -24,14 +24,14 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 #submodule.
 def test_reduce_hint(
     hints_reduction_meta: (
-        'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]')) -> None:
+        'tuple[beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC]')) -> None:
     '''
     Test the private
     :func:`beartype._check.convert._reduce.redmain.reduce_hint` reducer.
 
     Parameters
     ----------
-    hints_reduction_meta : 'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]
+    hints_reduction_meta : 'tuple[beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC]
         Tuple of all PEP-agnostic type hint reduction metadata to be tested.
     '''
 
@@ -39,7 +39,7 @@ def test_reduce_hint(
     # Defer test-specific imports.
     from beartype._check.convert._reduce.redmain import reduce_hint
     from beartype._check.cls.call.calldatadecorfunc import new_decor_func
-    from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+    from beartype_test.a00_unit.data.hint.cls.data_clshintreduce import (
         HintReductionInvalid,
         HintReductionValid,
     )
@@ -96,7 +96,7 @@ def test_reduce_hint_ignorable(hints_piths_pep_meta, hints_ignorable) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]
+    hints_piths_pep_meta : tuple[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
         Tuple of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
     hints_ignorable : frozenset

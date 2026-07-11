@@ -15,10 +15,10 @@ PEP-noncompliant type hints include:
 
 # ....................{ FIXTURES                           }....................
 def hints_nonpep695_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintNonpepMetadata]'):
+    'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintNonpepMetadata]'):
     '''
     List of :pep:`695`-sorta-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintNonpepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintNonpepMetadata`
     instances describing test-specific :pep:`695`-sorta-compliant sample type
     hints with metadata generically leveraged by various PEP-agnostic unit
     tests).
@@ -27,9 +27,9 @@ def hints_nonpep695_meta() -> (
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintNonpepMetadata)
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )

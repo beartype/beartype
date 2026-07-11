@@ -45,10 +45,10 @@ Note that:
 
 # ....................{ FIXTURES ~ meta                    }....................
 def hints_pep484_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]'):
+    'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]'):
     '''
     List of :pep:`484`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata`
     instances describing test-specific :pep:`484`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -120,9 +120,9 @@ def hints_pep484_meta() -> (
         default_dict_str_to_str,
         sync_generator,
     )
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintPepMetadata)
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
@@ -1018,6 +1018,7 @@ def hints_pep484_meta() -> (
             generic_type=Pep484GenericST,
             is_type_typing=True,
             is_typing=False,
+            typeargs_packed_subbed=(S, T,),
             typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Subclass-specific generic.
@@ -1038,6 +1039,7 @@ def hints_pep484_meta() -> (
             generic_type=Pep484GenericST,
             is_type_typing=True,
             is_typing=False,
+            typeargs_packed_subbed=(T, S,),
             typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Subclass-specific generic.
@@ -1056,6 +1058,7 @@ def hints_pep484_meta() -> (
             generic_type=Pep484GenericST,
             is_type_typing=True,
             is_typing=False,
+            typeargs_packed_subbed=(T,),
             typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Subclass-specific generic.
@@ -1086,6 +1089,7 @@ def hints_pep484_meta() -> (
             pep_sign=HintSignPep484585GenericSubbed,
             generic_type=Pep484GenericTToSSubbed,
             is_typing=False,
+            typeargs_packed_subbed=(T,),
             typeargs_packed_unsubbed=(S,),
             piths_meta=(
                 # Subclass-specific generic.
@@ -1235,6 +1239,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
@@ -1260,6 +1265,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
@@ -1285,6 +1291,7 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
+            typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(S, T,),
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
@@ -1319,6 +1326,8 @@ def hints_pep484_meta() -> (
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484ListUnsubscripted,
             is_type_typing=False,
+            typeargs_packed_subbed=(),
+            typeargs_packed_unsubbed=(),
             piths_meta=(
                 # Subclass-specific generic list of string constants.
                 PithSatisfiedMetadata(
@@ -3559,10 +3568,10 @@ def hints_pep484_meta() -> (
 
 
 def hints_pep484_reduction_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]'):
+    'list[beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC]'):
     '''
     List of :pep:`484`-compliant **type hint reduction metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC`
+    :class:`beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC`
     instances describing test-specific :pep:`484`-compliant sample type hints
     with metadata generically leveraged by PEP-agnostic unit tests validating
     the :func:`beartype._check.convert.reduce.redmain.reduce_hint` function).
@@ -3578,7 +3587,7 @@ def hints_pep484_reduction_meta() -> (
     from beartype._util.hint.pep.proposal.pep484.pep484604union import (
         make_hint_pep484604_union)
     from beartype_test.a00_unit.data.data_type import Class
-    from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+    from beartype_test.a00_unit.data.hint.cls.data_clshintreduce import (
         HintReductionValid)
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import T_str_or_bytes
 

@@ -14,10 +14,10 @@ Project-wide :pep:`544`-compliant **type hint test data.**
 
 # ....................{ FIXTURES                           }....................
 def hints_pep544_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata]'):
+    'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]'):
     '''
     List of :pep:`544`-compliant **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata`
     instances describing test-specific :pep:`544`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
@@ -36,9 +36,9 @@ def hints_pep544_meta() -> (
         HintSignType,
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintPepMetadata)
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
@@ -570,6 +570,7 @@ def hints_pep544_meta() -> (
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=ProtocolCustomTypevared,
                 is_typing=False,
+                typeargs_packed_subbed=(),
                 typeargs_packed_unsubbed=(T,),
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
@@ -723,6 +724,7 @@ def hints_pep544_meta() -> (
                 hint=IO[Any],
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
+                typeargs_packed_subbed=(),
                 typeargs_packed_unsubbed=(AnyStr,),
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
@@ -764,6 +766,7 @@ def hints_pep544_meta() -> (
                 hint=IO[bytes],
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
+                typeargs_packed_subbed=(),
                 typeargs_packed_unsubbed=(AnyStr,),
                 piths_meta=PITHS_META_BINARYIO,
             ),
@@ -773,6 +776,7 @@ def hints_pep544_meta() -> (
                 hint=IO[str],
                 pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
+                typeargs_packed_subbed=(),
                 typeargs_packed_unsubbed=(AnyStr,),
                 piths_meta=PITHS_META_TEXTIO,
             ),

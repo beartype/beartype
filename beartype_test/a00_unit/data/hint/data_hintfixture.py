@@ -44,11 +44,11 @@ def hints_ignorable(
 # ....................{ FIXTURES ~ hints : meta            }....................
 @fixture(scope='session')
 def hints_reduction_meta() -> (
-    'tuple[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]'):
+    'tuple[beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC]'):
     '''
     Session-scoped fixture yielding a tuple of **PEP-agnostic type hint
     reduction metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC`
+    :class:`beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC`
     instances, each describing a sample type hint exercising an edge case with
     respect to the :func:`beartype._check.convert.reduce.redmain.reduce_hint`
     function -- including both PEP-compliant and -noncompliant type hints).
@@ -56,7 +56,7 @@ def hints_reduction_meta() -> (
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+    from beartype_test.a00_unit.data.hint.cls.data_clshintreduce import (
         HintReductionABC)
     from beartype_test._util.kind.pytkindmake import make_container_from_funcs
 
@@ -88,11 +88,11 @@ def hints_reduction_meta() -> (
 # ....................{ FIXTURES ~ hints : meta : pith     }....................
 @fixture(scope='session')
 def hints_piths_meta(hints_piths_pep_meta, hints_piths_nonpep_meta) -> (
-    'tuple[beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta.HintNonpepMetadata]'):
+    'tuple[beartype_test.a00_unit.data.hint.cls.pith.data_clshint.HintNonpepMetadata]'):
     '''
     Session-scoped fixture yielding a tuple of **PEP-agnostic type hint
     metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta.HintNonpepMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshint.HintNonpepMetadata`
     instances, each describing a sample type hint exercising an edge case in the
     :mod:`beartype` codebase paired with a tuple of zero or more related objects
     either satisfying or violating this hint -- including both PEP-compliant and
@@ -104,17 +104,17 @@ def hints_piths_meta(hints_piths_pep_meta, hints_piths_nonpep_meta) -> (
     :func:`.iter_hints_piths_meta` **fixture instead.** This lower-level fixture
     is intended to be directly required only by that higher-level fixture, which
     trivializes the non-trivial
-    :attr:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta.HintNonpepMetadata.piths_meta`
+    :attr:`beartype_test.a00_unit.data.hint.cls.pith.data_clshint.HintNonpepMetadata.piths_meta`
     instance variable defined by each item yielded by this fixture. That
     instance variable is sufficiently non-trivial to safely use by downstream
     unit tests that it's effectively unsafe by definition.
 
     Parameters
     ----------
-    hints_piths_pep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta.HintPepMetadata]
+    hints_piths_pep_meta : tuple[beartype_test.a00_unit.data.hint.cls.pith.data_clshint.HintPepMetadata]
         Tuple of PEP-compliant type hint metadata describing PEP-compliant type
         hints exercising edge cases in the :mod:`beartype` codebase.
-    hints_piths_nonpep_meta : tuple[beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta.HintNonpepMetadata]
+    hints_piths_nonpep_meta : tuple[beartype_test.a00_unit.data.hint.cls.pith.data_clshint.HintNonpepMetadata]
         Tuple of PEP-noncompliant type hint metadata describing PEP-noncompliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -126,12 +126,12 @@ def hints_piths_meta(hints_piths_pep_meta, hints_piths_nonpep_meta) -> (
 
 @fixture(scope='session')
 def iter_hints_piths_meta(hints_piths_meta) -> (
-    'collections.abc.Callable[[], collections.abc.Iterable[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPithMetadata]]'):
+    'collections.abc.Callable[[], collections.abc.Iterable[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPithMetadata]]'):
     '''
     Session-scoped fixture yielding a **PEP-agnostic hint-pith metadata
     generator** (i.e., factory function creating and returning a generator
     iteratively yielding
-    :class:`beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPithMetadata`
+    :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPithMetadata`
     instances, each describing a sample type hint exercising an edge case in the
     :mod:`beartype` codebase paired with a related object either satisfying or
     violating this hint -- including both PEP-compliant and -noncompliant type
@@ -175,22 +175,22 @@ def iter_hints_piths_meta(hints_piths_meta) -> (
 
     Parameters
     ----------
-    hints_piths_meta : List[beartype_test.a00_unit.data.hint.metadata.pith.data_hintmeta.HintNonpepMetadata]
+    hints_piths_meta : List[beartype_test.a00_unit.data.hint.cls.pith.data_clshint.HintNonpepMetadata]
         List of PEP-agnostic type hint metadata describing sample PEP-agnostic
         type hints exercising edge cases in the :mod:`beartype` codebase.
 
     Yields
     ------
-    collections.abc.Callable[[], collections.abc.Iterable[beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta.HintPithMetadata]]
+    collections.abc.Callable[[], collections.abc.Iterable[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPithMetadata]]
         PEP-agnostic type hint-pith metadata generator.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.utilobjtest import is_object_context_manager
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_hintpithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith import (
         HintPithMetadata)
-    from beartype_test.a00_unit.data.hint.metadata.pith.data_pithmeta import (
+    from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )

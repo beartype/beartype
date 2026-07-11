@@ -11,17 +11,17 @@ cases in unit tests requiring these fixtures).
 
 # ....................{ FIXTURES ~ meta                    }....................
 def hints_pep557_reduction_meta() -> (
-    'list[beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC]'):
+    'list[beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC]'):
     '''
     List of :pep:`557`-compliant **type hint reduction metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta.HintReductionABC`
+    :class:`beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC`
     instances describing test-specific :pep:`557`-compliant sample type hints
     with metadata generically leveraged by PEP-agnostic unit tests validating
     the :func:`beartype._check.convert.reduce.redmain.reduce_hint` function).
     '''
 
     # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.metadata.data_hintreducemeta import (
+    from beartype_test.a00_unit.data.hint.cls.data_clshintreduce import (
         HintReductionValid)
     from dataclasses import InitVar
 
