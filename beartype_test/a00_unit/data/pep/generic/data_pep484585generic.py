@@ -56,7 +56,8 @@ class Pep484585GenericIntFloatSequenceU(Pep484585GenericIntTSequenceU[float]):
 
 # ....................{ PEP (484|585) ~ S, T, U            }....................
 # Subclassing order is *EXTREMELY* significant. Avoid modifying, please.
-class Pep484585GenericUUST(Pep585SequenceU, Pep484GenericST, list[U]):
+class Pep484585SequenceUGenericSTListU(
+    Pep585SequenceU, Pep484GenericST, list[U]):
     '''
     :pep:`484`- or :pep:`585`-compliant generic list parametrized by three
     unconstrained type variables, one of which is repeated twice across two
@@ -66,7 +67,8 @@ class Pep484585GenericUUST(Pep585SequenceU, Pep484GenericST, list[U]):
     pass
 
 
-class Pep484585GenericUIntT(Pep484585GenericUUST[U, int, T]):
+class Pep484585SequenceUGenericIntTListU(
+    Pep484585SequenceUGenericSTListU[U, int, T]):
     '''
     :pep:`585`-compliant generic list parametrized by two unconstrained type
     variables, one of which is repeated twice across two different

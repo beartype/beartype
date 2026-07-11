@@ -24,7 +24,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.maplike.utilmapset import update_mapping_keys
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 from typing import (
-    Optional,
+    # Optional,
     TypeVar,
 )
 
@@ -505,68 +505,97 @@ def get_hint_pep585_generic_typeargs_packed(
     # Else, this hint is a PEP 585-compliant generic.
 
     # ....................{ LOCALS                         }....................
-    #FIXME: Comment us up, please. Basically, we need to maintain a poppable
-    #FILO stack (defined as a pure-Python list, of course) of all child hints
-    #directly subscripting the passed subscripted generic if this generic is
-    #subscripted. As we iteratively discover each unbound type variable below,
-    #we "bind" that unbound type variable by:
-    #* Popping the top child hint subscripting this subscripted generic off this
-    #  list, effectively mimicing the action of "binding" this child hint to
-    #  this unbound type variable.
-    #* Silently ignore this type variable, which is now bound and thus no longer
-    #  suitable for returning in the tuple of all unbound type variables
-    #  parametrizing this subscripted generic.
-    #FIXME: Oh, right. We don't even need to maintain a stack! We just need to
-    #record the number of bound type variables remaining, initially defined as
-    #the number of child hints directly subscripting this generic. \o/
-    #FIXME: For the most part, "__parameters__" should be right for subscripted
-    #generics. The only edge case in which it isn't is when a generic is
-    #subscripted by fewer child hints than the number of unbound type parameters
-    #parametrizing the *UNSUBSCRIPTED* form of that generic, in which case
-    #CPython erroneously and inexplicable nullifies "__parameters__" to the
-    #empty tuple (). Guess they just gave up, huh? Ergo:
-    #* In most cases, just defer to "__parameters__" by *IMMEDIATELY* returning
-    #  "__parameters__" rather than the extremely expensive algorithm below if
-    #  this generic is subscripted.
-    #* In the single edge case detailed above, perform the extremely expensive
-    #  algorithm below. It is what it is. Thanks, "typing" runtime. *sigh*
-    hint_typeargs_bound_remaining: int = 0
+    # Current number of unbound type parameters (i.e., type parameters that have
+    # yet to be assigned a corresponding child hint subscripting a transitive
+    # pseudo-superclass of the passed generic, possibly including that generic)
+    # that remain to be assigned such child hints by iteration performed below.
+    hint_typeargs_unbound_remaining: int = 0
 
     # ....................{ UNSUBSCRIPT                    }....................
     # If this hint is a PEP 585-compliant subscripted generic...
     if is_hint_pep585_generic_subbed(hint):
-        #FIXME: Comment us up, please. *sigh*
+        # PEP 585-compliant unsubscripted generic underlying this subscripted
+        # generic.
         hint_unsubbed = get_hint_pep484585_generic_unsubbed_type(hint)
 
-        # If the caller requests that this generic be stripped of all
-        # subscripting child hints, reduce this subscripted generic to the
-        # unsubscripted generic underlying this subscripted generic. See also
-        # the higher-level get_hint_pep_typeargs_packed() getter.
+        # If the caller requested that this subscripted generic be stripped of
+        # all subscripting child hints, reduce this subscripted generic to this
+        # unsubscripted generic. See also get_hint_pep_typeargs_packed().
         if is_unsub:
             hint = hint_unsubbed
+        # Else, the caller did *NOT* request that this subscripted generic be
+        # stripped of all subscripting child hints. In this case...
         else:
-            #FIXME: Comment us up, please. *sigh*
+            # Number of child hints subscripting this subscripted generic.
             hint_childs_len = len(get_hint_pep_args(hint))
             # print(f'hint_childs_len: {hint_childs_len}')
 
-            # Value of the "__parameters__" dunder attribute on the
-            # unsubscripted form of this generic if this unsubscripted generic
-            # defines this attribute *OR* the empty tuple otherwise (which
-            # should never be the case, but "should" is the death of beartype).
+            # Possibly erroneous tuple of the zero or more unbound transitive
+            # packed type variables that Python (possibly erroneously) claims
+            # parametrize this subscripted generic.
+            #
+            # Python defines this tuple correctly for *MOST* use cases. Indeed,
+            # Python defines this tuple incorrectly *ONLY* for the valid use
+            # case of partially subscripted generics (i.e., generics subscripted
+            # by fewer child hints than the number of unbound type parameters
+            # parametrizing the *UNSUBSCRIPTED* forms of those generics). For
+            # partially subscripted generics, Python erroneously defines the
+            # "__parameters__" dunder attribute to be the empty tuple rather
+            # than correctly defining this attribute to be the non-empty tuple
+            # of all bound type parameters assigned some child hint subscripting
+            # this partially subscripted generic: e.g.,
+            #     >>> from collections.abc import Sequence
+            #     >>> from typing import Generic, TypeVar
+            #
+            #     # Define two PEP 484-compliant unconstrained type variables.
+            #     >>> T = TypeVar('T')
+            #     >>> U = TypeVar('U')
+            #
+            #     # PEP 484-compliant generic parametrized by a single
+            #     # PEP 484-compliant type variable.
+            #     >>> class Pep484GenericT(Generic[T]): ...
+            #
+            #     # PEP 484- and 585-compliant generic subclassing both:
+            #     # * That PEP 484-compliant generic, parametrized by the same
+            #     #   type variable.
+            #     # * A PEP 585-compliant abstract base class (ABC) parametrized
+            #     #   by a new type variable.
+            #     >>> class Pep484585GenericTSequenceU(
+            #     ...     list[bool], Pep484GenericT[T], Sequence[U]): ...
+            #
+            #     # Show that Python correctly defines the "__parameters__"
+            #     # dunder attribute for this unsubscripted generic.
+            #     >>> Pep484585GenericTSequenceU.__parameters__)
+            #     (~T, ~U)  # <-- good
+            #
+            #     # Show that Python erroneously defines the "__parameters__"
+            #     # dunder attribute for this partially subscripted generic to
+            #     # be the empty tuple rather than the non-empty tuple "(~U)".
+            #     >>> Pep484585GenericTSequenceU[float].__parameters__)
+            #     ()  # <-------- *BAD* wtf, Python!? should be "(~U)"
             hint_typeargs_unbound = getattr(hint, '__parameters__', ())
             # print(f'Peeked PEP 585 unsubscripted generic {hint} params {hint_typeargs_unbound}...')
 
-            #FIXME: Comment us up, please. *sigh*
+            # If Python claims this subscripted generic to be parametrized by
+            # one or more unbound type parameters, this claim appears to be
+            # accurate (or accurate enough in the sense that we have yet to
+            # receive an issue from a user encountering a real-world
+            # counterexample). In this case, return this tuple as is.
             if hint_typeargs_unbound:
                 return hint_typeargs_unbound
+            # Else, Python (possibly erroneously) claims this subscripted
+            # generic to be parametrized by *NO* unbound type parameters. As
+            # shown above, this claim is usually true for the common case while
+            # *NEVER* being true for the uncommon case of a partially
+            # subscripted generic. Since this claim is thus untrustworthy, we
+            # have *NO* recourse but to ignore this claim and manually compute
+            # the value of the correct "__parameters__" dunder attribute below.
 
-            #FIXME: Excise us up, please. *sigh*
-            # hint_typeargs_unbound = getattr(hint_unsubbed, '__parameters__', ())
-            # print(f'Peeked PEP 585 unsubscripted generic {hint_unsubbed} params {hint_typeargs_unbound}...')
-
-            #FIXME: Comment us up, please. *sigh*
-            # if hint_childs_len < len(hint_typeargs_unbound):
-            hint_typeargs_bound_remaining = hint_childs_len
+            # Initial number of unbound type parameters that remain to be
+            # assigned child hints subscripting transitive pseudo-superclasses
+            # of this generic by iteration performed below, initialized to the
+            # number of child hints directly subscripting this generic.
+            hint_typeargs_unbound_remaining = hint_childs_len
     # Else, this hint is *NOT* a PEP 585-compliant subscripted generic. In this
     # case, this hint *MUST* be a PEP 585-compliant unsubscripted generic.
     # Preserve this unsubscripted generic as is.
@@ -602,10 +631,28 @@ def get_hint_pep585_generic_typeargs_packed(
     #this bearable is that this *DOES* appear to compute the correct tuple --
     #which, ultimately, is all that matters. Thus, we sigh and silently ignore
     #something no one cares about for another year. **SIGH**
+    #
+    #A dramatically more efficient approach would be to:
+    #* First:
+    #  * Inline the body of this low-level
+    #    get_hint_pep585_generic_typeargs_packed() getter directly inside the
+    #    body of the high-level get_hint_typeargs_packed() getter. Doing so
+    #    enables newer Python interpreters to trivially optimize this recursion
+    #    with standard tail recursion optimizations. Doing so is also an
+    #    essential step to reimplementing this recursion with iteration.
+    #  * Decorate get_hint_typeargs_packed() by @callable_cached. Essential!
+    #  * Excise up this obsolete get_hint_pep585_generic_typeargs_packed()
+    #    getter at that point, including the corresponding unit test (which has
+    #    already been subsumed by the more robust
+    #    test_get_hint_typeargs_packed() unit test, thankfully).
+    #* Next:
+    #  * Reimplement this recursion inside get_hint_typeargs_packed() with
+    #    "while" loop-based iteration. Non-trivial, of course -- but the big
+    #    efficiency gains usually are. *shrug*
 
     # For each such pseudo-superclass...
     for hint_base in hint_bases:
-        # Tuple of the zero or more type parameters parametrizing this
+        # Tuple of the zero or more unbound type parameters parametrizing this
         # pseudo-superclass.
         hint_base_typeargs = get_hint_pep_typeargs_packed(
             hint=hint_base,
@@ -628,17 +675,86 @@ def get_hint_pep585_generic_typeargs_packed(
         )
 
         #FIXME: Comment us up, please. *sigh*
-        if hint_typeargs_bound_remaining and hint_base_typeargs:
-            hint_base_typeargs_len = len(hint_base_typeargs)
-            if hint_typeargs_bound_remaining <= hint_base_typeargs_len:
-                hint_base_typeargs = hint_base_typeargs[
-                    hint_typeargs_bound_remaining:]
-                hint_typeargs_bound_remaining = 0
-            else:
-                hint_base_typeargs = ()
-                hint_typeargs_bound_remaining -= hint_base_typeargs_len
+        #FIXME: As we iteratively discover each unbound type variable here,
+        #we semantically (but not actually) "bind" that unbound type variable by:
+        #* Popping the top child hint subscripting this subscripted generic off this
+        #  list, effectively mimicing the action of "binding" this child hint to
+        #  this unbound type variable.
+        #* Silently ignore this type variable, which is now bound and thus no longer
+        #  suitable for returning in the tuple of all unbound type variables
+        #  parametrizing this subscripted generic.
 
-        # Efficiently add these type parameters as new keys of this dictionary.
+        # If...
+        if (
+            # One or more unbound type parameters remain to be assigned
+            # corresponding child hints subscripting transitive
+            # pseudo-superclasses of this generic *AND*...
+            hint_typeargs_unbound_remaining and
+            # This pseudo-superclass is transitively parametrized by one or more
+            # unbound type parameters...
+            hint_base_typeargs
+        ):
+        # Then greedily assign as many of these unbound type parameters as
+        # possible that transitively parametrize this pseudo-superclass. For
+        # efficiency, we avoid doing so in actuality. We only semantically (but
+        # *NOT* actually) assign these unbound type parameters through trivial
+        # numerical bookkeeping.
+            # Number of unbound type parameters transitively parametrizing this
+            # pseudo-superclass of the passed subscripted generic.
+            hint_base_typeargs_len = len(hint_base_typeargs)
+
+            # If the number of unbound type parameters that remain to be
+            # assigned corresponding child hints subscripting transitive
+            # pseudo-superclasses of this generic is less than or equal to the
+            # number of unbound type parameters transitively parametrizing this
+            # pseudo-superclass, then *ALL* of these remaining unbound type
+            # parameters can now be greedily assigned. In this case...
+            if hint_typeargs_unbound_remaining <= hint_base_typeargs_len:
+                # Remove as many unbound type parameters (that remain to be
+                # assigned corresponding child hints subscripting transitive
+                # pseudo-superclasses of this generic) from the front of the
+                # tuple of all unbound type parameters transitively
+                # parametrizing this pseudo-superclass, effectively mimicking
+                # the action of assigning these removed type parameters to
+                # corresponding child hints. Since type parameters are greedily
+                # assigned in a first-come first-serve manner, we intentionally
+                # remove these type parameters from the front rather than back
+                # of this tuple. These previously unbound type parameters have
+                # now been (semantically, at least) assigned and are no longer
+                # suitable for returning as unbound type parameters.
+                hint_base_typeargs = hint_base_typeargs[
+                    hint_typeargs_unbound_remaining:]
+
+                # Record that all previously unbound type parameters that once
+                # remained to be assigned corresponding child hints subscripting
+                # transitive pseudo-superclasses of this generic have now been
+                # completely assigned and are thus bound rather than unbound.
+                hint_typeargs_unbound_remaining = 0
+            # Else, the number of unbound type parameters that remain to be
+            # assigned corresponding child hints subscripting transitive
+            # pseudo-superclasses of this generic is greater than the number of
+            # unbound type parameters transitively parametrizing this
+            # pseudo-superclass. This implies that one or more of these
+            # remaining unbound type parameters will still remain unassigned
+            # even after greedily assigning as many of the unbound type
+            # parameters transitively parametrizing this pseudo-superclass as
+            # possible. In this case...
+            else:
+                # Record that *ALL* previously unbound type parameters
+                # transitively parametrizing this pseudo-superclass have now
+                # been (semantically, at least) assigned and are no longer
+                # suitable for returning as unbound type parameters.
+                hint_base_typeargs = ()
+
+                # Reduce the number of unbound type parameters that remain to be
+                # assigned corresponding child hints subscripting transitive
+                # pseudo-superclasses of this generic by the total number of
+                # previously unbound type parameters transitively parametrizing
+                # this pseudo-superclass, *ALL* of which have now been assigned.
+                hint_typeargs_unbound_remaining -= hint_base_typeargs_len
+
+        # Efficiently add these still unbound type parameters transitively
+        # parametrizing this pseudo-superclass as new keys of this dictionary.
         # print(f'hint_base_typeargs: {hint_base} [{get_hint_pep_typeargs_packed(hint_base)}]')
         update_mapping_keys(hint_typeargs_to_none, hint_base_typeargs)
 

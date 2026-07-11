@@ -79,6 +79,7 @@ def hints_pep585_meta() -> (
     from beartype_test.a00_unit.data.pep.generic.data_pep484585generic import (
         Pep484585GenericIntTSequenceU,
         Pep484585GenericIntFloatSequenceU,
+        Pep484585SequenceUGenericIntTListU,
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
         Pep585ContextManagerTSequenceT,
@@ -996,6 +997,60 @@ def hints_pep585_meta() -> (
                 PithUnsatisfiedMetadata(True),
                 # List of booleans.
                 PithUnsatisfiedMetadata([True, True,]),
+            ),
+        ),
+
+        # PEP 484- and 585-compliant unsubscripted generic list parametrized by
+        # two unconstrained type variables: "T" and "U", both parametrizing the
+        # PEP 484- and 585-compliant
+        # "Pep484585SequenceUGenericSTListU[U, int, T]" subscripted generic
+        # pseudo-superclass of this generic list.
+        HintPepMetadata(
+            hint=Pep484585SequenceUGenericIntTListU,
+            pep_sign=HintSignPep484585GenericUnsubbed,
+            generic_type=Pep484585SequenceUGenericIntTListU,
+            is_pep585_generic=True,
+            typeargs_packed_unsubbed=(U, T,),
+            piths_meta=(
+                # Subclass-specific generic list of string constants.
+                PithSatisfiedMetadata(Pep484585SequenceUGenericIntTListU((
+                    'Pale wox I, and in vapours hid my face',
+                    'Art thou, too, near such doom? vague fear there is:',
+                ))),
+                # String constant.
+                PithUnsatisfiedMetadata(
+                    'For I have seen my sons most unlike Gods.'),
+                # List of string constants.
+                PithUnsatisfiedMetadata([
+                    'Divine ye were created, and divine',
+                    "In sad demeanour, solemn, undisturb'd,",
+                ]),
+            ),
+        ),
+
+        # PEP 484- and 585-compliant subscripted generic list subscripted by two
+        # builtin types and thus consuming all available type parameters.
+        HintPepMetadata(
+            hint=Pep484585SequenceUGenericIntTListU[bool, str],
+            pep_sign=HintSignPep484585GenericSubbed,
+            generic_type=Pep484585SequenceUGenericIntTListU,
+            is_pep585_generic=True,
+            typeargs_packed_subbed=(),
+            typeargs_packed_unsubbed=(U, T,),
+            piths_meta=(
+                # Subclass-specific generic list of string constants.
+                PithSatisfiedMetadata(Pep484585SequenceUGenericIntTListU((
+                    "Unruffled, like high Gods, ye liv'd and ruled:",
+                    'Now I behold in you fear, hope, and wrath;',
+                ))),
+                # String constant.
+                PithUnsatisfiedMetadata(
+                    'Actions of rage and passion; even as'),
+                # List of string constants.
+                PithUnsatisfiedMetadata([
+                    'I see them, on the mortal world beneath,',
+                    'In men who die.—This is the grief, O Son!',
+                ]),
             ),
         ),
 
