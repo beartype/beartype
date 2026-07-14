@@ -103,6 +103,12 @@ async def async_context_manager_factory(obj: object) -> AsyncIterator[object]:
     manager trivially yielding the passed object implemented as a generator
     factory function decorated by the standard
     :func:`contextlib.asynccontextmanager` decorator)).
+
+    Note that the context manager created and returned by this factory is
+    strictly **one-shot** (i.e., usable only in a single ``with`` statement
+    rather than reusable across multiple ``with`` statements). Why? Because the
+    :func:`.asynccontextmanager` decorator underlying this factory imposes that
+    constraint as a hard prerequisite, sadly.
     '''
 
     yield obj
@@ -355,6 +361,12 @@ def context_manager_factory(obj: object) -> Iterator[object]:
     **identity context manager** (i.e., context manager trivially yielding the
     passed object implemented as a generator factory function decorated by the
     standard :func:`contextlib.contextmanager` decorator)).
+
+    Note that the context manager created and returned by this factory is
+    strictly **one-shot** (i.e., usable only in a single ``with`` statement
+    rather than reusable across multiple ``with`` statements). Why? Because the
+    :func:`.asynccontextmanager` decorator underlying this factory imposes that
+    constraint as a hard prerequisite, sadly.
     '''
 
     yield obj

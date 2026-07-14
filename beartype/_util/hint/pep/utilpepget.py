@@ -42,7 +42,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
 from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_typeargs_packed,
     is_hint_pep585_generic,
-    is_hint_pep585_generic_unsubbed,
+    # is_hint_pep585_generic_unsubbed,
 )
 from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
     make_hint_pep646_typevartuple_unpacked_subbed)

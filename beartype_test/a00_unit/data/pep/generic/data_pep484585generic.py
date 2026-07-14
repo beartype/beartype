@@ -70,9 +70,21 @@ class Pep484585SequenceUGenericSTListU(
 class Pep484585SequenceUGenericIntTListU(
     Pep484585SequenceUGenericSTListU[U, int, T]):
     '''
-    :pep:`585`-compliant generic list parametrized by two unconstrained type
-    variables, one of which is repeated twice across two different
-    pseudo-superclasses at different hierarchical nesting levels.
+    :pep:`585`-compliant generic list parametrized by two unbound type variables
+    (i.e., :data:`.U` and :data:`.T`), one of which (i.e., :data:`.T`) is
+    repeated twice across these two different pseudo-superclasses at different
+    hierarchical nesting levels:
+
+    * The :pep:`484`-compliant unsubscripted pseudo-superclass
+      :class:`.Pep484GenericST`, where only the leading type variable :data:`.S`
+      is bound to the concrete child hint :class:`int` subscripting the single
+      pseudo-superclass subclassed by this generic list. The trailing type
+      variable :data:`.T` remains unbound and thus free for subscripting by
+      external subscriptions of this generic list.
+    * The :pep:`585`-compliant subscripted pseudo-superclass ``list[U]``, where
+      the type variable :data:`.U` subscripting that pseudo-superclass is bound
+      to the type variable :data:`.T` subscripting the single pseudo-superclass
+      subclassed by this generic list.
     '''
 
     pass

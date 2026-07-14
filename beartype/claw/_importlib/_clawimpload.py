@@ -316,6 +316,11 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             Code object underlying that module.
         '''
 
+        #FIXME: *WORKS*. Now just generalize this in a sane manner. *sigh*
+        # if fullname == 'beartype.buggo':
+        #     print('BUGGO!!!')
+        #     raise BeartypeClawImportAstException('BUGGO!!!')
+
         # ..................{ RECURSE                        }..................
         # If that module resides in a fundamentally problematic package (e.g.,
         # the beartype codebase itself), preserve that module as is by simply

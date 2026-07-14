@@ -18,7 +18,10 @@ from beartype._data.typing.datatyping import (
     FrozenSetStrs,
     TypeException,
 )
-from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatypingport import (
+    Hint,
+    TupleHints,
+)
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsignmap import (
     HINT_MODULE_NAME_TO_HINT_BASE_EXTRINSIC_BASENAME_TO_SIGN)
@@ -201,7 +204,7 @@ def get_hint_pep484585_generic_bases_unerased(
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> tuple:
+) -> TupleHints:
     '''
     Tuple of the one or more **unerased pseudo-superclasses** (i.e.,
     PEP-compliant objects originally listed as superclasses prior to their
@@ -333,16 +336,16 @@ def get_hint_pep484585_generic_bases_unerased(
     ----------
     hint : Hint
         Generic type hint to be inspected.
-    exception_cls : TypeException
-        Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep484585Exception`.
-    exception_prefix : str, optional
+    exception_cls : TypeException, default: BeartypeDecorHintPep484585Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
     Returns
     -------
-    tuple
+    tuple[Hint, ...]
         Tuple of the one or more unerased pseudo-superclasses of this generic.
 
     Raises

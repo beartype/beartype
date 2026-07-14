@@ -674,16 +674,6 @@ def get_hint_pep585_generic_typeargs_packed(
             is_unsub=False,
         )
 
-        #FIXME: Comment us up, please. *sigh*
-        #FIXME: As we iteratively discover each unbound type variable here,
-        #we semantically (but not actually) "bind" that unbound type variable by:
-        #* Popping the top child hint subscripting this subscripted generic off this
-        #  list, effectively mimicing the action of "binding" this child hint to
-        #  this unbound type variable.
-        #* Silently ignore this type variable, which is now bound and thus no longer
-        #  suitable for returning in the tuple of all unbound type variables
-        #  parametrizing this subscripted generic.
-
         # If...
         if (
             # One or more unbound type parameters remain to be assigned

@@ -59,6 +59,10 @@ _HintPep484585GenericUnsubbedBasesUnerased = tuple[
 #  defined below to simply accept a single mandatory "HintTreeABC" parameter.
 #* Globally replace all calls to this getter with calls to that getter.
 #* Excise up this getter! \o/
+#FIXME: *HMM*. Woops. I don't quite get the rationale for excising this anymore.
+#Don't we still need this for memoization purposes? Oh, I see. Is the
+#implication that accepting a single mandatory "HintTreeABC" parameter means we
+#no longer need to accept any other parameters? Pretty cool, if true. *lol*
 def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
     # Mandatory parameters.
     call_curr: BeartypeCallDataABC,

@@ -152,17 +152,15 @@ def test_find_hint_pep484585_generic_args_full() -> None:
             Pep484GenericST,
             (int, float),
         ),
+
         (Pep484585SequenceUGenericIntTListU, Pep585SequenceU, (U,)),
         (Pep484585SequenceUGenericIntTListU, Pep484GenericST, (int, T)),
-
-        #FIXME: *FASCINATING*. These are the only two failing cases left. Let's
-        #a-go, QA bros! W000t. Okay. Almost w000t. No is w000ting just yet.
-        # (Pep484585SequenceUGenericIntTListU[bool, float], list[U], (bool,)),
-        # (
-        #     Pep484585SequenceUGenericIntTListU[bool, float],
-        #     Pep484GenericST,
-        #     (int, float),
-        # ),
+        (Pep484585SequenceUGenericIntTListU[bool, float], list[U], (bool,)),
+        (
+            Pep484585SequenceUGenericIntTListU[bool, float],
+            Pep484GenericST,
+            (int, float),
+        ),
     ]
 
     # ....................{ PASS                           }....................

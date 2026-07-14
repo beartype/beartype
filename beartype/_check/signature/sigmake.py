@@ -68,10 +68,10 @@ def make_func_signature(
           ``code_signature_prefix`` parameter.
         * ``{code_signature_scope_args}``, replaced by the declaration of all
           hidden parameters in the passed ``func_scope`` parameter.
-    conf : BeartypeConf, optional
+    conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
-    code_signature_prefix : str, optional
+    code_signature_prefix : str, default: ''
         Code snippet prefixing this signature, typically either:
 
         * If a synchronous callables, the empty string.

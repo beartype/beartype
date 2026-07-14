@@ -29,6 +29,87 @@ from beartype._util.hint.pep.proposal.pep585 import (
 )
 
 # ....................{ RAISERS                            }....................
+#FIXME: Unit test us up, please.
+#FIXME: Implement us up, please.
+def die_if_hint_pep484585_generic_invalid(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise the passed exception if the passed type hint is a **invalid generic**
+    (i.e., :pep:`585`-compliant subscripted generic subscripted by more child
+    type hints than the number of PEP-compliant type parameters originally
+    parametrizing the unsubscripted form of this generic).
+
+    Motivation
+    ----------
+    This raiser generically applies to both :pep:`484`- and :pep:`585`-compliant
+    generics in both unsubscripted and subscripted form. Technically, this
+    raiser currently guards against *only* :pep:`585`-compliant invalid
+    unsubscripted generics (because those are currently the *only* generics that
+    can even be invalid at runtime). Pragmatically, this raiser is generically
+    intended to guard against *all* invalid generics (including future forms of
+    invalidity that do *not* currently exist). This raiser thus has the
+    intentionally future-proofed name ``die_if_hint_pep484585_generic_invalid``
+    rather than a more specifically applicable but less future-proofed name
+    (e.g., ``die_if_hint_pep585_generic_subbed_invalid``).
+
+    Whereas :pep:`484`-compliant subscripted generics explicitly prohibit
+    subscription invalidities by raising runtime exceptions at early
+    subscription time, :pep:`585`-compliant subscripted generics implicitly
+    promote such invalidities by failing to do so: e.g.,
+
+    .. code-block:: python
+
+       # Python loudly prohibits invalid PEP 484 subscripted generics! WIN.
+       >>> class Pep484GenericT[T]: ...
+       >>> Pep484GenericT[str, bytes]
+       TypeError: Too many arguments for <class '__main__.Pep484GenericT'>;
+       actual 2, expected 1
+
+       # Python silently accepts invalid PEP 484 subscripted generics. *sigh*
+       >>> class Pep585ListU[U](list[U]): ...
+       >>> Pep585ListU[str, bytes]
+       __main__.Pep585ListU[str, bytes]  # <-- tnx fer nuthin python
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`.BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    exception_cls
+        If this hint is *not* an unsubscripted generic.
+    '''
+
+    pass
+
+    # # If this hint is *NOT* an unsubscripted generic...
+    # if not is_hint_pep484585_generic_unsubbed(hint):
+    #     assert isinstance(exception_cls, type), (
+    #         f'{repr(exception_cls)} not type.')
+    #     assert isinstance(exception_prefix, str), (
+    #         f'{repr(exception_prefix)} not string.')
+    #
+    #     # Raise an exception of this type prefixed by this prefix.
+    #     raise exception_cls(
+    #         f'{exception_prefix}type hint {repr(hint)} not '
+    #         f'PEP 484 or 585 unsubscripted generic.'
+    #     )
+    # # Else, this hint is an unsubscripted generic.
+
+
 def die_unless_hint_pep484585_generic_unsubbed(
     # Mandatory parameters.
     hint: Hint,
