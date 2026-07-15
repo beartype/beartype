@@ -184,11 +184,6 @@ class HintPithMetadata(object):
         this call is performed (e.g., to validate that :pep:`484`-compliant
         stringified relative type hints are resolved as expected against some
         previously undefined type hint confined to this same scope).
-
-        Parameters
-        ----------
-        beartyped_func : Callable[[object], object]
-            :func:`beartype.beartype`-decorated function to be tested.
         '''
 
         # ....................{ IMPORTS                    }....................

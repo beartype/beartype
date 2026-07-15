@@ -17,8 +17,65 @@ submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# ....................{ TESTS ~ raisers                    }....................
+def test_die_if_hint_pep484585_generic_invalid() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.die_if_hint_pep484585_generic_invalid`
+    raiser.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep484585Exception
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
+        die_if_hint_pep484585_generic_invalid)
+    from beartype_test.a00_unit.data.pep.generic.data_pep484585generic import (
+        Pep484585SequenceUGenericIntTListU)
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
+        S,
+        T,
+    )
+    from pytest import raises
+    from typing import Generic
+
+    # ....................{ PASS                           }....................
+    # Implicitly assert that this raiser raises *NO* exception when passed a
+    # valid unsubscripted generic (i.e., which is *ALWAYS* guaranteed by
+    # definition to be valid).
+    die_if_hint_pep484585_generic_invalid(Pep484585SequenceUGenericIntTListU)
+
+    # Implicitly assert that this raiser raises *NO* exception when passed a
+    # valid PEP 484-compliant root subscripted generic (i.e., "typing.Generic"
+    # superclass directly parametrized by one or more type parameters).
+    die_if_hint_pep484585_generic_invalid(Generic[S, T])
+
+    # Implicitly assert that this raiser raises *NO* exception when passed a
+    # valid PEP 585-compliant subscripted generic (i.e., subscripted by less
+    # than or equal to the number of child type hints than the number of
+    # PEP-compliant type parameters parametrizing the unsubscripted form of this
+    # generic).
+    die_if_hint_pep484585_generic_invalid(
+        Pep484585SequenceUGenericIntTListU[str, bytes])
+
+    # ....................{ FAIL                           }....................
+    # Assert that this raiser raises the expected exception when passed a
+    # non-generic.
+    with raises(BeartypeDecorHintPep484585Exception):
+        die_if_hint_pep484585_generic_invalid(int)
+
+    # Assert that this raiser raises the expected exception when passed an
+    # invalid PEP 585-compliant subscripted generic (i.e., subscripted by more
+    # child type hints than the number of PEP-compliant type parameters
+    # originally parametrizing the unsubscripted form of this generic).
+    with raises(BeartypeDecorHintPep484585Exception):
+        die_if_hint_pep484585_generic_invalid(
+            Pep484585SequenceUGenericIntTListU[str, bytes, int])
+
 # ....................{ TESTS ~ testers                    }....................
-def test_is_hint_pep484585_generic(hints_piths_pep_meta) -> None:
+def test_is_hint_pep484585_generic(hints_piths_pep_meta: (
+    'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]'
+)) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic`
@@ -26,7 +83,7 @@ def test_is_hint_pep484585_generic(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
+    hints_piths_pep_meta : list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -57,7 +114,7 @@ def test_is_hint_pep484585_generic_unsubbed(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
+    hints_piths_pep_meta : list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -82,7 +139,9 @@ def test_is_hint_pep484585_generic_unsubbed(hints_piths_pep_meta) -> None:
         assert is_hint_pep484585_generic_unsubbed(not_hint_pep) is False
 
 
-def test_is_hint_pep484585_generic_subbed(hints_piths_pep_meta) -> None:
+def test_is_hint_pep484585_generic_subbed(hints_piths_pep_meta: (
+    'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]'
+)) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_subbed`
@@ -90,7 +149,7 @@ def test_is_hint_pep484585_generic_subbed(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
+    hints_piths_pep_meta : list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
@@ -115,7 +174,9 @@ def test_is_hint_pep484585_generic_subbed(hints_piths_pep_meta) -> None:
         assert is_hint_pep484585_generic_subbed(not_hint_pep) is False
 
 # ....................{ TESTS ~ testers : user             }....................
-def test_is_hint_pep484585_generic_user(hints_piths_pep_meta) -> None:
+def test_is_hint_pep484585_generic_user(hints_piths_pep_meta: (
+    'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]'
+)) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_user`
@@ -123,7 +184,7 @@ def test_is_hint_pep484585_generic_user(hints_piths_pep_meta) -> None:
 
     Parameters
     ----------
-    hints_piths_pep_meta : List[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
+    hints_piths_pep_meta : list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''

@@ -571,7 +571,7 @@ def hints_pep585_meta() -> (
         # require a different syntax to that of standard callables; ergo,
         # generator type hints are tested elsewhere.
 
-        # ................{ GENERICS ~ single                  }................
+        # ................{ GENERICS ~ single : concrete       }................
         # Note that PEP 585-compliant generics are *NOT* explicitly detected as
         # PEP 585-compliant due to idiosyncrasies in the CPython implementation
         # of these generics. Ergo, we intentionally do *NOT* set
@@ -641,6 +641,20 @@ def hints_pep585_meta() -> (
             ),
         ),
 
+        # ................{ GENERICS ~ single : typevar        }................
+        # Generic subclassing a single parametrized standard collections
+        # abstract base class (ABC) parametrized by a single type variable such
+        # that this generic is subscripted by *NO* child hints and is thus
+        # implicitly parametrized by the same type variable. Since this generic
+        # is also abstract, this generic is *NOT* actually instantiable. *shrug*
+        HintPepMetadata(
+            hint=Pep585SequenceTUnsubbed,
+            pep_sign=HintSignPep484585GenericUnsubbed,
+            generic_type=Pep585SequenceTUnsubbed,
+            is_pep585_generic=True,
+            typeargs_packed_unsubbed=(T,),
+        ),
+
         # Generic subclassing a single parametrized builtin container, itself
         # parametrized by the same multiple type variables in the same order.
         HintPepMetadata(
@@ -664,19 +678,6 @@ def hints_pep585_meta() -> (
                     'To Ɯṙaith‐like‐upwreathed ligaments',
                 ]),
             ),
-        ),
-
-        # Generic subclassing a single parametrized standard collections
-        # abstract base class (ABC) parametrized by a single type variable such
-        # that this generic is subscripted by *NO* child hints and is thus
-        # implicitly parametrized by the same type variable. Since this generic
-        # is also abstract, this generic is *NOT* actually instantiable. *shrug*
-        HintPepMetadata(
-            hint=Pep585SequenceTUnsubbed,
-            pep_sign=HintSignPep484585GenericUnsubbed,
-            generic_type=Pep585SequenceTUnsubbed,
-            is_pep585_generic=True,
-            typeargs_packed_unsubbed=(T,),
         ),
 
         # ................{ GENERICS ~ single : recursion      }................

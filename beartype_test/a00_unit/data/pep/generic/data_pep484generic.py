@@ -42,7 +42,7 @@ Arbitrary PEP-noncompliant non-generic type.
 '''
 
 # ....................{ PEP 484 ~ non-T                    }....................
-class Pep484ListUnsubscripted(Pep484List):
+class Pep484ListUnsubbed(Pep484List):
     '''
     :pep:`484`-compliant generic subclassing an unsubscripted :mod:`typing` type
     hint factory.

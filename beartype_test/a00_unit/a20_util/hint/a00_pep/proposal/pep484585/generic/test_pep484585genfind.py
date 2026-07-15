@@ -53,8 +53,8 @@ def test_find_hint_pep484585_generic_args_full() -> None:
         T,
         U,
     )
+    from beartype_test._util.error.pyterrraise import raises_uncached
     from collections.abc import Sequence
-    from pytest import raises
     from typing import Generic
 
     # ....................{ LOCALS                         }....................
@@ -189,11 +189,11 @@ def test_find_hint_pep484585_generic_args_full() -> None:
     # ....................{ FAIL                           }....................
     # Assert that this getter raises the expected exception when passed an
     # object that is *NOT* a PEP 484- or 585-compliant generic.
-    with raises(BeartypeDecorHintPep484585Exception):
+    with raises_uncached(BeartypeDecorHintPep484585Exception):
         find_hint_pep484585_generic_args_full(Nongeneric)
 
-    # Assert that this getter raises the expected exception when passed an
-    # PEP 585-compliant generic subscripted by more child hints than this
-    # generic was originally parametrized by type parameters.
-    with raises(BeartypeDecorHintPep484585Exception):
+    # Assert that this getter raises the expected exception when passed a PEP
+    # 585-compliant generic subscripted by more child hints than this generic
+    # was originally parametrized by type parameters.
+    with raises_uncached(BeartypeDecorHintPep484585Exception):
         find_hint_pep484585_generic_args_full(Pep585ListT[int, str])

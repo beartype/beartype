@@ -327,7 +327,10 @@ def get_hint_pep484585_generic_unsubbed_bases_unerased(
         f'{repr(hint_sane)} not sanified metadata.')
 
     # ....................{ LOCALS                         }....................
-    # This unsubscripted generic.
+    # This unsubscripted generic. Since *ALL* unsubscripted generics are
+    # necessarily valid, we need *NOT* explicitly call the
+    # die_if_hint_pep484585_generic_invalid() raiser here to validate this
+    # unsubscripted generic.
     hint = hint_sane.hint
 
     # List of 2-tuples "(hint_sane, hint_sign)" to be returned, where:

@@ -27,10 +27,14 @@ from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_generic_unsubbed,
     is_hint_pep585_builtin_subbed,
 )
+from typing import TypeVar
 
-# ....................{ RAISERS                            }....................
-#FIXME: Unit test us up, please.
-#FIXME: Implement us up, please.
+# ....................{ RAISERS ~ if                       }....................
+#FIXME: [SPEED] *SLOW*. The issue is the "for" loop performed in the body of
+#this raiser. Refactor as follows, please:
+#* Extract that entire "for" loop into a new memoized (i.e.,
+#  @callable_cached-decorated) is_hint_pep484_typevars_all() tester.
+#* Call is_hint_pep484_typevars_all() below rather than performing that loop.
 def die_if_hint_pep484585_generic_invalid(
     # Mandatory parameters.
     hint: Hint,
@@ -40,10 +44,10 @@ def die_if_hint_pep484585_generic_invalid(
     exception_prefix: str = '',
 ) -> None:
     '''
-    Raise the passed exception if the passed type hint is a **invalid generic**
-    (i.e., :pep:`585`-compliant subscripted generic subscripted by more child
-    type hints than the number of PEP-compliant type parameters originally
-    parametrizing the unsubscripted form of this generic).
+    Raise the passed exception if the passed type hint is an **invalid generic**
+    (i.e., :pep:`585`-compliant generic subscripted by more child type hints
+    than the number of PEP-compliant type parameters originally parametrizing
+    the unsubscripted form of this generic).
 
     Motivation
     ----------
@@ -68,6 +72,8 @@ def die_if_hint_pep484585_generic_invalid(
        # Python loudly prohibits invalid PEP 484 subscripted generics! WIN.
        >>> class Pep484GenericT[T]: ...
        >>> Pep484GenericT[str, bytes]
+       Traceback (most recent call last):
+           ...
        TypeError: Too many arguments for <class '__main__.Pep484GenericT'>;
        actual 2, expected 1
 
@@ -80,10 +86,10 @@ def die_if_hint_pep484585_generic_invalid(
     ----------
     hint : Hint
         Type hint to be inspected.
-    exception_cls : TypeException
-        Type of exception to be raised. Defaults to
-        :exc:`.BeartypeDecorHintPep484585Exception`.
-    exception_prefix : str, optional
+    exception_cls : TypeException, default: BeartypeDecorHintPep484585Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
@@ -93,21 +99,180 @@ def die_if_hint_pep484585_generic_invalid(
         If this hint is *not* an unsubscripted generic.
     '''
 
-    pass
+    # ....................{ IMPORTS                        }....................
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_args,
+        get_hint_pep_typeargs_unpacked,
+    )
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+        get_hint_pep484585_generic_unsubbed_type)
 
-    # # If this hint is *NOT* an unsubscripted generic...
-    # if not is_hint_pep484585_generic_unsubbed(hint):
-    #     assert isinstance(exception_cls, type), (
-    #         f'{repr(exception_cls)} not type.')
-    #     assert isinstance(exception_prefix, str), (
-    #         f'{repr(exception_prefix)} not string.')
+    # ....................{ VALIDATE                       }....................
+    # If this hint is *NOT* actually a PEP 484- or 585-compliant generic, raise
+    # an exception.
+    die_unless_hint_pep484585_generic(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # Else,this hint is a PEP 484- or 585-compliant generic.
+
+    # ....................{ LOCALS                         }....................
+    # This generic in unsubscripted form (i.e., unsubscripted generic underlying
+    # this generic if this generic is subscripted *OR* this unsubscripted
+    # generic as is otherwise).
+    hint_unsubbed = get_hint_pep484585_generic_unsubbed_type(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # Tuple of the zero or more unbound type parameters transitively
+    # parametrizing this generic in unsubscripted form. Note that this tuple can
+    # differ from the tuple of the one or more type parameters parametrizing
+    # this generic if this generic is subscripted: e.g.,
+    #    >>> T = TypeVar('T')
+    #    >>> class Ugh(Generic[T]): pass
+    #    >>> get_hint_pep_typeargs_packed(Ugh)
+    #    (~T,)  # <-- good
+    #    >>> get_hint_pep_typeargs_packed(Ugh[int])
+    #    ()  # <----- less good for this use case, but understandable
+    hint_typeargs = get_hint_pep_typeargs_unpacked(hint_unsubbed)
+
+    # If even the unsubscripted form of this generic is unparametrized by any
+    # unbound type parameters, this generic *MUST* be assumed to be valid for
+    # the purposes of this raiser. Examples of such generics include:
+    # * The PEP 484-compliant "typing.Generic" unsubscripted root superclass of
+    #   all PEP 484-compliant generics.
+    # * Any arbitrary subscription of that superclass.
+    # * A PEP 484-compliant generic transitively subclassing an unparametrized
+    #   deprecated "typing" factory: e.g.,
+    #       from typing import List
+    #       class MuhGenericList(List): ...
     #
-    #     # Raise an exception of this type prefixed by this prefix.
-    #     raise exception_cls(
-    #         f'{exception_prefix}type hint {repr(hint)} not '
-    #         f'PEP 484 or 585 unsubscripted generic.'
-    #     )
-    # # Else, this hint is an unsubscripted generic.
+    # Silently reduce to a noop by immediately returning. This is *NOT* merely a
+    # negligible optimization. If this edge case was *NOT* elided here, logic
+    # below would erroneously treat any subscription of this generic as invalid.
+    if not hint_typeargs:
+        return
+    # Else, the unsubscripted form of this generic is unparametrized by one or
+    # more unbound type parameters and thus warrants validation.
+
+    # Tuple of the zero or more child hints directly subscripting this generic
+    # if this generic is subscripted *OR* the empty tuple otherwise (i.e., if
+    # this generic is unsubscripted).
+    hint_args = get_hint_pep_args(hint)
+
+    # Number of unbound type parameters transitively parametrizing this generic
+    # in unsubscripted form.
+    hint_typeargs_len = len(hint_typeargs)
+
+    # Number of child hints directly subscripting this generic.
+    hint_args_len = len(hint_args)
+
+    # ....................{ CHECK                          }....................
+    # If this generic was subscripted by more child hints than this generic was
+    # parametrized by type parameters, this generic *COULD* be invalid.
+    # Additional validation is warranted to decide the matter. In this case...
+    if hint_args_len > hint_typeargs_len:
+        #FIXME: Validate PEP 612-compliant "typing.ParamSpec" as well. Pretty
+        #sure they also require a corresponding child hint, with the additional
+        #constraint that... what? Surely you can't map arbitrary child hints to
+        #parameter specifications, right? *sigh*
+
+        # For each unbound type parameter transitively parametrizing the
+        # unsubscripted form of this generic...
+        for hint_typearg in hint_typeargs:
+            # If this type parameter is *NOT* a PEP 484-compliant type variable,
+            # assume this generic to be valid. Silently reduce to a noop by
+            # immediately returning.
+            if not isinstance(hint_typearg, TypeVar):
+                return
+            # Else, this type parameter is a PEP 484-compliant type variable.
+
+        # Since the above iteration failed to return, *ALL* unbound type
+        # parameters transitively parametrizing the unsubscripted form of this
+        # generic are PEP 484-compliant type variables. However, this generic
+        # was subscripted by more child hints than this generic was parametrized
+        # by type variables! Ergo, this generic is invalid.
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise an exception of this type prefixed by this prefix.
+        raise exception_cls(
+            f'{exception_prefix}'
+            f'PEP 585 generic {repr(hint)} '
+            f'subscripted by {hint_args_len} child type hints but '
+            f'parametrized by {hint_typeargs_len} type parameters. '
+            f'Since the total number of child type hints exceeds '
+            f'the total number of type parameters '
+            f'(i.e., {hint_args_len} > {hint_typeargs_len}), '
+            f'this PEP 585 subscripted generic is invalid. '
+            f'The number of child type hints subscripting a generic '
+            f'must be less than or equal to the number of '
+            f'type parameters subscripting that generic. '
+            f'Thus spake Bearry the Elder, '
+            f'the wise and venerable QA old man '
+            f'that totters before you.'
+        )
+    # Else, this generic was correctly subscripted by no more child hints than
+    # this generic was parametrized by type parameters and is thus valid.
+
+# ....................{ RAISERS ~ unless                   }....................
+#FIXME: Unit test us up, please. *sigh*
+def die_unless_hint_pep484585_generic(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise the passed exception unless the passed type hint is a **generic**
+    (i.e., type originally subclassing at least one :pep:`484`- or
+    :pep:`585`-compliant pseudo-superclass parametrized by one or more
+    :pep:`484`-, :pep:`612`-, or :pep:`646`-compliant type parameters).
+
+    Note that this raiser does *not* validate this generic to be **valid**
+    (i.e., subscripted by no more child type hints than the number of
+    PEP-compliant type parameters originally parametrizing the unsubscripted
+    form of this generic). To do so, instead call the higher-level
+    :func:`.die_if_hint_pep484585_generic_invalid` raiser.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be inspected.
+    exception_cls : TypeException, default: BeartypeDecorHintPep484585Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    exception_cls
+        If this hint is *not* an unsubscripted generic.
+    '''
+
+    # If this hint is *NOT* a generic...
+    if not is_hint_pep484585_generic(hint):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise an exception of this type prefixed by this prefix.
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} not '
+            f'PEP 484 or 585 generic.'
+        )
+    # Else, this hint is a generic.
 
 
 def die_unless_hint_pep484585_generic_unsubbed(
@@ -127,10 +292,10 @@ def die_unless_hint_pep484585_generic_unsubbed(
     ----------
     hint : Hint
         Type hint to be inspected.
-    exception_cls : TypeException
-        Type of exception to be raised. Defaults to
-        :exc:`.BeartypeDecorHintPep484585Exception`.
-    exception_prefix : str, optional
+    exception_cls : TypeException, default: BeartypeDecorHintPep484585Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
@@ -153,6 +318,7 @@ def die_unless_hint_pep484585_generic_unsubbed(
             f'PEP 484 or 585 unsubscripted generic.'
         )
     # Else, this hint is an unsubscripted generic.
+
 
 # ....................{ TESTERS                            }....................
 @callable_cached

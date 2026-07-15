@@ -135,7 +135,7 @@ def hints_pep484_meta() -> (
         Pep484IterableTupleSTContainerTupleST,
         Pep484ListStr,
         Pep484ListListStr,
-        Pep484ListUnsubscripted,
+        Pep484ListUnsubbed,
     )
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
@@ -883,14 +883,14 @@ def hints_pep484_meta() -> (
         # ................{ GENERICS ~ single : unsubbed       }................
         # Generic subclassing a single unsubscripted "typing" type hint factory.
         HintPepMetadata(
-            hint=Pep484ListUnsubscripted,
+            hint=Pep484ListUnsubbed,
             pep_sign=HintSignPep484585GenericUnsubbed,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            generic_type=Pep484ListUnsubscripted,
+            generic_type=Pep484ListUnsubbed,
             is_type_typing=False,
             piths_meta=(
                 # Subclass-specific generic list of string constants.
-                PithSatisfiedMetadata(Pep484ListUnsubscripted((
+                PithSatisfiedMetadata(Pep484ListUnsubbed((
                     'Ibid., incredibly indelible, edible craws a',
                     'Of a liturgically upsurging, Θṙgiast‐ic holiness, and',
                 ))),
@@ -1321,17 +1321,17 @@ def hints_pep484_meta() -> (
         #   the unsubscripted variants tested above and thus *CANNOT* be
         #   re-tested here.
         HintPepMetadata(
-            hint=Pep484ListUnsubscripted[str],
+            hint=Pep484ListUnsubbed[str],
             pep_sign=HintSignPep484585GenericSubbed,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            generic_type=Pep484ListUnsubscripted,
+            generic_type=Pep484ListUnsubbed,
             is_type_typing=False,
             typeargs_packed_subbed=(),
             typeargs_packed_unsubbed=(),
             piths_meta=(
                 # Subclass-specific generic list of string constants.
                 PithSatisfiedMetadata(
-                    Pep484ListUnsubscripted((
+                    Pep484ListUnsubbed((
                         'Volubly vi‐brant libations',
                         'To blubber‐lubed Bacchus — hustling',
                     ))

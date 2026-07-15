@@ -359,8 +359,8 @@ def hints_pep646_reduction_meta() -> (
             # ),
 
             # A PEP 646-compliant tuple hint subscripted by two PEP
-        # 646-compliant unpacked child fixed-length tuple hint separated by
-        # other unrelated child hints is invalid.
+            # 646-compliant unpacked child fixed-length tuple hint separated by
+            # other unrelated child hints is invalid.
             HintReductionInvalid(
                 hint_unreduced=tuple[
                     str,

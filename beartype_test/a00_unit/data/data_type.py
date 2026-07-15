@@ -94,7 +94,7 @@ Arbitrary pure-Python asynchronous non-generator coroutine.
 # Prevent Python from emitting "ResourceWarning" warnings.
 async_coroutine.close()
 
-# ....................{ CALLABLES ~ sync : api : contextlib}....................
+# ....................{ CALLABLES ~ async : api : contextli}....................
 @asynccontextmanager
 async def async_context_manager_factory(obj: object) -> AsyncIterator[object]:
     '''
@@ -609,6 +609,24 @@ class ClassList(list):
     '''
 
     pass
+
+# ....................{ CLASSES ~ context                  }....................
+class ContextManagerNoop(object):
+    '''
+    Reusable **noop context manager type** (i.e., type satisfying the standard
+    context manager protocol but otherwise doing nothing).
+
+    See Also
+    --------
+    https://stackoverflow.com/a/48908462/2809027
+        StackOverflow answer strongly inspiring this implementation.
+    '''
+
+    def __enter__(self) -> None:
+        pass
+
+    def __exit__(self, *args, **kwargs) -> None:
+        pass
 
 # ....................{ CLASSES ~ enum                     }....................
 class MasterlessDecreeVenomlessWhich(Enum):

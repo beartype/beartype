@@ -327,13 +327,14 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
             ``type[typing.Union[cls1, cls2]]``.
     typearg_to_hint : Pep484612646TypeArgUnpackedToHint
         **Type parameter lookup table** (i.e., immutable dictionary mapping from
-        the **type parameter** (i.e., :pep:`484`-compliant type variable or
-        :pep:`646`-compliant unpacked type variable tuple) originally
-        parametrizing the origins of all transitive parent hints of this hint if
-        any to the corresponding child hints subscripting those parent hints).
-        This table enables a proper subset of type parameters to be efficiently
-        reduced to non-type parameters during dynamic generation of
-        type-checking code, including:
+        all **PEP-compliant unpacked type parameters** (i.e.,
+        :pep:`484`-compliant type variable, :pep:`612`-compliant unpacked
+        parameter specification, or :pep:`646`-compliant unpacked type variable
+        tuple) originally parametrizing the unsubscripted forms of all
+        transitive parent hints of this hint if any to the corresponding child
+        hints subscripting those parent hints). This table enables a proper
+        subset of type parameters to be efficiently reduced to non-type
+        parameters during dynamic generation of type-checking code, including:
 
         * :pep:`484`- or :pep:`585`-compliant **subscripted generics.** For
           example, this table enables runtime type-checkers to reduce the

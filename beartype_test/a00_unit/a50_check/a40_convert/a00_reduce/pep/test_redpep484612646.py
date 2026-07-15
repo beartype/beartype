@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype :pep:`484`-, :pep:`612`-, or :pep:`646`-compliant **type parameter
+Beartype :pep:`484`-, :pep:`612`-, and :pep:`646`-compliant **type parameter
 reduction** unit tests.
 
 This submodule unit tests the public API of the private
@@ -279,7 +279,6 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484612646Exception
-    from beartype.typing import Generic
     from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
         reduce_hint_pep484612646_subbed_typeargs_to_hints)
     from beartype._check.cls.call.calldataexternal import (
@@ -290,6 +289,7 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
         T,
     )
     from pytest import raises
+    from typing import Generic
 
     # ....................{ PEP 484                        }....................
     # Assert that this reducer reduces the PEP 484-compliant "typing.Generic"

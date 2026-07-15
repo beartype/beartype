@@ -20,6 +20,8 @@ from beartype._check.cls.hint.hintsane import (
     HintSane,
 )
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
+    die_if_hint_pep484585_generic_invalid)
 from beartype._util.hint.pep.proposal.pep544 import is_hint_pep484_generic_io
 from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
 from typing import (
@@ -94,6 +96,14 @@ def reduce_hint_pep484585_generic_subbed(
         * Else, that unsubscripted hint is parametrized by one or more type
           variables. In this case, the **sanified type hint metadata** (i.e.,
           :class:`.HintSane` object) describing this reduction.
+
+    Raises
+    ------
+    BeartypeDecorHintPep484585Exception
+        If this subscripted generic is **invalid** (e.g., is a
+        :pep:`585`-compliant generic subscripted by more child type hints than
+        the number of PEP-compliant type parameters originally parametrizing the
+        unsubscripted form of this generic).
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -140,7 +150,15 @@ def reduce_hint_pep484585_generic_subbed(
     # Else, this hint was *NOT* reduced to an unsubscripted generic from this
     # subscripted IO generic (i.e., "hint_reduced is hint").
 
-    # ....................{ UNSUBSCRIBE                    }....................
+    # ....................{ UNSUBSCRIPT                    }....................
+    # If this subscripted generic is invalid (e.g., is a PEP 585-compliant
+    # generic subscripted by more child hints than the number of type parameters
+    # originally parametrizing the unsubscripted form of this generic), raise an
+    # exception.
+    die_if_hint_pep484585_generic_invalid(
+        hint=hint, exception_prefix=exception_prefix)
+    # Else, this subscripted generic is valid.
+
     # Reduce this subscripted generic to:
     # * The semantically useful unsubscripted generic originating this
     #   semantically useless subscripted generic.
