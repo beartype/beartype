@@ -5,7 +5,7 @@
 
 '''
 Beartype **extraprocess Decidedly Object-Oriented Runtime-checking (DOOR)
-type-checking unit tests** (i.e., unit tests exercising :mod:`beartype.door`
+type-checking unit tests** (i.e., unit tests validating :mod:`beartype.door`
 functionality within a Python subprocess forked from the active Python process).
 '''
 
@@ -18,7 +18,7 @@ functionality within a Python subprocess forked from the active Python process).
 # ....................{ TESTS ~ raisers                    }....................
 def test_door_extraprocess_multiprocessing(monkeypatch: 'MonkeyPatch') -> None:
     '''
-    Test the :class:`beartype.door.die_if_unbearable` raiser function with
+    Test the :func:`beartype.door.die_if_unbearable` raiser function with
     respect to Python subprocesses forked by the standard :mod:`multiprocessing`
     submodule.
 
@@ -31,7 +31,7 @@ def test_door_extraprocess_multiprocessing(monkeypatch: 'MonkeyPatch') -> None:
     See Also
     --------
     https://github.com/python/cpython/issues/44791
-        Beartype issue exercised by this unit test.
+        Beartype issue validated by this unit test.
     '''
 
     # ....................{ IMPORTS                        }....................
