@@ -40,6 +40,10 @@ def test_die_if_hint_pep484585_generic_invalid() -> None:
     from typing import Generic
 
     # ....................{ PASS                           }....................
+    # Implicitly assert that this raiser raises *NO* exception when passed an
+    # arbitrary non-generic type hint.
+    die_if_hint_pep484585_generic_invalid(int)
+
     # Implicitly assert that this raiser raises *NO* exception when passed a
     # valid unsubscripted generic (i.e., which is *ALWAYS* guaranteed by
     # definition to be valid).
@@ -59,11 +63,6 @@ def test_die_if_hint_pep484585_generic_invalid() -> None:
         Pep484585SequenceUGenericIntTListU[str, bytes])
 
     # ....................{ FAIL                           }....................
-    # Assert that this raiser raises the expected exception when passed a
-    # non-generic.
-    with raises(BeartypeDecorHintPep484585Exception):
-        die_if_hint_pep484585_generic_invalid(int)
-
     # Assert that this raiser raises the expected exception when passed an
     # invalid PEP 585-compliant subscripted generic (i.e., subscripted by more
     # child type hints than the number of PEP-compliant type parameters

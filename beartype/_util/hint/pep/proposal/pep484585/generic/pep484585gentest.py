@@ -30,11 +30,6 @@ from beartype._util.hint.pep.proposal.pep585 import (
 from typing import TypeVar
 
 # ....................{ RAISERS ~ if                       }....................
-#FIXME: [SPEED] *SLOW*. The issue is the "for" loop performed in the body of
-#this raiser. Refactor as follows, please:
-#* Extract that entire "for" loop into a new memoized (i.e.,
-#  @callable_cached-decorated) is_hint_pep484_typevars_all() tester.
-#* Call is_hint_pep484_typevars_all() below rather than performing that loop.
 def die_if_hint_pep484585_generic_invalid(
     # Mandatory parameters.
     hint: Hint,
@@ -48,6 +43,8 @@ def die_if_hint_pep484585_generic_invalid(
     (i.e., :pep:`585`-compliant generic subscripted by more child type hints
     than the number of PEP-compliant type parameters originally parametrizing
     the unsubscripted form of this generic).
+
+    This raiser is effectively memoized for efficiency.
 
     Motivation
     ----------
@@ -92,114 +89,40 @@ def die_if_hint_pep484585_generic_invalid(
     exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
-
-    Raises
-    ------
-    exception_cls
-        If this hint is *not* an unsubscripted generic.
     '''
 
-    # ....................{ IMPORTS                        }....................
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
-        get_hint_pep_typeargs_unpacked,
-    )
-    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-        get_hint_pep484585_generic_unsubbed_type)
+    # If this hint is an invalid generic...
+    if is_hint_pep484585_generic_invalid(hint):
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilpepget import (
+            get_hint_pep_args,
+            get_hint_pep_typeargs_unpacked,
+        )
+        from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+            get_hint_pep484585_generic_unsubbed_type)
 
-    # ....................{ VALIDATE                       }....................
-    # If this hint is *NOT* actually a PEP 484- or 585-compliant generic, raise
-    # an exception.
-    die_unless_hint_pep484585_generic(
-        hint=hint,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
-    # Else,this hint is a PEP 484- or 585-compliant generic.
+        # This generic in unsubscripted form.
+        hint_unsubbed = get_hint_pep484585_generic_unsubbed_type(
+            hint=hint,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
 
-    # ....................{ LOCALS                         }....................
-    # This generic in unsubscripted form (i.e., unsubscripted generic underlying
-    # this generic if this generic is subscripted *OR* this unsubscripted
-    # generic as is otherwise).
-    hint_unsubbed = get_hint_pep484585_generic_unsubbed_type(
-        hint=hint,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
+        # Tuple of the zero or more unbound type parameters transitively
+        # parametrizing this generic in unsubscripted form.
+        hint_typeargs = get_hint_pep_typeargs_unpacked(hint_unsubbed)
 
-    # Tuple of the zero or more unbound type parameters transitively
-    # parametrizing this generic in unsubscripted form. Note that this tuple can
-    # differ from the tuple of the one or more type parameters parametrizing
-    # this generic if this generic is subscripted: e.g.,
-    #    >>> T = TypeVar('T')
-    #    >>> class Ugh(Generic[T]): pass
-    #    >>> get_hint_pep_typeargs_packed(Ugh)
-    #    (~T,)  # <-- good
-    #    >>> get_hint_pep_typeargs_packed(Ugh[int])
-    #    ()  # <----- less good for this use case, but understandable
-    hint_typeargs = get_hint_pep_typeargs_unpacked(hint_unsubbed)
+        # Tuple of the zero or more child hints directly subscripting this
+        # generic if this generic is subscripted *OR* the empty tuple otherwise
+        # (i.e., if this generic is unsubscripted).
+        hint_args = get_hint_pep_args(hint)
 
-    # If even the unsubscripted form of this generic is unparametrized by any
-    # unbound type parameters, this generic *MUST* be assumed to be valid for
-    # the purposes of this raiser. Examples of such generics include:
-    # * The PEP 484-compliant "typing.Generic" unsubscripted root superclass of
-    #   all PEP 484-compliant generics.
-    # * Any arbitrary subscription of that superclass.
-    # * A PEP 484-compliant generic transitively subclassing an unparametrized
-    #   deprecated "typing" factory: e.g.,
-    #       from typing import List
-    #       class MuhGenericList(List): ...
-    #
-    # Silently reduce to a noop by immediately returning. This is *NOT* merely a
-    # negligible optimization. If this edge case was *NOT* elided here, logic
-    # below would erroneously treat any subscription of this generic as invalid.
-    if not hint_typeargs:
-        return
-    # Else, the unsubscripted form of this generic is unparametrized by one or
-    # more unbound type parameters and thus warrants validation.
+        # Number of unbound type parameters transitively parametrizing this
+        # generic in unsubscripted form.
+        hint_typeargs_len = len(hint_typeargs)
 
-    # Tuple of the zero or more child hints directly subscripting this generic
-    # if this generic is subscripted *OR* the empty tuple otherwise (i.e., if
-    # this generic is unsubscripted).
-    hint_args = get_hint_pep_args(hint)
-
-    # Number of unbound type parameters transitively parametrizing this generic
-    # in unsubscripted form.
-    hint_typeargs_len = len(hint_typeargs)
-
-    # Number of child hints directly subscripting this generic.
-    hint_args_len = len(hint_args)
-
-    # ....................{ CHECK                          }....................
-    # If this generic was subscripted by more child hints than this generic was
-    # parametrized by type parameters, this generic *COULD* be invalid.
-    # Additional validation is warranted to decide the matter. In this case...
-    if hint_args_len > hint_typeargs_len:
-        #FIXME: Validate PEP 612-compliant "typing.ParamSpec" as well. Pretty
-        #sure they also require a corresponding child hint, with the additional
-        #constraint that... what? Surely you can't map arbitrary child hints to
-        #parameter specifications, right? *sigh*
-
-        # For each unbound type parameter transitively parametrizing the
-        # unsubscripted form of this generic...
-        for hint_typearg in hint_typeargs:
-            # If this type parameter is *NOT* a PEP 484-compliant type variable,
-            # assume this generic to be valid. Silently reduce to a noop by
-            # immediately returning.
-            if not isinstance(hint_typearg, TypeVar):
-                return
-            # Else, this type parameter is a PEP 484-compliant type variable.
-
-        # Since the above iteration failed to return, *ALL* unbound type
-        # parameters transitively parametrizing the unsubscripted form of this
-        # generic are PEP 484-compliant type variables. However, this generic
-        # was subscripted by more child hints than this generic was parametrized
-        # by type variables! Ergo, this generic is invalid.
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not type.')
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+        # Number of child hints directly subscripting this generic.
+        hint_args_len = len(hint_args)
 
         # Raise an exception of this type prefixed by this prefix.
         raise exception_cls(
@@ -218,8 +141,8 @@ def die_if_hint_pep484585_generic_invalid(
             f'the wise and venerable QA old man '
             f'that totters before you.'
         )
-    # Else, this generic was correctly subscripted by no more child hints than
-    # this generic was parametrized by type parameters and is thus valid.
+    # Else, this hint is *NOT* an invalid generic (e.g., is either a valid
+    # generic *OR* is not a generic at all). In either case, ignore this hint.
 
 # ....................{ RAISERS ~ unless                   }....................
 #FIXME: Unit test us up, please. *sigh*
@@ -393,6 +316,146 @@ def is_hint_pep484585_generic(hint: Hint) -> bool:
         # This generic is *NOT* beartype-blacklisted.
         not _is_hint_pep484585_generic_blacklisted(hint)
     )
+
+
+#FIXME: Unit test us up, please. *sigh*
+@callable_cached
+def is_hint_pep484585_generic_invalid(hint: Hint) -> bool:
+    '''
+    :data:`True` only if the passed type hint is an **invalid generic** (i.e.,
+    :pep:`585`-compliant generic subscripted by more child type hints than the
+    number of PEP-compliant type parameters originally parametrizing the
+    unsubscripted form of this generic).
+
+    This tester is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be inspected.
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    :func:`.die_if_hint_pep484585_generic_invalid`
+        Further details.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_args,
+        get_hint_pep_typeargs_unpacked,
+    )
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+        get_hint_pep484585_generic_unsubbed_type)
+
+    # ....................{ NOOP                           }....................
+    # If this hint is *NOT* actually a PEP 484- or 585-compliant generic,
+    # silently reduce to a noop by returning false immediately.
+    if not is_hint_pep484585_generic(hint):
+        return False
+    # Else,this hint is a PEP 484- or 585-compliant generic.
+
+    # ....................{ LOCALS                         }....................
+    # This generic in unsubscripted form (i.e., unsubscripted generic underlying
+    # this generic if this generic is subscripted *OR* this unsubscripted
+    # generic as is otherwise).
+    hint_unsubbed = get_hint_pep484585_generic_unsubbed_type(hint)
+
+    # Tuple of the zero or more unbound type parameters transitively
+    # parametrizing this generic in unsubscripted form. Note that this tuple can
+    # differ from the tuple of the one or more type parameters parametrizing
+    # this generic if this generic is subscripted: e.g.,
+    #    >>> T = TypeVar('T')
+    #    >>> class Ugh(Generic[T]): pass
+    #    >>> get_hint_pep_typeargs_packed(Ugh)
+    #    (~T,)  # <-- good
+    #    >>> get_hint_pep_typeargs_packed(Ugh[int])
+    #    ()  # <----- less good for this use case, but understandable
+    hint_typeargs = get_hint_pep_typeargs_unpacked(hint_unsubbed)
+
+    # If even the unsubscripted form of this generic is unparametrized by any
+    # unbound type parameters, return false immediately, as this generic is
+    # valid by definition. Only parametrized generics admit the possibility of
+    # invalidity. This is *NOT* merely a negligible microoptimization. If this
+    # edge case was *NOT* elided here, logic below would erroneously treat any
+    # subscription of this generic as invalid.
+    #
+    # Examples of valid generics detected by this test include:
+    # * The PEP 484-compliant "typing.Generic" unsubscripted root superclass of
+    #   all PEP 484-compliant generics.
+    # * Any arbitrary subscription of that superclass.
+    # * Any PEP 484-compliant generic transitively subclassing an unparametrized
+    #   deprecated "typing" factory: e.g.,
+    #       from typing import List
+    #       class MuhGenericList(List): ...
+    if not hint_typeargs:
+        return False
+    # Else, the unsubscripted form of this generic is unparametrized by one or
+    # more unbound type parameters and thus warrants validation.
+
+    # Tuple of the zero or more child hints directly subscripting this generic
+    # if this generic is subscripted *OR* the empty tuple otherwise (i.e., if
+    # this generic is unsubscripted).
+    hint_args = get_hint_pep_args(hint)
+
+    # Number of unbound type parameters transitively parametrizing this generic
+    # in unsubscripted form.
+    hint_typeargs_len = len(hint_typeargs)
+
+    # Number of child hints directly subscripting this generic.
+    hint_args_len = len(hint_args)
+
+    # ....................{ SEARCH                         }....................
+    # If this generic is subscripted by less than or equal to the number of
+    # child hints as the number of unbound type parameters transitively
+    # parametrizing this generic in unsubscripted form, then *ALL* such child
+    # hints safely bind to a subset of these type parameters, implying this
+    # generic to be valid. Return false immediately.
+    if hint_args_len <= hint_typeargs_len:
+        return False
+    # Else, this generic is subscripted by more child hints than this generic is
+    # transitively parametrized by unbound type parameters. This generic *COULD*
+    # be either valid or invalid. Only an exhaustive search through these type
+    # parameters suffices to decide which is the case. We're already exhausted.
+
+    #FIXME: Validate PEP 612-compliant "typing.ParamSpec" as well. Pretty
+    #sure they also require a corresponding child hint, with the additional
+    #constraint that... what, exactly? Surely one can't map arbitrary child
+    #hints to parameter specifications, right? *sigh*
+    #FIXME: Validate PEP 646-compliant "typing.TypeVarTuple" as well. Tons
+    #we can do here, including:
+    #* Check that "hint_typeargs" contains at most one "TypeVarTuple". I
+    #  dimly recall already performing that validation elsewhere. Hmm...
+    #* Relax the constraint below as follows:
+    #  * If "hint_typeargs" contains exactly one "TypeVarTuple", then it's
+    #    totally fine for "hint_args_len > hint_typeargs_len". Note,
+    #    however, that we still can't return noop immediately. Why? Because
+    #    we need to iterate the whole "hint_typeargs" to ensure that
+    #    "hint_typeargs" contains no other "TypeVarTuple".
+    #  * Else, "hint_args_len > hint_typeargs_len" implies invalidity.
+
+    # For each unbound type parameter transitively parametrizing the
+    # unsubscripted form of this generic...
+    for hint_typearg in hint_typeargs:
+        #FIXME: Not a great assumption, obviously. See "FIXME:" comments above!
+        # If this type parameter is *NOT* a PEP 484-compliant type variable,
+        # assume this generic to be valid. Return false immediately.
+        if not isinstance(hint_typearg, TypeVar):
+            return False
+        # Else, this type parameter is a PEP 484-compliant type variable.
+    # Else, this iteration failed to return, implying *ALL* unbound type
+    # parameters transitively parametrizing the unsubscripted form of this
+    # generic are PEP 484-compliant type variables. However, this generic
+    # was subscripted by more child hints than this generic was parametrized
+    # by type variables! Ergo, this generic is invalid.
+
+    # Return true with interminable reluctance. Sadness intensifies.
+    return True
 
 
 def is_hint_pep484585_generic_user(hint: Hint) -> bool:

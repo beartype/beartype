@@ -18,8 +18,8 @@ This submodule unit tests the subset of the public API of the public
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ testers                    }....................
-def test_door_is_subhint(
-    door_cases_is_subhint: 'Iterable[Tuple[object, object, bool]]') -> None:
+def test_door_is_subhint(door_cases_is_subhint: (
+    'collections.abc.Iterable[tuple[object, object, bool]]')) -> None:
     '''
     Test the :func:`beartype.door.is_subhint` tester.
 

@@ -68,7 +68,7 @@ class Pep484ListListStr(Pep484List[Pep484List[str]]):
 
     pass
 
-# ....................{ PEP 484 : T                        }....................
+# ....................{ PEP 484 ~ T : hierarchy            }....................
 class Pep484GenericT(Generic[T]):
     '''
     :pep:`484`-compliant generic superclass parametrized by one unconstrained
@@ -78,9 +78,9 @@ class Pep484GenericT(Generic[T]):
     pass
 
 
-class Pep484GenericTSubbed(Pep484GenericT[T]):
+class Pep484GenericTSubclass(Pep484GenericT[T]):
     '''
-    :pep:`484`-compliant generic subclass inheriting a :pep:`484`-compliant
+    :pep:`484`-compliant generic subclassing a :pep:`484`-compliant
     generic superclass subscripted by the same unconstrained type variable
     parametrizing that superclass.
     '''
@@ -88,6 +88,21 @@ class Pep484GenericTSubbed(Pep484GenericT[T]):
     pass
 
 
+class Pep484GenericTSubclassSubclass(Pep484GenericTSubclass[T]):
+    '''
+    :pep:`484`-compliant generic subclassing yet another a :pep:`484`-compliant
+    generic subclassing yet another :pep:`484`-compliant generic subscripted by
+    the same unconstrained type variable parametrizing that superclass.
+
+    See Also
+    --------
+    https://github.com/beartype/beartype/issues/607
+        GitHub issue guarded against regressions by this subclass.
+    '''
+
+    pass
+
+# ....................{ PEP 484 ~ T : subscription         }....................
 class Pep484GenericTToSSubbed(Pep484GenericT[S]):
     '''
     :pep:`484`-compliant generic subclass inheriting a :pep:`484`-compliant

@@ -60,8 +60,10 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         Pep484GenericSInt,
         Pep484GenericST,
         Pep484GenericSTToUU,
-        Pep484GenericTSubbed,
+        Pep484GenericTSubclass,
         Pep484GenericT,
+        Pep484GenericTSubclass,
+        Pep484GenericTSubclassSubclass,
         Pep484GenericTS,
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
@@ -239,10 +241,10 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize changes below by replacing all references in
-        # the first tuple item to "Pep484GenericT" with "Pep484GenericTSubbed".
+        # the first tuple item to "Pep484GenericT" with "Pep484GenericTSubclass".
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # PEP 484-compliant generic superclasses parametrized by one
-        # unconstrained type variables.
+        # unconstrained type variable.
         (Pep484GenericT, Pep484GenericT, True),
         (Pep484GenericT, Pep484GenericT[int], False),
         (Pep484GenericT[int], Pep484GenericT, True),
@@ -257,16 +259,23 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # CAUTION: Synchronize changes above.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # PEP 484-compliant generic subclasses parametrized by one unconstrained
-        # type variables.
-        (Pep484GenericTSubbed, Pep484GenericT, True),
-        (Pep484GenericTSubbed, Pep484GenericT[int], False),
-        (Pep484GenericTSubbed[int], Pep484GenericT, True),
-        (Pep484GenericTSubbed[int], Pep484GenericT[T_sequence], False),
-        (Pep484GenericTSubbed[list], Pep484GenericT[T_sequence], True),
-        (Pep484GenericTSubbed[list], Pep484GenericT[Sequence], True),
-        (Pep484GenericTSubbed[str], Pep484GenericT[T_sequence], True),
-        (Pep484GenericTSubbed[Sequence], Pep484GenericT[list], False),
-        (Pep484GenericTSubbed[T_sequence], Pep484GenericT, True),
+        # type variable.
+        (Pep484GenericTSubclass, Pep484GenericT, True),
+        (Pep484GenericTSubclass, Pep484GenericT[int], False),
+        (Pep484GenericTSubclass[int], Pep484GenericT, True),
+        (Pep484GenericTSubclass[int], Pep484GenericT[T_sequence], False),
+        (Pep484GenericTSubclass[list], Pep484GenericT[T_sequence], True),
+        (Pep484GenericTSubclass[list], Pep484GenericT[Sequence], True),
+        (Pep484GenericTSubclass[str], Pep484GenericT[T_sequence], True),
+        (Pep484GenericTSubclass[Sequence], Pep484GenericT[list], False),
+        (Pep484GenericTSubclass[T_sequence], Pep484GenericT, True),
+        (Pep484GenericTSubclassSubclass[T], Pep484GenericT[str], False),
+        (Pep484GenericTSubclassSubclass[str], Pep484GenericT[str], True),
+        (
+            Pep484GenericTSubclassSubclass[str],
+            Pep484GenericTSubclass[str],
+            True,
+        ),
 
         # PEP 484-compliant generic subclasses parametrized by one unconstrained
         # type variables and one concrete type.
@@ -280,7 +289,6 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Pep484GenericSInt[Sequence], Pep484GenericST[list, object], False),
         (Pep484GenericSInt[T_sequence], Pep484GenericST, True),
 
-        #FIXME: Generalize similar validation to PEP 695 below, please. *sigh!*
         # PEP 484-compliant generic subclasses subclassing exactly two generic
         # superclasses such that:
         # * The first such generic superclass is subscripted by a subset of the
@@ -297,8 +305,6 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Pep484GenericIntUT[str, float], Pep484GenericST[float, int], False),
         (Pep484GenericSTToUU, Pep484GenericST, True),
         (Pep484GenericSTToUU[str, int, float], Pep484GenericST, True),
-        #FIXME: Don't forget to also uncomment the similarly commented-out PEP
-        #695-compliant cases, too! *mega-sigh*
         (
             Pep484GenericSTToUU[str, int, float],
             Pep484GenericST[str, float],
