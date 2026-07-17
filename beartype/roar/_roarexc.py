@@ -1736,6 +1736,31 @@ class _BeartypeClawAstNodeScopesException(BeartypeClawAstException):
 
     pass
 
+
+class _BeartypeClawImportHookActive(BeartypeClawAstException):
+    '''
+    **Beartype import hook active exception.**
+
+    This exception is raised at :mod:`beartype.claw` import hook time from the
+    **beartype import hook source file loader** (i.e., private
+    :class:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader`
+    class responsible for importing *all* packages and modules registered for
+    type-checking by a prior call to a beartype import hook) on detecting an
+    attempt by the **beartype import path hook adder** (i.e., private
+    :func:`beartype.claw._importlib.clawimpmain.add_beartype_pathhook` function
+    responsible for adding a :mod:`beartype`-specific path hook to the standard
+    :mod:`sys.path_hooks` list) to check whether that path hook is now either
+    successfully active *or* unsuccessfully inactive (e.g., due to a competing
+    third-party package registering a competing import hook ignoring the
+    :mod:`beartype`-specific path hook added by that adder).
+
+    This exception facilitates a crude smoke test internal to the
+    :mod:`beartype` codebase, which intentionally raises and then catches this
+    exception. This exception should *never* unwind the call stack to end users.
+    '''
+
+    pass
+
 # ....................{ PRIVATE ~ door                       }..................
 class _BeartypeDoorTextException(BeartypeDoorException):
     '''

@@ -73,7 +73,13 @@ current user-defined module being imported and thus transformed by the
 :class:`beartype.claw._ast.clawastmain.BeartypeNodeTransformer` subclass.
 '''
 
-# ....................{ STRINGS ~ names ~ claw             }....................
+# ....................{ STRINGS ~ names : claw             }....................
+BEARTYPE_CLAW_SMOKE_TEST_SUBMODULE_NAME = (
+    'beartype.claw._importlib._clawimpsmoke')
+'''
+'''
+
+# ....................{ STRINGS ~ names : claw : state     }....................
 BEARTYPE_CLAW_STATE_OBJ_NAME = '__claw_state_beartype__'
 '''
 Unqualified basename of the beartype import hook state as imported into the

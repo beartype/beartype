@@ -44,12 +44,12 @@ from typing import Optional
 #FIXME: Unit test us up, please.
 class BeartypeSourceFileLoader(SourceFileLoader):
     '''
-    **Beartype source file loader** implementing :mod:`importlib` machinery
-    loading a **sourceful Python package or module** (i.e., package or module
-    backed by a ``.py``-suffixed source file) into a **module spec** (i.e.,
-    in-memory :class:`importlib._bootstrap.ModuleSpec` instance describing the
-    importation of that package or module, complete with a reference back to
-    this originating loader).
+    **Beartype import hook source file loader** implementing :mod:`importlib`
+    machinery loading a **physical Python package or module** (i.e., package or
+    module backed by a ``.py``-suffixed source file) into a **module spec**
+    (i.e., in-memory :class:`importlib._bootstrap.ModuleSpec` instance
+    describing the importation of that package or module, complete with a
+    reference back to this originating loader).
 
     The low-level :func:`beartype.claw._package.clawpkgmain.hook_packages`
     import hook underlying *all* high-level :mod:`beartype.claw` import hooks
