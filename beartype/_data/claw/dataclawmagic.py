@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # Note that attempting to import the equivalent global constants from the
 # "beartype.meta" submodule is known to unsafely induce infinite recursion
 # during "importlib" machinery handling performed by the
-# beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader.get_code()
+# beartype.claw._importlib._clawimpfileloader.BeartypeSourceFileLoader.get_code()
 # method. Therefore, rather than importing:
 # * The unsafe "beartype.meta.NAME" global constant here, we instead manually
 #   embed the literal substring "beartype" into global constants defined below.
@@ -74,6 +74,7 @@ current user-defined module being imported and thus transformed by the
 '''
 
 # ....................{ STRINGS ~ names : claw             }....................
+#FIXME: Docstring us up, please! *sigh*
 BEARTYPE_CLAW_SMOKE_TEST_SUBMODULE_NAME = (
     'beartype.claw._importlib._clawimpsmoke')
 '''
@@ -96,6 +97,16 @@ imported submodule of each package previously registered in our global package
 trie to the beartype configuration configuring type-checking by the
 :func:`beartype.beartype` decorator of that submodule) relative to the
 beartype import hook state, which contains this cache.
+'''
+
+# ....................{ STRINGS ~ names : stdlib           }....................
+STANDARD_FILE_FINDER_PATH_HOOK_NAME = (
+    '_frozen_importlib_external.FileFinder.path_hook.path_hook_for_FileFinder')
+'''
+Fully-qualified name of the **standard file finder path hook** (i.e., closure
+created and returned by the call to the
+:meth:`importlib.machinery.FileFinder.path_hook` method in the standard
+:mod:`importlib._bootstrap_external` module on Python startup).
 '''
 
 # ....................{ STRINGS ~ names : pep : 695        }....................

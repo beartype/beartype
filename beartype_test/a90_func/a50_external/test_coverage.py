@@ -32,7 +32,7 @@ def test_coverage_beartype_claw(
     induce *extreme* circular import recursion in the form of an unreadable
     `ImportError` traceback from the :mod:`coverage` package. If this just
     happened to you, please see also the
-    :func:`beartype.claw._importlib._clawimpload._init` initializer.
+    :func:`beartype.claw._importlib._clawimpfileloader._init` initializer.
 
     Parameters
     ----------

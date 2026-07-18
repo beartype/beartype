@@ -4,11 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **import hook module loaders** (i.e., :mod:`importlib`-compliant
-classes dynamically decorating all typed callables and classes of all submodules
-of all packages previously registered in our global package trie by the
-:func:`beartype.beartype` decorator via abstract syntax tree (AST) transformers
-defined by the :mod:`beartype.claw._ast.clawastmain` submodule).
+Beartype **import hook file loaders** (i.e., :mod:`importlib`-compliant
+subclasses dynamically decorating all callables and classes of all submodules of
+all packages registered with previously called :mod:`beartype.claw` import hooks
+by the :func:`beartype.beartype` decorator via abstract syntax tree (AST)
+transformers defined in the :mod:`beartype.claw._ast.clawastmain` submodule).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

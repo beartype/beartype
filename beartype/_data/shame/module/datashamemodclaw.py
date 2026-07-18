@@ -19,7 +19,7 @@ BLACKLIST_CLAW_PACKAGE_NAMES_REGEX: RegexCompiledType = None  # type: ignore[ass
 '''
 Compiled regular expression matching the fully-qualified names of all top-level
 packages to be blacklisted by the
-:meth:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader.get_code`
+:meth:`beartype.claw._importlib._clawimpfileloader.BeartypeSourceFileLoader.get_code`
 method.
 
 See commentary inside that method for exhaustive (and exhausting) details.
@@ -103,7 +103,7 @@ def _init() -> None:
     #         File "/home/leycec/py/beartype/beartype/claw/_package/clawpkgtrie.py", line 17, in <module>
     #           from beartype.claw._importlib.clawimpmain import remove_beartype_pathhook
     #         File "/home/leycec/py/beartype/beartype/claw/_importlib/clawimpmain.py", line 18, in <module>
-    #           from beartype.claw._importlib._clawimpload import BeartypeSourceFileLoader
+    #           from beartype.claw._importlib._clawimpfileloader import BeartypeSourceFileLoader
     #         File "/home/leycec/py/beartype/beartype/claw/_importlib/_clawimpload.py", line 18, in <module>
     #           from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
     #         File "/home/leycec/py/beartype/beartype/claw/_ast/clawastmain.py", line 21, in <module>

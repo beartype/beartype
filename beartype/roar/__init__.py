@@ -60,6 +60,7 @@ from beartype.roar._roarexc import (
     BeartypeClawImportException as BeartypeClawImportException,
     BeartypeClawImportAstException as BeartypeClawImportAstException,
     BeartypeClawImportConfException as BeartypeClawImportConfException,
+    BeartypeClawImportlibException as BeartypeClawImportlibException,
     BeartypeConfException as BeartypeConfException,
     BeartypeConfParamException as BeartypeConfParamException,
     BeartypeConfShellVarException as BeartypeConfShellVarException,

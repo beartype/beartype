@@ -20,7 +20,7 @@ from pprint import pformat
 # Original cache_from_source() function defined by the private (*gulp*)
 # "importlib._bootstrap_external" submodule, preserved *BEFORE* temporarily
 # replacing that function with our beartype-specific variant in the
-# "beartype.claw._importlib._clawimpload" submodule.
+# "beartype.claw._importlib._clawimpfileloader" submodule.
 from importlib.util import cache_from_source as cache_from_source_original
 
 # ....................{ SUBCLASSES                         }....................
@@ -124,7 +124,7 @@ class ModuleNameToBeartypeConf(dict[str, 'BeartypeConf']):
                 #
                 # Ideally, this import would be performed earlier (e.g., in the
                 # BeartypeSourceFileLoader.__init__() method defined in the
-                # "beartype.claw._importlib._clawimpload" submodule) for
+                # "beartype.claw._importlib._clawimpfileloader" submodule) for
                 # debuggability, efficiency, and idempotency; for this reason, a
                 # prior implementation of the aforementioned method performed
                 # this import.

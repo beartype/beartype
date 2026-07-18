@@ -18,7 +18,7 @@ code." Isolating those unsafe imports to that public :mod:`beartype.meta`
 submodule empowers the :mod:`beartype` codebase to preferentially import from
 this safer private submodule *without* accidentally triggering fragile safety
 mechanisms like the recursion guard in the
-:meth:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader.get_code`
+:meth:`beartype.claw._importlib._clawimpfileloader.BeartypeSourceFileLoader.get_code`
 method.
 '''
 

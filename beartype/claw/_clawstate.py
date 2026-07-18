@@ -247,7 +247,7 @@ def _init() -> None:
     # * The root "beartype" package. Doing so effectively silently ignores
     #   dangerous attempts to recursively type-check the "beartype" package by
     #   the @beartype.beartype decorator. See the
-    #   beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader.get_code()
+    #   beartype.claw._importlib._clawimpfileloader.BeartypeSourceFileLoader.get_code()
     #   method docstring for further commentary.
     #
     # Note that "beartype" is intentionally *OMITTED* from the global

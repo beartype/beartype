@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._importlib._clawimpload import BeartypeSourceFileLoader
+from beartype.claw._importlib._clawimpfileloader import BeartypeSourceFileLoader
 from importlib import invalidate_caches
 from importlib.machinery import (
     BYTECODE_SUFFIXES,
@@ -56,7 +56,7 @@ def add_beartype_pathhook() -> None:
 
     See Also
     --------
-    :class:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader`
+    :class:`beartype.claw._importlib._clawimpfileloader.BeartypeSourceFileLoader`
         Class docstring detailing the motivation for this function exclusively
         leveraging the lower-level :attr:`sys.path_hooks` mechanism for
         declaring import hooks rather than both that *and* the higher-level
@@ -368,7 +368,7 @@ _LOADERS_DETAILS = (
     # Python's default C extension loader.
     (ExtensionFileLoader, extension_suffixes()),
 
-    # Beartype-specific **source module loader** (i.e., file loader loading
+    # Beartype-specific source module loader (i.e., file loader loading
     # uncompiled pure-Python modules of the filetype ".py").
     (BeartypeSourceFileLoader, SOURCE_SUFFIXES),
 
@@ -387,7 +387,7 @@ _LOADERS_DETAILS = (
 '''
 Tuple of all **file-based module loader details** (i.e., 2-tuple ``(file_loader,
 filetypes)`` of the undocumented format expected by the
-:meth:`FileFinder.path_hook` class method called by the
+:meth:`.FileFinder.path_hook` class method called by the
 :func:`beartype.claw._importlib.clawimpmain.add_beartype_pathhook` function,
 associating each file-based module loader with the platform-specific filetypes
 of all modules loaded by that module).

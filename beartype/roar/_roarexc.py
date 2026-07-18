@@ -1454,6 +1454,23 @@ class BeartypeClawImportConfException(BeartypeClawImportException):
 
     pass
 
+# ....................{ API ~ claw : import                }....................
+class BeartypeClawImportlibException(BeartypeClawException):
+    '''
+    Abstract base class of all **beartype import hook** :mod:`importlib`
+    **exceptions.**
+
+    This exception is raised at :mod:`beartype.claw` **import hook
+    registration time** (i.e., when a third-party package or module calls a
+    public import hook published by the :mod:`beartype.claw` subpackage) if the
+    standard :mod:`importlib` machinery required to implement that import hook
+    has been unexpectedly transformed, malformed, or otherwise damaged in a
+    manner incompatible with :mod:`beartype` (e.g., due to competing import
+    hooks installed by another previously run third-party package or module).
+    '''
+
+    pass
+
 # ....................{ API ~ conf                         }....................
 class BeartypeConfException(BeartypeException):
     '''
@@ -1743,7 +1760,7 @@ class _BeartypeClawImportHookActive(BeartypeClawAstException):
 
     This exception is raised at :mod:`beartype.claw` import hook time from the
     **beartype import hook source file loader** (i.e., private
-    :class:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader`
+    :class:`beartype.claw._importlib._clawimpfileloader.BeartypeSourceFileLoader`
     class responsible for importing *all* packages and modules registered for
     type-checking by a prior call to a beartype import hook) on detecting an
     attempt by the **beartype import path hook adder** (i.e., private
