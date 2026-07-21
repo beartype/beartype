@@ -18,7 +18,7 @@ from pytest import fixture
 
 # ....................{ FIXTURES ~ equality                }....................
 @fixture(autouse=True, scope='function')
-def clean_claws_unit() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
+def clean_claws_unit() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny
     '''
     Permanently, silently, and recursively remove all **bytecode files** (i.e.,
     pure-Python bytecode compiled to platform-dependent temporary files residing

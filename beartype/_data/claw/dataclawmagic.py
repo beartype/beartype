@@ -99,16 +99,6 @@ trie to the beartype configuration configuring type-checking by the
 beartype import hook state, which contains this cache.
 '''
 
-# ....................{ STRINGS ~ names : stdlib           }....................
-STANDARD_FILE_FINDER_PATH_HOOK_NAME = (
-    '_frozen_importlib_external.FileFinder.path_hook.path_hook_for_FileFinder')
-'''
-Fully-qualified name of the **standard file finder path hook** (i.e., closure
-created and returned by the call to the
-:meth:`importlib.machinery.FileFinder.path_hook` method in the standard
-:mod:`importlib._bootstrap_external` module on Python startup).
-'''
-
 # ....................{ STRINGS ~ names : pep : 695        }....................
 BEARTYPE_HINT_PEP695_FORWARDREF_ITER_FUNC_NAME = (
     '__iter_hint_pep695_forwardref_beartype__')
