@@ -51,14 +51,14 @@ class BeartypeClawState(object):
 
     Attributes
     ----------
-    beartype_pathhook : Optional[_ImportPathHook]
+    beartype_path_hook : Optional[_ImportPathHook]
         Either:
 
         * If the
-          :func:`beartype.claw._importlib.clawimpmain.add_beartype_pathhook`
+          :func:`beartype.claw._importlib.clawimpmain.add_beartype_path_hook`
           function has been previously called at least once under the active
           Python interpreter and the
-          :func:`beartype.claw._importlib.clawimpmain.remove_beartype_pathhook`
+          :func:`beartype.claw._importlib.clawimpmain.remove_beartype_path_hook`
           function has not been called more recently, the **beartype import path
           hook singleton** (i.e., factory closure creating and returning a new
           :class:`importlib.machinery.FileFinder` instance itself creating and
@@ -104,7 +104,7 @@ class BeartypeClawState(object):
     # Slot all instance variables defined on this object to reduce the costs of
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
-        'beartype_pathhook',
+        'beartype_path_hook',
         'module_name_to_beartype_conf',
         'node_scope_beforelist_global',
         'packages_trie_blacklist',
@@ -114,7 +114,7 @@ class BeartypeClawState(object):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        beartype_pathhook: Optional[_ImportPathHook]
+        beartype_path_hook: Optional[_ImportPathHook]
         module_name_to_beartype_conf: ModuleNameToBeartypeConf
         node_scope_beforelist_global: BeartypeNodeScopeBeforelist
         packages_trie_blacklist: PackagesTrieBlacklist
@@ -125,7 +125,7 @@ class BeartypeClawState(object):
 
         # Nullify the proper subset of instance variables requiring
         # nullification *BEFORE* reinitializing this singleton.
-        self.beartype_pathhook: Optional[_ImportPathHook] = None
+        self.beartype_path_hook: Optional[_ImportPathHook] = None
 
         # Reinitialize this singleton safely.
         self._reinit_safe()
@@ -165,7 +165,7 @@ class BeartypeClawState(object):
 
         # Avoid circular import dependencies.
         from beartype.claw._importlib.clawimpmain import (
-            remove_beartype_pathhook)
+            remove_beartype_path_hook)
 
         # Perform the subset of reinitialization that is safe to be called from
         # the __init__() method.
@@ -177,7 +177,7 @@ class BeartypeClawState(object):
         # Remove our beartype import path hook if this path hook has already
         # been added (e.g., by a prior call to an import hook) *OR* silently
         # reduce to a noop otherwise.
-        remove_beartype_pathhook()
+        remove_beartype_path_hook()
 
     # ..................{ COPIERS                            }..................
     #FIXME: Unit test us up, please.
@@ -206,7 +206,7 @@ class BeartypeClawState(object):
     #         self.packages_trie_whitelist.copy_deep())
     #
     #     # Shallowly copy *ALL* remaining instance variables.
-    #     claw_state_copy.beartype_pathhook = self.beartype_pathhook
+    #     claw_state_copy.beartype_path_hook = self.beartype_path_hook
     #
     #     # Return this deep copy.
     #     return claw_state_copy
@@ -216,7 +216,7 @@ class BeartypeClawState(object):
 
         return '\n'.join((
             f'{self.__class__.__name__}(\n',
-            f'    beartype_pathhook={repr(self.beartype_pathhook)},\n',
+            f'    beartype_path_hook={repr(self.beartype_path_hook)},\n',
             f'    module_name_to_beartype_conf={repr(self.module_name_to_beartype_conf)},\n',
             f'    node_scope_beforelist_global={repr(self.node_scope_beforelist_global)},\n',
             f'    packages_trie_blacklist={repr(self.packages_trie_blacklist)},\n',

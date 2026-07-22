@@ -1457,8 +1457,7 @@ class BeartypeClawImportConfException(BeartypeClawImportException):
 # ....................{ API ~ claw : import                }....................
 class BeartypeClawImportlibException(BeartypeClawException):
     '''
-    Abstract base class of all **beartype import hook** :mod:`importlib`
-    **exceptions.**
+    **Beartype import hook** :mod:`importlib` **exception.**
 
     This exception is raised at :mod:`beartype.claw` **import hook
     registration time** (i.e., when a third-party package or module calls a
@@ -1764,7 +1763,7 @@ class _BeartypeClawImportHookActive(BeartypeClawAstException):
     class responsible for importing *all* packages and modules registered for
     type-checking by a prior call to a beartype import hook) on detecting an
     attempt by the **beartype import path hook adder** (i.e., private
-    :func:`beartype.claw._importlib.clawimpmain.add_beartype_pathhook` function
+    :func:`beartype.claw._importlib.clawimpmain.add_beartype_path_hook` function
     responsible for adding a :mod:`beartype`-specific path hook to the standard
     :mod:`sys.path_hooks` list) to check whether that path hook is now either
     successfully active *or* unsuccessfully inactive (e.g., due to a competing

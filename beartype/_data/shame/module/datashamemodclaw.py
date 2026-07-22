@@ -101,7 +101,7 @@ def _init() -> None:
     #           ...<5 lines>...
     #           )
     #         File "/home/leycec/py/beartype/beartype/claw/_package/clawpkgtrie.py", line 17, in <module>
-    #           from beartype.claw._importlib.clawimpmain import remove_beartype_pathhook
+    #           from beartype.claw._importlib.clawimpmain import remove_beartype_path_hook
     #         File "/home/leycec/py/beartype/beartype/claw/_importlib/clawimpmain.py", line 18, in <module>
     #           from beartype.claw._importlib._clawimpfileloader import BeartypeSourceFileLoader
     #         File "/home/leycec/py/beartype/beartype/claw/_importlib/_clawimpload.py", line 18, in <module>

@@ -141,9 +141,6 @@ def _pyright_package(project_dirname: str, package_name: str) -> None:
         Unqualified basename of the Python package or module (excluding trailing
         ``.py`` filetype in the case of a module) directly residing in this
         top-level directory to be run against `pyright`.
-    monkeypatch : MonkeyPatch
-        :mod:`pytest` fixture allowing various state associated with the active
-        Python process to be temporarily changed for the duration of this test.
     '''
     assert isinstance(project_dirname, str), (
         f'{repr(project_dirname)} not string.')

@@ -327,7 +327,7 @@ def import_module_attr(
     return module_attr
 
 
-#FIXME: Fix up all tests of this function, please.
+#FIXME: Fix up all tests of this function, please. *sigh*
 def import_module_attr_or_sentinel(
     # Mandatory parameters.
     attr_name: str,
