@@ -15,8 +15,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeClawImportlibFileFinderPathHookInactiveWarning
+from beartype.roar._roarexc import (
+    _BeartypeClawImportlibIsPathHookActiveException)
 from beartype.claw._importlib._clawimpfilefinder import (
     make_beartype_file_finder_path_hook_index)
+from beartype._metaverse import URL_ISSUES
+from beartype._util.error.utilerrwarn import issue_warning
 from importlib import invalidate_caches
 from sys import (
     path_hooks,
@@ -243,6 +248,109 @@ def remove_beartype_path_hook() -> None:
 
     # Lastly, clear *ALL* import path hook caches for safety.
     _clear_importlib_caches()
+
+# ....................{ PRIVATE ~ warners                  }....................
+#FIXME: Unit test us up, please. *sigh*
+#FIXME: Docstring us up, please. *sigh*
+#FIXME: *CRITICAL*. Only issue this warning *ONCE* per active Python process.
+#Note that we've already done this sort of warning caching elsewhere. Grep the
+#codebase for 'issue_warning\(' to decide where. The point is, though, that we
+#should just automate this at this point. Specifically:
+#* Generalize issue_warning() to accept this new optional parameter:
+#      is_oneshot: bool = False,
+#* Pass "is_oneshot=True" below to that call of issue_warning().
+#* Improve issue_warning() as follows:
+#  * Define a private "_issue_warning_types_oneshot: set[BeartypeWarning]"
+#    global in the same submodule.
+#  * If "is_oneshot", then:
+#    * Trivially avoid concurrency issues by properly locking. *IMPORTANT*. If
+#      we can trivially avoid concurrency issues, we should. *shrug*
+#    * Cache into that "_issue_warning_types_oneshot" set. Trivial, yo. \o/
+#* Pass "is_oneshot=True" throughout the codebase. Honestly, most calls of
+#  issue_warning() should probably be passing that.
+def _warn_if_beartype_pathhook_inactive() -> None:
+
+    #FIXME: Comment us up, please. *sigh*
+    try:
+        from beartype.claw._importlib import _clawimpsmoke
+    except _BeartypeClawImportlibIsPathHookActiveException:
+        return
+
+    #FIXME: Define these strings properly as suggested below, please. *sigh*
+    meta_path_items_nonstandard = ''
+    path_hooks_items_nonstandard = ''
+
+    #FIXME: Dynamically improve this message as follows:
+    #* Iteratively construct an ordered list of the names all
+    #  third-party "sys.meta_path" hooks that are currently active.
+    #  Standard "sys.meta_path" hooks should be ignored, of course.
+    #* Iteratively construct a *SEPARATE* list of the names all
+    #  third-party "sys.path_hooks" that are currently active
+    #  *AND* precede our beartype-specific "sys.path_hooks" hook.
+    #  Standard "sys.path_hooks" should be ignored, of course.
+    #* Define a new join_bulleted() string-joining function in the
+    #  existing "beartype._util.text.utiltextjoin" submodule. This
+    #  function should precede each of the passed strings by the
+    #  prefix "\n* ", probably by trivially deferring to the existing
+    #  join_delimited() joiner. *shrug*
+    #* For each of these lists that is non-empty, coerce these
+    #  non-empty lists into a string by deferring to that new
+    #  join_bulleted() joiner.
+    #* Define the "meta_path_items_nonstandard" and
+    #  "path_hooks_items_nonstandard" local variables interpolated
+    #  into the message below accordingly, please. What a huge job!
+    warning_message = (
+        f'"beartype.claw"-based runtime type-checking erroneously disabled. '
+        f'Beartype is unable to automatically runtime type-check any '
+        f'packages or modules under the active Python app stack. '
+        f'Competing third-party packages or modules in this stack already '
+        f'registered incompatible import hooks silently overriding '
+        f'"beartype.claw" import hooks (e.g., beartype_this_package()). '
+        f'Competing high-level "sys.meta_path" hooks include:\n'
+        f'{meta_path_items_nonstandard}\n'
+        f'Competing low-level "sys.path_hooks" hooks include:\n'
+        f'{path_hooks_items_nonstandard}\n'
+        f"This is mostly Python's fault. "
+        f'Python lacks standards governing import hook interoperability. '
+        f'In the absence of these standards, '
+        f'Python import hooks are currently an '
+        f'unhinged Wild West feeding frenzy of '
+        f'competing third-party import hooks that love to eat one other. '
+        f"In short, Python's standard \"importlib\" machinery sucks. "
+        f'You now have three sucky options. Either:\n'
+        f'* (Recommended) Contact the authors of the competing '
+        f'third-party packages or modules listed above. '
+        f'Kindly request they improve the compatibility of '
+        f'their import hooks with other import hooks registered by '
+        f'other packages and modules -- especially '
+        f'those registered by the "beartype.claw" subpackage. '
+        f'Please ping @leycec '
+        f'(the principal @beartype maintainer) on all relevant '
+        f'issues so that he can nod respectfully and pretend to '
+        f'render assistance.\n'
+        f'* (Not recommended) Complain to us about '
+        f"other people's problems on the @beartype issue tracker at:\n"
+        f'\t{URL_ISSUES}\n'
+        f'  This is usually useless. '
+        f'There is probably nothing @beartype itself can do. '
+        f'We have no meaningful control or leverage over '
+        f'competing third-party packages or modules. '
+        f'We cannot force others to improve the interoperability '
+        f'of the incompatible import hooks they themselves define. '
+        f'We can only heckle them with animated GIFs. '
+        f'Do this only if you want us to heckle somebody '
+        f'with animated GIFs.\n'
+        f'* (Desperation move) Globally silence this warning by '
+        f'adding to your top-level "{{muh_package}}.__init__" submodule:\n'
+        f'\tfrom beartype.roar import BeartypeClawImportlibFileFinderPathHookInactiveWarning\n'
+        f'\tfrom warnings import filterwarnings\n'
+        f'\tfilterwarnings(action="ignore", category=BeartypeClawImportlibFileFinderPathHookInactiveWarning)\n'
+    )
+
+    issue_warning(
+        warning_cls=BeartypeClawImportlibFileFinderPathHookInactiveWarning,
+        message=warning_message,
+    )
 
 # ....................{ PRIVATE ~ cachers                  }....................
 #FIXME: Unit test us up, please.

@@ -23,7 +23,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeClawImportlibException,
-    BeartypeClawImportlibWarning,
+    BeartypeClawImportlibStandardFileFinderPathHookNotFoundWarning,
 )
 from beartype.claw._importlib._clawimpfileloader import BeartypeSourceFileLoader
 from beartype._util.func.utilfuncscope import get_func_freevars
@@ -220,7 +220,8 @@ def make_beartype_file_finder_path_hook_index() -> FileFinderPathHookAndIndex:
 
             # Issue a warning to notify the caller of this calamity! *OHNOES*.
             issue_warning(
-                warning_cls=BeartypeClawImportlibWarning,
+                warning_cls=(
+                    BeartypeClawImportlibStandardFileFinderPathHookNotFoundWarning),
                 message=(
                     'Standard import file finder path hook not found '
                     '(i.e., importlib.machinery.FileFinder.path_hook() closure '
@@ -235,7 +236,7 @@ def make_beartype_file_finder_path_hook_index() -> FileFinderPathHookAndIndex:
                     'unexpectedly exotic third-party interpreter '
                     '(rather than CPython).\n'
                     'The Bear feels sadness yet also deep suspicion that you '
-                    'are wading in dark waters, where the Bear dares not swim.'
+                    'are wading in dark waters, where even Bear dare not swim.'
                 )
             )
 

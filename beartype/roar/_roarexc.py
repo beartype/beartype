@@ -1457,7 +1457,7 @@ class BeartypeClawImportConfException(BeartypeClawImportException):
 # ....................{ API ~ claw : import                }....................
 class BeartypeClawImportlibException(BeartypeClawException):
     '''
-    **Beartype import hook** :mod:`importlib` **exception.**
+    **Beartype** :mod:`importlib` **import hook exception.**
 
     This exception is raised at :mod:`beartype.claw` **import hook
     registration time** (i.e., when a third-party package or module calls a
@@ -1753,9 +1753,10 @@ class _BeartypeClawAstNodeScopesException(BeartypeClawAstException):
     pass
 
 
-class _BeartypeClawImportHookActive(BeartypeClawAstException):
+class _BeartypeClawImportlibIsPathHookActiveException(
+    BeartypeClawImportlibException):
     '''
-    **Beartype import hook active exception.**
+    **Beartype** :mod:`importlib` **import path hook active exception.**
 
     This exception is raised at :mod:`beartype.claw` import hook time from the
     **beartype import hook source file loader** (i.e., private

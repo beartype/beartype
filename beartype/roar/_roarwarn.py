@@ -81,10 +81,48 @@ class BeartypeClawDecorWarning(BeartypeClawWarning):
 
     pass
 
-
+# ....................{ CLAW ~ importlib                   }....................
 class BeartypeClawImportlibWarning(BeartypeClawWarning):
     '''
-    **Beartype import hook** :mod:`importlib` **warning.**
+    Abstract base class of all **beartype import hook** :mod:`importlib`
+    **warnings.**
+
+    Instances of subclasses of this warning is issued at :mod:`beartype.claw`
+    **import hook registration time** (i.e., when a third-party package or
+    module calls a public import hook published by the :mod:`beartype.claw`
+    subpackage) if the standard :mod:`importlib` machinery required to implement
+    that import hook has been unexpectedly transformed, malformed, or otherwise
+    damaged in a manner incompatible with :mod:`beartype` (e.g., due to
+    competing import hooks installed by another previously run third-party
+    package or module).
+    '''
+
+    pass
+
+
+#FIXME: Docstring us up properly, please. *sigh*
+class BeartypeClawImportlibFileFinderPathHookInactiveWarning(
+    BeartypeClawImportlibWarning):
+    '''
+    **Beartype import hook** :mod:`importlib` **warnings.**
+
+    This warning is issued at :mod:`beartype.claw` **import hook registration
+    time** (i.e., when a third-party package or module calls a public import
+    hook published by the :mod:`beartype.claw` subpackage) if the standard
+    :mod:`importlib` machinery required to implement that import hook has been
+    unexpectedly transformed, malformed, or otherwise damaged in a manner
+    incompatible with :mod:`beartype` (e.g., due to competing import hooks
+    installed by another previously run third-party package or module).
+    '''
+
+    pass
+
+
+#FIXME: Docstring us up properly, please. *sigh*
+class BeartypeClawImportlibStandardFileFinderPathHookNotFoundWarning(
+    BeartypeClawImportlibWarning):
+    '''
+    **Beartype import hook** :mod:`importlib` **warnings.**
 
     This warning is issued at :mod:`beartype.claw` **import hook registration
     time** (i.e., when a third-party package or module calls a public import
