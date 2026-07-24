@@ -68,7 +68,6 @@ filetype into imported in-memory module objects).
 '''
 
 # ....................{ FACTORIES                          }....................
-#FIXME: Call us up elsewhere, please!
 def make_beartype_file_finder_path_hook_index() -> FileFinderPathHookAndIndex:
     '''
     2-tuple ``(path_hook, path_hook_index)`` such that ``path_hook`` is the
@@ -336,7 +335,7 @@ def _get_file_finder_path_hook_loader_details(
 def _get_standard_file_finder_path_hook_basename_scoped() -> str:
     '''
     **Lexically scoped basename** (i.e., ``.``-delimited string unambiguously
-    identifying all lexical scopes encapsulating) the **standard file finder
+    identifying all lexical scopes encapsulating) of the **standard file finder
     path hook** (i.e., closure created and returned by the call to the
     :meth:`importlib.machinery.FileFinder.path_hook` method in the standard
     :mod:`importlib._bootstrap_external` module on Python startup), equivalent

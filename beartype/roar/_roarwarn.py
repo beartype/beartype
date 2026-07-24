@@ -100,37 +100,56 @@ class BeartypeClawImportlibWarning(BeartypeClawWarning):
     pass
 
 
-#FIXME: Docstring us up properly, please. *sigh*
 class BeartypeClawImportlibFileFinderPathHookInactiveWarning(
     BeartypeClawImportlibWarning):
     '''
-    **Beartype import hook** :mod:`importlib` **warnings.**
+    **Beartype-specific file finder path hook inactive warning.**
 
     This warning is issued at :mod:`beartype.claw` **import hook registration
     time** (i.e., when a third-party package or module calls a public import
-    hook published by the :mod:`beartype.claw` subpackage) if the standard
-    :mod:`importlib` machinery required to implement that import hook has been
-    unexpectedly transformed, malformed, or otherwise damaged in a manner
-    incompatible with :mod:`beartype` (e.g., due to competing import hooks
-    installed by another previously run third-party package or module).
+    hook published by the :mod:`beartype.claw` subpackage) if the
+    **beartype-specific file finder path hook** (i.e., closure created and
+    returned by calling the :meth:`importlib.machinery.FileFinder.path_hook`
+    static method with beartype-specific file finder path hook loader details
+    permuted from the standard "default" file finder path hook loader details)
+    is inactive despite being added to the global :obj:`sys.path_hooks` list,
+    typically due to a third-party package or module injecting a competing
+    import hook into an earlier index of either that list *or* the higher-level
+    global :obj:`sys.meta_path` list.
+
+    This warning implies *all* :mod:`beartype.claw` import hooks registered by
+    *all* third-party packages and modules to be inactive, effectively disabling
+    *all* automated runtime type-checking for the duration of the current Python
+    process. Clearly, this connotes a significant QA failure. In theory, this
+    non-fatal warning should instead be promoted into a fatal exception. In
+    practice, doing so would break most of the Python ecosystem. Why? Because
+    the beartype-specific file finder path hook has been intentionally designed
+    so as to deprioritize itself in favour of competing import hooks authored by
+    third-party packages and modules. Why? Because many of those import hooks
+    are mission-critical. PyInstaller-specific import hooks, for example, load
+    imported modules bundled inside PyInstaller-frozen apps. While unavoidable,
+    this permissiveness is a double-edged sword. Deprioritizing
+    :mod:`beartype.claw` import hooks does maximize compatibility and
+    interoperability across the Python ecosystem -- but also the likelihood of
+    :mod:`beartype.claw` import hooks being inactivated and thus ignored.
     '''
 
     pass
 
 
-#FIXME: Docstring us up properly, please. *sigh*
 class BeartypeClawImportlibStandardFileFinderPathHookNotFoundWarning(
     BeartypeClawImportlibWarning):
     '''
-    **Beartype import hook** :mod:`importlib` **warnings.**
+    **Beartype-agnostic file finder path hook not found warning.**
 
     This warning is issued at :mod:`beartype.claw` **import hook registration
     time** (i.e., when a third-party package or module calls a public import
-    hook published by the :mod:`beartype.claw` subpackage) if the standard
-    :mod:`importlib` machinery required to implement that import hook has been
-    unexpectedly transformed, malformed, or otherwise damaged in a manner
-    incompatible with :mod:`beartype` (e.g., due to competing import hooks
-    installed by another previously run third-party package or module).
+    hook published by the :mod:`beartype.claw` subpackage) if the global
+    :obj:`sys.path_hooks` list no longer contains the **standard file finder
+    path hook** (i.e., closure created and returned by the call to the
+    :meth:`importlib.machinery.FileFinder.path_hook` method in the standard
+    :mod:`importlib._bootstrap_external` module on Python startup), typically
+    due to a third-party package or module removing that hook from that list.
     '''
 
     pass
