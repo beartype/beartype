@@ -18,26 +18,72 @@ from typing import (
 )
 
 # ....................{ GETTERS ~ name                     }....................
-def get_object_name(obj: Any) -> str:
+def get_object_name(
+    # Mandatory parameters.
+    obj: Any,
+
+    # Optional parameters.
+    is_fallback_type_name: bool = False,
+) -> str:
     '''
-    **Fully-qualified name** (i.e., ``.``-delimited string unambiguously
-    identifying) of the passed object if this object defines either the
-    ``__qualname__`` or ``__name__`` dunder attributes *or* raise an exception
-    otherwise (i.e., if this object defines *no* such attributes).
+    **Fully-qualified name** (i.e., ``.``-delimited unambiguously identifying
+    string) of the passed object if this object defines either the
+    ``__qualname__`` or ``__name__`` dunder attributes, fully-qualified name of
+    the type of this object if the passed ``is_fallback_type_name`` parameter is
+    :data:`True`, *or* raise an exception otherwise (i.e., if this object
+    defines *no* such dunder attributes and ``is_fallback_type_name`` is
+    :data:`False`).
 
-    Specifically, this name comprises (in order):
+    This getter specifically returns a string comprising (in order):
 
-    #. If this object is transitively declared by a module, the absolute name
-       of that module.
-    #. If this object is transitively declared by another object (e.g., class,
-       callable) and thus nested in that object, the unqualified basenames of
-       all parent objects transitively declaring this object in that module.
-    #. Unqualified basename of this object.
+    * If this object is a callable or class:
+
+      #. If this object is transitively declared by a module, the absolute name
+         of that module.
+      #. If this object is transitively declared by another object (e.g., class,
+         callable) and thus nested in that object, the unqualified basenames of
+         all parent objects transitively declaring this object in that module.
+      #. Lexically scoped basename of this object (i.e., whichever of the
+         ``__qualname__`` or ``__name__`` dunder attributes is defined on this
+         object).
+
+    * Else if the passed ``is_fallback_type_name`` parameter is :data:`True`:
+
+      #. If the type of this object is transitively declared by a module, the
+         absolute name of that module.
+      #. If the type of this object is transitively declared by another object
+         (e.g., class, callable) and thus nested in that object, the unqualified
+         basenames of all parent objects transitively declaring this type in
+         that module.
+      #. Lexically scoped basename of the type of this object.
+
+    * Else, raise an exception.
+
+    Caveats
+    -------
+    **This getter performs expensive string concatenation in the common case**
+    in which this object is lexically defined inside a module. This getter
+    should thus either be called at most once per object *or* effectively
+    memoized by all higher-level callables calling this getter.
 
     Parameters
     ----------
     obj : object
         Object to be inspected.
+    is_fallback_type_name : bool, default: False
+        :data:`True` only if this getter falls back to returning the
+        fully-qualified name of the type of the passed object if this object is
+        neither a callable or class. Doing so improves the generality of this
+        getter and is thus suitable for general-purpose use cases in which the
+        caller *cannot* guarantee this object to either be a callable or class.
+        Specifically:
+
+        * If :data:`True`, this getter is guaranteed to *never* raise an
+          exception (regardless of the type of this object).
+        * If :data:`False`, this getter is guaranteed to effectively *always*
+          raise an exception if this object is neither a callable nor class.
+
+        Defaults to :data:`False` for strictness.
 
     Returns
     -------
@@ -47,41 +93,48 @@ def get_object_name(obj: Any) -> str:
     Raises
     ------
     _BeartypeUtilObjectNameException
-        If this object defines neither ``__qualname__`` *nor* ``__name__``
-        dunder attributes.
+        If ``is_fallback_type_name`` is :data:`False` *and* this object defines
+        neither the ``__qualname__`` nor ``__name__`` dunder attributes.
     '''
+    assert isinstance(is_fallback_type_name, bool), (
+        f'{repr(is_fallback_type_name)} not boolean.')
 
     # Avoid circular import dependencies.
     from beartype._cave._cavefast import CallableOrClassTypes
-    from beartype._util.module.utilmodget import (
-        get_object_module_name_or_none,
-        get_object_type_module_name_or_none,
-    )
+    from beartype._util.module.utilmodget import get_object_module_name_or_none
+
+    # If...
+    if (
+        # The caller requests that this getter fall back to returning the
+        # fully-qualified name of the type of the passed object when this object
+        # is neither a callable nor class *AND*...
+        is_fallback_type_name and
+        # This object is indeed neither a callable nor class...
+        not isinstance(obj, CallableOrClassTypes)
+    ):
+        # Reduce this object to the type of this object, guaranteeing that the
+        # lower-level get_object_basename_scoped() getter called below raises
+        # *NO* exception in this common case.
+        obj = type(obj)
+    # Else, this object is either a callable or class.
 
     # Lexically scoped name of this object excluding this module name if this
     # object is named *OR* raise an exception otherwise.
-    object_scopes_name = get_object_basename_scoped(obj)
+    object_basename_scoped = get_object_basename_scoped(obj)
 
     # Fully-qualified name of the module declaring this object if this object
-    # is declared by a module *OR* "None" otherwise, specifically defined as:
-    # * If this object is either a callable or class, the fully-qualified name
-    #   of the module declaring this object.
-    # * Else, the fully-qualified name of the module declaring the class of this
-    #   object.
-    object_module_name = (
-        get_object_module_name_or_none(obj)
-        if isinstance(obj, CallableOrClassTypes) else
-        get_object_type_module_name_or_none(obj)
-    )
+    # is defined by a module *OR* "None" otherwise (e.g., if this object is
+    # defined dynamically in-memory outside any module).
+    object_module_name = get_object_module_name_or_none(obj)
 
     # Return either...
     return (
-        # If this module name exists, "."-delimited concatenation of this module
-        # and object name;
-        f'{object_module_name}.{object_scopes_name}'
+        # If this module name exists, the "."-delimited concatenation of this
+        # module and lexically scoped name;
+        f'{object_module_name}.{object_basename_scoped}'
         if object_module_name is not None else
-        # Else, this object name as is.
-        object_scopes_name
+        # Else, this lexically scoped name as is.
+        object_basename_scoped
     )
 
 # ....................{ GETTERS ~ basename : qualified     }....................
