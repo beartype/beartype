@@ -25,7 +25,7 @@ from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
-from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
+from beartype._util.text.utiltextjoin import join_types_commaed_or
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_pith
 
@@ -268,7 +268,7 @@ def find_cause_instance_types_tuple(cause: HintTreeError) -> HintTreeError:
     # this case, this pith violates this tuple union.
     else:
         # Machine-readable representation of this tuple union.
-        hint_repr = join_delimited_disjunction_types(
+        hint_repr = join_types_commaed_or(
             types=hint, is_color=cause.conf.is_color)
 
         # Output cause to be returned, permuted from this input cause such that

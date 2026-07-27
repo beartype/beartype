@@ -15,7 +15,7 @@ from beartype._data.cls.datacls import TYPES_PEP586_ARG
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.hint.sign.datahintsigns import HintSignLiteral
-from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
+from beartype._util.text.utiltextjoin import join_types_commaed_or
 
 # ....................{ VALIDATORS                         }....................
 def die_unless_hint_pep586(
@@ -136,7 +136,7 @@ def die_unless_hint_pep586(
         if not isinstance(hint_literal, TYPES_PEP586_ARG):
             # Human-readable concatenation of the types of all valid literal
             # arguments, delimited by commas and/or "or".
-            hint_literal_types = join_delimited_disjunction_types(
+            hint_literal_types = join_types_commaed_or(
                 TYPES_PEP586_ARG)
 
             # Raise an exception.

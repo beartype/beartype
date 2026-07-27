@@ -17,25 +17,25 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                             }....................
-def test_join_delimited() -> None:
+def test_join_strings_delimited() -> None:
     '''
-    Test the :func:`beartype._util.text.utiltextjoin.join_delimited` function.
+    Test the :func:`beartype._util.text.utiltextjoin.join_strings_delimited` function.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.text.utiltextjoin import join_delimited
+    from beartype._util.text.utiltextjoin import join_strings_delimited
 
     # Assert that joining a sequence of no strings returns the empty string.
-    assert join_delimited(
-        strs=(),
+    assert join_strings_delimited(
+        strings=(),
         delimiter_if_two='In Xanadu did Kubla Khan',
         delimiter_if_three_or_more_nonlast='A stately pleasure-dome decree:',
         delimiter_if_three_or_more_last='Where Alph, the sacred river, ran',
     ) == ''
 
     # Assert that joining a sequence of one string returns that string.
-    assert join_delimited(
-        strs=('Through caverns measureless to man',),
+    assert join_strings_delimited(
+        strings=('Through caverns measureless to man',),
         delimiter_if_two='Down to a sunless sea.',
         delimiter_if_three_or_more_nonlast=(
             'So twice five miles of fertile ground'),
@@ -45,8 +45,8 @@ def test_join_delimited() -> None:
 
     # Assert that joining a sequence of two strings returns these strings
     # conditionally delimited by the appropriate delimiter.
-    assert join_delimited(
-        strs=(
+    assert join_strings_delimited(
+        strings=(
             'And there were gardens bright with sinuous rills,',
             'Where blossomed many an incense-bearing tree;',
         ),
@@ -63,8 +63,8 @@ def test_join_delimited() -> None:
 
     # Assert that joining a sequence of three strings returns these strings
     # conditionally delimited by the appropriate delimiters.
-    assert join_delimited(
-        strs=(
+    assert join_strings_delimited(
+        strings=(
             'Down the green hill athwart a cedarn cover!',
             'A savage place! as holy and enchanted',
             'As e’er beneath a waning moon was haunted',
@@ -83,18 +83,18 @@ def test_join_delimited() -> None:
     )
 
 
-def test_join_delimited_disjunction() -> None:
+def test_join_strings_commaed_or() -> None:
     '''
     Test the
-    :func:`beartype._util.text.utiltextjoin.join_delimited_disjunction`
+    :func:`beartype._util.text.utiltextjoin.join_strings_commaed_or`
     function.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.text.utiltextjoin import join_delimited_disjunction
+    from beartype._util.text.utiltextjoin import join_strings_commaed_or
 
     # Assert that joining a sequence of no strings returns the empty string.
-    assert join_delimited_disjunction((
+    assert join_strings_commaed_or((
         'A mighty fountain momently was forced:',
         'Amid whose swift half-intermitted burst',
         'Huge fragments vaulted like rebounding hail,',

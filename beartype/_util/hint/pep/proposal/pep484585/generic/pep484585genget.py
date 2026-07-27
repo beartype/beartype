@@ -32,7 +32,7 @@ from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_bases_unerased,
     is_hint_pep585_generic,
 )
-from beartype._util.text.utiltextjoin import join_delimited_disjunction
+from beartype._util.text.utiltextjoin import join_strings_commaed_or
 from typing import Optional
 
 # ....................{ GETTERS ~ base                     }....................
@@ -609,8 +609,8 @@ def get_hint_pep484585_generic_base_in_module_first(
     # ....................{ RAISE                          }....................
     # Human-readable double-quoted disjunction of all passed module names (e.g.,
     # '"ibix", "pandas", or "polars"').
-    module_names_quoted = join_delimited_disjunction(
-        strs=module_names, is_double_quoted=True)
+    module_names_quoted = join_strings_commaed_or(
+        strings=module_names, is_double_quoted=True)
 
     # Raise an exception of the passed type.
     raise exception_cls(

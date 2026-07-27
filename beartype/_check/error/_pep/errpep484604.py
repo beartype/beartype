@@ -20,7 +20,7 @@ from beartype._data.hint.sign.datahintsignset import HINT_SIGNS_UNION
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
+from beartype._util.text.utiltextjoin import join_types_commaed_or
 from beartype._util.text.utiltextmunge import (
     suffix_str_unless_suffixed,
     uppercase_str_char_first,
@@ -174,7 +174,7 @@ def find_cause_pep484604_union(cause: HintTreeError) -> HintTreeError:
     if hint_types_violated:
         # Human-readable comma-delimited disjunction of the names of these
         # classes (e.g., "bool, float, int, or str").
-        cause_types_unsatisfied = join_delimited_disjunction_types(
+        cause_types_unsatisfied = join_types_commaed_or(
             types=hint_types_violated, is_color=cause.conf.is_color)
 
         # Prepend this cause as a discrete bullet-prefixed line.

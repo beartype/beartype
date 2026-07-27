@@ -25,7 +25,7 @@ from beartype._data.os.dataosshell import (
 )
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.os.utilosshell import get_shell_var_value_or_none
-from beartype._util.text.utiltextjoin import join_delimited_disjunction
+from beartype._util.text.utiltextjoin import join_strings_commaed_or
 
 # ....................{ GETTERS                            }....................
 def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: ignore
@@ -83,8 +83,8 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: 
             # Human-readable string listing the names of all valid string values
             # of this environment variable, double-quoting each such name for
             # additional readability.
-            IS_COLOR_SHELL_VAR_VALUES = join_delimited_disjunction(
-                strs=SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ.keys(),
+            IS_COLOR_SHELL_VAR_VALUES = join_strings_commaed_or(
+                strings=SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ.keys(),
                 is_double_quoted=True,
             )
 

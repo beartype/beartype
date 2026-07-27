@@ -102,8 +102,10 @@ def add_beartype_path_hook() -> None:
     #          #* Define a new join_bulleted() string-joining function in the
     #          #  existing "beartype._util.text.utiltextjoin" submodule. This
     #          #  function should precede each of the passed strings by the
-    #          #  prefix "\n* ", probably by trivially deferring to the existing
-    #          #  join_delimited() joiner. *shrug*
+    #          #  prefix "\n* ". Sadly, we'll need to manually code this up. We
+    #          #  can't simply defer to the existing join_strings_delimited()
+    #          #  joiner, as that fails to handle the common case of prefixing a
+    #          #  single. *shrug*
     #          #* For each of these lists that is non-empty, coerce these
     #          #  non-empty lists into a string by deferring to that new
     #          #  join_bulleted() joiner.
@@ -368,7 +370,7 @@ def _warn_if_beartype_pathhook_inactive() -> None:
     #  existing "beartype._util.text.utiltextjoin" submodule. This
     #  function should precede each of the passed strings by the
     #  prefix "\n* ", probably by trivially deferring to the existing
-    #  join_delimited() joiner. *shrug*
+    #  join_strings_delimited() joiner. *shrug*
     #* For each of these lists that is non-empty, coerce these
     #  non-empty lists into a string by deferring to that new
     #  join_bulleted() joiner.

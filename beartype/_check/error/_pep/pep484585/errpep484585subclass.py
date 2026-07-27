@@ -17,7 +17,7 @@ from beartype._check.pep.pep484585.checkpep484585subclass import (
     get_hint_pep484585_subclass_hint_child_sanified)
 from beartype._data.hint.sign.datahintsigns import HintSignType
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
+from beartype._util.text.utiltextjoin import join_types_commaed_or
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_pith
 
@@ -81,7 +81,7 @@ def find_cause_pep484585_subclass(cause: HintTreeError) -> HintTreeError:
         if isinstance(hint_child, type) else
         # Else, this superclass is a tuple of types. In this case, a
         # description of these types...
-        join_delimited_disjunction_types(
+        join_types_commaed_or(
             types=hint_child, is_color=cause.conf.is_color)
     )
 
