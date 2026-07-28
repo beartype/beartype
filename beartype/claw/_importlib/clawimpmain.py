@@ -20,10 +20,18 @@ from beartype.roar._roarexc import (
     _BeartypeClawImportlibIsPathHookActiveException)
 from beartype.claw._importlib._clawimpfilefinder import (
     make_beartype_file_finder_path_hook_index)
+from beartype._data.claw.dataclawmagic import (
+    BEARTYPE_CLAW_FILE_FINDER_PATH_HOOK_ATTR_NAME,
+    STANDARD_META_PATH_ITEM_NAMES,
+    STANDARD_PATH_HOOKS_ITEM_NAMES,
+)
 from beartype._metaverse import URL_ISSUES
 from beartype._util.error.utilerrwarn import issue_warning
+from beartype._util.text.utiltextjoin import join_strings_bulleted_unnumbered
+from beartype._util.utilobjget import get_object_name
 from importlib import invalidate_caches
 from sys import (
+    meta_path,
     path_hooks,
     path_importer_cache,
 )
@@ -66,103 +74,7 @@ def add_beartype_path_hook() -> None:
     # ....................{ PREAMBLE                       }....................
     #FIXME: Attempt to import "_clawimpsmoke" in exactly two places below,
     #please! To do so, let's:
-    #* Define a new private _warn_if_beartype_pathhook_inactive() warner below.
-    #  Note that that function intentionally issues non-fatal warnings rather
-    #  than raising fatal exceptions. Why? Because "beartype.claw" import hooks
-    #  are *NOT* the most import hooks in the Python ecosystem. They're nice, to
-    #  be sure. Runtime type-checking is valuable -- but it's not
-    #  *MISSION-CRITICAL* per say. If it doesn't work, that's a shame -- but
-    #  it's hardly worth destroying the world over. Consider the following
-    #  comment (harvested from below):
-    #     "Consider PyInstaller, for example. PyInstaller-bundled executable
-    #     binary files necessarily prepend the PyInstaller-specific
-    #     "PyiFrozenFinder" finder to the front of this list as well.
-    #     PyInstaller-bundled executables bundling one or more third-party
-    #     modules registering one or more "beartype.claw" import hooks then
-    #     transitively call this function. Doing so (accidentally) overrode the
-    #     PyInstaller-specific bundled module importation performed by that
-    #     "PyiFrozenFinder" finder, catastrophically preventing all modules
-    #     bundled with those executables from being subsequently imported!"
-    #
-    #  This warner should resemble:
-    #      def _warn_if_beartype_pathhook_inactive() -> None:
-    #          try:
-    #              from beartype.claw._importlib import _clawimpsmoke
-    #          except _BeartypeClawImportHookActive:
-    #              return
-    #
-    #          #FIXME: Dynamically improve this message as follows:
-    #          #* Iteratively construct an ordered list of the names all
-    #          #  third-party "sys.meta_path" hooks that are currently active.
-    #          #  Standard "sys.meta_path" hooks should be ignored, of course.
-    #          #* Iteratively construct a *SEPARATE* list of the names all
-    #          #  third-party "sys.path_hooks" that are currently active
-    #          #  *AND* precede our beartype-specific "sys.path_hooks" hook.
-    #          #  Standard "sys.path_hooks" should be ignored, of course.
-    #          #* Define a new join_bulleted() string-joining function in the
-    #          #  existing "beartype._util.text.utiltextjoin" submodule. This
-    #          #  function should precede each of the passed strings by the
-    #          #  prefix "\n* ". Sadly, we'll need to manually code this up. We
-    #          #  can't simply defer to the existing join_strings_delimited()
-    #          #  joiner, as that fails to handle the common case of prefixing a
-    #          #  single. *shrug*
-    #          #* For each of these lists that is non-empty, coerce these
-    #          #  non-empty lists into a string by deferring to that new
-    #          #  join_bulleted() joiner.
-    #          #* Define the "meta_path_external_names" and
-    #          #  "path_hooks_external_names" local variables interpolated
-    #          #  into the message below accordingly, please. What a huge job!
-    #          warning_message = (
-    #              f'"beartype.claw"-based runtime type-checking inactive. '
-    #              f'Competing third-party packages or modules already '
-    #              f'registered their own import hooks incompatibly overriding '
-    #              f'"beartype.claw"-based import hooks responsible for '
-    #              f'performing runtime type-checking. '
-    #              f'Competing high-level "sys.meta_path" hooks include:\n'
-    #              f'{meta_path_external_names}\n'
-    #              f'Competing low-level "sys.path_hooks" hooks include:\n'
-    #              f'{path_hooks_external_names}\n'
-    #              f'Python currently lacks standards governing import hook '
-    #              f'interoperability, thus fostering this ugly breed of '
-    #              f'last-come-first-served dining philosophers feeding frenzy '
-    #              f'between competing third-party import hooks. '
-    #              f'In short, Python's standard "importlib" machinery sucks. '
-    #              f'You now have three sucky options at your disposal. '
-    #              f'Either:\n'
-    #              f'* (Recommended) Contact the authors of the competing
-    #              f'third-party packages or modules listed above. '
-    #              f'Kindly request they improve the compatibility of '
-    #              f'their import hooks with other import hooks registered by '
-    #              f'other packages and modules -- especially '
-    #              f'those registered by the "beartype.claw" subpackage. '
-    #              f'Please ping @leycec '
-    #              f'(the principal @beartype maintainer) on all relevant '
-    #              f'issues so that he can nod respectfully and pretend to '
-    #              f'render assistance.\n'
-    #              f'* (Not recommended) Uselessly complain to us about this on '
-    #              f'the @beartype issue tracker at:\n'
-    #              f'\t{URL_ISSUES}\n'
-    #              f'This is usually useless. '
-    #              f'There is probably nothing @beartype itself can do. '
-    #              f'We have no meaningful control or leverage over '
-    #              f'competing third-party packages or modules. '
-    #              f'We cannot force others to improve the interoperability '
-    #              f'of the incompatible import hooks they themselves define. '
-    #              f'We can only heckle them with animated GIFs. '
-    #              f'Do this only if you want us to heckle somebody '
-    #              f'with animated GIFs.\n'
-    #              f'* (Desperation move) Globally silence this warning by '
-    #              f'adding to your top-level "{{muh_package}}.__init__" submodule:\n'
-    #              f'\tfrom beartype.roar import BeartypeClawImportHookInactiveWarning\n'
-    #              f'\tfrom warnings import filterwarnings\n'
-    #              f'\tfilterwarnings(action="ignore", category=BeartypeClawImportHookInactiveWarning)\n'
-    #          )
-    #
-    #          issue_warning(
-    #              warning_cls=BeartypeClawImportHookInactiveWarning,
-    #              message=warning_message,
-    #          )
-    #* Call that warner:
+    #* Call our newly defined _warn_if_beartype_pathhook_inactive() warner:
     #  * First here like so:
     #        if claw_state.beartype_path_hook is not None:
     #            _warn_if_beartype_pathhook_inactive()
@@ -344,58 +256,124 @@ def _warn_if_beartype_pathhook_inactive() -> None:
     # failed to raise the beartype-specific private exception! "beartype.claw"
     # import hooks *MUST* be inactive. Thus, issue a non-fatal warning below.
 
-    # ....................{ LOCALS                         }....................
-    #FIXME: Define these strings properly as suggested below, please. *sigh*
+    # ....................{ META PATH                      }....................
+    #FIXME: Shift this logic into a new _get_meta_path_hook_custom_names_str()
+    #getter, please! *sigh*
 
-    # "*"-delimited string listing the fully-qualified names of all competing
-    # import hooks on the global "sys.meta_path" list defined by third-party
-    # packages or modules, initialized to the empty string.
-    meta_path_external_names = ''
+    # List of the fully-qualified names of all competing meta path hooks on the
+    # global "sys.meta_path" list defined by third-party packages or modules,
+    # iteratively appended to by the iteration performed below.
+    meta_path_hook_custom_names_list = []
 
-    # "*"-delimited string listing the fully-qualified names of all competing
-    # import hooks on the global "sys.path_hooks" list defined by third-party
-    # packages or modules , initialized to the empty string.
-    path_hooks_external_names = ''
+    # For each meta path hook registered in the global "sys.meta_path" list...
+    for meta_path_hook in meta_path:
+        # Fully-qualified name of either:
+        # * If this meta path hook is either a callable *OR* class, this
+        #   callable or class as is.
+        # * Else (i.e., this meta path hook is neither a callable *NOR* class),
+        #   the type of this meta path hook. This fallback is required. Some
+        #   custom meta path hooks defined by third-party packages and modules
+        #   (e.g., the third-party "distutils"-specific meta path hook) are
+        #   neither callables nor classes but simply arbitrary objects
+        #   technically satisfying the PEP 302-compliant "meta_path" hook API.
+        meta_path_hook_name = get_object_name(
+            obj=meta_path_hook, is_fallback_type_name=True)
+
+        # If fully-qualified name of this meta path hook is *NOT* that of a
+        # standard meta path hook (i.e., predefined by the active Python
+        # interpreter at interpreter startup), append this name to this list.
+        if meta_path_hook_name not in STANDARD_META_PATH_ITEM_NAMES:
+            meta_path_hook_custom_names_list.append(meta_path_hook_name)
+        # Else, fully-qualified name of this meta path hook is that of a
+        # standard meta path hook. In this case, silently ignore this meta path
+        # hook and continue to the next.
+
+    # Bullet point-delimited string listing the fully-qualified names of all
+    # competing meta path hooks on the global "sys.meta_path" list defined by
+    # third-party packages or modules.
+    meta_path_hook_custom_names = join_strings_bulleted_unnumbered(
+        strings=meta_path_hook_custom_names_list, is_double_quoted=True)
+
+    # ....................{ PATH HOOKS                     }....................
+    #FIXME: Shift this logic into a new _get_path_hook_custom_names_str()
+    #getter, please! *sigh*
+
+    # List of the fully-qualified names of all competing path hooks on the
+    # global "sys.path_hooks" list defined by third-party packages or modules,
+    # iteratively appended to by the iteration performed below.
+    path_hook_custom_names_list = []
+
+    # For each path hook registered in the global "sys.path_hooks" list...
+    for path_hook in path_hooks:
+        # Fully-qualified name of either:
+        # * If this path hook is either a callable *OR* class, this callable or
+        #   class as is.
+        # * Else (i.e., this path hook is neither a callable *NOR* class), the
+        #   type of this path hook. See above for further discussion.
+        path_hook_name = get_object_name(
+            obj=path_hook, is_fallback_type_name=True)
+
+        # If fully-qualified name of this path hook is *NOT* that of a standard
+        # path hook (i.e., predefined by the active Python interpreter at
+        # interpreter startup)...
+        if path_hook_name not in STANDARD_PATH_HOOKS_ITEM_NAMES:
+            # If this path hook defines the beartype-specific dunder attribute
+            # uniquely monkey-patched into the beartype-specific file finder
+            # path hook created and returned by the low-level
+            # make_beartype_file_finder_path_hook_index() factory function, this
+            # path hook *SHOULD* be that path hook. Since the higher-level
+            # add_beartype_path_hook() function intentionally adds that path
+            # hook immediately before Python's own standard file finder path
+            # hook *AND* since preceding path hooks assume precedence over
+            # subsequent path hooks, the beartype-specific file finder path hook
+            # assumes precedence over and thus effectively inactivates *ALL*
+            # subsequent path hooks. Ergo, *ALL* subsequent path hooks are
+            # irrelevant. If some competing path hook inactivated the
+            # beartype-specific file finder path hook, that competing path hook
+            # *MUST* already have been appended to this list. Appending any
+            # further path hook names to this list would only uselessly confound
+            # this already confounding issue. Immediately halt appending, yo!
+            if getattr(
+                path_hook,
+                BEARTYPE_CLAW_FILE_FINDER_PATH_HOOK_ATTR_NAME,
+                False,
+            ):
+                break
+            # Else, this path hook is *NOT* the beartype-specific file finder
+            # path hook. This hook precedes that hook and *COULD* thus be the
+            # culprit responsible for inactivating that hook.
+
+            # Append this name to this list.
+            path_hook_custom_names_list.append(path_hook_name)
+        # Else, fully-qualified name of this path hook is that of a standard
+        # path hook. In this case, silently ignore this path hook and continue
+        # to the next.
+
+    # Bullet point-delimited string listing the fully-qualified names of all
+    # competing path hooks on the global "sys.path_hooks" list defined by
+    # third-party packages or modules.
+    path_hook_custom_names = join_strings_bulleted_unnumbered(
+        strings=path_hook_custom_names_list, is_double_quoted=True)
 
     # ....................{ MESSAGE                        }....................
-    #FIXME: Dynamically improve this message as follows:
-    #* Iteratively construct an ordered list of the names all
-    #  third-party "sys.meta_path" hooks that are currently active.
-    #  Standard "sys.meta_path" hooks should be ignored, of course.
-    #* Iteratively construct a *SEPARATE* list of the names all
-    #  third-party "sys.path_hooks" that are currently active
-    #  *AND* precede our beartype-specific "sys.path_hooks" hook.
-    #  Standard "sys.path_hooks" should be ignored, of course.
-    #* Define a new join_bulleted() string-joining function in the
-    #  existing "beartype._util.text.utiltextjoin" submodule. This
-    #  function should precede each of the passed strings by the
-    #  prefix "\n* ", probably by trivially deferring to the existing
-    #  join_strings_delimited() joiner. *shrug*
-    #* For each of these lists that is non-empty, coerce these
-    #  non-empty lists into a string by deferring to that new
-    #  join_bulleted() joiner.
-    #* Define the "meta_path_external_names" and
-    #  "path_hooks_external_names" local variables interpolated
-    #  into the message below accordingly, please. What a huge job!
-
     # Warning message to be issued below.
     warning_message = (
-        f'"beartype.claw"-based runtime type-checking erroneously disabled. '
-        f'Beartype is unable to automatically runtime type-check any '
-        f'packages or modules under the active Python app stack. '
-        f'Competing third-party packages or modules in this stack already '
-        f'registered incompatible import hooks silently overriding '
-        f'"beartype.claw" import hooks (e.g., beartype_this_package()).\n'
+        '"beartype.claw"-based runtime type-checking erroneously disabled. '
+        'Beartype is unable to automatically runtime type-check any '
+        'packages or modules under the active Python app stack. '
+        'Competing third-party packages or modules in this stack already '
+        'registered incompatible import hooks silently overriding '
+        '"beartype.claw" import hooks (e.g., beartype_this_package()).\n'
     )
 
     # If the global "sys.meta_path" list contains one or more competing import
     # hooks defined by third-party packages or modules, append this warning
     # message with a human-readable substring enumerating the fully-qualified
     # names of these hooks.
-    if meta_path_external_names:
+    if meta_path_hook_custom_names:
         warning_message += (
             f'Competing high-level "sys.meta_path" hooks include:\n'
-            f'{meta_path_external_names}\n'
+            f'{meta_path_hook_custom_names}\n'
         )
     # Else, the global "sys.meta_path" list is still the default such list and
     # thus *CANNOT* be to blame for "beartype.claw" import hooks being inactive.
@@ -404,36 +382,37 @@ def _warn_if_beartype_pathhook_inactive() -> None:
     # hooks defined by third-party packages or modules, append this warning
     # message with a human-readable substring enumerating the fully-qualified
     # names of these hooks.
-    if path_hooks_external_names:
+    if path_hook_custom_names:
         warning_message += (
             f'Competing low-level "sys.path_hooks" hooks include:\n'
-            f'{path_hooks_external_names}\n'
+            f'{path_hook_custom_names}\n'
         )
     # Else, the global "sys.path_Hooks" list is still the default such list and
     # thus *CANNOT* be to blame for "beartype.claw" import hooks being inactive.
 
     # Finalize this warning message with verbose advice that makes gerbils weep.
     warning_message += (
-        f"This is mostly Python's fault. "
-        f'Python lacks standards governing import hook interoperability. '
-        f'In the absence of sane standards, '
-        f'Python import hooks are currently an '
-        f'unhinged Wild West feeding frenzy of '
-        f'competing third-party import hooks that love to eat each other. '
         f"In short, Python's standard \"importlib\" machinery sucks. "
-        f'You now have three sucky options. Either:\n'
-        f'* (Recommended) Contact the authors of the competing '
-        f'third-party packages or modules listed above. '
-        f'Kindly request they improve the compatibility of '
-        f'their import hooks with other import hooks registered by '
+        f'You now have three equally sucky options. Either:\n'
+        f'* (Desperation move) Globally silence this warning by '
+        f'adding to your top-level "{{muh_package}}.__init__" submodule:\n'
+        f'\tfrom beartype.roar import BeartypeClawImportlibFileFinderPathHookInactiveWarning\n'
+        f'\tfrom warnings import filterwarnings\n'
+        f'\tfilterwarnings(action="ignore", category=BeartypeClawImportlibFileFinderPathHookInactiveWarning)\n'
+        f'* (Recommended) Kindly submit an issue to the issue tracker of '
+        f'whichever of the competing third-party import hooks (listed above) '
+        f'is directly responsible for ignoring "beartype.claw" import hooks. '
+        f'Good luck identifying the culprit. '
+        f'Request they improve the compatibility of '
+        f'their import hooks with '
+        f'other PEP 302-compliant import hooks registered by '
         f'other packages and modules -- especially '
         f'those registered by the "beartype.claw" subpackage. '
-        f'Please ping @leycec '
-        f'(the principal @beartype maintainer) on all relevant '
-        f'issues so that he can nod respectfully and pretend to '
-        f'render assistance.\n'
+        f'Please ping @leycec (the principal @beartype maintainer) on '
+        f'all relevant issues so that he can '
+        f'nod respectfully at everyone and pretend to render assistance.\n'
         f'* (Not recommended) Complain to us about '
-        f"other people's problems on the @beartype issue tracker at:\n"
+        f"other people's problematic code on the @beartype issue tracker at:\n"
         f'\t{URL_ISSUES}\n'
         f'  This is usually useless. '
         f'There is probably nothing @beartype itself can do. '
@@ -444,11 +423,18 @@ def _warn_if_beartype_pathhook_inactive() -> None:
         f'We can only heckle them with animated GIFs. '
         f'Do this only if you want us to heckle somebody '
         f'with animated GIFs.\n'
-        f'* (Desperation move) Globally silence this warning by '
-        f'adding to your top-level "{{muh_package}}.__init__" submodule:\n'
-        f'\tfrom beartype.roar import BeartypeClawImportlibFileFinderPathHookInactiveWarning\n'
-        f'\tfrom warnings import filterwarnings\n'
-        f'\tfilterwarnings(action="ignore", category=BeartypeClawImportlibFileFinderPathHookInactiveWarning)\n'
+        f'This is mostly the fault of Python itself, which '
+        f'lacks standards governing import hook interoperability. '
+        f"The import hook ecosystem is an "
+        f'unscoped Battle Royale-esque feeding frenzy of '
+        f'internecine API masochists committed to '
+        f'flagellating one other, themselves, and Python itself with '
+        f'explosive burlap sacks all reading:\n'
+        f'\t"WARNING: Pythonista! '
+        f'Domain Specific Languages (DSL) may '
+        f'cause permanent ruptures in the code-space plenum. '
+        f'Break only in case of emergency."\n'
+        f"You are now experiencing that emergency. We've all had better days."
     )
 
     # Issue this non-fatal warning.

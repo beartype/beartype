@@ -26,6 +26,8 @@ from beartype.roar import (
     BeartypeClawImportlibStandardFileFinderPathHookNotFoundWarning,
 )
 from beartype.claw._importlib._clawimpfileloader import BeartypeSourceFileLoader
+from beartype._data.claw.dataclawmagic import (
+    BEARTYPE_CLAW_FILE_FINDER_PATH_HOOK_ATTR_NAME)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfuncscope import get_func_freevars
 from beartype._util.error.utilerrwarn import issue_warning
@@ -68,76 +70,6 @@ loader class whose instances are responsible for loading Python modules of that
 filetype into imported in-memory module objects).
 '''
 
-# ....................{ GETTERS                            }....................
-@callable_cached
-def get_standard_file_finder_path_hook_basename_scoped() -> str:
-    '''
-    **Lexically scoped basename** (i.e., ``.``-delimited unambiguously
-    identifying string of all lexical scopes) of the **standard file finder path
-    hook** (i.e., closure created and returned by the call to the
-    :meth:`importlib.machinery.FileFinder.path_hook` method in the standard
-    :mod:`importlib._bootstrap_external` module on Python startup), equivalent
-    to the value of the ``__qualname__`` dunder attribute defined on that hook.
-
-    This getter is memoized for efficiency.
-
-    Design
-    ------
-    This getter currently unconditionally returns the magic string constant
-    ``"FileFinder.path_hook.path_hook_for_FileFinder"`` under all actively
-    maintained Python releases. Technically, this implies that this getter could
-    simply be reduced to either trivially returning that constant *or* replaced
-    altogether by that constant. Pragmatically, doing so would render this
-    fragile submodule even more fragile against upstream changes outside our
-    control in Python's standard library.
-
-    This name is intentionally defined as the lexically scoped basename (as
-    introspected by the :func:`.get_object_basename_scoped` getter called below)
-    rather than as the fully-qualified name (as introspected by the
-    :func:`beartype._util.utilobjget.get_object_name` getter *not* called
-    below). In theory, the latter would be more precisely unambiguous and thus
-    preferable. In practice, the latter is unreliable and thus unusable. Why?
-    Because the standard :mod:`importlib` package modifies the fully-qualified
-    name of the standard file finder path hook it instantiates to pretend to be
-    defined by a different module (e.g., :mod:`_frozen_importlib_external`) than
-    the module actually defining that hook (e.g.,
-    :mod:`importlib._bootstrap_external`). Why? No idea, honestly. It doesn't
-    particularly matter, either. It's well beyond our control. All that's in our
-    control (and thus all that matters) is the observation that the module name
-    and thus the lexically scoped basename of the standard file finder path hook
-    can be unambiguously introspected by third-party packages. Consider:
-
-    .. code-block:: python
-
-       >>> from beartype._util.utilobjget import get_object_name
-       >>> from importlib.machinery import FileFinder
-
-       # Fully-qualified name of a standard file finder path hook manually
-       # instantiated outside the standard "importlib" machinery! This is awful.
-       >>> get_object_name(FileFinder.path_hook())
-       'importlib._bootstrap_external.FileFinder.path_hook.path_hook_for_FileFinder'
-
-       # Fully-qualified name of a standard file finder path hook automatically
-       # instantiated inside the standard "importlib" machinery. *UGH UGH UGH*.
-       >>> file_finder_path_hook = _find_standard_file_finder_path_hook()
-       >>> get_object_name(file_finder_path_hook)
-       '_frozen_importlib_external.FileFinder.path_hook.path_hook_for_FileFinder'
-    '''
-
-    # Standard file finder path hook manually instantiated outside the standard
-    # "importlib" machinery. Why? Chicken-and-egg issues. Merely finding the
-    # standard file finder path hook manually instantiated automatically
-    # instantiated inside the standard "importlib" machinery requires magically
-    # knowing the magic string constant introspected by this getter. We have no
-    # recourse but to create (and then immediately discard) an empty file finder
-    # path hook merely to introspect its lexically scoped basename.
-    path_hook = FileFinder.path_hook()
-
-    # Lexically scoped basename of this path hook.
-    path_hook_name = get_object_basename_scoped(path_hook)
-
-    # Return this lexically scoped basename.
-    return path_hook_name
 # ....................{ FACTORIES                          }....................
 def make_beartype_file_finder_path_hook_index() -> FileFinderPathHookAndIndex:
     '''
@@ -323,9 +255,13 @@ def make_beartype_file_finder_path_hook_index() -> FileFinderPathHookAndIndex:
 
     # Monkey-patch an arbitrary beartype-specific instance variable into this
     # closure. Doing so significantly aids debugging by enabling logging and
-    # print() statements to distinguish between our closure and Python's
+    # print() statements to distinguish between our closure and Python's own
     # equivalent default closure.
-    beartype_path_hook.__beartype_is_path_hook__ = True  # type: ignore[attr-defined]
+    setattr(
+        beartype_path_hook,
+        BEARTYPE_CLAW_FILE_FINDER_PATH_HOOK_ATTR_NAME,
+        True,
+    )
 
     # ....................{ RETURN                         }....................
     # Return this beartype-specific file finder path hook and the 0-based index
@@ -401,6 +337,77 @@ def _get_file_finder_path_hook_loader_details(
     # Return the value of that "*loader_details" variadic positional parameter.
     return path_hook_loader_details
 
+
+@callable_cached
+def _get_standard_file_finder_path_hook_basename_scoped() -> str:
+    '''
+    **Lexically scoped basename** (i.e., ``.``-delimited unambiguously
+    identifying string of all lexical scopes) of the **standard file finder path
+    hook** (i.e., closure created and returned by the call to the
+    :meth:`importlib.machinery.FileFinder.path_hook` method in the standard
+    :mod:`importlib._bootstrap_external` module on Python startup), equivalent
+    to the value of the ``__qualname__`` dunder attribute defined on that hook.
+
+    This getter is memoized for efficiency.
+
+    Design
+    ------
+    This getter currently unconditionally returns the magic string constant
+    ``"FileFinder.path_hook.path_hook_for_FileFinder"`` under all actively
+    maintained Python releases. Technically, this implies that this getter could
+    simply be reduced to either trivially returning that constant *or* replaced
+    altogether by that constant. Pragmatically, doing so would render this
+    fragile submodule even more fragile against upstream changes outside our
+    control in Python's standard library.
+
+    This name is intentionally defined as the lexically scoped basename (as
+    introspected by the :func:`.get_object_basename_scoped` getter called below)
+    rather than as the fully-qualified name (as introspected by the
+    :func:`beartype._util.utilobjget.get_object_name` getter *not* called
+    below). In theory, the latter would be more precisely unambiguous and thus
+    preferable. In practice, the latter is unreliable and thus unusable. Why?
+    Because the standard :mod:`importlib` package modifies the fully-qualified
+    name of the standard file finder path hook it instantiates to pretend to be
+    defined by a different module (e.g., :mod:`_frozen_importlib_external`) than
+    the module actually defining that hook (e.g.,
+    :mod:`importlib._bootstrap_external`). Why? No idea, honestly. It doesn't
+    particularly matter, either. It's well beyond our control. All that's in our
+    control (and thus all that matters) is the observation that the module name
+    and thus the lexically scoped basename of the standard file finder path hook
+    can be unambiguously introspected by third-party packages. Consider:
+
+    .. code-block:: python
+
+       >>> from beartype._util.utilobjget import get_object_name
+       >>> from importlib.machinery import FileFinder
+
+       # Fully-qualified name of a standard file finder path hook manually
+       # instantiated outside the standard "importlib" machinery! This is awful.
+       >>> get_object_name(FileFinder.path_hook())
+       'importlib._bootstrap_external.FileFinder.path_hook.path_hook_for_FileFinder'
+
+       # Fully-qualified name of a standard file finder path hook automatically
+       # instantiated inside the standard "importlib" machinery. *UGH UGH UGH*.
+       >>> file_finder_path_hook = _find_standard_file_finder_path_hook()
+       >>> get_object_name(file_finder_path_hook)
+       '_frozen_importlib_external.FileFinder.path_hook.path_hook_for_FileFinder'
+    '''
+
+    # Standard file finder path hook manually instantiated outside the standard
+    # "importlib" machinery. Why? Chicken-and-egg issues. Merely finding the
+    # standard file finder path hook manually instantiated automatically
+    # instantiated inside the standard "importlib" machinery requires magically
+    # knowing the magic string constant introspected by this getter. We have no
+    # recourse but to create (and then immediately discard) an empty file finder
+    # path hook merely to introspect its lexically scoped basename.
+    path_hook = FileFinder.path_hook()
+
+    # Lexically scoped basename of this path hook.
+    path_hook_name = get_object_basename_scoped(path_hook)
+
+    # Return this lexically scoped basename.
+    return path_hook_name
+
 # ....................{ PRIVATE ~ finders                  }....................
 #FIXME: Unit test us up, please. *sigh*
 def _find_standard_file_finder_path_hook_index_or_none() -> (
@@ -465,7 +472,7 @@ def _find_standard_file_finder_path_hook_index_or_none() -> (
     '''
 
     # Lexically scoped basename of the standard file finder path hook.
-    path_hook_basename = get_standard_file_finder_path_hook_basename_scoped()
+    path_hook_basename = _get_standard_file_finder_path_hook_basename_scoped()
 
     # For the 0-based index of each import path hook previously registered with
     # the standard "path_hooks" list *AND* that hook...

@@ -83,6 +83,22 @@ facilitating a crude smoke test, enabling :mod:`beartype.claw` import hooks to
 efficiently detect whether they were successfully activated or not).
 '''
 
+
+BEARTYPE_CLAW_FILE_FINDER_PATH_HOOK_ATTR_NAME = '__beartype_is_path_hook__'
+'''
+Unqualified basename of a :mod:`beartype`-specific dunder attribute to be
+monkey-patched into the :mod:`beartype`-specific **file finder path hook**
+(i.e., closure created and returned by calling the
+:meth:`importlib.machinery.FileFinder.path_hook` static method with
+:mod:`beartype`-specific file finder path hook loader details permuted from the
+standard "default" file finder path hook loader details).
+
+This attribute enables our :mod:`beartype`-specific file finder path hook to be
+portably, reliably, and efficiently disambiguated from Python's own standard
+file finder path hook. Both are instantiated with the exact same low-level
+:mod:`importlib` machinery and thus superficially appear to be identical.
+'''
+
 # ....................{ STRINGS ~ names : claw : state     }....................
 BEARTYPE_CLAW_STATE_OBJ_NAME = '__claw_state_beartype__'
 '''
