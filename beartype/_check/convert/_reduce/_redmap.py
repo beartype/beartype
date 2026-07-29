@@ -406,12 +406,6 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # reduce this hint to the standard "str" type.
     HintSignLiteralString: reduce_hint_pep675,
 
-    # ..................{ NON-PEP ~ numpy                    }..................
-    # If this hint is a PEP-noncompliant typed NumPy array (e.g.,
-    # "numpy.typing.NDArray[np.float64]"), reduce this hint to the equivalent
-    # well-supported beartype validator.
-    HintSignNumpyArray: reduce_hint_numpy_ndarray,
-
     # ..................{ NON-PEP ~ pandera                  }..................
     # If this hint is *ANY* PEP-noncompliant Pandera type hint (e.g.,
     # "pandera.typing.DataFrame[...]"), reduce this hint to an arbitrary
@@ -601,6 +595,12 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # * If this hint annotates the return of some callable, the "bool" type.
     # * Else, raise an exception.
     HintSignTypeIs: reduce_hint_pep647742,
+
+    # ..................{ NON-PEP ~ numpy                    }..................
+    # If this hint is a PEP-noncompliant typed NumPy array (e.g.,
+    # "numpy.typing.NDArray[np.float64]"), reduce this hint to the equivalent
+    # well-supported beartype validator.
+    HintSignNumpyArray: reduce_hint_numpy_ndarray,
 }
 '''
 Dictionary mapping from each sign uniquely identifying various type hints to

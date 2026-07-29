@@ -487,34 +487,38 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : numpy    }....................
     # NumPy-specific optional test-time dependencies.
 
-    #FIXME: Re-enable Python >= 3.15 support *AFTER* NumPy supports Python 3.15.
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* NumPy supports Python 3.15
+    #with officially published wheels. *sigh*
     #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
     #explicitly supporting PyPy.
-    # Require NumPy. NumPy has become *EXTREMELY* non-trivial to install under
-    # macOS with "pip", due to the conjunction of multiple issues. These
-    # include:
-    # * NumPy > 1.18.0, whose initial importation now implicitly detects
-    #   whether the BLAS implementation NumPy was linked against is sane and
-    #   raises a "RuntimeError" exception if that implementation is insane:
-    #       RuntimeError: Polyfit sanity test emitted a warning, most
-    #       likely due to using a buggy Accelerate backend. If you
-    #       compiled yourself, more information is available at
-    #       https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
-    #       Otherwise report this to the vendor that provided NumPy.
-    #       RankWarning: Polyfit may be poorly conditioned
-    # * Apple's blatantly broken multithreaded implementation of their
-    #   "Accelerate" BLAS replacement, which neither NumPy nor "pip" have *ANY*
-    #   semblance of control over.
-    # * "pip" under PyPy, which for unknown reasons fails to properly install
-    #   NumPy even when the "--force-reinstall" option is explicitly passed to
-    #   "pip". Oddly, passing that option to "pip" under CPython resolves this
-    #   issue -- which is why we only selectively disable NumPy installation
-    #   under macOS + PyPy.
+    # Required by optional NumPy-specific integration tests. Note that:
+    # * NumPy >= 2.5.0 introduced runtime API changes to the public
+    #   "numpy.typing" subpackage constituting a break in backward compatibility
+    #   from @beartype's QA-oriented perspective.
+    # * NumPy has become *EXTREMELY* non-trivial to install under macOS with
+    #   "pip", due to the conjunction of multiple issues. These include:
+    #   * NumPy > 1.18.0, whose initial importation now implicitly detects
+    #     whether the BLAS implementation NumPy was linked against is sane and
+    #     raises a "RuntimeError" exception if that implementation is insane:
+    #         RuntimeError: Polyfit sanity test emitted a warning, most
+    #         likely due to using a buggy Accelerate backend. If you
+    #         compiled yourself, more information is available at
+    #         https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
+    #         Otherwise report this to the vendor that provided NumPy.
+    #         RankWarning: Polyfit may be poorly conditioned
+    #   * Apple's blatantly broken multithreaded implementation of their
+    #     "Accelerate" BLAS replacement, which neither NumPy nor "pip" have
+    #     *ANY* semblance of control over.
+    #   * "pip" under PyPy, which for unknown reasons fails to properly install
+    #     NumPy even when the "--force-reinstall" option is explicitly passed to
+    #     "pip". Oddly, passing that option to "pip" under CPython resolves this
+    #     issue -- which is why we only selectively disable NumPy installation
+    #     under macOS + PyPy.
     #
-    # See also this upstream NumPy issue:
-    #     https://github.com/numpy/numpy/issues/15947
-    """numpy; \
+    #   See also this upstream NumPy issue:
+    #       https://github.com/numpy/numpy/issues/15947
+    """numpy >=2.5.0; \
        python_version < '3.15.0' and \
        sys_platform != 'darwin' and \
        platform_python_implementation != 'PyPy'\

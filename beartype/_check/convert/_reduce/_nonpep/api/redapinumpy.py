@@ -22,23 +22,27 @@ This private submodule is *not* intended for importation by downstream callers.
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintNonpepNumpyException
-from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.api.external.utilnumpy import (
     get_numpy_dtype_type_abcs,
     make_numpy_dtype,
 )
-from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.utilobjtest import is_object_hashable
 from typing import (
     Annotated,
     Any,
+    Optional,
 )
 
 # ....................{ REDUCERS                           }....................
-@callable_cached
-def reduce_hint_numpy_ndarray(hint: Hint) -> Hint:
+def reduce_hint_numpy_ndarray(
+    hint: Hint,
+    hint_parent_sane: Optional[HintSane],
+    exception_prefix: str,
+    **kwargs
+) -> Hint:
     '''
     Reduce the passed **PEP-noncompliant typed NumPy array** (i.e.,
     subscription of the third-party :attr:`numpy.typing.NDArray` type hint
@@ -52,12 +56,25 @@ def reduce_hint_numpy_ndarray(hint: Hint) -> Hint:
     throughout the codebase. Of course, doing so would yield *no* tangible
     benefits while imposing a considerable maintenance burden.
 
-    This reducer is memoized for efficiency.
+    This reducer is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), due to accepting one or more non-memoizable
+    parameters (e.g., ``hint_parent_sane``).
 
     Parameters
     ----------
     hint : Hint
         PEP-noncompliant typed NumPy array to be reduced.
+    hint_parent_sane : Optional[HintSane]
+        Either:
+
+        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
+          of child hints), :data:`None`.
+        * Else, the passed hint is a **child** of some parent hint. In this
+          case, the **sanified parent type hint metadata** (i.e., immutable and
+          thus hashable object encapsulating *all* metadata previously returned
+          by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
+          the possibly PEP-noncompliant parent hint of this child hint into a
+          fully PEP-compliant parent hint).
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
@@ -80,6 +97,7 @@ def reduce_hint_numpy_ndarray(hint: Hint) -> Hint:
           * An object coercible into a NumPy data type by passing to the
             :meth:`numpy.dtype.__init__` method.
     '''
+    # print(f'[reduce_hint_numpy_ndarray] hint_parent_sane: {hint_parent_sane}')
 
     # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports until *AFTER* validating this hint to be a typed
@@ -148,7 +166,7 @@ def reduce_hint_numpy_ndarray(hint: Hint) -> Hint:
     # malformed as a typed NumPy array. In this case, raise an exception.
     if len(hint_args) != 2:
         raise BeartypeDecorHintNonpepNumpyException(
-            f'{EXCEPTION_PLACEHOLDER}'
+            f'{exception_prefix}'
             f'typed NumPy array {repr(hint)} '
             f'not subscripted by exactly two child type hints '
             f'(i.e., {len(hint_args)} != 2).'
@@ -168,7 +186,7 @@ def reduce_hint_numpy_ndarray(hint: Hint) -> Hint:
     # is malformed as a data type subhint. In this case, raise an exception.
     if len(hint_dtype_subhint_args) != 1:
         raise BeartypeDecorHintNonpepNumpyException(
-            f'{EXCEPTION_PLACEHOLDER}'
+            f'{exception_prefix}'
             f'typed NumPy array {repr(hint)} '
             f'data type subhint {repr(hint_dtype_subhint)} '
             f'not subscripted by exactly one argument.'
@@ -228,7 +246,7 @@ def reduce_hint_numpy_ndarray(hint: Hint) -> Hint:
         hint_dtype = make_numpy_dtype(
             dtype=hint_dtype_like,
             exception_cls=BeartypeDecorHintNonpepNumpyException,
-            exception_prefix=EXCEPTION_PLACEHOLDER,
+            exception_prefix=exception_prefix,
         )
 
         # Equivalent nested beartype validator reduced from this hint.
