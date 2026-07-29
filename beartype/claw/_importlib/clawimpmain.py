@@ -55,6 +55,12 @@ def add_beartype_path_hook() -> None:
     the caller is expected to guarantee thread-safety through a higher-level
     locking primitive managed directly by that caller.
 
+    Warns
+    -----
+    BeartypeClawImportlibFileFinderPathHookInactiveWarning
+        If our beartype-specific file finder path hook is inactive even after
+        adding that hook to the global :mod:`sys.path_hooks` list.
+
     See Also
     --------
     :class:`beartype.claw._importlib._clawimpfileloader.BeartypeSourceFileLoader`
@@ -71,55 +77,48 @@ def add_beartype_path_hook() -> None:
     # Avoid circular import dependencies.
     from beartype.claw._clawstate import claw_state
 
-    # ....................{ PREAMBLE                       }....................
-    #FIXME: Attempt to import "_clawimpsmoke" in exactly two places below,
-    #please! To do so, let's:
-    #* Call our newly defined _warn_if_beartype_pathhook_inactive() warner:
-    #  * First here like so:
-    #        if claw_state.beartype_path_hook is not None:
-    #            _warn_if_beartype_pathhook_inactive()
-    #            return
-    #  * Then again below like so:
-    #        else:  # pragma: no cover
-    #            path_hooks.append(loader_factory)
-    #
-    #        _warn_if_beartype_pathhook_inactive()
-    #* Generalize the BeartypeSourceFileLoader.get_code() method to:
-    #  * Detect whether the passed module name is
-    #    "BEARTYPE_CLAW_SMOKE_TEST_SUBMODULE_NAME".
-    #  * If so, raise "_BeartypeClawImportHookActive".
+    # ....................{ GUARD                          }....................
+    # If this adder has yet to be called...
+    if claw_state.beartype_path_hook is None:
+        # ....................{ PATH HOOK                  }....................
+        # Beartype-specific file finder path hook created by this factory and
+        # the 0-based index of the "sys.path_hooks" list into which this path
+        # hook should be inserted by the caller.
+        path_hook, path_hook_index = make_beartype_file_finder_path_hook_index()
 
-    # If this adder has already been called at least once by a third-party
-    # reverse dependency of beartype under the active Python interpreter...
-    if claw_state.beartype_path_hook is not None:
-        # Silently reduce to a noop.
-        return
-    # Else, this adder has yet to be called.
+        # Insert this beartype-specific file finder path hook into the desired
+        # index of the global "sys.path_hooks" list -- typically, immediately
+        # *BEFORE* the default beartype-agnostic file finder path hook.
+        path_hooks.insert(path_hook_index, path_hook)
 
-    # ....................{ PATH HOOK                      }....................
-    # Beartype-specific file finder path hook created by this factory and the
-    # 0-based index of the "sys.path_hooks" list into which this path hook
-    # should be inserted by the caller.
-    path_hook, path_hook_index = make_beartype_file_finder_path_hook_index()
+        # ....................{ CACHE                      }....................
+        # Prevent subsequent calls to this function from erroneously re-adding
+        # duplicate copies of this path hook immediately *AFTER* successfully
+        # adding the first such path hook.
+        #
+        # Note that we intentionally avoid globalizing this path hook until
+        # *AFTER* successfully having done so. Why? Negligible safety. The
+        # companion remove_beartype_path_hook() function raises a
+        # non-human-readable exception if this global is non-"None" but *NOT* in
+        # the global "sys.path_hooks" list.
+        claw_state.beartype_path_hook = path_hook
 
-    # Insert this beartype-specific file finder path hook into the desired index
-    # of the global "sys.path_hooks" list -- typically, immediately *BEFORE* the
-    # default beartype-agnostic file finder path hook.
-    path_hooks.insert(path_hook_index, path_hook)
+        # Clear all import path hook caches for safety *AFTER* adding our path
+        # hook to the global "sys.path_hooks" list above.
+        _clear_importlib_caches()
+    # Else, this adder has already been called at least once by a third-party
+    # reverse dependency of beartype under the active Python interpreter. Avoid
+    # erroneously re-adding our beartype-specific file finder path hook to the
+    # "sys.path_hooks" list multiple times.
 
-    # ....................{ CACHE                          }....................
-    # Prevent subsequent calls to this function from erroneously re-adding
-    # duplicate copies of this path hook immediately *AFTER* successfully adding
-    # the first such path hook.
-    #
-    # Note that we intentionally avoid globalizing this path hook until *AFTER*
-    # successfully having done so. Why? Negligible safety. The companion
-    # remove_beartype_path_hook() function raises a non-human-readable exception
-    # if this global is non-"None" but *NOT* in the "path_hooks" list.
-    claw_state.beartype_path_hook = path_hook
-
-    # Lastly, clear *ALL* import path hook caches for safety.
-    _clear_importlib_caches()
+    # ....................{ WARN                           }....................
+    # If our beartype-specific file finder path hook previously added by
+    # that prior call of this adder is no longer active (e.g., due to
+    # another third-party package or module having since added one or more
+    # competing hooks overriding our own), issue a non-fatal warning.
+    _warn_if_beartype_pathhook_inactive()
+    # Else, our beartype-specific file finder path hook previously added by
+    # that prior call of this adder is still active. Go, Bear! Go, Bear!
 
 # ....................{ REMOVERS                           }....................
 #FIXME: Unit test us up, please.
@@ -163,27 +162,22 @@ def remove_beartype_path_hook() -> None:
     # Lastly, clear *ALL* import path hook caches for safety.
     _clear_importlib_caches()
 
+# ....................{ PRIVATE ~ globals                  }....................
+_is_warned_if_beartype_pathhook_inactive: bool = False
+'''
+:data:`True` only if the :func:`_warn_if_beartype_pathhook_inactive` function
+has already issued a non-fatal warning under the active Python interpreter.
+
+That function internally guards against issuing the same warning multiple times
+with this crude cache. That warning is extremely verbose and thus likely to
+incite more bad than good in end users overly exposed to that warning.
+'''
+
 # ....................{ PRIVATE ~ warners                  }....................
 #FIXME: Unit test us up, please. *sigh*
-#FIXME: *CRITICAL*. Only issue this warning *ONCE* per active Python process.
-#Note that we've already done this sort of warning caching elsewhere. Grep the
-#codebase for 'issue_warning\(' to decide where. The point is, though, that we
-#should just automate this at this point. Specifically:
-#* Generalize issue_warning() to accept this new optional parameter:
-#      is_oneshot: bool = False,
-#* Pass "is_oneshot=True" below to that call of issue_warning().
-#* Improve issue_warning() as follows:
-#  * Define a private "_issue_warning_types_oneshot: set[BeartypeWarning]"
-#    global in the same submodule.
-#  * If "is_oneshot", then:
-#    * Trivially avoid concurrency issues by properly locking. *IMPORTANT*. If
-#      we can trivially avoid concurrency issues, we should. *shrug*
-#    * Cache into that "_issue_warning_types_oneshot" set. Trivial, yo. \o/
-#* Pass "is_oneshot=True" throughout the codebase. Honestly, most calls of
-#  issue_warning() should probably be passing that.
 def _warn_if_beartype_pathhook_inactive() -> None:
     '''
-    Issue a non-fatal warning if the **beartype-specific file finder path hook**
+    Issue a non-fatal warning if our **beartype-specific file finder path hook**
     (i.e., closure created and returned by calling the
     :meth:`importlib.machinery.FileFinder.path_hook` static method with
     beartype-specific file finder path hook loader details permuted from the
@@ -215,11 +209,27 @@ def _warn_if_beartype_pathhook_inactive() -> None:
     the caller is expected to guarantee thread-safety through a higher-level
     locking primitive managed directly by that caller.
 
+    **This function issues this warning at most only once per Python process.**
+    Technically, that isn't a caveat. That is a good thing. This warning is
+    extremely verbose and thus likely to incite more bad than good in end users
+    overly exposed to this warning.
+
     Warns
     -----
     BeartypeClawImportlibFileFinderPathHookInactiveWarning
-        If the beartype-specific file finder path hook is inactive.
+        If our beartype-specific file finder path hook is inactive.
     '''
+
+    # ....................{ NOOP                           }....................
+    # Enable this global to be assigned to below.
+    global _is_warned_if_beartype_pathhook_inactive
+
+    # If this function has already issued this warning, avoid doing so again.
+    # This warning is verbose and thus likely to incite anger in users. We know.
+    # Instead, silently reduce to a noop by returning immediately.
+    if _is_warned_if_beartype_pathhook_inactive:
+        return
+    # Else, this function has *NOT* already issued this warning.
 
     # ~~~~~~~~~~~~~~~~~[ LEYCEC'S POLYCHROMATIC HOOK ELICITOR ]~~~~~~~~~~~~~~~~~
     # Attempt to import the beartype-specific import hook activation smoke test
@@ -255,6 +265,17 @@ def _warn_if_beartype_pathhook_inactive() -> None:
     # Else, importing the beartype-specific import hook activation smoke test
     # failed to raise the beartype-specific private exception! "beartype.claw"
     # import hooks *MUST* be inactive. Thus, issue a non-fatal warning below.
+
+    # Record that this function has now issued this warning, preventing
+    # subsequent calls from uselessly doing so again.
+    #
+    # Note that we intentionally assign this global early rather than late
+    # (i.e., after calling the issue_warning() function below). Why? To reduce
+    # the likelihood of issuing this warning multiple times in the event that
+    # the caller fails to call this function from a thread-safe context. That
+    # should never happen. Since assigning this global early is trivial,
+    # however, we do so to avoid suffering in both users and in us. No pain!
+    _is_warned_if_beartype_pathhook_inactive = True
 
     # ....................{ META PATH                      }....................
     #FIXME: Shift this logic into a new _get_meta_path_hook_custom_names_str()
@@ -372,7 +393,7 @@ def _warn_if_beartype_pathhook_inactive() -> None:
     # names of these hooks.
     if meta_path_hook_custom_names:
         warning_message += (
-            f'Competing high-level "sys.meta_path" hooks include:\n'
+            f'Competing high-level "sys.meta_path" hooks include:'
             f'{meta_path_hook_custom_names}\n'
         )
     # Else, the global "sys.meta_path" list is still the default such list and
@@ -384,7 +405,7 @@ def _warn_if_beartype_pathhook_inactive() -> None:
     # names of these hooks.
     if path_hook_custom_names:
         warning_message += (
-            f'Competing low-level "sys.path_hooks" hooks include:\n'
+            f'Competing low-level "sys.path_hooks" hooks include:'
             f'{path_hook_custom_names}\n'
         )
     # Else, the global "sys.path_Hooks" list is still the default such list and
@@ -392,10 +413,9 @@ def _warn_if_beartype_pathhook_inactive() -> None:
 
     # Finalize this warning message with verbose advice that makes gerbils weep.
     warning_message += (
-        f"In short, Python's standard \"importlib\" machinery sucks. "
         f'You now have three equally sucky options. Either:\n'
-        f'* (Desperation move) Globally silence this warning by '
-        f'adding to your top-level "{{muh_package}}.__init__" submodule:\n'
+        f'* (Desperation move) Globally silence this warning by adding to '
+        f'your top-level "{{your_package}}.__init__" submodule:\n'
         f'\tfrom beartype.roar import BeartypeClawImportlibFileFinderPathHookInactiveWarning\n'
         f'\tfrom warnings import filterwarnings\n'
         f'\tfilterwarnings(action="ignore", category=BeartypeClawImportlibFileFinderPathHookInactiveWarning)\n'

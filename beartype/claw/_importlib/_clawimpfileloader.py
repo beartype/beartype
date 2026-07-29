@@ -15,6 +15,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from ast import PyCF_ONLY_AST
+from beartype.roar._roarexc import (
+    _BeartypeClawImportlibIsPathHookActiveException)
 from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
 from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined]
     cache_from_source_beartype,
@@ -22,7 +24,10 @@ from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined
 )
 from beartype.roar import BeartypeClawImportAstException
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.shame.module.datashamemodclaw import BLACKLIST_CLAW_PACKAGE_NAMES_REGEX
+from beartype._data.claw.dataclawmagic import (
+    BEARTYPE_CLAW_SMOKE_TEST_SUBMODULE_NAME)
+from beartype._data.shame.module.datashamemodclaw import (
+    BLACKLIST_CLAW_PACKAGE_NAMES_REGEX)
 from beartype._util.ast.utilastget import get_node_repr_indented
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_15
 from beartype._util.text.utiltextlabel import label_exception_message
@@ -148,18 +153,24 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
     See Also
     --------
-    * The `comparable "typeguard.importhook" submodule <typeguard import
-      hook_>`__ implemented by the incomparable `@agronholm (Alex Grönholm)
-      <agronholm_>`__, whose intrepid solutions strongly inspired this
-      subpackage. `Typeguard's import hook infrastructure <typeguard import
-      hook_>`__ is a significant improvement over the prior state of the art in
-      Python and a genuine marvel of concise, elegant, and portable abstract
-      syntax tree (AST) transformation.
+    No Idea, Honestly
+        This section once advised referring to the comparable
+        ``typeguard.importhook`` submodule implemented by the incomparable
+        `@agronholm (Alex Grönholm) <agronholm_>`__, whose intrepid solutions
+        strongly inspired this subpackage. Typeguard's import hook
+        infrastructure was a significant improvement over the prior state of the
+        art in Python and a genuine marvel of concise, elegant, and portable
+        abstract syntax tree (AST) transformation. Unfortunately, note our
+        cautious use of the past tense verb "was." Typeguard's import hook
+        infrastructure has intensified over the past decade. What was once
+        concise and elegant is now anything but. That's not necessarily a bad
+        thing. All things change. Moreover, beartype itself is hardly one to
+        argue; beartype also is anything but concise or elegant. Still, it's a
+        shame. Typeguard's import hook infrastructure was a revelation... once.
+        Something has been lost that mattered there.
 
     .. _agronholm:
        https://github.com/agronholm
-    .. _typeguard import hook:
-       https://github.com/agronholm/typeguard/blob/master/src/typeguard/importhook.py
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -195,8 +206,8 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
     def get_code(self, fullname: str) -> Optional[CodeType]:
         '''
-        Create and return the code object underlying the module with the passed
-        name.
+        Dynamically import the module with the passed fully-qualified name by
+        creating and returning the code object underlying that module.
 
         This override of the superclass :meth:`SourceLoader.get_code` method
         internally follows one of two distinct code paths, conditionally
@@ -314,12 +325,28 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         -------
         Optional[CodeType]
             Code object underlying that module.
+
+        Raises
+        ------
+        _BeartypeClawImportlibIsPathHookActiveException
+            If the passed module name is that of the **beartype import hook
+            activation smoke test** (i.e., private empty submodule isolated to
+            the :mod:`beartype` codebase). This exception facilitates a crude
+            smoke test, enabling :mod:`beartype.claw` import hooks to
+            efficiently detect whether they were successfully activated or not.
         '''
 
-        #FIXME: *WORKS*. Now just generalize this in a sane manner. *sigh*
-        # if fullname == 'beartype.buggo':
-        #     print('BUGGO!!!')
-        #     raise BeartypeClawImportAstException('BUGGO!!!')
+        # ..................{ SMOKE                          }..................
+        # If that module name is that of the beartype import hook activation
+        # smoke test, raise the exception expected by that test. *YO*!
+        if fullname == BEARTYPE_CLAW_SMOKE_TEST_SUBMODULE_NAME:
+        # if 'smoke' in fullname:
+            raise _BeartypeClawImportlibIsPathHookActiveException(
+                f'"beartype.claw" import hook(s) activity detected by '
+                f'"{BEARTYPE_CLAW_SMOKE_TEST_SUBMODULE_NAME}" smoke test.'
+            )
+        # Else, that module name is *NOT* that of the beartype import hook
+        # activation smoke test. In this case, import this module as expected.
 
         # ..................{ RECURSE                        }..................
         # If that module resides in a fundamentally problematic package (e.g.,
@@ -386,10 +413,10 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         #   triggers the above "coverage" failure, which defeats the point.
         # * There appear to exist *NO* working alternatives to a "regex"-based
         #   recursion guard like this. Hard-coding a finite set of problematic
-        #   package and module names into the "BLACKLIST_CLAW_PACKAGE_NAMES_REGEX"
-        #   global is clearly fragile and liable to break under future CPython
-        #   versions. Ideally, we would instead dynamically detect "importlib"
-        #   recursion with logic resembling:
+        #   package and module names into this
+        #   "BLACKLIST_CLAW_PACKAGE_NAMES_REGEX" global is clearly fragile and
+        #   liable to break under future CPython versions. Ideally, we would
+        #   instead dynamically detect "importlib" recursion with logic like:
         #   * Declare this private global at module scope below:
         #         #FIXME: Non-thread and -"asyncio"-safe, obviously. This
         #         #should instead be declared as a "contextvars.ContextVar".

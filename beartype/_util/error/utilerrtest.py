@@ -10,8 +10,6 @@ metadata associated with various types of exceptions).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                            }....................
-
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
 def is_exception_message_str(exception: Exception) -> bool:

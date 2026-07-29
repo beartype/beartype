@@ -78,8 +78,8 @@ BEARTYPE_CLAW_SMOKE_TEST_SUBMODULE_NAME = (
     'beartype.claw._importlib._clawimpsmoke')
 '''
 Fully-qualified name of the **beartype import hook activation smoke test**
-(i.e., private empty submodule isolated to the :mod:`beartype` codebase
-facilitating a crude smoke test, enabling :mod:`beartype.claw` import hooks to
+(i.e., private empty submodule isolated to the :mod:`beartype` codebase,
+facilitating a crude smoke test enabling :mod:`beartype.claw` import hooks to
 efficiently detect whether they were successfully activated or not).
 '''
 
@@ -196,17 +196,26 @@ passed each such meta path hook.
 STANDARD_PATH_HOOKS_ITEM_NAMES = frozenset((
     # ....................{ STANDARD                       }....................
     # Python predefines two standard path hooks for importing (in order):
-    # * Zipped modules, intentionally included below.
+    # * Zipped modules.
     # * Pathed modules (i.e., modules residing on either the global "sys.path"
-    #   list *OR* package-specific "__path__" dunder attribute), intentionally
-    #   omitted below. Why? Because the fully-qualified name of this standard
-    #   path hook is non-trivial and possibly dynamic across disparate Python
-    #   environments. Callers are encouraged to instead call the lower-level
+    #   list *OR* package-specific "__path__" dunder attribute). Although this
+    #   path hook is standard, the fully-qualified name of this path hook is
+    #   non-trivial -- and possibly even dynamic across disparate Python
+    #   environments. Technically, this implies that this name should be
+    #   omitted below. Instead, callers are encouraged to call the lower-level
     #   _get_standard_file_finder_path_hook_basename_scoped() to safely obtain
-    #   the lexically scoped name of this standard path hook.
+    #   the lexically scoped name of this standard path hook. Pragmatically,
+    #   there is *NO* real-world benefit to omitting this magic string below.
+    #   Doing so would only increase the likelihood of the
+    #   _warn_if_beartype_pathhook_inactive() function accidentally embedding
+    #   this name in warning messages, which would only engender end user
+    #   confusion on a topic already laden with maximal confusion.
 
     # Python's standard zipped module importer.
     'zipimport.zipimporter',
+
+    # Python's standard pathed module importer.
+    '_frozen_importlib_external.FileFinder.path_hook.path_hook_for_FileFinder',
 ))
 '''
 Frozen set of the **fully-qualified names** (i.e., ``.``-delimited unambiguously
