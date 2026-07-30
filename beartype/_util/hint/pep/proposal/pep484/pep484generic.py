@@ -105,7 +105,7 @@ def is_hint_pep484_generic_unsubbed(hint: Hint) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 
     # Return true only if this hint is a subclass of the "typing.Generic"
     # superclass, in which case this hint is a generic.
@@ -176,7 +176,7 @@ def is_hint_pep484_generic_unsubbed(hint: Hint) -> bool:
             # superclass *AND*...
             is_type_subclass(hint, Generic) and  # type: ignore[arg-type]
             # This PEP 484-compliant generic is unsubscripted.
-            not get_hint_pep_args(hint)
+            not get_hint_pep_childs(hint)
         )
     )
 

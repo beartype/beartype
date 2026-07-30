@@ -26,7 +26,7 @@ from beartype._util.cls.pep.clspep3119 import (
 )
 from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
     get_hint_pep484585_arg)
-from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
 # ....................{ FACTORIES                          }....................
@@ -115,7 +115,7 @@ def get_hint_pep484585_subclass_hint_child_sanified(
     # tuple of superclasses. Only the latter is safely passable as the second
     # parameter to the issubclass() builtin under all supported Python versions.
     if hint_child_sign is HintSignUnion:
-        hint_child = get_hint_pep_args(hint_child)
+        hint_child = get_hint_pep_childs(hint_child)
     # Else, this child hint is *NOT* a union.
 
     # If this child hint is *NOT* an issubclassable object, raise an exception.

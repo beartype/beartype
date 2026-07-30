@@ -493,9 +493,6 @@ test-tox = [
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
     #explicitly supporting PyPy.
     # Required by optional NumPy-specific integration tests. Note that:
-    # * NumPy >= 2.5.0 introduced runtime API changes to the public
-    #   "numpy.typing" subpackage constituting a break in backward compatibility
-    #   from @beartype's QA-oriented perspective.
     # * NumPy has become *EXTREMELY* non-trivial to install under macOS with
     #   "pip", due to the conjunction of multiple issues. These include:
     #   * NumPy > 1.18.0, whose initial importation now implicitly detects
@@ -518,7 +515,7 @@ test-tox = [
     #
     #   See also this upstream NumPy issue:
     #       https://github.com/numpy/numpy/issues/15947
-    """numpy >=2.5.0; \
+    """numpy; \
        python_version < '3.15.0' and \
        sys_platform != 'darwin' and \
        platform_python_implementation != 'PyPy'\

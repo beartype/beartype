@@ -306,7 +306,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #            _infer_hint_factory_collection_builtin)
     #        from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
     #        from beartype._util.hint.pep.utilpepget import (
-    #            get_hint_pep_args,
+    #            get_hint_pep_childs,
     #            get_hint_pep_origin_type,
     #        )
     #
@@ -328,7 +328,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #                # Defer heavyweight imports.
     #                from beartype.vale import IsInstance
     #
-    #                hint_args = get_hint_pep_args(hint)
+    #                hint_args = get_hint_pep_childs(hint)
     #
     #                #FIXME: Unsure if this works. If not, try:
     #                #    hint_builtin = builtin_factory.__getitem__(*hint_args)

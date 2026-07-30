@@ -935,7 +935,7 @@ def _die_unless_object_builtin_checkable(
             f'{repr(exception_prefix)} not string.')
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+        from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
         from beartype._util.text.utiltextlabel import (
             label_exception_traceback)
         from beartype._util.utilobjget import (
@@ -998,7 +998,7 @@ def _die_unless_object_builtin_checkable(
             # Else, this object is a new union. Define these locals accordingly.
             else:
                 message_prefix = 'PEP 604 new union type hint '
-                obj_items = get_hint_pep_args(obj)
+                obj_items = get_hint_pep_childs(obj)
                 obj_item_prefix = 'new union child '
 
             # For the 0-based index of each item of this container and that

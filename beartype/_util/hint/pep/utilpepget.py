@@ -57,7 +57,7 @@ from typing import (
 # PEP 747-compliant "typing.TypeForm[...]" type hints, as pyright in particular
 # currently fails to support PEP 747 properly.
 
-def get_hint_pep_args(hint: object) -> tuple:
+def get_hint_pep_childs(hint: object) -> tuple:
     '''
     Tuple of the zero or more **child type hints** subscripting (indexing) the
     passed PEP-compliant type hint if this hint was subscripted *or* the empty
@@ -131,10 +131,10 @@ def get_hint_pep_args(hint: object) -> tuple:
 
        >>> import typing
        >>> from beartype._util.hint.pep.utilpepget import (
-       ...     get_hint_pep_args)
-       >>> get_hint_pep_args(typing.Any)
+       ...     get_hint_pep_childs)
+       >>> get_hint_pep_childs(typing.Any)
        ()
-       >>> get_hint_pep_args(typing.List[int, str, typing.Dict[str, str]])
+       >>> get_hint_pep_childs(typing.List[int, str, typing.Dict[str, str]])
        (int, str, typing.Dict[str, str])
     '''
 
@@ -266,7 +266,7 @@ def get_hint_pep_args_of_len(
     assert args_len >= 1, f'{args_len} < 0.'
 
     # Tuple of all arguments subscripting this hint.
-    hint_args = get_hint_pep_args(hint)
+    hint_args = get_hint_pep_childs(hint)
 
     # If this hint is *NOT* subscripted by the expected number of child hints...
     if len(hint_args) != args_len:
@@ -1148,7 +1148,7 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
 _HINT_ARGS_EMPTY_TUPLE = ((),)
 '''
 Tuple containing only the empty tuple, to be returned from the
-:func:`.get_hint_pep_args` getter when passed either:
+:func:`.get_hint_pep_childs` getter when passed either:
 
 * A :pep:`585`-compliant type hint subscripted by the empty tuple (e.g.,
   ``tuple[()]``).

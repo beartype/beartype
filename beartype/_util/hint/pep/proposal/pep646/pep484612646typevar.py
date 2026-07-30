@@ -30,7 +30,7 @@ from beartype._data.typing.datatypingport import (
     Hint,
     TypeIs,
 )
-from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 
 # ....................{ RAISERS                            }....................
 #FIXME: Unit test us up, please.
@@ -319,7 +319,7 @@ def pack_hint_pep484612646_typearg_unpacked(
 
     # Tuple of the zero or more child hints subscripting this unpacked type
     # parameter.
-    hint_args = get_hint_pep_args(hint)
+    hint_args = get_hint_pep_childs(hint)
 
     # If this unpacked type parameter is *NOT* subscripted by exactly one child
     # hint, raise an exception.

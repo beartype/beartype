@@ -25,7 +25,7 @@ from beartype._data.typing.datatypingport import (
 )
 from beartype._util.hint.pep.proposal.pep484.pep484604union import (
     make_hint_pep484604_union)
-from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from typing import Optional
 
 # ....................{ TESTERS                            }....................
@@ -115,7 +115,7 @@ def reduce_hint_pep484604_union(
 
     # ....................{ LOCALS                         }....................
     # Tuple of the two or more child hints subscripting this union.
-    hint_childs_old = get_hint_pep_args(hint)
+    hint_childs_old = get_hint_pep_childs(hint)
 
     # Number of these child hints.
     hint_childs_len = len(hint_childs_old)
@@ -196,8 +196,8 @@ def reduce_hint_pep484604_union(
     # This enables logic below to inspect these metadata, including the
     # "hint_recursable_to_depth" dictionary required to decide whether a child
     # hint is either:
-    # * Recursive (and thus not ignorable in the conventional sense) *OR*...
-    # * Non-recursive (and thus ignorable in the conventional sense).
+    # * Recursive (and thus shallowly ignorable) *OR*...
+    # * Non-recursive (and thus *NOT* ignorable).
     #
     # By default, reduce_hint_child() reduces such hints to the standard
     # "HINT_SANE_IGNORABLE" singleton. Though *USUALLY* desirable, that
@@ -228,16 +228,13 @@ def reduce_hint_pep484604_union(
     #
     # Ergo, we intentionally omit that class from consideration here.
 
-    # For each child hint of this union...
+    # For the 0-based index of each child hint subscripting this union...
     while hint_childs_index < hint_childs_len:
-        # Currently visited child hint of this union.
+        # This possibly insane child hint subscripting this union.
         hint_child_insane = hint_childs_old[hint_childs_index]
         # print(f'hints_overridden: {kwargs["hints_overridden"]}')
 
-        # Sane child hint sanified from this possibly insane child hint if
-        # sanifying this child hint did not generate supplementary metadata *OR*
-        # that metadata otherwise (i.e., if sanifying this child hint generated
-        # supplementary metadata).
+        # Metadata encapsulating the sanification of this child hint.
         # print(f'Reducing union {hint} insane child {hint_child_insane} with {kwargs}...')
         hint_child_sane = reduce_hint_child(hint=hint_child_insane, **kwargs)
         # print(f'...to sane child {hint_child_sane}!')

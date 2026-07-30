@@ -25,6 +25,7 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from string import digits
 
 # ....................{ GETTERS                            }....................
@@ -93,7 +94,7 @@ def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
     otherwise).
 
     This getter is memoized for efficiency. To defer the substantial cost of
-    importing from NumPy, the frozen set memoized by this getter is
+    importing from NumPy, the frozen dictionary memoized by this getter is
     intentionally deferred to call time rather than globalized as a constant.
     '''
 
@@ -107,7 +108,7 @@ def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
     # lacking a corresponding builtin type, interestingly. Since Python itself
     # has no concept of an "unsigned integer" the NumPy-specific
     # "unsignedinteger" ABC is preferred instead.
-    _DTYPE_NAME_SANITIZED_TO_BUILTIN_TYPE = {
+    _DTYPE_NAME_SANITIZED_TO_BUILTIN_TYPE: dict[str, type] = FrozenDict({
         'bool': bool,
         'bytes': bytes,
         'complex': complex,
@@ -116,7 +117,7 @@ def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
         'uint': unsignedinteger,
         'str': str,
         'void': memoryview,
-    }
+    })
 
     # Return this dictionary.
     return _DTYPE_NAME_SANITIZED_TO_BUILTIN_TYPE
@@ -128,8 +129,8 @@ def reduce_numpy_dtype(
     dtype: object,
 
     # Optional parameters.
-    exception_prefix: str = '',
     exception_cls: TypeException = BeartypeLibraryNumpyException,
+    exception_prefix: str = '',
 ) -> type:
     '''
     Reduce the passed fine-grained **NumPy data type** (i.e., third-party
@@ -142,12 +143,12 @@ def reduce_numpy_dtype(
     ----------
     dtype : object
         NumPy data type to be reduced.
-    exception_prefix : str, optional
-        Human-readable label prefixing raised exception messages. Defaults to
-        the empty string.
-    exception_cls : Type[Exception], optional
+    exception_cls : Type[Exception], default: BeartypeLibraryNumpyException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeLibraryNumpyException`.
+    exception_prefix : str, default: ""
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -197,8 +198,8 @@ def make_numpy_dtype(
     dtype: object,
 
     # Optional parameters.
-    exception_prefix: str = '',
     exception_cls: TypeException = BeartypeLibraryNumpyException,
+    exception_prefix: str = '',
 ) -> type:
     '''
     **NumPy data type** (i.e., third-party :class:`numpy.dtype` instance)
@@ -211,12 +212,12 @@ def make_numpy_dtype(
     ----------
     dtype : object
         Object to be coerced into a NumPy data type.
-    exception_prefix : str, optional
-        Human-readable label prefixing raised exception messages. Defaults to
-        the empty string.
-    exception_cls : Type[Exception], optional
+    exception_cls : Type[Exception], default: BeartypeLibraryNumpyException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeLibraryNumpyException`.
+    exception_prefix : str, default: ""
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Parameters
     ----------

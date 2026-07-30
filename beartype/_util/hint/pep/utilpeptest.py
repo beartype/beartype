@@ -408,11 +408,11 @@ def is_hint_pep_subbed(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 
     # Return true only if the tuple of all child type hints subscripting this
     # hint contains one or more child type hints.
-    return bool(get_hint_pep_args(hint))
+    return bool(get_hint_pep_childs(hint))
 
 
 @callable_cached

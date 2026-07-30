@@ -95,7 +95,7 @@ def die_if_hint_pep484585_generic_invalid(
     if is_hint_pep484585_generic_invalid(hint):
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilpepget import (
-            get_hint_pep_args,
+            get_hint_pep_childs,
             get_hint_pep_typeargs_unpacked,
         )
         from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
@@ -115,7 +115,7 @@ def die_if_hint_pep484585_generic_invalid(
         # Tuple of the zero or more child hints directly subscripting this
         # generic if this generic is subscripted *OR* the empty tuple otherwise
         # (i.e., if this generic is unsubscripted).
-        hint_args = get_hint_pep_args(hint)
+        hint_args = get_hint_pep_childs(hint)
 
         # Number of unbound type parameters transitively parametrizing this
         # generic in unsubscripted form.
@@ -347,7 +347,7 @@ def is_hint_pep484585_generic_invalid(hint: Hint) -> bool:
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
+        get_hint_pep_childs,
         get_hint_pep_typeargs_unpacked,
     )
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
@@ -401,7 +401,7 @@ def is_hint_pep484585_generic_invalid(hint: Hint) -> bool:
     # Tuple of the zero or more child hints directly subscripting this generic
     # if this generic is subscripted *OR* the empty tuple otherwise (i.e., if
     # this generic is unsubscripted).
-    hint_args = get_hint_pep_args(hint)
+    hint_args = get_hint_pep_childs(hint)
 
     # Number of unbound type parameters transitively parametrizing this generic
     # in unsubscripted form.

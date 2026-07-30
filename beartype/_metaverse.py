@@ -245,13 +245,15 @@ pyproject.toml
 
 # ....................{ METADATA ~ dependency : versions   }....................
 # Note that test-time functionality imports this private string global. *shrug*
-LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY = '1.21.0'
+LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY = '2.5.0'
 '''
 Minimum optional version of NumPy recommended for use with this project.
 
-NumPy >= 1.21.0 first introduced the third-party PEP-noncompliant
-:attr:`numpy.typing.NDArray` type hint supported by the
-:func:`beartype.beartype` decorator.
+NumPy >= 2.5.0 first introduced significant breaking changes to the public
+:attr:`numpy.typing.NDArray` type hint factory. From the runtime QA-oriented
+perspective of :mod:`beartype`, these changes constitute a break in backward
+compatibility. Supporting older NumPy versions would be feasible but largely
+non-worthwhile. There are larger fish that need frying on this skillet.
 '''
 
 

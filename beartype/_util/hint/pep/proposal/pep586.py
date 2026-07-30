@@ -80,7 +80,7 @@ def die_unless_hint_pep586(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
 
     # If this hint is *NOT* PEP 586-compliant, raise an exception.
@@ -92,7 +92,7 @@ def die_unless_hint_pep586(
     # Else, this hint is PEP 586-compliant.
 
     # Tuple of zero or more literal objects subscripting this hint.
-    hint_literals = get_hint_pep_args(hint)
+    hint_literals = get_hint_pep_childs(hint)
 
     # If this hint is unsubscripted...
     if not hint_literals:

@@ -383,7 +383,7 @@
 #          hint_pep484585_generic_subbed = getattr(obj, '__orig_class__', None)
 #
 #          if hint_pep484585_generic_subbed is not None:
-#              hints_child = get_hint_pep_args(hint_pep484585_generic_subbed)
+#              hints_child = get_hint_pep_childs(hint_pep484585_generic_subbed)
 #              beartype_pep484585_generic_subbed_object(
 #                  obj=self, hints_child=hints_child)
 #

@@ -18,9 +18,9 @@ This submodule unit tests the public API of the private
 # from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ attr                       }....................
-def test_get_hint_pep_args(hints_piths_pep_meta) -> None:
+def test_get_hint_pep_childs(hints_piths_pep_meta) -> None:
     '''
-    Test the :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_args`
+    Test the :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_childs`
     getter.
 
     Parameters
@@ -35,7 +35,7 @@ def test_get_hint_pep_args(hints_piths_pep_meta) -> None:
     from beartype.roar import BeartypeDecorHintPepException
     from beartype.typing import Tuple
     from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
+        get_hint_pep_childs,
         _HINT_ARGS_EMPTY_TUPLE,
     )
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
@@ -57,7 +57,7 @@ def test_get_hint_pep_args(hints_piths_pep_meta) -> None:
         hint = hint_pep_meta.hint
 
         # Tuple of all arguments subscripting this hint.
-        hint_args = get_hint_pep_args(hint)
+        hint_args = get_hint_pep_childs(hint)
         assert isinstance(hint_args, tuple)
 
         # For subscripted hints, one or more arguments.
@@ -69,7 +69,7 @@ def test_get_hint_pep_args(hints_piths_pep_meta) -> None:
 
     # Assert this getter returns *NO* type variables for non-"typing" hints.
     for not_hint_pep in NOT_HINTS_PEP:
-        assert get_hint_pep_args(not_hint_pep) == ()
+        assert get_hint_pep_childs(not_hint_pep) == ()
 
     # ....................{ PASS ~ tuple                   }....................
     # Explicitly validate that this getter handles both PEP 484- and 585-
@@ -77,18 +77,18 @@ def test_get_hint_pep_args(hints_piths_pep_meta) -> None:
 
     # Assert this getter when passed a PEP 484-compliant empty tuple hint
     # returns a tuple containing an empty tuple for disambiguity.
-    assert get_hint_pep_args(Tuple[()]) == _HINT_ARGS_EMPTY_TUPLE
+    assert get_hint_pep_childs(Tuple[()]) == _HINT_ARGS_EMPTY_TUPLE
 
     # Assert this getter when passed a PEP 585-compliant empty tuple hint
     # returns a tuple containing an empty tuple for disambiguity.
-    assert get_hint_pep_args(tuple[()]) == _HINT_ARGS_EMPTY_TUPLE
+    assert get_hint_pep_childs(tuple[()]) == _HINT_ARGS_EMPTY_TUPLE
 
     # ....................{ FAIL                           }....................
     # Assert this getter when passed a PEP-noncompliant hint defining the
     # "__args__" dunder attribute to *NOT* be a tuple raises the expected
     # exception.
     with raises(BeartypeDecorHintPepException):
-        get_hint_pep_args(TheWholeMammothBrood)
+        get_hint_pep_childs(TheWholeMammothBrood)
 
 # ....................{ TESTS ~ attr : typeargs            }....................
 def test_get_hint_pep_typeargs_packed(

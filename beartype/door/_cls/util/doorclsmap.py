@@ -50,7 +50,7 @@ from beartype._data.hint.sign.datahintsigns import (
 )
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_UNSUBSCRIPTABLE)
-from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 
@@ -130,7 +130,7 @@ def get_typehint_subclass(hint: Hint) -> type[TypeHint]:
         # the "ClassTypeHint" subclass even when unsubscripted *OR*...
         hint_sign in HINT_SIGNS_UNSUBSCRIPTABLE or
         # This hint is subscripted by one or more child hints.
-        get_hint_pep_args(hint)
+        get_hint_pep_childs(hint)
     ):
         # Replace this inappropriate "SubscriptedTypeHint" wrapper with the more
         # appropriate "ClassTypeHint" subclass wrapping unsubscripted types.
@@ -139,7 +139,7 @@ def get_typehint_subclass(hint: Hint) -> type[TypeHint]:
 
     #FIXME: Alternately, it might be preferable to refactor this to resemble:
     #    if (
-    #       not get_hint_pep_args(hint) and
+    #       not get_hint_pep_childs(hint) and
     #       get_hint_pep_origin_type_or_none(hint) is not None
     #    ):
     #        wrapper_subclass = ClassTypeHint

@@ -181,7 +181,7 @@ def get_hint_pep484585_callable_params(
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
     # ....................{ VALIDATE                       }....................
@@ -234,7 +234,7 @@ def get_hint_pep484585_callable_params(
     #     >>> from collections.abc import Callable
     #     >>> Callable[()]
     #     TypeError: Callable must be used as Callable[[arg, ...], result].
-    hint_args = get_hint_pep_args(hint)
+    hint_args = get_hint_pep_childs(hint)
 
     # Number of parameter type hints flattened into this tuple, calculated by
     # excluding the trailing return type hint also flattened into this tuple.
@@ -377,7 +377,7 @@ def get_hint_pep484585_callable_return(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 
     # If this hint is *NOT* a callable type hint, raise an exception.
     _die_unless_hint_pep484585_callable(hint)
@@ -385,7 +385,7 @@ def get_hint_pep484585_callable_return(
 
     # Flattened tuple of the one or more child type hints subscripting this
     # callable type hint. See get_hint_pep484585_callable_params() for details.
-    hint_args = get_hint_pep_args(hint)
+    hint_args = get_hint_pep_childs(hint)
 
     # Return the last object subscripting this hint.
     #

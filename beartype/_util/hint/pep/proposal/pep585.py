@@ -230,7 +230,7 @@ def is_hint_pep585_generic_unsubbed(hint: Hint) -> bool:
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
     from beartype._util.hint.pep.proposal.pep560 import (
         is_hint_pep560,
         iter_hint_pep560_bases_unerased,
@@ -273,7 +273,7 @@ def is_hint_pep585_generic_unsubbed(hint: Hint) -> bool:
             # child hints.
             #
             # This PEP 484-compliant generic is unsubscripted.
-            not get_hint_pep_args(hint)
+            not get_hint_pep_childs(hint)
         )
     # Then this hint *CANNOT* be a PEP 585-compliant unsubscripted generic. In
     # this case, return false immediately.
@@ -491,7 +491,7 @@ def get_hint_pep585_generic_typeargs_packed(
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_unsubbed_type)
     from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
+        get_hint_pep_childs,
         get_hint_pep_typeargs_packed,
     )
 
@@ -527,7 +527,7 @@ def get_hint_pep585_generic_typeargs_packed(
         # stripped of all subscripting child hints. In this case...
         else:
             # Number of child hints subscripting this subscripted generic.
-            hint_childs_len = len(get_hint_pep_args(hint))
+            hint_childs_len = len(get_hint_pep_childs(hint))
             # print(f'hint_childs_len: {hint_childs_len}')
 
             # Possibly erroneous tuple of the zero or more unbound transitive

@@ -211,7 +211,7 @@ def find_hint_pep484585_generic_args_full(
     #be strictly less than or equal to the number of unbound type parameters
     #parametrizing the *UNSUBSCRIPTED* form of that generic. In other words, the
     #following runtime equality *MUST* hold (in the inclusive range):
-    #    len(get_hint_pep_args(hint)) <= [
+    #    len(get_hint_pep_childs(hint)) <= [
     #        0,
     #        len(get_hint_pep484585_generic_unsubbed_type(
     #            get_hint_pep_typeargs_packed(hint))),
@@ -228,7 +228,7 @@ def find_hint_pep484585_generic_args_full(
     #Then subscriptions of that generic *MUST* obey the above maxim, yet:
     #    # Show the equality holds for a valid subscription.
     #    >>> hint = Pep484585SequenceUGenericIntTListU[bool, float]
-    #    >>> len(get_hint_pep_args(hint))
+    #    >>> len(get_hint_pep_childs(hint))
     #    2
     #    >>> len(get_hint_pep484585_generic_unsubbed_type(
     #    ...     get_hint_pep_typeargs_packed(hint)))
@@ -241,7 +241,7 @@ def find_hint_pep484585_generic_args_full(
     #    # Note that CPython itself should prohibit this at subscription time,
     #    # but doesn't. Ergo, @beartype itself will need to validate this.
     #    >>> hint = Pep484585SequenceUGenericIntTListU[bool, int, float]
-    #    >>> len(get_hint_pep_args(hint))
+    #    >>> len(get_hint_pep_childs(hint))
     #    3
     #    >>> len(get_hint_pep484585_generic_unsubbed_type(
     #    ...     get_hint_pep_typeargs_packed(hint)))
@@ -450,7 +450,7 @@ def find_hint_pep484585_generic_args_full(
         is_hint_pep484585_generic_user,
     )
     from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
+        get_hint_pep_childs,
         get_hint_pep_typeargs_unpacked,
     )
 
@@ -683,7 +683,7 @@ def find_hint_pep484585_generic_args_full(
             # Tuple of the zero or more child hints directly subscripting this
             # pseudo-superclass if this pseudo-superclass is subscripted *OR*
             # the empty tuple if this pseudo-superclass is unsubscripted.
-            hint_base_args = get_hint_pep_args(hint_base)
+            hint_base_args = get_hint_pep_childs(hint_base)
 
             # Number of unbound type parameters transitively parametrizing this
             # pseudo-superclass in unsubscripted form.
@@ -850,7 +850,7 @@ def find_hint_pep484585_generic_args_full(
             # of zero or more child hints directly subscripting this
             # pseudo-superclass is semantically equivalent to what that list
             # would have been (had that list actually been defined).
-            list(get_hint_pep_args(hint_base))  # type: ignore[assignment]
+            list(get_hint_pep_childs(hint_base))  # type: ignore[assignment]
             if is_hint_base_leaf else
             # Else, this is *NOT* a terminal leaf pseudo-superclass. In this
             # case, the list of zero or more child hints transitively

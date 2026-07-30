@@ -37,7 +37,7 @@ from beartype._util.cache.pool.utilcachepoolinstance import (
     release_instance,
 )
 # from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 
@@ -390,7 +390,7 @@ def _get_hint_pep484604_union_args_flattened(
 
     # ....................{ LOCALS ~ child                 }....................
     # Tuple of the two or more child hints subscripting this union.
-    hint_childs = get_hint_pep_args(union_hint)
+    hint_childs = get_hint_pep_childs(union_hint)
 
     # Number of these child hints.
     hint_childs_len = len(hint_childs)
@@ -587,7 +587,7 @@ def _get_hint_pep484604_union_args_flattened(
         #     typing.Union[float, int, str]
         if hint_child_sign in HINT_SIGNS_UNION:
             # Tuple of all child child hints subscripting this child union.
-            hint_child_childs = get_hint_pep_args(hint_child)
+            hint_child_childs = get_hint_pep_childs(hint_child)
             # print(f'Expanding union {repr(hint_curr)} with child union {repr(hint_child_childs)}...')
 
             # For each child child type subscripting this child union,

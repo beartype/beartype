@@ -97,7 +97,7 @@ from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
 from beartype._util.hint.pep.proposal.pep696 import (
     get_hint_pep484612646_typearg_packed_default_or_sentinel)
 from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
+    get_hint_pep_childs,
     get_hint_pep_origin,
     get_hint_pep_typeargs_unpacked,
 )
@@ -114,9 +114,9 @@ def reduce_hint_pep484612646_typearg(
     **kwargs
 ) -> HintSane:
     '''
-    Reduce the passed :pep:`484`-, :pep:`612`-, or :pep:`646`-compliant **type
-    parameter** (i.e., :pep:`484`-compliant type variable, :pep:`612`-compliant
-    parameter specification, or :pep:`646`-compliant type variable tuple) to a
+    Reduce the passed PEP-compliant **unpacked type parameter** (i.e.,
+    :pep:`484`-compliant type variable, :pep:`612`-compliant unpacked parameter
+    specification, or :pep:`646`-compliant unpacked type variable tuple) to a
     lower-level type hint currently supported by :mod:`beartype`.
 
     This reducer is intentionally *not* memoized (e.g., by the
@@ -408,11 +408,12 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     '''
     Reduce the passed **subscripted hint** (i.e., derivative hint produced by
     subscripting an unsubscripted hint originally parametrized by one or more
-    **type parameters** (i.e., :pep:`484`-compliant type variables or
-    :pep:`646`-compliant type variable tuples) with one or more child hints) to
-    that unsubscripted hint and corresponding **type parameter lookup table**
-    (i.e., immutable dictionary mapping from those same type parameters to those
-    same child hints).
+    PEP-compliant **unpacked type parameters** (i.e., :pep:`484`-compliant type
+    variables, :pep:`612`-compliant unpacked parameter specifications, or
+    :pep:`646`-compliant unpacked type variable tuples) with one or more child
+    hints) to that unsubscripted hint and corresponding **type parameter lookup
+    table** (i.e., immutable dictionary mapping from those same type parameters
+    to those same child hints).
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as reducers cannot be memoized.
@@ -561,7 +562,7 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     # print(f'hints_typearg: {hints_typearg}')
 
     # Tuple of all child hints subscripting this subscripted hint.
-    hints_child = get_hint_pep_args(hint)
+    hints_child = get_hint_pep_childs(hint)
     # print(f'hints_child: {hints_child}')
 
     # ....................{ REDUCE                         }....................

@@ -46,10 +46,6 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype.typing import (
-        Any,
-        Tuple,
-    )
     from beartype.vale import Is
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep484585TupleFixed,
@@ -63,6 +59,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
+    from typing import Any
 
     # Defer NumPy-specific imports.
     from numpy import (
@@ -235,10 +232,10 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         # ................{ NUMPY ~ array : nested             }................
         # 2-tuple of one-dimensional typed NumPy arrays of 64-bit floats.
         HintPepMetadata(
-            hint=Tuple[Numpy1DFloat64Array, Numpy1DFloat64Array],
+            hint=tuple[Numpy1DFloat64Array, Numpy1DFloat64Array],
             pep_sign=HintSignPep484585TupleFixed,
             isinstanceable_type=tuple,
-            is_pep585_builtin_subbed=Tuple is tuple,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # 2-tuple of NumPy arrays containing only 64-bit floats.
                 PithSatisfiedMetadata((
@@ -252,8 +249,9 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
                         "cylindroid‐cindered cleft, and",
                     ),
                     # Match that the exception message raised for this object
-                    # embeds the representation of the expected class.
-                    exception_str_match_regexes=(r'\bnumpy\.ndarray\b',),
+                    # embeds the representation of the expected PEP
+                    # 695-compliant type alias.
+                    exception_str_match_regexes=(r'\bNDArray\b',),
                 ),
                 # 2-tuple of NumPy arrays containing only integers.
                 PithUnsatisfiedMetadata(

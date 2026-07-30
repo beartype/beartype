@@ -41,7 +41,7 @@ from beartype._util.cache.utilcachecall import (
     property_cached,
 )
 from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
+    get_hint_pep_childs,
     get_hint_pep_origin_type_or_none,
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
@@ -784,7 +784,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         '''
 
         # We are the one-liner. We are the codebase.
-        return get_hint_pep_args(self._hint)
+        return get_hint_pep_childs(self._hint)
 
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_equal(self, other: 'TypeHint') -> bool:
