@@ -1,32 +1,34 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2026 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
-**Beartype-generated wrapper function utility unit tests.**
+**Beartype-generated wrapper function utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.bear.utilbearfunc` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ testers                   }....................
+# ....................{ TESTS ~ testers                    }....................
 def test_is_func_beartyped() -> None:
     '''
     Test the
     :func:`beartype._util.bear.utilbearfunc.is_func_beartyped` tester.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
     from beartype._util.bear.utilbearfunc import is_func_beartyped
 
+    # ....................{ CALLABLES                      }....................
     @beartype
     def where_that_or() -> str:
         '''
@@ -46,11 +48,12 @@ def test_is_func_beartyped() -> None:
 
         return 'Seeking among the shadows that pass by'
 
-    # Assert this tester returns the expected results for these callables.
+    # ....................{ ASSERTS                        }....................
+    # Assert that this tester returns the expected results for these callables.
     assert is_func_beartyped(where_that_or) is True
     assert is_func_beartyped(thou_art_no_unbidden_guest) is False
 
-# ....................{ TESTS ~ setters                   }....................
+# ....................{ TESTS ~ setters                    }....................
 def test_set_func_beartyped() -> None:
     '''
     Test the

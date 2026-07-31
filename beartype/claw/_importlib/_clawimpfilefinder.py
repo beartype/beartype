@@ -70,6 +70,32 @@ loader class whose instances are responsible for loading Python modules of that
 filetype into imported in-memory module objects).
 '''
 
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please. *sigh*
+def is_beartype_file_finder_path_hook(path_hook: object) -> bool:
+    '''
+    :data:`True` only if the passed object defines the :mod:`beartype`-specific
+    dunder attribute uniquely monkey-patched into the :mod:`beartype`-specific
+    file finder path hook created and returned by the low-level
+    :func:`.make_beartype_file_finder_path_hook_index` factory function.
+
+    Parameters
+    ----------
+    path_hook : object
+        Arbitrary object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a :mod:`beartype`-specific file
+        finder path hook.
+    '''
+
+    # Return true only if this path hook defines this beartype-specific dunder
+    # attribute indicative of being a beartype-specific file finder path hook.
+    return getattr(
+        path_hook, BEARTYPE_CLAW_FILE_FINDER_PATH_HOOK_ATTR_NAME, False)
+
 # ....................{ FACTORIES                          }....................
 def make_beartype_file_finder_path_hook_index() -> FileFinderPathHookAndIndex:
     '''

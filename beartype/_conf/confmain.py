@@ -805,7 +805,7 @@ class BeartypeConf(object):
             * ``is_check_pep557``.
         '''
 
-        # In a non-reentrant thread lock specific to beartype configurations...
+        # In a non-reentrant thread lock isolated to this constructor...
         #
         # Note that this lock is potentially overkill and thus unnecessary.
         # Nonetheless, since the number of beartype configurations instantiated

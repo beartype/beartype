@@ -19,7 +19,9 @@ from beartype.roar import BeartypeClawImportlibFileFinderPathHookInactiveWarning
 from beartype.roar._roarexc import (
     _BeartypeClawImportlibIsPathHookActiveException)
 from beartype.claw._importlib._clawimpfilefinder import (
-    make_beartype_file_finder_path_hook_index)
+    make_beartype_file_finder_path_hook_index,
+    is_beartype_file_finder_path_hook,
+)
 from beartype._data.claw.dataclawmagic import (
     BEARTYPE_CLAW_FILE_FINDER_PATH_HOOK_ATTR_NAME,
     STANDARD_META_PATH_ITEM_NAMES,
@@ -354,11 +356,7 @@ def _warn_if_beartype_pathhook_inactive() -> None:
             # *MUST* already have been appended to this list. Appending any
             # further path hook names to this list would only uselessly confound
             # this already confounding issue. Immediately halt appending, yo!
-            if getattr(
-                path_hook,
-                BEARTYPE_CLAW_FILE_FINDER_PATH_HOOK_ATTR_NAME,
-                False,
-            ):
+            if is_beartype_file_finder_path_hook(path_hook):
                 break
             # Else, this path hook is *NOT* the beartype-specific file finder
             # path hook. This hook precedes that hook and *COULD* thus be the

@@ -493,6 +493,9 @@ test-tox = [
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
     #explicitly supporting PyPy.
     # Required by optional NumPy-specific integration tests. Note that:
+    # * The minimal NumPy version required by these tests is best specified
+    #   elsewhere by the
+    #   "beartype._metaverse.LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY" global.
     # * NumPy has become *EXTREMELY* non-trivial to install under macOS with
     #   "pip", due to the conjunction of multiple issues. These include:
     #   * NumPy > 1.18.0, whose initial importation now implicitly detects

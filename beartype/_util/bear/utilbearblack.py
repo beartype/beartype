@@ -19,17 +19,41 @@ from beartype._data.shame.module.datashamemodtype import (
     BLACKLIST_MODULE_NAME_TO_TYPE_NAMES,
     BLACKLIST_TYPE_MRO_ROOT_MODULE_NAME_TO_TYPE_NAMES,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from threading import Lock
+from weakref import WeakKeyDictionary
 
-# ....................{ TESTERS ~ object                   }....................
-@callable_cached
+# ....................{ TESTERS                            }....................
 def is_object_blacklisted(obj: object) -> bool:
     '''
-    :data:`True` only if the passed object (e.g., callable, class) is
-    **beartype-blacklisted** (i.e., resides in a third-party package or modules
-    well-known to be hostile to runtime type-checking and thus :mod:`beartype`).
+    :data:`True` only if the passed arbitrary user-defined object (typically but
+    *not* necessarily a callable or class) is **beartype-blacklisted** (i.e.,
+    resides in a third-party package or modules well-known to be hostile to
+    runtime type-checking and thus :mod:`beartype`).
 
-    This tester is memoized for efficiency.
+    This tester is both thread-safe and memoized. See below for ugly details!
+
+    Caveats
+    -------
+    This tester is internally memoized via a thread-safe global
+    :class:`weakref.WeakKeyDictionary` instance for efficiency. Since the passed
+    object is both arbitrary and user-defined, this memoization is careful to
+    hold weak rather than strong references to that object. The usual
+    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator
+    commonly employed throughout the :mod:`beartype` codebase to trivially
+    memoize callables is thus wholly inappropriate here. Doing so would hold an
+    unbounded number of strong references to arbitrary user-defined objects,
+    resulting in a catastrophic explosion in space consumption under normal use
+    cases. Interestingly, most objects do *not* accept weak references and thus
+    *cannot* be memoized under this scheme. Thankfully, most objects passed to
+    this tester (i.e., callables, classes) do. The sole exceptions are slotted
+    classes, most of which do not. Python: "Why, bro? Why?"
+
+    For example, consider closures automatically decorated under
+    :mod:`beartype.claw` import hooks by the :func:`beartype.beartype`
+    decorator; those closures are newly created on each call of their parent
+    callable and would thus be held indefinitely as strong references by such an
+    inappropriate memoization scheme. And... that's exactly what just happened,
+    which is why this tester was completely refactored to avoid those horrors.
 
     Parameters
     ----------
@@ -45,6 +69,79 @@ def is_object_blacklisted(obj: object) -> bool:
     --------
     :data:`.BLACKLIST_PACKAGE_NAMES`
         Detailed discussion of beartype-blacklisting.
+    '''
+
+    # In a non-reentrant thread lock isolated to this tester...
+    with _is_object_blacklisted_lock:
+        # True only if this object is beartype-blacklisted, initialized to false
+        # for safety.
+        is_obj_blacklisted: bool | None = False
+
+        # Attempt to...
+        try:
+            # Memoized boolean previously returned by the first prior call of
+            # this tester passed this object if this tester has already been
+            # passed this object and this object accepts weak references *OR*
+            # either:
+            # * If this tester has *NOT* already been passed this object,
+            #   "None". Defaulting to "None" rather than false enables
+            #   subsequent logic to reuse memoized false values.
+            # * If this object refuses weak references, a "TypeError" exception.
+            is_obj_blacklisted = _object_to_is_blacklisted.get(obj, None)
+
+            # If this tester has *NOT* already been passed this object...
+            if is_obj_blacklisted is None:
+                # True only if this object is beartype-blacklisted.
+                is_obj_blacklisted = _is_object_blacklisted(obj)
+
+                # Memoize this boolean for subsequent lookup by future calls.
+                _object_to_is_blacklisted[obj] = is_obj_blacklisted
+            # Else, this tester has already been passed this object. In this
+            # case, trivially return the boolean memoized by the first prior
+            # call of this tester passed this object.
+        # If this object refuses weak references, the WeakKeyDictionary.get()
+        # method called above raises a "TypeError" exception: e.g.,
+        #     >>> from weakref import WeakKeyDictionary
+        #     >>> weak_sauce = WeakKeyDictionary()
+        #     >>> weak_sauce[['Lists', 'refuse']] = 'weak references, yo!'
+        #     Traceback (most recent call last):
+        #       File "<python-input-2>", line 1, in <module>
+        #         weak_sauce[['Lists', 'refuse']] = 'weak references, yo!'
+        #         ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+        #       File "../3.15.0/lib/python3.15/weakref.py", line 335, in __setitem__
+        #         self.data[ref(key, self._remove)] = value
+        #                   ~~~^^^^^^^^^^^^^^^^^^^
+        #     TypeError: cannot create weak reference to 'list' object
+        #
+        # In this case, trivially assume this tester has yet to be passed this
+        # object. Don't blame us. Blame Guido. Weak references are weak sauce.
+        except TypeError:
+            # True only if this object is beartype-blacklisted.
+            is_obj_blacklisted = _is_object_blacklisted(obj)
+
+    # Return true only if this object is beartype-blacklisted.
+    return is_obj_blacklisted
+
+# ....................{ PRIVATE ~ testers                  }....................
+def _is_object_blacklisted(obj: object) -> bool:
+    '''
+    :data:`True` only if the passed arbitrary user-defined object (typically but
+    *not* necessarily a callable or class) is **beartype-blacklisted** (i.e.,
+    resides in a third-party package or modules well-known to be hostile to
+    runtime type-checking and thus :mod:`beartype`).
+
+    This tester is unmemoized and thus intended to be called directly *only* by
+    the higher-level memoized :func:`.is_object_blacklisted` tester.
+
+    Parameters
+    ----------
+    obj : object
+        Arbitrary object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is beartype-blacklisted.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -208,3 +305,20 @@ def is_object_blacklisted(obj: object) -> bool:
     # ....................{ FALLBACK                       }....................
     # Return false as a feeble fallback.
     return False
+
+# ....................{ PRIVATE ~ globals                  }....................
+_is_object_blacklisted_lock = Lock()
+'''
+**Non-reentrant beartype blacklist thread lock** (i.e., low-level thread locking
+mechanism implemented as a highly efficient C extension, defined as an global
+for non-reentrant reuse elsewhere as a context manager).
+'''
+
+
+_object_to_is_blacklisted: WeakKeyDictionary[object, bool] = WeakKeyDictionary()
+'''
+Dictionary mapping from each weakly referenceable object passed to the private
+:func:`._is_object_blacklisted` tester to the boolean returned by that tester,
+effectively memoizing the higher-level :func:`.is_object_blacklisted` tester
+internally calling that lower-level tester.
+'''
