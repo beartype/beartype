@@ -94,6 +94,22 @@ def is_object_blacklisted(obj: object) -> bool:
                 # True only if this object is beartype-blacklisted.
                 is_obj_blacklisted = _is_object_blacklisted(obj)
 
+                # If this memoization dictionary contains more than this maximum
+                # number of key-value pairs, efficiently clear this dictionary.
+                # Doing so reverts this cache back to the empty dictionary by
+                # removing all existing key-value pairs. This could be
+                # considered a crude (albeit efficient) facsimile of a least
+                # recently used (LRU) cache (albeit without that whole least
+                # recently used part).
+                if (
+                    len(_object_to_is_blacklisted) >=
+                    _OBJECT_TO_IS_BLACKLISTED_LEN_MAX
+                ):
+                    _object_to_is_blacklisted.clear()
+                # Else, this memoization dictionary contains fewer than this
+                # maximum number of key-value pairs. In this case, preserve the
+                # existing contents of this dictionary.
+
                 # Memoize this boolean for subsequent lookup by future calls.
                 _object_to_is_blacklisted[obj] = is_obj_blacklisted
             # Else, this tester has already been passed this object. In this
@@ -305,6 +321,21 @@ def _is_object_blacklisted(obj: object) -> bool:
     # ....................{ FALLBACK                       }....................
     # Return false as a feeble fallback.
     return False
+
+# ....................{ PRIVATE ~ constants                }....................
+_OBJECT_TO_IS_BLACKLISTED_LEN_MAX = 8192
+'''
+Maximum number of key-value pairs that the :func:`.is_object_blacklisted` tester
+permits the :data:`._object_to_is_blacklisted` dictionary to contain.
+
+That tester utilizes this magic number to effectively coerce that dictionary
+into a crude (but efficient) facsimile of a least recently used (LRU) cache.
+This number exhibits a tug-of-war between competing tradeoffs. Specifically, as
+this number increases:
+
+* The average-case efficiency of that tester increases (i.e., time decreases).
+* The average-case consumption of that tester increases (i.e., space increases).
+'''
 
 # ....................{ PRIVATE ~ globals                  }....................
 _is_object_blacklisted_lock = Lock()
