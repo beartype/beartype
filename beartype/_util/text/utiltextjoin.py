@@ -27,8 +27,8 @@ def join_strings_bulleted_unnumbered(
     strings: IterableStrs,
 
     # Optional parameters.
-    delimiter: str = '\n* ',
-    is_double_quoted: bool = False,
+    prefix: str = '\n* ',
+    suffix: str = '.',
 ) -> str:
     '''
     Concatenate the passed iterable of zero or more strings delimited by the
@@ -46,14 +46,13 @@ def join_strings_bulleted_unnumbered(
     ----------
     strings : Iterable[str]
         Iterable of all strings to be joined.
-    delimiter : str, default: "\n* "
-        Substring separating each string contained in this iterable. Defaults to
+    prefix : str, default: "\n* "
+        Substring prefixing each string contained in this iterable. Defaults to
         traditional Markdown-style **unnumbered bullet point delimiter** (i.e.,
         ``"\n* "`` substring).
-    is_double_quoted : bool, default: False
-        :data:`True` only if **double-quoting** (i.e., both prefixing and
-        suffixing by the ``"`` character) each item of this iterable. Defaults
-        to :data:`False`.
+    suffix : str, default: "."
+        Substring suffixing each string contained in this iterable. Defaults to
+        a period.
 
     Returns
     -------
@@ -65,22 +64,18 @@ def join_strings_bulleted_unnumbered(
         >>> from beartype._util.text.utiltextjoin import (
         ...     join_strings_bulleted_unnumbered)
         >>> join_strings_bulleted_unnumbered(
-        ...     strings=('Orion Pax', 'Bumblebee', 'Cliffjumper', 'Wheeljack'),
-        ...     is_double_quoted=True,
-        ... )
+        ...     ('Orion Pax', 'Bumblebee', 'Cliffjumper', 'Wheeljack'))
         """
-        * "Orion Pax".
-        * "Bumblebee".
-        * "Cliffjumper".
-        * "Wheeljack".
+        * Orion Pax.
+        * Bumblebee.
+        * Cliffjumper.
+        * Wheeljack.
         """
     '''
     assert isinstance(strings, IterableABC) and not isinstance(strings, str), (
         f'{repr(strings)} not non-string iterable.')
-    assert isinstance(delimiter, str), f'{repr(delimiter)} not string.'
-    assert delimiter, 'Delimiter is empty string.'
-    assert isinstance(is_double_quoted, bool), (
-        f'{repr(is_double_quoted)} not boolean.')
+    assert isinstance(prefix, str), f'{repr(prefix)} not string.'
+    assert isinstance(suffix, str), f'{repr(suffix)} not string.'
 
     # ....................{ PREAMBLE                        }....................
     # If this iterable is *NOT* a sequence, internally coerce this iterable
@@ -99,19 +94,14 @@ def join_strings_bulleted_unnumbered(
     if not strings:
         return ''
     # Else, one or more strings are passed.
-    #
-    # If double-quoting these strings, do so.
-    elif is_double_quoted:
-        strings = tuple(f'"{string}"' for string in strings)
-    # Else, preserve these strings as is.
 
-    # String efficiently prefixing all of the passed strings (except the first)
-    # with the delimiter requested by the caller.
-    strings_delimited_after_first = delimiter.join(strings)
+    # String joining the passed strings, each prefixed and suffixed by the
+    # passed prefix and suffix.
+    strings_joined = ''.join(
+        f'{prefix}{string}{suffix}' for string in strings)
 
-    # Return this string (and thus effectively the first passed string as well)
-    # prefixed by this same delimiter.
-    return f'{delimiter}{strings_delimited_after_first}'
+    # Return this joined string.
+    return strings_joined
 
 # ....................{ JOINERS ~ commaed : and            }....................
 def join_strings_commaed_and(strings: IterableStrs, **kwargs) -> str:

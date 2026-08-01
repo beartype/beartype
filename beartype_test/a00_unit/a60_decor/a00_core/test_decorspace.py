@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator safety** unit tests.
+**Beartype decorator space consumption** unit tests.
 
-This submodule unit tests safety concerns surrounding the
+This submodule unit tests space-specific concerns surrounding the
 :func:`beartype.beartype` decorator as a safety guard against regressions back
 to previously unsafe behaviour.
 '''
@@ -18,7 +18,7 @@ to previously unsafe behaviour.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_decor_safety_space() -> None:
+def test_decor_space() -> None:
     '''
     Test that the :func:`beartype.decorator` decorator does *not* hold strong
     references to arbitrary user-defined callables and classes decorated by that

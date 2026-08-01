@@ -34,7 +34,9 @@ def test_join_strings_bulleted_unnumbered() -> None:
     # Assert that joining a sequence of one string returns that string prefixed
     # by the bullet point delimiter.
     assert join_strings_bulleted_unnumbered(
-        ('My life is but the life of winds and tides,',)) == (
+        strings=('My life is but the life of winds and tides,',),
+        suffix='',
+    ) == (
         '\n* My life is but the life of winds and tides,')
 
     # Assert that joining a sequence of two or more strings returns these
@@ -44,32 +46,19 @@ def test_join_strings_bulleted_unnumbered() -> None:
             'No more than winds and tides can I avail:—',
             'But thou canst.—Be thou therefore in the van',
         ),
+        suffix='',
     ) == (
         '\n* No more than winds and tides can I avail:—'
         '\n* But thou canst.—Be thou therefore in the van'
-    )
-
-    # Assert that joining a sequence of two or more strings with additional
-    # double-quoting returns these strings first double-quoted and then prefixed
-    # by the bullet point delimiter.
-    assert join_strings_bulleted_unnumbered(
-        strings=(
-            "Of circumstance; yea, seize the arrow's barb",
-            'Before the tense string murmur.—To the earth!',
-        ),
-        is_double_quoted=True,
-    ) == (
-        "\n* \"Of circumstance; yea, seize the arrow's barb\""
-        '\n* "Before the tense string murmur.—To the earth!"'
     )
 
     # Assert that joining a generator of three or more strings returns these
     # strings conditionally delimited by the appropriate delimiters.
     assert join_strings_bulleted_unnumbered(
         (str(integer) for integer in range(3))) == (
-        '\n* 0'
-        '\n* 1'
-        '\n* 2'
+        '\n* 0.'
+        '\n* 1.'
+        '\n* 2.'
     )
 
 # ....................{ TESTS ~ commaed                    }....................
