@@ -118,7 +118,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #            __getattribute__() dunder method into "ast.NodeTransformer". Note
 #            that __getattribute__() commonly causes infinite recursion. Yeah.
 #            Thankfully, it's trivial to circumvent by falling back to the root
-#            object.__getattribute__() dunder method. Anways. This
+#            object.__getattribute__() dunder method. Anyways. This
 #            __getattribute__() monkey-patch exists *ONLY* to intercept attempts
 #            by third-party AST transforms to call the NodeTransformer.visit()
 #            method. Ergo, that monkey-patch should:
@@ -128,7 +128,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #              SomeCustomNodeTransformer.visit() method. Then our
 #              _beartype_visit() monkey-patch should:
 #              * *HMM*. Maybe _beartype_visit() should be a closure? If it is,
-#                we can then safely define a new local local variable:
+#                we can then safely define a new local local variable like so:
 #                    # Define in the outer get_code() scope:
 #                    is_beartype_ast_visited = False
 #
@@ -268,6 +268,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #      front of "sys.path_hooks" *AFTER* "beartype.claw" import hooks have
 #      already inserted the beartype-specific path hook to the front of that
 #      list from doing so:
+#      * *OHWAIT*. Great idea, but fundamentally unsafe. Why? If any other
+#        package or module did a prior import of "from sys import path_hooks",
+#        then this silently breaks that package or module. Unacceptable,
+#        obviously.
 #          class BeartypePathHooks(list):
 #              def insert(self, index: int, item: object) -> None:
 #
@@ -609,6 +613,7 @@ def _warn_if_beartype_pathhook_inactive() -> None:
     # contributing any useful solutions in recompense.
     elif is_mapping_keys_any(
         mapping=sys.modules, keys=_WARN_BLACKLIST_PACKAGE_NAMES):
+        # print('Ignoring competing "jaxtyping" or "typeguard" import hooks!')
         return
     # Else, the global "sys.modules" dictionary contains the fully-qualified
     # names of *NO* warning-blacklisted third-party package as keys.
@@ -756,12 +761,12 @@ def _warn_if_beartype_pathhook_inactive() -> None:
         f'Competing third-party import hooks include:'
         f'{hook_custom_names if hook_custom_names else "* No idea, yo. Something went horribly wrong. Ugh!"}\n'
         f'You now have three unpleasant options. Either:\n'
-        f'* [DESPERATION MOVE] Globally silence this warning by adding to '
+        f'* Globally silence this warning by adding to '
         f'your top-level "{{your_package}}.__init__" submodule:\n'
         f'\tfrom beartype.roar import BeartypeClawImportlibFileFinderPathHookInactiveWarning\n'
         f'\tfrom warnings import filterwarnings\n'
         f'\tfilterwarnings(action="ignore", category=BeartypeClawImportlibFileFinderPathHookInactiveWarning)\n'
-        f'* [RECOMMENDED] Submit an issue to the issue tracker of '
+        f'* Submit an issue to the issue tracker of '
         f'the competing third-party import hook listed above responsible for '
         f'ignoring "beartype.claw" import hooks. '
         f'Good luck identifying the culprit. '
@@ -772,10 +777,10 @@ def _warn_if_beartype_pathhook_inactive() -> None:
         f'Ping @leycec (i.e., @beartype maintainer bald guy) on '
         f'all relevant issues so he can '
         f'nod respectfully and pretend to render assistance.\n'
-        f'* [NOT RECOMMENDED] Complain about other people on '
-        f"@beartype's issue tracker. "
-        f'Like in real life, this is usually useless. '
-        f'There is probably nothing @beartype can do. '
+        f'* Submit an issue to the beartype issue tracker '
+        f'in which we all complain about other people. '
+        f'Like in real life, this can be unproductive. '
+        f'There is probably nothing beartype can do. '
         f'We cannot force others to improve the interoperability '
         f'of their incompatible import hooks. '
         f'We can only heckle them with animated GIFs. '

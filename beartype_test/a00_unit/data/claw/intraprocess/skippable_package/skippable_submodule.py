@@ -11,10 +11,7 @@ the :func:`beartype.beartype` decorator).
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    List,
-    Union,
-)
+from typing import Union
 
 # ....................{ PEP 526                            }....................
 # Validate that *NO* import hooks installed by the caller apply to this
@@ -29,7 +26,7 @@ assert isinstance(in_most_familiar_cadence, bytes)
 
 # ....................{ FUNCTIONS                          }....................
 def with_the_howl(the_thunder_and_the_hiss: Union[str, complex]) -> (
-    Union[complex, List[bytes]]):
+    Union[complex, list[bytes]]):
     '''
     Arbitrary method neither implicitly *nor* explicitly type-checked by the
     :func:`beartype.beartype` decorator.

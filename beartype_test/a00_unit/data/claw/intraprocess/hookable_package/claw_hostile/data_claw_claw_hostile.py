@@ -4,21 +4,21 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **current package beartype import hook unhookable module** (i.e.,
-data module *not* whitelisted by any import hooks published by the
-:mod:`beartype.claw` subpackage and thus expected to be governed by standard
-Python type-checking semantics -- which is to say, *no* type-checking at all).
+Test-wide **beartype-hostile import hook submodule** (i.e., data module
+mimicking real-world usage of various :func:`beartype.claw` import hooks on
+packages and modules concurrently subjected to **beartype-hostile import hooks**
+(i.e., external import hooks mimicking existing competing import hooks published
+by real-world third-party packages and modules, which silently override
+:func:`beartype.claw` import hooks and thus silently prevent :mod:`beartype`
+from applying runtime type-checking to *any* submodules of this subpackage).
 
-Note that **unhooking** (i.e., *not* whitelisting) is *not* quite the same thing
-as **skipping** (i.e., blacklisting). Unhooking is simply the absence of
-actively whitelisting; skipping is the action of actively blacklisting.
+This submodule silently ignores *all* import hooks published by the
+:mod:`beartype.claw` subpackage and is thus expected to be governed by standard
+Python type-checking semantics -- which is to say, *no* type-checking at all.
 '''
 
 # ....................{ IMPORTS                            }....................
 from typing import Union
-
-# from beartype.claw._importlib.clawimpcache import module_name_to_beartype_conf
-# print(f'this_submodule conf: {repr(module_name_to_beartype_conf)}')
 
 # ....................{ PEP 526                            }....................
 # Validate that *NO* import hooks installed by the caller apply to this
@@ -28,11 +28,11 @@ from typing import Union
 
 # Assert that a PEP 526-compliant assignment statement assigning an object
 # violating the type hint annotating that statement raises *NO* exception.
-and_winter_robing: str = b'And winter robing with pure snow and crowns'
-assert isinstance(and_winter_robing, bytes)
+then_with_a_slow_incline: str = b'Then with a slow incline of his broad breast,'
+assert isinstance(then_with_a_slow_incline, bytes)
 
 # ....................{ FUNCTIONS                          }....................
-def of_starry_ice(the_grey_grass_and_bare_boughs: Union[str, complex]) -> (
+def of_his_broad_breast(like_to_a_diver: Union[str, complex]) -> (
     Union[complex, list[bytes]]):
     '''
     Arbitrary method neither implicitly *nor* explicitly type-checked by the
@@ -40,10 +40,10 @@ def of_starry_ice(the_grey_grass_and_bare_boughs: Union[str, complex]) -> (
     '''
 
     # This means nothing to us. Nothing!
-    return the_grey_grass_and_bare_boughs
+    return like_to_a_diver
 
 # Assert that a function call passed a parameter violating the type hint
 # annotating that parameter raises *NO* exception.
-voluptuous_pantings = of_starry_ice(
-    b"If spring's voluptuous pantings when she breathes")
-assert isinstance(voluptuous_pantings, bytes)
+in_the_pearly_seas = of_his_broad_breast(
+    b'Like to a diver in the pearly seas')
+assert isinstance(in_the_pearly_seas, bytes)
