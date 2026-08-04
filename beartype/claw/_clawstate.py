@@ -66,6 +66,14 @@ class BeartypeClawState(object):
         * Else, :data:`None`.
 
         Initialized to :data:`None`.
+    is_warned_if_beartype_path_hook_inactive : bool
+        :data:`True` only if the
+        :func:`beartype.claw._importlib.clawimpmain._warn_if_beartype_pathhook_inactive`
+        function has already issued a non-fatal warning under the active Python
+        interpreter. That function internally guards against issuing the same
+        warning multiple times via this crude cache. That warning is extremely
+        verbose and thus likely to incite more bad than good in end users overly
+        exposed to that warning. Initialized to :data:`False`.
     module_name_to_beartype_conf : ModuleNameToBeartypeConf
         **Hooked module beartype configuration cache** (i.e., non-thread-safe
         dictionary mapping from the fully-qualified name of each previously
@@ -105,6 +113,7 @@ class BeartypeClawState(object):
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
         'beartype_path_hook',
+        'is_warned_if_beartype_path_hook_inactive',
         'module_name_to_beartype_conf',
         'node_scope_beforelist_global',
         'packages_trie_blacklist',
@@ -115,6 +124,7 @@ class BeartypeClawState(object):
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         beartype_path_hook: Optional[_ImportPathHook]
+        is_warned_if_beartype_path_hook_inactive: bool
         module_name_to_beartype_conf: ModuleNameToBeartypeConf
         node_scope_beforelist_global: BeartypeNodeScopeBeforelist
         packages_trie_blacklist: PackagesTrieBlacklist
@@ -126,6 +136,7 @@ class BeartypeClawState(object):
         # Nullify the proper subset of instance variables requiring
         # nullification *BEFORE* reinitializing this singleton.
         self.beartype_path_hook: Optional[_ImportPathHook] = None
+        self.is_warned_if_beartype_path_hook_inactive = False
 
         # Reinitialize this singleton safely.
         self._reinit_safe()
@@ -145,9 +156,9 @@ class BeartypeClawState(object):
         # One one-liner to reinitialize them all.
         self.module_name_to_beartype_conf = ModuleNameToBeartypeConf()
         self.node_scope_beforelist_global = make_node_scope_beforelist_global()
-        self.packages_trie_whitelist = PackagesTrieWhitelist()
         self.packages_trie_blacklist = PackagesTrieBlacklist(
             subpackage_basename_to_trie=_PACKAGE_NAME_TO_TRIE_BLACKLISTED)
+        self.packages_trie_whitelist = PackagesTrieWhitelist()
         # print(f'node_scope_beforelist_global: {self.node_scope_beforelist_global}')
 
         #FIXME: Preserved because the above will inevitably break. *sigh*
