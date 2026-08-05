@@ -627,6 +627,12 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Plaintext decoded contents of that module.
         module_source = decode_source(data)
 
+        #FIXME: Under Python >= 3.15, conditionally also pass this new parameter
+        #accepted by the compile() builtin both here and below:
+        #    module=fullname,
+        #Since these DRY violations are getting kinda annoying, let's abstract
+        #compilation out into a new low-level compile_python() utility function!
+
         # Abstract syntax tree (AST) parsed from these contents.
         module_ast = compile(
             module_source,

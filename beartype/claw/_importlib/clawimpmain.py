@@ -321,13 +321,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #      only our path hook. *WHATEVAHS*. /shrug/
 #* Unit test up "LAST_BEFORE_STANDARD_PATH_HOOK", now that that's no longer the
 #  default.
-#FIXME: [PYINSTALLER] Let's issue a *MUCH* more succinct warning if we detect
-#PyInstaller. There's no confusion here. PyInstaller is ignoring third-party
-#path hooks and thus PEP 302-noncompliant. Suggest users shout about this on the
-#PyInstaller issue tracker. Should be trivial to detect. Just look for
-#"PyiFrozenFinder" (or whatevahs) on the current "sys.path_hooks" list.
-#
-#When we do, resurrect our existing unit test that we've currently disabled.
+#FIXME: *UHM*. Most of the above no longer applies. Instead, we now want to
+#refactor beartype's entire loader infrastructure to comply with our own newly
+#proposed "NegotiatoryLoader" API at this open feature request:
+#    https://github.com/beartype/beartype/issues/674
 
 #FIXME: [JAXTYPING] Is jaxtyping configurable? Probably. If not, though,
 #beartype should probably begin automatically:
@@ -374,6 +371,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #a discussion on the PyInstaller issue tracker about this, because it implies
 #that PyInstaller is also incompatible with jaxtyping and typeguard import
 #hooks, which... means literally all runtime type-checking. Jeeeeez.
+#FIXME: [PYINSTALLER] Let's issue a *MUCH* more succinct warning if we detect
+#PyInstaller. There's no confusion here. PyInstaller is ignoring third-party
+#path hooks and thus PEP 302-noncompliant. Suggest users shout about this on the
+#PyInstaller issue tracker. Should be trivial to detect. Just look for
+#"PyiFrozenFinder" (or whatevahs) on the current "sys.path_hooks" list.
+#
+#When we do, resurrect our existing unit test that we've currently disabled.
 
 # ....................{ IMPORTS                            }....................
 # Intentionally import the root "sys" module rather than attributes of that
@@ -479,7 +483,23 @@ def add_beartype_path_hook() -> None:
     # that prior call of this adder is no longer active (e.g., due to
     # another third-party package or module having since added one or more
     # competing hooks overriding our own), issue a non-fatal warning.
-    _warn_if_beartype_pathhook_inactive()
+
+    #FIXME: Works perfect, but sadly unwise at the moment. Why? Because
+    #beartype's own loader infrastructure fails to comply with our own new
+    #proposed "NegotiatoryLoader" API at this open feature request:
+    #    https://github.com/beartype/beartype/issues/674
+    #
+    #Once our loader infrastructure successfully complies with that API, we'll
+    #still want to at least partially rewrite the warning message issued by
+    #warn_if_beartype_claw_inactive(). Notably, that message should
+    #encourage third-party packages and modules to also comply with that API.
+    #Until beartype does, though, it's sheer hypocrisy to suggest others do so
+    #first. It's unclear whether the bloody technique even works! Though... it
+    #probably does. Probably. Oh, boy. *sigh*
+    #FIXME: Unit test this in test_claw_intraprocess_claw_hostile() after
+    #uncommenting this as well, please. *sigh*
+
+    # warn_if_beartype_claw_inactive()
     # Else, our beartype-specific file finder path hook previously added by
     # that prior call of this adder is still active. Go, Bear! Go, Bear!
 
@@ -522,7 +542,7 @@ def remove_beartype_path_hook() -> None:
     # the first such path hook.
     claw_state.beartype_path_hook = None
 
-    # Allow subsequent calls of the _warn_if_beartype_pathhook_inactive()
+    # Allow subsequent calls of the warn_if_beartype_claw_inactive()
     # function to re-issue the non-fatal warning previously issued by that
     # function (if any).
     claw_state.is_warned_if_beartype_path_hook_inactive = False
@@ -538,7 +558,7 @@ packages** (i.e., packages well-known to aggressively add competing import hooks
 to the front of the global :obj:`sys.path_hooks` list, resulting in
 :mod:`beartype.claw` import hooks being silently ignored).
 
-The :func:`._warn_if_beartype_pathhook_inactive` function silently reduces to a
+The :func:`.warn_if_beartype_claw_inactive` function silently reduces to a
 noop if *any* of these packages have already been imported under the active
 Python interpreter. Since their import hooks are already well-known to disable
 ours, issuing warnings to users only uselessly annoys users without contributing
@@ -547,7 +567,7 @@ any useful solutions in recompense.
 
 # ....................{ PRIVATE ~ warners                  }....................
 #FIXME: Unit test us up, please. *sigh*
-def _warn_if_beartype_pathhook_inactive() -> None:
+def warn_if_beartype_claw_inactive() -> None:
     '''
     Issue a non-fatal warning if our **beartype-specific file finder path hook**
     (i.e., closure created and returned by calling the
@@ -611,10 +631,17 @@ def _warn_if_beartype_pathhook_inactive() -> None:
     # are already well-known to "accidentally" disable "beartype.claw" import
     # hooks. Issuing warnings to users would only uselessly annoy users without
     # contributing any useful solutions in recompense.
-    elif is_mapping_keys_any(
-        mapping=sys.modules, keys=_WARN_BLACKLIST_PACKAGE_NAMES):
-        # print('Ignoring competing "jaxtyping" or "typeguard" import hooks!')
-        return
+
+    #FIXME: *UNCOMMENT THIS AFTER RESOLVING FEATURE REQUEST #674.* Or, maybe
+    #just excise this entirely? Yeah. Probably. For now, there's *NO* point in
+    #preventing this warning from being issued if "jaxtyping" or "typeguard"
+    #have also been imported. The user wants to see this. So, let 'em! \o/
+
+    # elif is_mapping_keys_any(
+    #     mapping=sys.modules, keys=_WARN_BLACKLIST_PACKAGE_NAMES):
+    #     # print('Ignoring competing "jaxtyping" or "typeguard" import hooks!')
+    #     return
+
     # Else, the global "sys.modules" dictionary contains the fully-qualified
     # names of *NO* warning-blacklisted third-party package as keys.
 
@@ -663,7 +690,13 @@ def _warn_if_beartype_pathhook_inactive() -> None:
     # the caller fails to call this function from a thread-safe context. That
     # should never happen. Since assigning this global early is trivial,
     # however, we do so to avoid suffering in both users and in us. No pain!
-    claw_state.is_warned_if_beartype_path_hook_inactive = True
+
+    #FIXME: *UNCOMMENT THIS AFTER RESOLVING FEATURE REQUEST #674.* For now,
+    #there's *NO* point in preventing this warning from being re-issued. This
+    #function currently has to be explicitly called by the user. Until we start
+    #implicitly calling this function in add_beartype_path_hook() again, it's
+    #best to let the user do what they wilt. QA shall be the whole of the Law!
+    # claw_state.is_warned_if_beartype_path_hook_inactive = True
 
     # ....................{ LOCALS                         }....................
     # List of the fully-qualified names of all competing meta path hooks on the

@@ -68,7 +68,7 @@ class BeartypeClawState(object):
         Initialized to :data:`None`.
     is_warned_if_beartype_path_hook_inactive : bool
         :data:`True` only if the
-        :func:`beartype.claw._importlib.clawimpmain._warn_if_beartype_pathhook_inactive`
+        :func:`beartype.claw._importlib.clawimpmain.warn_if_beartype_claw_inactive`
         function has already issued a non-fatal warning under the active Python
         interpreter. That function internally guards against issuing the same
         warning multiple times via this crude cache. That warning is extremely

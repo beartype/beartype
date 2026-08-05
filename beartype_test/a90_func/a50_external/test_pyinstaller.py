@@ -208,7 +208,7 @@ def test_pyinstaller(
 
     #FIXME: Tragically, doing so now emits standard error. Which standard error?
     #The extremely verbose non-fatal warning message issued by our private
-    #_warn_if_beartype_pathhook_inactive() function. The fact that this message
+    #warn_if_beartype_claw_inactive() function. The fact that this message
     #is being issued means that PyInstaller is, indeed, ignoring not merely the
     #"beartype.claw" path hook but *ALL* other third-party path hooks. That is
     #incredibly bad for PyInstaller users -- but absolutely *NOT* our fault.

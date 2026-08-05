@@ -207,7 +207,7 @@ STANDARD_PATH_HOOKS_ITEM_NAMES = frozenset((
     #   the lexically scoped name of this standard path hook. Pragmatically,
     #   there is *NO* real-world benefit to omitting this magic string below.
     #   Doing so would only increase the likelihood of the
-    #   _warn_if_beartype_pathhook_inactive() function accidentally embedding
+    #   warn_if_beartype_claw_inactive() function accidentally embedding
     #   this name in warning messages, which would only engender end user
     #   confusion on a topic already laden with maximal confusion.
 
