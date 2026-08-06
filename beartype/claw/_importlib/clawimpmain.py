@@ -398,7 +398,6 @@ from beartype._data.claw.dataclawmagic import (
 )
 from beartype._metaverse import URL_ISSUES
 from beartype._util.error.utilerrwarn import issue_warning
-from beartype._util.kind.maplike.utilmaptest import is_mapping_keys_any
 from beartype._util.text.utiltextjoin import join_strings_bulleted_unnumbered
 from beartype._util.utilobjget import get_object_name
 from importlib import invalidate_caches
@@ -550,21 +549,6 @@ def remove_beartype_path_hook() -> None:
     # Lastly, clear *ALL* import path hook caches for safety.
     _clear_importlib_caches()
 
-# ....................{ PRIVATE ~ globals                  }....................
-_WARN_BLACKLIST_PACKAGE_NAMES = frozenset(('jaxtyping', 'typeguard',))
-'''
-Frozen set of the fully-qualified names of all **warning-blacklisted third-party
-packages** (i.e., packages well-known to aggressively add competing import hooks
-to the front of the global :obj:`sys.path_hooks` list, resulting in
-:mod:`beartype.claw` import hooks being silently ignored).
-
-The :func:`.warn_if_beartype_claw_inactive` function silently reduces to a
-noop if *any* of these packages have already been imported under the active
-Python interpreter. Since their import hooks are already well-known to disable
-ours, issuing warnings to users only uselessly annoys users without contributing
-any useful solutions in recompense.
-'''
-
 # ....................{ PRIVATE ~ warners                  }....................
 #FIXME: Unit test us up, please. *sigh*
 def warn_if_beartype_claw_inactive() -> None:
@@ -631,19 +615,6 @@ def warn_if_beartype_claw_inactive() -> None:
     # are already well-known to "accidentally" disable "beartype.claw" import
     # hooks. Issuing warnings to users would only uselessly annoy users without
     # contributing any useful solutions in recompense.
-
-    #FIXME: *UNCOMMENT THIS AFTER RESOLVING FEATURE REQUEST #674.* Or, maybe
-    #just excise this entirely? Yeah. Probably. For now, there's *NO* point in
-    #preventing this warning from being issued if "jaxtyping" or "typeguard"
-    #have also been imported. The user wants to see this. So, let 'em! \o/
-
-    # elif is_mapping_keys_any(
-    #     mapping=sys.modules, keys=_WARN_BLACKLIST_PACKAGE_NAMES):
-    #     # print('Ignoring competing "jaxtyping" or "typeguard" import hooks!')
-    #     return
-
-    # Else, the global "sys.modules" dictionary contains the fully-qualified
-    # names of *NO* warning-blacklisted third-party package as keys.
 
     # ~~~~~~~~~~~~~~~~~[ LEYCEC'S POLYCHROMATIC HOOK ELICITOR ]~~~~~~~~~~~~~~~~~
     # Attempt to import the beartype-specific import hook activation smoke test
