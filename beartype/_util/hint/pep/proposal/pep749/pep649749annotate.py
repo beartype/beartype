@@ -486,8 +486,8 @@ if IS_PYTHON_AT_LEAST_3_14:
                 if isinstance(hintable, ObjectAttrTypes):
                     # "__annotations__" dunder dictionary in the "FORWARDREF"
                     # format previously cached by a prior call to either this or
-                    # the set_pep649749_hintable_annotations() function if any *OR*
-                    # the sentinel placeholder otherwise.
+                    # the set_pep649749_hintable_annotations() function if any
+                    # *OR* the sentinel placeholder otherwise.
                     hintable_annotations = get_object_attr_cached_or_sentinel(
                         obj=hintable,
                         attr_name_if_obj_function=(
