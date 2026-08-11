@@ -10,6 +10,109 @@ global caches distributed throughout the :mod:`beartype` codebase).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: *URGH*. clear_caches() is currently non-thread-safe, which... isn't
+#great. If that callable is called by the higher-level
+#_uncache_beartype_if_type_redefined() function called by *MUCH* the
+#higher-level beartype_type() decorator. This is *NOT* going to be easy to
+#resolve. The easiest way is probably as follows:
+#* Rename this submodule to "utilcacheglobal" for disambiguity.
+#* Rename clear_caches() to clear_caches_global() for disambiguity.
+#* Shift the "_is_object_blacklisted_lock" global into this submodule, renamed
+#  to simply "cache_global_lock". Note that this global *MUST* now be public.
+#* Convert that global into a reentrant "RLock" for safety.
+#* Add a *SUPER-HUGE BANNER* both to the docstring *AND* the internal body of
+#  the clear_caches_global() function defined below. This is a note to ourselves
+#  notifying ourselves that we *MUST* manually protect every reference to every
+#  dictionary global cleared by this function inside a thread-safe lock. See
+#  above for the simplistic one-liner. *shrug*
+#* Now here's the hard part. None of the above was hard. *THIS* is hard. We now
+#  need to iteratively grep through the codebase for every reference to *ANY*
+#  dictionary global referenced by the clear_caches_global() function defined
+#  below. For each such reference, we now need to:
+#  * Wrap the *ENTIRE* body (in most cases) of the function referencing that
+#    dictionary global in a new thread-safe lock resembling:
+#        with cache_global_lock:
+#
+#  However, note that there is an obvious exception to this refactoring:
+#  * All dictionary globals that are already internally locked (e.g., by being
+#    "CacheVastStrong" instances) are obviously exempt from this wrapping.
+
+#FIXME: *FASCINATING*, huh? The above suggests we should probably refactor *ALL*
+#raw low-level thread-unsafe dictionary globals used below into full-blown
+#high-level thread-safe "CacheVastStrong"-like objects. They don't have
+#to *EXACTLY* be "CacheVastStrong" instances, of course. They just need
+#to be instances of something *LIKE* "CacheVastStrong".
+#FIXME: That said, our issue with "CacheVastStrong" was always the syntax.
+#Seriously. We should use that thing everywhere. We currently do *NOT* use
+#that thing everywhere for the simple (yet horrible) reason that its syntax is
+#so sucky we can't bear to use it anywhere. An alternative would be to design
+#some completely new alternative that reads sanely with Pythonic syntax: e.g.,
+#    # Instead of unreadable syntax like this...
+#    wrapper: 'beartype.door.TypeHint' = (
+#        _HINT_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(  # type: ignore[assignment]
+#            # Cache this wrapper singleton under this hint.
+#            key=hint,
+#            # If a wrapper singleton has yet to be instantiated for this
+#            # hint, do so by calling this private factory method...
+#            value_factory=cls._make_wrapper,  # type: ignore[arg-type]
+#            # ...with this hint passed as the sole parameter to that method.
+#            arg=hint,
+#        ))
+#
+#    # ...readably syntax like this would be *MAGICAL*:
+#    wrapper: 'beartype.door.TypeHint' = None  # type: ignore[assignment]
+#    with _HINT_TO_WRAPPER[hint] as wrapper:
+#         _HINT_TO_WRAPPER[hint] = wrapper = cls._make_wrapper(hint)
+#
+#Significantly easier to read. Still not perfect, of course... but nothing is
+#perfect. The perfect is the enemy *BLAH BLAH*.
+#
+#So how does that actually work, then? The idea:
+#* The "dict" subclass (of which "_HINT_TO_WRAPPER" is an instance) overrides
+#  both the __getitem__() dunder method *AND* the dict.get() method to
+#  return... uh, what? New context manager objects? Sounds expensive.
+#  Basically, it depends on whether this is locked behind a "Lock" or "RLock".
+#  If:
+#  * A "Lock", we can efficiently and safely reuse a single private context
+#    manager bound in the subclass __init__() constructor to the current
+#    "dict" subclass instance. Simple.
+#  * An "RLock", we're kinda screwed. We'd have to inefficiently create and
+#    return one now context manager object on each __getitem__() call. Sucky.
+#    Kinda defeats the entire point of caching. *sigh*
+#    Oh, right. We could internally cache and maintain a private *POOL* (i.e.,
+#    list) of all previously created context manager objects returned by each
+#    prior __getitem__() call. Would totally work. And because access to that
+#    pool is locked behind a threadsafe "RLock", we wouldn't have to worry
+#    about locking that pool. Just append to and pop from a private list
+#    unique to each subclass.
+#
+#Lastly, note that that class should obviously *NOT* be an actual "dict"
+#subclass. It just behaves like a "dict" subclass. Useful names for the two
+#obvious class variants of this core idea include:
+#* "beartype._util.kind.map.utilmaplock.DictLocked".
+#* "beartype._util.kind.map.utilmaplock.DictRLocked".
+#
+#Note that we're *NOT* bothering with the obsolete "beartype._util.cache.maplike"
+#subpackage. Too antiquated. The *ONLY* thing we should do with that
+#subpackage is to explicitly note in the docstrings of existing classes like
+#"CacheBoundedStrong" is that this class has been *OBSOLETED* by the
+#substantially newer and more Pythonic "Dict(R|)Locked" family of classes.
+#
+#Lastly lastly:
+#* The Dict(R|)Locked.__getitem__() should raise an exception if called inside
+#  an existing "with" block of this class. Maintain an internal
+#  "self._is_entered: bool = False" instance variable to track this. *shrug*
+#* The Dict(R|)Locked.__setitem__() dunder method should raise an exception if
+#  *NOT* inside an existing "with" block.
+#FIXME: *OH*. The above design doesn't work, sadly. Why? Because context
+#managers are currently required to "yield". They can't *NOT* "yield". Which
+#means the body of the "with...:" block would *ALWAYS* get executed, which
+#totally defeats the purpose of caching. Oh, well. Guess we gotta use
+#"CacheVastStrong" and friends, huh? That's fine. Python leaves us no
+#alternative. The point is thread-safe efficiency. This is the *ONLY* way to get
+#that. It is what it is. *sigh*
+
 # ....................{ CLEARERS                           }....................
 def clear_caches() -> None:
     '''
@@ -49,7 +152,9 @@ def clear_caches() -> None:
       :data:`beartype._check.convert._convcoerce._hint_repr_to_hint`
       dictionary).
     * The **type hint wrapper cache** (i.e., private
-      :data:`beartype._door._cls.doormeta._HINT_TO_WRAPPER` cache).
+      :data:`beartype._door._cls.doormeta._HINT_TO_WRAPPER` dictionary).
+    * The **object blacklist cache** (i.e., private
+      :data:`_object_to_is_blacklisted` dictionary).
     '''
     # print('Clearing all \"beartype._check\" caches...')
 
@@ -69,6 +174,8 @@ def clear_caches() -> None:
         _ref_proxy_to_resolved_type,
     )
     from beartype._check.cls.hint.hintsane import _HINT_TO_HINTSANE
+    from beartype._util.bear.utilbearblack import (
+        _object_to_is_blacklisted)
     from beartype._util.cache.utilcacheobjattr import clear_object_attr_caches
 
     # Clear all relevant caches used throughout this subpackage.
@@ -81,4 +188,5 @@ def clear_caches() -> None:
     _ref_proxy_to_resolved_hint.clear()
     _ref_proxy_to_resolved_type.clear()
     _HINT_TO_HINTSANE.clear()
+    _object_to_is_blacklisted.clear()
     clear_object_attr_caches()

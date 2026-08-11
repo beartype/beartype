@@ -7,7 +7,7 @@
 Project-wide **Least Recently Used (LRU) cache** utility unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.cache.map.utilmaplru` submodule.
+:mod:`beartype._util.cache.maplike.utilcachemaplru` submodule.
 """
 
 # ....................{ IMPORTS                           }....................
@@ -22,12 +22,12 @@ from beartype.roar._roarexc import _BeartypeUtilCacheLruException
 def test_lrucachestrong_one_pass() -> None:
     """
     Test successful usage of the
-    :func:`beartype._util.cache.map.utilmaplru.CacheLruStrong` class against an
+    :func:`beartype._util.cache.maplike.utilcachemaplru.CacheLruStrong` class against an
     LRU cache caching at most one key-value pair.
     """
 
     # Defer test-specific imports.
-    from beartype._util.cache.map.utilmaplru import CacheLruStrong
+    from beartype._util.cache.maplike.utilcachemaplru import CacheLruStrong
 
     # Arbitrary key-value pair.
     LRU_CACHE_KEY_A = 'KEY_A'
@@ -58,12 +58,12 @@ def test_lrucachestrong_one_pass() -> None:
 def test_lrucachestrong_two_pass() -> None:
     """
     Test successful usage of the
-    :func:`beartype._util.cache.map.utilmaplru.CacheLruStrong` class against an
+    :func:`beartype._util.cache.maplike.utilcachemaplru.CacheLruStrong` class against an
     LRU cache caching at most two key-value pairs.
     """
 
     # Defer test-specific imports.
-    from beartype._util.cache.map.utilmaplru import CacheLruStrong
+    from beartype._util.cache.maplike.utilcachemaplru import CacheLruStrong
 
     # Arbitrary key-value pair.
     LRU_CACHE_KEY_A = 'KEY_A'
@@ -125,11 +125,11 @@ def test_lrucachestrong_two_pass() -> None:
 def test_lrucachestrong_fail() -> None:
     """
     Test unsuccessful usage of the
-    :func:`beartype._util.cache.map.utilmaplru.CacheLruStrong` class.
+    :func:`beartype._util.cache.maplike.utilcachemaplru.CacheLruStrong` class.
     """
 
     # Defer test-specific imports.
-    from beartype._util.cache.map.utilmaplru import CacheLruStrong
+    from beartype._util.cache.maplike.utilcachemaplru import CacheLruStrong
 
     # Confirm behaviour for a non-integer size.
     with raises(_BeartypeUtilCacheLruException):

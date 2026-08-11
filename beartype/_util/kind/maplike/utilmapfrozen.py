@@ -7,6 +7,8 @@
 Project-wide **frozen dictionary class hierarchy** (i.e., private classes
 implementing immutable mappings, preserving :math:`O(1)` complexity while
 prohibiting modification).
+
+This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................

@@ -330,6 +330,8 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
             # wrapper functions to raise erroneous type-checking violations.
             clear_caches()
 
+            #FIXME: Should just be performed inside the clear_caches() function
+            #called above, obviously. *sigh*
             # Clear the previously accessed set of the unqualified basenames of
             # *ALL* classes in that module previously decorated by this
             # decorator. Technically, this is optional. Pragmatically, this

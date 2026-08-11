@@ -30,7 +30,15 @@ def is_object_blacklisted(obj: object) -> bool:
     resides in a third-party package or modules well-known to be hostile to
     runtime type-checking and thus :mod:`beartype`).
 
-    This tester is both thread-safe and memoized. See below for ugly details!
+    This tester is both thread-safe and memoized. Clearly, thread-safety is
+    essential. Is memoization? It is. Although many user-defined objects passed
+    to this callable are defined and decorated by the :func:`beartype.beartype`
+    only once (and thus do *not* benefit from memoization), some user-defined
+    objects are repeatedly passed to this callable across many decorations by
+    the :func:`beartype.beartype` decorator (and thus *do* benefit from
+    memoization). Which objects? Superclasses. They're reused across each of
+    their user-defined subclasses, each of which is decorated by the
+    :func:`beartype.beartype` decorator. See below for uglier details.
 
     Caveats
     -------

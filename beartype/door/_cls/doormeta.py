@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from abc import ABCMeta
 from beartype._cave._cavefast import NoneType
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.cache.map.utilmapunbounded import CacheUnboundedStrong
+from beartype._util.cache.maplike.utilcachemapvast import CacheVastStrong
 from threading import RLock
 from typing import TYPE_CHECKING
 
@@ -130,6 +130,9 @@ class _TypeHintMetaclass(ABCMeta):
         # each duplicate hint subsequently passed to this factory is wrapped by
         # the same instance under this Python interpreter.
         wrapper: 'beartype.door.TypeHint' = (
+            #FIXME: Unsure why "_HINT_TO_WRAPPER" is capitalized. This is a
+            #modifiable dictionary, obviously. Consider renaming to:
+            #* "_hint_to_wrapper". *shrug*
             _HINT_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(  # type: ignore[assignment]
                 # Cache this wrapper singleton under this hint.
                 key=hint,
@@ -150,7 +153,7 @@ class _TypeHintMetaclass(ABCMeta):
         **Type hint wrapper factory** (i.e., low-level private method creating
         and returning a new :class:`beartype.door.TypeHint` instance wrapping
         the passed type hint), intended to be called by the
-        :meth:`CacheUnboundedStrong.cache_or_get_cached_func_return_passed_arg`
+        :meth:`CacheVastStrong.cache_or_get_cached_func_return_passed_arg`
         method to create a new type hint wrapper singleton for the passed hint.
 
         Parameters
@@ -227,10 +230,10 @@ class _TypeHintMetaclass(ABCMeta):
 # '''
 # PEP-compliant type hint matching the type hint wrapper cache defined below.
 # '''
-# _HINT_TO_WRAPPER: _HINT_TO_WRAPPER_HINT = CacheUnboundedStrong(  # type: ignore[assignment]
+# _HINT_TO_WRAPPER: _HINT_TO_WRAPPER_HINT = CacheVastStrong(  # type: ignore[assignment]
 
 
-_HINT_TO_WRAPPER = CacheUnboundedStrong(
+_HINT_TO_WRAPPER = CacheVastStrong(
     # Prefer the slower reentrant lock type for safety. As the subpackage name
     # implies, the DOOR API is recursive and thus requires reentrancy.
     lock_type=RLock,

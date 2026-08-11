@@ -7,7 +7,7 @@
 Project-wide **unbounded cache** utility unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.cache.map.utilmapunbounded` submodule.
+:mod:`beartype._util.cache.maplike.utilcachemapvast` submodule.
 """
 
 # ....................{ IMPORTS                            }....................
@@ -20,14 +20,14 @@ This submodule unit tests the public API of the private
 def test_cacheunboundedstrong() -> None:
     """
     Test successful usage of the
-    :class:`beartype._util.cache.map.utilmapunbounded.CacheUnboundedStrong` class.
+    :class:`beartype._util.cache.maplike.utilcachemapvast.CacheVastStrong` class.
     """
 
     # Defer test-specific imports.
-    from beartype._util.cache.map.utilmapunbounded import CacheUnboundedStrong
+    from beartype._util.cache.maplike.utilcachemapvast import CacheVastStrong
 
     # Initially empty unbounded cache.
-    cache_unbounded = CacheUnboundedStrong()
+    cache_unbounded = CacheVastStrong()
 
     # Arbitrary key-value pairs.
     KEY_A =   'My own, my human mind, which passively'

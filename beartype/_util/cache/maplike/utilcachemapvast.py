@@ -18,13 +18,16 @@ from collections.abc import (
     Hashable,
 )
 from contextlib import AbstractContextManager
-from threading import Lock
+from threading import (
+    Lock,
+    RLock,
+)
 from typing import Union
 
 # ....................{ CLASSES                            }....................
 #FIXME: Submit back to StackOverflow, preferably under this question:
 #    https://stackoverflow.com/questions/1312331/using-a-global-dictionary-with-threads-in-python
-class CacheUnboundedStrong(object):
+class CacheVastStrong(object):
     '''
     **Thread-safe strongly unbounded cache** (i.e., mapping of unlimited size
     from strongly referenced arbitrary keys onto strongly referenced arbitrary
@@ -32,29 +35,29 @@ class CacheUnboundedStrong(object):
 
     Design
     ------
-    Cache implementations typically employ weak references for safety. Employing
-    strong references invites memory leaks by preventing objects *only*
-    referenced by the cache (cache-only objects) from being garbage-collected.
-    Nonetheless, this cache intentionally employs strong references to persist
-    these cache-only objects across calls to callables decorated with
-    :func:`beartype.beartype`. In theory, caching an object under a weak
-    reference would result in immediate garbage-collection; with *no* external
-    strong referents, that object would be garbage-collected with all other
-    short-lived objects in the first generation (i.e., generation 0).
-
-    This cache intentionally does *not* adhere to standard mapping semantics by
+    This class intentionally does *not* adhere to standard mapping semantics by
     subclassing a standard mapping API (e.g., :class:`dict`,
     :class:`collections.abc.MutableMapping`). Standard mapping semantics are
     sufficiently low-level as to invite race conditions between competing
     threads concurrently contesting the same instance of this class. For
     example, consider the following standard non-atomic logic for caching a new
-    key-value into this cache:
+    key-value into an instance of this cache:
 
     .. code-block:: python
 
        if key not in cache:    # <-- If a context switch happens immediately
                                # <-- after entering this branch, bad stuff!
            cache[key] = value  # <-- We may overwrite another thread's work.
+
+    Cache implementations typically employ weak references for safety. Employing
+    strong references invites memory leaks by preventing objects *only*
+    referenced by the cache (cache-only objects) from being garbage-collected.
+    Instances of this cache intentionally employ strong references to persist
+    these cache-only objects across calls to callables decorated with
+    :func:`beartype.beartype`. In theory, caching an object under a weak
+    reference would result in immediate garbage-collection; with *no* external
+    strong referents, that object would be garbage-collected with all other
+    short-lived objects in the first generation (i.e., generation 0).
 
     Attributes
     ----------
@@ -95,18 +98,22 @@ class CacheUnboundedStrong(object):
         self,
 
         # Optional parameters.
-        lock_type: Union[type, Callable[[], object]] = Lock,
+        lock_type: type[Union[Lock, RLock]] = Lock,
     ) -> None:
         '''
         Initialize this cache to an empty cache.
 
         Parameters
         ----------
-        lock_type : Union[type, Callable[[], object]]
+        lock_type : type[Lock | RLock], default: Lock
             Type of thread-safe lock to internally use. Defaults to
-            :class:`Lock` (i.e., the type of the standard non-reentrant lock)
+            :class:`.Lock` (i.e., the type of the standard non-reentrant lock)
             for efficiency.
         '''
+        assert lock_type in _LOCK_TYPES, (
+            f'{repr(lock_type)} neither '
+            f'"threading.Lock" nor "threading.RLock".'
+        )
 
         # Initialize all instance variables.
         self._key_to_value: dict[Hashable, object] = {}
@@ -126,11 +133,10 @@ class CacheUnboundedStrong(object):
         _SENTINEL=SENTINEL,
     ) -> object:
         '''
-        **Statically** (i.e., non-dynamically, rather than "statically" in the
-        different semantic sense of "static" methods) associate the passed key
-        with the passed value if this cache has yet to cache this key (i.e., if
-        this method has yet to be passed this key) and, in any case, return the
-        value associated with this key.
+        Non-dynamically associate the passed key with the passed value if this
+        cache has yet to cache this key (i.e., if this method has yet to be
+        passed this key) and, in any case, return the value now guaranteed to be
+        associated with this key.
 
         This method is intentionally implemented as a distinct method from the
         sibling :meth:`cache_or_get_cached_func_return_passed_arg` method. Why?
@@ -193,8 +199,8 @@ class CacheUnboundedStrong(object):
         passed **value factory** (i.e., caller-defined function accepting this
         key and returning the value to be associated with this key) if this
         cache has yet to cache this key (i.e., if this method has yet to be
-        passed this key) and, in any case, return the value associated with this
-        key.
+        passed this key) and, in any case, return the value now guaranteed to be
+        associated with this key.
 
         This method is intentionally implemented as a distinct method from the
         sibling :meth:`cache_or_get_cached_value` method. Why?
@@ -274,3 +280,10 @@ class CacheUnboundedStrong(object):
         with self._lock:
             # Clear your head and be at peace, one-liner.
             self._key_to_value.clear()
+
+# ....................{ PRIVATE                            }....................
+_LOCK_TYPES = frozenset((Lock, RLock,))
+'''
+Frozen set of all **thread-locking types** (i.e., standard context managers
+acting as low-level thread-locking primitives).
+'''
