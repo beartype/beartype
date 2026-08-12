@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **strongly unbounded cache** (i.e., mapping of unlimited size from
+Beartype **strongly unbounded cache** (i.e., mapping of unlimited size from
 strongly referenced arbitrary keys onto strongly referenced arbitrary values,
 whose methods are guaranteed to behave thread-safely) utilities.
 
@@ -12,22 +12,17 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._cache.cls.cacheclsabc import CacheABC
 from beartype._data.kind.datakindiota import SENTINEL
 from collections.abc import (
     Callable,
     Hashable,
 )
-from contextlib import AbstractContextManager
-from threading import (
-    Lock,
-    RLock,
-)
-from typing import Union
 
-# ....................{ CLASSES                            }....................
+# ....................{ SUBCLASSES                         }....................
 #FIXME: Submit back to StackOverflow, preferably under this question:
 #    https://stackoverflow.com/questions/1312331/using-a-global-dictionary-with-threads-in-python
-class CacheVastStrong(object):
+class CacheVastStrong(CacheABC):
     '''
     **Thread-safe strongly unbounded cache** (i.e., mapping of unlimited size
     from strongly referenced arbitrary keys onto strongly referenced arbitrary
@@ -35,20 +30,6 @@ class CacheVastStrong(object):
 
     Design
     ------
-    This class intentionally does *not* adhere to standard mapping semantics by
-    subclassing a standard mapping API (e.g., :class:`dict`,
-    :class:`collections.abc.MutableMapping`). Standard mapping semantics are
-    sufficiently low-level as to invite race conditions between competing
-    threads concurrently contesting the same instance of this class. For
-    example, consider the following standard non-atomic logic for caching a new
-    key-value into an instance of this cache:
-
-    .. code-block:: python
-
-       if key not in cache:    # <-- If a context switch happens immediately
-                               # <-- after entering this branch, bad stuff!
-           cache[key] = value  # <-- We may overwrite another thread's work.
-
     Cache implementations typically employ weak references for safety. Employing
     strong references invites memory leaks by preventing objects *only*
     referenced by the cache (cache-only objects) from being garbage-collected.
@@ -70,15 +51,6 @@ class CacheVastStrong(object):
     _key_to_value_set : Callable
         The :meth:`self._key_to_value.__setitem__` dunder method, classified
         for efficiency.
-    _lock : AbstractContextManager
-        **Instance-specific thread lock** (i.e., low-level thread locking
-        mechanism implemented as a highly efficient C extension, defined as an
-        instance variable for non-reentrant reuse by the public API of this
-        type). Although CPython, the canonical Python interpreter, *does*
-        prohibit conventional multithreading via its Global Interpreter Lock
-        (GIL), CPython still coercively preempts long-running threads at
-        arbitrary execution points. Ergo, multithreading concerns are *not*
-        safely ignorable -- even under CPython.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -90,36 +62,26 @@ class CacheVastStrong(object):
         '_key_to_value',
         '_key_to_value_get',
         '_key_to_value_set',
-        '_lock',
     )
 
     # ..................{ INITIALIZER                        }..................
-    def __init__(
-        self,
-
-        # Optional parameters.
-        lock_type: type[Union[Lock, RLock]] = Lock,
-    ) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         '''
         Initialize this cache to an empty cache.
 
         Parameters
         ----------
-        lock_type : type[Lock | RLock], default: Lock
-            Type of thread-safe lock to internally use. Defaults to
-            :class:`.Lock` (i.e., the type of the standard non-reentrant lock)
-            for efficiency.
+        All parameters are passed as is to the superclass
+        :meth:`CacheABC.__init__` constructor.
         '''
-        assert lock_type in _LOCK_TYPES, (
-            f'{repr(lock_type)} neither '
-            f'"threading.Lock" nor "threading.RLock".'
-        )
+
+        # Initialize our superclass with all passed parameters.
+        super().__init__(*args, **kwargs)
 
         # Initialize all instance variables.
         self._key_to_value: dict[Hashable, object] = {}
         self._key_to_value_get = self._key_to_value.get
         self._key_to_value_set = self._key_to_value.__setitem__
-        self._lock: AbstractContextManager = lock_type()  # type: ignore[assignment]
 
     # ..................{ GETTERS                            }..................
     def cache_or_get_cached_value(
@@ -139,7 +101,7 @@ class CacheVastStrong(object):
         associated with this key.
 
         This method is intentionally implemented as a distinct method from the
-        sibling :meth:`cache_or_get_cached_func_return_passed_arg` method. Why?
+        sibling :meth:`cache_or_get_cached_func_return_arg` method. Why?
         Efficiency, which is the whole point of caching. If caching isn't
         efficient, there is *no* reason to even cache.
 
@@ -156,12 +118,17 @@ class CacheVastStrong(object):
         -------
         object
             **Value** (i.e., arbitrary object) associated with this key.
+
+        Raises
+        ------
+        TypeError
+            If the passed key is unhashable.
         '''
         # assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize with the
-        # cache_or_get_cached_func_return_passed_arg() method.
+        # cache_or_get_cached_func_return_arg() method.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # Thread-safely...
@@ -183,7 +150,7 @@ class CacheVastStrong(object):
 
 
     #FIXME: Unit test us up.
-    def cache_or_get_cached_func_return_passed_arg(
+    def cache_or_get_cached_func_return_arg(
         self,
 
         # Mandatory parameters.
@@ -203,17 +170,18 @@ class CacheVastStrong(object):
         associated with this key.
 
         This method is intentionally implemented as a distinct method from the
-        sibling :meth:`cache_or_get_cached_value` method. Why?
+        sibling :meth:`.cache_or_get_cached_value` method. Why?
         Efficiency, which is the whole point of caching. If caching isn't
         efficient, there is *no* reason to even cache.
 
         Caveats
-        ----------
-        **This value factory must not recursively call this method.** For
-        efficiency, this cache is internally locked through a non-reentrant
-        rather than reentrant thread lock. If this value factory accidentally
-        recursively calls this method, the active thread will be indefinitely
-        locked. Welcome to the risky world of high-cost efficiency gains.
+        -------
+        **This method intentionally avoids raising a** :exc:`TypeError` **when
+        the passed key is unhashable.** If this key is unhashable, this method
+        instead creates and returns a new value by calling the passed value
+        factory function *without* attempting to cache that value. Although
+        non-ideal, generality and stability is preferable to specificity and
+        instability by unexpected exceptions.
 
         Parameters
         ----------
@@ -271,19 +239,9 @@ class CacheVastStrong(object):
 
     # ..................{ CLEARERS                           }..................
     #FIXME: Unit test us up, please.
-    def clear(self) -> None:
-        '''
-        Clear (i.e., empty) this cache.
-        '''
+    def clear_cache(self) -> None:
 
         # Thread-safely...
         with self._lock:
             # Clear your head and be at peace, one-liner.
             self._key_to_value.clear()
-
-# ....................{ PRIVATE                            }....................
-_LOCK_TYPES = frozenset((Lock, RLock,))
-'''
-Frozen set of all **thread-locking types** (i.e., standard context managers
-acting as low-level thread-locking primitives).
-'''

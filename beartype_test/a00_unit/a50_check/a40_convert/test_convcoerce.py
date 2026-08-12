@@ -73,7 +73,7 @@ def test_coerce_hint_any() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype._util.cache.utilcacheclear import clear_caches
+    from beartype._cache.cacheclear import clear_caches
     from beartype._check.convert._convcoerce import coerce_hint_any
 
     # ..................{ PREAMBLE                           }..................

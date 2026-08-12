@@ -113,7 +113,7 @@ class HintPithMetadata(object):
 
         # ..................{ IMPORTS                            }..................
         # Defer test-specific imports.
-        from beartype._util.cache.utilcacheclear import clear_caches
+        from beartype._cache.cacheclear import clear_caches
         from beartype_test._util.error.pyterrwarn import warns_uncached
         from warnings import (
             catch_warnings,

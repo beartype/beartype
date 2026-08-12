@@ -588,7 +588,7 @@ class _SupportsLen(Protocol):
     :meth:`__len__` dunder method.
     '''
 
-    def __len__(self) -> bool: ...
+    def __len__(self) -> int: ...
 
 
 _BoolLike = (_SupportsBool, _SupportsLen)
