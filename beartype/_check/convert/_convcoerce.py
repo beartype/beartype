@@ -54,7 +54,7 @@ from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
 from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str_decor_curr
 from beartype._check.cls.call.calldatadecorfunc import BeartypeCallDecorFuncData
-from beartype._cache.cls.cacheclsvast import CacheVastStrong
+from beartype._cache.cls.cacheclsmega import CacheMegaStrongCaller
 from beartype._util.hint.pep.proposal.pep484.pep484union import (
     make_hint_pep484_union)
 from beartype._util.hint.utilhintget import get_hint_repr
@@ -427,7 +427,7 @@ def coerce_hint_any(hint: Hint) -> Hint:
     return hint
 
 # ....................{ PRIVATE ~ mappings                 }....................
-_hint_repr_to_hint = CacheVastStrong()
+_hint_repr_to_hint = CacheMegaStrongCaller()
 '''
 **Type hint cache** (i.e., thread-safe cache mapping from the machine-readable
 representations of all non-self-cached type hints to cached singleton instances

@@ -234,31 +234,6 @@ def make_func_checker(
     #Cleaning this up will prove non-trivial, however, as the caching logic
     #performed below is non-trivial. The only reasonably way to implement this
     #is as follows:
-    #* In the existing "beartype._cache.cls.cacheclsvast" submodule:
-    #  * Define a new "CacheVastStrongABC" superclass subclassing the existing
-    #    "CacheABC" class... probably. It's fine. Just do it. *shrug*
-    #  * In "CacheVastStrongABC":
-    #    * Define an *ABSTRACW* _make_value() factory method accepting variadic
-    #      positional and keyword parameters. Yum!
-    #    * Define a *CONCRETE* cache_or_get_cached_value() method strongly
-    #      inspired by the existing
-    #      CacheVastStrong.cache_or_get_cached_func_return_arg() method with one
-    #      critical difference. Rather than call a passed "value_factory", this
-    #      new cache_or_get_cached_value() should call a *SUBCLASS*-specific
-    #      self._make_value() factory method passed all passed variadic
-    #      parameters. This is sufficiently cool that's it obvious (in
-    #      hindsight, of course) that should have been the initial design all
-    #      along. Object-oriented design was *DEFINITELY* the way to go here.
-    #      Lastly, note we have to stop passing "_SENTINEL". *WHATEVAHS*. That
-    #      was always silly, frankly. The new trivial signature resembles:
-    #          def cache_or_get_cached_value(
-    #              self, key: Hashable, *args, **kwargs) -> object:
-    #  * Possibly do *NOT* modify the existing "CacheVastStrong" class. It's
-    #    fine. Totally unrelated to "CacheVastStrongABC". *WHATEVAHS*.
-    #    Alternately, we could refactor. Doing so would reduce caching
-    #    efficiency by introducing extraneous calls, which are unreasonably
-    #    expensive in Python. Probably not worth it. Note why we're doing this,
-    #    though: dumb speed. *shrug*
     #* Now here's the cray-cray so-dumb-it's-smart-part: *REFACTOR THIS ENTIRE
     #  make_func_checker() factory function into a new
     #  FuncCheckerFactoryCache._make_value() method. Crazy smart, huh? No. That

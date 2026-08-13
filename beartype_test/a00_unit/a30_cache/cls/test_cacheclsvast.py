@@ -7,7 +7,7 @@
 Project-wide **unbounded cache type hierarchy** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._cache.cls.cacheclsvast` submodule.
+:mod:`beartype._cache.cls.cacheclsmega` submodule.
 """
 
 # ....................{ IMPORTS                            }....................
@@ -19,16 +19,16 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS                              }....................
 def test_cachevaststrong() -> None:
     """
-    Test the :class:`beartype._cache.cls.cacheclsvast.CacheVastStrong` class.
+    Test the :class:`beartype._cache.cls.cacheclsmega.CacheMegaStrongCaller` class.
     """
 
     # ....................{ IMPORTS                         }....................
     # Defer test-specific imports.
-    from beartype._cache.cls.cacheclsvast import CacheVastStrong
+    from beartype._cache.cls.cacheclsmega import CacheMegaStrongCaller
 
     # ....................{ LOCALS                          }....................
     # Initially empty unbounded cache.
-    cache_vast = CacheVastStrong()
+    cache_vast = CacheMegaStrongCaller()
 
     # Arbitrary key-value pairs.
     KEY_A =   'My own, my human mind, which passively'

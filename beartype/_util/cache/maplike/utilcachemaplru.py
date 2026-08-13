@@ -17,13 +17,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #       lru_dict[key] = value
 #
 #For thread-safety, the entire "CacheLruStrong" class *MUST* be rethought along
-#the manner of the comparable "utilcachemapvast.CacheVastStrong" class. Notably:
+#the manner of the comparable "utilcachemapvast.CacheMegaStrongCaller" class. Notably:
 #* "CacheLruStrong" class should *NOT* directly subclass "dict" but instead
 #  simply contain a "_dict" instance.
 #* Thread-unsafe dunder methods (particularly the "__setitem__" method) should
 #  probably *NOT* be defined at all. Yeah, we know.
 #* A new CacheLruStrong.cache_entry() method resembling the existing
-#  CacheVastStrong.cache_entry() method should be declared.
+#  CacheMegaStrongCaller.cache_entry() method should be declared.
 #* Indeed, we should (arguably) declare a new "CacheStrongABC" base class to
 #  provide a common API here -- trivializing switching between different
 #  caching strategies implemented by concrete subclasses.

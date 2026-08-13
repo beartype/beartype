@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from abc import ABCMeta
 from beartype._cave._cavefast import NoneType
 from beartype._data.typing.datatypingport import Hint
-from beartype._cache.cls.cacheclsvast import CacheVastStrong
+from beartype._cache.cls.cacheclsmega import CacheMegaStrongCaller
 from threading import RLock
 from typing import TYPE_CHECKING
 
@@ -153,7 +153,7 @@ class _TypeHintMetaclass(ABCMeta):
         **Type hint wrapper factory** (i.e., low-level private method creating
         and returning a new :class:`beartype.door.TypeHint` instance wrapping
         the passed type hint), intended to be called by the
-        :meth:`CacheVastStrong.cache_or_get_cached_func_return_arg`
+        :meth:`CacheMegaStrongCaller.cache_or_get_cached_func_return_arg`
         method to create a new type hint wrapper singleton for the passed hint.
 
         Parameters
@@ -230,10 +230,10 @@ class _TypeHintMetaclass(ABCMeta):
 # '''
 # PEP-compliant type hint matching the type hint wrapper cache defined below.
 # '''
-# _hint_to_wrapper: _HINT_TO_WRAPPER_HINT = CacheVastStrong(  # type: ignore[assignment]
+# _hint_to_wrapper: _HINT_TO_WRAPPER_HINT = CacheMegaStrongCaller(  # type: ignore[assignment]
 
 
-_hint_to_wrapper = CacheVastStrong(
+_hint_to_wrapper = CacheMegaStrongCaller(
     # Prefer the slower reentrant lock type for safety. As the subpackage name
     # implies, the DOOR API is recursive and thus requires reentrancy.
     lock_type=RLock,

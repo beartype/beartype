@@ -31,7 +31,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #  However, note that there is an obvious exception to this refactoring:
 #  * All dictionary globals that are already internally locked (e.g., by being
-#    "CacheVastStrong" instances) are obviously exempt from this wrapping.
+#    "CacheMegaStrongCaller" instances) are obviously exempt from this wrapping.
 #FIXME: *BOLD NEW IDEA*. Also, the right idea. Ignore most of the prior comment:
 #* Shift *ALL* cache globals listed below into a new sibling "cacheglobal"
 #  submodule of this subpackage.
@@ -39,7 +39,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  scope of this module. Just. Do. It. \o/
 #* Define a new private "_CACHE_GLOBALS" frozenset manually listing *ALL* such
 #  imported cache globals.
-#* Refactor each such cache global into a "CacheVastStrong" instance.
+#* Refactor each such cache global into a "CacheMegaStrongCaller" instance.
 #* Refactor clear_caches() to iterate over "_CACHE_GLOBALS" and, for each such
 #  cache global, call that cache global's clear_cache() method.
 #
@@ -48,10 +48,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 #FIXME: *FASCINATING*, huh? The above suggests we should probably refactor *ALL*
 #raw low-level thread-unsafe dictionary globals used below into full-blown
-#high-level thread-safe "CacheVastStrong"-like objects. They don't have
-#to *EXACTLY* be "CacheVastStrong" instances, of course. They just need
-#to be instances of something *LIKE* "CacheVastStrong".
-#FIXME: That said, our issue with "CacheVastStrong" was always the syntax.
+#high-level thread-safe "CacheMegaStrongCaller"-like objects. They don't have
+#to *EXACTLY* be "CacheMegaStrongCaller" instances, of course. They just need
+#to be instances of something *LIKE* "CacheMegaStrongCaller".
+#FIXME: That said, our issue with "CacheMegaStrongCaller" was always the syntax.
 #Seriously. We should use that thing everywhere. We currently do *NOT* use
 #that thing everywhere for the simple (yet horrible) reason that its syntax is
 #so sucky we can't bear to use it anywhere. An alternative would be to design
@@ -117,7 +117,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #managers are currently required to "yield". They can't *NOT* "yield". Which
 #means the body of the "with...:" block would *ALWAYS* get executed, which
 #totally defeats the purpose of caching. Oh, well. Guess we gotta use
-#"CacheVastStrong" and friends, huh? That's fine. Python leaves us no
+#"CacheMegaStrongCaller" and friends, huh? That's fine. Python leaves us no
 #alternative. The point is thread-safe efficiency. This is the *ONLY* way to get
 #that. It is what it is. *sigh*
 
