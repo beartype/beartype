@@ -85,8 +85,19 @@ class _CacheMegaStrongABC(CacheABC):
         self._key_to_value_get = self._key_to_value.get
         self._key_to_value_set = self._key_to_value.__setitem__
 
+    # ..................{ DUNDERS                            }..................
+    def __len__(self) -> int:
+        '''
+        Number of key-value pairs currently stored in this cache.
+
+        This method is thread-safe.
+        '''
+
+        # Thread-safely tell us what you really think, one-liner.
+        with self._lock:
+            return len(self._key_to_value)
+
     # ..................{ CLEARERS                           }..................
-    #FIXME: Unit test us up, please.
     def clear_cache(self) -> None:
 
         # Thread-safely clear your head and be at peace, one-liner.
@@ -94,6 +105,7 @@ class _CacheMegaStrongABC(CacheABC):
             self._key_to_value.clear()
 
 
+#FIXME: Unit test us up, please.
 class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
     '''
     **Subclass-defined thread-safe strongly unbounded cache abstract base class
@@ -109,9 +121,6 @@ class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
     @abstractmethod
     def _make_value(
         self,
-
-        # Mandatory parameters.
-        key: Hashable,
 
         # Subclass-specific variadic parameters passed from the parent
         # cache_or_get_cached_value() method.
@@ -147,7 +156,6 @@ class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
 
         # Mandatory parameters.
         key: Hashable,
-        value: object,
 
         # Subclass-specific variadic parameters passed to the child
         # _make_value() method.
@@ -156,11 +164,13 @@ class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
         '''
         Dynamically associate the passed key with the value returned by the
         subclass-specific concrete implementation of the :meth:`._make_value`
-        method (i.e., child method accepting this key followed by all passed
-        subclass-specific variadic parameters and returning the value to be
-        associated with this key) if this cache has yet to cache this key (i.e.,
-        if this method has yet to be passed this key) and, in any case, return
-        the value now guaranteed to be associated with this key.
+        method (i.e., child method accepting all passed subclass-specific
+        variadic parameters and returning the value to be associated with this
+        key) if this cache has yet to cache this key (i.e., if this method has
+        yet to be passed this key) and, in any case, return the value now
+        guaranteed to be associated with this key.
+
+        This method is thread-safe.
 
         Caveats
         -------
@@ -205,7 +215,7 @@ class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
             # non-ideal, generality and stability are preferable to
             # unnecessarily raising fatal exceptions.
             except TypeError:
-                return self._make_value(key, *args, **kwargs)
+                return self._make_value(*args, **kwargs)
 
             # If this key has already been cached, return this value as is.
             if value_old is not SENTINEL:
@@ -215,7 +225,7 @@ class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
             # New value created by this factory function, localized for
             # negligible efficiency to avoid the unnecessary subsequent
             # dictionary lookup.
-            value_new = self._make_value(key, *args, **kwargs)
+            value_new = self._make_value(*args, **kwargs)
 
             # Cache this key with this value.
             self._key_to_value_set(key, value_new)
@@ -257,6 +267,8 @@ class CacheMegaStrongCaller(_CacheMegaStrongABC):
         sibling :meth:`cache_or_get_cached_func_return_arg` method. Why?
         Efficiency, which is the whole point of caching. If caching isn't
         efficient, there is *no* reason to even cache.
+
+        This method is thread-safe.
 
         Parameters
         ----------
@@ -326,6 +338,8 @@ class CacheMegaStrongCaller(_CacheMegaStrongABC):
         sibling :meth:`.cache_or_get_cached_value` method. Why?
         Efficiency, which is the whole point of caching. If caching isn't
         efficient, there is *no* reason to even cache.
+
+        This method is thread-safe.
 
         Caveats
         -------

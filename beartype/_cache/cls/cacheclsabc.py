@@ -106,6 +106,14 @@ class CacheABC(metaclass=ABCMeta):
     def clear_cache(self) -> None:
         '''
         Clear (i.e., empty) this cache of all previously cached key-value pairs.
+
+        This method is intentionally named distinctly from the standard
+        :meth:`dict.clear` method. Doing so serves as a trivial guard against
+        erroneously calling that non-thread-safe method against low-level
+        :class:`dict` instances rather than calling this thread-safe method
+        against thread-safe instances of this superclass.
+
+        This method is thread-safe.
         '''
 
         pass
