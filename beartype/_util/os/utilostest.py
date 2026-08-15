@@ -27,7 +27,6 @@ def is_os_linux() -> bool:
     return platform_system() == 'Linux'
 
 
-
 @callable_cached
 def is_os_macos() -> bool:
     '''

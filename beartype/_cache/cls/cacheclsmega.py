@@ -21,7 +21,7 @@ from collections.abc import (
 )
 
 # ....................{ SUPERCLASSES                       }....................
-class _CacheMegaStrongABC(CacheABC):
+class CacheMegaStrongABC(CacheABC):
     '''
     **Thread-safe strongly unbounded cache abstract base class (ABC)** (i.e.,
     superclass of all concrete subclasses implementing mappings of unlimited
@@ -106,7 +106,7 @@ class _CacheMegaStrongABC(CacheABC):
 
 
 #FIXME: Unit test us up, please.
-class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
+class CacheMegaStrongSubclassABC(CacheMegaStrongABC):
     '''
     **Subclass-defined thread-safe strongly unbounded cache abstract base class
     (ABC)** (i.e., superclass of all concrete subclasses implementing mappings
@@ -123,23 +123,19 @@ class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
         self,
 
         # Subclass-specific variadic parameters passed from the parent
-        # cache_or_get_cached_value() method.
+        # get_value_cached_or_cache() method.
         *args, **kwargs
     ) -> object:
         '''
         **Value factory** (i.e., subclass-specific private method accepting the
         key followed by all subclass-specific variadic parameters passed by the
         external caller to the parent call of the public
-        :meth:`.cache_or_get_cached_value` method and returning the value to be
+        :meth:`.get_value_cached_or_cache` method and returning the value to be
         associated with this key).
 
         Parameters
         ----------
-        key : Hashable
-            **Key** (i.e., arbitrary hashable object) to return the associated
-            value of.
-
-        All remaining parameters are passed as is to subclass-specific concrete
+        All parameters are passed as is to subclass-specific concrete
         implementation of this abstract method.
 
         Returns
@@ -151,7 +147,7 @@ class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
         pass
 
     # ..................{ GETTERS                            }..................
-    def cache_or_get_cached_value(
+    def get_value_cached_or_cache(
         self,
 
         # Mandatory parameters.
@@ -200,7 +196,7 @@ class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize with the
-        # CacheMegaStrongCaller.cache_or_get_cached_func_return_arg() method.
+        # CacheMegaStrongCaller.get_func_arg_return_cached_or_cache() method.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # Thread-safely...
@@ -236,7 +232,7 @@ class CacheMegaStrongSubclassABC(_CacheMegaStrongABC):
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Submit back to StackOverflow, preferably under this question:
 #    https://stackoverflow.com/questions/1312331/using-a-global-dictionary-with-threads-in-python
-class CacheMegaStrongCaller(_CacheMegaStrongABC):
+class CacheMegaStrongCaller(CacheMegaStrongABC):
     '''
     **Caller-defined thread-safe strongly unbounded cache** (i.e., mapping of
     unlimited size from strongly referenced arbitrary keys onto strongly
@@ -247,7 +243,7 @@ class CacheMegaStrongCaller(_CacheMegaStrongABC):
     '''
 
     # ..................{ GETTERS                            }..................
-    def cache_or_get_cached_value(
+    def get_value_cached_or_cache(
         self,
 
         # Mandatory parameters.
@@ -264,7 +260,7 @@ class CacheMegaStrongCaller(_CacheMegaStrongABC):
         associated with this key.
 
         This method is intentionally implemented as a distinct method from the
-        sibling :meth:`cache_or_get_cached_func_return_arg` method. Why?
+        sibling :meth:`get_func_arg_return_cached_or_cache` method. Why?
         Efficiency, which is the whole point of caching. If caching isn't
         efficient, there is *no* reason to even cache.
 
@@ -293,7 +289,7 @@ class CacheMegaStrongCaller(_CacheMegaStrongABC):
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize with the
-        # cache_or_get_cached_func_return_arg() method.
+        # get_func_arg_return_cached_or_cache() method.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # Thread-safely...
@@ -315,7 +311,7 @@ class CacheMegaStrongCaller(_CacheMegaStrongABC):
 
 
     #FIXME: Unit test us up.
-    def cache_or_get_cached_func_return_arg(
+    def get_func_arg_return_cached_or_cache(
         self,
 
         # Mandatory parameters.
@@ -335,7 +331,7 @@ class CacheMegaStrongCaller(_CacheMegaStrongABC):
         associated with this key.
 
         This method is intentionally implemented as a distinct method from the
-        sibling :meth:`.cache_or_get_cached_value` method. Why?
+        sibling :meth:`.get_value_cached_or_cache` method. Why?
         Efficiency, which is the whole point of caching. If caching isn't
         efficient, there is *no* reason to even cache.
 
@@ -372,8 +368,8 @@ class CacheMegaStrongCaller(_CacheMegaStrongABC):
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize with:
-        # * The cache_or_get_cached_value() method of this same subclass.
-        # * The CacheMegaStrongSubclassABC.cache_or_get_cached_value() method.
+        # * The get_value_cached_or_cache() method of this same subclass.
+        # * The CacheMegaStrongSubclassABC.get_value_cached_or_cache() method.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # Thread-safely...

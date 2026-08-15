@@ -58,7 +58,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #some completely new alternative that reads sanely with Pythonic syntax: e.g.,
 #    # Instead of unreadable syntax like this...
 #    wrapper: 'beartype.door.TypeHint' = (
-#        _hint_to_wrapper.cache_or_get_cached_func_return_arg(  # type: ignore[assignment]
+#        _hint_to_wrapper.get_func_arg_return_cached_or_cache(  # type: ignore[assignment]
 #            # Cache this wrapper singleton under this hint.
 #            key=hint,
 #            # If a wrapper singleton has yet to be instantiated for this

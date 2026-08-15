@@ -4,25 +4,17 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype type-checking function code utility factories** (i.e., low-level
-callables dynamically generating pure-Python code snippets type-checking
-arbitrary objects passed to arbitrary callables against PEP-compliant type hints
-passed to those same callables).
+**Beartype type-checking callable signature factories** (i.e., low-level
+callables dynamically generating and returning the signatures of pure-Python
+callables type-checking arbitrary objects passed to arbitrary callables against
+PEP-compliant type hints passed to those same callables).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Pretty awkward subpackage, honestly. Instead, we should:
-#* Rename this existing "beartype._check.signature" subpackage to
-#  "beartype._check.make".
-#* Split up the increasingly verbose "beartype._check.checkmake" submodule into
-#  various new submodules of this new "beartype._check.make" subpackage.
-#* Rename this submodule to "makesig". *lol*
-
 # ....................{ IMPORTS                            }....................
-from beartype._data.check.code.datacodename import ARG_NAME_GETRANDBITS
 from beartype._conf.confmain import BeartypeConf
+from beartype._data.check.code.datacodename import ARG_NAME_GETRANDBITS
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_SIGNATURE_SCOPE_ARG_format,
     CODE_INIT_RANDOM_INT,
@@ -30,7 +22,7 @@ from beartype._data.check.code.func.datacodefuncwrap import (
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._util.text.utiltextrepr import represent_object
 
-# ....................{ MAKERS ~ signature                 }....................
+# ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
 def make_func_signature(
     # Mandatory parameters.
@@ -43,10 +35,11 @@ def make_func_signature(
     code_signature_prefix: str = '',
 ) -> str:
     '''
-    **Type-checking signature factory** (i.e., low-level function dynamically
-    generating and returning the **signature** (i.e., callable declaration
-    prefixing the body of that callable) of a callable type-checking arbitrary
-    objects against arbitrary type hints, described by the passed parameters.
+    **Type-checking callable signature factory** (i.e., low-level function
+    dynamically generating and returning the **signature** (i.e., callable
+    declaration prefixing the body of that callable) of a callable type-checking
+    arbitrary objects against arbitrary type hints, described by the passed
+    parameters.
 
     Parameters
     ----------

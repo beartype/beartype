@@ -36,7 +36,7 @@ from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
-from beartype._check.signature.sigmake import make_func_signature
+from beartype._check.make.makecheckersig import make_func_signature
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.conftest import die_unless_conf
 from beartype._data.check.code.datacodename import (
@@ -133,7 +133,6 @@ parameters accepted by the :func:`.make_func_checker` function factory.
 
 # ....................{ FACTORIES ~ func                   }....................
 #FIXME: Unit test us up, please.
-#FIXME: Docstring us up that this factory is now thread-safe, please. *sigh*
 def make_func_checker(
     hint: Hint,
     conf: BeartypeConf,
