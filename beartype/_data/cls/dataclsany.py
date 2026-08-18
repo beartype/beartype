@@ -4,11 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **any analog class hierarchy** defining runtime-friendly types that
-are syntactically distinct from yet semantically analogous to:
-
-* The builtin runtime-friendly root :class:`object` superclass.
-* The standard runtime-hostile :class:`typing.Any` type hint singleton.
+Project-wide **any analog type hierarchy** (i.e., runtime-friendly classes
+syntactically distinct from yet semantically analogous to both the builtin
+runtime-friendly root :class:`object` superclass *and* the standard
+runtime-hostile :class:`typing.Any` type hint singleton).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -77,7 +76,6 @@ class _BeartypeAnyMeta(type):
         return issubclass(subclass, object)  # type: ignore[return-value]
 
 # ....................{ CLASSES                            }....................
-#FIXME: Unit test us up, please. *sigh*
 class BeartypeAny(object, metaclass=_BeartypeAnyMeta):
     '''
     :mod:`beartype`-specific **any analog**, a runtime-friendly isinstanceable

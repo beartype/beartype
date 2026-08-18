@@ -516,6 +516,21 @@ def beartype_pep557_dataclass(
 
         # If this dataclass attribute is annotated and thus a field...
         if attr_hint is not SENTINEL:
+            #FIXME: [SPEED] We can do substantially better than merely calling
+            #is_bearable() here. Calling die_if_unbearable() below is fine, as
+            #speed no longer matters at that late point. At this early point,
+            #though, speed *ABSOLUTELY* matters. Instead:
+            #* Define a new *PUBLIC* beartype.door.make_hint_tester() factory
+            #  function, which basically does the first half of what
+            #  is_bearable() internally does: dynamically generate (or reuse a
+            #  previously generated) tester function specific to the passed
+            #  hint. make_hint_tester() then simply returns that function.
+            #* Refactor is_bearable() to internally call make_hint_tester().
+            #* Call make_hint_tester() above immediately *AFTER* sanitizing each
+            #  hint.
+            #* Call the corresponding hint tester created by each such call
+            #  below rather than calling is_bearable() below.
+
             # If the new value of this field violates this hint...
             #
             # Note that this is a non-negligible optimization. Technically, this

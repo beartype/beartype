@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **any analog class hierarchy** unit tests.
+Beartype **any analog type hierarchy** unit tests.
 
 This submodule unit tests the public API of the public
 :mod:`beartype._data.cls.dataclsany` submodule.
@@ -19,7 +19,7 @@ This submodule unit tests the public API of the public
 # ....................{ TESTS                              }....................
 def test_beartype_any() -> None:
     '''
-    Test the :obj:`beartype._data.cls.dataclsany.BeartypeAny` type.
+    Test the :class:`beartype._data.cls.dataclsany.BeartypeAny` type.
     '''
 
     # ....................{ IMPORTS                        }....................

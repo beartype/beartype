@@ -44,6 +44,10 @@ from warnings import catch_warnings
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
 #FIXME: Docstring us up, please.
+#FIXME: *BEGIN TESTING FREE-THREADING BUILDS IN "tox.ini"*. Somewhat non-trivial
+#as this will necessitate changes to "pyproject.toml". Whatevahs! Mandatory now.
+#FIXME: Pretty sure we have to define empty "__slots__ = ()" both here and
+#*EVERYWHERE* we subclass "CacheABC". *shrug*
 class FuncCheckerFactoryCache(CacheMegaStrongABC):
     '''
 
