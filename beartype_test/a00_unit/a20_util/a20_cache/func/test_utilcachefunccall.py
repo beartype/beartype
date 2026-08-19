@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable caching utility unit tests.**
+Project-wide **callable caching utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.cache.utilcachecall` submodule.
+:mod:`beartype._util.cache.func.utilcachefunc` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,13 +20,13 @@ This submodule unit tests the public API of the private
 def test_callable_cached() -> None:
     '''
     Test the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator.
+    :func:`beartype._util.cache.func.utilcachefunc.callable_cached`
+    decorator.
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
-    from beartype._util.cache.utilcachecall import callable_cached
+    from beartype._util.cache.func.utilcachefunc import callable_cached
     from pytest import raises
 
     # ..................{ CALLABLES                          }..................
@@ -121,14 +121,15 @@ def test_callable_cached() -> None:
 def test_method_cached_arg_by_id() -> None:
     '''
     Test the
-    :func:`beartype._util.cache.utilcachecall.method_cached_arg_by_id`
+    :func:`beartype._util.cache.func.utilcachefunc.method_cached_arg_by_id`
     decorator.
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
-    from beartype._util.cache.utilcachecall import method_cached_arg_by_id
+    from beartype._util.cache.func.utilcachefunc import (
+        method_cached_arg_by_id)
     from pytest import raises
 
     # ..................{ CLASSES                            }..................
@@ -217,12 +218,12 @@ def test_method_cached_arg_by_id() -> None:
 def test_property_cached() -> None:
     '''
     Test the
-    :func:`beartype._util.cache.utilcachecall.property_cached` decorator.
+    :func:`beartype._util.cache.func.utilcachefunc.property_cached` decorator.
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype._util.cache.utilcachecall import property_cached
+    from beartype._util.cache.func.utilcacheproperty import property_cached
 
     # ..................{ CLASSES                            }..................
     class Keeper(object):

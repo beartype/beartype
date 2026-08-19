@@ -70,7 +70,7 @@ from beartype._data.typing.datatyping import (
     LexicalScope,
 )
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.utilfuncmake import make_func

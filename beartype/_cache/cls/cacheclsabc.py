@@ -12,10 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from abc import (
-    ABCMeta,
-    abstractmethod,
-)
+from abc import abstractmethod
+from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from contextlib import AbstractContextManager
 from threading import (
     Lock,
@@ -27,7 +25,7 @@ from typing import (
 )
 
 # ....................{ SUPERCLASSES                       }....................
-class CacheABC(metaclass=ABCMeta):
+class CacheABC(metaclass=BeartypeSlottedABCMeta):
     '''
     **Thread-safe cache abstract base class (ABC)** (i.e., superclass of all
     concrete subclasses implementing mappings intended to be instantiated as

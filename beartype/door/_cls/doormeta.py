@@ -13,10 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from abc import ABCMeta
-from beartype._cave._cavefast import NoneType
-from beartype._data.typing.datatypingport import Hint
 from beartype._cache.cls.cacheclsmega import CacheMegaStrongCaller
+from beartype._cave._cavefast import NoneType
+from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._data.typing.datatypingport import Hint
 from threading import RLock
 from typing import TYPE_CHECKING
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 # ....................{ METACLASSES                        }....................
 #FIXME: Unit test us up, please.
-class _TypeHintMetaclass(ABCMeta):
+class _TypeHintMetaclass(BeartypeSlottedABCMeta):
     '''
     Metaclass of all **type hint wrapper** (i.e., high-level object
     encapsulating a low-level type hint augmented with a magically
@@ -255,7 +255,7 @@ contending over those globals, this dictionary *must* be thread-safe.
 
 **This dictionary is intentionally designed as a naive dictionary rather than a
 robust LRU cache,** for the same reasons that callables accepting hints are
-memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
+memoized by the :func:`beartype._util.cache.func.utilcachefunc.callable_cached`
 rather than the :func:`functools.lru_cache` decorator. Why? Because:
 
 * The number of different type hints instantiated across even worst-case

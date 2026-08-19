@@ -511,7 +511,7 @@ class _BeartypeUtilCallableWarning(_BeartypeUtilWarning):
     Beartype **decorator memoization decorator keyword argument** warning.
 
     This warning is issued from callables memoized by the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator on
+    :func:`beartype._util.cache.func.utilcachefunc.callable_cached` decorator on
     calls receiving one or more keyword arguments. Memoizing keyword arguments
     is substantially more space- and time-intensive than memoizing the
     equivalent positional arguments, partially defeating the purpose of

@@ -33,7 +33,7 @@ def is_stdout_terminal() -> bool:
     Caveats
     ----------
     **This tester is intentionally not memoized** (i.e., via the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator), as
+    :func:`beartype._util.cache.func.utilcachefunc.callable_cached` decorator), as
     external callers can and frequently do monkey-patch or otherwise modify the
     value of the global :attr:`sys.stdout` output stream.
 

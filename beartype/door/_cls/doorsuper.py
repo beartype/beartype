@@ -11,10 +11,6 @@ non-object-oriented type hint API standardized by the :mod:`typing` module).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Slot "TypeHint" attributes for lookup efficiency, please.
-#FIXME: Privatize most (...or perhaps all) public instance variables, please.
-
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doormeta import _TypeHintMetaclass
 from beartype.door._cls.util.doorclstest import die_unless_typehint
@@ -23,21 +19,14 @@ from beartype.door._func.doorfunc import (
     is_bearable,
 )
 from beartype.roar import BeartypeDoorIsSubhintException
-from beartype.typing import (
-    Any,
-    FrozenSet,
-    Generic,
-    Iterable,
-    Tuple,
-    overload,
-)
 from beartype._check.convert.convmain import sanify_hint_any
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.typing.datatypingport import T_Hint
-from beartype._util.cache.utilcachecall import (
-    method_cached_arg_by_id,
+from beartype._util.cache.func.utilcachefunc import method_cached_arg_by_id
+from beartype._util.cache.func.utilcacheproperty import (
+    get_property_var_name,
     property_cached,
 )
 from beartype._util.hint.pep.utilpepget import (
@@ -46,6 +35,12 @@ from beartype._util.hint.pep.utilpepget import (
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobjget import get_object_type_basename
+from collections.abc import Iterable
+from typing import (
+    Any,
+    Generic,
+    overload,
+)
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.
@@ -105,7 +100,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         * If this hint is PEP-compliant and thus uniquely identified by a
           :mod:`beartype`-specific sign, that sign.
         * Else (i.e., if this hint is an isinstanceable class), :data:`None`.
-    _origin: type
+    _origin : type
         Either:
 
         * If this hint originates from an **isinstanceable class** such that all
@@ -114,6 +109,28 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
           guaranteeing sanity when this instance variable is passed as either
           the first or second parameters to the :func:`issubclass` builtin.
     '''
+
+    # ..................{ CLASS VARIABLES                    }..................
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently called
+    # @beartype decorations. Slotting has been shown to reduce read and write
+    # costs by approximately ~10%, which is non-trivial.
+    __slots__ = (
+        # Instance variables explicitly defined by the __init__() constructor.
+        '_args',
+        '_hint',
+        '_hint_sign',
+        '_origin',
+
+        # Instance variables implicitly defined by each decoration of a property
+        # method by the @property_cached decorator below, whose names are
+        # dynamically precomputed by this getter. It doesn't have to make sense.
+        get_property_var_name('is_ignorable'),
+        get_property_var_name('_args_wrapped_frozenset'),
+        get_property_var_name('_args_wrapped_tuple'),
+        get_property_var_name('_branches'),
+        get_property_var_name('_is_args_ignorable'),
+    )
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, hint: T_Hint) -> None:
@@ -346,7 +363,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     @overload
     def __getitem__(self, index: int) -> 'TypeHint': ...
     @overload
-    def __getitem__(self, index: slice) -> Tuple['TypeHint', ...]: ...
+    def __getitem__(self, index: slice) -> tuple['TypeHint', ...]: ...
 
     # Note that the actual implementation of this overload is intentionally:
     # * *NOT* decorated by the standard @overload decorator.
@@ -994,7 +1011,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
     @property  # type: ignore
     @property_cached
-    def _args_wrapped_tuple(self) -> Tuple['TypeHint', ...]:
+    def _args_wrapped_tuple(self) -> tuple['TypeHint', ...]:
         '''
         Tuple of the zero or more high-level **child type hint wrappers** (i.e.,
         :class:`TypeHint` instances) wrapping the low-level child type hints
@@ -1012,7 +1029,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
     @property  # type: ignore
     @property_cached
-    def _args_wrapped_frozenset(self) -> FrozenSet['TypeHint']:
+    def _args_wrapped_frozenset(self) -> frozenset['TypeHint']:
         '''
         Frozen set of the zero or more high-level child **type hint wrappers**
         (i.e., :class:`TypeHint` instances) wrapping the low-level child type

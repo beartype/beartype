@@ -148,7 +148,6 @@ class BeartypeSlottedMetaclass(BeartypeSlottedMetaclassMixin, type):  # type: ig
     pass
 
 
-#FIXME: Unit test us up, please. *sigh*
 class BeartypeSlottedABCMeta(BeartypeSlottedMetaclassMixin, ABCMeta):  # type: ignore[misc]
     '''
     :pep:`3115`-compliant **slotted abstract base class (ABC) metaclass** (i.e.,

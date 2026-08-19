@@ -16,7 +16,7 @@ from beartype._data.typing.datatyping import (
     Pep484TowerComplex,
     Pep484TowerFloat,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from typing import Optional
 

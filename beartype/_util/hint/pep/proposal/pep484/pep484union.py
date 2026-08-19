@@ -18,7 +18,7 @@ from beartype._data.typing.datatypingport import (
     Hint,
     TupleHints,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
 
 # ....................{ FACTORIES                          }....................

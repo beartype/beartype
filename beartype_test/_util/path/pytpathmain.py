@@ -18,7 +18,7 @@ from beartype.meta import (
     PACKAGE_NAME,
     PACKAGE_TEST_NAME,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype_test._util.path.pytpathlib import (
     DirRelative,
     FileRelative,

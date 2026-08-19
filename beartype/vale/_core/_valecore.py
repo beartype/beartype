@@ -23,12 +23,13 @@ from beartype.vale._util._valeutiltyping import (
     BeartypeValidatorTester,
     BeartypeValidatorRepresenter,
 )
+from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._util.func.arg.utilfuncargtest import is_func_argless
 from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ CLASSES                            }....................
-class BeartypeValidator(object):
+class BeartypeValidator(metaclass=BeartypeSlottedABCMeta):
     '''
     **Beartype validator** (i.e., object encapsulating a caller-defined
     validation callable returning ``True`` when an arbitrary object passed to

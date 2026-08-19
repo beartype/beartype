@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatyping import TypeWarning
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.error.utilerrtest import is_exception_message_str
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_11,

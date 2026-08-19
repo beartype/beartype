@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep484Exception
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.hint.sign.datahintsigns import HintSignNewType
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.

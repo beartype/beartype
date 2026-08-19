@@ -20,16 +20,54 @@ This submodule unit tests the public API of the public
 def test_beartype_slotted_metaclass() -> None:
     '''
     Test the :class:`beartype._data.cls.dataclsslot.BeartypeSlottedMetaclass`
-    type.
+    metaclass.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._data.cls.dataclsslot import BeartypeSlottedMetaclass
+
+    # Assert that this slotted metaclass behaves as expected.
+    _assert_beartype_slotted_metaclass(BeartypeSlottedMetaclass)
+
+
+def test_beartype_slotted_abc_meta() -> None:
+    '''
+    Test the :class:`beartype._data.cls.dataclsslot.BeartypeSlottedABCMeta`
+    metaclass.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+
+    # Assert that this slotted metaclass behaves as expected.
+    _assert_beartype_slotted_metaclass(BeartypeSlottedABCMeta)
+
+# ....................{ PRIVATE ~ asserters                }....................
+def _assert_beartype_slotted_metaclass(
+    metacls: (
+        'type[beartype._data.cls.dataclsslot.BeartypeSlottedMetaclassMixin]')
+) -> None:
+    '''
+    Test the passed **slotted metaclass** (i.e.,
+    :class:`beartype._data.cls.dataclsslot.BeartypeSlottedMetaclassMixin`
+    subclass).
+
+    Parameters
+    ----------
+    metacls: type[beartype._data.cls.dataclsslot.BeartypeSlottedMetaclassMixin]
+        Slotted metaclass to be tested.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._data.cls.dataclsslot import BeartypeSlottedMetaclass
+    from beartype._data.cls.dataclsslot import BeartypeSlottedMetaclassMixin
     from pytest import raises
 
     # ....................{ CLASSES                        }....................
-    class ItsLovelinessIncreases(metaclass=BeartypeSlottedMetaclass):
+    # Assert the passed object to be a slotted metaclass.
+    assert issubclass(metacls, BeartypeSlottedMetaclassMixin)
+
+    class ItsLovelinessIncreases(metaclass=metacls):
         '''
         Arbitrary **non-empty slotted superclass** (i.e., superclass defining an
         explicit ``__slots__`` dunder class attribute to be a non-empty tuple).

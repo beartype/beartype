@@ -51,75 +51,9 @@ This private submodule is *not* intended for importation by downstream callers.
 #high-level thread-safe "CacheMegaStrongCaller"-like objects. They don't have
 #to *EXACTLY* be "CacheMegaStrongCaller" instances, of course. They just need
 #to be instances of something *LIKE* "CacheMegaStrongCaller".
-#FIXME: That said, our issue with "CacheMegaStrongCaller" was always the syntax.
-#Seriously. We should use that thing everywhere. We currently do *NOT* use
-#that thing everywhere for the simple (yet horrible) reason that its syntax is
-#so sucky we can't bear to use it anywhere. An alternative would be to design
-#some completely new alternative that reads sanely with Pythonic syntax: e.g.,
-#    # Instead of unreadable syntax like this...
-#    wrapper: 'beartype.door.TypeHint' = (
-#        _hint_to_wrapper.get_func_arg_return_cached_or_cache(  # type: ignore[assignment]
-#            # Cache this wrapper singleton under this hint.
-#            key=hint,
-#            # If a wrapper singleton has yet to be instantiated for this
-#            # hint, do so by calling this private factory method...
-#            value_factory=cls._make_wrapper,  # type: ignore[arg-type]
-#            # ...with this hint passed as the sole parameter to that method.
-#            arg=hint,
-#        ))
-#
-#    # ...readably syntax like this would be *MAGICAL*:
-#    wrapper: 'beartype.door.TypeHint' = None  # type: ignore[assignment]
-#    with _hint_to_wrapper[hint] as wrapper:
-#         _hint_to_wrapper[hint] = wrapper = cls._make_wrapper(hint)
-#
-#Significantly easier to read. Still not perfect, of course... but nothing is
-#perfect. The perfect is the enemy *BLAH BLAH*.
-#
-#So how does that actually work, then? The idea:
-#* The "dict" subclass (of which "_hint_to_wrapper" is an instance) overrides
-#  both the __getitem__() dunder method *AND* the dict.get() method to
-#  return... uh, what? New context manager objects? Sounds expensive.
-#  Basically, it depends on whether this is locked behind a "Lock" or "RLock".
-#  If:
-#  * A "Lock", we can efficiently and safely reuse a single private context
-#    manager bound in the subclass __init__() constructor to the current
-#    "dict" subclass instance. Simple.
-#  * An "RLock", we're kinda screwed. We'd have to inefficiently create and
-#    return one now context manager object on each __getitem__() call. Sucky.
-#    Kinda defeats the entire point of caching. *sigh*
-#    Oh, right. We could internally cache and maintain a private *POOL* (i.e.,
-#    list) of all previously created context manager objects returned by each
-#    prior __getitem__() call. Would totally work. And because access to that
-#    pool is locked behind a threadsafe "RLock", we wouldn't have to worry
-#    about locking that pool. Just append to and pop from a private list
-#    unique to each subclass.
-#
-#Lastly, note that that class should obviously *NOT* be an actual "dict"
-#subclass. It just behaves like a "dict" subclass. Useful names for the two
-#obvious class variants of this core idea include:
-#* "beartype._util.kind.map.utilmaplock.DictLocked".
-#* "beartype._util.kind.map.utilmaplock.DictRLocked".
-#
-#Note that we're *NOT* bothering with the obsolete "beartype._util.cache.maplike"
-#subpackage. Too antiquated. The *ONLY* thing we should do with that
-#subpackage is to explicitly note in the docstrings of existing classes like
-#"CacheBoundedStrong" is that this class has been *OBSOLETED* by the
-#substantially newer and more Pythonic "Dict(R|)Locked" family of classes.
-#
-#Lastly lastly:
-#* The Dict(R|)Locked.__getitem__() should raise an exception if called inside
-#  an existing "with" block of this class. Maintain an internal
-#  "self._is_entered: bool = False" instance variable to track this. *shrug*
-#* The Dict(R|)Locked.__setitem__() dunder method should raise an exception if
-#  *NOT* inside an existing "with" block.
-#FIXME: *OH*. The above design doesn't work, sadly. Why? Because context
-#managers are currently required to "yield". They can't *NOT* "yield". Which
-#means the body of the "with...:" block would *ALWAYS* get executed, which
-#totally defeats the purpose of caching. Oh, well. Guess we gotta use
-#"CacheMegaStrongCaller" and friends, huh? That's fine. Python leaves us no
-#alternative. The point is thread-safe efficiency. This is the *ONLY* way to get
-#that. It is what it is. *sigh*
+
+#FIXME: *GULP*. We also need to resolve potential race conditions in
+#"fwdrefmeta". See that submodule for further deets, yo. *sigh*
 
 # ....................{ CLEARERS                           }....................
 def clear_caches() -> None:
@@ -130,39 +64,7 @@ def clear_caches() -> None:
 
     This function is typically cleared on detecting a **hot reload** (i.e.,
     attempt by the end user to reimport a presumably redefined user-defined
-    module, type, or other object commonly cached by :mod:`beartype`). Notably,
-    this function clears:
-
-    * The :func:`beartype.door.die_if_unbearable` **cache** (i.e., private
-      :data:`beartype.door._func.doorfunc._HINT_CONF_EXCEPTION_PREFIX_TO_FUNC_RAISER`
-      dictionary).
-    * The :func:`beartype.door.is_bearable` **cache** (i.e., private
-      :data:`beartype.door._func.doorfunc._HINT_CONF_EXCEPTION_PREFIX_TO_FUNC_TESTER`
-      dictionary).
-    * The **annotations dictionary cache** (i.e., private
-      :data:`beartype._util.hint.pep.proposal.pep749.pep649749annotate._MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS`
-      dictionary).
-    * All **forward reference proxy caches** (i.e., private
-      :data:`beartype._check.forward.reference._cls.fwdrefmeta._ref_proxy_to_resolved_hint`
-      and
-      :data:`beartype._check.forward.reference._cls.fwdrefmeta._ref_proxy_to_resolved_type`
-      dictionaries).
-    * The **sanified type hint metadata cache** (i.e., private
-      :data:`beartype._check.cls.hint.hintsane._HINT_TO_HINTSANE`
-      dictionary).
-    * The **tuple union cache** (i.e., private
-      :data:`beartype._check.code.codescope._tuple_union_to_tuple_union`
-      dictionary).
-    * The **type hint code factory cache** (i.e., private
-      :data:`beartype._check.code.codemain import _HINT_CONF_TO_CHECK_EXPR`
-      dictionary).
-    * The **type hint coercion cache** (i.e., private
-      :data:`beartype._check.convert._convcoerce._hint_repr_to_hint`
-      dictionary).
-    * The **type hint wrapper cache** (i.e., private
-      :data:`beartype._door._cls.doormeta._hint_to_wrapper` dictionary).
-    * The **object blacklist cache** (i.e., private
-      :data:`_object_to_is_blacklisted` dictionary).
+    module, type, or other object commonly cached by :mod:`beartype`).
     '''
     # print('Clearing all \"beartype._check\" caches...')
 
@@ -199,6 +101,13 @@ def clear_caches() -> None:
         cache_global.clear_cache()
 
     #FIXME: Refactor each of these caches into a "CacheABC" instance, please!
+    #Sadly, we're out of time for the moment. Leaving these caches as raw
+    #dictionary globals invites subtle race conditions with this function. Ugh.
+    #When time permits, the most important of these that should *ABSOLUTELY* be
+    #refactored first are:
+    #* The pair of "_ref_proxy_to_resolved_*" dictionaries. These are indirectly
+    #  exposed to end users via @beartype's forward reference resolvers.
+
     # Clear all relevant caches used throughout this subpackage.
     _hint_data_to_func_raiser.clear()
     _hint_data_to_func_tester.clear()

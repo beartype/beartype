@@ -16,7 +16,7 @@ callers.
 # ....................{ IMPORTS                            }....................
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 
 # ....................{ GLOBALS                            }....................
 BEARTYPE_CONF_DEFAULT = BeartypeConf()

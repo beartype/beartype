@@ -29,14 +29,12 @@ This private submodule is *not* intended for importation by downstream callers.
 #the bare minimum... but that's still leagues ahead of our current non-design.
 
 # ....................{ IMPORTS                            }....................
-from abc import (
-    ABCMeta,
-    abstractmethod,
-)
+from abc import abstractmethod
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.cls.hint.data.hintdataabc import HintDataABC
 from beartype._conf.confmain import BeartypeConf
+from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatypingport import Hint
 from typing import (
     TYPE_CHECKING,
@@ -44,7 +42,7 @@ from typing import (
 )
 
 # ....................{ SUPERCLASSES                       }....................
-class HintTreeABC(metaclass=ABCMeta):
+class HintTreeABC(metaclass=BeartypeSlottedABCMeta):
     '''
     **Type hint tree abstract base class (ABC)** (i.e., superclass whose
     subclasses recursively traverse over abstract trees of child type hints

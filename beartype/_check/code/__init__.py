@@ -850,7 +850,7 @@
 #is_inferred_subhint_callable() to:
 #     from beartype.door._func.doorinfer import _infer_hint_callable
 #     from beartype._cave._cavefast import FunctionType
-#     from beartype._util.cache.utilcachecall import callable_cached
+#     from beartype._util.cache.func.utilcachefunc import callable_cached
 #     from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 #     from collections.abc import Callable
 #

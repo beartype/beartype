@@ -32,7 +32,7 @@ Usage
 -----
 This substring is typically hard-coded into non-human-readable exception
 messages raised by low-level callables memoized with the
-:func:`beartype._util.cache.utilcachecall.callable_cached` decorator. Why?
+:func:`beartype._util.cache.func.utilcachefunc.callable_cached` decorator. Why?
 Memoization prohibits those callables from raising human-readable exception
 messages. Why? Doing so would require those callables to accept fine-grained
 parameters unique to each call to those callables, which those callables would

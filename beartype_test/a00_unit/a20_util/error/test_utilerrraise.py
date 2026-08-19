@@ -26,7 +26,7 @@ def test_reraise_exception_placeholder() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.cache.utilcachecall import callable_cached
+    from beartype._util.cache.func.utilcachefunc import callable_cached
     from beartype._util.error.utilerrraise import reraise_exception_placeholder
     from pytest import raises
     from random import getrandbits

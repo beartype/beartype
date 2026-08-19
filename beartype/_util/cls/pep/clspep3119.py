@@ -22,7 +22,7 @@ from beartype._data.typing.datatyping import (
     Pep3119Checkable,
     TypeException,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 
 # ....................{ RAISERS ~ isinstanceable           }....................
 def die_unless_object_isinstanceable(

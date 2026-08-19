@@ -22,7 +22,7 @@ from beartype._data.typing.datatypingport import (
     SequenceHints,
     TypeIs,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from collections.abc import Sequence
 from functools import reduce
 from operator import __or__ as or_operator

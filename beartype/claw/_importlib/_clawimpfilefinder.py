@@ -28,7 +28,7 @@ from beartype.roar import (
 from beartype.claw._importlib._clawimpfileloader import BeartypeSourceFileLoader
 from beartype._data.claw.dataclawmagic import (
     BEARTYPE_CLAW_FILE_FINDER_PATH_HOOK_ATTR_NAME)
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.func.utilfuncscope import get_func_freevars
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.module.utilmodimport import import_module_attr_or_none

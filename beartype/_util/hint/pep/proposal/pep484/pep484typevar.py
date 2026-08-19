@@ -23,7 +23,7 @@ from beartype._data.typing.datatypingport import (
     HintOrNone,
     TypeIs,
 )
-# from beartype._util.cache.utilcachecall import callable_cached
+# from beartype._util.cache.func.utilcachefunc import callable_cached
 from typing import Optional
 
 # ....................{ RAISERS                            }....................

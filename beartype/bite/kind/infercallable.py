@@ -83,7 +83,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
     ArgMandatory,

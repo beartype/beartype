@@ -23,7 +23,7 @@ from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.datahintrepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED)
 from beartype._data.typing.datatypingport import Hint
-# from beartype._util.cache.utilcachecall import callable_cached
+# from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.utilhintget import get_hint_repr
 from typing import NoReturn

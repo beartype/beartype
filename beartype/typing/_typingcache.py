@@ -10,11 +10,11 @@ subpackage) utilities.
 
 This private submodule implements only a minimal subset of the caching
 functionality implemented by the general-purpose
-:mod:`beartype._util.cache.utilcachecall` submodule, from which this submodule
+:mod:`beartype._util.cache.func.utilcachefunc` submodule, from which this submodule
 was originally derived. Since the latter transitively imports from the
 :mod:`beartype.typing` subpackage at module scope, submodules of the
 :mod:`beartype.typing` subpackage *cannot* safely import from the
-:mod:`beartype._util.cache.utilcachecall` submodule at module scope. Ergo, the
+:mod:`beartype._util.cache.func.utilcachefunc` submodule at module scope. Ergo, the
 existence of this submodule.
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -60,7 +60,7 @@ def callable_cached_minimal(func: Callable) -> Callable:
 
     See Also
     ----------
-    :func:`beartype._util.cache.utilcachecall.callable_cached`
+    :func:`beartype._util.cache.func.utilcachefunc.callable_cached`
         Further details.
     '''
     assert callable(func), f'{repr(func)} not callable.'

@@ -14,14 +14,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from beartype.roar import BeartypeValeSubscriptionException
-from beartype.typing import Any
 from beartype.vale._core._valecore import BeartypeValidator
+from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._util.text.utiltextrepr import represent_object
+from typing import Any
 
 # ....................{ METACLASSES                        }....................
-class _BeartypeValidatorFactoryABCMeta(ABCMeta):
+class _BeartypeValidatorFactoryABCMeta(BeartypeSlottedABCMeta):
     '''
     Metaclass all **beartype validator factory subclasses** (i.e.,
     :class:`_BeartypeValidatorFactoryABC` subclasses).
@@ -42,8 +43,7 @@ class _BeartypeValidatorFactoryABCMeta(ABCMeta):
 #"_BeartypeValidatorFactoryABCMeta" metaclass is a "generic" (i.e., subclasses
 #"typing.Generic"), when in fact that metaclass merely subclasses the standard
 #"abc.ABCMeta" metaclass. Consider submitting an upstream pyright issue, please.
-class _BeartypeValidatorFactoryABC(
-    object, metaclass=_BeartypeValidatorFactoryABCMeta):  # pyright: ignore
+class _BeartypeValidatorFactoryABC(metaclass=_BeartypeValidatorFactoryABCMeta):  # pyright: ignore
     '''
     Abstract base class of all **beartype validator factory subclasses**
     (i.e., subclasses that, when subscripted (indexed) by subclass-specific
@@ -62,6 +62,19 @@ class _BeartypeValidatorFactoryABC(
         Human-readable substring prefixing exceptions raised by the subclass
         implementation of the abstract :meth:__getitem__` dunder method.
     '''
+
+    # ..................{ CLASS VARIABLES                    }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Subclasses declaring uniquely subclass-specific instance
+    # variables *MUST* additionally slot those variables. Subclasses violating
+    # this constraint will be usable but unslotted, which defeats the purpose.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Slot all instance variables defined on this object to reduce the costs of
+    # both reading and writing these variables by approximately ~10%.
+    __slots__ = (
+        '_basename',
+        '_getitem_exception_prefix',
+    )
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, basename: str) -> None:
@@ -100,7 +113,7 @@ class _BeartypeValidatorFactoryABC(
         Concrete subclasses are required to implement this abstract method.
         Concrete subclasses are strongly recommended (but *not* required) to
         memoize their implementations by the
-        :func:`beartype._util.cache.utilcachecall.callable_cached` decorator.
+        :func:`beartype._util.cache.func.utilcachefunc.callable_cached` decorator.
 
         Returns
         ----------

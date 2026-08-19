@@ -46,7 +46,7 @@ def is_object_blacklisted(obj: object) -> bool:
     :class:`weakref.WeakKeyDictionary` instance for efficiency. Since the passed
     object is both arbitrary and user-defined, this memoization is careful to
     hold weak rather than strong references to that object. The usual
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator
+    :func:`beartype._util.cache.func.utilcachefunc.callable_cached` decorator
     commonly employed throughout the :mod:`beartype` codebase to trivially
     memoize callables is thus wholly inappropriate here. Doing so would hold an
     unbounded number of strong references to arbitrary user-defined objects,

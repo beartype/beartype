@@ -20,7 +20,7 @@ from beartype.typing import (
     TYPE_CHECKING,
     TypeVar,
 )
-from beartype._util.cache.utilcachecall import property_cached
+from beartype._util.cache.func.utilcacheproperty import property_cached
 
 # ....................{ SUBCLASSES                         }....................
 class TypeVarTypeHint(UnionTypeHint):

@@ -27,7 +27,7 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._data.typing.datatypingport import TypeIs
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.func.utilfunccodeobj import get_func_codeobject_or_none
 from collections.abc import Callable
 from inspect import (

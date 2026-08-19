@@ -38,6 +38,16 @@ class AnnotatedTypeHint(TypeHint):
         hint, equivalent to the first argument subscripting this hint).
     '''
 
+    # ..................{ CLASS VARIABLES                    }..................
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently called
+    # @beartype decorations. Slotting has been shown to reduce read and write
+    # costs by approximately ~10%, which is non-trivial.
+    __slots__ = (
+        '_metadata',
+        '_metahint_wrapper',
+    )
+
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, hint: Hint) -> None:
 

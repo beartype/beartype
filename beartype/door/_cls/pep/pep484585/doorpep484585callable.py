@@ -15,18 +15,18 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.door._cls.doorhint import TupleTypeHints
 from beartype.door._cls.doorsuper import TypeHint
 from beartype.roar import BeartypeDoorPepUnsupportedException
-from beartype.typing import (
-    Any,
-    Tuple,
-)
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_PEP612_CALLABLE_ARGLIST)
-from beartype._util.cache.utilcachecall import property_cached
+from beartype._util.cache.func.utilcacheproperty import (
+    get_property_var_name,
+    property_cached,
+)
 from beartype._util.hint.pep.proposal.pep484585.pep484585callable import (
     get_hint_pep484585_callable_params,
     get_hint_pep484585_callable_return,
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+from typing import Any
 
 # ....................{ SUBCLASSES                         }....................
 class CallableTypeHint(TypeHint):
@@ -34,6 +34,18 @@ class CallableTypeHint(TypeHint):
     **Callable type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`- or :pep:`585`-compliant ``Callable[...]`` type hint).
     '''
+
+    # ..................{ CLASS VARIABLES                    }..................
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently called
+    # @beartype decorations. Slotting has been shown to reduce read and write
+    # costs by approximately ~10%, which is non-trivial.
+    __slots__ = (
+        # Instance variables implicitly defined by each decoration of a property
+        # method by the @property_cached decorator below, whose names are
+        # dynamically precomputed by this getter. It doesn't have to make sense.
+        get_property_var_name('param_hints'),
+    )
 
     # ..................{ INITIALIZERS                       }..................
     def _make_args(self) -> tuple:
@@ -141,7 +153,7 @@ class CallableTypeHint(TypeHint):
 
     # ..................{ PRIVATE ~ properties               }..................
     @property
-    # @property_cached
+    @property_cached
     def _args_wrapped_tuple(self) -> TupleTypeHints:
 
         # Tuple of all child type hints subscripting this callable type hint.
@@ -166,7 +178,7 @@ class CallableTypeHint(TypeHint):
             # Return a 2-tuple consisting of...
             args_wrapped_tuple = (
                 # Empty parameter list.
-                TypeHint(Tuple[()]),  # pyright: ignore
+                TypeHint(tuple[()]),  # pyright: ignore
                 # Return type hint.
                 TypeHint(args[-1]),
             )
@@ -228,12 +240,14 @@ class CallableTypeHint(TypeHint):
         return self.is_params_ignorable and self.is_return_ignorable
 
 
+    #FIXME: Docstring us up, please. *sigh*
     @property
     def is_params_ignorable(self) -> bool:
         # Callable[..., ???]
         return self._args[0] is Ellipsis
 
 
+    #FIXME: Docstring us up, please. *sigh*
     @property
     def is_return_ignorable(self) -> bool:
         # Callable[???, Any]
@@ -263,7 +277,8 @@ class CallableTypeHint(TypeHint):
 
         #FIXME: [SPEED] *INEFFICIENT.* The any() builtin has been profiled to be
         #almost twice as slow as equivalent manual iteration! The zip() builtin
-        #is likely to fare no better. Iterate manually, please. *sigh*
+        #is likely to fare no better. Iterate manually, please. Actually, isn't
+        #zip() fairly fast. Annnyway. *sigh*
         #FIXME: Internally comment us up, please.
         elif not branch.is_params_ignorable and (
             (

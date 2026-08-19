@@ -51,11 +51,11 @@ from beartype._conf.confcommon import BEARTYPE_CONF_NONRANDOM
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_isinstanceable,
     is_object_isinstanceable,
 )
-from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrwarn import issue_deprecation
 from beartype._util.func.utilfuncframe import (
     get_frame_locals,
@@ -290,9 +290,8 @@ class BeartypeForwardRefMeta(type):
             # Raise the standard "AttributeError" exception expected by EAFP.
             #
             # Note that we intentionally avoid suffixing the exception message
-            # by a "." character here. Why? Because Python treats
-            # "AttributeError" exceptions as special. Notably, Python appears to
-            # actually:
+            # by a "." character here. Python treats "AttributeError" exceptions
+            # as special. Notably, Python appears to actually:
             # 1. Parse apart the messages of these exceptions for the
             #    double-quoted attribute name embedded in these messages.
             # 2. Suffix these messages by a "." character followed by a sentence

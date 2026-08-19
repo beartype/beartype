@@ -17,7 +17,7 @@ from beartype._data.typing.datatyping import (
     LexicalScope,
     # TypeException,
 )
-# from beartype._util.cache.utilcachecall import callable_cached
+# from beartype._util.cache.func.utilcachefunc import callable_cached
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up.

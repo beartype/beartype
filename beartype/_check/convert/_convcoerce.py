@@ -352,7 +352,7 @@ def coerce_hint_any(hint: Hint) -> Hint:
     who, what, or how is caching those type hints -- only that they are cached
     before being passed to utility functions in the :mod:`beartype` codebase.
     Why? Because most such utility functions are memoized for efficiency by the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator, which
+    :func:`beartype._util.cache.func.utilcachefunc.callable_cached` decorator, which
     maps passed parameters (typically including the standard ``hint`` parameter
     accepting a type hint) based on object identity to previously cached return
     values. You see the problem, we trust.
@@ -459,7 +459,7 @@ contending over that variable, this dictionary *must* be thread-safe.
 
 **This dictionary is intentionally designed as a naive dictionary rather than a
 robust LRU cache,** for the same reasons that callables accepting hints are
-memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
+memoized by the :func:`beartype._util.cache.func.utilcachefunc.callable_cached`
 rather than the :func:`functools.lru_cache` decorator. Why? Because:
 
 * The number of different type hints instantiated across even worst-case

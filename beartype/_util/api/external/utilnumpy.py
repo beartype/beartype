@@ -24,7 +24,7 @@ from beartype._data.typing.datatyping import (
     FrozenSetTypes,
     TypeException,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from string import digits
 

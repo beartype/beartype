@@ -125,7 +125,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignUnpack,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic_subbed,
     is_hint_pep484585_generic_unsubbed,

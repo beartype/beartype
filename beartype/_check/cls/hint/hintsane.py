@@ -17,15 +17,16 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._data.cls.dataclsslot import BeartypeSlottedMetaclass
+from beartype._data.kind.datakindiota import SENTINEL
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatypingport import (
     Hint,
     Pep484612646TypeArgUnpackedToHint,
 )
-from beartype._data.kind.datakindiota import SENTINEL
-from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
-from beartype._util.utilobjtest import is_object_hashable
 from beartype._util.utilobjmake import permute_object
+from beartype._util.utilobjtest import is_object_hashable
 from collections.abc import Iterable
 from typing import (
     TYPE_CHECKING,
@@ -104,7 +105,7 @@ def make_hint_sane(
 
 # ....................{ METACLASSES                        }....................
 #FIXME: Unit test us up, please.
-class _HintSaneMetaclass(type):
+class _HintSaneMetaclass(BeartypeSlottedMetaclass):
     '''
     Metaclass of all **sanified type hint metadata** (i.e., immutable and thus
     hashable object encapsulating *all* metadata returned by some

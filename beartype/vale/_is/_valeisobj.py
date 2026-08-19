@@ -18,7 +18,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeValeSubscriptionException
-from beartype.typing import Any, Tuple
 from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._util._valeutilsnip import (
     VALE_CODE_CHECK_ISATTR_TEST_format,
@@ -27,11 +26,12 @@ from beartype.vale._util._valeutilsnip import (
 )
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype._data.typing.datatyping import LexicalScope
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._data.kind.datakindiota import SENTINEL
+from typing import Any
 
 # ....................{ SUBCLASSES ~ attr                  }....................
 class _IsAttrFactory(_BeartypeValidatorFactoryABC):
@@ -136,7 +136,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
     # ..................{ DUNDERS                            }..................
     @callable_cached
     def __getitem__(  # type: ignore[override]
-        self, args: Tuple[str, BeartypeValidator]) -> BeartypeValidator:
+        self, args: tuple[str, BeartypeValidator]) -> BeartypeValidator:
         '''
         Create and return a new beartype validator validating object attributes
         with the passed name satisfying the passed validator, suitable for
@@ -146,7 +146,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
 
         Parameters
         ----------
-        args : Tuple[str, BeartypeValidator]
+        args : tuple[str, BeartypeValidator]
             2-tuple ``(attr_name, attr_validator)``, where:
 
             * ``attr_name`` is the arbitrary attribute name to validate that
