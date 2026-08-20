@@ -1377,7 +1377,7 @@ def _is_exception_sufficient(exception: Exception) -> bool:
        isinstance(), due to raising "BeartypeCallHintForwardRefException:
        Forward reference "OfPearl" unimportable from module
        "beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve"." from
-       metaclass BeartypeForwardRefMeta.__instancecheck__() method).
+       metaclass BeartypeForwardRefMetaclass.__instancecheck__() method).
 
     Parameters
     ----------

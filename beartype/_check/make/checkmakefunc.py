@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.convert.convmain import sanify_hint_root_statement
 from beartype._check.code.codemain import (
     CodeGenerated,
     make_check_expr,
@@ -30,27 +29,17 @@ from beartype._check.cls.call.calldatadecorfunc import (
     BeartypeCallDecorFuncData,
     prefix_decor_func_callable_pith,
 )
-from beartype._check.cls.call.calldataexternal import (
-    BEARTYPE_CALL_EXTERNAL_META)
-from beartype._check.cls.hint.hintsane import (
-    HINT_SANE_IGNORABLE,
-    HintSane,
-)
-from beartype._check.make.makecheckersig import make_func_signature
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
-from beartype._conf.conftest import die_unless_conf
 from beartype._data.check.code.datacodename import (
-    ARG_NAME_CALL_META,
     ARG_NAME_CONF,
     ARG_NAME_EXCEPTION_PREFIX,
     ARG_NAME_GETRANDBITS,
     ARG_NAME_GET_VIOLATION,
     ARG_NAME_RAISER_HINT,
     ARG_NAME_WARN,
-    FUNC_CHECKER_NAME_PREFIX,
 )
 from beartype._data.check.code.func.datacodefunccheck import (
-    CODE_CHECKER_SIGNATURE,
     CODE_GET_FUNC_PITH_VIOLATION,
     CODE_GET_HINT_OBJECT_VIOLATION,
     CODE_GET_VIOLATION_RANDOM_INT,
@@ -60,32 +49,21 @@ from beartype._data.check.code.func.datacodefunccheck import (
     CODE_TESTER_CHECK_PREFIX,
     CODE_WARN_VIOLATION,
 )
-from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
 )
-from beartype._data.typing.datatyping import (
-    CallableRaiserOrTester,
-    LexicalScope,
-)
+from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.func.utilcachefunc import callable_cached
-from beartype._util.error.utilerrraise import reraise_exception_placeholder
-from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
-from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.utilhintget import get_hint_repr
 from beartype._util.kind.maplike.utilmapfrozen import (
     FrozenDict,
     FrozenDictStrToAny,
 )
-from collections.abc import Callable
 from itertools import count
 from typing import Optional
-from warnings import (
-    catch_warnings,
-    warn,
-)
+from warnings import warn
 
 # ....................{ CONSTANTS                          }....................
 # Human-readable constants intended to be passed as the values of the
@@ -123,322 +101,6 @@ accepted by the type-checking raiser function created and returned by that
 factory to be an **arbitrary object** (e.g., passed to the
 :func:`beartype.door.die_if_unbearable` raiser function).
 '''
-
-# ....................{ HINTS                              }....................
-TupleHintConfStr = tuple[Hint, BeartypeConf, str]
-'''
-Type hint matching each three 3-tuple ``(hint, conf, exception_prefix)`` of all
-parameters accepted by the :func:`.make_func_checker` function factory.
-'''
-
-# ....................{ FACTORIES ~ func                   }....................
-#FIXME: Unit test us up, please.
-def make_func_checker(
-    hint: Hint,
-    conf: BeartypeConf,
-    exception_prefix: str,
-    make_code_check: Callable[..., CodeGenerated],
-    hint_data_to_func_checker: (
-        dict[TupleHintConfStr, CallableRaiserOrTester]),
-) -> CallableRaiserOrTester:
-    '''
-    **Type-checking function factory** (i.e., low-level callable dynamically
-    generating a pure-Python function detecting whether an arbitrary object
-    passed to that function satisfies the type hint passed to this factory and
-    either returning that result as its boolean return *or* raising a fatal
-    exception or emitting a non-fatal warning if that result is :data:`False`).
-
-    This factory underlies both the public
-    :func:`beartype.door.die_if_unbearable` and
-    :func:`beartype.door.is_bearable` statement-level type-checking functions.
-
-    This factory is thread-safe and effectively memoized by the
-    ``hint_data_to_func_checker`` dictionary passed to this
-    factory for the proper subset of type hints whose type-checking code is
-    safely memoizable. See also that dictionary's docstring for further details.
-
-    Caveats
-    -------
-    **This factory intentionally accepts no** ``exception_cls`` **parameter.**
-    Doing so would only ambiguously obscure context-sensitive exceptions raised
-    by lower-level utility functions called by this higher-level factory.
-
-    **This factory dynamically resolves all** :pep:`484`-compliant **forward
-    reference type hints visitable from this type hint** against the first
-    external lexical scope on the call stack originating from a third-party
-    module or package. For efficiency, this factory does so by internally
-    delegating forward hint resolution to the **beartype external call metadata
-    singleton** (i.e., :data:`.BEARTYPE_CALL_EXTERNAL_META` global).
-
-    Parameters
-    ----------
-    hint : Hint
-        Type hint to be type-checked.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
-    make_code_check : Callable[..., CodeGenerated]
-        **Type-checking code factory** (i.e., function dynamically generating a
-        code snippet of a function type-checking an arbitrary object against the
-        passed type hint under the passed beartype configuration).
-    hint_data_to_func_checker : dict[TupleHintConfStr, CallableRaiserOrTester]
-        **Type-checking function factory cache** (i.e., dictionary mapping from
-        each 3-tuple ``(hint, conf, exception_prefix)`` of these parameters to
-        the type-checking function dynamically generated by this factory).
-
-    Returns
-    -------
-    CallableRaiserOrTester
-        Function type-checking this hint against this configuration under this
-        beartype call metadata.
-
-    Raises
-    ------
-    All exceptions raised by the lower-level :func:`.make_check_expr` factory.
-    Additionally, this factory also raises:
-
-    BeartypeConfException
-        If this configuration is *not* a :class:`.BeartypeConf` instance.
-    BeartypeDecorHintForwardRefException
-        If this hint contains one or more relative forward references, which
-        this factory explicitly prohibits to improve both the efficiency and
-        portability of calls by users to the resulting type-checker.
-    _BeartypeUtilCallableException
-        If this function erroneously generates a syntactically invalid
-        type-checking function. That should *never* happen, but let's admit that
-        you're still reading this for a reason.
-
-    Warns
-    -----
-    All warnings emitted by the lower-level :func:`.make_check_expr` factory.
-    '''
-
-    # ....................{ CACHE                          }....................
-    # True only if the function dynamically generated by this factory is safely
-    # memoizable back into this cache, defaulting to true.
-    is_func_cacheable = True
-
-    # Object with which to cache the function dynamically generated by this
-    # factory. Since that function conditionally depends on these parameters,
-    # this is the 3-tuple aggregating these objects.
-    #
-    # Note that this object is hashable if and only if this hint is hashable.
-    # Since a proper subset of PEP-compliant hints are unhashable (e.g.,
-    # "Annotated[str, []]"), this cache key *COULD* be unhashable.
-    CACHE_KEY = (hint, conf, exception_prefix)
-
-    #FIXME: *LOLBRO*. This... is totally non-thread-safe. Definitely non-ideal.
-    #Cleaning this up will prove non-trivial, however, as the caching logic
-    #performed below is non-trivial. The only reasonably way to implement this
-    #is as follows:
-    #* Now here's the cray-cray so-dumb-it's-smart-part: *REFACTOR THIS ENTIRE
-    #  make_func_checker() factory function into a new
-    #  FuncCheckerFactoryCache._make_value() method. Crazy smart, huh? No. That
-    #  was friggin' obvious. Just took us forever to admit that object-oriented
-    #  design was a smart and efficient move here. *sigh*
-    #* Let's do so by *FINALLY* splitting this submodule up into its constituent
-    #  components as follows:
-    #  * Make a new "beartype._check.make" subpackage. In that submodule:
-    #    * Make a new "beartype._check.make.checkmakecls" submodule defining
-    #      this new "FuncCheckerFactoryCache" subclass.
-    #    * Split all remaining functions defined by this submodule into a new
-    #      "beartype._check.make._checkmakefunc" submodule.
-
-    # Attempt to...
-    try:
-        # Either:
-        # * If this hint is safely memoizable *AND* this function factory has
-        #   already been passed the same parameters, the function previously
-        #   generated by that call.
-        # * Else, "None".
-        func_checker = hint_data_to_func_checker.get(CACHE_KEY)
-
-        # If a prior call to this factory has already generated a function
-        # type-checking these parameters, return that function.
-        if func_checker is not None:
-            return func_checker
-        # Else, this is the first call to this factory passed these parameters.
-    # If the dictionary lookup above raised the standard "TypeError" exception,
-    # this hint is unhashable. In this case...
-    except TypeError:
-        # Record that the function dynamically generated by this factory
-        # *CANNOT* be safely memoized back into this cache.
-        is_func_cacheable = False
-
-    # Validate parameter sanity.
-    #
-    # Note that we avoid doing so above as a negligible micro-optimization.
-    assert callable(make_code_check), f'{repr(make_code_check)} uncallable.'
-
-    # ....................{ FACTORY                        }....................
-    # Attempt to...
-    #
-    # Note that the passed "exception_prefix" is intentionally *NOT* passed to
-    # functions in the body of this "try" block. Why? Memoization efficiency.
-    # Instead, the placeholder "EXCEPTION_PLACEHOLDER" is intentionally passed.
-    # The "except" block then catches and replaces that with "exception_prefix".
-    try:
-        # With a context manager "catching" *ALL* non-fatal warnings emitted
-        # during this logic for subsequent "playback" below...
-        with catch_warnings(record=True) as warnings_issued:
-            # ....................{ VALIDATE               }....................
-            # If "conf" is *NOT* a configuration, raise an exception.
-            die_unless_conf(conf)
-            # Else, "conf" is a configuration.
-
-            # Beartype external call metadata singleton, enabling logic below to
-            # dynamically resolve *ALL* PEP 484-compliant forward reference type
-            # hints visitable from this hint against the first external lexical
-            # scope on the call stack originating from a third-party package.
-            call_curr = BEARTYPE_CALL_EXTERNAL_META
-
-            # Metadata encapsulating the sanification of this possibly insane
-            # hint if this hint is supported by @beartype *OR* raise an
-            # exception otherwise (i.e., if this hint is unsupported).
-            #
-            # Do this first *BEFORE* passing this hint to any further callables.
-            hint_sane = sanify_hint_root_statement(
-                call_curr=call_curr,
-                conf=conf,
-                hint=hint,
-                exception_prefix=EXCEPTION_PLACEHOLDER,
-            )
-            # print(f'Reduced tester root hint {repr(hint)} to hint or metadata {repr(hint_sane)}.')
-
-            # If this hint is ignorable, all objects satisfy this hint. In this
-            # case, return a trivial function unconditionally returning true.
-            if hint_sane is HINT_SANE_IGNORABLE:
-                # print(f'[_make_func_checker] Ignoring ignorable hint {hint} with conf {conf}!')
-                return _func_checker_ignorable
-            # Else, this hint is unignorable.
-
-            # ....................{ CODE                   }....................
-            # Python code snippet comprising a single boolean expression
-            # type-checking an arbitrary object against this hint.
-            #
-            # Note that this call (and *ONLY* this call) is intentionally passed
-            # the "exception_prefix" parameter rather than the
-            # "EXCEPTION_PLACEHOLDER" placeholder. Why? Because this call
-            # dynamically generates code raising type-checking violations
-            # prefixed by this prefix at a later time rather than *NOW*. Passing
-            # "EXCEPTION_PLACEHOLDER" would, in particular, erroneously cause
-            # the public beartype.door.die_if_unbearable() type-checker to raise
-            # unreadable type-checking violations prefixed by
-            # "EXCEPTION_PLACEHOLDER" (which is an unreadable placeholder).
-            code_check, func_scope_frozen = make_code_check(
-                call_curr,
-                hint,
-                hint_sane,
-                conf,
-                exception_prefix,
-            )
-            # print(f'func_scope: {func_scope}')
-
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # CAUTION: Synchronize with similar logic in
-            # make_code_raiser_func_pith_check() below.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # If this hint is annotated by one or more forward references *NOT*
-            # resolvable at decoration time, these references have all been
-            # proxied by beartype-specific forward reference proxies. In this
-            # case...
-            if func_scope_frozen.beartype_ref_proxies:
-                # Overwrite the default value of the
-                # "__exception_prefix_beartype__" class variables bound to these
-                # proxies with a specific exception prefix contextually defined
-                # by the caller, dramatically improving the readability of
-                # exceptions raised at type-checking wrapper call time if one of
-                # these proxies fails to resolve the reference it proxies.
-                set_beartype_ref_proxies_exception_prefix(
-                    ref_proxies=func_scope_frozen.beartype_ref_proxies,
-                    exception_prefix=exception_prefix,
-                )
-            # Else, this hint is annotated by *NO* such references.
-
-            # ....................{ SCOPE                  }....................
-            # Mutable dictionary coerced from this immutable frozen dictionary
-            # if this dictionary is *NOT* already mutable.
-            func_scope = dict(func_scope_frozen)
-
-            # Expose this beartype external call metadata singleton to this
-            # wrapper function as a beartype-specific hidden parameter passed to
-            # this wrapper function, whose default value is that metadata. Doing
-            # so simplifies calls to the get_hint_object_violation() getter in
-            # the body of this wrapper function by enabling this metadata to be
-            # passed as a single unified parameter (rather than individually as
-            # multiple distinct parameters).
-            func_scope[ARG_NAME_CALL_META] = call_curr
-
-            # ....................{ FUNCTION               }....................
-            # Unqualified basename of this type-checking function to be created,
-            # uniquified by suffixing an arbitrary integer unique to this
-            # function.
-            func_checker_name = (
-                f'{FUNC_CHECKER_NAME_PREFIX}{next(_func_checker_name_counter)}')
-
-            # Python code snippet declaring the signature of the type-checking
-            # function function to be defined and returned by this factory.
-            code_signature = make_func_signature(
-                func_name=func_checker_name,
-                func_scope=func_scope,
-                code_signature_format=CODE_CHECKER_SIGNATURE,
-                conf=conf,
-            )
-
-            # Python code snippet defining this type-checking function in full.
-            func_checker_code = f'{code_signature}{code_check}'
-
-            # Type-checking function to be returned.
-            # print(f'Making checker {repr(func_checker_name)} with conf {conf}...')
-            func_checker = make_func(
-                func_name=func_checker_name,
-                func_code=func_checker_code,
-                func_locals=func_scope,
-                func_label=EXCEPTION_PLACEHOLDER,
-                is_debug=conf.is_debug,
-            )
-
-            # If...
-            if (
-                # That function is *SUPERFICIALLY* memoizable *AND*...
-                is_func_cacheable and
-                # The lower-level make_check_expr() code factory internally
-                # called by the above call to the passed higher-level
-                # make_func() code factory memoized the type-checking expression
-                # it dynamically generated against this hint and configuration,
-                # then that function is *ACTUALLY* memoizable.
-                func_scope_frozen.is_check_expr_cacheable
-                # Else, make_check_expr() refused to memoize this expression.
-                # Ergo, either this root hint itself *OR* one or more child
-                # hints transitively subscripting this root hint are
-                # unmemoizable (e.g., due to conditionally depending on
-                # caller-specific context). In either case, that function
-                # embedding this unmemoizable expression is also unmemoizable.
-            # Then memoize that function.
-            ):
-                hint_data_to_func_checker[CACHE_KEY] = func_checker
-            # Else, that function is *NOT* safely memoizable.
-
-        # If one or more warnings were issued, reissue these warnings with each
-        # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
-        # replaced by a human-readable description of this callable and
-        # annotated return.
-        if warnings_issued:
-            reissue_warnings_placeholder(
-                warnings=warnings_issued, target_str=exception_prefix)
-        # Else, *NO* warnings were issued.
-    # ....................{ RETURN                         }....................
-    # If doing so raises *ANY* exception, reraise this exception with each
-    # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by
-    # an explanatory prefix.
-    except Exception as exception:
-        reraise_exception_placeholder(
-            exception=exception, target_str=exception_prefix)
-
-    # Return that function.
-    return func_checker
 
 # ....................{ FACTORIES ~ code                   }....................
 #FIXME: Unit test us up, please.
@@ -622,9 +284,13 @@ def make_code_tester_check(
     return (func_code, func_scope_frozen)
 
 # ....................{ FACTORIES ~ code : raiser          }....................
+#FIXME: Pretty sure *ALL* factories (including this factory) should return a
+#full-blown "CodeGenerated" 2-tuple rather than the hacky
+#"tuple[str, FrozenDictStrToAny]" we're currently returning. Oh, well. The
+#current approach works, technically. It's just non-orthogonal and weird. *sigh*
 @callable_cached
 def make_code_raiser_func_pep484_noreturn_check(
-    conf: BeartypeConf) -> tuple[str, FrozenDict]:
+    conf: BeartypeConf) -> tuple[str, FrozenDictStrToAny]:
     '''
     Pure-Python code snippet of a type-checking raiser function type-checking a
     return of a decorated callable against the :obj:`typing.NoReturn` type hint
@@ -642,7 +308,7 @@ def make_code_raiser_func_pep484_noreturn_check(
 
     Returns
     -------
-    tuple[str, FrozenDict]
+    tuple[str, FrozenDictStrToAny]
         Tuple containing the Python code snippet dynamically generated by this
         code factory and metadata describing that code. See also the
         :attr:`beartype._data.typing.datatyping.CodeGenerated` type hint.
@@ -671,9 +337,6 @@ def make_code_raiser_func_pep484_noreturn_check(
     # Code snippet type-checking the root pith against the root hint.
     func_code = f'{code_get_violation}{code_handle_violation}'
 
-    #FIXME: Pretty sure this should be safely cacheable across calls to this
-    #factory function. Not *ENTIRELY* sure, though. Grep through the
-    #_make_code_raiser_violation() factory and see what happens to "func_scope".
     # Coerce this currently mutable non-frozen dictionary into an immutable
     # frozen dictionary, preventing callers from erroneously modifying this
     # frozen dictionary when memoized below and subsequently returned to

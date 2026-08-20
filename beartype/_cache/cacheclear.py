@@ -65,6 +65,10 @@ def clear_caches() -> None:
     This function is typically cleared on detecting a **hot reload** (i.e.,
     attempt by the end user to reimport a presumably redefined user-defined
     module, type, or other object commonly cached by :mod:`beartype`).
+
+    This function is implicitly thread-safe under the (probably not) safe
+    assumption that *all* internal caches cleared by this function are
+    themselves explicitly thread-safe.
     '''
     # print('Clearing all \"beartype._check\" caches...')
 
@@ -73,8 +77,8 @@ def clear_caches() -> None:
     # comparatively rarer occurrence. We optimize for the common case.
     from beartype.door._cls.doormeta import _hint_to_wrapper
     from beartype.door._func.doorfunc import (
-        _hint_data_to_func_raiser,
-        _hint_data_to_func_tester,
+        _func_raiser_factory,
+        _func_tester_factory,
     )
     from beartype._check.code.codemain import _HINT_CONF_TO_CHECK_EXPR
     from beartype._check.code.codescope import _tuple_union_to_tuple_union
@@ -91,6 +95,8 @@ def clear_caches() -> None:
     #FIXME: Refactor into a global once feature complete. See above, yo!
     # Frozen set of all thread-safe global caches to be cleared below.
     _CACHE_GLOBALS = (
+        _func_raiser_factory,
+        _func_tester_factory,
         _hint_to_wrapper,
         _hint_repr_to_hint,
     )
@@ -109,8 +115,6 @@ def clear_caches() -> None:
     #  exposed to end users via @beartype's forward reference resolvers.
 
     # Clear all relevant caches used throughout this subpackage.
-    _hint_data_to_func_raiser.clear()
-    _hint_data_to_func_tester.clear()
     _HINT_TO_HINTSANE.clear()
     _HINT_CONF_TO_CHECK_EXPR.clear()
     _tuple_union_to_tuple_union.clear()

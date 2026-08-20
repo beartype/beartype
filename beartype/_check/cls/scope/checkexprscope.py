@@ -35,7 +35,7 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
 
     Attributes
     ----------
-    beartype_ref_proxies : tuple[BeartypeForwardRefMeta, ...]
+    beartype_ref_proxies : tuple[BeartypeForwardRefMetaclass, ...]
         Tuple of all :mod:`beartype`-specific **forward reference proxies**
         (i.e., classes whose metaclass defers the resolution of forward
         reference type hints referencing type hints that have yet to be defined
@@ -86,7 +86,7 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
 
         Parameters
         ----------
-        beartype_ref_proxies : tuple[BeartypeForwardRefMeta, ...], default: None
+        beartype_ref_proxies : tuple[BeartypeForwardRefMetaclass, ...], default: None
             Tuple of all :mod:`beartype`-specific **forward reference proxies**
             (i.e., classes whose metaclass defers the resolution of forward
             reference type hints referencing type hints that have yet to be

@@ -22,7 +22,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.cls.call.calldatadecorfunc import BeartypeCallDecorFuncData
-from beartype._check.make.makecheckersig import make_func_signature
+from beartype._check.make.checkmakesig import make_func_signature
 from beartype._data.check.code.func.datacodefuncwrap import CODE_WRAPPER_SIGNATURE
 from beartype._data.check.code.datacodename import (
     ARG_NAME_CALL_META,

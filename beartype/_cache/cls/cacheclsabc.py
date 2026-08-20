@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **thread-safe cache abstract base classes (ABCs)** (i.e., superclasses
-of all concrete subclasses implementing mappings intended to be instantiated as
-global thread-safe key-value caches) utilities.
+Project-wide **thread-safe cache abstract base classes (ABCs)** (i.e.,
+superclasses of all concrete subclasses implementing mappings intended to be
+instantiated as global thread-safe key-value caches).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -31,9 +31,7 @@ class CacheABC(metaclass=BeartypeSlottedABCMeta):
     concrete subclasses implementing mappings intended to be instantiated as
     global thread-safe key-value caches).
 
-    Design
-    ------
-    This class intentionally does *not* adhere to standard mapping semantics by
+    This ABC intentionally does *not* adhere to standard mapping semantics by
     subclassing a standard mapping API (e.g., :class:`dict`,
     :class:`collections.abc.MutableMapping`). Standard mapping semantics are
     sufficiently low-level as to invite race conditions between competing
@@ -47,17 +45,17 @@ class CacheABC(metaclass=BeartypeSlottedABCMeta):
                                # <-- after entering this branch, bad stuff!
            cache[key] = value  # <-- We may overwrite another thread's work.
 
+    This ABC and *all* subclasses thereof unconditionally perform thread-safe
+    locking, even non-free-threaded CPython builds. Although those builds *do*
+    prohibit conventional multithreading via its Global Interpreter Lock (GIL),
+    those builds still coercively preempt long-running threads at arbitrary
+    execution points. Multithreading concerns are thus *never* safely ignorable.
+
     Attributes
     ----------
     _lock : AbstractContextManager
         **Instance-specific thread lock** (i.e., low-level thread locking
-        mechanism implemented as a highly efficient C extension, defined as an
-        instance variable for non-reentrant reuse by the public API of this
-        type). Although CPython, the canonical Python interpreter, *does*
-        prohibit conventional multithreading via its Global Interpreter Lock
-        (GIL), CPython still coercively preempts long-running threads at
-        arbitrary execution points. Ergo, multithreading concerns are *not*
-        safely ignorable -- even under CPython.
+        mechanism implemented as a highly efficient C extension).
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -74,7 +72,7 @@ class CacheABC(metaclass=BeartypeSlottedABCMeta):
     if TYPE_CHECKING:
         _lock: AbstractContextManager
 
-    # ..................{ INITIALIZER                        }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
 
@@ -97,7 +95,19 @@ class CacheABC(metaclass=BeartypeSlottedABCMeta):
         )
 
         # Initialize all instance variables.
-        self._lock: AbstractContextManager = lock_type()  # type: ignore[assignment]
+        self._lock = lock_type()  # type: ignore[assignment]
+
+    # ..................{ PROPERTIES                         }..................
+    # This property is read-only and thus intentionally lacks a setter. \o/
+    @property
+    def lock(self) -> AbstractContextManager:
+        '''
+        Read-only **instance-specific thread lock** (i.e., low-level thread
+        locking mechanism implemented as a highly efficient C extension).
+        '''
+
+        # Raven beast: one-liner summons a searing struggle!
+        return self._lock
 
     # ..................{ CLEARERS                           }..................
     @abstractmethod

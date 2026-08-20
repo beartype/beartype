@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.checkmake import (
+from beartype._check.make.checkmakefunc import (
     make_code_raiser_func_pith_check,
     make_code_raiser_func_pep484_noreturn_check,
 )

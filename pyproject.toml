@@ -195,9 +195,21 @@ dependencies = []
 # extras in comma-delimited fashion: e.g.,
 #     $ pip install beartype[doc-rtd,test-tox]
 #
-# Note that PEP 621 explicitly supports dependency composition through
-# self-referential "extras". See also this awesome StackOverflow answer:
-#     https://stackoverflow.com/a/72524073/2809027
+# Note that:
+# * PEP 508 standardized dependency conditionals via so-called "environment
+#   markers" or "dependency specifiers."
+# * PEP 621 standardized dependency composition through self-referential
+#   "extras". See also this awesome StackOverflow answer:
+#       https://stackoverflow.com/a/72524073/2809027
+# * PEP 780 extends PEP 508 with additional support for exposing low-level ABI
+#   features intrinsic to the active Python interpreter as environment markers.
+#   If accepted, this PEP would enable dependencies listed below to
+#   conditionally apply *ONLY* to non-free-threaded builds. Sadly, this PEP has
+#   yet to be accepted (and might never be). Until accepted, we effectively have
+#   *NO* means of safely installing dependencies that remain hostile to
+#   free-threaded builds and thus *NO* means of safely testing free-threaded
+#   builds at all. Free-threading: still a mess after all these years. See also:
+#       https://peps.python.org/pep-0780
 [project.optional-dependencies]
 
 #FIXME: Most of these "extras" should be transformed into PEP 735-compliant

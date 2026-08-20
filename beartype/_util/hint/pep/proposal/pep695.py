@@ -109,7 +109,7 @@ from beartype._cave._cavefast import (
     Pep695ParameterizableTypes,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.forward.reference._cls.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.forward.reference._cls.fwdrefmeta import BeartypeForwardRefMetaclass
 from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
 from beartype._data.typing.datatyping import (
@@ -649,7 +649,7 @@ def iter_hint_pep695_unsubbed_forwardrefs(
 
     # Optional parameters.
     exception_prefix: str = '',
-) -> Iterable[BeartypeForwardRefMeta]:
+) -> Iterable[BeartypeForwardRefMetaclass]:
     '''
     Iteratively create and yield one **forward reference proxy** (i.e.,
     :class:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC`
@@ -679,7 +679,7 @@ def iter_hint_pep695_unsubbed_forwardrefs(
 
     Yields
     ------
-    BeartypeForwardRefMeta
+    BeartypeForwardRefMetaclass
         Forward reference proxy encapsulating the next unquoted relative forward
         reference in this unsubscripted type alias.
 

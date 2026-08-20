@@ -8,7 +8,7 @@ Project-wide **type-checking function code snippets** (i.e., triple-quoted
 pure-Python string constants formatted and concatenated together to dynamically
 generate the implementations of functions type-checking arbitrary objects
 against arbitrary PEP-compliant type hints by the private
-:mod:`beartype._check.checkmake` submodule).
+:mod:`beartype._check.make.checkmakefunc` submodule).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -33,7 +33,7 @@ CODE_CHECKER_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(
 ):'''
 '''
 Code snippet declaring the signature of all type-checking functions created by
-the :func:`beartype._check.checkmake.make_func_checker` factory.
+the :func:`beartype._check.make.checkmakefunc.make_func_checker` factory.
 
 Note that:
 
@@ -42,7 +42,7 @@ Note that:
   * Avoids annotating its parameters or return by type hints. Doing so would be:
 
     * Pointless, as the type-checking functions dynamically created and returned
-      by factory functions defined by the "beartype._check.checkmake" submodule
+      by factory functions defined by the "beartype._check.make.checkmakefunc" submodule
       are only privately called by the public :func:`beartype.door.is_bearable`
       and :func:`beartype.door.die_if_unbearable` runtime type-checkers.
     * Harmful, as doing so would prevent this common signature from being

@@ -416,9 +416,9 @@ def coerce_hint_any(hint: Hint) -> Hint:
         # print(f'Self-caching type hint {repr(hint)}...')
 
         #FIXME: [SPEED] Globalize the
-        #_hint_repr_to_hint.get_value_cached_or_cache() bound method and call
+        #_hint_repr_to_hint.cache_value() bound method and call
         #that globalized bound method here instead as a negligible speedup.
-        hint = _hint_repr_to_hint.get_value_cached_or_cache(  # type: ignore[return-value]
+        hint = _hint_repr_to_hint.cache_value(  # type: ignore[return-value]
             key=get_hint_repr(hint), value=hint)
     # Else, this hint is (hopefully) self-caching.
 

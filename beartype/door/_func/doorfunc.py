@@ -40,15 +40,13 @@ process).
 # whereas the API defined by this submodule is expected to unconditionally
 # operate as expected regardless of the current context.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype._check.checkmake import (
-    TupleHintConfStr,
+from beartype._check.make.checkmakefunc import (
     make_code_raiser_hint_object_check,
     make_code_tester_check,
-    make_func_checker,
 )
+from beartype._check.make.checkmakecls import BeartypeFuncCheckerFactoryCache
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._data.typing.datatyping import CallableRaiserOrTester
 from beartype._data.typing.datatypingport import (
     Hint,
     HintBare,
@@ -117,12 +115,11 @@ def die_if_unbearable(
     # the type hint passed to this high-level type-checking raiser function.
     #
     # Note that parameters are intentionally passed positionally for efficiency.
-    func_raiser = make_func_checker(
-        hint,
-        conf,
-        exception_prefix,
-        make_code_raiser_hint_object_check,
-        _hint_data_to_func_raiser,
+    func_raiser = _func_raiser_factory.cache_func_checker(
+         hint,
+         conf,
+         exception_prefix,
+         make_code_raiser_hint_object_check,
     )
 
     # Either raise an exception or emit a warning only if the passed object
@@ -230,12 +227,11 @@ def is_bearable(
     # high-level type-checking tester function.
     #
     # Note that parameters are intentionally passed positionally for efficiency.
-    func_tester = make_func_checker(
-        hint,  # pyright: ignore
-        conf,
-        exception_prefix,
-        make_code_tester_check,
-        _hint_data_to_func_tester,
+    func_tester = _func_tester_factory.cache_func_checker(
+         hint,
+         conf,
+         exception_prefix,
+         make_code_tester_check,
     )
 
     # Return true only if the passed object satisfies this hint.
@@ -311,7 +307,7 @@ def is_subhint(subhint: Hint, superhint: Hint) -> bool:
     return TypeHint(subhint).is_subhint(TypeHint(superhint))
 
 # ....................{ PRIVATE ~ globals                  }....................
-_hint_data_to_func_raiser: dict[TupleHintConfStr, CallableRaiserOrTester] = {}
+_func_raiser_factory = BeartypeFuncCheckerFactoryCache()
 '''
 **Type-checking raiser function factory cache** (i.e., dictionary mapping from
 each 3-tuple ``(hint, conf, exception_prefix)`` of the same triple of parameters
@@ -340,7 +336,7 @@ cache would only uselessly inhibit efficiency for no tangible benefit.
 '''
 
 
-_hint_data_to_func_tester: dict[TupleHintConfStr, CallableRaiserOrTester] = {}
+_func_tester_factory = BeartypeFuncCheckerFactoryCache()
 '''
 **Type-checking tester function factory cache** (i.e., dictionary mapping from
 each 3-tuple ``(hint, conf, exception_prefix)`` of the same triple of parameters

@@ -51,27 +51,27 @@ def test_cachemegastrongcaller() -> None:
     # Assert that this cache is currently empty.
     assert len(cache_mega) == 0
 
-    # ....................{ get_value_cached_or_cache      }....................
+    # ....................{ cache_value      }....................
     # Assert that statically getting an uncached key returns the passed value
     # (i.e., caches that key with that value).
-    assert cache_mega.get_value_cached_or_cache(
+    assert cache_mega.cache_value(
         key=KEY_A, value=VALUE_A) is VALUE_A
 
     # Assert that statically getting a cached key returns the previously
     # (rather than currently) passed value.
-    assert cache_mega.get_value_cached_or_cache(
+    assert cache_mega.cache_value(
         key=KEY_A, value=VALUE_B) is VALUE_A
 
     # ....................{ cache_or_get_cached_func_return}....................
     # Assert that dynamically getting a cached key returns the previously
     # passed value rather than a value returned by the passed value factory.
-    assert cache_mega.get_func_arg_return_cached_or_cache(
+    assert cache_mega.cache_func_return_passed_arg(
         key=KEY_A, value_factory=value_factory, arg=KEY_A) is VALUE_A
 
     # Assert that dynamically getting an uncached key returns the value
     # returned by the passed value factory (i.e., caches that key with that
     # value).
-    assert cache_mega.get_func_arg_return_cached_or_cache(
+    assert cache_mega.cache_func_return_passed_arg(
         key=KEY_B, value_factory=value_factory, arg=KEY_B) == hash(KEY_B)
 
     # ....................{ clear_cache                    }....................
@@ -102,7 +102,7 @@ def test_cachemegastrongsubclassabc() -> None:
             self,
 
             # Subclass-specific variadic parameters passed from the parent
-            # get_value_cached_or_cache() method.
+            # cache_value() method.
             over_the: str,
             airy_shore: bytes,
         ) -> object:
@@ -135,26 +135,26 @@ def test_cachemegastrongsubclassabc() -> None:
     # Assert that this cache is currently empty.
     assert len(cache_mega) == 0
 
-    # ....................{ get_value_cached_or_cache      }....................
+    # ....................{ cache_value      }....................
     # Assert that getting an uncached key returns a new value created from the
     # passed parameters.
-    assert cache_mega.get_value_cached_or_cache(
+    assert cache_mega.cache_value(
         key=KEY_A, over_the=OVER_THE_A, airy_shore=AIRY_SHORE_A) == VALUE_A
 
     # Assert that getting a cached key returns the value previously associated
     # with that key rather than a new value created from the passed parameters.
-    assert cache_mega.get_value_cached_or_cache(
+    assert cache_mega.cache_value(
         key=KEY_A, over_the=OVER_THE_B, airy_shore=AIRY_SHORE_B) == VALUE_A
 
     # Assert that getting another uncached key returns yet another new value
     # created from the passed parameters.
-    assert cache_mega.get_value_cached_or_cache(
+    assert cache_mega.cache_value(
         key=KEY_B, over_the=OVER_THE_B, airy_shore=AIRY_SHORE_B) == VALUE_B
 
     # Assert that getting another cached key returns the value previously
     # associated with that key rather than yet another new value created from
     # the passed parameters.
-    assert cache_mega.get_value_cached_or_cache(
+    assert cache_mega.cache_value(
         key=KEY_B, over_the=OVER_THE_A, airy_shore=AIRY_SHORE_A) == VALUE_B
 
     # ....................{ clear_cache                    }....................

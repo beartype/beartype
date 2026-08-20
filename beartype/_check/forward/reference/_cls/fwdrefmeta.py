@@ -47,6 +47,8 @@ from beartype.roar import (
     BeartypeCallHintForwardRefException,
     BeartypeCallHintPep484ForwardRefStrException,
 )
+from beartype._check.forward.reference._cls.fwdrefcache import (
+    BeartypeForwardRefABC)
 from beartype._conf.confcommon import BEARTYPE_CONF_NONRANDOM
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import TypeException
@@ -81,16 +83,8 @@ from beartype._util.text.utiltextidentifier import is_dunder
 from beartype._util.utilobjget import get_object_name
 from typing import Optional
 
-# ....................{ PRIVATE ~ hints                    }....................
-_BeartypeForwardRefABC = type[
-    'beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC']   # type: ignore[name-defined]
-'''
-:pep:`585`-compliant type hint matching all instances of this forward reference
-metaclass.
-'''
-
 # ....................{ METACLASSES                        }....................
-class BeartypeForwardRefMeta(type):
+class BeartypeForwardRefMetaclass(type):
     '''
     **Forward reference metaclass** (i.e., metaclass of the
     :class:`.BeartypeForwardRefABC` superclass deferring the resolution of a
@@ -117,11 +111,11 @@ class BeartypeForwardRefMeta(type):
     #FIXME: This is great, but still insufficient. Additionally:
     #* If the caller resides in a "beartype."-prefixed submodule, do what we
     #  currently do.
-    #* Else, immediately resolve the referent by accessing "__resolved_type_beartype__"
-    #  and then (as above) proxy the __getattr__() of this referent by calling
-    #  getattr() against this referent.
+    #* Else, immediately resolve the referent by accessing
+    #  "__resolved_type_beartype__" and then (as above) proxy the __getattr__()
+    #  of this referent by calling getattr() against this referent.
     def __getattr__(  # type: ignore[misc]
-        cls: _BeartypeForwardRefABC, hint_name: str) -> _BeartypeForwardRefABC:
+        cls: BeartypeForwardRefABC, hint_name: str) -> BeartypeForwardRefABC:
         '''
         **Fully-qualified forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
@@ -268,7 +262,7 @@ class BeartypeForwardRefMeta(type):
 
         Returns
         -------
-        _BeartypeForwardRefABC
+        BeartypeForwardRefABC
             Fully-qualified forward reference subclass concatenated as above.
         '''
 
@@ -330,7 +324,7 @@ class BeartypeForwardRefMeta(type):
 
 
     @callable_cached
-    def __repr__(cls: _BeartypeForwardRefABC) -> str:  # type: ignore[misc]
+    def __repr__(cls: BeartypeForwardRefABC) -> str:  # type: ignore[misc]
         '''
         Machine-readable string representing this forward reference subclass.
 
@@ -409,7 +403,7 @@ class BeartypeForwardRefMeta(type):
         return cls_repr
 
     # ....................{ DUNDERS ~ pep : 3119 : instance}....................
-    def __instancecheck__(cls: _BeartypeForwardRefABC, obj: object) -> bool:  # type: ignore[misc]
+    def __instancecheck__(cls: BeartypeForwardRefABC, obj: object) -> bool:  # type: ignore[misc]
         '''
         :data:`True` only if the passed object satisfies the target referent
         type hint referred to by this **forward reference proxy** (i.e.,
@@ -505,7 +499,7 @@ class BeartypeForwardRefMeta(type):
 
             #FIXME: *DEFINITELY INSUFFICIENT.* It's essential that we respect
             #the user configuration by instead:
-            #* Defining a new "_BeartypeForwardRefABC.__conf_beartype__" class
+            #* Defining a new "BeartypeForwardRefABC.__conf_beartype__" class
             #  variable.
             #* Adding a new *MANDATORY* "conf" parameter to *ALL* proxy_*()
             #  functions defined by the "fwdrefproxy" submodule.
@@ -559,7 +553,7 @@ class BeartypeForwardRefMeta(type):
         )
 
 
-    def __instancecheck_str__(cls: _BeartypeForwardRefABC, obj: object) -> str:
+    def __instancecheck_str__(cls: BeartypeForwardRefABC, obj: object) -> str:
         '''
         Human-readable substring to be embedded in the message of a
         :exc:`beartype.roar.BeartypeCallHintViolation` describing why the object
@@ -668,7 +662,7 @@ class BeartypeForwardRefMeta(type):
         return violation_message
 
     # ....................{ DUNDERS ~ pep : 3119 : subclass}....................
-    def __subclasscheck__(cls: _BeartypeForwardRefABC, obj: object) -> bool:  # type: ignore[misc]
+    def __subclasscheck__(cls: BeartypeForwardRefABC, obj: object) -> bool:  # type: ignore[misc]
         '''
         :data:`True` only if the passed object is a subclass of the target
         referent type referred to by this **forward reference proxy** (i.e.,
@@ -712,7 +706,7 @@ class BeartypeForwardRefMeta(type):
     #* When the target referent is itself a stringified forward reference.
     #* When the target referent is itself another forward reference proxy.
     @property
-    def __resolved_hint_beartype__(cls: _BeartypeForwardRefABC) -> Hint:  # type: ignore[misc]
+    def __resolved_hint_beartype__(cls: BeartypeForwardRefABC) -> Hint:  # type: ignore[misc]
         '''
         **Referent** (i.e., arbitrary type hint referred to by the forward
         reference encapsulated by this forward reference proxy after dynamically
@@ -830,7 +824,7 @@ class BeartypeForwardRefMeta(type):
         # * die_unless_hint(), which calls...
         # * die_unless_object_isinstanceable(), which calls...
         # * "isinstance(None, cls)", which calls...
-        # * BeartypeForwardRefMeta.__subclasscheck__(), which calls...
+        # * BeartypeForwardRefMetaclass.__subclasscheck__(), which calls...
         # * "issubclass(obj, cls.__resolved_type_beartype__)", which calls...
         # * This __resolved_hint_beartype__() property getter, which calls...
         # * die_unless_hint() yet again. Repeat as needed for pain.
@@ -872,7 +866,7 @@ class BeartypeForwardRefMeta(type):
 
 
     @property
-    def __resolved_type_beartype__(cls: _BeartypeForwardRefABC) -> type:  # type: ignore[misc]
+    def __resolved_type_beartype__(cls: BeartypeForwardRefABC) -> type:  # type: ignore[misc]
         '''
         **Referent type** (i.e., arbitrary type referred to by the forward
         reference encapsulated by this forward reference proxy after dynamically
@@ -983,7 +977,7 @@ class BeartypeForwardRefMeta(type):
     #FIXME: Remove this officially deprecated property after a sufficient number
     #@beartype releases following @beartype 0.23.0, please. *sigh*
     @property
-    def __type_beartype__(cls: _BeartypeForwardRefABC) -> type:  # type: ignore[misc]
+    def __type_beartype__(cls: BeartypeForwardRefABC) -> type:  # type: ignore[misc]
 
         # Fully-qualified name of this forward reference proxy metaclass.
         metaclass_name = get_object_name(type(cls))
@@ -1000,7 +994,7 @@ class BeartypeForwardRefMeta(type):
         return cls.__resolved_type_beartype__
 
 # ....................{ PRIVATE ~ globals : hint           }....................
-_ref_proxy_to_resolved_hint: dict[_BeartypeForwardRefABC, Hint] = {}
+_ref_proxy_to_resolved_hint: dict[BeartypeForwardRefABC, Hint] = {}
 '''
 **Forward reference type hint referent cache** (i.e., dictionary mapping from
 each forward reference proxy to the target referent type hint referred to by
@@ -1012,7 +1006,7 @@ This cache serves a dual purpose. Notably, this cache both enables:
   proxies. This is particularly useful when responding to module reloading,
   which requires that *all* previously cached types be uncached.
 * The
-  :attr:`.BeartypeForwardRefMeta.__resolved_hint_beartype__` property to
+  :attr:`.BeartypeForwardRefMetaclass.__resolved_hint_beartype__` property to
   internally memoize this referent. Since the existing ``property_cached``
   decorator could also trivially do so, this is a negligible side effect.
 '''
@@ -1025,7 +1019,7 @@ dictionary, globalized as a negligible microoptimization.
 '''
 
 # ....................{ PRIVATE ~ globals : type           }....................
-_ref_proxy_to_resolved_type: dict[_BeartypeForwardRefABC, type] = {}
+_ref_proxy_to_resolved_type: dict[BeartypeForwardRefABC, type] = {}
 '''
 **Forward reference type referent cache** (i.e., dictionary mapping from each
 forward reference proxy to the target referent type referred to by that proxy).
@@ -1045,15 +1039,15 @@ dictionary, globalized as a negligible microoptimization.
 
 # ....................{ PRIVATE ~ testers                  }....................
 #FIXME: Unit test us up, please.
-def _is_ref_proxy_resolved(cls: _BeartypeForwardRefABC) -> bool:
+def _is_ref_proxy_resolved(cls: BeartypeForwardRefABC) -> bool:
     '''
     :data:`True` only if the passed **forward reference proxy** (i.e.,
-    :class:`._BeartypeForwardRefABC` object) has already been resolved to its
+    :class:`.BeartypeForwardRefABC` object) has already been resolved to its
     **target referent** (i.e., type hint referred to by this source reference).
 
     Parameters
     ----------
-    cls : _BeartypeForwardRefABC
+    cls : BeartypeForwardRefABC
         Forward reference proxy to be inspected.
 
     Returns
@@ -1061,7 +1055,7 @@ def _is_ref_proxy_resolved(cls: _BeartypeForwardRefABC) -> bool:
     bool
         :data:`True` only if this proxy has been resolved to its referent.
     '''
-    assert isinstance(cls, BeartypeForwardRefMeta), (
+    assert isinstance(cls, BeartypeForwardRefMetaclass), (
         f'{repr(cls)} not beartype forward reference proxy.')
 
     # Return true only if this proxy has been resolved to its referent.
@@ -1070,21 +1064,21 @@ def _is_ref_proxy_resolved(cls: _BeartypeForwardRefABC) -> bool:
 # ....................{ PRIVATE ~ cachers                  }....................
 #FIXME: Unit test us up, please.
 def _cache_ref_proxy_referent_hint(
-    cls: _BeartypeForwardRefABC, referent_hint: Hint) -> None:
+    cls: BeartypeForwardRefABC, referent_hint: Hint) -> None:
     '''
     Associate the passed **forward reference proxy** (i.e.,
-    :class:`._BeartypeForwardRefABC` object) with the passed **target referent
+    :class:`.BeartypeForwardRefABC` object) with the passed **target referent
     type hint** (i.e., external type hint referred to by the source forward
     reference encapsulated by this proxy).
 
     Parameters
     ----------
-    cls : _BeartypeForwardRefABC
+    cls : BeartypeForwardRefABC
         Forward reference proxy to cache this referent against.
     referent_hint : Hint
         Target referent type hint to be cached.
     '''
-    assert isinstance(cls, BeartypeForwardRefMeta), (
+    assert isinstance(cls, BeartypeForwardRefMetaclass), (
         f'{repr(cls)} not beartype forward reference proxy.')
     # print(f'Cached proxy {repr(cls)} referent hint: {repr(referent_hint)}')
 
@@ -1094,21 +1088,21 @@ def _cache_ref_proxy_referent_hint(
 
 #FIXME: Unit test us up, please.
 def _cache_ref_proxy_referent_type(
-    cls: _BeartypeForwardRefABC, referent_type: type) -> None:
+    cls: BeartypeForwardRefABC, referent_type: type) -> None:
     '''
     Associate the passed **forward reference proxy** (i.e.,
-    :class:`._BeartypeForwardRefABC` object) with the passed **target referent
+    :class:`.BeartypeForwardRefABC` object) with the passed **target referent
     type** (i.e., external type referred to by the source forward reference
     encapsulated by this proxy).
 
     Parameters
     ----------
-    cls : _BeartypeForwardRefABC
+    cls : BeartypeForwardRefABC
         Forward reference proxy to cache this referent against.
     referent_type : type
         Target referent type to be cached.
     '''
-    assert isinstance(cls, BeartypeForwardRefMeta), (
+    assert isinstance(cls, BeartypeForwardRefMetaclass), (
         f'{repr(cls)} not beartype forward reference proxy.')
     # print(f'Cached proxy {repr(cls)} referent type: {repr(referent_type)}')
 
@@ -1116,19 +1110,19 @@ def _cache_ref_proxy_referent_type(
     _ref_proxy_to_resolved_type[cls] = referent_type
 
 # ....................{ PRIVATE ~ uncachers                }....................
-def _uncache_ref_proxy_referent_hint(cls: _BeartypeForwardRefABC) -> None:
+def _uncache_ref_proxy_referent_hint(cls: BeartypeForwardRefABC) -> None:
     '''
     De-associate the passed **forward reference proxy** (i.e.,
-    :class:`._BeartypeForwardRefABC` object) from the **target referent type
+    :class:`.BeartypeForwardRefABC` object) from the **target referent type
     hint** (i.e., external type hint referred to by the source forward reference
     encapsulated by this proxy) previously associated with this proxy.
 
     Parameters
     ----------
-    cls : _BeartypeForwardRefABC
+    cls : BeartypeForwardRefABC
         Forward reference proxy to uncache the target referent type hint from.
     '''
-    assert isinstance(cls, BeartypeForwardRefMeta), (
+    assert isinstance(cls, BeartypeForwardRefMetaclass), (
         f'{repr(cls)} not beartype forward reference proxy.')
 
     # Uncache the target referent type hint previously cached on this proxy.
@@ -1136,19 +1130,19 @@ def _uncache_ref_proxy_referent_hint(cls: _BeartypeForwardRefABC) -> None:
 
 
 #FIXME: Currently not required, but preserved for posterity. Never know, bro.
-# def _uncache_ref_proxy_referent_type(cls: _BeartypeForwardRefABC) -> None:
+# def _uncache_ref_proxy_referent_type(cls: BeartypeForwardRefABC) -> None:
 #     '''
 #     De-associate the passed **forward reference proxy** (i.e.,
-#     :class:`._BeartypeForwardRefABC` object) from the **target referent type**
+#     :class:`.BeartypeForwardRefABC` object) from the **target referent type**
 #     (i.e., external type referred to by the source forward reference
 #     encapsulated by this proxy) previously associated with this proxy.
 #
 #     Parameters
 #     ----------
-#     cls : _BeartypeForwardRefABC
+#     cls : BeartypeForwardRefABC
 #         Forward reference proxy to uncache the target referent type from.
 #     '''
-#     assert isinstance(cls, BeartypeForwardRefMeta), (
+#     assert isinstance(cls, BeartypeForwardRefMetaclass), (
 #         f'{repr(cls)} not beartype forward reference proxy.')
 #
 #     # Uncache the target referent type previously cached on this proxy.
@@ -1156,11 +1150,11 @@ def _uncache_ref_proxy_referent_hint(cls: _BeartypeForwardRefABC) -> None:
 
 # ....................{ PRIVATE ~ factories                }....................
 #FIXME: Unit test us up, please. *sigh*
-def _make_ref_proxy_exception_prefix(cls: _BeartypeForwardRefABC) -> str:
+def _make_ref_proxy_exception_prefix(cls: BeartypeForwardRefABC) -> str:
     '''
     Human-readable substring intended to prefix exception messages raised when
     the passed **forward reference proxy** (i.e.,
-    :class:`.BeartypeForwardRefMeta` instance) fails to dynamically resolve the
+    :class:`.BeartypeForwardRefMetaclass` instance) fails to dynamically resolve the
     source forward reference this proxy encapsulates to its target referent.
 
     Caveats
@@ -1170,7 +1164,7 @@ def _make_ref_proxy_exception_prefix(cls: _BeartypeForwardRefABC) -> str:
 
     Parameters
     ----------
-    cls : _BeartypeForwardRefABC
+    cls : BeartypeForwardRefABC
         Forward reference proxy to be resolved.
 
     Returns
@@ -1178,7 +1172,7 @@ def _make_ref_proxy_exception_prefix(cls: _BeartypeForwardRefABC) -> str:
     str
         Human-readable substring as detailed above.
     '''
-    assert isinstance(cls, BeartypeForwardRefMeta), (
+    assert isinstance(cls, BeartypeForwardRefMetaclass), (
         f'{repr(cls)} not beartype forward reference proxy.')
 
     # Human-readable substring to prefix raised exception messages with.
@@ -1220,7 +1214,7 @@ def _make_ref_proxy_exception_prefix(cls: _BeartypeForwardRefABC) -> str:
 #FIXME: Unit test us up, please. *sigh*
 def _resolve_hint_pep484_ref_str(
     # Mandatory parameters.
-    cls: _BeartypeForwardRefABC,
+    cls: BeartypeForwardRefABC,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeCallHintPep484ForwardRefStrException,
@@ -1230,7 +1224,7 @@ def _resolve_hint_pep484_ref_str(
     hint** (i.e., string referring to a referent target type hint that typically
     has yet to be defined in the current lexical scope) encapsulated by the
     passed **forward reference proxy subclass** (i.e.,
-    :class:`.BeartypeForwardRefMeta` instance) to that referent.
+    :class:`.BeartypeForwardRefMetaclass` instance) to that referent.
 
     This resolver is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator). Resolving both absolute *and* relative
@@ -1240,7 +1234,7 @@ def _resolve_hint_pep484_ref_str(
 
     Parameters
     ----------
-    cls : _BeartypeForwardRefABC
+    cls : BeartypeForwardRefABC
         Forward reference proxy subclass to be resolved.
     exception_cls : Type[Exception], default: BeartypeCallHintPep484ForwardRefStrException
         Type of exception to be raised in the event of a fatal error. Defaults
@@ -1258,7 +1252,7 @@ def _resolve_hint_pep484_ref_str(
         exception, typically due to this reference being syntactically invalid
         as Python.
     '''
-    assert isinstance(cls, BeartypeForwardRefMeta), (
+    assert isinstance(cls, BeartypeForwardRefMetaclass), (
         f'{repr(cls)} not beartype forward reference proxy.')
     # print(f'Importing ref "{cls.__hint_name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
 

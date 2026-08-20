@@ -133,7 +133,7 @@ class _TypeHintMetaclass(BeartypeSlottedABCMeta):
             #FIXME: Unsure why "_hint_to_wrapper" is capitalized. This is a
             #modifiable dictionary, obviously. Consider renaming to:
             #* "_hint_to_wrapper". *shrug*
-            _hint_to_wrapper.get_func_arg_return_cached_or_cache(  # type: ignore[assignment]
+            _hint_to_wrapper.cache_func_return_passed_arg(  # type: ignore[assignment]
                 # Cache this wrapper singleton under this hint.
                 key=hint,
                 # If a wrapper singleton has yet to be instantiated for this
@@ -153,7 +153,7 @@ class _TypeHintMetaclass(BeartypeSlottedABCMeta):
         **Type hint wrapper factory** (i.e., low-level private method creating
         and returning a new :class:`beartype.door.TypeHint` instance wrapping
         the passed type hint), intended to be called by the
-        :meth:`CacheMegaStrongCaller.get_func_arg_return_cached_or_cache`
+        :meth:`CacheMegaStrongCaller.cache_func_return_passed_arg`
         method to create a new type hint wrapper singleton for the passed hint.
 
         Parameters

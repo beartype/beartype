@@ -37,7 +37,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        NON-TRIVIAL*. The exact details elude me at the moment, but we'll
 #        basically need to do something resembling:
 #        * Rename the existing make_func_checker() factory in the existing
-#          "beartype._check.checkmake" submodule to make_func_checker_bearable()
+#          "beartype._check.make.checkmakefunc" submodule to make_func_checker_bearable()
 #          for disambiguity.
 #        * Define a new make_func_checker_satisfies() factory in that submodule,
 #          initially just copy-pasted from make_func_checker_bearable().
@@ -50,7 +50,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        * At this point, the "checkmake" submodule has almost certainly
 #          exploded into 10,000,000 lines of madness. Consequently:
 #          * Define a new "beartype._check.make" subpackage.
-#          * Rename "beartype._check.checkmake" to
+#          * Rename "beartype._check.make.checkmakefunc" to
 #            "beartype._check.make.checkmakefunc".
 #          * Split up "beartype._check.make.checkmakefunc" into appropriate new
 #            submodules. *shrugs nonchalantly*
@@ -59,7 +59,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #  *INDEED*. Performance almost certainly degrades as the number of optional
 #  parameters increases, based on the implementation of our
-#  "beartype._check.checkmake.make_func_checker() factory alone. Why? Because
+#  "beartype._check.make.checkmakefunc.make_func_checker() factory alone. Why? Because
 #  the tuple size of "CACHE_KEY" increases. Ergo, we should have *ALREADY* done
 #  this. So much sighing can be distantly heard.
 #

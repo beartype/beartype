@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import HintPep484749RefObjectType
 from beartype._check.forward.reference._cls.fwdrefmeta import (
-    BeartypeForwardRefMeta)
+    BeartypeForwardRefMetaclass)
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
     LexicalScope,
@@ -34,14 +34,14 @@ from typing import (
 #
 # If this is *NOT* done, these variables could induce a namespace conflict with
 # user-defined subpackages, submodules, and classes of the same names
-# concatenated via the BeartypeForwardRefMeta.__getattr__() dunder method.
+# concatenated via the BeartypeForwardRefMetaclass.__getattr__() dunder method.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #FIXME: Unit test us up, please.
-class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
+class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     '''
     Abstract base class (ABC) of all **forward reference proxy subclasses**
-    (i.e., classes whose :class:`.BeartypeForwardRefMeta` metaclass defers the
+    (i.e., classes whose :class:`.BeartypeForwardRefMetaclass` metaclass defers the
     resolution of forward reference type hints referencing type hints that have
     yet to be defined in the lexical scopes of external callers).
 
@@ -50,7 +50,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     **This ABC prohibits instantiation.** This ABC *only* exists to sanitize,
     simplify, and streamline the definition of subclasses passed as the second
     parameter to the :func:`isinstance` builtin, whose
-    :class:`.BeartypeForwardRefMeta.__instancecheck__` dunder method then
+    :class:`.BeartypeForwardRefMetaclass.__instancecheck__` dunder method then
     implicitly resolves the forward references encapsulated by those subclasses.
     The :func:`.make_forwardref_subtype` function dynamically creates and
     returns one concrete subclass of this ABC for each unique forward reference
@@ -322,7 +322,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
 class BeartypeForwardRefSubbedABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscripted forward reference
-    subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMeta`
+    subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMetaclass`
     metaclass defers the resolution of stringified type hints referencing actual
     type hints that have yet to be defined, subscripted by any arbitrary
     positional and keyword parameters).
@@ -358,7 +358,7 @@ class BeartypeForwardRefSubbedABC(BeartypeForwardRefABC):
 class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscriptable forward reference
-    subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMeta`
+    subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMetaclass`
     metaclass defers the resolution of stringified type hints referencing actual
     type hints that have yet to be defined, transparently permitting these type
     hints to be subscripted by any arbitrary positional and keyword parameters).

@@ -4,10 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype type-checking callable signature factories** (i.e., low-level
-callables dynamically generating and returning the signatures of pure-Python
-callables type-checking arbitrary objects passed to arbitrary callables against
-PEP-compliant type hints passed to those same callables).
+Beartype **type-checking callable signature factory classes** (i.e., subclasses
+thread-safely generating pure-Python functions detecting whether arbitrary
+objects passed to those functions satisfy the type hints passed to those
+factories and either returning those results as their boolean return *or*
+raising fatal exceptions or emitting non-fatal warnings if those results are
+:data:`False`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -22,7 +24,7 @@ from beartype._check.code.codemain import CodeGenerated
 from beartype._check.convert.convmain import sanify_hint_root_statement
 from beartype._check.forward.reference.fwdrefset import (
     set_beartype_ref_proxies_exception_prefix)
-from beartype._check.make.makecheckersig import make_func_signature
+from beartype._check.make.checkmakesig import make_func_signature
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.conftest import die_unless_conf
 from beartype._data.check.code.datacodename import (
@@ -42,63 +44,115 @@ from itertools import count
 from warnings import catch_warnings
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Unit test us up, please.
-#FIXME: Docstring us up, please.
 #FIXME: *BEGIN TESTING FREE-THREADING BUILDS IN "tox.ini"*. Somewhat non-trivial
 #as this will necessitate changes to "pyproject.toml". Whatevahs! Mandatory now.
-#FIXME: Pretty sure we have to define empty "__slots__ = ()" both here and
-#*EVERYWHERE* we subclass "CacheABC". *shrug*
-class FuncCheckerFactoryCache(CacheMegaStrongABC):
+#FIXME: Actually, we can't even do that yet, because PEP 780 has yet to be
+#accepted. So lame! So Python. *sigh*
+
+#FIXME: Unit test us up, please.
+class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
+    '''
+    **Type-checking function factory** (i.e., thread-safe cache dynamically
+    generating a pure-Python function detecting whether an arbitrary object
+    passed to that function satisfies the type hint passed to this factory and
+    either returning that result as its boolean return *or* raising a fatal
+    exception or emitting a non-fatal warning if that result is :data:`False`).
+
+    This factory underlies both the public
+    :func:`beartype.door.die_if_unbearable` and
+    :func:`beartype.door.is_bearable` statement-level type-checking functions.
+
+    This factory is strongly inspired by the competing
+    :class:`beartype._cache.cls.cacheclsmega.CacheMegaStrongSubclassABC`
+    subclass, whose class design ultimately proved too rigid to support the
+    domain-specific caching logic warranted by this subclass.
+
+    All methods explicitly defined by this factory are thread-safe.
     '''
 
-    This subclass is strongly inspired by the competing subclass
-    :class:`beartype._cache.cls.cacheclsmega.CacheMegaStrongSubclassABC`, whose
-    class design ultimately proved too rigid to support the domain-specific
-    caching logic warranted by this subclass.
-    '''
-
-    # ..................{ GETTERS                            }..................
-    #FIXME: Revise docstring up, please.
-    def get_func_checker_cached_or_cache(
+    # ..................{ CACHERS                            }..................
+    def cache_func_checker(
         self,
         hint: Hint,
         conf: BeartypeConf,
         exception_prefix: str,
         make_code_check: Callable[..., CodeGenerated],
-    ) -> object:
+    ) -> CallableRaiserOrTester:
         '''
-        Dynamically associate the passed key with the value returned by the
-        subclass-specific concrete implementation of the :meth:`._make_value`
-        method (i.e., child method accepting all passed subclass-specific
-        variadic parameters and returning the value to be associated with this
-        key) if this cache has yet to cache this key (i.e., if this method has
-        yet to be passed this key) and, in any case, return the value now
-        guaranteed to be associated with this key.
+        **Thread-safe type-checking function factory** (i.e., low-level method
+        thread-safely generating a pure-Python function detecting whether an
+        arbitrary object passed to that function satisfies the type hint passed
+        to this factory and either returning that result as its boolean return
+        *or* raising a fatal exception or emitting a non-fatal warning if that
+        result is :data:`False`).
 
-        This method is thread-safe.
+        This factory method is thread-safe and memoized for the proper subset of
+        type hints whose type-checking code is memoizable.
 
         Caveats
         -------
-        **This method intentionally avoids raising a** :exc:`TypeError` **when
-        the passed key is unhashable.** If this key is unhashable, this method
-        instead creates and returns a new value by calling the
-        :meth:`._make_value` factory method *without* attempting to cache that
-        value. Although non-ideal, generality and stability is preferable to
-        specificity and instability by unexpected exceptions.
+        **This factory method intentionally avoids raising a** :exc:`TypeError`
+        **when the passed type hint is unhashable.** If this hint is
+        unhashable, this method instead creates and returns a new type-checking
+        function by calling a lower-level factory method *without* attempting to
+        cache that hint. Although non-ideal, generality and stability is
+        preferable to specificity and instability by unexpected exceptions.
+
+        **This factory method intentionally accepts no** ``exception_cls``
+        **parameter.** Doing so would only ambiguously obscure context-sensitive
+        exceptions raised by lower-level utility functions called by this
+        higher-level factory method.
+
+        **This factory method dynamically resolves all** :pep:`484`-compliant
+        **forward reference type hints visitable from this type hint** against
+        the first external lexical scope on the call stack originating from a
+        third-party module or package. For efficiency, this factory method does
+        so by internally delegating forward hint resolution to the **beartype
+        external call metadata singleton** (i.e.,
+        :data:`.BEARTYPE_CALL_EXTERNAL_META` global).
 
         Parameters
         ----------
-        key : Hashable
-            **Key** (i.e., arbitrary hashable object) to return the associated
-            value of.
-
-        All remaining parameters are passed as is to the
-        :meth:`._make_value` factory method.
+        hint : Hint
+            Type hint to be type-checked.
+        conf : BeartypeConf
+            **Beartype configuration** (i.e., self-caching dataclass
+            encapsulating all settings configuring type-checking for the passed
+            type hint).
+        exception_prefix : str
+            Human-readable substring prefixing raised exception messages.
+        make_code_check : Callable[..., CodeGenerated]
+            **Type-checking code factory** (i.e., function dynamically
+            generating a code snippet of a function type-checking an arbitrary
+            object against the passed type hint under the passed beartype
+            configuration).
 
         Returns
         -------
-        object
-            **Value** (i.e., arbitrary object) associated with this key.
+        CallableRaiserOrTester
+            Function type-checking this hint against this configuration under
+            this beartype call metadata.
+
+        Raises
+        ------
+        All exceptions raised by the lower-level :func:`.make_check_expr`
+        factory. Additionally, this factory also raises:
+
+        BeartypeConfException
+            If this configuration is *not* a :class:`.BeartypeConf` instance.
+        BeartypeDecorHintForwardRefException
+            If this hint contains one or more relative forward references, which
+            this factory explicitly prohibits to improve both the efficiency and
+            portability of calls by users to the resulting type-checker.
+        _BeartypeUtilCallableException
+            If this function erroneously generates a syntactically invalid
+            type-checking function. That should *never* happen, but let's admit
+            that you're still reading this for a reason.
+
+        Warns
+        -----
+        All warnings emitted by the lower-level :func:`.make_check_expr`
+        factory.
         '''
         # assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
         # assert callable(value_factory), f'{repr(value_factory)} uncallable.'
@@ -131,8 +185,8 @@ class FuncCheckerFactoryCache(CacheMegaStrongABC):
 
                 # If a prior call to this factory has already generated a
                 # function type-checking these parameters, return that function.
-                if func_checker is not None:
-                    return func_checker
+                if func_checker:
+                    return func_checker  # type: ignore[return-value]
                 # Else, this is the first prior call to this factory passed
                 # these parameters.
             # If the dictionary lookup above raised the standard "TypeError"
@@ -154,7 +208,8 @@ class FuncCheckerFactoryCache(CacheMegaStrongABC):
                 # With a context manager "catching" *ALL* non-fatal warnings
                 # emitted during this logic for subsequent "playback" below...
                 with catch_warnings(record=True) as warnings_issued:
-                    #FIXME: Comment us up, please. *sigh*
+                    # Type-checking function to be returned and the expression
+                    # local scope describing that function.
                     func_checker, func_scope_frozen = self._make_func_checker(
                         hint=hint,
                         conf=conf,
@@ -207,7 +262,6 @@ class FuncCheckerFactoryCache(CacheMegaStrongABC):
             return func_checker
 
     # ..................{ PRIVATE ~ factories                }..................
-    #FIXME: Revise docstring up, please. *sigh*
     def _make_func_checker(
         self,
         hint: Hint,
@@ -216,11 +270,16 @@ class FuncCheckerFactoryCache(CacheMegaStrongABC):
         make_code_check: Callable[..., CodeGenerated],
     ) -> tuple[CallableRaiserOrTester, BeartypeCheckExprScope]:
         '''
-        **Value factory** (i.e., subclass-specific private method accepting the
-        key followed by all subclass-specific variadic parameters passed by the
-        external caller to the parent call of the public
-        :meth:`.get_value_cached_or_cache` method and returning the value to be
-        associated with this key).
+        **Non-thread-safe type-checking function factory** (i.e., low-level
+        method non-thread-safely generating a pure-Python function detecting
+        whether an arbitrary object passed to that function satisfies the type
+        hint passed to this factory and either returning that result as its
+        boolean return *or* raising a fatal exception or emitting a non-fatal
+        warning if that result is :data:`False`).
+
+        This low-level private factory method is non-thread-safe and intended to
+        be called *only* by the higher-level public :meth:`.cache_func_checker`
+        factory method.
 
         Parameters
         ----------
@@ -240,8 +299,15 @@ class FuncCheckerFactoryCache(CacheMegaStrongABC):
 
         Returns
         -------
-        object
-            **Value** (i.e., arbitrary object) associated with this key.
+        tuple[CallableRaiserOrTester, BeartypeCheckExprScope]
+            2-tuple ``(func_checker, func_checker_locals)`` such that:
+
+            * ``func_checker`` is the **type-checking function** (i.e.,
+              low-level callable dynamically generated by this factory,
+              type-checking an arbitrary user-defined object against this hint).
+            * ``func_checker_locals`` is the **type-checking function parameter
+              scope** (i.e., dictionary mapping from the name to default value
+              of each hidden optional parameter passed to ``func_checker``).
         '''
         assert callable(make_code_check), f'{repr(make_code_check)} uncallable.'
         assert isinstance(exception_prefix, str), (
@@ -253,9 +319,11 @@ class FuncCheckerFactoryCache(CacheMegaStrongABC):
         # Else, "conf" is a configuration.
 
         # ....................{ LOCALS                     }....................
-        #FIXME: The "call_curr" parameter should *DEFINITELY* be a passed
-        #mandatory parameter. This is "fine" for now, but will almost certainly
-        #cease to be fine sometime soon. We sigh, so forlornly.
+        #FIXME: This "call_curr" local variable should *DEFINITELY* be
+        #refactored into a new full-blown mandatory "call_curr" parameter passed
+        #to the higher-level cache_func_checker() method. This current
+        #hard-coded approach is "fine" for now, but will almost certainly cease
+        #to be fine sometime soon. We sigh.
 
         # Beartype external call metadata singleton, enabling logic below to
         # dynamically resolve *ALL* PEP 484-compliant forward reference type
@@ -408,7 +476,7 @@ _FUNC_CHECKER_IGNORABLE = (
 func_scope_frozen)`` encapsulating an ignorable type-checking tester function
 singleton and metadata trivially describing that singleton).
 
-The :meth:`FuncCheckerFactoryCache._make_func_checker` method returns this
+The :meth:`BeartypeFuncCheckerFactoryCache._make_func_checker` method returns this
 global constant when passed an ignorable type hint, an optimization
 substantially improving the efficiency of that method in common edge cases.
 '''

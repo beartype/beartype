@@ -23,7 +23,7 @@ FUNC_CHECKER_NAME_PREFIX = f'{NAME_PREFIX}checker_'
 '''
 Substring prefixing the unqualified basenames of all type-checking raiser and
 tester functions created by the
-:func:`beartype._check.checkmake._make_func_checker` factory function.
+:func:`beartype._check.make.checkmakefunc._make_func_checker` factory function.
 '''
 
 # ....................{ NAMES ~ parameter                  }....................
