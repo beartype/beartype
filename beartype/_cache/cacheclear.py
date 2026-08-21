@@ -83,10 +83,8 @@ def clear_caches() -> None:
     from beartype._check.code.codemain import _HINT_CONF_TO_CHECK_EXPR
     from beartype._check.code.codescope import _tuple_union_to_tuple_union
     from beartype._check.convert._convcoerce import _hint_repr_to_hint
-    from beartype._check.forward.reference._cls.fwdrefmeta import (
-        _ref_proxy_to_resolved_hint,
-        _ref_proxy_to_resolved_type,
-    )
+    from beartype._check.forward.reference._cls.fwdrefcache import (
+        ref_proxy_cache)
     from beartype._check.cls.hint.hintsane import _HINT_TO_HINTSANE
     from beartype._util.bear.utilbearblack import (
         _object_to_is_blacklisted)
@@ -95,6 +93,7 @@ def clear_caches() -> None:
     #FIXME: Refactor into a global once feature complete. See above, yo!
     # Frozen set of all thread-safe global caches to be cleared below.
     _CACHE_GLOBALS = (
+        ref_proxy_cache,
         _func_raiser_factory,
         _func_tester_factory,
         _hint_to_wrapper,
@@ -118,7 +117,5 @@ def clear_caches() -> None:
     _HINT_TO_HINTSANE.clear()
     _HINT_CONF_TO_CHECK_EXPR.clear()
     _tuple_union_to_tuple_union.clear()
-    _ref_proxy_to_resolved_hint.clear()
-    _ref_proxy_to_resolved_type.clear()
     _object_to_is_blacklisted.clear()
     clear_object_attr_caches()

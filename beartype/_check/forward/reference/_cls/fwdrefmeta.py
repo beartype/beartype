@@ -705,6 +705,10 @@ class BeartypeForwardRefMetaclass(type):
     #cases that should be tested as well:
     #* When the target referent is itself a stringified forward reference.
     #* When the target referent is itself another forward reference proxy.
+    #FIXME: [SPEED] Refactor *ALL* internal access of this now mostly useless
+    #property across this subpackage with direct calls of the
+    #ref_proxy_cache.cache_ref_proxy_referent_hint() method wrapped by this
+    #property. *sigh*
     @property
     def __resolved_hint_beartype__(cls: BeartypeForwardRefABC) -> Hint:  # type: ignore[misc]
         '''
@@ -714,7 +718,7 @@ class BeartypeForwardRefMetaclass(type):
         **supported type hint** (i.e., object supported by the
         :func:`beartype.beartype` decorator as a valid type hint annotating
         callable parameters and returns) *or* raise an exception otherwise
-        (e.g., if this type hint is unsupported by :func:`beartype.beartype`).
+        (e.g., if this type hint is unsupported by :mod:`beartype`).
 
         This class property is manually memoized for efficiency. However, note
         this class property is *not* automatically memoized (e.g., by the
@@ -752,7 +756,8 @@ class BeartypeForwardRefMetaclass(type):
            # If this type hint is actually a @beartype-specific forward
            # reference proxy that only refers to the desired type hint,
            # dereference that proxy to obtain that type hint.
-           type_hint = getattr(type_hint, '__resolved_hint_beartype__', type_hint)
+           type_hint = getattr(
+               type_hint, '__resolved_hint_beartype__', type_hint)
 
         Raises
         ------
@@ -832,7 +837,7 @@ class BeartypeForwardRefMetaclass(type):
         # Caching this referent first circumvents this recursion by ensuring
         # that all subsequent access of this property after the first access of
         # this property casually returns this referent rather than repeatedly
-        # (thus uselessly) calling the die_unless_hint() raiser.
+        # (i.e., uselessly) calling the die_unless_hint() raiser.
         _cache_ref_proxy_referent_hint(cls=cls, referent_hint=referent_hint)
 
         # If this referent is *NOT* a supported type hint...
@@ -865,6 +870,10 @@ class BeartypeForwardRefMetaclass(type):
         return referent_hint  # type: ignore[return-value]
 
 
+    #FIXME: [SPEED] Refactor *ALL* internal access of this now mostly useless
+    #property across this subpackage with direct calls of the
+    #ref_proxy_cache.cache_ref_proxy_referent_type() method wrapped by this
+    #property. *sigh*
     @property
     def __resolved_type_beartype__(cls: BeartypeForwardRefABC) -> type:  # type: ignore[misc]
         '''
