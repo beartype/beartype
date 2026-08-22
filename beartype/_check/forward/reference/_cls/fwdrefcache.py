@@ -22,7 +22,10 @@ from beartype._data.kind.datakindiota import (
     Iota,
 )
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatypingport import (
+    Hint,
+    HintOrSentinel,
+)
 from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_isinstanceable,
     is_object_isinstanceable,
@@ -51,7 +54,6 @@ from threading import RLock
 from typing import (
     TYPE_CHECKING,
     Optional,
-    Union,
 )
 from weakref import WeakKeyDictionary
 
@@ -133,7 +135,7 @@ class BeartypeForwardRefProxyCache(CacheABC):
         _ref_proxy_to_resolved_hint: (
             WeakKeyDictionary[BeartypeForwardRefABC, Hint])
         _ref_proxy_to_resolved_hint_get: (
-            Callable[[BeartypeForwardRefABC, Iota], Union[Hint, Iota]])
+            Callable[[BeartypeForwardRefABC, Iota], HintOrSentinel])
         _ref_proxy_to_resolved_hint_set: (
             Callable[[BeartypeForwardRefABC, Hint], None])
         _ref_proxy_to_resolved_type: (
@@ -189,17 +191,22 @@ class BeartypeForwardRefProxyCache(CacheABC):
             self._ref_proxy_to_resolved_hint.clear()
             self._ref_proxy_to_resolved_type.clear()
 
-    # ..................{ TESTERS                            }..................
+    # ..................{ GETTERS                            }..................
     #FIXME: Unit test us up, please. *sigh*
-    #FIXME: Externally call us up, please. *sigh*
-    def is_ref_proxy_resolved(self, ref_proxy: BeartypeForwardRefABC) -> bool:
+    def get_ref_proxy_referent_hint_if_resolved_or_sentinel(
+        self, ref_proxy: BeartypeForwardRefABC) -> HintOrSentinel:
         '''
-        :data:`True` only if the passed **forward reference proxy** (i.e.,
-        :class:`.BeartypeForwardRefABC` object) has already been resolved to its
-        **target referent** (i.e., type hint referred to by this source
-        reference).
+        Return either:
 
-        This tester is thread-safe.
+        * If this cache has yet to cache the **referent** (i.e., arbitrary type
+          hint referred to by the forward reference encapsulated by this proxy
+          after dynamically resolving this reference to this referent) that the
+          passed **forward reference proxy** (i.e.,
+          :class:`.BeartypeForwardRefABC` object) refers to, the sentinel
+          placeholder.
+        * Else, the referent previously cached against this proxy.
+
+        This getter is thread-safe.
 
         Parameters
         ----------
@@ -208,21 +215,29 @@ class BeartypeForwardRefProxyCache(CacheABC):
 
         Returns
         -------
-        bool
-            :data:`True` only if this proxy has been resolved to its referent.
+        Union[Hint, Iota]
+            Either:
+
+            * If this proxy has already been resolved, the referent this proxy
+              refers to.
+            * Else, the sentinel placeholder.
         '''
         assert isinstance(ref_proxy, type), f'{repr(ref_proxy)} not type.'
 
-        # Thread-safely return true *ONLY* if this proxy has already been
-        # resolved to its referent.
+        # Thread-safely...
         with self._lock:
-            return ref_proxy in self._ref_proxy_to_resolved_hint
+            # Return either:
+            # * If this forward reference proxy has yet to be resolved to its
+            #   target referent (e.g., by a prior isinstance() or issubclass()
+            #   type-check), the sentinel placeholder.
+            # * Else, that target referent.
+            #
+            # Note that this proxy *SHOULD* be hashable. See also commentary in
+            # the cache_ref_proxy_referent_hint() method for further details.
+            return self._ref_proxy_to_resolved_hint_get(ref_proxy, SENTINEL)
 
     # ..................{ CACHERS                            }..................
     #FIXME: Unit test us up, please. *sigh*
-    #FIXME: Externally call us up, please. Looks like the existing
-    #"__resolved_hint_beartype__" property can and should now trivially defer to
-    #this method instead. *sigh*
     def cache_ref_proxy_referent_hint(
         self, ref_proxy: BeartypeForwardRefABC) -> Hint:
         '''
@@ -271,10 +286,10 @@ class BeartypeForwardRefProxyCache(CacheABC):
         # Thread-safely...
         with self._lock:
             # ....................{ CACHE                  }....................
-            # Cached referent referred to by this forward reference proxy if a
-            # prior call of this method has already resolved this referent *OR*
-            # the sentinel placeholder otherwise (i.e., if this is the first
-            # call of this method passed this proxy).
+            # Previously cached target referent type hint this forward reference
+            # proxy refers to if a prior call of this method already resolved
+            # this referent *OR* the sentinel placeholder otherwise (i.e., if
+            # this is the first call of this method passed this proxy).
             #
             # Note that this proxy *SHOULD* be hashable even if one or more
             # class variables defined by this proxy are unhashable (e.g., a
@@ -380,9 +395,6 @@ class BeartypeForwardRefProxyCache(CacheABC):
 
 
     #FIXME: Unit test us up, please. *sigh*
-    #FIXME: Externally call us up, please. Looks like the existing
-    #"__resolved_type_beartype__" property can and should now trivially defer to
-    #this method instead. *sigh*
     def cache_ref_proxy_referent_type(
         self, ref_proxy: BeartypeForwardRefABC) -> type:
         '''
@@ -432,10 +444,10 @@ class BeartypeForwardRefProxyCache(CacheABC):
         # Thread-safely...
         with self._lock:
             # ....................{ CACHE                  }....................
-            # Cached referent type referred to by this forward reference proxy
-            # if a prior call of this method has already resolved this referent
-            # type *OR* the sentinel placeholder otherwise (i.e., if this is the
-            # first call of this method passed this proxy).
+            # Previously cached target referent type hint this forward reference
+            # proxy refers to if a prior call of this method already resolved
+            # this referent *OR* "None" otherwise (i.e., if this is the first
+            # call of this method passed this proxy).
             #
             # Note that this proxy *SHOULD* be hashable. See also commentary in
             # the cache_ref_proxy_referent_hint() method for further details.

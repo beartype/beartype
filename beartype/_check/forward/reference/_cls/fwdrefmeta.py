@@ -34,54 +34,20 @@ This private submodule is *not* intended for importation by downstream callers.
 #references to refer to full-blown type hints (rather than simple types) is
 #already vanishingly small. Ergo, our shrug is both smug and convenient. *shrug*
 
-#FIXME: *THREAD-SAFETY*! The bodies of all of the following callables need to
-#internally wrap *EVERYTHING* inside a submodule-specific "RLock":
-#* __resolved_hint_beartype__.
-#* __resolved_type_beartype__.
-#* _is_ref_proxy_resolved().
-#
-#Maybe even more? No idea. Subtle race conditions ignite if we fail. *gulp*
-
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeCallHintForwardRefException,
-    BeartypeCallHintPep484ForwardRefStrException,
-)
 from beartype._check.forward.reference._cls.fwdrefcache import (
-    BeartypeForwardRefABC)
+    BeartypeForwardRefABC,
+    ref_proxy_cache,
+)
 from beartype._conf.confcommon import BEARTYPE_CONF_NONRANDOM
 from beartype._data.kind.datakindiota import SENTINEL
-from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.func.utilcachefunc import callable_cached
-from beartype._util.cls.pep.clspep3119 import (
-    die_unless_object_isinstanceable,
-    is_object_isinstanceable,
-)
+from beartype._util.cls.pep.clspep3119 import is_object_isinstanceable
 from beartype._util.error.utilerrwarn import issue_deprecation
-from beartype._util.func.utilfuncframe import (
-    get_frame_locals,
-    get_frame_name,
-    find_frame_codeobject_or_none,
-)
-from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-    get_hint_pep484585_generic_unsubbed_type)
-from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
-    is_hint_pep484585_generic)
-from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
-    resolve_hint_pep484749_ref_object)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._util.hint.utilhinttest import (
-    die_unless_hint,
-    is_hint,
-)
-from beartype._util.module.utilmodimport import (
-    import_module_attr,
-    import_module_attr_or_sentinel,
-)
 from beartype._util.text.utiltextidentifier import is_dunder
 from beartype._util.utilobjget import get_object_name
-from typing import Optional
 
 # ....................{ METACLASSES                        }....................
 class BeartypeForwardRefMetaclass(type):
@@ -119,8 +85,9 @@ class BeartypeForwardRefMetaclass(type):
         '''
         **Fully-qualified forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`.BeartypeForwardRefABC.__hint_name_beartype__`
-        class variable is the fully-qualified name of an external class).
+        metaclass and whose
+        :attr:`.BeartypeForwardRefABC.__hint_name_beartype__` class variable is
+        the fully-qualified name of an external class).
 
         This dunder method creates and returns a new forward reference subclass
         referring to an external class whose name is concatenated from (in
@@ -266,12 +233,20 @@ class BeartypeForwardRefMetaclass(type):
             Fully-qualified forward reference subclass concatenated as above.
         '''
 
-        #FIXME: Unit test up this edge case, please.
+        # Previously cached target referent type hint this forward reference
+        # proxy refers to if a prior call of this method already resolved this
+        # referent *OR* the sentinel placeholder otherwise (i.e., if this is the
+        # first call of this method passed this proxy).
+        referent_hint = (
+            ref_proxy_cache.get_ref_proxy_referent_hint_if_resolved_or_sentinel(
+                cls))
+
         # If this forward reference proxy has already been resolved to its
-        # referent (e.g., by a prior isinstance() or issubclass() check),
+        # referent (e.g., by a prior isinstance() or issubclass() type-check),
         # forward this dunder method call directly to that referent.
-        if _is_ref_proxy_resolved(cls):
-            return getattr(cls.__resolved_hint_beartype__, hint_name)
+        if referent_hint is not SENTINEL:
+            # print(f'Forward reference proxy "{cls.__hint_name_beartype__}" resolved to {referent_hint}!')
+            return getattr(referent_hint, hint_name)
         # Else, this forward reference proxy has yet to be resolved.
         #
         # If a non-existent dunder attribute was requested, assume this
@@ -441,7 +416,7 @@ class BeartypeForwardRefMetaclass(type):
         # reference is *NOT* supported by @beartype. Ergo, this hint is now
         # guaranteed to be supported and thus safely passable to the
         # is_bearable() dunder method defined below. Maybe. WHO EVEN KNOWS!?!
-        resolved_hint = cls.__resolved_hint_beartype__
+        resolved_hint = ref_proxy_cache.cache_ref_proxy_referent_hint(cls)
 
         # ....................{ ISINSTANCEABLE             }....................
         # If
@@ -483,10 +458,10 @@ class BeartypeForwardRefMetaclass(type):
         # In either case, avoid passing this hint to that builtin.
 
         # ....................{ NON-ISINSTANCEABLE         }....................
-        # By validation internally performed by the "__resolved_hint_beartype__"
-        # property accessed above, this hint is supported by @beartype and thus
-        # safely passable to the substantially slower (but still as
-        # micro-optimized to the hilt as feasible) @beartype-specific pair of
+        # By validation internally performed by the
+        # cache_ref_proxy_referent_hint() method called above, this hint is
+        # supported by @beartype and thus safely passable to the slower (but
+        # still micro-optimized to the hilt) @beartype-specific pair of
         # is_bearable() and die_if_unbearable() functions.
 
         # Avoid circular import dependencies.
@@ -595,10 +570,10 @@ class BeartypeForwardRefMetaclass(type):
 
         # ....................{ IMPORTS                    }....................
         # Avoid circular import dependencies.
-        from beartype._check.error.errmain import (
-            get_hint_object_violation_message)
         from beartype._check.cls.call.calldataexternal import (
             BEARTYPE_CALL_EXTERNAL_META)
+        from beartype._check.error.errmain import (
+            get_hint_object_violation_message)
 
         # ....................{ RESOLVE                    }....................
         # @beartype-supported type hint referred to by the PEP-compliant forward
@@ -613,7 +588,7 @@ class BeartypeForwardRefMetaclass(type):
         # by accessing this property (*WITHOUT* that property internally raising
         # an exception). In short, this access should trivially reduce to an
         # efficient O(1)-style cached property lookup.
-        resolved_hint = cls.__resolved_hint_beartype__
+        resolved_hint = ref_proxy_cache.cache_ref_proxy_referent_hint(cls)
 
         # ....................{ MESSAGE                    }....................
         # Type-checking violation message describing the failure of this object
@@ -695,7 +670,7 @@ class BeartypeForwardRefMetaclass(type):
         # reference is *NOT* an isinstanceable type. Ergo, this type is now
         # guaranteed to be isinstanceable and thus safely passable to the
         # issubclass() dunder method defined below. Hopefully. WHO EVEN KNOWS!?!
-        resolved_type = cls.__resolved_type_beartype__
+        resolved_type = ref_proxy_cache.cache_ref_proxy_referent_type(cls)
 
         # Return true only if the passed object is a subclass of this type.
         return issubclass(obj, resolved_type)  # type: ignore[arg-type]
@@ -705,10 +680,6 @@ class BeartypeForwardRefMetaclass(type):
     #cases that should be tested as well:
     #* When the target referent is itself a stringified forward reference.
     #* When the target referent is itself another forward reference proxy.
-    #FIXME: [SPEED] Refactor *ALL* internal access of this now mostly useless
-    #property across this subpackage with direct calls of the
-    #ref_proxy_cache.cache_ref_proxy_referent_hint() method wrapped by this
-    #property. *sigh*
     @property
     def __resolved_hint_beartype__(cls: BeartypeForwardRefABC) -> Hint:  # type: ignore[misc]
         '''
@@ -772,108 +743,10 @@ class BeartypeForwardRefMetaclass(type):
                 implying this proxy circularly proxies itself.
         '''
 
-        # ....................{ CACHE                      }....................
-        # Cached referent referred to by this forward reference proxy if a prior
-        # access of this property has already resolved this referent *OR* "None"
-        # (i.e., if this is the first access of this property).
-        referent_hint: Optional[Hint] = _ref_proxy_to_resolved_hint_get(cls)
-
-        # If a prior access of this property has already resolved this referent,
-        # immediately return this previously resolved referent as is.
-        if referent_hint is not None:
-            return referent_hint
-        # Else, this referent has yet to be resolved, implying this to be the
-        # first call to this property.
-
-        # ....................{ RESOLVE                    }....................
-        # If this reference thinly wraps a PEP 749-compliant object-oriented
-        # forward reference  (i.e., "annotationlib.ForwardRef" object), resolve
-        # this reference in a PEP 749-specific manner.
-        if cls.__hint_pep749_ref_beartype__:
-            # Forward referent dynamically imported from this module if this
-            # module is both importable and defines this referent *OR* the
-            # sentinel placeholder (i.e., if this module is either unimportable
-            # or fails to define this referent).
-            referent_hint = resolve_hint_pep484749_ref_object(
-                hint=cls.__hint_pep749_ref_beartype__,
-                exception_prefix=cls.__exception_prefix_beartype__,
-            )
-        # Else, this reference does *NOT* thinly wrap such a reference and
-        # *MUST* thus instead thickly wrap a PEP 484-compliant stringified
-        # forward reference. In this case, resolve this reference in a PEP
-        # 484-specific manner.
-        else:
-            referent_hint = _resolve_hint_pep484_ref_str(cls)
-
-        # ....................{ VALIDATE                   }....................
-        # If this referent is this forward reference proxy, this proxy
-        # circularly proxies itself. Since allowing this edge case would openly
-        # invite infinite recursion, we detect this edge case and instead raise
-        # a human-readable exception.
-        if referent_hint is cls:
-            raise BeartypeCallHintForwardRefException(
-                f'{_make_ref_proxy_exception_prefix(cls)}'
-                f'that target referent circularly '
-                f'(i.e., infinitely recursively) references itself.'
-            )
-        # Else, this referent is *NOT* this forward reference proxy.
-
-        # Cache this referent for subsequent lookup by this property *BEFORE*
-        # validating this referent to be a supported hint. If this property is
-        # validated to *NOT* be a supported hint, this referent will be
-        # immediately uncached below. Of course, this is insane. Ideally, this
-        # referent would be cached only *AFTER* validating this referent to be a
-        # supported hint. Unfortunately, doing so invites infinite recursion as
-        # follows (in order):
-        # * This __resolved_hint_beartype__() property getter calls...
-        # * die_unless_hint(), which calls...
-        # * die_unless_object_isinstanceable(), which calls...
-        # * "isinstance(None, cls)", which calls...
-        # * BeartypeForwardRefMetaclass.__subclasscheck__(), which calls...
-        # * "issubclass(obj, cls.__resolved_type_beartype__)", which calls...
-        # * This __resolved_hint_beartype__() property getter, which calls...
-        # * die_unless_hint() yet again. Repeat as needed for pain.
-        #
-        # Caching this referent first circumvents this recursion by ensuring
-        # that all subsequent access of this property after the first access of
-        # this property casually returns this referent rather than repeatedly
-        # (i.e., uselessly) calling the die_unless_hint() raiser.
-        _cache_ref_proxy_referent_hint(cls=cls, referent_hint=referent_hint)
-
-        # If this referent is *NOT* a supported type hint...
-        #
-        # Note that:
-        # * This tester is memoized and thus requires parameters be passed only
-        #   positionally.
-        # * The optional "is_ref_proxy_valid: bool = False" parameter accepted
-        #   by this tester is intentionally left unpassed. Doing so ensures
-        #   that, if this referent is itself a forward reference proxy, this
-        #   referent is *NOT* treated as isinstanceable if that proxy *CANNOT*
-        #   be resolved to the referent that proxy refers to. While an unlikely
-        #   edge case, unlikely edge cases are million-to-one chances in a
-        #   Pratchett novel: you just know it's coming up.
-        if not is_hint(referent_hint):
-            # Uncache this referent. See above for commentary.
-            _uncache_ref_proxy_referent_hint(cls)
-
-            # Raise a readable exception detailing why this referent is *NOT* a
-            # supported type hint.
-            die_unless_hint(
-                hint=referent_hint,  # pyright: ignore
-                exception_cls=BeartypeCallHintForwardRefException,
-                exception_prefix=_make_ref_proxy_exception_prefix(cls),
-            )
-        # Else, this referent is a supported type hint.
-
-        # ....................{ RETURN                     }....................
-        # Return this referent.
-        return referent_hint  # type: ignore[return-value]
+        # Trivially defer to this lower-level method of this global cache.
+        return ref_proxy_cache.cache_ref_proxy_referent_hint(cls)
 
 
-    #FIXME: [SPEED] Refactor *ALL* internal access of this now mostly useless
-    #property across this subpackage with direct calls of the
-    #ref_proxy_cache.cache_ref_proxy_referent_type() method wrapped by this
-    #property. *sigh*
     @property
     def __resolved_type_beartype__(cls: BeartypeForwardRefABC) -> type:  # type: ignore[misc]
         '''
@@ -909,78 +782,8 @@ class BeartypeForwardRefMetaclass(type):
             Further details.
         '''
 
-        # ....................{ CACHE                      }....................
-        # Cached referent referred to by this forward reference proxy if a prior
-        # access of this property has already resolved this referent *OR* "None"
-        # (i.e., if this is the first access of this property).
-        referent_type: Optional[type] = _ref_proxy_to_resolved_type_get(cls)
-
-        # If a prior access of this property has already resolved this referent,
-        # immediately return this previously resolved referent as is.
-        if referent_type is not None:
-            return referent_type
-        # Else, this referent has yet to be resolved, implying this to be the
-        # first call to this property.
-
-        # ....................{ RESOLVE                    }....................
-        # Cached referent referred to by this forward reference proxy if this
-        # referent is a hint supported by @beartype *OR* raise an exception
-        # (i.e., if @beartype fails to support this hint).
-        referent_type = cls.__resolved_hint_beartype__
-
-        # ....................{ VALIDATE                   }....................
-        # If this referent is a subscripted generic (e.g., "MuhGeneric[int]"),
-        # reduce this referent to the child type subscripting this generic
-        # (e.g., "int" in the prior example). Why? Because subscripted
-        # generics are neither isinstanceable *NOR* issubclassable: e.g.,
-        #     >>> MuhGeneric[T]: ...
-        #     >>> issubclass(type, MuhGeneric)
-        #     TypeError: issubclass() argument 2 cannot be a
-        #     parameterized generic
-        if is_hint_pep484585_generic(referent_type):  # pyright: ignore
-            referent_type = get_hint_pep484585_generic_unsubbed_type(
-                hint=referent_type,  # pyright: ignore
-                exception_cls=BeartypeCallHintForwardRefException,
-                exception_prefix=cls.__exception_prefix_beartype__,
-            )
-        # Else, this referent is *NOT* a subscripted generic.
-
-        # If this referent is *NOT* an isinstanceable type...
-        #
-        # Note that:
-        # * This tester is memoized and thus requires parameters be passed only
-        #   positionally.
-        # * The optional "is_ref_proxy_valid: bool = False" parameter accepted
-        #   by this tester is intentionally left unpassed. Doing so ensures
-        #   that, if this referent is itself a forward reference proxy, this
-        #   referent is *NOT* treated as isinstanceable if that proxy *CANNOT*
-        #   be resolved to the referent that proxy refers to.
-        #   While an unlikely edge case, unlikely edge cases are like
-        #   million-to-one chances in a Pratchett novel: they're coming up.
-        if not is_object_isinstanceable(referent_type):
-            # Raise a readable exception detailing why this referent is *NOT* an
-            # isinstanceable type.
-            die_unless_object_isinstanceable(
-                obj=referent_type,  # pyright: ignore
-                exception_cls=BeartypeCallHintForwardRefException,
-                exception_prefix=_make_ref_proxy_exception_prefix(cls),
-            )
-        # Else, this referent is an isinstanceable type.
-
-        # ....................{ RETURN                     }....................
-        # Cache this referent *AFTER* both validating this referent to be a
-        # valid type and possibly reducing this referent to a more preferable
-        # type above.
-        #
-        # Note that, unlike a similar call to the comparable
-        # _cache_ref_proxy_referent_hint() cacher in the lower-level
-        # __resolved_hint_beartype__() property far above, this call suffers
-        # *NO* chicken-and-egg infinite recursion issues and is thus
-        # intentionally called at the ideal time: immediately before returning.
-        _cache_ref_proxy_referent_type(cls=cls, referent_type=referent_type)  # pyright: ignore
-
-        # Return this referent.
-        return referent_type  # type: ignore[return-value]
+        # Trivially defer to this lower-level method of this global cache.
+        return ref_proxy_cache.cache_ref_proxy_referent_type(cls)
 
 
     #FIXME: Remove this officially deprecated property after a sufficient number
@@ -1001,466 +804,3 @@ class BeartypeForwardRefMetaclass(type):
 
         # Defer to the equivalent non-deprecated property. *sigh*
         return cls.__resolved_type_beartype__
-
-# ....................{ PRIVATE ~ globals : hint           }....................
-_ref_proxy_to_resolved_hint: dict[BeartypeForwardRefABC, Hint] = {}
-'''
-**Forward reference type hint referent cache** (i.e., dictionary mapping from
-each forward reference proxy to the target referent type hint referred to by
-that proxy).
-
-This cache serves a dual purpose. Notably, this cache both enables:
-
-* External callers to iterate over all previously instantiated forward reference
-  proxies. This is particularly useful when responding to module reloading,
-  which requires that *all* previously cached types be uncached.
-* The
-  :attr:`.BeartypeForwardRefMetaclass.__resolved_hint_beartype__` property to
-  internally memoize this referent. Since the existing ``property_cached``
-  decorator could also trivially do so, this is a negligible side effect.
-'''
-
-
-_ref_proxy_to_resolved_hint_get = _ref_proxy_to_resolved_hint.get
-'''
-:meth:`dict.get` method bound to the :data:`._ref_proxy_to_resolved_hint` global
-dictionary, globalized as a negligible microoptimization.
-'''
-
-# ....................{ PRIVATE ~ globals : type           }....................
-_ref_proxy_to_resolved_type: dict[BeartypeForwardRefABC, type] = {}
-'''
-**Forward reference type referent cache** (i.e., dictionary mapping from each
-forward reference proxy to the target referent type referred to by that proxy).
-
-See Also
---------
-:data:`._ref_proxy_to_resolved_hint`
-    Further details.
-'''
-
-
-_ref_proxy_to_resolved_type_get = _ref_proxy_to_resolved_type.get
-'''
-:meth:`dict.get` method bound to the :data:`._ref_proxy_to_resolved_type` global
-dictionary, globalized as a negligible microoptimization.
-'''
-
-# ....................{ PRIVATE ~ testers                  }....................
-#FIXME: Unit test us up, please.
-def _is_ref_proxy_resolved(cls: BeartypeForwardRefABC) -> bool:
-    '''
-    :data:`True` only if the passed **forward reference proxy** (i.e.,
-    :class:`.BeartypeForwardRefABC` object) has already been resolved to its
-    **target referent** (i.e., type hint referred to by this source reference).
-
-    Parameters
-    ----------
-    cls : BeartypeForwardRefABC
-        Forward reference proxy to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this proxy has been resolved to its referent.
-    '''
-    assert isinstance(cls, BeartypeForwardRefMetaclass), (
-        f'{repr(cls)} not beartype forward reference proxy.')
-
-    # Return true only if this proxy has been resolved to its referent.
-    return cls in _ref_proxy_to_resolved_hint
-
-# ....................{ PRIVATE ~ cachers                  }....................
-#FIXME: Unit test us up, please.
-def _cache_ref_proxy_referent_hint(
-    cls: BeartypeForwardRefABC, referent_hint: Hint) -> None:
-    '''
-    Associate the passed **forward reference proxy** (i.e.,
-    :class:`.BeartypeForwardRefABC` object) with the passed **target referent
-    type hint** (i.e., external type hint referred to by the source forward
-    reference encapsulated by this proxy).
-
-    Parameters
-    ----------
-    cls : BeartypeForwardRefABC
-        Forward reference proxy to cache this referent against.
-    referent_hint : Hint
-        Target referent type hint to be cached.
-    '''
-    assert isinstance(cls, BeartypeForwardRefMetaclass), (
-        f'{repr(cls)} not beartype forward reference proxy.')
-    # print(f'Cached proxy {repr(cls)} referent hint: {repr(referent_hint)}')
-
-    # Cache this target referent against this source forward reference proxy.
-    _ref_proxy_to_resolved_hint[cls] = referent_hint
-
-
-#FIXME: Unit test us up, please.
-def _cache_ref_proxy_referent_type(
-    cls: BeartypeForwardRefABC, referent_type: type) -> None:
-    '''
-    Associate the passed **forward reference proxy** (i.e.,
-    :class:`.BeartypeForwardRefABC` object) with the passed **target referent
-    type** (i.e., external type referred to by the source forward reference
-    encapsulated by this proxy).
-
-    Parameters
-    ----------
-    cls : BeartypeForwardRefABC
-        Forward reference proxy to cache this referent against.
-    referent_type : type
-        Target referent type to be cached.
-    '''
-    assert isinstance(cls, BeartypeForwardRefMetaclass), (
-        f'{repr(cls)} not beartype forward reference proxy.')
-    # print(f'Cached proxy {repr(cls)} referent type: {repr(referent_type)}')
-
-    # Cache this target referent against this source forward reference proxy.
-    _ref_proxy_to_resolved_type[cls] = referent_type
-
-# ....................{ PRIVATE ~ uncachers                }....................
-def _uncache_ref_proxy_referent_hint(cls: BeartypeForwardRefABC) -> None:
-    '''
-    De-associate the passed **forward reference proxy** (i.e.,
-    :class:`.BeartypeForwardRefABC` object) from the **target referent type
-    hint** (i.e., external type hint referred to by the source forward reference
-    encapsulated by this proxy) previously associated with this proxy.
-
-    Parameters
-    ----------
-    cls : BeartypeForwardRefABC
-        Forward reference proxy to uncache the target referent type hint from.
-    '''
-    assert isinstance(cls, BeartypeForwardRefMetaclass), (
-        f'{repr(cls)} not beartype forward reference proxy.')
-
-    # Uncache the target referent type hint previously cached on this proxy.
-    del _ref_proxy_to_resolved_hint[cls]
-
-
-#FIXME: Currently not required, but preserved for posterity. Never know, bro.
-# def _uncache_ref_proxy_referent_type(cls: BeartypeForwardRefABC) -> None:
-#     '''
-#     De-associate the passed **forward reference proxy** (i.e.,
-#     :class:`.BeartypeForwardRefABC` object) from the **target referent type**
-#     (i.e., external type referred to by the source forward reference
-#     encapsulated by this proxy) previously associated with this proxy.
-#
-#     Parameters
-#     ----------
-#     cls : BeartypeForwardRefABC
-#         Forward reference proxy to uncache the target referent type from.
-#     '''
-#     assert isinstance(cls, BeartypeForwardRefMetaclass), (
-#         f'{repr(cls)} not beartype forward reference proxy.')
-#
-#     # Uncache the target referent type previously cached on this proxy.
-#     del _ref_proxy_to_resolved_type[cls]
-
-# ....................{ PRIVATE ~ factories                }....................
-#FIXME: Unit test us up, please. *sigh*
-def _make_ref_proxy_exception_prefix(cls: BeartypeForwardRefABC) -> str:
-    '''
-    Human-readable substring intended to prefix exception messages raised when
-    the passed **forward reference proxy** (i.e.,
-    :class:`.BeartypeForwardRefMetaclass` instance) fails to dynamically resolve the
-    source forward reference this proxy encapsulates to its target referent.
-
-    Caveats
-    -------
-    **This factory function is computationally expensive and thus intended to be
-    called only when an exception is guaranteed to be raised.**
-
-    Parameters
-    ----------
-    cls : BeartypeForwardRefABC
-        Forward reference proxy to be resolved.
-
-    Returns
-    -------
-    str
-        Human-readable substring as detailed above.
-    '''
-    assert isinstance(cls, BeartypeForwardRefMetaclass), (
-        f'{repr(cls)} not beartype forward reference proxy.')
-
-    # Human-readable substring to prefix raised exception messages with.
-    exception_prefix = cls.__exception_prefix_beartype__
-
-    # If this reference thinly wraps a PEP 749-compliant object-oriented forward
-    # reference, define this substring in a PEP 749-specific manner.
-    if cls.__hint_pep749_ref_beartype__:
-        exception_prefix += 'PEP 649 unquoted forward reference type hint "'  # pyright: ignore
-    # Else, this reference does *NOT* thinly wrap a PEP 749-compliant
-    # object-oriented forward reference (i.e., "annotationlib.ForwardRef"
-    # object). By elimination, this reference *MUST* thickly wrap a
-    # PEP 484-compliant stringified forward reference. In this case...
-    else:
-        exception_prefix += (  # pyright: ignore
-            'PEP 484 stringified forward reference type hint "')
-
-    # PEP 484-compliant stringified forward reference type hint reconstituted
-    # from its constituent substrings encapsulated by this proxy.
-    #
-    # Note that:
-    # * The "cls.__scope_name_beartype__" class variable is guaranteed to be a
-    #   non-empty string *ONLY* for PEP 484-compliant stringified forward
-    #   reference type hints. Ergo, we make no assumptions of its existence.
-    # * PEP 749-compliant unquoted forward reference type hints literally do
-    #   *NOT* exist at runtime. Ergo, this hint *MUST* be reconstituted when
-    #   this proxy encapsulates such a hint.
-    if cls.__scope_name_beartype__:
-        exception_prefix += f'{cls.__scope_name_beartype__}.'
-    exception_prefix += (
-        f'{cls.__hint_name_beartype__}" '
-        f'unresolvable to its target referent, as '
-    )
-
-    # Return this prefix.
-    return exception_prefix
-
-# ....................{ PRIVATE ~ resolvers                }....................
-#FIXME: Unit test us up, please. *sigh*
-def _resolve_hint_pep484_ref_str(
-    # Mandatory parameters.
-    cls: BeartypeForwardRefABC,
-
-    # Optional parameters.
-    exception_cls: TypeException = BeartypeCallHintPep484ForwardRefStrException,
-) -> Hint:
-    '''
-    Resolve the :pep:`484`-compliant **stringified forward reference type
-    hint** (i.e., string referring to a referent target type hint that typically
-    has yet to be defined in the current lexical scope) encapsulated by the
-    passed **forward reference proxy subclass** (i.e.,
-    :class:`.BeartypeForwardRefMetaclass` instance) to that referent.
-
-    This resolver is intentionally *not* memoized (e.g., by the
-    ``@callable_cached`` decorator). Resolving both absolute *and* relative
-    forward references assumes contextual context (e.g., the fully-qualified
-    name of the object to which relative forward references are relative to)
-    that *cannot* be safely and context-freely memoized away.
-
-    Parameters
-    ----------
-    cls : BeartypeForwardRefABC
-        Forward reference proxy subclass to be resolved.
-    exception_cls : Type[Exception], default: BeartypeCallHintPep484ForwardRefStrException
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`.BeartypeCallHintPep484ForwardRefStrException`.
-
-    Returns
-    -------
-    Hint
-        Non-string type hint to which this reference refers.
-
-    Raises
-    ------
-    exception_cls
-        If attempting to dynamically evaluate this reference raises an
-        exception, typically due to this reference being syntactically invalid
-        as Python.
-    '''
-    assert isinstance(cls, BeartypeForwardRefMetaclass), (
-        f'{repr(cls)} not beartype forward reference proxy.')
-    # print(f'Importing ref "{cls.__hint_name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
-
-    # ....................{ PHASE                          }....................
-    # This stringified forward reference is resolved with an iterative series of
-    # ad-hoc strategies, intentionally ordered in descending order of robustness
-    # and efficiency (i.e., from most to least robust and efficient). Robustness
-    # takes priority over efficiency, all else being equal. It never is! Why!?!?
-
-    # ....................{ LOCALS                         }....................
-    # Fully-qualified module name and unqualified basename of the target
-    # referent to resolve from this stringified forward reference, localized
-    # both for readability and as a negligible microoptimization. Fight us, fam.
-    referent_module_name: str = cls.__scope_name_beartype__  # pyright: ignore
-    referent_basename: str = cls.__hint_name_beartype__  # pyright: ignore
-
-    # ....................{ PHASE ~ global                 }....................
-    # Target referent dynamically imported from this module if this module is
-    # both importable and defines this referent in global scope as a globally
-    # accessible attribute *OR* the sentinel placeholder (i.e., if this module
-    # is unimportable or fails to define this referent as such a global).
-    #
-    # Although admittedly expensive, dynamic module importation and global
-    # attribute lookup is the most robust and efficient means of resolving
-    # stringified forward references. Ergo, this is the first phase.
-    referent_hint: Hint = import_module_attr_or_sentinel(
-        attr_name=referent_basename,
-        module_name=referent_module_name,
-        exception_cls=exception_cls,
-        # Delay calling the preferable (yet expensive)
-        # _make_ref_proxy_exception_prefix(cls) function until required below.
-        exception_prefix=cls.__exception_prefix_beartype__,  # pyright: ignore
-    )
-
-    # If this module is importable and defines this referent, return this
-    # referent as is immediately.
-    if referent_hint is not SENTINEL:
-        return referent_hint
-    # Else, this module is unimportable *OR* fails to define this referent.
-
-    # If this proxy does *NOT* proxy a PEP 484-compliant stringified forward
-    # reference type hint annotating a locally decorated callable, this forward
-    # reference type hint annotated a globally decorated callable. Ergo, the
-    # target referent referred to by this reference *SHOULD* have also been
-    # accessible from the global scope of this module. Since it wasn't...
-    #
-    # See the "__func_local_parent_codeobj_weakref_beartype__" docstring for
-    # further details.
-    if cls.__func_local_parent_codeobj_weakref_beartype__ is None:
-        # Raise a human-readable exception describing this failure by instead
-        # deferring to the mandatory variant of the import function above.
-        import_module_attr(
-            attr_name=referent_basename,
-            module_name=referent_module_name,
-            exception_cls=BeartypeCallHintPep484ForwardRefStrException,
-            exception_prefix=_make_ref_proxy_exception_prefix(cls),
-        )
-
-        # Assert that the prior call raised the expected exception. Sanity test!
-        assert False  # pragma: no cover
-    # Else, this proxy proxies a PEP 484-compliant stringified relative forward
-    # reference type hint annotating a locally decorated callable. In this case,
-    # avoid emitting false positives by erroneously assuming that the target
-    # referent referred to by this forward reference *SHOULD* have also been
-    # accessible from the global scope of this module. On the contrary, this
-    # referent is likely to *ONLY* be accessible from the local scope of the
-    # body of that locally decorated callable.
-
-    # ....................{ PHASE ~ local                  }....................
-    # There now exist two main edge cases. That locally decorated callable is
-    # currently being called from either:
-    # * The same local scope defining that callable. In this case, this forward
-    #   reference can be safely resolved by introspecting up the call stack for
-    #   the stack frame encapsulating that local scope.
-    # * A different scope (either global or local) from the same local scope
-    #   defining that callable. Two more edge cases arise here. Either:
-    #   * That different scope is a child local scope induced by a call to
-    #     another callable called from the local scope of the body of that
-    #     locally decorated callable. This uncommon edge case occurs when:
-    #     1. That locally decorated callable passes itself (e.g., as a callback)
-    #        to a lower-level callable called from within itself.
-    #     2. That lower-level callable calls that locally decorated callable.
-    #     In this case, this forward reference can yet again be safely resolved
-    #     by introspecting up the call stack for the stack frame encapsulating
-    #     that local scope.
-    #   * That different scope is either a global scope *OR* a child local scope
-    #     *NOT* induced by such a call (as detailed above). In this considerably
-    #     more common case, this forward reference *CANNOT* be safely resolved
-    #     by introspecting up the call stack for the stack frame encapsulating
-    #     that local scope. Instead, the best that @beartype (or *ANY* runtime
-    #     type-checker for that matter) can do here is to "pretend" to resolve
-    #     this forward reference to a fake proxy type.
-    #
-    # We now attempt to resolve all edge cases (described above) in which this
-    # forward reference *CAN* be safely resolved by introspecting up the call
-    # stack for the stack frame encapsulating the local scope of the body of the
-    # locally @beartype-decorated callable annotated by the stringified relative
-    # forward reference type hint proxied by this proxy.
-    #
-    # Call stack introspection is *MUCH* less:
-    # * Robust. Why? Because the stack frame code object iteratively searched
-    #   for below is conditionally accessed through a previously cached weak
-    #   reference that may already be dead (i.e., garbage-collected).
-    # * Efficient. This introspection performs O(n) iteration for a possibly
-    #   large n, especially under the common case of a third-party package or
-    #   module calling @beartype-decorated callables recursively.
-    #
-    # Call stack introspection is still more robust, however, than the
-    # last-ditch fallback of pretending to resolve this stringified forward
-    # reference to a fake proxy type. Ergo, this is the next phase.
-
-    # Code object underlying the lexical scope of the parent type or callable
-    # whose body locally defines that locally decorated callable if that parent
-    # is still alive (i.e., has yet to be garbage-collected) *OR* "None"
-    # otherwise (i.e., if that parent has already been garbage-collected).
-    func_local_parent_codeobj = (
-        cls.__func_local_parent_codeobj_weakref_beartype__())
-
-    # If that parent type or callable is still alive...
-    if func_local_parent_codeobj is not None:
-        # First frame on the call stack whose code object is this code object if
-        # the call stack contains such a frame *OR* "None" otherwise.
-        func_local_parent_frame = find_frame_codeobject_or_none(
-            frame_codeobj=func_local_parent_codeobj,
-            # Ignore the frame embodying the current call to this resolver.
-            ignore_frames=1,
-        )
-
-        # If the call stack contains a frame whose code object is this code
-        # object...
-        if func_local_parent_frame is not None:
-            # print(f'PEP 484 relative forward reference {repr(cls)} local frame found!')
-
-            # Local scope encapsulated by this frame.
-            #
-            # Note that the sibling get_frame_globals() getter need *NOT* be
-            # called here. Why? Because we already tried and failed to access
-            # this hint from the global scope of this module above. Ergo, this
-            # hint *MUST* be defined in that local scope.
-            func_local_parent_locals = get_frame_locals(func_local_parent_frame)
-
-            # Target referent referred to by this reference defined in the local
-            # scope of that parent type or callable defining that locally
-            # decorated callable if this local scope also defines this target
-            # referent *OR* the sentinel placeholder otherwise.
-            referent_hint = func_local_parent_locals.get(
-                referent_basename, SENTINEL)
-
-            # If that local scope defines this referent, return this referent.
-            if referent_hint is not SENTINEL:
-                # print(f'PEP 484 relative forward reference {repr(cls)} referent found: {repr(referent_hint)}')
-                return referent_hint
-            # Else, that local scope fails to define this referent.
-
-            # Substring prefixing the exception message to be raised below.
-            exception_prefix = _make_ref_proxy_exception_prefix(cls)
-
-            # Fully-qualified name of that parent type or callable.
-            func_local_parent_name = get_frame_name(func_local_parent_frame)
-
-            # Raise a human-readable exception.
-            raise exception_cls(
-                f'{exception_prefix}'
-                f'"{referent_basename}" undefined as either:\n'
-                f'* Global attribute of module "{referent_module_name}".\n'
-                f'* Local attribute of parent callable or type '
-                f'"{func_local_parent_name}", which locally defines '
-                f'currently called @beartype-decorated nested callable '
-                f'annotated by this forward reference.'
-            )
-        # Else, the call stack contains *NO* frame whose code object is this
-        # code object.
-    # Else, that parent type or callable is dead.
-
-    # ....................{ PHASE ~ fake                   }....................
-    # Avoid circular import dependencies.
-    from beartype._check.forward.reference.fwdrefproxy import (
-        proxy_hint_pep484_ref_str_fake)
-
-    # Pretend to resolve this reference to a beartype-specific forward reference
-    # fake proxy, a dynamically generated type pretending to proxy calls to the
-    # following callables when passed this proxy as:
-    # * The second parameter to the issubclass() builtin, internally called by
-    #   the PEP 3119-compliant __subclasscheck__() dunder method, itself
-    #   implicitly called by an issubclass() call in the body of a
-    #   @beartype-generated type-checking wrapper function.
-    # * The second parameter to our is_bearable() tester, internally called by
-    #   the PEP 3119-compliant __instancecheck__() dunder method, itself
-    #   implicitly called by an isinstance() call in the body of a
-    #   @beartype-generated type-checking wrapper function.
-    # * The second parameter to our get_hint_object_violation() getter,
-    #   internally called by the beartype-specific __instancecheck_str__()
-    #   dunder method, explicitly called by the "beartype._check.error"
-    #   subpackage to raise human-readable type-checking violations.
-    #
-    # Note that this factory is memoized and thus requires that all parameters
-    # only be passed positionally.
-    referent_hint = proxy_hint_pep484_ref_str_fake(
-        referent_module_name, referent_basename)
-
-    # Return this fake type proxy as a last-ditch act of foolhardy bravado.
-    return referent_hint

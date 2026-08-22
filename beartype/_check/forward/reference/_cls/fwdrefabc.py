@@ -41,9 +41,24 @@ from typing import (
 class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     '''
     Abstract base class (ABC) of all **forward reference proxy subclasses**
-    (i.e., classes whose :class:`.BeartypeForwardRefMetaclass` metaclass defers the
-    resolution of forward reference type hints referencing type hints that have
-    yet to be defined in the lexical scopes of external callers).
+    (i.e., classes whose
+    :class:`beartype._check.forward.reference._cls.fwdrefmeta.BeartypeForwardRefMetaclass`
+    metaclass defers the resolution of forward reference type hints referencing
+    type hints that have yet to be defined in the lexical scopes of external
+    callers).
+
+    Note that the call to the low-level
+    :func:`beartype._util.cls.utilclsmake.make_type` factory function performed
+    by the higher-level
+    :func:`beartype._check.forward.reference.fwdrefproxy._proxy_hint_ref` proxy
+    function defines these additional class attributes on *all* subclasses of
+    this ABC, which are thus guaranteed to exist at early proxy creation without
+    requiring this proxy to be resolved to its target referent type hint:
+
+    * ``__module__``, the fully-qualified name of the module containing the
+      target referent type hint this proxy subclass refers to.
+    * ``__name__``, the unqualified basename of the target referent type hint
+      this proxy subclass refers to.
 
     Caveats
     -------
