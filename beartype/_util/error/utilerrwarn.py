@@ -6,7 +6,7 @@
 '''
 Project-wide **warning handlers** (i.e., low-level callables manipulating
 non-fatal warnings -- which, technically, are also exceptions -- in a
-human-readable, general-purpose manner).
+human-readable general-purpose manner).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -15,7 +15,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatyping import TypeWarning
-from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.error.utilerrtest import is_exception_message_str
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_11,
@@ -107,6 +106,7 @@ def warnings_ignored(
                 yield
 
 # ....................{ WARNERS                            }....................
+#FIXME: Unit test us up, please. *sigh*
 # If the active Python interpreter targets Python >= 3.12, the standard
 # warnings.warn() function supports the optional "skip_file_prefixes" parameter
 # critical for emitting more useful warnings. In this case, define our

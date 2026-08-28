@@ -912,11 +912,11 @@ Specifically, this hint matches:
 # ....................{ TYPE                               }....................
 TypeException = type[Exception]
 '''
-PEP-compliant type hint matching *any* exception class.
+:pep:`585`-compliant type hint matching *any* exception class.
 '''
 
 
 TypeWarning = type[Warning]
 '''
-PEP-compliant type hint matching *any* warning category.
+:pep:`585`-compliant type hint matching *any* warning category.
 '''
