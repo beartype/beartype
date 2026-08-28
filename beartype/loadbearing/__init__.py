@@ -14,4 +14,8 @@ exact subset currently supported.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.loadbearing._marshal import (
+    from_json,
+    to_json,
+)
 from beartype.loadbearing._schema import to_json_schema

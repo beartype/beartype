@@ -30,7 +30,20 @@ from dataclasses import (
     is_dataclass,
 )
 from enum import Enum
-from typing import get_type_hints
+from typing import (
+    TYPE_CHECKING,
+    get_type_hints,
+)
+
+# If statically type-checking, import the stub-only "DataclassInstance"
+# protocol. "Dataclass instance" is *NOT* a nominally expressible type:
+# the @dataclass decorator adds *NO* superclass, rendering dataclass-ness
+# purely structural. Typeshed defines this protocol (matching any class
+# defining "__dataclass_fields__") for precisely this reason. Since the
+# "_typeshed" module exists *ONLY* at static type-checking time, this import
+# *CANNOT* be performed at runtime.
+if TYPE_CHECKING:
+    from _typeshed import DataclassInstance
 
 # ....................{ PRIVATE ~ globals                  }....................
 _SCALAR_CLS_TO_SCHEMA_TYPE = {
@@ -61,7 +74,7 @@ JSON-encodable. Ergo, both are currently unsupported.
 '''
 
 # ....................{ TRANSLATORS                        }....................
-def to_json_schema(datacls: type) -> dict:
+def to_json_schema(datacls: 'type[DataclassInstance]') -> dict:
     '''
     JSON Schema (draft 2020-12) validating JSON objects deserializable into
     instances of the passed :pep:`557`-compliant dataclass.
@@ -102,7 +115,7 @@ def to_json_schema(datacls: type) -> dict:
 
     Parameters
     ----------
-    datacls : type
+    datacls : type[DataclassInstance]
         :pep:`557`-compliant dataclass to be translated.
 
     Returns
