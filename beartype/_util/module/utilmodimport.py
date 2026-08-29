@@ -15,11 +15,11 @@ from beartype.roar import BeartypeModuleUnimportableWarning
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._cave._cavefast import ModuleType
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.py.databuiltins import BUILTIN_NAME_TO_TYPE
 from beartype._data.typing.datatyping import TypeException
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.text.utiltextidentifier import die_unless_identifier
-from beartype._data.kind.datakindiota import SENTINEL
 from importlib import import_module as importlib_import_module
 from typing import (
     Any,
