@@ -425,8 +425,16 @@ test-tox = [
     "typer",
 
     # ....................{ CLI ~ click                    }....................
+    #FIXME: Excise this "< 8.5.0" pin *AFTER* "rich-click" publishes a release
+    #compatible with click >= 8.5.0. Click 8.5.0 deprecates the
+    #click.utils.get_binary_stream() function, which "rich-click" 1.9.8 (the
+    #most recent release at this time) still calls at importation time. The
+    #resulting importation-time "DeprecationWarning" is then re-emitted by our
+    #import_module_or_none() utility function as a non-fatal
+    #"BeartypeModuleUnimportableWarning" -- which this test suite's strict
+    #warning policy then escalates into a fatal test_click_command() failure.
     # Required by optional Click-specific integration tests.
-    "click",
+    "click < 8.5.0",
     "rich-click",
 
     # Required by optional Celery-specific integration tests. Note that Celery
