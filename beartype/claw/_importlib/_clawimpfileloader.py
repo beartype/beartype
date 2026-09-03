@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from ast import PyCF_ONLY_AST
+from contextvars import ContextVar
 from beartype.roar._roarexc import (
     _BeartypeClawImportlibIsPathHookActiveException)
 from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
@@ -38,6 +39,13 @@ from importlib.machinery import SourceFileLoader
 from importlib.util import decode_source
 from types import CodeType
 from typing import Optional
+
+# True only while this module is lazily importing the state required to decide
+# whether the current module should be transformed. Third-party importers may
+# recursively invoke this loader while those imports are still in progress.
+_IS_GET_CODE_IMPORTING_STATE: ContextVar[bool] = ContextVar(
+    '_IS_GET_CODE_IMPORTING_STATE', default=False)
+
 
 # ....................{ CLASSES                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -336,6 +344,13 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             efficiently detect whether they were successfully activated or not.
         '''
 
+        # ..................{ RECURSE                        }..................
+        # If a lazy import below recursively invokes this loader, preserve the
+        # nested module as is. Attempting to import our state again would recurse
+        # into a partially initialized "beartype" package.
+        if _IS_GET_CODE_IMPORTING_STATE.get():
+            return super().get_code(fullname)
+
         # ..................{ SMOKE                          }..................
         # If that module name is that of the beartype import hook activation
         # smoke test, raise the exception expected by that test. *YO*!
@@ -411,12 +426,10 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # * This "if" conditional *MUST* be performed prior to importing
         #   *ANYTHING* below. Importing *ANYTHING* before this "if" conditional
         #   triggers the above "coverage" failure, which defeats the point.
-        # * There appear to exist *NO* working alternatives to a "regex"-based
-        #   recursion guard like this. Hard-coding a finite set of problematic
-        #   package and module names into this
-        #   "BLACKLIST_CLAW_PACKAGE_NAMES_REGEX" global is clearly fragile and
-        #   liable to break under future CPython versions. Ideally, we would
-        #   instead dynamically detect "importlib" recursion with logic like:
+        # * This regex-based guard remains necessary to proactively bypass known
+        #   problematic packages. It is separate from the context-local guard
+        #   above, which handles re-entry while lazily importing hook state. An
+        #   older dynamic guard only activated for "beartype" module names:
         #   * Declare this private global at module scope below:
         #         #FIXME: Non-thread and -"asyncio"-safe, obviously. This
         #         #should instead be declared as a "contextvars.ContextVar".
@@ -452,19 +465,10 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         #               if is_import_in_beartype_ending:
         #                   _is_import_in_beartype = False
         #
-        # Sadly, that fails with circular "ImportError" exceptions. Why? No
-        # idea. When the current "regex"-based approach inevitably falters, we
-        # should revisit the above global-based approach. Our assumption as to
-        # why this fails is the private pure-Python
-        # importlib._bootstrap._call_with_frames_removed() helper, which the
-        # C-based "import.c" file detects and then strips *ALL* "importlib"
-        # frames from the call stack. In theory, that CPython behaviour might
-        # prohibit the sort of recursion detection we attempt below. In
-        # practice, however, we *CANNOT* simply monkey-patch away all calls to
-        # importlib._bootstrap._call_with_frames_removed(). Doing so would
-        # fatally break Python by invite "RecursionLimit" exceptions induced by
-        # exhausting the stack during import handling. In other words, there is
-        # likely to *NO* valid alternative to the current approach. *shrug*
+        # That narrower guard fails with circular "ImportError" exceptions
+        # because it only activates after re-entry reaches a "beartype" module.
+        # The context-local guard above instead activates before the lazy imports
+        # below and bypasses every nested loader call until they finish.
         if BLACKLIST_CLAW_PACKAGE_NAMES_REGEX.match(fullname) is not None:
             return super().get_code(fullname)
         # Else, that module does *NOT* reside in a problematic package.
@@ -474,8 +478,12 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         #
         # Note that these imports *MUST* be performed after the recursion guard
         # performed above.
-        from beartype.claw._clawstate import claw_state
-        from beartype.claw._package.clawpkgtrie import get_package_conf_or_none
+        state_import_token = _IS_GET_CODE_IMPORTING_STATE.set(True)
+        try:
+            from beartype.claw._clawstate import claw_state
+            from beartype.claw._package.clawpkgtrie import get_package_conf_or_none
+        finally:
+            _IS_GET_CODE_IMPORTING_STATE.reset(state_import_token)
 
         # ..................{ NOOP                           }..................
         # Beartype configuration with which to type-check that module if that
