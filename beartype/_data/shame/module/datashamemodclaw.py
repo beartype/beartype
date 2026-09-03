@@ -119,9 +119,11 @@ def _init() -> None:
     _BLACKLIST_CLAW_PACKAGE_NAMES = frozenset((
         'beartype',
         'importlib',
-        'numbers',
-        'shutil',
-        'tempfile',
+
+        #FIXME: Excise us up. These are probably no longer relevant. *shrug*
+        # 'numbers',
+        # 'shutil',
+        # 'tempfile',
     ))
 
     # "|"-delimited string of these names.

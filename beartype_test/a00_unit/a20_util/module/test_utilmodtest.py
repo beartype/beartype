@@ -71,12 +71,14 @@ def test_is_module() -> None:
     assert is_module(
         'beartype_test.a00_unit.data.util.module.data_utilmodule_good') is True
 
-    # Assert that this tester accepts the name of a pair of existing modules
-    # that circularly import from one another and thus induce Python to raise an
-    # "ImportError" exception at importation time claiming these modules to only
-    # be partially initialized. Although these modules have been maliciously
-    # implemented so as to *ALWAYS* raise this exception, almost all real-world
-    # partially initialized modules of interest are only temporarily that way.
+    # Assert that this tester accepts the name of a module whose global scope
+    # intentionally circularly imports from another module whose global scope
+    # intentionally circularly imports from that first module, which induces
+    # Python to raise an "ImportError" exception at importation time claiming
+    # these modules to only be partially initialized. Although these modules
+    # have been maliciously implemented so as to *ALWAYS* raise this exception,
+    # almost all real-world partially initialized modules of interest are only
+    # temporarily and accidentally partially initialized. Still, this suffices.
     assert is_module(
         'beartype_test.a00_unit.data.util.module.circular.data_utilmodcircular_gates'
     ) is True

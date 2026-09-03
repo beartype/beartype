@@ -19,8 +19,7 @@ from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                              }....................
 @skip_unless_package('coverage')
-def test_coverage_beartype_claw(
-    monkeypatch: 'pytest.MonkeyPatch', tmp_path: 'pathlib.Path') -> None:
+def test_coverage_beartype_claw(tmp_path: 'pathlib.Path') -> None:
     '''
     Integration test validating that :func:`beartype.claw` import hooks
     integrate cleanly with the popular ``coverage`` entry point exposed by the
@@ -36,9 +35,6 @@ def test_coverage_beartype_claw(
 
     Parameters
     ----------
-    monkeypatch : MonkeyPatch
-        :mod:`pytest` fixture allowing various state associated with the active
-        Python process to be temporarily changed for the duration of this test.
     tmp_path : pathlib.Path
         Abstract path encapsulating a temporary directory unique to this test,
         created in the base temporary directory.
@@ -53,6 +49,7 @@ def test_coverage_beartype_claw(
         run_command_forward_output)
     from beartype_test._util.path.pytpathtest import (
         get_test_func_data_external_coverage_dir)
+    from pytest import MonkeyPatch
 
     # ....................{ CONSTANTS                      }....................
     # Tuple of all shell words with which to run the external "coverage"
@@ -74,10 +71,11 @@ def test_coverage_beartype_claw(
         #
         # Don't blame us. We voted for Beardos.
         '--source', 'dismal_rack_of_clouds.and_all_along',
+        # '--source="dismal_rack_of_clouds.and_all_along"',
 
         # Instruct Coverage.py to run "pytest" against the "pytest"-based test
         # suite also bundled with this package.
-        '-m', 'pytest', 'dismal_rack_of_clouds_tests',
+        '-m', 'pytest', 'dismal_rack_of_clouds_tests/',
     )
 
     # ....................{ LOCALS                         }....................
@@ -96,14 +94,20 @@ def test_coverage_beartype_claw(
     # ....................{ PATHS                          }....................
     # Recursively copy this Coverage.py project into this temporary directory.
     copy_dir(src_dirname=project_dir_src, trg_dirname=project_dir_trg)
-
-    # Change the current working directory (CWD) to that of this Coverage.py
-    # project.
-    monkeypatch.chdir(project_dir_trg)
+    # from os import listdir
+    # print(f'src_dirname = "{project_dir_src}"')
+    # print(f'trg_dirname = "{project_dir_trg}"')
+    # print(f'trg contents = {repr(listdir(project_dir_trg))}')
 
     # ....................{ COMMANDS                       }....................
-    # Run the "coverage" command in the current ${PATH} with these options and
-    # arguments, raising an exception on subprocess failure while forwarding
-    # all standard output and error output by this subprocess to the
-    # standard output and error file handles of the active Python process.
-    run_command_forward_output(command_words=COVERAGE_ARGS)
+    # Inside the equivalent of the "monkeypatch" fixture...
+    with MonkeyPatch.context() as monkeypatch:
+        # Change the current working directory (CWD) to that of this Coverage.py
+        # project.
+        monkeypatch.chdir(project_dir_trg)
+
+        # Run the "coverage" command in the current ${PATH} with these options
+        # and arguments, raising an exception on subprocess failure while
+        # forwarding all standard output and error output by this subprocess to
+        # the standard output and error file handles of this parent process.
+        run_command_forward_output(command_words=COVERAGE_ARGS)

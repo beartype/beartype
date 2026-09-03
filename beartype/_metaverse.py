@@ -4,10 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype metaverse** (e.g., submodule exporting scalar global constants safely
+Project **metaverse** (e.g., submodule exporting scalar global constants safely
 describing this package *without* requiring first- or third-party imports from
-potentially unsafe external packages or modules residing outside the main
-:mod:`beartype` codebase).
+potentially unsafe external packages or modules residing outside this package).
 
 This private submodule is imported by the public :mod:`beartype.meta` submodule.
 Why? Because that submodule unsafely imports from other packages and modules

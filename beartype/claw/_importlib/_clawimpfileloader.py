@@ -29,6 +29,7 @@ from beartype._data.claw.dataclawmagic import (
 from beartype._data.shame.module.datashamemodclaw import (
     BLACKLIST_CLAW_PACKAGE_NAMES_REGEX)
 from beartype._util.ast.utilastget import get_node_repr_indented
+from beartype._util.bear.utilbearpackage import is_beartype_initted_partial
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_15
 from beartype._util.text.utiltextlabel import label_exception_message
 from importlib import (  # type: ignore[attr-defined]
@@ -465,9 +466,32 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # fatally break Python by invite "RecursionLimit" exceptions induced by
         # exhausting the stack during import handling. In other words, there is
         # likely to *NO* valid alternative to the current approach. *shrug*
-        if BLACKLIST_CLAW_PACKAGE_NAMES_REGEX.match(fullname) is not None:
+        if (
+            # Beartype itself has only been partially initialized (in which case
+            # attempting to import *ANY* submodule of the "beartype" package
+            # below could possibly raise an "ImportError" exception) *OR*...
+            is_beartype_initted_partial() or
+            BLACKLIST_CLAW_PACKAGE_NAMES_REGEX.match(fullname) is not None
+        # If that module being imported *CANNOT* be safely type-checked...
+        ):
             return super().get_code(fullname)
-        # Else, that module does *NOT* reside in a problematic package.
+        # # Else, that module being imported can now be safely type-checked.
+        # if BLACKLIST_CLAW_PACKAGE_NAMES_REGEX.match(fullname) is not None:
+        #     return super().get_code(fullname)
+        # # Else, that module does *NOT* reside in a problematic package.
+
+        # try:
+        #     from beartype._util.bear.utilbearpackage import (
+        #         is_beartype_initted_partial)
+        # except ImportError:
+        #     return super().get_code(fullname)
+        #
+        # # If beartype itself has only been partially initialized, attempting to
+        # # import *ANY* submodule of the "beartype" package below could possibly
+        # # raise an "ImportError" exception. In this case...
+        # if is_beartype_initted_partial():
+        #     return super().get_code(fullname)
+        # # Else, that module being imported can now be safely type-checked.
 
         # ..................{ IMPORTS                        }..................
         # Avoid circular import dependencies.

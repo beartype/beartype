@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**beartype blacklist utility** unit tests.
+Beartype **blacklist utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.bear.utilbearblack` submodule.

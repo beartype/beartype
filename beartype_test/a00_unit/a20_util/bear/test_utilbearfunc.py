@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype-generated wrapper function utility** unit tests.
+Beartype **wrapper function utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.bear.utilbearfunc` submodule.
