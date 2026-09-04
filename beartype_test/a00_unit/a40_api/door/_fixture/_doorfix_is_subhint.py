@@ -107,6 +107,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         TypedDict,
         Union,
     )
+    from types import UnionType
 
     # ..................{ NEWTYPES                           }..................
     NewStr = NewType('NewStr', str)
@@ -339,6 +340,17 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Union[str, list], Union[str, int], False),
         (Union[int, str, list], list, False),
         (Union[int, str, list], Union[int, str], False),
+
+        # PEP 604-compliant "int | str" new-style unions instantiate the
+        # low-level C-based "types.UnionType" class. Passing either that
+        # class itself (rather than an instance of it) or a "type[...]" hint
+        # wrapping that class used to raise an unexpected
+        # "BeartypeDecorHintPepException", because the class' inherited
+        # "__args__" dunder attribute is an unbound slot descriptor rather
+        # than an actual tuple of child hints. See also the "typing.Union"
+        # cases above.
+        (type(int | str), type[Union], False),
+        (type[int | str], type[UnionType], False),
 
         # ..................{ PEP (484|585) ~ callable       }..................
         # PEP 484-compliant callable type hints.
