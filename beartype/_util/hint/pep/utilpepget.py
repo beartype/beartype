@@ -46,6 +46,7 @@ from beartype._util.hint.pep.proposal.pep585 import (
 )
 from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
     make_hint_pep646_typevartuple_unpacked_subbed)
+from types import UnionType
 from typing import (
     Any,
     Optional,
@@ -158,7 +159,16 @@ def get_hint_pep_childs(hint: object) -> tuple:
         # valid hints, this "__args__" implementation is *TECHNICALLY* also
         # valid albeit semantically meaningless. In this case, simply return the
         # empty tuple.
-        if hint is Union:
+        #
+        # Likewise, if this hint is the unsubscripted "types.UnionType" class
+        # itself (as opposed to an actual PEP 604-compliant union instance
+        # like "int | str"), this hint's "__args__" dunder attribute is
+        # merely the unbound slot descriptor inherited from the class, not an
+        # actual tuple of child hints. This arises whenever a caller passes
+        # "type(some_union)" or "UnionType" itself as a hint (e.g., inside a
+        # "type[...]" hint). As with the "Union" case above, return the empty
+        # tuple rather than erroring out.
+        if hint is Union or hint is UnionType:
             return ()
         # Else, this hint is *NOT* the unsubscripted "typing.Union" hint. In
         # this case, raise an exception.
