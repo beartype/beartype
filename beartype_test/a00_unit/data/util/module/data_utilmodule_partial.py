@@ -16,7 +16,7 @@ current from global scope).
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.bear.utilbearpackage import is_module_initted_partial
+from beartype._util.module.utilmodinitted import is_module_initted_partial
 
 # ....................{ ASSERTS                            }....................
 # Assert that this tester reports the module currently being imported to be only
@@ -27,6 +27,6 @@ assert is_module_initted_partial(__name__) is True
 # "importlib" machinery during the importation of this submodule. Yeah. We know.
 del __spec__
 
-# Assert that this tester reports the module currently being imported to now be
-# fully initialized (i.e., imported). Yeah. We know. Not our fault, bro. *shrug*
-assert is_module_initted_partial(__name__) is False
+# Assert that this tester reports the module currently being imported to still
+# be only partially initialized, despite our malicious behaviour above. \o/
+assert is_module_initted_partial(__name__) is True

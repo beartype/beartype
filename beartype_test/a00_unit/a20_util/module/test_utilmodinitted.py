@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **package utility** unit tests.
+Project-wide **module partially initialized utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.bear.utilbearpackage` submodule.
+:mod:`beartype._util.module.utilmodinitted` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -17,36 +17,16 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ testers                    }....................
-def test_is_beartype_initted_partial() -> None:
-    '''
-    Test the
-    :func:`beartype._util.bear.utilbearpackage.is_beartype_initted_partial`
-    tester.
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype._util.bear.utilbearpackage import is_beartype_initted_partial
-
-    # ....................{ ASSERTS                        }....................
-    #FIXME: Additionally pass various other kinds of objects commonly passed to
-    #this tester in real-world code (e.g., callables, classes).
-
-    # Assert that this tester reports the "beartype" package to be fully
-    # initialized from within any arbitrary unit test.
-    assert is_beartype_initted_partial() is False
-
-
 def test_is_module_initted_partial() -> None:
     '''
     Test the
-    :func:`beartype._util.bear.utilbearpackage.is_module_initted_partial`
+    :func:`beartype._util.module.utilmodinitted.is_module_initted_partial`
     tester.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.bear.utilbearpackage import is_module_initted_partial
+    from beartype._util.module.utilmodinitted import is_module_initted_partial
 
     # ....................{ ASSERTS                        }....................
     # Assert that this tester reports an arbitrary module guaranteed to *NOT*

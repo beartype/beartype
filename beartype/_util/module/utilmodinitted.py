@@ -4,34 +4,27 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :mod:`beartype` **package utilities** (i.e., low-level callables
-generically applicable to the *entire* :mod:`beartype` package as a whole).
+Project-wide **module partially initialized utilities** (i.e., low-level
+callables introspecting whether arbitrary modules have been partially
+initialized, fully initialized, or neither).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Avoid importing *ANYTHING* from the "beartype" codebase *ANYWHERE*
+# inside this submodule. Doing so could induce an accidental circular import,
+# due to the tester defined below being transitively called by the
+# beartype.claw._importlib._clawimpfileloader.BeartypeSourceFileLoader.get_code()
+# method, itself transitively called by standard "importlib" machinery on
+# *EVERY* import throughout the active Python process. Manually inline *ALL*
+# functionality required by that tester directly into the body of that tester.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import sys
+from importlib import import_module as importlib_import_module
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please. Probably impossible. Try anyway. At least call
-#this tester from a unit test and assert it raises no exceptions, please. *sigh*
-def is_beartype_initted_partial() -> bool:
-    '''
-    :data:`True` only if :mod:`beartype` has been **fully initialized** (i.e.,
-    sufficiently imported such that :mod:`beartype.claw` import hooks registered
-    by external users may safely type-check under the current call stack
-    but has yet to be fully imported).
-    '''
-
-    #
-    for module_name in _BEARTYPE_INIT_VULNERABLE_MODULE_NAMES:
-        if is_module_initted_partial(module_name):
-            return True
-
-    return False
-
-
 # This tester is intentionally defined in this higher-level submodule rather
 # than the lower-level "beartype._util.module.utilmodtest" submodule, which
 # would ordinarily be the preferred submodule for this tester. Why? Because the
@@ -62,20 +55,47 @@ def is_module_initted_partial(module_name: str) ->  bool:
     '''
     assert isinstance(module_name, str), f'{repr(module_name)} not string.'
 
-    # ....................{ MODULE                         }....................
+    # ....................{ PHASE 1 ~ module               }....................
     # Module object encapsulating either the current partial importation of the
     # module with the passed name *OR* the prior full importation of that module
     # if that module either currently is or has already been imported *OR*
     # "None" otherwise (i.e., If that module has yet to be imported).
     module = sys.modules.get(module_name)
 
-    # If that module has yet to be imported, that module *CANNOT* (by
-    # definition) be partially initialized. In this case, return false.
+    # If that module has yet to be imported, that module *COULD* still be
+    # partially initialized when subsequently imported. The only means of
+    # deciding the question is to attempt to import that module. In this case...
     if module is None:
-        return False
-    # If that module either currently is or has already been imported.
+        #FIXME: Unit test up this edge case, please. *sigh*
+        # Attempt to dynamically import that module.
+        try:
+            module = importlib_import_module(module_name)
+            # print(f'module: {repr(module)}')
+        # If doing so raises the standard "ImportError" exception possibly
+        # implying that module to be only partially initialized...
+        except ImportError as exception:
+            # Message raised by this exception.
+            exception_message = str(exception)
 
-    # ....................{ SPEC                           }....................
+            # If this message indicates that module to be only partially
+            # initialized, return true.
+            if "' from partially initialized module '" in exception_message:
+                print(f'Ignoring partially initialized module "{module_name}"!')
+                return True
+            # Else, this message does *NOT* indicate that module to be only
+            # partially initialized.
+        # If doing so raises any other exception, ignore that exception for the
+        # explicit purpose of this tester.
+        except Exception:
+            pass
+
+        # Return false, since dynamically importing that module above failed to
+        # raise the standard "ImportError" exception implying that module to be
+        # only partially initialized.
+        return False
+    # Else, that module either currently is or has already been imported.
+
+    # ....................{ PHASE 1 ~ spec                 }....................
     # Module spec describing the importation of that module if an external
     # caller has *NOT* already maliciously deleted the "__spec__" dunder
     # attribute providing that module spec *OR* "None" otherwise (i.e., if a
@@ -106,10 +126,9 @@ def is_module_initted_partial(module_name: str) ->  bool:
     # reason we even bother handling this awful edge case is because we are
     # beartype. Beartype is QA. In QA, we handle edge cases. It's what we do.
     if module_spec is None:
-        return False
+        return True
     # Else, that module still defines the "__spec__" dunder attribute. Yay! \o/
 
-    # ....................{ INITTED                        }....................
     # Return true only if this module spec enables the CPython-specific private
     # "_initializing" instance variable defined by the standard (albeit private)
     # importlib._bootstrap._load_unlocked() function: e.g.,
@@ -124,19 +143,3 @@ def is_module_initted_partial(module_name: str) ->  bool:
     #         spec._initializing = True
     #         ...
     return getattr(module_spec, '_initializing', False)
-
-# ....................{ TESTERS                            }....................
-_BEARTYPE_INIT_VULNERABLE_MODULE_NAMES = (
-    'beartype',
-    'beartype.claw._clawstate',
-
-    #FIXME: *DEFINITELY* not right. This fragility suggests that
-    #is_beartype_initted_partial() reports false results. We probably want to
-    #generalize is_module_initted_partial() to additionally attempt to
-    #dynamically import that module and ensure that *NO* "ImportError"
-    #exception is raised.
-    #FIXME: After doing so, comment this out. Everything should just work then.
-    'beartype.claw._package.clawpkgtrie',
-)
-'''
-'''
