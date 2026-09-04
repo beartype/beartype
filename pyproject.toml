@@ -574,6 +574,14 @@ test-tox = [
     # requires Pydantic.
     "fastmcp; python_version < '3.15.0'",
 
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* explicitly supported.
+    # Required by the optional "beartype.loadbearing" Pydantic differential
+    # tests, which treat Pydantic's JSON Schema generation as an oracle. Note
+    # that pydantic is currently *ALSO* a transitive dependency of both
+    # "fastmcp" above and "pandera" further above; this explicit declaration
+    # exists so those tests survive the removal of either.
+    "pydantic; python_version < '3.15.0'",
+
     #FIXME: Actually, let's *NOT* install "pyarrow". "pyarrow" is super-intense,
     #because Apache Arrow is super-intense. Since nothing in @beartype requires
     #"pyarrow", let's tamp down on all this bare-knuckle intensity for now.
