@@ -18,7 +18,8 @@ from pytest import fixture
 
 # ....................{ FIXTURES ~ equality                }....................
 @fixture(scope='session')
-def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
+def door_cases_equality() -> (
+    'collections.abc.Iterable[tuple[object, object, bool]]'):
     '''
     Session-scoped fixture returning an iterable of **hint equality cases**
     (i.e., 3-tuples ``(hint_a, hint_b, is_equal)`` describing the equality
@@ -65,12 +66,24 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
 
     # ..................{ LISTS                              }..................
     HINT_EQUALITY_CASES = [
-        # ..................{ PEP 484 ~ argless : bare       }..................
-        # PEP 484-compliant unsubscripted type hints, which are necessarily
-        # equal to themselves.
-        (tuple, Tuple, True),
+        # ..................{ NON-PEP                        }..................
+        # PEP-noncompliant types are obviously equal to themselves. They better!
         (list, list, True),
-        (list, List, True),
+
+        # ..................{ PEP 484 ~ any                  }..................
+        # PEP 484-compliant "Any" singleton is equal to itself. We swear.
+        (Any, Any, True),
+
+        # PEP 484-compliant "Any" singleton is unequal to *EVERY* other valid
+        # type hint.
+        (Any, str, False),
+        (Any, list[str], False),
+
+        # ..................{ PEP 484 ~ argless              }..................
+        # PEP 484-compliant unsubscripted type hint factories are equal to the
+        # PEP-noncompliant types underlying those factories.
+        (Tuple, tuple, True),
+        (List, list, True),
 
         # ..................{ PEP 484 ~ arg : sequence       }..................
         # PEP 484-compliant sequence type hints.
@@ -95,7 +108,7 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
         (Union[bool, int], Union[int], True),
         (Union[int], Union[bool, int], True),
 
-        # ..................{ PEP 585                        }..................
+        # ..................{ PEP 585 ~ arg                  }..................
         # PEP 585-compliant type hints.
         (tuple[str, ...], Tuple[str, ...], True),
         (list[str], List[str], True),

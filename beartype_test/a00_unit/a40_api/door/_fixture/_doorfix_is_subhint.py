@@ -18,7 +18,8 @@ from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
-def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
+def door_cases_is_subhint() -> (
+    'collections.abc.Iterable[tuple[object, object, bool]]'):
     '''
     Session-scoped fixture returning an iterable of **type subhint cases**
     (i.e., 3-tuples ``(subhint, superhint, is_subhint)`` describing the subhint

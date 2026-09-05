@@ -129,10 +129,9 @@ def test_door_typehint_mapping(iter_hints_piths_meta) -> None:
         # same hint. In theory, an "is"-based identity test would be preferable
         # to an "=="-based equality test; in practice, the former would induce
         # false positives in common edge cases.
-        wrapper_hint = wrapper.hint
-        # print(f'wrapper_hint: {repr(wrapper_hint), id(wrapper_hint), type(wrapper_hint)}')
+        # print(f'wrapper.hint: {repr(wrapper.hint), id(wrapper.hint), type(wrapper.hint)}')
         # print(f'hint: {repr(hint),  id(hint), type(hint)}')
-        assert wrapper_hint == hint
+        assert wrapper.hint == hint
 
 # ....................{ TESTS ~ dunders                    }....................
 #FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
@@ -151,9 +150,10 @@ def test_door_typehint_repr() -> None:
 
 # ....................{ TESTS ~ dunders : compare          }....................
 def test_door_typehint_equals(
-    door_cases_equality: 'Iterable[Tuple[object, object, bool]]') -> None:
+    door_cases_equality: (
+        'collections.abc.Iterable[tuple[object, object, bool]]')) -> None:
     '''
-    Test the :meth:`beartype.door.TypeHint.__equals__` dunder method.
+    Test the :meth:`beartype.door.TypeHint.__eq__` dunder method.
 
     Parameters
     ----------
@@ -491,16 +491,15 @@ def test_door_typehint_is_args_ignorable():
     '''
 
     from beartype.door import TypeHint
-    from beartype.typing import (
+    from typing import (
         Any,
         Callable,
-        Tuple,
     )
 
     assert TypeHint(Callable)._is_args_ignorable
     assert TypeHint(Callable[..., Any])._is_args_ignorable
-    assert TypeHint(Tuple)._is_args_ignorable
-    assert TypeHint(Tuple[Any, ...])._is_args_ignorable
+    assert TypeHint(tuple)._is_args_ignorable
+    assert TypeHint(tuple[Any, ...])._is_args_ignorable
     assert TypeHint(int)._is_args_ignorable
 
 

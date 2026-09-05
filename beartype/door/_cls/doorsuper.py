@@ -44,7 +44,6 @@ from typing import (
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.
-#FIXME: Document all public and private attributes of this class, please.
 class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     '''
     Abstract base class (ABC) of all **type hint wrapper** (i.e., high-level
@@ -180,11 +179,37 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         Hash of the low-level immutable type hint wrapped by this immutable
         wrapper.
 
-        Defining this method satisfies the :class:`collections.abc.Hashable`
+        This dunder method satisfies the :class:`collections.abc.Hashable`
         abstract base class (ABC), enabling this wrapper to be used as in
         hashable containers (e.g., dictionaries, sets).
+
+        This dunder method is memoized for efficiency.
         '''
 
+        #FIXME: Memoize this, probably by manually caching this into a new
+        #"_hash" instance variable. Simplicity beats automation here: e.g.,
+        #    def __hash__(self) -> int:
+        #        if self._hash is not None:
+        #            return self._hash
+        #
+        #        self._hash = self._get_hash()
+        #        return self._hash
+        #
+        #    def _get_hash(self) -> int:
+        #        return hash(self._hint)
+        #FIXME: Likewise, do the same for the (awful)
+        #@method_cached_arg_by_id-decorated __eq__() method, please. *moreshrug*
+        #FIXME: Generalize this to properly satisfy:
+        #    hash(TypeHint(list[int])) == hash(TypeHint(typing.List[int]))
+        #
+        #Doing so will probably require overriding
+        #SubscriptedTypeHint._get_hash() to resemble:
+        #    class SubscriptedTypeHint(...):
+        #        def _get_hash(self) -> int:
+        #            # No idea, bro. Might work. *shrug*
+        #            return hash((self._origin, self._args,))
+
+        # Trivially hash "TypeHint" wrappers by the type hints they wrap.
         return hash(self._hint)
 
 

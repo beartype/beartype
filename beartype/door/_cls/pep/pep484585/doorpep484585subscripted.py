@@ -68,7 +68,7 @@ class SubscriptedTypeHint(TypeHint):
         #     list[str, int]  # <-- wat
         if len(args) not in args_len_range:  # pragma: no cover
             #FIXME: This seems sensible, but currently provokes test failures.
-            #Let's investigate further at a later time, please.
+            #Let's investigate further at a later time, please. *sigh*
             # # If this hint was subscripted by *NO* parameters, comply with PEP
             # # 484 standards by silently pretending this hint was subscripted by
             # # the "typing.Any" fallback for all missing parameters.
