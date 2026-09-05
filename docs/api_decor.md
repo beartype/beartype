@@ -12,7 +12,7 @@ The beating heart of beartype is the eponymous `beartype` decorator. This is its
 
 ### Callable Mode
 
-`def beartype.beartype(func: `[`collections.abc.Callable`](https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable)`) -> `[`collections.abc.Callable`](https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable)
+`def beartype.beartype(func: `[`collections.abc.Callable`][collections.abc.Callable]`) -> `[`collections.abc.Callable`][collections.abc.Callable]
 
 In callable mode, `beartype` dynamically generates a new **callable** (i.e., pure-Python function or method) runtime type-checking the passed callable.
 
@@ -123,7 +123,7 @@ One `beartype()` to monkey-patch them all and in the darkness type-check them.
 
   - The `beartype` decorator itself.
 
-  - The [PEP 484](https://peps.python.org/pep-0484)-compliant `typing.no_type_check` decorator: e.g.,
+  - The [PEP 484]-compliant `typing.no_type_check` decorator: e.g.,
 
     ```python
     # Import more requisite machinery. It is requisite.
@@ -141,7 +141,7 @@ One `beartype()` to monkey-patch them all and in the darkness type-check them.
 
 - That callable is **unannotated** (i.e., *no* parameters or return values in the signature of that callable are annotated by type hints).
 
-- [Sphinx](https://www.sphinx-doc.org) is currently autogenerating documentation (i.e., Sphinx's ["autodoc" extension](https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html) is currently running).
+- [Sphinx] is currently autogenerating documentation (i.e., Sphinx's ["autodoc" extension][sphinx.ext.autodoc] is currently running).
 
 Laziness **+** efficiency **==** `beartype`.
 
@@ -187,7 +187,7 @@ class IAmABearOfNoBrainAtAll(object):
 
 Pragmatically, this is *not* just syntactic sugar. You *must* decorate classes (rather than merely methods) with `beartype` to type-check the following:
 
-- **Class-centric type hints** (i.e., type hints like the `673`-compliant [typing.Self](https://docs.python.org/3/library/typing.html#typing.Self) attribute that describe the decorated class itself). To type-check these kinds of type hints, `beartype` needs access to the class. `beartype` lacks access to the class when decorating methods directly. Instead, you *must* decorate classes by `beartype` for classes declaring one or more methods annotated by one or more class-centric type hints.
+- **Class-centric type hints** (i.e., type hints like the `673`-compliant [typing.Self] attribute that describe the decorated class itself). To type-check these kinds of type hints, `beartype` needs access to the class. `beartype` lacks access to the class when decorating methods directly. Instead, you *must* decorate classes by `beartype` for classes declaring one or more methods annotated by one or more class-centric type hints.
 - **Dataclasses.** The standard `dataclasses.dataclass` decorator dynamically generates and adds new dunder methods (e.g., `__init__()`, `__eq__()`, `__hash__()`) to the decorated class. These methods do *not* physically exist and thus *cannot* be decorated directly with `beartype`. Instead, you *must* decorate dataclasses first by `@beartype` and then by `@dataclasses.dataclass`. Order is significant, of course. `</sigh>`
 
 When decorating classes, `@beartype` should *usually* be listed as the **first** (i.e., topmost) decorator. This ensures that `beartype` is called last on the decorated class *after* other decorators have a chance to dynamically monkey-patch that class (e.g., by adding new methods to that class). `beartype` will then type-check the monkey-patched functionality as well.
@@ -242,7 +242,7 @@ Configuration: *because you know best*.
 The default configuration `BeartypeConf()` configures beartype to:
 
 - Perform $O(1)$ constant-time type-checking for safety, scalability, and efficiency.
-- Disable support for [PEP 484's implicit numeric tower](https://peps.python.org/pep-0484/#the-numeric-tower)
+- Disable support for [PEP 484's implicit numeric tower][implicit numeric tower]
 - Disable developer-specific debugging logic.
 - Conditionally output color when standard output is attached to a terminal.
 
@@ -367,7 +367,7 @@ Defaults to `False`. Eye-gouging sample output or it didn't happen, so:
 
 *Type:* `bool` = `False`
 
-`True` only if enabling support for [PEP 484's implicit numeric tower](https://peps.python.org/pep-0484/#the-numeric-tower) (i.e., lossy conversion of integers to floating-point numbers as well as both integers and floating-point numbers to complex numbers). Specifically, enabling this instructs beartype to automatically expand:
+`True` only if enabling support for [PEP 484's implicit numeric tower][implicit numeric tower] (i.e., lossy conversion of integers to floating-point numbers as well as both integers and floating-point numbers to complex numbers). Specifically, enabling this instructs beartype to automatically expand:
 
 - All `float` type hints to `float` `|` `int`, thus implicitly accepting both integers and floating-point numbers for objects annotated as only accepting floating-point numbers.
 - All `complex` type hints to `complex` `|` `float` `|` `int`, thus implicitly accepting integers, floating-point, and complex numbers for objects annotated as only accepting complex numbers.
@@ -457,7 +457,7 @@ def muh_colorless_func() -> str:
 
 Enumeration of all kinds of **type-checking strategies** (i.e., competing procedures for type-checking objects passed to or returned from `beartype`-decorated callables, each with concomitant tradeoffs with respect to runtime complexity and quality assurance).
 
-Strategies are intentionally named according to [conventional Big O notation](https://en.wikipedia.org/wiki/Big_O_notation) (e.g., `.BeartypeStrategy.On` enables the $O(n)$ strategy). Strategies are established per-decoration at the fine-grained level of callables decorated by the `beartype` decorator. Simply set the `.BeartypeConf.strategy` parameter of the `BeartypeConf` object passed as the optional `conf` parameter to the `beartype` decorator.
+Strategies are intentionally named according to [conventional Big O notation][Big O] (e.g., `.BeartypeStrategy.On` enables the $O(n)$ strategy). Strategies are established per-decoration at the fine-grained level of callables decorated by the `beartype` decorator. Simply set the `.BeartypeConf.strategy` parameter of the `BeartypeConf` object passed as the optional `conf` parameter to the `beartype` decorator.
 
 ```python
 # Import the requisite machinery.
@@ -552,9 +552,9 @@ negligible overhead isn't negligible enough, brave callers considering an occupa
 
 Either:
 
-- [Pass Python the "-O" command-line option](https://docs.python.org/3/using/cmdline.html#cmdoption-o), which beartype respects.
+- [Pass Python the "-O" command-line option][-O], which beartype respects.
 
-- [Run Python under the "PYTHONOPTIMIZE" environment variable](https://docs.python.org/3/using/cmdline.html#envvar-PYTHONOPTIMIZE), which beartype also respects.
+- [Run Python under the "PYTHONOPTIMIZE" environment variable][PYTHONOPTIMIZE], which beartype also respects.
 
 - Define a new `@maybebeartype` decorator disabling type-checking when an app-specific constant `I_AM_RELEASE_BUILD` defined elsewhere is enabled:
 

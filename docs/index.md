@@ -19,11 +19,11 @@ documents for this project.
   }
 </style>
 
-[![beartype —\[ the bare-metal type-checker \]—](https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.svg)](https://github.com/beartype/beartype)
+[![beartype —\[ the bare-metal type-checker \]—](https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.svg)][beartype]
 
-[![beartype test coverage status](https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ)](https://codecov.io/gh/beartype/beartype) [![beartype continuous integration (CI) status](https://github.com/beartype/beartype/actions/workflows/python_test.yml/badge.svg)](https://github.com/beartype/beartype/actions?workflow=tests) [![beartype Read The Docs (RTD) status](https://readthedocs.org/projects/beartype/badge/?version=latest)](https://beartype.readthedocs.io/en/latest/?badge=latest)
+[![beartype test coverage status](https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ)](https://codecov.io/gh/beartype/beartype) [![beartype continuous integration (CI) status](https://github.com/beartype/beartype/actions/workflows/python_test.yml/badge.svg)][beartype tests] [![beartype Read The Docs (RTD) status](https://readthedocs.org/projects/beartype/badge/?version=latest)](https://beartype.readthedocs.io/en/latest/?badge=latest)
 
-**Beartype** is an [open-source](https://github.com/beartype/beartype/blob/main/LICENSE) [pure-Python](faq.md#what-does-pure-python-mean) [PEP-compliant](pep.md) [near-real-time](faq.md#what-does-near-real-time-even-mean-are-you-just-making-stuff-up) [hybrid runtime-static](faq.md#what-does-hybrid-runtime-static-mean-pretty-sure-you-made-that-up-too) [third-generation](faq.md#third-generation-type-checker-doesnt-mean-anything-does-it) [type-checker](eli5.md) emphasizing efficiency, usability, unsubstantiated jargon we just made up, and thrilling puns.
+**Beartype** is an [open-source][beartype license] [pure-Python](faq.md#what-does-pure-python-mean) [PEP-compliant](pep.md) [near-real-time](faq.md#what-does-near-real-time-even-mean-are-you-just-making-stuff-up) [hybrid runtime-static](faq.md#what-does-hybrid-runtime-static-mean-pretty-sure-you-made-that-up-too) [third-generation](faq.md#third-generation-type-checker-doesnt-mean-anything-does-it) [type-checker](eli5.md) emphasizing efficiency, usability, unsubstantiated jargon we just made up, and thrilling puns.
 
 Beartype enforces [type hints](eli5.md#standard-hints) across your entire app in [two lines of runtime code with no runtime overhead](api_claw.md). If seeing is believing, prepare to do both those things.
 
@@ -166,16 +166,16 @@ list[
 # ...all righty then. Guess I'll just take your word for that, BeartypeAI™.
 ```
 
-Beartype brings [Rust](https://www.rust-lang.org)- and [C++](https://en.wikipedia.org/wiki/C%2B%2B)-inspired [zero-cost abstractions](https://boats.gitlab.io/blog/post/zero-cost-abstractions) into the lawless world of [dynamically-typed](https://en.wikipedia.org/wiki/Type_system) Python by [enforcing type safety at the granular level of functions and methods](eli5.md) against [type hints standardized by the Python community](pep.md) in $O(1)$ [non-amortized worst-case time with negligible constant factors](math.md#nobody-expects-the-linearithmic-time). If the prior sentence was unreadable jargon, see [our friendly and approachable FAQ for a human-readable synopsis](faq.md).
+Beartype brings [Rust]- and [C++]-inspired [zero-cost abstractions][zero-cost abstraction] into the lawless world of [dynamically-typed][dynamic typing] Python by [enforcing type safety at the granular level of functions and methods](eli5.md) against [type hints standardized by the Python community](pep.md) in $O(1)$ [non-amortized worst-case time with negligible constant factors](math.md#nobody-expects-the-linearithmic-time). If the prior sentence was unreadable jargon, see [our friendly and approachable FAQ for a human-readable synopsis](faq.md).
 
-Beartype is [portably implemented](https://github.com/beartype/beartype/tree/main/beartype) in [Python 3](https://www.python.org), [continuously stress-tested](https://github.com/beartype/beartype/actions?workflow=tests) via [GitHub Actions](https://github.com/features/actions) **×** [tox](https://tox.readthedocs.io) **×** [pytest](https://docs.pytest.org) **×** [Codecov](https://about.codecov.io), and [permissively distributed](https://github.com/beartype/beartype/blob/main/LICENSE) under the [MIT license](https://opensource.org/licenses/MIT). Beartype has *no* runtime dependencies, [only one test-time dependency](https://docs.pytest.org), and [only one documentation-time dependency](https://www.sphinx-doc.org). Beartype supports [all actively developed Python versions](https://devguide.python.org/versions/#versions), [all Python package managers](install.md), and [multiple platform-specific package managers](install.md).
+Beartype is [portably implemented][beartype codebase] in [Python 3][Python], [continuously stress-tested][beartype tests] via [GitHub Actions] **×** [tox] **×** [pytest] **×** [Codecov], and [permissively distributed][beartype license] under the [MIT license]. Beartype has *no* runtime dependencies, [only one test-time dependency][pytest], and [only one documentation-time dependency][Sphinx]. Beartype supports [all actively developed Python versions][Python status], [all Python package managers](install.md), and [multiple platform-specific package managers](install.md).
 
-Beartype [powers quality assurance across the Python ecosystem](https://github.com/beartype/beartype/network/dependents).
+Beartype [powers quality assurance across the Python ecosystem][beartype dependents].
 
 <!--
 ## The Typing Tree
 
-Welcome to the **Bearpedia** – your one-stop Encyclopedia Beartanica for all things @beartype. It's "[`typing`](https://docs.python.org/3/library/typing.html) or bust!" as you...
+Welcome to the **Bearpedia** – your one-stop Encyclopedia Beartanica for all things @beartype. It's "[`typing`][typing] or bust!" as you...
 
 **Bear with Us**
 
@@ -187,31 +187,31 @@ Welcome to the **Bearpedia** – your one-stop Encyclopedia Beartanica for all t
 
 Beartype plugins adjacent to your interests include:
 
-- [ipython-beartype](https://pypi.org/project/ipython-beartype), beartype's official [IPython](https://ipython.org) plugin. Type-check:
-  - Browser-based [Jupyter](https://jupyter.org), [Marimo](https://marimo.io), and [Google Colab](https://colab.research.google.com) notebook cells.
-  - IDE-based [Zasper](https://zasper.io) notebook cells.
-  - Terminal-based [IPython](https://ipython.org) REPLs.
-- [pytest-beartype](https://pypi.org/project/pytest-beartype), beartype's official [pytest](https://docs.pytest.org) plugin. Type-check packages *only* at [pytest](https://docs.pytest.org) test-time. Fatally obsessed with speed? Fatally accepting of critical failure? Can't bear to type-check at runtime? When your team lacks trust, your team chooses [pytest-beartype](https://pypi.org/project/pytest-beartype).
+- [ipython-beartype], beartype's official [IPython] plugin. Type-check:
+  - Browser-based [Jupyter], [Marimo], and [Google Colab] notebook cells.
+  - IDE-based [Zasper] notebook cells.
+  - Terminal-based [IPython] REPLs.
+- [pytest-beartype], beartype's official [pytest] plugin. Type-check packages *only* at [pytest] test-time. Fatally obsessed with speed? Fatally accepting of critical failure? Can't bear to type-check at runtime? When your team lacks trust, your team chooses [pytest-beartype].
 
 ## License
 
-Beartype is [open-source software released](https://github.com/beartype/beartype/blob/main/LICENSE) under the [permissive MIT license](https://opensource.org/licenses/MIT).
+Beartype is [open-source software released][beartype license] under the [permissive MIT license][MIT license].
 
 ## Security
 
-Beartype encourages security researchers, institutes, and concerned netizens to [responsibly disclose security vulnerabilities as GitHub-originated Security Advisories](https://github.com/beartype/beartype/blob/main/.github/SECURITY.md) – published with full acknowledgement in the public [GitHub Advisory Database](https://github.com/advisories).
+Beartype encourages security researchers, institutes, and concerned netizens to [responsibly disclose security vulnerabilities as GitHub-originated Security Advisories][beartype security] – published with full acknowledgement in the public [GitHub Advisory Database].
 
 ## Funding
 
-Beartype is financed as a [purely volunteer open-source project via GitHub Sponsors](https://github.com/sponsors/leycec), to whom our burgeoning community is eternally indebted. Without your generosity, runtime type-checking would be a shadow of its current hulking bulk. We genuflect before your selfless charity, everyone!
+Beartype is financed as a [purely volunteer open-source project via GitHub Sponsors][GitHub Sponsors], to whom our burgeoning community is eternally indebted. Without your generosity, runtime type-checking would be a shadow of its current hulking bulk. We genuflect before your selfless charity, everyone!
 
 Prior official funding sources (*yes, they once existed*) include:
 
-1.  A [Paul Allen Discovery Center award](https://www.alleninstitute.org/what-we-do/frontiers-group/news-press/press-resources/press-releases/paul-g-allen-frontiers-group-announces-allen-discovery-center-tufts-university) from the [Paul G. Allen Frontiers Group](https://www.alleninstitute.org/what-we-do/frontiers-group) under the administrative purview of the [Paul Allen Discovery Center](http://www.alleninstitute.org/what-we-do/frontiers-group/discovery-centers/allen-discovery-center-tufts-university) at [Tufts University](https://www.tufts.edu) over the period 2015—2018 preceding the untimely death of [Microsoft co-founder Paul Allen](https://en.wikipedia.org/wiki/Paul_Allen), during which beartype was maintained as the private `@type_check` decorator in the [Bioelectric Tissue Simulation Engine (BETSE)](https://github.com/betsee/betse). <sup>Phew!</sup>
+1.  A [Paul Allen Discovery Center award] from the [Paul G. Allen Frontiers Group] under the administrative purview of the [Paul Allen Discovery Center] at [Tufts University] over the period 2015—2018 preceding the untimely death of [Microsoft co-founder Paul Allen][Paul Allen], during which beartype was maintained as the private `@type_check` decorator in the [Bioelectric Tissue Simulation Engine (BETSE)][BETSE]. <sup>Phew!</sup>
 
 ## Contributors
 
-Beartype is the work product of volunteer enthusiasm, excess caffeine, and sleepless Wednesday evenings. These brave GitHubbers hurtled [the pull request (PR) gauntlet](https://github.com/beartype/beartype/pulls) so that you wouldn't have to:
+Beartype is the work product of volunteer enthusiasm, excess caffeine, and sleepless Wednesday evenings. These brave GitHubbers hurtled [the pull request (PR) gauntlet][beartype pulls] so that you wouldn't have to:
 
 [![Beartype contributors](https://contrib.rocks/image?repo=beartype/beartype)](https://github.com/beartype/beartype/graphs/contributors)
 
@@ -221,4 +221,4 @@ It's a heavy weight they bear. Applaud them as they buckle under the load!
 
 Beartype's histrionic past is checkered with drama, papered over in propaganda, and chock full of the stuff of stars. Gaze upon their glistening visage as they grow monotonically. But do the stars matter? Neither to mortal nor to bear. Yet, by starlight, we all howl to commit by dawn.
 
-[![Beartype stargazers](https://api.star-history.com/svg?repos=beartype/beartype&type=Date)](https://github.com/beartype/beartype/stargazers)
+[![Beartype stargazers](https://api.star-history.com/svg?repos=beartype/beartype&type=Date)][beartype stars]
