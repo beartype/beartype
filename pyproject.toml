@@ -569,10 +569,13 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : pydantic }....................
     # Pydantic-specific optional test-time dependencies.
 
-    #FIXME: Re-enable Python >= 3.15 support *AFTER* explicitly supported.
-    # Required by optional FastMCP-specific integration tests. Note that FastMCP
-    # requires Pydantic.
-    "fastmcp; python_version < '3.15.0'",
+    #FIXME: Re-enable Python >= 3.16 support *AFTER* explicitly supported.
+    # Required by optional FastMCP-specific integration tests. Note that:
+    # * FastMCP requires Pydantic.
+    # * The @beartype test suite requires FastMCP >= 4.0.0, which broke backward
+    #   compatibility with prior versions by fundamentally revising its
+    #   client-server protocol.
+    "fastmcp >= 4.0.0; python_version < '3.16.0'",
 
     #FIXME: Actually, let's *NOT* install "pyarrow". "pyarrow" is super-intense,
     #because Apache Arrow is super-intense. Since nothing in @beartype requires

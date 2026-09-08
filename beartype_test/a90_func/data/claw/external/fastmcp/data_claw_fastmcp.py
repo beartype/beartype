@@ -33,7 +33,15 @@ input and output) transport protocol.
 '''
 
 
-fastmcp_client = Client(fastmcp_server)
+fastmcp_client = Client(
+    fastmcp_server,
+    # Required to avoid spurious exceptions when calling the
+    # data_claw_fastmcp_main() coroutine defined below awaits the
+    # fastmcp_client.ping() method under FastMCP >= 4.0.0. Failure to do so
+    # induces non-human-readable exceptions resembling:
+    #     mcp.shared.exceptions.MCPError: Method not found
+    mode='legacy',
+)
 '''
 Arbitrary in-memory FastMCP client connecting to this server of that protocol.
 '''
