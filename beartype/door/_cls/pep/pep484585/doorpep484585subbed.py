@@ -7,7 +7,7 @@
 Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) subscripted type
 hint classes** (i.e., :class:`beartype.door.TypeHint` subclasses implementing
 support for :pep:`484`- and :pep:`585`-compliant subscripted type hints *not*
-already matched by any more fine-grained :class:`beartype.door.TypeHint`
+already matched by a more fine-grained :class:`beartype.door.TypeHint`
 subclass).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -23,11 +23,11 @@ from beartype._data.hint.sign.datahintsignmap import (
 class SubscriptedTypeHint(TypeHint):
     '''
     **Subscripted type hint wrapper** (i.e., high-level object encapsulating
-    a low-level parent type hint satisfying various conditions).
+    a low-level :pep:`484`- and :pep:`585`-compliant type hint satisfying
+    various conditions).
 
     Notably, this wrapper wraps hints that both:
 
-    * Are either :pep:`484`- or :pep:`585`-compliant.
     * Are subscripted (indexed) by a predetermined number of one or more
       low-level child type hints.
     * Originate from an **isinstanceable class** such that *all* objects

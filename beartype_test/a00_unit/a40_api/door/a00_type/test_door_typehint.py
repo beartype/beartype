@@ -162,41 +162,80 @@ def test_door_typehint_equals(
         declared by the :func:`hint_subhint_cases` fixture.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.door import TypeHint
 
     # Intentionally import from "typing" rather than "beartype.typing" to
-    # guarantee PEP 484-compliant type hints.
+    # guarantee PEP 484-compliant hints.
     from typing import (
         Generator,
         Union,
     )
 
-    # Arbitrary hint guaranteed to be unequal to every other hint listed in the
-    # "hint_equality_cases" iterable.
+    # ....................{ LOCALS                         }....................
+    # Arbitrary PEP 484-compliant hint guaranteed to be unequal to every other
+    # hint listed in the "hint_equality_cases" iterable.
     typehint_unequal = TypeHint(Generator[Union[list, str], str, None])
 
-    # Arbitrary non-hint object. Note that strings are valid type hints!
+    # Arbitrary non-hint object.
+    #
+    # Note that arbitrary strings are superficially indistinguishable from PEP
+    # 484-compliant stringified type hints and thus unsuitable for use as
+    # non-hint objects here.
     nonhint = b'Of insects, beasts, and birds, becomes its spoil;'
 
+    # ....................{ ASSERTS                        }....................
     # For each equality relation to be tested...
-    for hint_a, hint_b, IS_EQUAL in door_cases_equality:
-        # "TypeHint" instances encapsulating these hints.
+    for hint_a, hint_b, is_equal_expect in door_cases_equality:
+        # "TypeHint" wrappers encapsulating these hints.
         typehint_a = TypeHint(hint_a)
         typehint_b = TypeHint(hint_b)
 
-        # Assert this tester returns the expected boolean for these hints.
-        is_equal = (typehint_a == typehint_b)
-        assert is_equal is IS_EQUAL
+        # Assert that these wrappers compare equal as expected.
+        is_equal_actual = (typehint_a == typehint_b)
+        assert is_equal_actual is is_equal_expect
 
-        # Assert this tester returns the expected boolean for each such hint and
-        # another arbitrary hint guaranteed to be unequal to these hints. In
-        # other words, perform a smoke test.
+        # If these wrappers compare equal, assert that these wrappers are share
+        # the *EXACT* same hash.
+        #
+        # Note that this well-known theoretical constraint applies to *ANY*
+        # language. Violating this constraint promotes inconsistent key and node
+        # hashing in hash-based data structures. Since Python's builtin "dict",
+        # "set", and "frozenset" types trivialize both usage and implementation
+        # of these structures, this constraint is doubly critical in Python; any
+        # caller inserting these wrappers into these structures implicitly
+        # triggers hashing via the TypeHint.__hash__() dunder method.
+        if is_equal_actual:
+            pass
+
+            #FIXME: Uncomment once this is actually worky. We sigh. *sigh*
+            # assert hash(typehint_a) == hash(typehint_b), (
+            #     f'TypeHint.__eq__() <-> TypeHint.__hash__() '
+            #     f'inconsistency detected: '
+            #     f'TypeHint({repr(hint_a)}) == TypeHint({repr(hint_b)}), but '
+            #     f'hash(TypeHint({repr(hint_a)}) != '
+            #     f'hash(TypeHint({repr(hint_b)}).'
+            # )
+        # Else, these wrappers compare unequal. In these case, these wrappers
+        # typically do *NOT* (but technically could) share the same hash.
+        #
+        # Note that two wrappers that compare unequal yet share the same hash
+        # constitute a hash collision. That isn't great but also isn't the end
+        # of our QA world. Although we *COULD* issue a non-fatal warning here,
+        # there is little incentive to do so. Why? Because it's unlikely that we
+        # could safely resolve this hash collision even if we wanted to. Hash
+        # functions are an art as much as a science. We know enough to know we
+        # do *NOT* know enough to reasonably define our own hash functions.
+
+        # Assert that each of these wrappers compares unequal against an
+        # arbitrary hint guaranteed to be unequal to both. In other words, a
+        # smoke test. Smoke that QA down to the filter!
         assert typehint_a != typehint_unequal
         assert typehint_b != typehint_unequal
 
-        # Assert this tester returns the expected boolean for each such hint and
-        # an arbitrary non-hint. In other words, perform another smoke test.
+        # Assert that each of these wrappers compares unequal against an
+        # arbitrary non-hint. In other words, another smoke test. Smoke it!
         assert typehint_a != nonhint
         assert typehint_b != nonhint
 

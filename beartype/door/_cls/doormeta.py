@@ -112,8 +112,8 @@ class _TypeHintMetaclass(BeartypeSlottedABCMeta):
         if cls is not TypeHint:
             # print('!!!!!!!!!!!!! [ _TypeHintMetaclass.__call__ ] instantiating subclass... !!!!!!!!!!!!!!!')
             return super().__call__(hint)
-        # Else, this type is that ABC. In this case, instantiate that ABC in a
-        # non-standard way.
+        # Else, this type is the "TypeHint" ABC. In this case, instantiate that
+        # ABC in a non-standard way.
         #
         # If this low-level type hint is already a high-level type hint wrapper,
         # return this wrapper as is. This guarantees the following constraint:
@@ -130,9 +130,6 @@ class _TypeHintMetaclass(BeartypeSlottedABCMeta):
         # each duplicate hint subsequently passed to this factory is wrapped by
         # the same instance under this Python interpreter.
         wrapper: 'beartype.door.TypeHint' = (
-            #FIXME: Unsure why "_hint_to_wrapper" is capitalized. This is a
-            #modifiable dictionary, obviously. Consider renaming to:
-            #* "_hint_to_wrapper". *shrug*
             _hint_to_wrapper.cache_func_return_passed_arg(  # type: ignore[assignment]
                 # Cache this wrapper singleton under this hint.
                 key=hint,
@@ -179,7 +176,7 @@ class _TypeHintMetaclass(BeartypeSlottedABCMeta):
 
         # ................{ IMPORTS                            }................
         # Avoid circular import dependencies.
-        from beartype.door._cls.util.doorclsmap import get_typehint_subclass
+        from beartype.door._cls._doormap import get_typehint_subclass
 
         # ................{ REDUCTION                          }................
         # Reduce this hint to a more amenable form suitable for mapping to a
@@ -220,6 +217,7 @@ class _TypeHintMetaclass(BeartypeSlottedABCMeta):
         # wrapper = super(_TypeHintMetaclass, wrapper_subclass).__call__(hint)
         # print('!!!!!!!!!!!!! [ _TypeHintMetaclass.__call__ ] caching and returning singleton... !!!!!!!!!!!!!!!')
 
+        # ................{ RETURN                             }................
         # Return this wrapper.
         return wrapper
 
@@ -239,7 +237,7 @@ _hint_to_wrapper = CacheMegaStrongCaller(
     lock_type=RLock,
 )
 '''
-**Type hint wrapper cache** (i.e., non-thread-safe cache mapping from the
+**Type hint wrapper cache** (i.e., thread-safe cache mapping from the
 machine-readable representations of all type hints to cached singleton instances
 of concrete subclasses of the :class:`beartype.door.TypeHint` abstract base
 class (ABC) wrapping those hints).
@@ -283,7 +281,7 @@ collisions and why we are *not* going to do so.
 
 Likewise, this dictionary intentionally caches machine-readable representations
 of low-level type hints rather than those hints themselves. Since increasingly
-many hints are no longer self-caching (e.g., PEP 585-compliant type hints like
-"list[str]"), the latter *cannot* be guaranteed to be singletons and thus safely
-used as cache keys.
+many hints are no longer self-caching (e.g., :pep:`585`-compliant type hints
+like ``list[str]``), the latter *cannot* be guaranteed to be singletons and thus
+safely used as cache keys.
 '''

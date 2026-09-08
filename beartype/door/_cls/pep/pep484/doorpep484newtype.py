@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
+from beartype.door._cls.nonpep.doornonpepclass import ClassTypeHint
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cls.utilclsmake import make_type
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (

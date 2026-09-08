@@ -4,57 +4,35 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) class type hint
-classes** (i.e., :class:`beartype.door.TypeHint` subclasses implementing support
-for :pep:`484`-compliant type hints that are, in fact, simple classes).
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) unsubscripted type
+hint factory classes** (i.e., :class:`beartype.door.TypeHint` subclasses implementing
+support for :pep:`484`-compliant unsubscripted type hint factories (e.g.,
+:obj:`typing.List`, :obj:`typing.Tuple`) *not* already matched by a more
+fine-grained :class:`beartype.door.TypeHint` subclass).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsuper import TypeHint
-from beartype.typing import TYPE_CHECKING
 
 # ....................{ SUBCLASSES                         }....................
-class ClassTypeHint(TypeHint):
+#FIXME: Actually use in lieu of "ClassTypeHint", please. *sigh*
+class UnsubscriptedTypeHint(TypeHint):
     '''
-    **Class type hint wrapper** (i.e., high-level object encapsulating a
-    low-level :pep:`484`-compliant type hint that is, in fact, a simple class).
-
-    Caveats
-    -------
-    This wrapper also intentionally wraps :pep:`484`-compliant :data:``None`
-    type hints as the simple type of the :data:``None` singleton, as :pep:`484`
-    standardized the reduction of the former to the latter:
-
-         When used in a type hint, the expression None is considered equivalent
-         to type(None).
-
-    Although a unique ``NoneTypeHint`` subclass of this class specific to the
-    :data:`None` singleton *could* be declared, doing so is substantially
-    complicated by the fact that numerous PEP-compliant type hints internally
-    elide :data:`None` to the type of that singleton before the
-    :mod:`beartype.door` API ever sees a distinction. Notably, this includes
-    :pep:`484`-compliant unions subscripted by that singleton: e.g.,
-
-    .. code-block:: python
-
-       >>> from typing import Union
-       >>> Union[str, None].__args__
-       (str, NoneType)
+    **Unsubscripted type hint factory wrapper** (i.e., high-level object
+    encapsulating a low-level :pep:`484`-compliant unsubscripted type hint
+    factory (e.g., :obj:`typing.List`) originating from an isinstanceable class
+    (e.g., :class:`list`) such that *all* objects satisfying this factory are
+    instances of that class).
     '''
-
-    # ..................{ STATIC                             }..................
-    # Squelch false negatives from static type checkers.
-    if TYPE_CHECKING:
-        _hint: type
 
     # ..................{ PRIVATE ~ properties               }..................
     @property
     def _is_args_ignorable(self) -> bool:
 
-        # Unconditionally return true, as simple classes are unsubscripted and
-        # could thus be said to only have ignorable arguments. Look. Semantics.
+        # Unconditionally return true, as unsubscripted type hint factories are
+        # unsubscripted and could thus be said to only have ignorable arguments.
         return True
 
     # ..................{ PRIVATE ~ methods                  }..................

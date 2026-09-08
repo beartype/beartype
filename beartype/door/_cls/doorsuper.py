@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doormeta import _TypeHintMetaclass
-from beartype.door._cls.util.doorclstest import die_unless_typehint
+from beartype.door._cls._doortest import die_unless_typehint
 from beartype.door._func.doorfunc import (
     die_if_unbearable,
     is_bearable,
@@ -23,6 +23,7 @@ from beartype._check.convert.convmain import sanify_hint_any
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.typing.datatypingport import T_Hint
 from beartype._util.cache.func.utilcachefunc import method_cached_arg_by_id
 from beartype._util.cache.func.utilcacheproperty import (
@@ -37,6 +38,7 @@ from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobjget import get_object_type_basename
 from collections.abc import Iterable
 from typing import (
+    TYPE_CHECKING,
     Any,
     Generic,
     overload,
@@ -88,12 +90,20 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
     Attributes
     ----------
-    _args : Tuple[Hint, ...]
+    _args : tuple[Hint, ...]
         Tuple of the zero or more low-level child type hints subscripting
         (indexing) the low-level parent type hint wrapped by this wrapper.
+    _hash : int | None
+        Either:
+
+        * If the :meth:`__hash__` dunder method has been called at least once
+          (e.g., due to a caller inserting this wrapper inside a :class:`dict`,
+          :class:`set`, or :class:`frozenset`), hash value cached on the first
+          such call to that dunder method.
+        * Else, :data:`None`.
     _hint : T_Hint
         Low-level type hint wrapped by this wrapper.
-    _hint_sign : beartype._data.hint.sign.datahintsigncls.HintSign | None
+    _hint_sign : HintSign | None
         Either:
 
         * If this hint is PEP-compliant and thus uniquely identified by a
@@ -117,6 +127,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     __slots__ = (
         # Instance variables explicitly defined by the __init__() constructor.
         '_args',
+        '_hash',
         '_hint',
         '_hint_sign',
         '_origin',
@@ -131,6 +142,17 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         get_property_var_name('_is_args_ignorable'),
     )
 
+    # Squelch false negatives from static type checkers.
+    if TYPE_CHECKING:
+        _args: tuple
+        _hash: int | None
+        _hint_sign: HintSign | None
+        _origin: type
+
+        # Note that the "_hint" instance variable annotation is intentionally
+        # deferred to the body of the constructor to ensure proper binding.
+        # _hint: T_Hint
+
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, hint: T_Hint) -> None:
         '''
@@ -142,6 +164,9 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             Low-level type hint to be wrapped by this wrapper.
         '''
 
+        # Nullify all instance variables *NOT* explicitly initialized below.
+        self._hash = None
+
         # Classify all passed parameters. Note that this type hint is guaranteed
         # to be a type hint by validation performed by this metaclass __init__()
         # method.
@@ -152,7 +177,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
         # Isinstance class originating this hint if any *OR* "None" otherwise,
         # defined as either...
-        self._origin: type = (
+        self._origin = (
             # If this hint originates from an origin type, that type;
             get_hint_pep_origin_type_or_none(
                 hint=hint,
@@ -174,45 +199,6 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         self._args = self._make_args()
 
     # ..................{ DUNDERS                            }..................
-    def __hash__(self) -> int:
-        '''
-        Hash of the low-level immutable type hint wrapped by this immutable
-        wrapper.
-
-        This dunder method satisfies the :class:`collections.abc.Hashable`
-        abstract base class (ABC), enabling this wrapper to be used as in
-        hashable containers (e.g., dictionaries, sets).
-
-        This dunder method is memoized for efficiency.
-        '''
-
-        #FIXME: Memoize this, probably by manually caching this into a new
-        #"_hash" instance variable. Simplicity beats automation here: e.g.,
-        #    def __hash__(self) -> int:
-        #        if self._hash is not None:
-        #            return self._hash
-        #
-        #        self._hash = self._get_hash()
-        #        return self._hash
-        #
-        #    def _get_hash(self) -> int:
-        #        return hash(self._hint)
-        #FIXME: Likewise, do the same for the (awful)
-        #@method_cached_arg_by_id-decorated __eq__() method, please. *moreshrug*
-        #FIXME: Generalize this to properly satisfy:
-        #    hash(TypeHint(list[int])) == hash(TypeHint(typing.List[int]))
-        #
-        #Doing so will probably require overriding
-        #SubscriptedTypeHint._get_hash() to resemble:
-        #    class SubscriptedTypeHint(...):
-        #        def _get_hash(self) -> int:
-        #            # No idea, bro. Might work. *shrug*
-        #            return hash((self._origin, self._args,))
-
-        # Trivially hash "TypeHint" wrappers by the type hints they wrap.
-        return hash(self._hint)
-
-
     def __repr__(self) -> str:
         '''
         Machine-readable representation of this type hint wrapper.
@@ -231,6 +217,70 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
         # Return this machine-readable representation.
         return f'{hint_wrapper_basename}({repr(self._hint)})'
+
+    # ..................{ DUNDERS ~ hash                     }..................
+    def __hash__(self) -> int:
+        '''
+        Memoized hash of this immutable wrapper.
+
+        This hash is defined in a subclass-specific manner, defaulting to the
+        hash of the lower-level immutable type hint wrapped by this wrapper.
+
+        This hash satisfies the equality-hash constraint, rendering this wrapper
+        suitable for use as the keys of dictionaries and members of sets.
+        Specifically, if this wrapper is equal to another wrapper, then this
+        pair of wrappers shares the same hash.
+
+        This dunder method satisfies the :class:`collections.abc.Hashable`
+        abstract base class (ABC), enabling this wrapper to be used as in
+        hashable containers (e.g., dictionaries, sets).
+
+        This dunder method is memoized for efficiency.
+        '''
+
+        # If a hash value has already been precomputed by a prior call of this
+        # dunder method, efficiently reuse and return that value as is.
+        if self._hash is not None:
+            return self._hash
+        # Else, this is the first call of this dunder method.
+
+        # Compute the hash value of this wrapper in a subclass-specific manner.
+        self._hash = self._get_hash()
+
+        # Return this hash value.
+        return self._hash
+
+
+    #FIXME: Generalize this to properly satisfy:
+    #    hash(TypeHint(list[int])) == hash(TypeHint(typing.List[int]))
+    #
+    #Doing so will probably require overriding
+    #SubscriptedTypeHint._get_hash() to resemble:
+    #    class SubscriptedTypeHint(...):
+    #        def _get_hash(self) -> int:
+    #            # No idea, bro. Might work. See this StackOverflow post on
+    #            # combining hashes:
+    #            #     https://stackoverflow.com/a/27952689/2809027
+    #            #
+    #            # Since this is *SUPER* non-trivial, let's define a new
+    #            # utility combine_hashes() function defined as follows:
+    #            #     def combine_hashes(int hash_a, int hash_b) -> int:
+    #            #         return hash(hash_a)*3 + hash_b
+    #            return hash(self._origin)*3 + hash(self._args_wrapped_tuple)
+    def _get_hash(self) -> int:
+        '''
+        Unmemoized hash of this immutable wrapper.
+
+        This hash is defined in a subclass-specific manner, defaulting to the
+        hash of the lower-level immutable type hint wrapped by this wrapper.
+
+        This method is intentionally *not* memoized and should thus *never* be
+        called directly. This method exists *only* to abstract away memoization
+        concerns from subclasses overriding this method.
+        '''
+
+        # Trivially hash "TypeHint" wrappers by the type hints they wrap, yo!
+        return hash(self._hint)
 
     # ..................{ DUNDERS ~ compare : equals         }..................
     # Note that we intentionally avoid typing this method as returning
@@ -1132,3 +1182,10 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         # print(f'[_is_args_ignorable] {self}._args_wrapped_tuple: {self._args_wrapped_tuple}')
         return all(
             hint_child.is_ignorable for hint_child in self._args_wrapped_tuple)
+
+# ....................{ HINTS                              }....................
+TupleTypeHints = tuple[TypeHint, ...]
+'''
+PEP-compliant type hint matching a tuple of zero or more **type hint wrappers**
+(i.e., :data:`.TypeHint` objects).
+'''

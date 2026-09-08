@@ -13,18 +13,18 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.nonpep.doornonpepclass import ClassTypeHint
 from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
 from beartype.door._cls.pep.doorpep586 import LiteralTypeHint
 from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint
 from beartype.door._cls.pep.pep484.doorpep484any import AnyTypeHint
-from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
 from beartype.door._cls.pep.pep484.doorpep484newtype import NewTypeTypeHint
 from beartype.door._cls.pep.pep484.doorpep484typevar import TypeVarTypeHint
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
     CallableTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585generic import (
     GenericTypeHint)
-from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
+from beartype.door._cls.pep.pep484585.doorpep484585subbed import (
     SubscriptedTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
     TupleFixedTypeHint,
@@ -67,7 +67,7 @@ def get_typehint_subclass(hint: Hint) -> type[TypeHint]:
 
     Returns
     -------
-    Type[TypeHint]
+    type[TypeHint]
         Concrete subclass of the abstract :mod:`TypeHint` superclass handling
         this hint.
 
@@ -116,7 +116,7 @@ def get_typehint_subclass(hint: Hint) -> type[TypeHint]:
                 f'currently unsupported by "beartype.door.TypeHint".'
             )
     # Else, this hint is supported.
-
+    #
     #FIXME: Instead of reducing to the inappropriate "ClassTypeHint" subclass
     #here, we should instead:
     #* Define a new "UnsubscriptedTypeHint" subclass wherever we currently
@@ -178,11 +178,13 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Isolate function-specific imports.
     from beartype._data.hint.sign.datahintsignmap import (
         HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
     from beartype._data.hint.sign.datahintsignset import HINT_SIGNS_UNION
 
+    # ....................{ INITIALIZE                     }....................
     # Fully initialize the "_HINT_SIGN_TO_TYPEHINT_CLS" global dictionary.
     #
     # For each sign in the dictionary mapping from signs uniquely identifying
@@ -190,11 +192,10 @@ def _init() -> None:
     # number of child type hints subscripting those factories...
     for hint_sign in HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE.keys():
         # If this sign has *NOT* already been mapped to an existing "TypeHint"
-        # subclass, map this sign to the generic private
-        # "SubscriptedTypeHint" subclass.
+        # subclass, map this sign to the catch-all "SubscriptedTypeHint"
+        # subclass.
         if hint_sign not in _HINT_SIGN_TO_TYPEHINT_CLS:
-            _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = (
-                SubscriptedTypeHint)
+            _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = SubscriptedTypeHint
         # Else, this sign has already been mapped to an existing "TypeHint"
         # subclass. Preserve this mapping as is.
 
@@ -203,8 +204,11 @@ def _init() -> None:
     for hint_sign in HINT_SIGNS_UNION:
         _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = UnionTypeHint
 
-    # For each concrete "TypeHint" subclass registered with this dictionary
-    # (*AFTER* initializing this dictionary)...
+    # ....................{ MONKEY-PATCH                   }....................
+    # Logic intentionally performed last *AFTER* initializing this dictionary
+    # above. This logic typically monkey-patches items of this dictionary, yo!
+
+    # For each concrete "TypeHint" subclass registered with this dictionary...
     for typehint_cls in _HINT_SIGN_TO_TYPEHINT_CLS.values():
         # If the unqualified basename of this subclass is prefixed by an
         # underscore, this subclass is private rather than public. In this case,
