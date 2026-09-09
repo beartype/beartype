@@ -51,7 +51,7 @@ class AnnotatedTypeHint(TypeHint):
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, hint: Hint) -> None:
 
-        # Initialize our superclass.
+        # Initialize our superclass with all passed parameters.
         super().__init__(hint)
 
         # Tuple of the zero or more arbitrary caller-defined arguments following

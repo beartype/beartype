@@ -14,6 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.pep.pep484.doorpep484unsubbed import (
     UnsubscriptedTypeHint)
+from beartype._data.typing.datatypingport import Hint
+from beartype._util.cls.utilclstest import die_unless_type
 from typing import TYPE_CHECKING
 
 # ....................{ SUBCLASSES                         }....................
@@ -51,3 +53,14 @@ class ClassTypeHint(UnsubscriptedTypeHint):
     # Squelch false negatives from static type checkers.
     if TYPE_CHECKING:
         _hint: type
+
+    # ..................{ INITIALIZERS                       }..................
+    def __init__(self, hint: Hint) -> None:
+
+        #FIXME: Unit test up this edge case, please. *sigh*
+        # If this hint is *NOT* a type.
+        die_unless_type(hint)
+        # Else, this hint is a type.
+
+        # Initialize our superclass with all passed parameters.
+        super().__init__(hint)

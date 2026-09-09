@@ -70,7 +70,7 @@ class TupleFixedTypeHint(TypeHint):
         # assume that hint to be subscripted as "typing.Callable[..., Any]" by
         # reducing to a test for compatible origin types.
         if branch._is_args_ignorable:
-            return issubclass(self._origin, branch._origin)
+            return issubclass(self._origin_type, branch._origin_type)
         # Else, that hint is subscripted.
         #
         # If that hint is a variable-length tuple, then this fixed-length tuple

@@ -109,7 +109,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         * If this hint is PEP-compliant and thus uniquely identified by a
           :mod:`beartype`-specific sign, that sign.
         * Else (i.e., if this hint is an isinstanceable class), :data:`None`.
-    _origin : type
+    _origin_type : type
         Either:
 
         * If this hint originates from an **isinstanceable class** such that all
@@ -117,6 +117,14 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         * Else, the root superclass :class:`object` of *all* classes,
           guaranteeing sanity when this instance variable is passed as either
           the first or second parameters to the :func:`issubclass` builtin.
+    _repr : str | None
+        Either:
+
+        * If the :meth:`__repr__` dunder method has been called at least once
+          (e.g., due to a caller passing this wrapper to the builtin
+          :func:`repr` function), the machine-readable representation of this
+          wrapper cached on the first such call to that dunder method.
+        * Else, :data:`None`.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -130,7 +138,8 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         '_hash',
         '_hint',
         '_hint_sign',
-        '_origin',
+        '_origin_type',
+        '_repr',
 
         # Instance variables implicitly defined by each decoration of a property
         # method by the @property_cached decorator below, whose names are
@@ -147,7 +156,8 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         _args: tuple
         _hash: int | None
         _hint_sign: HintSign | None
-        _origin: type
+        _origin_type: type
+        _repr : str | None
 
         # Note that the "_hint" instance variable annotation is intentionally
         # deferred to the body of the constructor to ensure proper binding.
@@ -164,8 +174,10 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             Low-level type hint to be wrapped by this wrapper.
         '''
 
+        # ..................{ SIMPLE                         }..................
         # Nullify all instance variables *NOT* explicitly initialized below.
         self._hash = None
+        self._repr = None
 
         # Classify all passed parameters. Note that this type hint is guaranteed
         # to be a type hint by validation performed by this metaclass __init__()
@@ -175,24 +187,33 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         # Sign uniquely identifying this and that hint if any *OR* "None"
         self._hint_sign = get_hint_pep_sign_or_none(hint)
 
-        # Isinstance class originating this hint if any *OR* "None" otherwise,
-        # defined as either...
-        self._origin = (
-            # If this hint originates from an origin type, that type;
-            get_hint_pep_origin_type_or_none(
-                hint=hint,
-                # If this hint is a type defining the "__origin__" dunder
-                # attribute to be a non-type, fallback to euphemistically
-                # claiming that this hint originates from "itself." Boooo!
-                is_self_fallback=True,
-            ) or
-            # Else, this hint does *NOT* originate from an origin type. In this
-            # case, the root superclass "object" of *ALL* classes, guaranteeing
-            # sanity when this instance variable is passed as either the first
-            # or second parameters to the issubclass() builtin.
-            object
+        # ..................{ ORIGIN                         }..................
+        # Type originating this hint if any *OR* "None" otherwise (i.e., if this
+        # hint originates from *NO* type).
+        self._origin_type = get_hint_pep_origin_type_or_none(  # type: ignore[assignment]
+            hint=hint,
+            # If this hint is a type defining the "__origin__" dunder attribute
+            # to be a non-type, fallback to euphemistically claiming that this
+            # hint originates from "itself." Boooo!
+            is_self_fallback=True,
         )
 
+        # If this hint still lacks an origin type...
+        if self._origin_type is None:
+            # Fallback to euphemistically claiming that this hint originates
+            # from either...
+            self._origin_type = (
+                # If this hint is itself a type, itself. Ugh.
+                hint
+                if isinstance(hint, type) else
+                # Else, this hint is *NOT* itself a type. In this case, the root
+                # superclass of *ALL* classes. Doing so guarantees sanity when
+                # this instance variable is passed as either the first or second
+                # parameters to the issubclass() builtin elsewhere. More "Ugh."
+                object
+            )
+
+        # ..................{ ARGS                           }..................
         # Tuple of all low-level child type hints of this hint *AFTER* defining
         # all other instance variables. Deferring this call allows subclass
         # _make_args() implementations to access these instance variables.
@@ -201,22 +222,33 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
         '''
-        Machine-readable representation of this type hint wrapper.
+        Memoized machine-readable representation of this type hint wrapper.
+
+        This dunder method is memoized for efficiency.
         '''
 
+        # If a representation has already been precomputed by a prior call of
+        # this dunder method, efficiently reuse and return that representation.
+        if self._repr is not None:
+            return self._repr
+        # Else, this is the first call of this dunder method.
+
         # Unqualified name of the concrete subclass wrapping this hint.
-        hint_wrapper_basename = get_object_type_basename(self)
+        type_basename = get_object_type_basename(self)
         # print('hint_wrapper_basename: {hint_wrapper_basename}')
 
         # If this concrete subclass is currently private, deviously hide this
         # implementation detail by defaulting to the unqualified name of this
         # public "TypeHint" superclass instead.
-        if hint_wrapper_basename[0] == '_':
-            hint_wrapper_basename = 'TypeHint'
+        if type_basename[0] == '_':
+            type_basename = 'TypeHint'
         # Else, this concrete subclass is public.
 
-        # Return this machine-readable representation.
-        return f'{hint_wrapper_basename}({repr(self._hint)})'
+        # Cache this representation for subsequent lookup.
+        self._repr = f'{type_basename}({repr(self._hint)})'
+
+        # Return this representation.
+        return self._repr
 
     # ..................{ DUNDERS ~ hash                     }..................
     def __hash__(self) -> int:
@@ -251,22 +283,6 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         return self._hash
 
 
-    #FIXME: Generalize this to properly satisfy:
-    #    hash(TypeHint(list[int])) == hash(TypeHint(typing.List[int]))
-    #
-    #Doing so will probably require overriding
-    #SubscriptedTypeHint._get_hash() to resemble:
-    #    class SubscriptedTypeHint(...):
-    #        def _get_hash(self) -> int:
-    #            # No idea, bro. Might work. See this StackOverflow post on
-    #            # combining hashes:
-    #            #     https://stackoverflow.com/a/27952689/2809027
-    #            #
-    #            # Since this is *SUPER* non-trivial, let's define a new
-    #            # utility combine_hashes() function defined as follows:
-    #            #     def combine_hashes(int hash_a, int hash_b) -> int:
-    #            #         return hash(hash_a)*3 + hash_b
-    #            return hash(self._origin)*3 + hash(self._args_wrapped_tuple)
     def _get_hash(self) -> int:
         '''
         Unmemoized hash of this immutable wrapper.
@@ -1007,7 +1023,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         # If the type originating this hint is *NOT* a subclass of the type
         # originating that branch, this hint *CANNOT* be a subhint of that
         # branch. Return false immediately.
-        if not issubclass(self._origin, branch._origin):
+        if not issubclass(self._origin_type, branch._origin_type):
             return False
         # Else, the class originating this hint is a subclass of the class
         # originating that branch. In this case, this hint *COULD* be a subhint
@@ -1174,14 +1190,20 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
         Note that this property is *not* equivalent to the :meth:`is_ignorable`
         property. Although related, a non-ignorable parent type hint can
-        trivially have ignorable child type hints (e.g., ``list[Any]``).
+        trivially have ignorable child type hints (e.g., ``list[typing.Any]``).
         '''
-
-        # Return true only if all child type hints subscripting this parent type
-        # hint are themselves ignorable.
         # print(f'[_is_args_ignorable] {self}._args_wrapped_tuple: {self._args_wrapped_tuple}')
-        return all(
-            hint_child.is_ignorable for hint_child in self._args_wrapped_tuple)
+
+        # Return true only if either...
+        return (
+            # This hint is unsubscripted *OR*...
+            not self._args or
+            # All child hints subscripting this parent hint are ignorable.
+            all(
+                hint_child.is_ignorable
+                for hint_child in self._args_wrapped_tuple
+            )
+        )
 
 # ....................{ HINTS                              }....................
 TupleTypeHints = tuple[TypeHint, ...]

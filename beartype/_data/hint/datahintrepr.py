@@ -247,7 +247,59 @@ for all :pep:`484`-compliant type hints obsoleted by :pep:`585`-compliant
 subscriptable classes).
 '''
 
-# ....................{ INITIALIZERS                       }....................
+# ....................{ PRIVATE ~ sets                     }....................
+_HINT_PEP484_TYPING_ATTR_BASENAMES_DEPRECATED: FrozenSetStrs = frozenset((
+    # ..................{ PEP ~ 484                      }..................
+    # Unqualified basenames of all deprecated PEP 484-compliant
+    # typing attributes (e.g., "typing.List") that have since been obsoleted
+    # by equivalent bare PEP 585-compliant builtin classes (e.g., "list").
+    'AbstractSet',
+    'AsyncContextManager',
+    'AsyncGenerator',
+    'AsyncIterable',
+    'AsyncIterator',
+    'Awaitable',
+    'ByteString',
+    'Callable',
+    'ChainMap',
+    'Collection',
+    'Container',
+    'ContextManager',
+    'Coroutine',
+    'Counter',
+    'DefaultDict',
+    'Deque',
+    'Dict',
+    'FrozenSet',
+    'Generator',
+    'Hashable',
+    'ItemsView',
+    'Iterable',
+    'Iterator',
+    'KeysView',
+    'List',
+    'MappingView',
+    'Mapping',
+    'Match',
+    'MutableMapping',
+    'MutableSequence',
+    'MutableSet',
+    'OrderedDict',
+    'Pattern',
+    'Reversible',
+    'Sequence',
+    'Set',
+    'Sized',
+    'Tuple',
+    'Type',
+    'ValuesView',
+))
+'''
+Set of the unqualified names of all deprecated :pep:`484`-compliant
+:mod:`typing` attributes.
+'''
+
+# ....................{ PRIVATE ~ initializers             }....................
 def _init() -> None:
     '''
     Initialize this submodule.
@@ -283,56 +335,6 @@ def _init() -> None:
     # # This dictionary enables subsequent logic to transparently resynchronize
     # # the unqualified names and representations of pants typing attributes.
     # _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX: Dict[str, str] = {}
-
-    # ..................{ HINTS ~ deprecated                 }..................
-    # Set of the unqualified names of all deprecated PEP 484-compliant typing
-    # attributes.
-    _HINT_PEP484_TYPING_ATTR_BASENAMES_DEPRECATED: Set[str] = {
-        # ..................{ PEP ~ 484                      }..................
-        # Unqualified basenames of all deprecated PEP 484-compliant
-        # typing attributes (e.g., "typing.List") that have since been obsoleted
-        # by equivalent bare PEP 585-compliant builtin classes (e.g., "list").
-        'AbstractSet',
-        'AsyncContextManager',
-        'AsyncGenerator',
-        'AsyncIterable',
-        'AsyncIterator',
-        'Awaitable',
-        'ByteString',
-        'Callable',
-        'ChainMap',
-        'Collection',
-        'Container',
-        'ContextManager',
-        'Coroutine',
-        'Counter',
-        'DefaultDict',
-        'Deque',
-        'Dict',
-        'FrozenSet',
-        'Generator',
-        'Hashable',
-        'ItemsView',
-        'Iterable',
-        'Iterator',
-        'KeysView',
-        'List',
-        'MappingView',
-        'Mapping',
-        'Match',
-        'MutableMapping',
-        'MutableSequence',
-        'MutableSet',
-        'OrderedDict',
-        'Pattern',
-        'Reversible',
-        'Sequence',
-        'Set',
-        'Sized',
-        'Tuple',
-        'Type',
-        'ValuesView',
-    }
 
     # ..................{ INITIALIZATION                     }..................
     # For the fully-qualified name of each quasi-standard typing module...

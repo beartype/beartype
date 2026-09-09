@@ -13,16 +13,20 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsuper import (
-    TypeHint,
     TupleTypeHints,
+    TypeHint,
 )
 from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
-# from beartype.roar import BeartypeDoorPepUnsupportedException
-from beartype.typing import (
+from beartype._data.hint.sign.datahintsigns import HintSignUnion
+from beartype._util.cache.func.utilcacheproperty import property_cached
+from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
+    get_hint_pep484_typevar_bounded_constraints_or_none)
+from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+from typing import (
     TYPE_CHECKING,
     TypeVar,
 )
-from beartype._util.cache.func.utilcacheproperty import property_cached
 
 # ....................{ SUBCLASSES                         }....................
 class TypeVarTypeHint(UnionTypeHint):
@@ -52,15 +56,8 @@ class TypeVarTypeHint(UnionTypeHint):
         #       TypeVar('T', object)
         return self._is_args_ignorable
 
-    # ..................{ PRIVATE ~ properties               }..................
-    #FIXME: *HMM.* We should arguably just define the _make_args() factory
-    #method instead. That implementation would become quite a bit simpler as
-    #well as generalize to cover more use cases. By defining this method,
-    #"self._args" and "self._args_wrapped_tuple" are now desynchronized. *sigh*
-
-    @property  # type: ignore[misc]
-    @property_cached
-    def _args_wrapped_tuple(self) -> TupleTypeHints:
+    # ..................{ PRIVATE ~ factories                }..................
+    def _make_args(self) -> tuple:
 
         #FIXME: Support covariance and contravariance, please. We don't
         #particularly care about either at the moment. Moreover, runtime type
@@ -84,28 +81,55 @@ class TypeVarTypeHint(UnionTypeHint):
         #     )
         # # Else, this type variable is invariant.
 
-        # TypeVars may only be bound or constrained, but not both. The
+        # Type variables may only be bound or constrained, but not both. The
         # difference between the two has semantic meaning for static type
         # checkers but relatively little meaning for us. Ultimately, we're only
         # concerned with the set of compatible types present in either the bound
-        # or the constraints. So, we treat a type variable as a union of its
+        # or the constraints. We thus treat a type variable as a union of its
         # constraints or bound. See also:
         #     https://docs.python.org/3/library/typing.html#typing.TypeVar
 
-        # If this type variable is bounded, return the 1-tuple containing only
-        # this wrapped bound.
-        if self._hint.__bound__ is not None:
-            return (TypeHint(self._hint.__bound__),)
-        # Else, this type variable is unbounded.
-        #
-        # If this type variable is constrained, return the n-tuple containing
-        # each of these wrapped constraints.
-        elif self._hint.__constraints__:
-            return tuple(TypeHint(t) for t in self._hint.__constraints__)
-        # Else, this type variable is unconstrained.
+        # If this type variable was parametrized by:
+        # * One or more constraints (i.e., positional arguments passed by the
+        #   caller to the typing.TypeVar.__init__() call initializing this
+        #   type variable), a new PEP-484 or 604-compliant union hint over those
+        #   constraints.
+        # * One upper bound (i.e., "bound" keyword argument passed by the caller
+        #   to the typing.TypeVar.__init__() call initializing this type
+        #   variable), that bound as is.
+        #. Else, "None".
+        hint_child = get_hint_pep484_typevar_bounded_constraints_or_none(
+            self._hint)
 
-        #FIXME: Consider globalizing this as a private constant for efficiency.
-        # Return the 1-tuple containing only the "object" superclass. Why?
-        # Because PEP 484 states that an unconstrained and unbounded type
-        # variable has an implicit upper bound of "object".
-        return (TypeHint(object),)
+        # Tuple of all child hints to be returned as the fake "arguments"
+        # subscripting this type variable, defaulting to the 1-tuple containing
+        # the root "object" superclass. Why? Because PEP 484 states that an
+        # unconstrained and unbounded type variable has an implicit upper bound
+        # of (waitforit) the root "object" superclass. *shrugs meaningfully*
+        args = _TUPLE_OBJECT
+
+        # If this type variable is either constrained *OR* bounded...
+        if hint_child is not None:
+            # Sign uniquely identifying the child hint synthesized by the above
+            # call to get_hint_pep484_typevar_bounded_constraints_or_none().
+            hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+
+            # If this child hint is a union, this type variable was constrained
+            # by one or more constraints. In this case, return this existing
+            # tuple of these constraints.
+            if hint_child_sign is HintSignUnion:
+                args = get_hint_pep_childs(hint_child)
+            # Else, this child hint is *NOT* a union -- implying this type
+            # variable was bounded by a single child hint. In this case, return
+            # the 1-tuple containing only this child hint.
+            else:
+                args = (hint_child,)
+
+        # Return this tuple of all child hints.
+        return args
+
+# ....................{ PRIVATE ~ constants                }....................
+_TUPLE_OBJECT = (object,)
+'''
+1-tuple containing only the root :class:`object` superclass.
+'''

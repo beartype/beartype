@@ -40,8 +40,8 @@ class GenericTypeHint(TypeHint):
         # If the unsubscripted type originating this generic is *NOT* a subclass
         # of the unsubscripted type originating that branch, this generic is
         # *NOT* a subhint of that branch. In this case, return false.
-        if not issubclass(self._origin, branch._origin):
-            # print(f'{self._origin} not subclass of {branch._origin})!')
+        if not issubclass(self._origin_type, branch._origin_type):
+            # print(f'{self._origin_type} not subclass of {branch._origin_type})!')
             return False
         # Else, the unsubscripted type originating this generic is a subclass
         # of the unsubscripted type originating that branch. Note, however, that

@@ -35,6 +35,6 @@ def test_door_is_subhint(door_cases_is_subhint: (
     from beartype.door import is_subhint
 
     # For each type subhint case to be tested...
-    for subhint, superhint, IS_SUBHINT in door_cases_is_subhint:
+    for subhint, superhint, is_subhint_expect in door_cases_is_subhint:
         # Assert this tester returns the expected boolean for these hints.
-        assert is_subhint(subhint, superhint) is IS_SUBHINT
+        assert is_subhint(subhint, superhint) is is_subhint_expect

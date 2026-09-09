@@ -179,7 +179,7 @@ def die_if_hint_pep604_inconsistent(hint: Hint) -> None:
     # Else, the representation of this new union is prefixed by the
     # representation of this hint as expected.
 
-# ....................{ TESTERS                        }....................
+# ....................{ TESTERS                            }....................
 def is_hint_pep604(hint: object) -> TypeIs[Hint]:
     '''
     :data:`True` only if the passed object is a :pep:`604`-compliant **union**
@@ -198,7 +198,6 @@ def is_hint_pep604(hint: object) -> TypeIs[Hint]:
 
     # Release the werecars, Bender!
     return isinstance(hint, HintPep604Type)
-
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.

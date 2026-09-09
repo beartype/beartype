@@ -154,10 +154,10 @@ def is_hint_pep484_typevar(hint: Hint) -> TypeIs[TypeVar]:  # pyright: ignore
 #  Kinda fun, but *REALLY* non-trivial -- and probably no one cares. Guh!
 def get_hint_pep484_typevar_bounded_constraints_or_none(
     # Mandatory parameters.
-    hintable: Optional[Pep649749Hintable],
     hint: TypeVar,
 
     # Optional parameters.
+    hintable: Optional[Pep649749Hintable] = None,
     exception_prefix: str = '',
 ) -> HintOrNone:
     '''
@@ -211,7 +211,9 @@ def get_hint_pep484_typevar_bounded_constraints_or_none(
 
     Parameters
     ----------
-    hintable : Optional[Pep649749Hintable]
+    hint : object
+        Type variable to be inspected.
+    hintable : Optional[Pep649749Hintable], default: None
         **Hintable** (i.e., pure-Python module, type, or callable annotated by
         this hint) to be passed as the optional ``owner`` parameter to the
         low-level :func:`annotationlib.call_evaluate_function` function
@@ -221,8 +223,6 @@ def get_hint_pep484_typevar_bounded_constraints_or_none(
         :func:`beartype.door.die_if_unbearable` functions and thus originates
         from no hintable). A non-:data:`None` hintable is required to resolve
         unquoted forward references transitively subscripting this hint.
-    hint : object
-        Type variable to be inspected.
     exception_prefix : str, default: ''
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -243,6 +243,7 @@ def get_hint_pep484_typevar_bounded_constraints_or_none(
         if this object is *not* a :pep:`484`-compliant type variable.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484.pep484604union import (
         make_hint_pep484604_union)
@@ -251,11 +252,13 @@ def get_hint_pep484_typevar_bounded_constraints_or_none(
         get_hint_pep749_evaluator_optional,
     )
 
+    # ....................{ VALIDATE                       }....................
     # If this hint is *NOT* a type variable, raise an exception.
     die_unless_hint_pep484_typevar(
         hint=hint, exception_prefix=exception_prefix)
     # Else, this hint is a type variable.
 
+    # ....................{ LOCALS                         }....................
     # Bounded constraints parametrizing this type variable to be returned.
     hint_bounded_constraints: Hint = None
 
@@ -269,7 +272,7 @@ def get_hint_pep484_typevar_bounded_constraints_or_none(
         exception_prefix=exception_prefix,
     )
 
-    #
+    # ....................{ UNION                          }....................
     # If this type variable was parametrized by one or more constraints, create
     # and return the PEP 484-compliant union of these constraints.
     if hint_constraints:
@@ -310,5 +313,6 @@ def get_hint_pep484_typevar_bounded_constraints_or_none(
         # Else, this type variable was parametrized by *NO* bound.
     # Else, this type variable was parametrized by *NO* constraints.
 
+    # ....................{ RETURN                         }....................
     # Return these bounded constraints.
     return hint_bounded_constraints

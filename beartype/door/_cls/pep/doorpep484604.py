@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsuper import TypeHint
-from beartype.typing import Iterable
+from collections.abc import Iterable
 
 # ....................{ SUBCLASSES                         }....................
 class UnionTypeHint(TypeHint):

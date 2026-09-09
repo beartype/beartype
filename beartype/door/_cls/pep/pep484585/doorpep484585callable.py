@@ -51,7 +51,7 @@ class CallableTypeHint(TypeHint):
 
     # ..................{ INITIALIZERS                       }..................
     def _make_args(self) -> tuple:
-        # print(f'{self}._origin: {self._origin}')
+        # print(f'{self}._origin_type: {self._origin_type}')
 
         # Tuple of all child type hints subscripting this callable type hint,
         # localized for both readability and negligible efficiency gains.
@@ -267,7 +267,7 @@ class CallableTypeHint(TypeHint):
         # originating this hint is a subclass of the class
         # originating that branch.
         if branch._is_args_ignorable:
-            return issubclass(self._origin, branch._origin)
+            return issubclass(self._origin_type, branch._origin_type)
         # Else, that branch is subscripted (e.g., "typing.Callable[..., int]").
         #
         # If that branch is *NOT* a callable type hint, this callable type hint

@@ -20,6 +20,8 @@ from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint
 from beartype.door._cls.pep.pep484.doorpep484any import AnyTypeHint
 from beartype.door._cls.pep.pep484.doorpep484newtype import NewTypeTypeHint
 from beartype.door._cls.pep.pep484.doorpep484typevar import TypeVarTypeHint
+from beartype.door._cls.pep.pep484.doorpep484unsubbed import (
+    UnsubscriptedTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
     CallableTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585generic import (
@@ -48,8 +50,6 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignPep484585TupleFixed,
     HintSignTypeVar,
 )
-from beartype._data.hint.sign.datahintsignset import (
-    HINT_SIGNS_UNSUBSCRIPTABLE)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
@@ -79,97 +79,104 @@ def get_typehint_subclass(hint: Hint) -> type[TypeHint]:
         If the passed hint is *not* actually a PEP-compliant type hint.
     '''
 
-    # ..................{ SUBCLASS                           }..................
+    # ..................{ LOCALS                             }..................
     # Sign uniquely identifying this hint if any *OR* "None" otherwise (i.e., if
-    # this hint is a PEP-noncompliant class).
+    # this hint is either a valid PEP-noncompliant class, an invalid
+    # PEP-noncompliant object *NEVER* likely to be supported by beartype, *OR* a
+    # valid PEP-compliant hint currently unsupported by beartype).
     hint_sign = get_hint_pep_sign_or_none(hint)
 
-    #FIXME: [SPEED] As a negligible optimization, globalize the
-    #_HINT_SIGN_TO_TYPEHINT_CLS.get() method to avoid repeated lookups here.
-    # Private concrete subclass of this ABC handling this hint if any *OR*
-    # "None" otherwise (i.e., if no such subclass has been authored yet).
-    wrapper_subclass = _HINT_SIGN_TO_TYPEHINT_CLS.get(hint_sign)  # type: ignore[arg-type]
-    # print(f'Mapping hint {hint} sign {hint_sign} to subclass {wrapper_subclass}...')
+    # ..................{ SUBCLASS                           }..................
+    # Concrete "TypeHint" subclass to be returned.
+    wrapper_subclass: type[TypeHint] = None  # type: ignore[assignment]
 
-    # If this hint appears to be currently unsupported...
-    if wrapper_subclass is None:
-        # If either...
+    # If this hint is uniquely identified by a sign...
+    if hint_sign is not None:
+        #FIXME: [SPEED] As a negligible optimization, globalize the
+        #_HINT_SIGN_TO_TYPEHINT_SUBTYPE.get() method to avoid repeated lookups here.
+
+        # Concrete "TypeHint" subclass superficially handling *ALL* hints
+        # identified by this sign if any *OR* "None" otherwise (i.e., if *NO*
+        # such subclass has been authored yet).
+        wrapper_subclass = _HINT_SIGN_TO_TYPEHINT_SUBTYPE.get(hint_sign)  # type: ignore[assignment]
+        # print(f'Mapping hint {hint} sign {hint_sign} to subclass {wrapper_subclass}...')
+
+        # If...
         if (
-            # This hint is a PEP-noncompliant isinstanceable class *OR*...
-            isinstance(hint, type) or
-
-            #FIXME: This condition is kinda intense. Should we really be
-            #conflating typing attributes that aren't types with objects that
-            #are types? Let's investigate exactly which kinds of type hints
-            #require this and contemplate something considerably more elegant.
-            # An unsupported kind of PEP-compliant type hint (e.g.,
-            # "typing.TypedDict" instance)...
-            is_hint_pep_typing(hint)
-        # Return the concrete "TypeHint" subclass handling all such classes.
+            # This hint is superficially handled by a "catch-all" subscripted
+            # "TypeHint" subclass despite possibly being unsubscripted *AND*...
+            wrapper_subclass in TYPEHINT_SUBTYPES_SUBSCRIPTED_CATCHALL and
+            # This hint is unsubscripted...
+            not get_hint_pep_childs(hint)
         ):
+            # print('Here!')
+            # This hint is more accurately handled by the catch-all
+            # "UnsubscriptedTypeHint" subclass, which handles *ALL*
+            # unsubscripted hints *NOT* handled by some finer-grained subclass.
+            wrapper_subclass = UnsubscriptedTypeHint
+
+    # If *NO* "TypeHint" subclass handling this hint has been authored yet...
+    if wrapper_subclass is None:
+        # If this hint is a type, prefer the concrete "TypeHint" subclass
+        # handling all such types.
+        if isinstance(hint, type):
             wrapper_subclass = ClassTypeHint
-            # print(f'[type fallback] hint: {repr(hint)}; sign: {repr(hint_sign)}; wrapper: {repr(wrapper_subclass)}')
-        # Else, raise an exception.
-        else:
+        # Else, this hint is *NOT* a type.
+        #
+        # If this hint is *NOT* published by the standard "typing" submodule,
+        # this hint is *NOT* guaranteed to be a PEP-compliant hint currently
+        # unsupported by beartype (e.g., "typing.TypedDict" instance). Since
+        # this implies this hint to be a PEP-noncompliant object authored by
+        # some third-party package unlikely to ever be supported by a concrete
+        # "TypeHint" subclass implemented by us, raise an exception.
+        elif not is_hint_pep_typing(hint):
             raise BeartypeDoorNonpepException(
                 f'Type hint {repr(hint)} '
                 f'currently unsupported by "beartype.door.TypeHint".'
             )
-    # Else, this hint is supported.
-    #
-    #FIXME: Instead of reducing to the inappropriate "ClassTypeHint" subclass
-    #here, we should instead:
-    #* Define a new "UnsubscriptedTypeHint" subclass wherever we currently
-    #  define the existing "SubscriptedTypeHint" subclass.
-    #* Reduce to "UnsubscriptedTypeHint" rather than "ClassTypeHint" below.
+        # Else, this hint is published by the standard "typing" submodule and
+        # thus guaranteed to be a PEP-compliant hint merely currently
+        # unsupported by beartype (e.g., "typing.TypedDict" instance). In this
+        # case, prefer the concrete "TypeHint" subclass handling all such hints.
+        else:
+            wrapper_subclass = UnsubscriptedTypeHint
+        # print(f'[type fallback] hint: {repr(hint)}; sign: {repr(hint_sign)}; wrapper: {repr(wrapper_subclass)}')
 
-    # If it is *NOT* the case that either...
-    elif not (
-        # This hint is unsubscriptable (i.e., permissible as a valid hint even
-        # when unsubscripted by child hints) and thus *NOT* safely reducible to
-        # the "ClassTypeHint" subclass even when unsubscripted *OR*...
-        hint_sign in HINT_SIGNS_UNSUBSCRIPTABLE or
-        # This hint is subscripted by one or more child hints.
-        get_hint_pep_childs(hint)
-    ):
-        # Replace this inappropriate "SubscriptedTypeHint" wrapper with the more
-        # appropriate "ClassTypeHint" subclass wrapping unsubscripted types.
-        wrapper_subclass = ClassTypeHint
-    # # In any case, this hint is supported by this concrete subclass.
-
-    #FIXME: Alternately, it might be preferable to refactor this to resemble:
-    #    if (
-    #       not get_hint_pep_childs(hint) and
-    #       get_hint_pep_origin_type_or_none(hint) is not None
-    #    ):
-    #        wrapper_subclass = ClassTypeHint
-    #
-    #That's possibly simpler and cleaner, as it seamlessly conveys the exact
-    #condition we're going for -- assuming it works, of course. *sigh*
-    #FIXME: While sensible, the above approach induces non-trivial test
-    #failures. Let's investigate this further at a later time, please.
-
+    # ..................{ RETURN                             }..................
     # Return this subclass.
     # print(f'Mapped hint {hint} sign {hint_sign} to subclass {wrapper_subclass}!')
     return wrapper_subclass
 
 # ....................{ PRIVATE ~ globals                  }....................
 # Further initialized below by the _init() function.
-_HINT_SIGN_TO_TYPEHINT_CLS: dict[HintSign, type[TypeHint]] = {
-    HintSignAnnotated:  AnnotatedTypeHint,
-    HintSignAny:        AnyTypeHint,
-    HintSignCallable:   CallableTypeHint,
-    HintSignLiteral:    LiteralTypeHint,
-    HintSignNewType:    NewTypeTypeHint,
-    HintSignTuple:      TupleVariableTypeHint,
-    HintSignPep484585TupleFixed: TupleFixedTypeHint,
-    HintSignTypeVar:    TypeVarTypeHint,
+_HINT_SIGN_TO_TYPEHINT_SUBTYPE: dict[HintSign, type[TypeHint]] = {
+    HintSignAnnotated:                AnnotatedTypeHint,
+    HintSignAny:                      AnyTypeHint,
+    HintSignCallable:                 CallableTypeHint,
+    HintSignLiteral:                  LiteralTypeHint,
+    HintSignNewType:                  NewTypeTypeHint,
+    HintSignTuple:                    TupleVariableTypeHint,
+    HintSignPep484585TupleFixed:      TupleFixedTypeHint,
+    HintSignTypeVar:                  TypeVarTypeHint,
     HintSignPep484585GenericSubbed:   GenericTypeHint,
     HintSignPep484585GenericUnsubbed: GenericTypeHint,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
 to the :class:`.TypeHint` subclass handling those hints.
+'''
+
+
+TYPEHINT_SUBTYPES_SUBSCRIPTED_CATCHALL = frozenset((
+    SubscriptedTypeHint,
+    TupleVariableTypeHint,
+))
+'''
+Frozen set of all **catch-all subscripted type hint subclasses** (i.e., concrete
+:class:`.TypeHint` subclasses superficially assigned by the
+:data:`._HINT_SIGN_TO_TYPEHINT_SUBTYPE` dictionary to *all* hints uniquely
+identified by various signs, regardless of whether those hints are actually
+subscripted or not).
 '''
 
 # ....................{ PRIVATE ~ initializers             }....................
@@ -185,7 +192,7 @@ def _init() -> None:
     from beartype._data.hint.sign.datahintsignset import HINT_SIGNS_UNION
 
     # ....................{ INITIALIZE                     }....................
-    # Fully initialize the "_HINT_SIGN_TO_TYPEHINT_CLS" global dictionary.
+    # Fully initialize the "_HINT_SIGN_TO_TYPEHINT_SUBTYPE" global dictionary.
     #
     # For each sign in the dictionary mapping from signs uniquely identifying
     # type hint factories originating from isinstanceable types to the fixed
@@ -194,22 +201,22 @@ def _init() -> None:
         # If this sign has *NOT* already been mapped to an existing "TypeHint"
         # subclass, map this sign to the catch-all "SubscriptedTypeHint"
         # subclass.
-        if hint_sign not in _HINT_SIGN_TO_TYPEHINT_CLS:
-            _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = SubscriptedTypeHint
+        if hint_sign not in _HINT_SIGN_TO_TYPEHINT_SUBTYPE:
+            _HINT_SIGN_TO_TYPEHINT_SUBTYPE[hint_sign] = SubscriptedTypeHint
         # Else, this sign has already been mapped to an existing "TypeHint"
         # subclass. Preserve this mapping as is.
 
     # For each sign uniquely identifying a union, map this sign to the
     # union-specific "TypeHint" subclass.
     for hint_sign in HINT_SIGNS_UNION:
-        _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = UnionTypeHint
+        _HINT_SIGN_TO_TYPEHINT_SUBTYPE[hint_sign] = UnionTypeHint
 
     # ....................{ MONKEY-PATCH                   }....................
     # Logic intentionally performed last *AFTER* initializing this dictionary
     # above. This logic typically monkey-patches items of this dictionary, yo!
 
     # For each concrete "TypeHint" subclass registered with this dictionary...
-    for typehint_cls in _HINT_SIGN_TO_TYPEHINT_CLS.values():
+    for typehint_cls in _HINT_SIGN_TO_TYPEHINT_SUBTYPE.values():
         # If the unqualified basename of this subclass is prefixed by an
         # underscore, this subclass is private rather than public. In this case,
         # silently ignore this private subclass and continue to the next.

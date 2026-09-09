@@ -56,8 +56,8 @@ class SubscriptedTypeHint(TypeHint):
                 f'Type hint {repr(self._hint)} argument length range unknown.')
         # Else, this factory has been associated with such a range.
 
-        #FIXME: Consider actually testing this. This *IS* technically
-        #testable and should thus *NOT* be marked as "pragma: no cover".
+        #FIXME: Consider actually testing this. This *IS* technically testable
+        #and should thus *NOT* be marked as "pragma: no cover".
 
         # If this hint was subscripted by an unexpected number of child hints...
         #
@@ -119,6 +119,36 @@ class SubscriptedTypeHint(TypeHint):
         # Return these child hints.
         return args
 
+    # ..................{ PRIVATE ~ getters                  }..................
+    def _get_hash(self) -> int:
+
+        # Low-level hashable object encapsulated by this high-level wrapper to
+        # be hashed below as the hash for this wrapper, defined as either...
+        wrapper_hashable = (
+            # If at least one of the child hints subscripting this hint is
+            # unignorable, the hashable 2-tuple combining (in arbitrary order):
+            # * The type originating this hint (e.g., "list" for "list[int]").
+            # * All nested "TypeHint" objects wrapping these child hints.
+            #
+            # This hash has the minor disadvantage of increased time complexity
+            # but the major advantage of preserving consistency between equality
+            # and hashes. Specifically, doing so ensures that semantically
+            # equivalent subscripted PEP 484- and 585-compliant type hints
+            # (e.g., "list[int]" and "typing.List[int]"), which compare equal,
+            # also share the same hash.
+            hash((self._origin_type, self._args_wrapped_tuple))
+            if not self._is_args_ignorable else
+            # Else, *ALL* child hints subscripting this hint are ignorable. In
+            # this case, the type originating this hint. Doing so ensures that
+            # unsubscripted type hint factories and the corresponding type
+            # hints subscripted by ignorable child hints (e.g., "list" and
+            # "list[object]"), which compare equal, also share the same hash.
+            self._origin_type
+        )
+
+        # Hash this wrapper by this hashable.
+        return hash(wrapper_hashable)
+
     # ..................{ PRIVATE ~ testers                  }..................
     # Note that this redefinition of the superclass _is_equal() method is
     # technically unnecessary, as that method is already sufficiently
@@ -129,11 +159,11 @@ class SubscriptedTypeHint(TypeHint):
     # discarding faster working code would be senseless.
     def _is_equal(self, other: TypeHint) -> bool:
 
-        # If *ALL* of the child type hints subscripting both of these parent
-        # type hints are ignorable, return true only if these parent type hints
-        # both originate from the same isinstanceable class.
+        # If *ALL* of the child hints subscripting both of these parent hints
+        # are ignorable, return true only if these parent hints both
+        # originate from the same type.
         if self._is_args_ignorable and other._is_args_ignorable:
-            return self._origin == other._origin
+            return self._origin_type == other._origin_type
         # Else, one or more of the child type hints subscripting either of these
         # parent type hints are unignorable.
         #
@@ -151,9 +181,6 @@ class SubscriptedTypeHint(TypeHint):
         # Return true only if all child type hints of these hints are equal.
         return all(
             this_child == that_child
-            #FIXME: Probably more efficient and maintainable to write this as:
-            #    for this_child in self
-            #    for that_child in other
             for this_child, that_child in zip(
                 self._args_wrapped_tuple, other._args_wrapped_tuple)
         )

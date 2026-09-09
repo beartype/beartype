@@ -213,9 +213,10 @@ def test_door_typehint_equals(
             # assert hash(typehint_a) == hash(typehint_b), (
             #     f'TypeHint.__eq__() <-> TypeHint.__hash__() '
             #     f'inconsistency detected: '
-            #     f'TypeHint({repr(hint_a)}) == TypeHint({repr(hint_b)}), but '
-            #     f'hash(TypeHint({repr(hint_a)}) != '
-            #     f'hash(TypeHint({repr(hint_b)}).'
+            #     f'{typehint_a.__class__.__name__}({repr(hint_a)}) == '
+            #     f'{typehint_b.__class__.__name__}({repr(hint_b)}), but '
+            #     f'hash({typehint_a.__class__.__name__}({repr(hint_a)}) != '
+            #     f'hash({typehint_b.__class__.__name__}({repr(hint_b)}).'
             # )
         # Else, these wrappers compare unequal. In these case, these wrappers
         # typically do *NOT* (but technically could) share the same hash.

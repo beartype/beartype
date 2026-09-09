@@ -95,60 +95,6 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignPep695TypeAliasUnsubscripted,
 )
 
-# ....................{ SETS ~ args                        }....................
-HINT_SIGNS_UNSUBSCRIPTABLE = frozenset((
-    # ..................{ PEP 484                            }..................
-    # The PEP 484-compliant "typing.Any" singleton is *ALWAYS* unsubscripted and
-    # thus clearly unsubscriptable.
-    HintSignAny,
-
-    # PEP 484-compliant new types (i.e., "typing.NewType" objects) are *ALWAYS*
-    # unsubscripted and thus clearly unsubscriptable.
-    HintSignNewType,
-
-    # PEP 484-compliant type variables (i.e., "typing.TypeVar" objects) are
-    # *ALWAYS* unsubscripted and thus clearly unsubscriptable.
-    HintSignTypeVar,
-
-    # ..................{ PEP (484|585)                      }..................
-    # PEP 484- and 585-compliant generics are best wrapped by the standard
-    # "GenericTypeHint" wrapper even when directly unsubscripted. Why? Because
-    # *ALL* generics are (transitively) semantically subscripted either:
-    # * Directly (e.g., "MuhGeneric[int]") *OR*...
-    # * Indirectly by one or more of their unerased pseudo-superclasses.
-    HintSignPep484585GenericUnsubbed,
-
-    # ..................{ PEP 612                            }..................
-    # PEP 612-compliant parameter specifications (i.e., "typing.ParamSpec"
-    # objects) are *ALWAYS* unsubscripted and thus clearly unsubscriptable.
-    HintSignParamSpec,
-
-    # ..................{ PEP 646                            }..................
-    # PEP 646-compliant type variable tuples (i.e., "typing.TypeVarTuple"
-    # objects) are *ALWAYS* unsubscripted and thus clearly unsubscriptable.
-    HintSignTypeVarTuple,
-))
-'''
-Frozen set of the signs uniquely identifying all **unsubscriptable type hints**,
-defined as type hints that are acceptable when unsubscripted by child type hints
-both:
-
-* Technically, as formally standardized by one or more PEPs.
-* Pragmatically, as effectively standardized by common usage throughout
-  real-world downstream modules.
-
-This frozen set intentionally excludes:
-
-* :pep:`484`-compliant **type hint factories** published by the standard
-  :mod:`typing` module subsequently deprecated by :pep:`585` (e.g.,
-  :obj:`typing.Dict`, :obj:`typing.List`). Technically, :mod:`beartype`
-  permissively accepts these factories as unsubscripted type hints to avoid
-  raising excessive decoration-time exceptions that most users would consider to
-  be ignorable and thus noxious false negatives. Pragmatically, these factories
-  are intended to *only* be subscripted by child type hints. Since these
-  factories have been deprecated, this debate is largely moot in either case.
-'''
-
 # ....................{ SETS ~ args : container            }....................
 HINT_SIGNS_MAPPING: FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
