@@ -32,7 +32,7 @@ def die_unless_typehint(obj: object) -> None:
     '''
 
     # Avoid circular import dependencies.
-    from beartype.door._cls.doorsuper import TypeHint
+    from beartype.door._cls.doorabc import TypeHint
 
     # If this object is *NOT* a type hint wrapper, raise an exception.
     if not isinstance(obj, TypeHint):

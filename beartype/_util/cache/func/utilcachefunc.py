@@ -285,7 +285,7 @@ def callable_cached(func: CallableT) -> CallableT:
 #
 #This makes this decorator fundamentally unsound. Refactor as follows, please:
 #* Replace the two usages of this decorator in the
-#  "beartype.door._cls.doorsuper" submodule with a manual caching scheme
+#  "beartype.door._cls.doorabc" submodule with a manual caching scheme
 #  leveraging a global dictionary mapping from the name to... *SOMETHING.* Sigh!
 #* Permanently destroy this decorator and associated tests.
 def method_cached_arg_by_id(func: CallableT) -> CallableT:

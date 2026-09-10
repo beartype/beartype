@@ -36,7 +36,10 @@ from beartype._util.hint.pep.utilpepget import (
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobjget import get_object_type_basename
-from collections.abc import Iterable
+from collections.abc import (
+    Collection,
+    Iterable,
+)
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -326,12 +329,12 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
         # Return either...
         return (
-            # If that object is a type hint wrapper, defer to the
-            # subclass-specific implementation of this test;
+            # If the passed object is also a type hint wrapper, defer to the
+            # subclass-specific implementation of this test passed that wrapper;
             self._is_equal(other)
             if isinstance(other, TypeHint) else
-            # Else, that object is *NOT* a type hint wrapper. In this case,
-            # defer to either:
+            # Else, the passed object is *NOT* a type hint wrapper. In this
+            # case, defer to either:
             # * If the class of that object defines a similar __eq__() method
             #   supporting the "TypeHint" API, that method.
             # * Else, Python's builtin C-based fallback equality comparator that
@@ -819,18 +822,9 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         die_unless_typehint(other)
         # Else, that object is a type hint wrapper.
 
-        # Return true only if either...
-        return (
-            # This hint is the "typing.Any" catch-all (then this hint is
-            # necessarily a subhint of any hint) *OR*...
-            self._hint is Any or
-            # That hint is the "typing.Any" catch-all (then this hint is
-            # necessarily a subhint of that hint) *OR*...
-            other._hint is Any or
-            # This hint is a subhint of that hint (according to the
-            # subclass-specific implementation of this test).
-            self._is_subhint(other)
-        )
+        # Return true only if this hint is a subhint of that hint (according to
+        # each subclass-specific implementation of this test).
+        return self._is_subhint(other)
 
 
     def is_superhint(self, other: 'TypeHint') -> bool:
@@ -901,15 +895,16 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         semantically equivalent to the other low-level type hint wrapped by the
         passed wrapper.
 
-        Subclasses are advised to override this method to implement the public
-        :meth:`is_subhint` tester method (which internally defers to this
-        private tester method) in a subclass-specific manner. Since the default
-        implementation is guaranteed to suffice for *all* possible use cases,
-        subclasses should override this method only for efficiency reasons; the
-        default implementation calls the :meth:`is_subhint` method twice and is
-        thus *not* necessarily the optimal implementation for subclasses.
-        Notably, the default implementation exploits the well-known syllogism
-        between two partially ordered items ``A`` and ``B``:
+        Subclasses may covertly override this method (without *actually*
+        overriding this method) by instead overriding the private
+        :meth:`_is_subhint` tester method. The former defers to the latter.
+        Since the default implementation of this method is guaranteed to suffice
+        for *all* possible use cases, subclasses should override this method
+        only for efficiency reasons; the default implementation calls the
+        :meth:`is_subhint` method twice and is thus *not* necessarily the
+        optimal implementation for all possible subclasses. Notably, the default
+        implementation exploits the well-known syllogism between two partially
+        ordered items ``A`` and ``B``:
 
         * If ``A <= B`` and ``A >= B``, then ``A == B``.
 
@@ -933,9 +928,9 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         # Note that this conditional implements the trivial boolean syllogism
         # that we all know and adore: "If A <= B and B <= A, then A == B".
         return (
-            # This union is a subhint of that object.
+            # This hint is a subhint of the passed hint.
             self.is_subhint(other) and
-            # That object is a subhint of this union.
+            # The passed hint is a subhint of this hint.
             other.is_subhint(self)
         )
 
@@ -1105,8 +1100,8 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     def _args_wrapped_tuple(self) -> tuple['TypeHint', ...]:
         '''
         Tuple of the zero or more high-level **child type hint wrappers** (i.e.,
-        :class:`TypeHint` instances) wrapping the low-level child type hints
-        subscripting (indexing) the low-level parent type hint wrapped by this
+        :class:`TypeHint` instances) wrapping the low-level child hints
+        subscripting (indexing) the low-level parent hint wrapped by this
         wrapper.
 
         This attribute is intentionally defined as a memoized property to
@@ -1122,10 +1117,10 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     @property_cached
     def _args_wrapped_frozenset(self) -> frozenset['TypeHint']:
         '''
-        Frozen set of the zero or more high-level child **type hint wrappers**
-        (i.e., :class:`TypeHint` instances) wrapping the low-level child type
-        hints subscripting (indexing) the low-level parent type hint wrapped by
-        this wrapper.
+        Frozen set of the zero or more high-level **child type hint wrappers**
+        (i.e., :class:`TypeHint` instances) wrapping the low-level child hints
+        subscripting (indexing) the low-level parent hint wrapped by this
+        wrapper.
 
         This attribute is intentionally defined as a memoized property to
         minimize space and time consumption for use cases *not* accessing this
@@ -1137,24 +1132,23 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
     @property  # type: ignore
     @property_cached
-    def _branches(self) -> Iterable['TypeHint']:
+    def _branches(self) -> Collection['TypeHint']:
         '''
-        Immutable iterable of all **branches** (i.e., high-level type hint
-        wrappers encapsulating all low-level child type hints subscripting
-        (indexing) the low-level parent type hint encapsulated by this
-        high-level parent type hint wrappers if this is a union (and thus an
-        instance of the :class:`UnionTypeHint` subclass) *or* the 1-tuple
-        containing only this instance itself otherwise) of this type hint
-        wrapper.
+        Immutable collection of all **branches** (i.e., high-level type hint
+        wrappers encapsulating all low-level child hints subscripting (indexing)
+        the low-level parent hint encapsulated by this high-level parent type
+        hint wrapper if this is a union (and thus an instance of the
+        :class:`UnionTypeHint` subclass) *or* the 1-tuple containing only this
+        instance itself otherwise) of this type hint wrapper.
 
-        This property enables the child type hints of both :pep:`484`- and
+        This property enables the child hints of both :pep:`484`- and
         :pep:`604`-compliant unions (e.g., :attr:`typing.Union`,
         :attr:`typing.Optional`, and ``|``-delimited type objects) to be handled
         transparently *without* special cases in subclass implementations.
         '''
 
         # Default to returning the 1-tuple containing only this instance, as
-        # *ALL* subclasses except "_HintTypeUnion" require this default.
+        # *ALL* subclasses (except "UnionTypeHint") require this default.
         return (self,)
 
 

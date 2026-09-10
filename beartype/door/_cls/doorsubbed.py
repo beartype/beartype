@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.doorabc import TypeHint
 from beartype.roar import BeartypeDoorPepArgsLenException
 from beartype._data.hint.sign.datahintsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)

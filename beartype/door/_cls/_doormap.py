@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.doorabc import TypeHint
 from beartype.door._cls.nonpep.doornonpepclass import ClassTypeHint
 from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
 from beartype.door._cls.pep.doorpep586 import LiteralTypeHint
@@ -20,13 +20,13 @@ from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint
 from beartype.door._cls.pep.pep484.doorpep484any import AnyTypeHint
 from beartype.door._cls.pep.pep484.doorpep484newtype import NewTypeTypeHint
 from beartype.door._cls.pep.pep484.doorpep484typevar import TypeVarTypeHint
-from beartype.door._cls.pep.pep484.doorpep484unsubbed import (
+from beartype.door._cls.doorunsubbed import (
     UnsubscriptedTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
     CallableTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585generic import (
     GenericTypeHint)
-from beartype.door._cls.pep.pep484585.doorpep484585subbed import (
+from beartype.door._cls.doorsubbed import (
     SubscriptedTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
     TupleFixedTypeHint,

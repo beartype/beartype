@@ -301,7 +301,7 @@ def is_subhint(subhint: Hint, superhint: Hint) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype.door._cls.doorsuper import TypeHint
+    from beartype.door._cls.doorabc import TypeHint
 
     # The one-liner is mightier than the... many-liner.
     return TypeHint(subhint).is_subhint(TypeHint(superhint))

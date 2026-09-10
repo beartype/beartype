@@ -14,9 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.doorabc import TypeHint
 from beartype.door._cls.nonpep.doornonpepclass import ClassTypeHint
-from beartype.door._cls.pep.pep484585.doorpep484585subbed import (
+from beartype.door._cls.doorsubbed import (
     SubscriptedTypeHint as SubscriptedTypeHint)
 from beartype.roar import BeartypeDoorIsSubhintException
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genfind import (

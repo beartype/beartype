@@ -100,7 +100,7 @@ class _TypeHintMetaclass(BeartypeSlottedABCMeta):
 
         # ................{ IMPORTS                            }................
         # Avoid circular import dependencies.
-        from beartype.door._cls.doorsuper import TypeHint
+        from beartype.door._cls.doorabc import TypeHint
 
         # ................{ UNCACHED                           }................
         # If the type to be instantiated is *NOT* the "TypeHint" abstract base

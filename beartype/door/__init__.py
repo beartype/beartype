@@ -34,7 +34,7 @@ standardized by the :mod:`typing` module.
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.door._cls.doorsuper import (
+from beartype.door._cls.doorabc import (
     TypeHint as TypeHint)
 from beartype.door._cls.nonpep.doornonpepclass import (
     ClassTypeHint as ClassTypeHint)
@@ -50,13 +50,13 @@ from beartype.door._cls.pep.pep484.doorpep484newtype import (
     NewTypeTypeHint as NewTypeTypeHint)
 from beartype.door._cls.pep.pep484.doorpep484typevar import (
     TypeVarTypeHint as TypeVarTypeHint)
-from beartype.door._cls.pep.pep484.doorpep484unsubbed import (
+from beartype.door._cls.doorunsubbed import (
     UnsubscriptedTypeHint as UnsubscriptedTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
     CallableTypeHint as CallableTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585generic import (
     GenericTypeHint as GenericTypeHint)
-from beartype.door._cls.pep.pep484585.doorpep484585subbed import (
+from beartype.door._cls.doorsubbed import (
     SubscriptedTypeHint as SubscriptedTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
     TupleFixedTypeHint,

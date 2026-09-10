@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.pep.pep484.doorpep484unsubbed import (
+from beartype.door._cls.doorunsubbed import (
     UnsubscriptedTypeHint)
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cls.utilclstest import die_unless_type

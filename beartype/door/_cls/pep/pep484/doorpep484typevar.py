@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsuper import (
+from beartype.door._cls.doorabc import (
     TupleTypeHints,
     TypeHint,
 )

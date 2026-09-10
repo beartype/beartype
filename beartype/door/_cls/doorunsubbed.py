@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.doorabc import TypeHint
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Actually use in lieu of "ClassTypeHint", please. *sigh*
