@@ -150,6 +150,13 @@ toc = {permalink = true}
 #     https://facelessuser.github.io/pymdown-extensions/extensions/superfences
 "pymdownx.superfences" = {}
 
+# File-inclusion snippets, used here solely for its "auto_append" feature:
+# automatically appending "docs/_links.md" to every page so that all Markdown
+# reference-style link definitions in that file are globally available. This
+# replicates the RST "_links.rst" / "rst_epilog" pattern. See also:
+#     https://facelessuser.github.io/pymdown-extensions/extensions/snippets
+"pymdownx.snippets" = {base_path = ["docs"], auto_append = ["_links.md"]}
+
 # ....................{ PLUGINS                             }...................
 # ....................{ PLUGINS ~ builtin                   }...................
 # First-party Zensical plugins bundled with Zensical itself.
@@ -364,7 +371,11 @@ scheme = "default"
 toggle = {icon = "lucide/sun", name = "Switch to system preference"}  # old icon: material/brightness-7
 
 [project.validation]
-# TODO: https://github.com/zensical/zensical/issues/700 - Snippets
+# Needed because docs/_links.md may contain link definitions that
+# aren't actually used anywhere, but still belong in the corpus.
+unused_definitions = false
+
+# FIXME: https://github.com/zensical/zensical/issues/700 - Snippets
 # [and other things] recognized as unresolved link reference. This is
 # necessary to build under --strict until that issue is fixed.
 unresolved_references = false

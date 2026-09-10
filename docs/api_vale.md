@@ -47,7 +47,7 @@ See [Validator Showcase](#validator-showcase) for comforting examples – or bli
 
 Beartype validators are **zero-cost code generators.** Like the rest of beartype (but unlike other validation frameworks), beartype validators generate optimally efficient pure-Python type-checking logic with *no* hidden function or method calls, undocumented costs, or runtime overhead.
 
-Beartype validator code is thus **call-explicit.** Since pure-Python function and method calls are notoriously slow in [CPython](https://github.com/python/cpython), the code we generate only calls the pure-Python functions and methods you specify when you subscript `beartype.vale.Is*` classes with those functions and methods. That's it. We *never* call anything without your permission. For example:
+Beartype validator code is thus **call-explicit.** Since pure-Python function and method calls are notoriously slow in [CPython], the code we generate only calls the pure-Python functions and methods you specify when you subscript `beartype.vale.Is*` classes with those functions and methods. That's it. We *never* call anything without your permission. For example:
 
 - The declarative validator `Annotated[np.ndarray, IsAttr['dtype', IsAttr['type', IsEqual[np.float64]]]]` detects NumPy arrays of 64-bit floating-point precision by generating the fastest possible inline expression for doing so:
 
@@ -144,7 +144,7 @@ from typing import Annotated
 AnswerToTheUltimateQuestion = Annotated[list, IsEqual[list(range(42))]]
 ```
 
-`IsEqual` generalizes the comparable [PEP 586](https://peps.python.org/pep-0586)-compliant `typing.Literal` type hint. Both check equality against user-defined objects. Despite the differing syntax, these two type hints enforce the same semantics:
+`IsEqual` generalizes the comparable [PEP 586]-compliant `typing.Literal` type hint. Both check equality against user-defined objects. Despite the differing syntax, these two type hints enforce the same semantics:
 
 ```python
 # This beartype validator enforces the same semantics as...
@@ -237,7 +237,7 @@ from typing import Annotated
 StrOrBytesSubclass = Annotated[type, IsSubclass[str, bytes]]
 ```
 
-`IsSubclass` generalizes the comparable [PEP 484](https://peps.python.org/pep-0484)-compliant `typing.Type` and [PEP 585](https://peps.python.org/pep-0585)-compliant `type` type hint factories. All three check subclassing of arbitrary superclasses. Despite the differing syntax, the following hints all enforce the same semantics:
+`IsSubclass` generalizes the comparable [PEP 484]-compliant `typing.Type` and [PEP 585]-compliant `type` type hint factories. All three check subclassing of arbitrary superclasses. Despite the differing syntax, the following hints all enforce the same semantics:
 
 ```python
 # This beartype validator enforces the same semantics as...
@@ -271,7 +271,7 @@ Wherever you can, prefer `type` and `typing.Type`. Sure, they're inflexible, but
 
 ## Validator Syntax
 
-Beartype validators support a rich domain-specific language (DSL) leveraging familiar Python operators. Dynamically create new validators on-the-fly from existing validators, fueling reuse and preserving [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself):
+Beartype validators support a rich domain-specific language (DSL) leveraging familiar Python operators. Dynamically create new validators on-the-fly from existing validators, fueling reuse and preserving [DRY]:
 
 - **Negation** (i.e., `not`). Negating any validator with the `~` operator creates a new validator returning `True` only when the negated validator returns `False`:
 
@@ -341,8 +341,8 @@ DSL: *it's not just a telecom acronym anymore.*
 !!! note
     **Validators require:**
 
-    - **Beartype.** Currently, all *other* static and runtime type checkers silently ignore beartype validators during type-checking. This includes [mypy](http://mypy-lang.org) – which we could possibly solve by bundling a [mypy plugin](https://mypy.readthedocs.io/en/stable/extending_mypy.html) with beartype that extends [mypy](http://mypy-lang.org) to statically analyze declarative beartype validators (e.g., `beartype.vale.IsAttr`, `beartype.vale.IsEqual`). We leave this as an exercise to the idealistic doctoral thesis candidate. <sup>Please do this for us, someone who is not us.</sup>
-    - Either **Python ≥ 3.9** *or* [typing_extensions ≥ 3.9.0.0](https://pypi.org/project/typing-extensions). Validators piggyback onto the `typing.Annotated` class first introduced with Python 3.9.0 and since backported to older Python versions by the [third-party "typing_extensions" package](https://pypi.org/project/typing-extensions), which beartype also transparently supports.
+    - **Beartype.** Currently, all *other* static and runtime type checkers silently ignore beartype validators during type-checking. This includes [mypy] – which we could possibly solve by bundling a [mypy plugin] with beartype that extends [mypy] to statically analyze declarative beartype validators (e.g., `beartype.vale.IsAttr`, `beartype.vale.IsEqual`). We leave this as an exercise to the idealistic doctoral thesis candidate. <sup>Please do this for us, someone who is not us.</sup>
+    - Either **Python ≥ 3.9** *or* [typing_extensions ≥ 3.9.0.0][typing_extensions]. Validators piggyback onto the `typing.Annotated` class first introduced with Python 3.9.0 and since backported to older Python versions by the [third-party "typing_extensions" package][typing_extensions], which beartype also transparently supports.
 
 ## Validator Showcase
 
@@ -375,10 +375,10 @@ def sum_intlist(my_list: IntList) -> int:
     return sum(my_list)  # oh, gods what have you done
 ```
 
-Welcome to **full-fat type-checking.** In [our disastrous roadmap to beartype 1.0.0](https://github.com/beartype/beartype/issues/7), we reluctantly admit that we'd like to augment the `beartype.beartype` decorator with a new parameter enabling full-fat type-checking. But don't wait for us. Force the issue now by just doing it yourself and then mocking us all over Gitter! *Fight the bear, man.*
+Welcome to **full-fat type-checking.** In [our disastrous roadmap to beartype 1.0.0][beartype 1.0.0], we reluctantly admit that we'd like to augment the `beartype.beartype` decorator with a new parameter enabling full-fat type-checking. But don't wait for us. Force the issue now by just doing it yourself and then mocking us all over Gitter! *Fight the bear, man.*
 
 `There are good reasons to believe that O(1) type-checking is preferable
-<faq:O1>`. Violating that core precept exposes your codebase to scalability and security concerns. But you're the Big Boss, you swear you know best, and (in any case) we can't stop you because we already let the unneutered tomcat out of his trash bin by [publishing this API into the badlands of PyPI](https://pypi.org/project/beartype).
+<faq:O1>`. Violating that core precept exposes your codebase to scalability and security concerns. But you're the Big Boss, you swear you know best, and (in any case) we can't stop you because we already let the unneutered tomcat out of his trash bin by [publishing this API into the badlands of PyPI][beartype PyPI].
 
 ### Trendy String Matching
 
@@ -439,9 +439,9 @@ def strip_lengthy_or_quoted_sentence(
 
 > **Subtitle:** *From Set Theory They Shall Grow*
 
-[PEP 484](https://peps.python.org/pep-0484) standardized the `typing.Union` factory [disjunctively](https://en.wikipedia.org/wiki/Logical_disjunction) matching any of several equally permissible type hints ala Python's builtin `or` operator or the overloaded `|` operator for sets. That's great, because set theory is the beating heart behind type theory.
+[PEP 484] standardized the `typing.Union` factory [disjunctively][disjunction] matching any of several equally permissible type hints ala Python's builtin `or` operator or the overloaded `|` operator for sets. That's great, because set theory is the beating heart behind type theory.
 
-But that's just [disjunction](https://en.wikipedia.org/wiki/Logical_disjunction). What about [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)) (e.g., `and`, `&`), [complementation](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement) (e.g., `not`, `~`), or any of the vast multitude of *other* set theoretic operations? Can we logically connect simple type hints validating trivial constraints into complex type hints validating non-trivial constraints via PEP-standardized analogues of unary and binary operators?
+But that's just [disjunction]. What about [intersection] (e.g., `and`, `&`), [complementation] (e.g., `not`, `~`), or any of the vast multitude of *other* set theoretic operations? Can we logically connect simple type hints validating trivial constraints into complex type hints validating non-trivial constraints via PEP-standardized analogues of unary and binary operators?
 
 **Nope.** They don't exist yet. But that's okay. You use beartype, which means you don't have to wait for official Python developers to get there first. You're already there. <sup>...woah</sup>
 
@@ -472,7 +472,7 @@ Guido doesn't want you to know. But you want to know, don't you? You are about t
 
 When we annotate a callable as accepting an `int`, we *never* want that callable to also silently accept a `bool`. Likewise, when we annotate another callable as accepting a `Sequence[Any]` or `Sequence[str]`, we *never* want that callable to also silently accept a `str`. These are sensible expectations – just not in Python, where madness prevails.
 
-To resolve these counter-intuitive concerns, we need the equivalent of the [relative set complement (or difference)](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement). We now call this thing... **type elision!** Sounds pretty hot, right? We know.
+To resolve these counter-intuitive concerns, we need the equivalent of the [relative set complement (or difference)][complementation]. We now call this thing... **type elision!** Sounds pretty hot, right? We know.
 
 ##### Booleans ≠ Integers
 
@@ -580,21 +580,21 @@ If the unbridled power of beartype validators leaves you variously queasy, uneas
 
 Whereas beartype validators are verbose, expressive, and general-purpose, the following hints are terse, inexpressive, and domain-specific. Since beartype internally converts these hints to their equivalent validators, [similar caveats apply](#validator-caveats). Notably, these hints require:
 
-- Either **Python ≥ 3.9** *or* [typing_extensions ≥ 3.9.0.0](https://pypi.org/project/typing-extensions).
+- Either **Python ≥ 3.9** *or* [typing_extensions ≥ 3.9.0.0][typing_extensions].
 - **Beartype,** which hopefully goes without saying.
 
 ### NumPy Type Hints
 
-Beartype conditionally supports [NumPy type hints (i.e., annotations created by subscripting (indexing) various attributes of the "numpy.typing" subpackage)](https://numpy.org/devdocs/reference/typing.html) when these optional runtime dependencies are *all* satisfied:
+Beartype conditionally supports [NumPy type hints (i.e., annotations created by subscripting (indexing) various attributes of the "numpy.typing" subpackage)][numpy.typing] when these optional runtime dependencies are *all* satisfied:
 
 - Python ≥ 3.8.0.
 - beartype ≥ 0.8.0.
-- [NumPy ≥ 1.21.0](https://numpy.org).
-- Either **Python ≥ 3.9** *or* [typing_extensions ≥ 3.9.0.0](https://pypi.org/project/typing-extensions).
+- [NumPy ≥ 1.21.0][NumPy].
+- Either **Python ≥ 3.9** *or* [typing_extensions ≥ 3.9.0.0][typing_extensions].
 
-Beartype internally converts [NumPy type hints](https://numpy.org/devdocs/reference/typing.html) into [equivalent beartype validators](#beartype-validators) at decoration time. [NumPy type hints currently only validate dtypes](https://numpy.org/devdocs/reference/typing.html), a common but limited use case. [Beartype validators](#beartype-validators) validate *any* arbitrary combinations of array constraints – including dtypes, shapes, contents, and... well, *anything.* Which is alot. [NumPy type hints](https://numpy.org/devdocs/reference/typing.html#ndarray) are thus just syntactic sugar for [beartype validators](#beartype-validators) – albeit quasi-portable syntactic sugar also supported by [mypy](http://mypy-lang.org).
+Beartype internally converts [NumPy type hints][numpy.typing] into [equivalent beartype validators](#beartype-validators) at decoration time. [NumPy type hints currently only validate dtypes][numpy.typing], a common but limited use case. [Beartype validators](#beartype-validators) validate *any* arbitrary combinations of array constraints – including dtypes, shapes, contents, and... well, *anything.* Which is alot. [NumPy type hints][numpy.typing.NDArray] are thus just syntactic sugar for [beartype validators](#beartype-validators) – albeit quasi-portable syntactic sugar also supported by [mypy].
 
-Wherever you can, prefer [NumPy type hints](https://numpy.org/devdocs/reference/typing.html) for portability. Everywhere else, default to [beartype validators](#beartype-validators) for generality. Combine them for the best of all possible worlds:
+Wherever you can, prefer [NumPy type hints][numpy.typing] for portability. Everywhere else, default to [beartype validators](#beartype-validators) for generality. Combine them for the best of all possible worlds:
 
 ```python
 # Import the requisite machinery.
@@ -615,15 +615,15 @@ Rejoice! A one-liner solves everything yet again.
 
 Type NumPy arrays by subscripting (indexing) the [numpy.typing.NDArray](https://numpy.org/doc/stable/reference/typing.html#numpy.typing.NDArray) class with one of three possible types of objects:
 
-- An **array dtype** (i.e., instance of the [numpy.dtype](https://numpy.org/doc/stable/reference/arrays.dtypes.html) class).
-- A **scalar dtype** (i.e., concrete subclass of the [numpy.generic](https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.generic) abstract base class (ABC)).
-- A **scalar dtype ABC** (i.e., abstract subclass of the [numpy.generic](https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.generic) ABC).
+- An **array dtype** (i.e., instance of the [numpy.dtype] class).
+- A **scalar dtype** (i.e., concrete subclass of the [numpy.generic] abstract base class (ABC)).
+- A **scalar dtype ABC** (i.e., abstract subclass of the [numpy.generic] ABC).
 
-Beartype generates fundamentally different type-checking code for these types, complying with both [mypy](http://mypy-lang.org) semantics (which behaves similarly) and our userbase (which demands this behaviour). May there be hope for our collective future.
+Beartype generates fundamentally different type-checking code for these types, complying with both [mypy] semantics (which behaves similarly) and our userbase (which demands this behaviour). May there be hope for our collective future.
 
-`class numpy.typing.NDArray[`[`numpy.dtype`](https://numpy.org/doc/stable/reference/arrays.dtypes.html)`]`
+`class numpy.typing.NDArray[`[`numpy.dtype`][numpy.dtype]`]`
 
-> **NumPy array typed by array dtype.** A PEP-noncompliant type hint enforcing object equality against any **array dtype** (i.e., [numpy.dtype](https://numpy.org/doc/stable/reference/arrays.dtypes.html) instance), created by subscripting (indexing) the [numpy.typing.NDArray](https://numpy.org/devdocs/reference/typing.html#ndarray) class with that array dtype.
+> **NumPy array typed by array dtype.** A PEP-noncompliant type hint enforcing object equality against any **array dtype** (i.e., [numpy.dtype] instance), created by subscripting (indexing) the [numpy.typing.NDArray] class with that array dtype.
 >
 > Prefer this variant when validating the exact data type of an array:
 >
@@ -640,9 +640,9 @@ Beartype generates fundamentally different type-checking code for these types, c
 > NumpyInt32BigEndianArray = NDArray[dtype('>i4')]
 > ```
 
-`class numpy.typing.NDArray[`[`numpy.dtype.type`](https://numpy.org/doc/stable/reference/arrays.dtypes.html)`]`
+`class numpy.typing.NDArray[`[`numpy.dtype.type`][numpy.dtype]`]`
 
-> **NumPy array typed by scalar dtype.** A PEP-noncompliant type hint enforcing object equality against any **scalar dtype** (i.e., concrete subclass of the [numpy.generic](https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.generic) ABC), created by subscripting (indexing) the [numpy.typing.NDArray](https://numpy.org/devdocs/reference/typing.html#ndarray) class with that scalar dtype.
+> **NumPy array typed by scalar dtype.** A PEP-noncompliant type hint enforcing object equality against any **scalar dtype** (i.e., concrete subclass of the [numpy.generic] ABC), created by subscripting (indexing) the [numpy.typing.NDArray] class with that scalar dtype.
 >
 > Prefer this variant when validating the exact scalar precision of an array:
 >
@@ -664,9 +664,9 @@ Beartype generates fundamentally different type-checking code for these types, c
 > - **Fixed-precision integer dtypes** (e.g., `numpy.int32`, `numpy.int64`).
 > - **Fixed-precision floating-point dtypes** (e.g., `numpy.float32`, `numpy.float64`).
 
-`class numpy.typing.NDArray[`[`type`](https://docs.python.org/3/library/stdtypes.html#bltin-type-objects)`[`[`numpy.dtype.type`](https://numpy.org/doc/stable/reference/arrays.dtypes.html)`]]`
+`class numpy.typing.NDArray[`[`type`][type]`[`[`numpy.dtype.type`][numpy.dtype]`]]`
 
-> **NumPy array typed by scalar dtype ABC.** A PEP-noncompliant type hint enforcing type inheritance against any **scalar dtype ABC** (i.e., abstract subclass of the [numpy.generic](https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.generic) ABC), created by subscripting (indexing) the [numpy.typing.NDArray](https://numpy.org/devdocs/reference/typing.html#ndarray) class with that ABC.
+> **NumPy array typed by scalar dtype ABC.** A PEP-noncompliant type hint enforcing type inheritance against any **scalar dtype ABC** (i.e., abstract subclass of the [numpy.generic] ABC), created by subscripting (indexing) the [numpy.typing.NDArray] class with that ABC.
 >
 > Prefer this variant when validating only the *kind* of scalars (without reference to exact precision) in an array:
 >
@@ -685,7 +685,7 @@ Beartype generates fundamentally different type-checking code for these types, c
 >
 > Common scalar dtype ABCs include:
 >
-> - [numpy.integer](https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.integer), the superclass of all fixed-precision integer dtypes.
-> - [numpy.floating](https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.floating), the superclass of all fixed-precision floating-point dtypes.
+> - [numpy.integer], the superclass of all fixed-precision integer dtypes.
+> - [numpy.floating], the superclass of all fixed-precision floating-point dtypes.
 
 [^1]: You don't want to know the type of `enum.Enum` members. Srsly. You don't. Okay... you do? Very well. It's `enum.Enum`. <sup>mic drop</sup>
