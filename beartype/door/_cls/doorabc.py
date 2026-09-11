@@ -306,15 +306,51 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
     # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
     @method_cached_arg_by_id
+    def __ne__(self, other: object) -> bool:
+        '''
+        :data:`True` only if the low-level type hint wrapped by this wrapper is
+        semantically unequal to the other low-level type hint wrapped by the
+        passed wrapper.
+
+        This tester is memoized for efficiency, mostly simply for orthogonality
+        with the :meth:`__eq__` dunder method (which *must* be memoized to
+        preserve :math:`O(1)` hashable-based container lookups).
+
+        Parameters
+        ----------
+        other : object
+            Other type hint to be tested against this type hint.
+
+        Returns
+        -------
+        bool
+            :data:`True` only if this type hint is unequal to that other hint.
+        '''
+
+        # Return either...
+        return (
+            # If that object is a type hint wrapper, defer to the
+            # subclass-specific implementation of this test;
+            not self._is_equal(other)
+            if isinstance(other, TypeHint) else
+            # Else, that object is *NOT* a type hint wrapper. See __eq__().
+            NotImplemented
+        )
+
+
+    # Note that we intentionally avoid typing this method as returning
+    # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
+    # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
+    @method_cached_arg_by_id
     def __eq__(self, other: object) -> bool:
         '''
-        :data:`True`` only if the low-level type hint wrapped by this wrapper is
+        :data:`True` only if the low-level type hint wrapped by this wrapper is
         semantically equivalent to the other low-level type hint wrapped by the
         passed wrapper.
 
         This tester is memoized for efficiency, as Python implicitly calls this
         dunder method on hashable-based container lookups (e.g.,
-        :meth:`dict.get`) expected to be ``O(1)`` fast.
+        :meth:`dict.get`) expected to be :math:`O(1)` fast.
 
         Parameters
         ----------
@@ -344,16 +380,75 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         )
 
 
-    def __ne__(self, other: object) -> bool:
+    def _is_equal(self, other: 'TypeHint') -> bool:
+        '''
+        :data:`True` only if the low-level type hint wrapped by this wrapper is
+        semantically equivalent to the other low-level type hint wrapped by the
+        passed wrapper.
 
-        # Return either...
+        Subclasses may covertly override this method (without *actually*
+        overriding this method) by instead overriding the private
+        :meth:`_is_subhint` tester method. The former defers to the latter.
+        Since the default implementation of this method is guaranteed to suffice
+        for *all* possible use cases, subclasses should override this method
+        only for efficiency reasons; the default implementation calls the
+        :meth:`is_subhint` method twice and is thus *not* necessarily the
+        optimal implementation for all possible subclasses. Notably, the default
+        implementation exploits the well-known syllogism between two partially
+        ordered items ``A`` and ``B``:
+
+        * If ``A <= B`` and ``A >= B``, then ``A == B``.
+
+        This private tester method is *not* memoized for efficiency, as the
+        caller is guaranteed to be the public :meth:`__eq__` tester method,
+        which is already memoized.
+
+        Parameters
+        ----------
+        other : TypeHint
+            Other type hint to be tested against this type hint.
+
+        Returns
+        -------
+        bool
+            :data:`True` only if this type hint is equal to that other hint.
+        '''
+
+        # Avoid circular import dependencies.
+        from beartype.door._cls.pep.pep484.doorpep484any import AnyTypeHint
+
+        # If that other hint is the PEP 484-compliant "typing.Any" catch-all,
+        # intentionally avoid performing the boolean syllogism below. Instead,
+        # reduce to returning the equality of these two hints with the order
+        # reversed. Why? Because the AnyTypeHint._is_equal() dunder method
+        # overrides this superclass method with subclass-specific logic
+        # appropriate to "typing.Any". The boolean syllogism below is *NOT*
+        # appropriate to "typing.Any". Why? Because
+        # TypeHint(typing.Any).is_subhint(other) and
+        # other.is_subhint(TypeHint(typing.Any)) are both unconditionally true
+        # for *ALL* possible type hints "other", in which case this tester would
+        # return true when either "self" or "other" are "TypeHint(typing.Any)".
+        # However, the AnyTypeHint._is_equal() dunder method overrides this
+        # superclass method to *ONLY* return true when the passed hint is also
+        # "typing.Any". The discrepancy between semantic equality and the
+        # boolean syllogism below *ONLY* arises for the specific edge case of
+        # "typing.Any", whose comparison semantics are highly irregular.
+        if isinstance(other, AnyTypeHint):
+            return other == self
+        # Else, that other hint is *NOT* the PEP 484-compliant "typing.Any"
+        # catch-all. In this case, the boolean syllogism below usually applies.
+        # Where that is *NOT* the case, subclasses are encouraged to override
+        # this tester with subclass-specific logic.
+
+        # Return true only if both...
+        #
+        # Note that this conditional implements the trivial boolean syllogism
+        # that we all know and adore: "If A <= B and B <= A, then A == B".
         return (
-            # If that object is a type hint wrapper, defer to the
-            # subclass-specific implementation of this test;
-            not self._is_equal(other)
-            if isinstance(other, TypeHint) else
-            # Else, that object is *NOT* a type hint wrapper. See __eq__().
-            NotImplemented
+            # This hint is a subhint of the passed hint.
+            self.is_subhint(other) and
+            # The passed hint is a subhint of this hint.
+            other.is_subhint(self)
         )
 
     # ..................{ DUNDERS ~ compare : rich           }..................
@@ -887,52 +982,6 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
         # We are the one-liner. We are the codebase.
         return get_hint_pep_childs(self._hint)
-
-    # ..................{ PRIVATE ~ testers                  }..................
-    def _is_equal(self, other: 'TypeHint') -> bool:
-        '''
-        :data:`True` only if the low-level type hint wrapped by this wrapper is
-        semantically equivalent to the other low-level type hint wrapped by the
-        passed wrapper.
-
-        Subclasses may covertly override this method (without *actually*
-        overriding this method) by instead overriding the private
-        :meth:`_is_subhint` tester method. The former defers to the latter.
-        Since the default implementation of this method is guaranteed to suffice
-        for *all* possible use cases, subclasses should override this method
-        only for efficiency reasons; the default implementation calls the
-        :meth:`is_subhint` method twice and is thus *not* necessarily the
-        optimal implementation for all possible subclasses. Notably, the default
-        implementation exploits the well-known syllogism between two partially
-        ordered items ``A`` and ``B``:
-
-        * If ``A <= B`` and ``A >= B``, then ``A == B``.
-
-        This private tester method is *not* memoized for efficiency, as the
-        caller is guaranteed to be the public :meth:`__eq__` tester method,
-        which is already memoized.
-
-        Parameters
-        ----------
-        other : TypeHint
-            Other type hint to be tested against this type hint.
-
-        Returns
-        -------
-        bool
-            :data:`True` only if this type hint is equal to that other hint.
-        '''
-
-        # Return true only if both...
-        #
-        # Note that this conditional implements the trivial boolean syllogism
-        # that we all know and adore: "If A <= B and B <= A, then A == B".
-        return (
-            # This hint is a subhint of the passed hint.
-            self.is_subhint(other) and
-            # The passed hint is a subhint of this hint.
-            other.is_subhint(self)
-        )
 
     # ..................{ PRIVATE ~ testers : subhint        }..................
     def _is_subhint(self, other: 'TypeHint') -> bool:

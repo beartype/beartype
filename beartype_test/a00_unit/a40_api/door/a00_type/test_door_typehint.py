@@ -149,17 +149,16 @@ def test_door_typehint_repr() -> None:
     assert repr(annotation) in repr(hint)
 
 # ....................{ TESTS ~ dunders : compare          }....................
-def test_door_typehint_equals(
-    door_cases_equality: (
-        'collections.abc.Iterable[tuple[object, object, bool]]')) -> None:
+def test_door_typehint_compare_equals(door_cases_equals: (
+    'tuple[tuple[object, object, bool]]')) -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.__eq__` dunder method.
 
     Parameters
     ----------
-    door_cases_equality : Iterable[Tuple[object, object, bool]]
+    door_cases_equals : tuple[tuple[object, object, bool]]
         Iterable of one or more 3-tuples ``(hint_a, hint_b, is_equal)``,
-        declared by the :func:`hint_subhint_cases` fixture.
+        declared by the :func:`door_cases_equals` fixture.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -187,17 +186,21 @@ def test_door_typehint_equals(
 
     # ....................{ ASSERTS                        }....................
     # For each equality relation to be tested...
-    for hint_a, hint_b, is_equal_expect in door_cases_equality:
+    for hint_a, hint_b, is_equal_expect in door_cases_equals:
         # "TypeHint" wrappers encapsulating these hints.
         typehint_a = TypeHint(hint_a)
         typehint_b = TypeHint(hint_b)
 
         # Assert that these wrappers compare equal as expected.
-        is_equal_actual = (typehint_a == typehint_b)
-        assert is_equal_actual is is_equal_expect
+        is_equal_a_b_actual = (typehint_a == typehint_b)
+        assert is_equal_a_b_actual is is_equal_expect
 
-        # If these wrappers compare equal, assert that these wrappers are share
-        # the *EXACT* same hash.
+        # Assert that this comparison is symmetric and thus order-invariant.
+        is_equal_b_a_actual = (typehint_b == typehint_a)
+        assert is_equal_b_a_actual is is_equal_expect
+
+        # If these wrappers compare equal, assert that these wrappers both share
+        # the same hash.
         #
         # Note that this well-known theoretical constraint applies to *ANY*
         # language. Violating this constraint promotes inconsistent key and node
@@ -206,7 +209,7 @@ def test_door_typehint_equals(
         # of these structures, this constraint is doubly critical in Python; any
         # caller inserting these wrappers into these structures implicitly
         # triggers hashing via the TypeHint.__hash__() dunder method.
-        if is_equal_actual:
+        if is_equal_a_b_actual:
             assert hash(typehint_a) == hash(typehint_b), (
                 f'TypeHint.__eq__() <-> TypeHint.__hash__() '
                 f'inconsistency detected: '
@@ -238,20 +241,88 @@ def test_door_typehint_equals(
         assert typehint_b != nonhint
 
 
-def test_door_typehint_compare_fail() -> None:
+#FIXME: *WOEFULLY AND EMBARASSINGLY INADEQUATE.* Unsurprisingly, it turns out
+#that implementing rich comparisons between arbitrary type hints is
+#astonishingly non-trivial. Just consider the PEP 484-compliant "typing.Any"
+#singleton, for example. Even comparing merely that single type hint against any
+#other type hint is *SUPER* non-trivial. Why? Because "Any" is a stand-in for
+#any other valid type hint that could possibly satisfy the relation in question.
+#Notably:
+#* "Any ≤ hint" and "hint ≤ Any" are both trivially the case for all possible
+#  hints "hint". Why? Because any hint is a subhint of itself. Done. QED.
+#* "Any < hint" and "hint < Any" are *NOT* trivially the case. It's easy to
+#  construct counter-examples. For example, "Any < typing.Literal[hint_child]"
+#  is false for all possible literals "hint_child". Why? Because you cannot
+#  decompose a 1-literal any further. It's already an atomic instance of a
+#  builtin type.
+#
+#Ergo, we need to *SUBSTANTIALLY* improve this test. In fact, we need to:
+#* Define a new session-scoped fixture "_doorfix_cases_lessthan" enabling us to
+#  properly test proper subhint comparisons at some later date, where "later
+#  date" is left undefined and may never happen. I blame Kodos. I always do.
+#  (Note that, since "<" and ">" are obviously symmetric, it suffices to only
+#  define "_doorfix_cases_lessthan". A hypothetical fixture
+#  "_doorfix_cases_greaterthan" need *NOT* be defined. To test ">", all you do
+#  is iterate over "_doorfix_cases_lessthan" and pass each operand in the
+#  opposite order. Whatevahs. Supa-trivial, yo.)
+#* Split this hegemonic test into *ONE* new unit test for each possible rich
+#  comparison operator (e.g., test_door_typehint_compare_lessthan(),
+#  test_door_typehint_compare_greaterthan(),
+#  test_door_typehint_compare_notequals()).
+#
+#I actually wrote a *TON* of internal commentary pertaining to how exactly we
+#even think about proper subhint relations involving "Any". Here's what I came
+#up with so far. As you can see, the topic gets *SUPER* intense *SUPER* fast:
+#* "Any < Literal[...])" is:
+#  * False for all possible 1-literals (i.e., "Literal[muh_literal]"). Why?
+#    Because you cannot decompose a 1-literal any further. It's already an
+#    instance of a builtin type. Actually, there *MIGHT* exist a stupid edge
+#    case here. Technically, strings are collections of characters. Ergo, it
+#    *MIGHT* be the case that:
+#    * "Any < Literal[muh_str]" is true for all strings containing two or more
+#      characters, because Any can be assigned to the "Literal[...]" type hint
+#      factory subscripted by one of those arbitrary characters in this context.
+#    * "Any < Literal[muh_str]" is false for all strings containing only one
+#      character, because that string cannot be decomposed any further. *shrug*
+#  * True for all possible N-literals for N > 1 (e.g.,
+#    "Literal[muh_literal1, ..., muh_literalN]").
+#* "Literal[...] < Any" is true for all possible literals. Why? Because literals
+#  are constrained to be instances of builtin types (e.g., "int", "str",
+#  "enum.Enum"). Since *ALL* types (builtin or otherwise) are subhints of
+#  "object", "Any" can be assigned to "object" in this context. *shrug*
+# * "Any" is both a proper subhint *AND* proper superhint of all possible unions
+#   subscripted by two or more non-redundant child hints. (Unions subscripted by
+#   only one non-redundant child hints are implicitly reduced by CPython at
+#   runtime to just those hints, thus "erasing" those unions for all intents and
+#   purposes.) Specifically, for any such union "union":
+#   * "Any < union" is true, as "Any" can be assigned in that context to the
+#     hint "Any = union_subset_proper", where "union_subset_proper" is
+#     abstractly defined as any proper subset of that "union". Since that
+#     "union" was subscripted by two or more non-redundant child hints, a proper
+#     subset is guaranteed to exist.
+#   * "union < Any" is also true, as "Any" can be assigned in that context to
+#     the hint "Any = union_superset_proper", where "union_superset_proper" is
+#     abstractly defined as any proper superset of that "union". A proper
+#     superset of *ANY* union is guaranteed to exist. Why? Because there exist a
+#     countably infinite number of possible types. It follows that a union over
+#     a finite number of types *MUST* necessarily omit a countably infinite
+#     number of possible types. Select an arbitrary such type "cls" omitted from
+#     "union". It then follows that you can *ALWAYS* construct a new union
+#     "union_superset_proper = union | cls".
+def test_door_typehint_compare_rich() -> None:
     '''
-    Test unsuccessful usage the rich comparison dunder methods defined by the
-    :class:`beartype.door.TypeHint` class.
+    Test the rich comparison dunder methods defined by various concrete
+    subclasses of the :class:`beartype.door.TypeHint` abstract base class (ABC).
     '''
 
     # Defer test-specific imports.
     from beartype.door import TypeHint
-    from beartype.typing import (
-        Any,
+    from collections.abc import (
         Callable,
         Sequence,
     )
     from pytest import raises
+    from typing import Any
 
     # ....................{ LOCALS                         }....................
     a = TypeHint(Callable[[], list])
@@ -419,7 +490,8 @@ def test_door_typehint_len():
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by this test. Urgh!
 @ignore_warnings(DeprecationWarning)
-def test_door_typehint_is_ignorable(hints_piths_pep_meta, hints_ignorable) -> None:
+def test_door_typehint_is_ignorable(
+    hints_piths_pep_meta, hints_ignorable: frozenset) -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.is_ignorable` property.
 
@@ -503,7 +575,7 @@ def test_door_typehint_is_ignorable(hints_piths_pep_meta, hints_ignorable) -> No
             #     hint_pep_meta.is_ignorable)
 
 # ....................{ TESTS ~ testers                    }....................
-def test_door_typehint_is_subhint_fail() -> None:
+def test_door_typehint_is_subhint() -> None:
     '''
     Test unsuccessful usage of the
     :meth:`beartype.door.TypeHint.is_subhint` tester method.
@@ -512,7 +584,7 @@ def test_door_typehint_is_subhint_fail() -> None:
     # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorException
-    from beartype.typing import Callable
+    from collections.abc import Callable
     from pytest import raises
 
     hint = TypeHint(Callable[[], list])
@@ -528,16 +600,14 @@ def test_door_typehint_is_args_ignorable():
     '''
 
     from beartype.door import TypeHint
-    from typing import (
-        Any,
-        Callable,
-    )
+    from collections.abc import Callable
+    from typing import Any
 
-    assert TypeHint(Callable)._is_args_ignorable
-    assert TypeHint(Callable[..., Any])._is_args_ignorable
-    assert TypeHint(tuple)._is_args_ignorable
-    assert TypeHint(tuple[Any, ...])._is_args_ignorable
-    assert TypeHint(int)._is_args_ignorable
+    assert TypeHint(Callable)._is_args_ignorable is True
+    assert TypeHint(Callable[..., Any])._is_args_ignorable is True
+    assert TypeHint(tuple)._is_args_ignorable is True
+    assert TypeHint(tuple[Any, ...])._is_args_ignorable is True
+    assert TypeHint(int)._is_args_ignorable is True
 
 
 #FIXME: Implement us up at some point, yo.

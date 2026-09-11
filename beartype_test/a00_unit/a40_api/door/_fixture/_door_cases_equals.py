@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) fixtures** (i.e.,
-:mod:`pytest`-specific context managers passed as parameters to unit tests
-exercising the :mod:`beartype.door.TypeHint` superclass).
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) equality fixtures**
+(i.e., :mod:`pytest`-specific context managers passed as parameters to unit
+tests validating the :mod:`beartype.door.TypeHint.__eq__` dunder method).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,8 +18,7 @@ from pytest import fixture
 
 # ....................{ FIXTURES ~ equality                }....................
 @fixture(scope='session')
-def door_cases_equality() -> (
-    'collections.abc.Iterable[tuple[object, object, bool]]'):
+def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
     '''
     Session-scoped fixture returning an iterable of **hint equality cases**
     (i.e., 3-tuples ``(hint_a, hint_b, is_equal)`` describing the equality
@@ -121,5 +120,6 @@ def door_cases_equality() -> (
         (Annotated[int, "hi"], Annotated[int, "low"], False),
     ]
 
+    # ..................{ RETURN                             }..................
     # Return this mutable list coerced into an immutable tuple for safety.
     return tuple(HINT_EQUALITY_CASES)

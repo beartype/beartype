@@ -72,9 +72,9 @@ class AnnotatedTypeHint(TypeHint):
     def _is_equal(self, other: TypeHint) -> bool:
 
         return (
-            isinstance(other, AnnotatedTypeHint)
-            and self._metahint_wrapper == other._metahint_wrapper
-            and self._metadata == other._metadata
+            isinstance(other, AnnotatedTypeHint) and
+            self._metahint_wrapper == other._metahint_wrapper and
+            self._metadata == other._metadata
         )
 
 

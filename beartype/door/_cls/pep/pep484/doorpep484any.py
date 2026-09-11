@@ -104,8 +104,8 @@ class AnyTypeHint(TypeHint):
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_equal(self, other: TypeHint) -> bool:
 
-        # Return true *ONLY* if the passed wrapper also encapsulates
-        # "typing.Any". Why? Because Any is semantically equal *ONLY* to itself.
+        # Return true *ONLY* if the passed hint is also "typing.Any", which is
+        # semantically equal *ONLY* to itself.
         return other._hint is Any
 
 

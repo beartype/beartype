@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) fixtures** (i.e.,
-:mod:`pytest`-specific context managers passed as parameters to unit tests
-exercising the :mod:`beartype.door.is_subhint` function).
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) subhint fixtures**
+(i.e., :mod:`pytest`-specific context managers passed as parameters to unit
+tests validating the :func:`beartype.door.is_subhint` function and equivalent
+:meth:`beartype.door.TypeHint.is_subhint` method).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,8 +19,7 @@ from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
-def door_cases_is_subhint() -> (
-    'collections.abc.Iterable[tuple[object, object, bool]]'):
+def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
     '''
     Session-scoped fixture returning an iterable of **type subhint cases**
     (i.e., 3-tuples ``(subhint, superhint, is_subhint)`` describing the subhint
@@ -61,7 +61,7 @@ def door_cases_is_subhint() -> (
         Pep484GenericSInt,
         Pep484GenericST,
         Pep484GenericSTToUU,
-        Pep484GenericTSubclass,
+        # Pep484GenericTSubclass,
         Pep484GenericT,
         Pep484GenericTSubclass,
         Pep484GenericTSubclassSubclass,
@@ -113,6 +113,10 @@ def door_cases_is_subhint() -> (
     NewStr = NewType('NewStr', str)
 
     # ..................{ CLASSES                            }..................
+    #FIXME: Redundant type definitions. Just import the equivalent types we
+    #already define from relevant submodules of the
+    #"beartype_test.a00_util.data" subpackage (e.g., "data_type").
+
     class MuhThing:
         def muh_method(self):
             pass
@@ -172,10 +176,28 @@ def door_cases_is_subhint() -> (
         (Tuple[object, ...], Any, True),
         (Union[int, MuhThing], Any, True),
 
-        # "Any" is itself a subhint of arbitrary superhints.
+        # "Any" is itself a subhint of *ALL* possible hints. Why? Because what
+        # "Any" semantically means is "some type hint exists that satisfies this
+        # relation." In the case of the subhint relation, some type hint
+        # "some_hint" satisfying the relation "is_subhint(Any, hint)" for all
+        # possible types "hint" is guaranteed to *ALWAYS* exist. Which
+        # "some_hint" is that? Easy: "some_hint = hint". Any type is a trivial
+        # subhint of itself.
+        #
+        # Look. Something can be both dumb and true. This is like that.
         (Any, Any, True),
         (Any, object, True),
+        (Any, str, True),
         (Any, str | None, True),
+
+        # "Any" is itself also a superhint of *ALL* possible hints for the same
+        # exact reason as above. Why? Because some type hint "some_hint"
+        # satisfying the relation "is_subhint(cls, Any)" for all possible types
+        # "hints" is guaranteed to *ALWAYS* exist. Which "some_hint" is that?
+        # Easy: "some_hint = hint". Any type is a trivial subhint of itself.
+        (object, Any, True),
+        (str, Any, True),
+        (str | None, Any, True),
 
         # "Any" nested inside subscripted hints is assignable to concrete types.
         (List[Any], List[int], True),
