@@ -241,7 +241,7 @@ def test_door_typehint_compare_equals(door_cases_equals: (
         assert typehint_b != nonhint
 
 
-#FIXME: *WOEFULLY AND EMBARASSINGLY INADEQUATE.* Unsurprisingly, it turns out
+#FIXME: *WOEFULLY AND EMBARRASSINGLY INADEQUATE.* Unsurprisingly, it turns out
 #that implementing rich comparisons between arbitrary type hints is
 #astonishingly non-trivial. Just consider the PEP 484-compliant "typing.Any"
 #singleton, for example. Even comparing merely that single type hint against any
