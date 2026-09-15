@@ -97,44 +97,58 @@ class AnyTypeHint(TypeHint):
     @property
     def _is_args_ignorable(self) -> bool:
 
-        # Unconditionally return true, as "typing.Any" is *ALWAYS* unsubscripted
-        # and could thus be said to only have ignorable arguments. Semantics.
+        # Unconditionally return true, as "Any" is *ALWAYS* unsubscripted and
+        # could thus be said to only have ignorable arguments. Semantics.
         return True
 
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_equal(self, other: TypeHint) -> bool:
 
-        # Return true *ONLY* if the passed hint is also "typing.Any", which is
-        # semantically equal *ONLY* to itself.
+        #FIXME: In theory, we could workaround this core CompSci constraint by
+        #trivially defining a new public TypeHint.is_equal() tester returning
+        #true only if the current wrapper is semantically equal to the passed
+        #wrapper. The TypeHint.__eq__() dunder method would then be treated as a
+        #lower-level tester whose runtime semantics do *NOT* necessarily perform
+        #a true semantic equality comparison. In practice, it's unclear that
+        #anyone actually cares. Until they do, this suffices.
+
+        # Return true *ONLY* if the passed hint is also "Any". Why? To preserve
+        # consistency between hint wrapper equality (i.e., TypeHint.__eq__()
+        # dunder method) and hint wrapper hashing (i.e., TypeHint.__hash__()
+        # dunder method). Like literally *ALL* languages, Python implicitly
+        # requires that two objects that compare equal share the same hash.
+        # Violating this fundamental constraints breaks hashing and thus
+        # hashable-based collections (e.g., "dict", "set", "frozenset"). If we
+        # permitted "Any" to dynamically compare equal to *ANY* other hint, then
+        # we would also need to permit "Any" to dynamically hash equal to *ANY*
+        # other hint. However, that is infeasible. Unlike the TypeHint.__eq__()
+        # dunder method, the TypeHint.__hash__() dunder method accepts *NO*
+        # parameters against which to produce such a dynamic hash. By
+        # definition, hashes are necessarily static. Not dynamic.
+        #
+        # Note that this return value is technically incorrect, however. If
+        # consistency between hint wrapper equality and hashing was a non-issue
+        # (which it obviously isn't), this method would instead return true.
+        # Why? Because "Any" is simply a stand-in for a valid type hint. Ergo,
+        # we can trivially assign "Any" to any other type hint against which
+        # "Any" is being compared. Since any type hint is trivially equal to
+        # itself, this syllogism follows:
+        #     hint == hint            # The trivial equality implies that...
+        #     (Any := hint) == hint   # ...this *MUST* also be the case.
+        #     Any == hint             # The conclusion follows. QED, yo! \o/
         return other._hint is Any
 
 
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
         # print(f'[AnyTypeHint._is_subhint_branch] Comparing {self} to {branch}...')
 
-        #FIXME: *UHM*. This... is super-weird and probably absolutely wrong. As
-        #detailed by the above docstring, "Any" is just a placeholder for a
-        #valid type hint that *COULD* have been specified but wasn't. Clearly,
-        #there *DOES* exist a type hint "foo" that could be a subhint of any
-        #other type hint "bar": that "bar" itself, because every type hint is a
-        #subhint of itself! Ergo, "Any" trivially satisfies this method. Ergo,
-        #this method should unconditionally return true. Wow. We sure botched
-        #that one, huh?
-        #FIXME: Inspect the superclass is_subhint() and _is_subhint_branch()
-        #methods. Looks like we manually handled "Any" there. Maybe we shouldn't
-        #have done that? Ideally, this subclass would be contain only references
-        #to "Any" across the entire "beartype.door" subpackage. *shrug*
-
-        # Unconditionally return false, as "typing.Any" is a subhint of *NO*
-        # hint other than itself. However, the following superclass methods
-        # already universally handle this common edge case in which the passed
-        # hint is "typing.Any":
-        # * The public is_subhint() method.
-        # * The private _is_subhint_branch() method.
-        #
-        # The passed hint is thus guaranteed to *NOT* also be "typing.Any", so
-        # this hint *CANNOT* be a subhint of that hint.
-        # return False
-
-        #FIXME: Comment this up as suggested above, please. *sigh*
+        # Unconditionally return true, as "Any" is *ALWAYS* a subhint of *ANY*
+        # valid type hint. Why? Because "Any" is a stand-in for *ANY* arbitrary
+        # valid type hint. Ergo, we can trivially assign "Any" to the passed
+        # other type hint against which "Any" is being compared. Since any type
+        # hint is trivially equal to itself, any type hint is trivially a
+        # subhint of itself. This syllogism then follows:
+        #     hint <= hint            # The trivial inequality implies that...
+        #     (Any := hint) <= hint   # ...this *MUST* also be the case.
+        #     Any <= hint             # The conclusion follows. QED, yo! \o/
         return True

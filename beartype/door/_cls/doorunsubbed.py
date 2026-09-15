@@ -17,7 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.door._cls.doorabc import TypeHint
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Actually use in lieu of "ClassTypeHint", please. *sigh*
 class UnsubscriptedTypeHint(TypeHint):
     '''
     **Unsubscripted type hint factory wrapper** (i.e., high-level object

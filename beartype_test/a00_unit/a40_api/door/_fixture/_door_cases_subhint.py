@@ -476,12 +476,17 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
 
         # ..................{ PEP 593                        }..................
         # PEP 593-compliant type hints.
-        (Annotated[int, "a note"], int, True),  # annotated is subtype of unannotated
-        (int, Annotated[int, "a note"], False),  # but not vice versa
+        (Annotated[int, 'a note'], int, True),  # annotated is subtype of unannotated
+        (int, Annotated[int, 'a note'], False),  # but not vice versa
         (Annotated[list, True], Annotated[Sequence, True], True),
         (Annotated[list, False], Annotated[Sequence, True], False),
         (Annotated[list, 0, 0], Annotated[list, 0], False),  # must have same num args
-        (Annotated[List[int], "metadata"], List[int], True),
+        (Annotated[List[int], 'metadata'], List[int], True),
+
+        # ..................{ PEP 604                        }..................
+        # PEP 604-compliant union type hints.
+        (int | str, int | Any, True),
+        (int | Any, int | str, True),
     ]
 
     # ..................{ LISTS ~ cases : version            }..................

@@ -73,8 +73,9 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         # PEP 484-compliant "Any" singleton is equal to itself. We swear.
         (Any, Any, True),
 
-        # PEP 484-compliant "Any" singleton is unequal to *EVERY* other valid
-        # type hint.
+        # PEP 484-compliant "Any" singleton is technically unequal (despite
+        # being semantically equal) to *ANY* other valid type hint. See the
+        # AnyTypeHint._is_equal() implementation for further commentary.
         (Any, str, False),
         (Any, list[str], False),
 
@@ -109,15 +110,34 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
 
         # ..................{ PEP 585 ~ arg                  }..................
         # PEP 585-compliant type hints.
-        (tuple[str, ...], Tuple[str, ...], True),
         (list[str], List[str], True),
+        (tuple[str, ...], Tuple[str, ...], True),
+        (tuple[int, Any], tuple[int, str], False),
         (AwaitableABC[SequenceABC[int]], AwaitableABC[SequenceABC[int]], True),
 
         # ..................{ PEP 593                        }..................
         # PEP 593-compliant type hints.
-        (Annotated[int, "hi"], Annotated[int, "hi"], True),
-        (Annotated[int, "hi"], Annotated[int, "low"], False),
-        (Annotated[int, "hi"], Annotated[int, "low"], False),
+        (
+            Annotated[int, 'For simple sheep'],
+            Annotated[int, 'For simple sheep'],
+            True,
+        ),
+        (
+            Annotated[int, 'and such'],
+            Annotated[int, 'are daffodils'],
+            False,
+        ),
+
+        # ..................{ PEP 604                        }..................
+        # PEP 604-compliant union type hints.
+
+        # Any union subscripted by "Any" semantically reduces to simply "Any"
+        # and is thus technically unequal (despite being semantically equal) to
+        # *ANY* other union *NOT* also subscripted by "Any". See the
+        # AnyTypeHint._is_equal() implementation for further commentary.
+        (Any, Any | int, False),
+        (Any | int, Any | int, True),
+        (Any | int, str | int, False),
     ]
 
     # ..................{ RETURN                             }..................

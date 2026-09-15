@@ -175,22 +175,24 @@ def test_door_typehint_compare_equals(door_cases_equals: (
     # ....................{ LOCALS                         }....................
     # Arbitrary PEP 484-compliant hint guaranteed to be unequal to every other
     # hint listed in the "hint_equality_cases" iterable.
-    typehint_unequal = TypeHint(Generator[Union[list, str], str, None])
+    TYPEHINT_UNEQUAL = TypeHint(Generator[Union[list, str], str, None])
 
     # Arbitrary non-hint object.
     #
     # Note that arbitrary strings are superficially indistinguishable from PEP
     # 484-compliant stringified type hints and thus unsuitable for use as
     # non-hint objects here.
-    nonhint = b'Of insects, beasts, and birds, becomes its spoil;'
+    NONHINT = b'Of insects, beasts, and birds, becomes its spoil;'
 
     # ....................{ ASSERTS                        }....................
     # For each equality relation to be tested...
     for hint_a, hint_b, is_equal_expect in door_cases_equals:
+        # ....................{ LOCALS                     }....................
         # "TypeHint" wrappers encapsulating these hints.
         typehint_a = TypeHint(hint_a)
         typehint_b = TypeHint(hint_b)
 
+        # ....................{ PASS                       }....................
         # Assert that these wrappers compare equal as expected.
         is_equal_a_b_actual = (typehint_a == typehint_b)
         assert is_equal_a_b_actual is is_equal_expect
@@ -229,16 +231,17 @@ def test_door_typehint_compare_equals(door_cases_equals: (
         # functions are an art as much as a science. We know enough to know we
         # do *NOT* know enough to reasonably define our own hash functions.
 
+        # ....................{ FAIL                       }....................
         # Assert that each of these wrappers compares unequal against an
-        # arbitrary hint guaranteed to be unequal to both. In other words, a
-        # smoke test. Smoke that QA down to the filter!
-        assert typehint_a != typehint_unequal
-        assert typehint_b != typehint_unequal
+        # arbitrary non-hint. In other words, a smoke test. Smoke it!
+        assert typehint_a != NONHINT
+        assert typehint_b != NONHINT
 
         # Assert that each of these wrappers compares unequal against an
-        # arbitrary non-hint. In other words, another smoke test. Smoke it!
-        assert typehint_a != nonhint
-        assert typehint_b != nonhint
+        # arbitrary hint guaranteed to be unequal to both. In other words, yet
+        # another smoke test. Smoke that QA down to the filter!
+        assert typehint_a != TYPEHINT_UNEQUAL
+        assert typehint_b != TYPEHINT_UNEQUAL
 
 
 #FIXME: *WOEFULLY AND EMBARRASSINGLY INADEQUATE.* Unsurprisingly, it turns out
@@ -309,6 +312,18 @@ def test_door_typehint_compare_equals(door_cases_equals: (
 #     number of possible types. Select an arbitrary such type "cls" omitted from
 #     "union". It then follows that you can *ALWAYS* construct a new union
 #     "union_superset_proper = union | cls".
+#FIXME: *lolbro* Even the above fails to suffice. Why? @Glinte, who cleverly
+#realized there are various edge cases under which "Any" is either *NOT* a
+#proper subhint or is *NOT* a proper superhint of some union. Specifically:
+#* "Union[object, ...] < Any is False". You can't go higher than the highest
+#  authority.
+#
+#I'm now going to quote both myself and @Glinte in Markdown, 'cause ain't nobody
+#got the time to even read this craziness. Actually, let's just link to the
+#remote GitHub URL and hope that Microsoft continues hosting this madness in
+#perpetuity for all time, despite reason and sanity encouraging humanity to do
+#otherwise with scarce resources (and, more importantly, sanity):
+#    https://github.com/beartype/beartype/commit/84f4ef36890d977dd4b6290327f59882b59724ec#r200112186
 def test_door_typehint_compare_rich() -> None:
     '''
     Test the rich comparison dunder methods defined by various concrete

@@ -417,6 +417,11 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         # Avoid circular import dependencies.
         from beartype.door._cls.pep.pep484.doorpep484any import AnyTypeHint
 
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: *ALL* subclass-specific overrides of this default
+        # implementation *MUST* be prefaced by a similar "if" statement. Failure
+        # to do so *WILL* induce inconsistency between equality and hashability.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # If that other hint is the PEP 484-compliant "typing.Any" catch-all,
         # intentionally avoid performing the boolean syllogism below. Instead,
         # reduce to returning the equality of these two hints with the order

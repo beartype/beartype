@@ -41,6 +41,38 @@ class SubscriptedTypeHint(TypeHint):
         # (indexing) the low-level parent type hint wrapped by this wrapper.
         args = super()._make_args()
 
+        # If this hint is *NOT* subscripted by the expected number of child
+        # hints, raise an exception.
+        self._die_unless_args_len_range(args)
+        # Else, this hint is subscripted by the expected number of child hints.
+
+        # Return these child hints.
+        return args
+
+    # ..................{ PRIVATE ~ raisers                  }..................
+    def _die_unless_args_len_range(self, args: tuple) -> None:
+        '''
+        Raise an exception unless this hint is subscripted by the expected
+        number of child hints.
+
+        Subclasses encapsulating hints subscripted by a variable number of child
+        hints are encouraged to override this property to reduce to a noop.
+        Since most hints are subscripted by a fixed number of child hints, this
+        property defaults to returning :data:`True` for almost *all* subclasses.
+
+        Parameters
+        ----------
+        args : tuple
+            Tuple of the zero or more child hints subscripting this hint to be
+            validated.
+
+        Raises
+        ------
+        BeartypeDoorPepArgsLenException
+            If this hint is *not* subscripted by the expected number of child
+            hints.
+        '''
+
         # Argument length range (i.e., "range" object covering the minimum and
         # maximum number of child type hints that may subscript this low-level
         # parent type hint factory) if this factory has been associated with
@@ -116,9 +148,6 @@ class SubscriptedTypeHint(TypeHint):
             raise BeartypeDoorPepArgsLenException(exception_message)
         # Else, this hint was subscripted by the expected number of child hints.
 
-        # Return these child hints.
-        return args
-
     # ..................{ PRIVATE ~ getters                  }..................
     def _get_hash(self) -> int:
 
@@ -165,22 +194,31 @@ class SubscriptedTypeHint(TypeHint):
         if self._is_args_ignorable and other._is_args_ignorable:
             return self._origin_type == other._origin_type
         # Else, one or more of the child type hints subscripting either of these
-        # parent type hints are unignorable.
+        # parent hints are unignorable.
         #
         # If either...
         elif (
             # These hints have differing signs *OR*...
             self._hint_sign is not other._hint_sign or
-            # These hints have a differing number of child type hints...
+            # These parent hints are subscripting by a differing number of child
+            # hints...
             len(self._args_wrapped_tuple) != len(other._args_wrapped_tuple)
         ):
             # Then these hints are unequal.
             return False
-        # Else, these hints share the same sign and number of child type hints.
+        # Else, these hints share the same sign and number of child hints.
 
-        # Return true only if all child type hints of these hints are equal.
-        return all(
-            this_child == that_child
-            for this_child, that_child in zip(
-                self._args_wrapped_tuple, other._args_wrapped_tuple)
-        )
+        # For each pair of child hints subscripting the same index of these
+        # parent hints...
+        for this_child, that_child in zip(
+            self._args_wrapped_tuple, other._args_wrapped_tuple):
+            # If this child hint is unequal to that child hint, this parent hint
+            # is unequal to that parent hint. In this case, return false.
+            if this_child != that_child:
+                return False
+            # Else, this child hint is equal to that child hint, implying this
+            # parent hint *COULD* be equal to that parent hint. Continue to the
+            # next child hints to decide.
+
+        # Return true as a safe fallback.
+        return True

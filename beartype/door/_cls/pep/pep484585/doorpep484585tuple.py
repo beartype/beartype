@@ -13,20 +13,31 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorabc import TypeHint
-from beartype.door._cls.doorsubbed import (
-    SubscriptedTypeHint)
+from beartype.door._cls.doorsubbed import SubscriptedTypeHint
 from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
     is_hint_pep484585646_tuple_empty,
     is_hint_pep484585646_tuple_variadic_unpacked_if_needed,
 )
 
 # ....................{ SUBCLASSES                         }....................
-class TupleFixedTypeHint(TypeHint):
+class TupleFixedTypeHint(SubscriptedTypeHint):
     '''
     **Fixed-length tuple type hint wrapper** (i.e., high-level object
     encapsulating a low-level :pep:`484`- or :pep:`585`-compliant type hint of
     the form ``tuple[{child_hint_1}, ..., {child_hint_N}]``).
     '''
+
+    # ..................{ PRIVATE ~ properties               }..................
+    @property
+    def _is_args_ignorable(self) -> bool:
+
+        # Prevent the child type hints subscripting *ANY* fixed-length tuple
+        # type hints from being ignored as a whole, even if one or all of those
+        # child type hints are technically ignorable. Why? Because ignoring all
+        # child type hints as a whole would then prevent the length of this
+        # tuple type hint from being type-checked, which would rather defeat the
+        # purpose of the whole thing really.
+        return False
 
     # ..................{ INITIALIZERS                       }..................
     def _make_args(self) -> tuple:
@@ -49,17 +60,18 @@ class TupleFixedTypeHint(TypeHint):
         # Return these child hints.
         return args
 
-    # ..................{ PRIVATE ~ properties               }..................
-    @property
-    def _is_args_ignorable(self) -> bool:
+    # ..................{ PRIVATE ~ raisers                  }..................
+    def _die_unless_args_len_range(self, args: tuple) -> None:
 
-        # Prevent the child type hints subscripting *ANY* fixed-length tuple
-        # type hints from being ignored as a whole, even if one or all of those
-        # child type hints are technically ignorable. Why? Because ignoring all
-        # child type hints as a whole would then prevent the length of this
-        # tuple type hint from being type-checked, which would rather defeat the
-        # purpose of the whole thing really.
-        return False
+        # Silently reduce to a noop. As the superclass method docstring
+        # suggests, the superclass implementation of this method applies *ONLY*
+        # to hints subscripted by a fixed number of child hints. However,
+        # fixed-length tuple hints are subscripted by a variable number of child
+        # hints. Since *ALL* possible variations in length constitute valid
+        # fixed-length tuple hints -- even the empty fixed-length tuple hint
+        # (i.e., "tuple[()]"). That leaves this validator with *NOTHING* to
+        # validate. Ergo, we intentionally reduce this validator to a noop.
+        pass
 
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
