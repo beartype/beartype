@@ -34,7 +34,7 @@ from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
 )
 from beartype.roar import (
     BeartypeDoorNonpepException,
-    # BeartypeDoorPepUnsupportedException,
+    BeartypeDoorPepUnsupportedException,
 )
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.hint.sign.datahintsigncls import HintSign
@@ -49,6 +49,10 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignTuple,
     HintSignPep484585TupleFixed,
     HintSignTypeVar,
+    HintSignPep646TupleUnpacked,
+    HintSignPep646TypeVarTupleUnpacked,
+    HintSignTypeVarTuple,
+    HintSignUnpack,
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
@@ -85,6 +89,36 @@ def get_typehint_subclass(hint: Hint) -> type[TypeHint]:
     # PEP-noncompliant object *NEVER* likely to be supported by beartype, *OR* a
     # valid PEP-compliant hint currently unsupported by beartype).
     hint_sign = get_hint_pep_sign_or_none(hint)
+
+    # ..................{ UNSUPPORTED                        }..................
+    # If this hint is *NOT* a standalone type hint, raise an exception. Some
+    # PEP 646-compliant objects are merely *MODIFIERS* of the child hints
+    # subscripting a parent hint rather than hints in their own right (e.g., the
+    # "*tuple[int]" and "typing.Unpack[tuple[int]]" child hints subscripting the
+    # parent hint "tuple[*tuple[int]]"). Such objects convey *NO* meaning in
+    # isolation and are thus unwrappable.
+    #
+    # Note that this test is intentionally performed *BEFORE* the fallbacks
+    # below. Why? Because "typing.Unpack[...]" is published by the standard
+    # "typing" submodule and would thus otherwise be silently misidentified by
+    # the "is_hint_pep_typing()" fallback below as an unsubscripted hint,
+    # despite conveying nothing. Worse, the equivalent "*tuple[int]" spelling of
+    # that same hint is *NOT* published by that submodule and would thus
+    # otherwise raise, rendering these two spellings of one object inconsistent.
+    if hint_sign in HINT_SIGNS_UNWRAPPABLE:
+        raise BeartypeDoorPepUnsupportedException(
+            f'Type hint {repr(hint)} unwrappable by '
+            f'"beartype.door.TypeHint", as this hint only modifies the child '
+            f'hints subscripting a parent hint rather than conveying meaning '
+            f'in its own right. Consider wrapping the parent hint '
+            f'subscripted by this hint instead: e.g.,\n'
+            f'    # Instead of wrapping an unpacked child hint...\n'
+            f'    TypeHint(*tuple[int])\n'
+            f'\n'
+            f'    # Prefer wrapping the parent tuple hint.\n'
+            f'    TypeHint(tuple[*tuple[int]])'
+        )
+    # Else, this hint is a standalone type hint.
 
     # ..................{ SUBCLASS                           }..................
     # Concrete "TypeHint" subclass to be returned.
@@ -164,6 +198,33 @@ _HINT_SIGN_TO_TYPEHINT_SUBTYPE: dict[HintSign, type[TypeHint]] = {
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
 to the :class:`.TypeHint` subclass handling those hints.
+'''
+
+
+HINT_SIGNS_UNWRAPPABLE = frozenset((
+    # Ambiguously identifies unpacked child hints (e.g., the "typing.Unpack[Ts]"
+    # child hint subscripting the parent hint "tuple[typing.Unpack[Ts]]").
+    HintSignUnpack,
+
+    # Uniquely identifies unpacked child tuple hints (e.g., the "*tuple[int]"
+    # child hint subscripting the parent hint "tuple[*tuple[int]]").
+    HintSignPep646TupleUnpacked,
+
+    # Uniquely identifies unpacked type variable tuples (e.g., the "*Ts" child
+    # hint subscripting the parent hint "tuple[int, *Ts]").
+    HintSignPep646TypeVarTupleUnpacked,
+
+    # Uniquely identifies type variable tuples (e.g., "Ts"). Unlike a type
+    # variable, which is a valid hint annotating a parameter or return (e.g.,
+    # "def f(x: T) -> T"), a type variable tuple is *ONLY* valid unpacked in a
+    # parent hint (e.g., "def f(*args: *Ts)").
+    HintSignTypeVarTuple,
+))
+'''
+Frozen set of all **unwrappable signs** (i.e., signs uniquely identifying
+objects that modify the child hints subscripting a parent hint rather than
+conveying meaning in their own right and are thus unwrappable by the
+:class:`beartype.door.TypeHint` superclass).
 '''
 
 

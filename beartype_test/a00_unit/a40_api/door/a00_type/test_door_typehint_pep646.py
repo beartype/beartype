@@ -153,3 +153,69 @@ def test_door_pep646_tuple_equality() -> None:
 
     # Assert that this hint is *NOT* a subhint of an unrelated tuple hint.
     assert not (TypeHint(hint) <= TypeHint(tuple[int, int]))
+
+
+# ....................{ TESTS ~ unwrappable                }....................
+@skip_if_python_version_less_than('3.11.0')
+def test_door_pep646_unwrappable() -> None:
+    '''
+    Test that :pep:`646`-compliant objects that merely modify the child hints
+    subscripting a parent hint -- rather than conveying meaning in their own
+    right -- raise the expected exception when wrapped in isolation.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import TypeHint
+    from beartype.roar import BeartypeDoorPepUnsupportedException
+    from beartype_test.a00_unit.data.pep.data_pep646 import (
+        Ts,
+        Ts_unpacked_prefix,
+        Ts_unpacked_subbed,
+        tuple_fixed_str_bytes_unpacked_prefix,
+        tuple_fixed_str_bytes_unpacked_subbed,
+    )
+    from pytest import raises
+
+    # For each unwrappable object...
+    for hint in (
+        # Both spellings of an unpacked child tuple hint. Note that these two
+        # spellings previously disagreed: the "typing.Unpack[...]" spelling was
+        # silently misidentified as an unsubscripted hint, as that spelling
+        # alone is published by the "typing" submodule.
+        tuple_fixed_str_bytes_unpacked_prefix,
+        tuple_fixed_str_bytes_unpacked_subbed,
+
+        # Both spellings of an unpacked type variable tuple.
+        Ts_unpacked_prefix,
+        Ts_unpacked_subbed,
+
+        # A type variable tuple, which is *ONLY* valid unpacked in a parent
+        # hint (e.g., "def f(*args: *Ts)").
+        Ts,
+    ):
+        with raises(BeartypeDoorPepUnsupportedException):
+            TypeHint(hint)
+
+
+@skip_if_python_version_less_than('3.11.0')
+def test_door_pep646_unwrappable_parents_unaffected() -> None:
+    '''
+    Test that wrapping the *parent* hints subscripted by unwrappable objects
+    continues to behave as expected.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import TypeHint
+    from beartype_test.a00_unit.data.pep.data_pep646 import (
+        tuple_fixed_str_bytes_unpacked_prefix)
+    from typing import TypeVar
+
+    # Assert that the parent tuple hint subscripted by an unwrappable object
+    # remains wrappable.
+    assert TypeHint(
+        tuple[tuple_fixed_str_bytes_unpacked_prefix]) is TypeHint(
+        tuple[str, bytes])
+
+    # Assert that PEP 484-compliant type variables remain wrappable. Unlike a
+    # type variable tuple, a type variable *IS* a valid standalone hint.
+    assert TypeHint(TypeVar('T')) is not None
