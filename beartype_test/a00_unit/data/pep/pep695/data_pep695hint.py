@@ -281,3 +281,37 @@ See Also
 --------
 :data:`.AliasCircularSelf`
 '''
+
+
+# ....................{ ALIASES ~ door                     }....................
+type AliasDoorInt = int
+'''
+Type alias aliasing a simple isinstanceable type.
+'''
+
+
+type AliasDoorIntNested = AliasDoorInt
+'''
+Type alias aliasing :data:`.AliasDoorInt` and thus transitively aliasing a
+simple isinstanceable type.
+'''
+
+
+type AliasDoorStr = str
+'''
+Type alias aliasing a different simple isinstanceable type.
+'''
+
+
+type AliasDoorUnion = int | float
+'''
+Type alias aliasing a :pep:`604`-compliant new union.
+'''
+
+
+type AliasDoorListSetT[T] = list[T] | set[T]
+'''
+Type alias parametrized by one type variable, aliasing a :pep:`604`-compliant
+new union of two :pep:`585`-compliant generics each subscripted by that same
+type variable.
+'''

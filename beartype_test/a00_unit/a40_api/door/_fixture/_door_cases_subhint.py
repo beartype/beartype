@@ -673,6 +673,51 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         # actually a subhint of this superhint.
         HINT_SUBHINT_CASES.append((subhint, superhint, True))
 
+    # ..................{ PEP 695                            }..................
+    # If the active Python interpreter targets Python >= 3.12 and thus supports
+    # PEP 695-compliant type aliases...
+    if IS_PYTHON_AT_LEAST_3_12:
+        # Defer version-specific imports.
+        from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
+            AliasDoorInt,
+            AliasDoorListSetT,
+            AliasDoorStr,
+            AliasDoorUnion,
+            AliasPep484604Recursive2T,
+        )
+
+        # Append PEP 695-specific subhint cases. Since PEP 695 defines type
+        # aliases to be *TRANSPARENT*, an alias is a subhint of exactly those
+        # hints the aliased hint is a subhint of -- and vice versa.
+        HINT_SUBHINT_CASES.extend((
+            # An alias is a subhint of the hint aliased by that alias...
+            (AliasDoorInt, int, True),
+            # ...and a superhint of it, too.
+            (int, AliasDoorInt, True),
+
+            # Subhint relations propagate through an alias in both directions.
+            (bool, AliasDoorInt, True),
+            (AliasDoorInt, object, True),
+            (AliasDoorInt, AliasDoorUnion, True),
+            (AliasDoorUnion, AliasDoorInt, False),
+
+            # Aliases of unrelated hints are unrelated.
+            (AliasDoorInt, AliasDoorStr, False),
+
+            # Subscripted aliases obey the variance of the aliased hint.
+            (list[int], AliasDoorListSetT[int], True),
+            (AliasDoorListSetT[int], list[int] | set[int], True),
+
+            # Aliases nested as child hints of parent hints are transparent.
+            (list[AliasDoorInt], list[object], True),
+
+            # A recursive alias is comparable without infinite recursion. Note
+            # that @beartype ignores recursion rather than modelling it, so
+            # these cases assert termination rather than exact semantics.
+            (AliasPep484604Recursive2T[int], object, True),
+        ))
+    # Else, this interpreter fails to support PEP 695.
+
     # ..................{ RETURN                             }..................
     # Return this mutable list coerced into an immutable tuple for safety.
     return tuple(HINT_SUBHINT_CASES)

@@ -686,6 +686,42 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         return self._hint
 
 
+    @property
+    def unaliased(self) -> 'TypeHint':
+        '''
+        Wrapper wrapping the hint that this wrapper's hint ultimately refers to,
+        stripped of any :pep:`695`-compliant type aliases.
+
+        :pep:`695` defines type aliases to be **transparent**: an alias conveys
+        exactly the semantics of the hint aliased by that alias. This wrapper
+        thus preserves the alias itself (e.g., for the :attr:`hint` property and
+        machine-readable representations), while this property exposes the
+        semantically equivalent wrapper that alias refers to: e.g.,
+
+        .. code-block:: pycon
+
+           >>> from beartype.door import TypeHint
+           >>> type MuhAlias = int
+
+           # This wrapper preserves the alias...
+           >>> TypeHint(MuhAlias).hint
+           MuhAlias
+
+           # ...while this property resolves it, returning the *SAME* singleton
+           # wrapper as the hint aliased by that alias.
+           >>> TypeHint(MuhAlias).unaliased is TypeHint(int)
+           True
+
+        For wrappers wrapping hints that are *not* type aliases, this property
+        trivially returns this wrapper itself. Callers may thus unconditionally
+        access this property without first testing whether this wrapper wraps a
+        type alias.
+        '''
+
+        # Almost all hints are *NOT* type aliases. Return this wrapper as is.
+        return self
+
+
     @property  # type: ignore
     @property_cached
     def is_ignorable(self) -> bool:
