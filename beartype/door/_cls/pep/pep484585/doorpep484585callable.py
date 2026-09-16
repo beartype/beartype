@@ -16,6 +16,7 @@ from beartype.door._cls.doorabc import (
     TypeHint,
     TupleTypeHints,
 )
+from beartype.door._cls.doorsubbed import SubscriptedTypeHint
 from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_PEP612_CALLABLE_ARGLIST)
@@ -31,7 +32,7 @@ from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from typing import Any
 
 # ....................{ SUBCLASSES                         }....................
-class CallableTypeHint(TypeHint):
+class CallableTypeHint(SubscriptedTypeHint):
     '''
     **Callable type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`- or :pep:`585`-compliant ``Callable[...]`` type hint).
@@ -153,6 +154,15 @@ class CallableTypeHint(TypeHint):
         # Return these child hints.
         return args
 
+    # ..................{ PRIVATE ~ raisers                  }..................
+    def _die_unless_args_len_range(self, args: tuple) -> None:
+
+        # Silently reduce to a noop. As the superclass method docstring
+        # suggests, the superclass implementation of this method applies *ONLY*
+        # to hints subscripted by a fixed number of child hints. However,
+        # callable hints are subscripted by a variable number of child hints.
+        pass
+
     # ..................{ PRIVATE ~ properties               }..................
     @property
     @property_cached
@@ -261,27 +271,26 @@ class CallableTypeHint(TypeHint):
         # print(f'{branch}._is_args_ignorable: {branch._is_args_ignorable}')
 
         # If that branch is unsubscripted (e.g., "typing.Callable"), assume that
-        # branch to be subscripted as the maximally wide callable type hint
-        # "typing.Callable[..., Any]". Since *ALL* callable type hints are
+        # branch to be subscripted as the maximally wide callable hint
+        # "typing.Callable[..., Any]". Since *ALL* callable hints are
         # necessarily subhints of that hint, return true only if the class
-        # originating this hint is a subclass of the class
-        # originating that branch.
+        # originating this hint is a subclass of the class originating that
+        # branch.
         if branch._is_args_ignorable:
             return issubclass(self._origin_type, branch._origin_type)
         # Else, that branch is subscripted (e.g., "typing.Callable[..., int]").
         #
-        # If that branch is *NOT* a callable type hint, this callable type hint
-        # is incommensurable with that branch and thus *CANNOT* be a subhint of
+        # If that branch is *NOT* a callable hint, this callable hint is
+        # incommensurable with that branch and thus *CANNOT* be a subhint of
         # that branch. Return false.
         elif not isinstance(branch, CallableTypeHint):
             return False
-        # Else, that branch is a callable type hint.
+        # Else, that branch is a callable hint.
 
         #FIXME: [SPEED] *INEFFICIENT.* The any() builtin has been profiled to be
         #almost twice as slow as equivalent manual iteration! The zip() builtin
-        #is likely to fare no better. Iterate manually, please. Actually, isn't
-        #zip() fairly fast. Annnyway. *sigh*
-        #FIXME: Internally comment us up, please.
+        #is surprisingly fast. any() isn't. Iterate manually, please. *sigh*
+        #FIXME: Internally comment us up, please. *sigh*
         elif not branch.is_params_ignorable and (
             (
                 self.is_params_ignorable or
@@ -294,13 +303,7 @@ class CallableTypeHint(TypeHint):
             )
         ):
             return False
-
-        # FIXME: Insufficient, sadly. There are *MANY* different type hints that
-        # are ignorable and thus semantically equivalent to "Any". It's likely
-        # we should just reduce this to a one-liner resembling:
-        #    return self.return_hint <= branch.return_hint
-        #
-        # Are we missing something? We're probably missing something. *sigh*
+        #FIXME: Internally comment us up, please. *sigh*
         elif not branch.is_return_ignorable:
             return (
                 False

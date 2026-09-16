@@ -415,6 +415,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         '''
 
         # Avoid circular import dependencies.
+        from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
         from beartype.door._cls.pep.pep484.doorpep484any import AnyTypeHint
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -422,23 +423,28 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         # implementation *MUST* be prefaced by a similar "if" statement. Failure
         # to do so *WILL* induce inconsistency between equality and hashability.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # If that other hint is the PEP 484-compliant "typing.Any" catch-all,
-        # intentionally avoid performing the boolean syllogism below. Instead,
-        # reduce to returning the equality of these two hints with the order
-        # reversed. Why? Because the AnyTypeHint._is_equal() dunder method
-        # overrides this superclass method with subclass-specific logic
-        # appropriate to "typing.Any". The boolean syllogism below is *NOT*
-        # appropriate to "typing.Any". Why? Because
-        # TypeHint(typing.Any).is_subhint(other) and
-        # other.is_subhint(TypeHint(typing.Any)) are both unconditionally true
-        # for *ALL* possible type hints "other", in which case this tester would
-        # return true when either "self" or "other" are "TypeHint(typing.Any)".
-        # However, the AnyTypeHint._is_equal() dunder method overrides this
-        # superclass method to *ONLY* return true when the passed hint is also
-        # "typing.Any". The discrepancy between semantic equality and the
-        # boolean syllogism below *ONLY* arises for the specific edge case of
-        # "typing.Any", whose comparison semantics are highly irregular.
-        if isinstance(other, AnyTypeHint):
+        # If that other hint is equality-dominating (i.e., prefers to define the
+        # semantics of equality), intentionally avoid performing the boolean
+        # syllogism below. Instead, reduce to returning the equality of these
+        # two hints with the order reversed.
+        #
+        # Examples of equality-dominating hints include:
+        # * The PEP 484-compliant "typing.Any" catch-all. Why? Because the
+        #   AnyTypeHint._is_equal() dunder method overrides this superclass
+        #   method with subclass-specific logic appropriate to "typing.Any". The
+        #   boolean syllogism below is *NOT* appropriate to "typing.Any". Why?
+        #   Because TypeHint(typing.Any).is_subhint(other) and
+        #   other.is_subhint(TypeHint(typing.Any)) are both unconditionally true
+        #   for *ALL* possible type hints "other", in which case this tester
+        #   would return true when either "self" or "other" are
+        #   "TypeHint(typing.Any)". However, the AnyTypeHint._is_equal() dunder
+        #   method overrides this superclass method to *ONLY* return true when
+        #   the passed hint is also "typing.Any". The discrepancy between
+        #   semantic equality and the boolean syllogism below *ONLY* arises for
+        #   the specific edge case of "typing.Any", whose comparison semantics
+        #   are highly irregular.
+        # * PEP 484- and 604-compliant unions, for similar reasons.
+        if isinstance(other, (AnyTypeHint, UnionTypeHint)):
             return other == self
         # Else, that other hint is *NOT* the PEP 484-compliant "typing.Any"
         # catch-all. In this case, the boolean syllogism below usually applies.
@@ -1191,9 +1197,9 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         Immutable collection of all **branches** (i.e., high-level type hint
         wrappers encapsulating all low-level child hints subscripting (indexing)
         the low-level parent hint encapsulated by this high-level parent type
-        hint wrapper if this is a union (and thus an instance of the
-        :class:`UnionTypeHint` subclass) *or* the 1-tuple containing only this
-        instance itself otherwise) of this type hint wrapper.
+        hint wrapper if this is a **union** (i.e.,
+        :class:`beartype.door.UnionTypeHint` object) *or* the 1-tuple containing
+        only this instance itself otherwise) of this type hint wrapper.
 
         This property enables the child hints of both :pep:`484`- and
         :pep:`604`-compliant unions (e.g., :attr:`typing.Union`,
@@ -1254,8 +1260,15 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         )
 
 # ....................{ HINTS                              }....................
+CollectionTypeHints = Collection[TypeHint]
+'''
+:pep:`585`-compliant type hint matching any arbitrary collection of zero or more
+**type hint wrappers** (i.e., :data:`.TypeHint` objects).
+'''
+
+
 TupleTypeHints = tuple[TypeHint, ...]
 '''
-PEP-compliant type hint matching a tuple of zero or more **type hint wrappers**
-(i.e., :data:`.TypeHint` objects).
+:pep:`585`-compliant type hint matching any tuple of zero or more **type hint
+wrappers** (i.e., :data:`.TypeHint` objects).
 '''

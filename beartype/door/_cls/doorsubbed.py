@@ -88,9 +88,11 @@ class SubscriptedTypeHint(TypeHint):
                 f'Type hint {repr(self._hint)} argument length range unknown.')
         # Else, this factory has been associated with such a range.
 
+        # Total number of child hints subscripting this hint.
+        args_len = len(args)
+
         #FIXME: Consider actually testing this. This *IS* technically testable
         #and should thus *NOT* be marked as "pragma: no cover".
-
         # If this hint was subscripted by an unexpected number of child hints...
         #
         # Note that this edge case commonly occurs with PEP 585-compliant type
@@ -98,7 +100,7 @@ class SubscriptedTypeHint(TypeHint):
         # child type hints: e.g.,
         #     >>> list[str, int]
         #     list[str, int]  # <-- wat
-        if len(args) not in args_len_range:  # pragma: no cover
+        if args_len not in args_len_range:  # pragma: no cover
             #FIXME: This seems sensible, but currently provokes test failures.
             #Let's investigate further at a later time, please. *sigh*
             # # If this hint was subscripted by *NO* parameters, comply with PEP
@@ -127,12 +129,15 @@ class SubscriptedTypeHint(TypeHint):
                 # Human-readable noun describing the grammatically correct
                 # plurality of the number of expected child type hints. English!
                 exception_noun = (
-                    'child type hint' if len(args) == 1 else 'child type hints')
+                    'child type hint'
+                    if ARGS_LEN_MAX == 1 else
+                    'child type hints'
+                )
 
                 # Append this number to this exception message.
                 exception_message += (
                     f'{ARGS_LEN_MAX} {exception_noun} (i.e., '
-                    f'subscripted by {len(args)} != '
+                    f'subscripted by {args_len} != '
                     f'{ARGS_LEN_MAX} child type hints).'
                 )
             # Else, this factory accepts a variable number of child hints. Raise
@@ -141,7 +146,7 @@ class SubscriptedTypeHint(TypeHint):
                 # Append this number to this exception message.
                 exception_message += (
                     f'[{ARGS_LEN_MIN}, {ARGS_LEN_MAX}] arguments (i.e., '
-                    f'subscripted by {len(args)} child type hints).'
+                    f'subscripted by {args_len} child type hints).'
                 )
 
             # Raise this exception.
@@ -179,18 +184,11 @@ class SubscriptedTypeHint(TypeHint):
         return hash(wrapper_hashable)
 
     # ..................{ PRIVATE ~ testers                  }..................
-    # Note that this redefinition of the superclass _is_equal() method is
-    # technically unnecessary, as that method is already sufficiently
-    # general-purpose to suffice for *ALL* possible subclasses (including this
-    # subclass). Nonetheless, we wrote this method first. More importantly, this
-    # method is *SUBSTANTIALLY* faster than the superclass method. Although
-    # efficiency is typically *NOT* a pressing concern for the DOOR API,
-    # discarding faster working code would be senseless.
     def _is_equal(self, other: TypeHint) -> bool:
 
         # If *ALL* of the child hints subscripting both of these parent hints
-        # are ignorable, return true only if these parent hints both
-        # originate from the same type.
+        # are ignorable, return true only if these parent hints both originate
+        # from the same low-level type.
         if self._is_args_ignorable and other._is_args_ignorable:
             return self._origin_type == other._origin_type
         # Else, one or more of the child type hints subscripting either of these

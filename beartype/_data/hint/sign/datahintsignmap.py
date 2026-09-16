@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Dict
 from beartype._data.api.standard.datatyping import TYPING_MODULE_NAMES
 from beartype._data.typing.datatyping import (
     DictStrToHintSign,
@@ -74,7 +73,7 @@ from beartype._data.hint.sign.datahintsigns import (
 )
 
 # ....................{ HINTS                              }....................
-HintSignTrie = Dict[str, DictStrToHintSign]
+HintSignTrie = dict[str, DictStrToHintSign]
 '''
 PEP-compliant type hint matching a **hint sign trie** (i.e.,
 dictionary-of-dictionaries tree data structure mapping from the fully-qualified
@@ -360,7 +359,7 @@ subscriptable by either one or two child type hints).
 
 # ....................{ SIGNS ~ origin : args              }....................
 # Fully initialized by the _init() function below.
-HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE: Dict[HintSign, range] = {
+HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE: dict[HintSign, range] = {
     # Type hint factories subscriptable by exactly one child type hint.
     HintSignAbstractSet: _ARGS_LEN_1,
     HintSignAsyncIterable: _ARGS_LEN_1,
@@ -388,6 +387,19 @@ HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE: Dict[HintSign, range] = {
     HintSignValuesView: _ARGS_LEN_1,
 
     # Type hint factories subscriptable by exactly two child type hints.
+    #
+    # Note that PEP 484- and 585-compliant "collections.abc.Callable[{args},
+    # {return}]" hints are intentionally excluded. Why? Because:
+    # * Semantically subscriptable by exactly two child type hints.
+    # * Technically subscriptable by *ONE OR MORE* child type hints. Bear
+    #   witness to these horrors, QA children:
+    #       >>> from collections.abc import Callable
+    #       >>> Callable[..., object].__args__
+    #       (Ellipsis, <class 'object'>)  # <-- good. this is good.
+    #       >>> Callable[[], object].__args__
+    #       (<class 'object'>,)  # <-- *BAD*. this is bad. this is very bad.
+    #       >>> Callable[[int, str], object].__args__
+    #       (<class 'int'>, <class 'str'>, <class 'object'>)  # <-- okay then
     HintSignAsyncGenerator: _ARGS_LEN_2,
     HintSignChainMap: _ARGS_LEN_2,
     HintSignDefaultDict: _ARGS_LEN_2,

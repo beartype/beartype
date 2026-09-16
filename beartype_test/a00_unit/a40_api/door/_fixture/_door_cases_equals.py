@@ -50,6 +50,7 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
     from beartype.typing import Annotated
     from collections.abc import (
         Awaitable as AwaitableABC,
+        Callable as CallableABC,
         Sequence as SequenceABC,
     )
     from numbers import Number
@@ -114,6 +115,7 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         (tuple[str, ...], Tuple[str, ...], True),
         (tuple[int, Any], tuple[int, str], False),
         (AwaitableABC[SequenceABC[int]], AwaitableABC[SequenceABC[int]], True),
+        (CallableABC, CallableABC[..., Any], True),
 
         # ..................{ PEP 593                        }..................
         # PEP 593-compliant type hints.
@@ -135,7 +137,9 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         # and is thus technically unequal (despite being semantically equal) to
         # *ANY* other union *NOT* also subscripted by "Any". See the
         # AnyTypeHint._is_equal() implementation for further commentary.
-        (Any, Any | int, False),
+        (Any | int, Any, False),
+        (int | Any, Any, False),  # <-- intentionally exercises an edge case!
+        (Any | int, int, False),
         (Any | int, Any | int, True),
         (Any | int, str | int, False),
     ]
