@@ -17,7 +17,10 @@ from beartype.roar import (
     BeartypeDecorHintPepNumberedException,
 )
 from beartype.roar._roarexc import _BeartypeUtilTypeException
-from beartype._cave._cavefast import HintPep646TypeVarTupleType
+from beartype._cave._cavefast import (
+    HintPep604Type,
+    HintPep646TypeVarTupleType,
+)
 from beartype._data.cls.datacls import TYPES_NONPEP_TYPEARGS_PACKED
 from beartype._data.typing.datatypingport import (
     Hint,
@@ -150,18 +153,36 @@ def get_hint_pep_childs(hint: object) -> tuple:
     #
     # If this attribute is *NOT* a tuple...
     elif not isinstance(hint_args, tuple):
-        # If this hint is the unsubscripted "typing.Union" hint semantically
-        # equivalent to the subscripted "typing.Union[typing.Any]" hint, this
-        # hint is a C-based type whose "__args__" dunder attribute is
-        # implemented as a C-based slotted class attribute of some obscure type
-        # under Python >= 3.14. Since unsubscripted "typing.Union" hints are
-        # valid hints, this "__args__" implementation is *TECHNICALLY* also
-        # valid albeit semantically meaningless. In this case, simply return the
-        # empty tuple.
-        if hint is Union:
+        # If this hint is either...
+        #
+        # Note that arbitrary hints are *NOT* necessarily hashable and thus
+        # *NOT* testable against a hypothetical frozenset efficiently congealing
+        # the two unsubscripted union factories tested below.
+        if (
+            # The PEP 484-compliant "typing.Union" unsubscripted union factory
+            # *OR*...
+            #
+            # Note that:
+            # * This unsubscripted union factory is semantically equivalent to
+            #   the PEP 484-compliant "typing.Union[typing.Any]" union, which
+            #   itself is semantically equivalent to the PEP 484-compliant
+            #   "typing.Any" catch-all singleton. "typing.Any" constitutes a
+            #   valid hint, this unsubscripted union factory also constitutes a
+            #   valid hint.
+            hint is Union or
+            # The PEP 604-compliant "types.UnionType" unsubscripted union
+            # factory.
+            hint is HintPep604Type
+        ):
+            # Then this hint is a C-based type whose "__args__" dunder attribute
+            # is implemented as a C-based slotted class attribute of some
+            # obscure type under Python >= 3.14. Since both of the unsubscripted
+            # union factories detected above are themselves valid hints, this
+            # "__args__" implementation is *TECHNICALLY* also valid (albeit
+            # semantically meaningless). In this case, return the empty tuple.
             return ()
-        # Else, this hint is *NOT* the unsubscripted "typing.Union" hint. In
-        # this case, raise an exception.
+        # Else, this hint is *NOT* such an unsubscripted union factory. In this
+        # case, raise an exception.
         else:
             raise BeartypeDecorHintPepException(
                 f'PEP-noncompliant hint {repr(hint)} '

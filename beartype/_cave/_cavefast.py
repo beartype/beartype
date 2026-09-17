@@ -1115,10 +1115,13 @@ else:
 #FIXME: Excise the obsolete "HintPep604Type" type *AFTER* dropping Python 3.13
 #support, please. Under Python >= 3.14, this type is a trivial alias of the
 #standard "typing.Union" type.
+#FIXME: Actually, just rename this to "HintPep484604UnionType" at that point.
+#This unambiguous name is still quite useful for clarity, as this is frankly a
+#super-confusing topic. *sigh*
 HintPep604Type = _types.UnionType
 '''
-C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
-created by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
+C-based type of all :pep:`604`-compliant **new unions** (i.e., objects created
+by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
 
 This type is a version-agnostic generalization of the standard
 :class:`types.UnionType` type available only under Python >= 3.10.
@@ -1131,7 +1134,10 @@ Tuple of all :pep:`604`-compliant **new union item types** (i.e., types of all
 objects permissible as the items of new unions), including:
 
 * The C-based type of all types (e.g., the type of the first item in the new
-  union ``list | None``).
+  union ``list | None``). Note that the :pep:`484`-compliant :class:`typing.Any`
+  hint is also defined as a pure-Python type and thus implicitly matched by this
+  :class:`type` root superclass, which is good; :class:`typing.Any` constitutes
+  a valid member of any :pep:`604`-compliant new union (e.g., ``Any | int``).
 * The C-based type of all subscripted generics (e.g., the type of the first item
   in the new union ``list[dict[str, int]] | None``).
 '''

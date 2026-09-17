@@ -51,10 +51,12 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
     import collections.abc
     import typing
     from abc import ABCMeta
+    from beartype._cave._cavefast import HintPep604Type
     from beartype._util.cls.utilclstest import is_type_subclass_proper
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_12,
         IS_PYTHON_AT_MOST_3_13,
+        IS_PYTHON_AT_LEAST_3_14,
     )
     from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
         Pep484GenericIntUT,
@@ -352,17 +354,6 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Optional[int], int, False),
         (list, Optional[Sequence], True),
 
-        # ..................{ PEP 484 ~ union                }..................
-        # "typing.Union"-centric tests.
-
-        # PEP 484-compliant unions.
-        (int, Union[int, str], True),
-        (Union[int, str], Union[list, int, str], True),
-        (Union[str, int], Union[int, str, list], True),  # order doesn't matter
-        (Union[str, list], Union[str, int], False),
-        (Union[int, str, list], list, False),
-        (Union[int, str, list], Union[int, str], False),
-
         # ..................{ PEP (484|585) ~ callable       }..................
         # PEP 484-compliant callable type hints.
         (Callable, Callable[..., Any], True),
@@ -448,6 +439,37 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Type[MuhThing], Type[MuhSubThing], False),
         (MuhThing, Type[MuhThing], False),
 
+        # ..................{ PEP (484|604) ~ union          }..................
+        # PEP 484- and 604-compliant union type hints.
+
+        # PEP 484-compliant unions.
+        (int, Union[int, str], True),
+        (Union[int, str], Union[list, int, str], True),
+        (Union[str, int], Union[int, str, list], True),  # order doesn't matter
+        (Union[str, list], Union[str, int], False),
+        (Union[int, str, list], list, False),
+        (Union[int, str, list], Union[int, str], False),
+
+        # PEP 604-compliant unions.
+        (int | str, int | Any, True),
+        (int | Any, int | str, True),
+
+        # Types of PEP 484- and 604-compliant unsubscripted union factories
+        # (i.e., "typing.Union" and "types.UnionType"). These cases implicitly
+        # validate that these factories are accepted as valid types, guarding
+        # against regressions. Previously, both of these factories erroneously
+        # induced non-human-readable exceptions.
+        #
+        # Note that both cases conditionally evaluate to:
+        # * If the active Python interpreter targets Python <= 3.13, false. Why?
+        #   Python <= 3.13 differentiated the types of PEP 484-compliant old
+        #   unions from the types of PEP 604-compliant new unions.
+        # * If the active Python interpreter targets Python >= 3.14, true. Why?
+        #   Python >= 3.14 unified union types such that the type of *ALL*
+        #   unions is merely "Union" and "Union is HintPep604Type".
+        (type(int | str), type[Union], IS_PYTHON_AT_LEAST_3_14),
+        (type[int | str], type[HintPep604Type], IS_PYTHON_AT_LEAST_3_14),
+
         # ..................{ PEP 544                        }..................
         # PEP 544-compliant type hints.
         (MuhThing, MuhThingP, True),
@@ -476,17 +498,17 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
 
         # ..................{ PEP 593                        }..................
         # PEP 593-compliant type hints.
-        (Annotated[int, 'a note'], int, True),  # annotated is subtype of unannotated
-        (int, Annotated[int, 'a note'], False),  # but not vice versa
+
+        # Annotated[{type}, ...] <= {type}.
+        (Annotated[int, 'a note'], int, True),
+
+        # {type} > Annotated[{type}, ...].
+        (int, Annotated[int, 'a note'], False),
+
         (Annotated[list, True], Annotated[Sequence, True], True),
         (Annotated[list, False], Annotated[Sequence, True], False),
         (Annotated[list, 0, 0], Annotated[list, 0], False),  # must have same num args
         (Annotated[List[int], 'metadata'], List[int], True),
-
-        # ..................{ PEP 604                        }..................
-        # PEP 604-compliant union type hints.
-        (int | str, int | Any, True),
-        (int | Any, int | str, True),
     ]
 
     # ..................{ LISTS ~ cases : version            }..................
