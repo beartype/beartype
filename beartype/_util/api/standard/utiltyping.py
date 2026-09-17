@@ -13,11 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype.typing import Any
-from beartype._data.typing.datatyping import TypeException
 from beartype._data.api.standard.datatyping import TYPING_MODULE_NAMES
+from beartype._data.typing.datatyping import TypeException
 from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.module.utilmodimport import import_module_attr_or_none
+from typing import Any
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -208,8 +208,8 @@ def import_typing_attr(
             '"Your Grizzled Pal in the Friendly Skies."'
         )
 
-        # If the "typing_extensions" module is importable, raise an
-        # appropriate exception.
+        # If the "typing_extensions" module is importable, raise an appropriate
+        # exception.
         if is_module('typing_extensions'):
             raise exception_cls(
                 f'{EXCEPTION_PREFIX} Please either '
@@ -287,7 +287,6 @@ def import_typing_attr_or_none(
 
 
 #FIXME: Unit test us up, please.
-#FIXME: Leverage above, please.
 @callable_cached
 def import_typing_attr_or_fallback(
     # Mandatory parameters.

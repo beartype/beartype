@@ -794,12 +794,12 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         ----------
         obj : object
             Arbitrary object to be tested against this hint.
-        conf : BeartypeConf, optional
+        conf : BeartypeConf, default: BeartypeConf
             **Beartype configuration** (i.e., self-caching dataclass
             encapsulating all settings configuring type-checking for the passed
-            object). Defaults to ``BeartypeConf()``, the default ``O(1)``
+            object). Defaults to ``BeartypeConf()``, the default :math:`O(1)`
             constant-time configuration.
-        exception_prefix : str, optional
+        exception_prefix : str, default: "die_if_unbearable() "
             Human-readable label prefixing the representation of this object in
             the exception message. Defaults to a reasonably sensible string.
 

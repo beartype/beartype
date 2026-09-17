@@ -105,7 +105,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep695Exception
 from beartype._cave._cavefast import (
     # HintGenericSubscriptedType,
-    HintPep695TypeAlias,
+    HintPep695TypeAliasTypes,
     Pep695ParameterizableTypes,
 )
 from beartype._cave._cavemap import NoneTypeOr
@@ -252,13 +252,13 @@ def is_hint_pep695_subbed(hint: Hint) -> bool:
 
     # Return true only if this origin is a PEP 695-compliant unsubscripted type
     # alias. Yes. It really is this non-trivial, folks. *sigh*
-    return isinstance(hint_origin, HintPep695TypeAlias)
+    return isinstance(hint_origin, HintPep695TypeAliasTypes)
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep695_unsubbed_alias(
     # Mandatory parameters.
-    hint: HintPep695TypeAlias,
+    hint: HintPep695TypeAliasTypes,
 
     # Optional parameters.
     exception_prefix: str = '',
@@ -279,7 +279,7 @@ def get_hint_pep695_unsubbed_alias(
 
     Parameters
     ----------
-    hint : HintPep695TypeAlias
+    hint : HintPep695TypeAliasTypes
         Unsubscripted type alias to be inspected.
     exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
@@ -301,7 +301,7 @@ def get_hint_pep695_unsubbed_alias(
 
     # If this hint is *NOT* a PEP 695-compliant unsubscripted type alias, raise
     # an exception.
-    if not isinstance(hint, HintPep695TypeAlias):
+    if not isinstance(hint, HintPep695TypeAliasTypes):
         raise BeartypeDecorHintPep695Exception(
             f'{exception_prefix}type hint {repr(hint)} '
             f'not PEP 695 unsubscripted type alias.'
@@ -318,7 +318,7 @@ def get_hint_pep695_unsubbed_alias(
         hint = hint.__value__  # type: ignore[attr-defined]
 
         # If this type hint is *NOT* a nested type alias, break this iteration.
-        if not isinstance(hint, HintPep695TypeAlias):
+        if not isinstance(hint, HintPep695TypeAliasTypes):
             break
         # Else, this type hint is a nested type alias. In this case, continue
         # iteratively unwrapping this nested type alias.
@@ -645,7 +645,7 @@ def resolve_func_scope_pep695(
 # ....................{ ITERATORS                          }....................
 def iter_hint_pep695_unsubbed_forwardrefs(
     # Mandatory parameters.
-    hint: HintPep695TypeAlias,
+    hint: HintPep695TypeAliasTypes,
 
     # Optional parameters.
     exception_prefix: str = '',
@@ -671,7 +671,7 @@ def iter_hint_pep695_unsubbed_forwardrefs(
 
     Parameters
     ----------
-    hint : HintPep695TypeAlias
+    hint : HintPep695TypeAliasTypes
         Unsubscripted type alias to be iterated over.
     exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults

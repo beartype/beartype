@@ -296,11 +296,19 @@ class HintPithMetadata(object):
             for exception_str_match_regex in (
                 pith_meta.exception_str_match_regexes):
                 assert search(
-                    exception_str_match_regex, exception_str) is not None
+                    exception_str_match_regex, exception_str) is not None, (
+                    f'@beartype decorator exception message '
+                    f'"{exception_str}" fails to match '
+                    f'regex "{exception_str_match_regex}".'
+                )
 
             # For each uncompiled regular expression expected to *NOT* match
             # this message, assert this expression actually does so.
             for exception_str_not_match_regex in (
                 pith_meta.exception_str_not_match_regexes):
                 assert search(
-                    exception_str_not_match_regex, exception_str) is None
+                    exception_str_not_match_regex, exception_str) is None, (
+                    f'@beartype decorator exception message '
+                    f'"{exception_str}" fails to match '
+                    f'regex "{exception_str_not_match_regex}".'
+                )

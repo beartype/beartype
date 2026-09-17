@@ -78,7 +78,7 @@ def reduce_hint_pep484604_union(
 
     Parameters
     ----------
-    hint : HintPep695TypeAlias
+    hint : Hint
         Union hint to be reduced.
     hint_parent_sane : Optional[HintSane]
         Either:

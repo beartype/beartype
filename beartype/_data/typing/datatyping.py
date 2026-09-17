@@ -33,7 +33,7 @@ from beartype._cave._cavefast import (
     HintPep612ParamSpecType,
     HintPep646TypeVarTupleType,
     HintPep646692UnpackedType,
-    HintPep695TypeAlias,
+    HintPep695TypeAliasTypes,
     MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
@@ -894,7 +894,9 @@ to the type hint annotating that parameter, return, or variable).
 '''
 
 # ....................{ PEP ~ 695                          }....................
-Pep695Parameterizable = type | FunctionType | HintPep695TypeAlias
+#FIXME: Uncomment the "| typing.TypeAliasType" branch *AFTER* dropping support
+#for Python 3.12. *sigh*
+Pep695Parameterizable = type | FunctionType  # | typing.TypeAliasType
 '''
 :pep:`695`-compliant type hint matching *any* :pep:`695` **parameterizable**
 (i.e., object that may be parametrized by a :pep:`695`-compliant list of one or
