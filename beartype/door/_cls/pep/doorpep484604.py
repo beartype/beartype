@@ -338,7 +338,7 @@ class UnionTypeHint(TypeHint):
                     # hint subscripting that other union to decide.
                 # If the inner "for" loop above did *NOT* break, then this child
                 # hint is *NOT* a subhint of some other child subscripting that
-                # other union, implying that this union *CANOT* be a subhint of
+                # other union, implying that this union *CANNOT* be a subhint of
                 # that other union as a whole. In this case, return false.
                 else:
                     return False

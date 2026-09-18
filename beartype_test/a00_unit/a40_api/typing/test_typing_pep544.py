@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype :pep:`544` **optimization layer** unit tests.
+Beartype **typing subpackage** :pep:`544`-compliant **submodule** unit tests.
 
 This submodule unit tests both the public *and* private API of the private
 :mod:`beartype.typing._typingpep544` subpackage for sanity.
@@ -17,7 +17,7 @@ This submodule unit tests both the public *and* private API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ protocol : metaclass       }....................
-def test_typingpep544_protocol_metaclass() -> None:
+def test_typing_pep544_protocol_metaclass() -> None:
     '''
     Test the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
@@ -55,7 +55,7 @@ def test_typingpep544_protocol_metaclass() -> None:
 
 
 # ....................{ TESTS ~ protocol                   }....................
-def test_typingpep544_protocol_superclass() -> None:
+def test_typing_pep544_protocol_superclass() -> None:
     '''
     Test that the public :pep:`544`-compliant :class:`beartype.typing.Protocol`
     superclass itself behaves as expected.
@@ -100,7 +100,7 @@ def test_typingpep544_protocol_superclass() -> None:
         ProtocolFast[str]
 
 
-def test_typingpep544_protocol_subclass() -> None:
+def test_typing_pep544_protocol_subclass() -> None:
     '''
     Test that the :pep:`544`-compliant :class:`beartype.typing.Protocol`
     superclass behaves as expected with respect to user-defined subclasses.
@@ -158,7 +158,7 @@ def test_typingpep544_protocol_subclass() -> None:
         runtime_checkable(SupportsHiddenBuds)
 
 # ....................{ TESTS ~ supports*                  }....................
-def test_typingpep544_protocols_supports() -> None:
+def test_typing_pep544_protocols_supports() -> None:
     '''
     Test the public retinue of ``beartype.typing.Supports*`` protocols with
     respect to both caching optimizations implemented by the public
