@@ -289,7 +289,7 @@ def __getattr__(attr_name: str) -> object:
     # Defer dunder-specific imports.
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_MOST_3_16,
-        IS_PYTHON_AT_LEAST_3_11,
+        IS_PYTHON_AT_LEAST_3_13,
     )
 
     # ....................{ PEP ~ 585 : removed            }....................
@@ -337,9 +337,9 @@ def __getattr__(attr_name: str) -> object:
     #   "collections.abc.ByteString" type, in which case the attribute this
     #   caller is explicitly importing is unrecognized.
 
-    # If the active Python interpreter targets Python >= 3.11, the "typing"
+    # If the active Python interpreter targets Python >= 3.13, the "typing"
     # module defines the __getattr__() dunder method. In this case...
-    if IS_PYTHON_AT_LEAST_3_11:
+    if IS_PYTHON_AT_LEAST_3_13:
         # Attempt to...
         try:
             # Import the typing.__getattr__() dunder method.
@@ -355,7 +355,7 @@ def __getattr__(attr_name: str) -> object:
         # "AttributeError" exception below specific to "beartype.typing".
         except AttributeError:
             pass
-    # Else, the active Python interpreter targets Python <= 3.10. In this case,
+    # Else, the active Python interpreter targets Python <= 3.12. In this case,
     # the "typing" module fails to define the __getattr__() dunder method.
 
     # Raise the same exception raised by Python on accessing a non-existent
