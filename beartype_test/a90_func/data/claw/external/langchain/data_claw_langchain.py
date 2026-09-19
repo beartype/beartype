@@ -59,7 +59,7 @@ the_arms_of_melody = when_harboured_in.invoke(
 assert the_arms_of_melody == 'For rest divine of fair day.'
 
 # ....................{ FAIL                               }....................
-# Assert this Runnable when passed an invalid parameter raises the expected
+# Assert that this runnable when passed an invalid parameter raises the expected
 # @beartype-specific type-checking violation.
 with raises(BeartypeCallHintParamViolation):
     when_harboured_in.invoke(

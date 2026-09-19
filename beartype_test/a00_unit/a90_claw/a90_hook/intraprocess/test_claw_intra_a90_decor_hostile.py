@@ -39,10 +39,7 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.claw import beartype_package
-    from beartype.claw._clawstate import (
-        claw_lock,
-        claw_state,
-    )
+    from beartype.claw._clawstate import reinit_claw_state
     from beartype.roar import BeartypeDecorWrappeeException
     from beartype._conf.decorplace.confplacetrie import (
         BeartypeDecorPlacePackagesTrie,
@@ -88,10 +85,8 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     )
     # print(datashamedecor.DECOR_HOSTILE_ATTR_NAME_TRIE)
 
-    # With a submodule-specific thread-safe reentrant lock, reset our import
-    # hook state back to its initial defaults to respect the above monkey-patch.
-    with claw_lock:
-        claw_state.reinit()
+    # Thread-safely reinitialize *ALL* beartype import hook state.
+    reinit_claw_state()
 
     # ....................{ PREAMBLE                       }....................
     # Validate that the decorator-hostile decorator leveraged by the package

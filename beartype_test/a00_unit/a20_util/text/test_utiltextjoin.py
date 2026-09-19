@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **string-joining utility unit tests.**
+Project-wide **string-joining utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.text.utiltextjoin` submodule.

@@ -21,7 +21,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # *EVERY* import throughout the active Python process. Manually inline *ALL*
 # functionality required by that tester directly into the body of that tester.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# Intentionally import the root "sys" module rather than attributes of that
+# module (e.g., "meta_path", "path_hooks") to account for malicious third-party
+# packages that reassign those attributes rather than modifying their contents.
 import sys
+
 from importlib import import_module as importlib_import_module
 
 # ....................{ TESTERS                            }....................

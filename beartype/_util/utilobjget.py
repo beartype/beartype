@@ -414,6 +414,17 @@ def get_object_type_unless_type(obj: object) -> type:
     return obj if isinstance(obj, type) else type(obj)
 
 # ....................{ GETTERS ~ type : name              }....................
+#FIXME: Woefully insufficient implementation. The name of this getter is
+#perfect. The implementation, however, leaves much to be desired. The issue is
+#the low-level get_object_type_basename() getter internally called by this
+#high-level getter, which is *DEFINITELY* wrong. get_object_type_basename()
+#should be refactored as follows:
+#* Rename get_object_type_basename() to get_object_type_basename_scoped().
+#* Redefine get_object_type_basename() as follows:
+#      def get_object_type_basename(obj: object) -> str:
+#          return get_object_basename_scoped(get_object_type_unless_type(obj))
+#
+#Trivial, obviously. But this warrants testing, also obviously. *shrug & sigh*
 def get_object_type_name(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the

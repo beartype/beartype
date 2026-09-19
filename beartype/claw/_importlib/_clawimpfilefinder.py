@@ -21,6 +21,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #    https://stackoverflow.com/a/76641537/2809027
 
 # ....................{ IMPORTS                            }....................
+# Intentionally import the root "sys" module rather than attributes of that
+# module (e.g., "meta_path", "path_hooks") to account for malicious third-party
+# packages that reassign those attributes rather than modifying their contents.
+import sys
+
 from beartype.roar import (
     BeartypeClawImportlibException,
     BeartypeClawImportlibStandardFileFinderPathHookNotFoundWarning,
@@ -28,47 +33,22 @@ from beartype.roar import (
 from beartype.claw._importlib._clawimpfileloader import BeartypeSourceFileLoader
 from beartype._data.claw.dataclawmagic import (
     BEARTYPE_CLAW_FILE_FINDER_PATH_HOOK_ATTR_NAME)
-from beartype._util.cache.func.utilcachefunc import callable_cached
-from beartype._util.func.utilfuncscope import get_func_freevars
+from beartype._data.typing.datatyping import (
+    FileFinderPathHookAndIndex,
+    FileFinderPathHookLoaderDetails,
+)
 from beartype._util.error.utilerrwarn import issue_warning
+from beartype._util.func.utilfuncscope import get_func_freevars
+from beartype._util.importlib.utilimppathhook import (
+    find_standard_file_finder_path_hook_index_or_none)
 from beartype._util.module.utilmodimport import import_module_attr_or_none
-from beartype._util.utilobjget import get_object_basename_scoped
 from collections.abc import Callable
-from importlib.abc import Loader
 from importlib.machinery import (
     BYTECODE_SUFFIXES,
     SOURCE_SUFFIXES,
     FileFinder,
     SourcelessFileLoader,
 )
-from sys import path_hooks
-from typing import Optional
-
-# ....................{ HINTS                              }....................
-FileFinderPathHookAndIndex = tuple[Callable, int]
-'''
-:pep:`585`-compliant type hint matching any 2-tuple ``(path_hook,
-path_hook_index)`` where:
-
-* ``path_hook`` is a **file finder path hook** (i.e., closure created and
-  returned by a call to the :meth:`importlib.machinery.FileFinder.path_hook`
-  method).
-* ``path_hook_index`` is the 0-based index of either:
-
-  * If the global :obj:`sys.path_hooks` list already contains this hook, the
-    index of this hook in that list.
-  * Else, the index at which the caller should insert this hook into that list.
-'''
-
-
-FileFinderPathHookLoaderDetails = tuple[tuple[type[Loader], list[str]], ...]
-'''
-:pep:`585`-compliant type hint matching **import hook file finder loader
-details** (i.e., tuple-centric data structure associating each Python module
-filetype supported by the current platform with a corresponding import hook file
-loader class whose instances are responsible for loading Python modules of that
-filetype into imported in-memory module objects).
-'''
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please. *sigh*
@@ -162,7 +142,7 @@ def make_beartype_file_finder_path_hook_index() -> FileFinderPathHookAndIndex:
     # 2-tuple "(standard_path_hook, path_hook_index)" if the global
     # "sys.path_hooks" list still contains the standard file finder path hook
     # *OR* "None" otherwise.
-    path_hook_data = _find_standard_file_finder_path_hook_index_or_none()
+    path_hook_data = find_standard_file_finder_path_hook_index_or_none()
 
     # Standard (i.e., beartype-agnostic) file finder path hook loader details
     # defined below.
@@ -197,7 +177,7 @@ def make_beartype_file_finder_path_hook_index() -> FileFinderPathHookAndIndex:
         #     >>> muh_list.insert(len(muh_list), 'y u so lazy, muh list!?')
         #     >>> muh_list
         #     ['y u so lazy, muh list!?']  # <-- noice
-        path_hook_index = len(path_hooks)
+        path_hook_index = len(sys.path_hooks)
 
         # Standard private _get_supported_file_loaders() getter defined by the
         # standard private "importlib._bootstrap_external" submodule.
@@ -210,10 +190,23 @@ def make_beartype_file_finder_path_hook_index() -> FileFinderPathHookAndIndex:
             attr_name='_get_supported_file_loaders',
         )
 
-        # If this getter exists, define the standard file finder path hook
-        # loader details as the tuple created and returned by this getter.
+        # If this getter exists...
         if _get_supported_file_loaders:
+            # Standard file finder path hook loader details, defined as the
+            # tuple created and returned by this low-level private getter.
             standard_loader_details = _get_supported_file_loaders()
+
+            # If these loader details are a mutable list rather than an
+            # immutable tuple, coerce the former into the latter for safety.
+            #
+            # Note that it is unclear exactly when, why, or how this edge case
+            # occurs -- merely that it does during unit tests. Ergo, we
+            # trivially handle this.
+            if isinstance(standard_loader_details, list):
+                standard_loader_details = tuple(standard_loader_details)
+            # Else, these loader details are *NOT* a mutable list.
+            #
+            # In either case, these loader details are now presumable a tuple.
         # Else, this getter does *NOT* exist. In this case...
         else:  # pragma: no cover
             # print('Here!')
@@ -360,162 +353,16 @@ def _get_file_finder_path_hook_loader_details(
         )
     # Else, that method still conforms to API expectations.
 
-    # Return the value of that "*loader_details" variadic positional parameter.
+    # If these loader details are *NOT* a tuple, raise an exception.
+    if not isinstance(path_hook_loader_details, tuple):  # pragma: no cover
+        raise BeartypeClawImportlibException(
+            f'"sys.path_hooks" entry {repr(path_hook)} '
+        f'loader details {repr(path_hook_loader_details)} not tuple.'
+    )
+    # Else, these loader details are a tuple.
+
+    # Return these loader details.
     return path_hook_loader_details
-
-
-@callable_cached
-def _get_standard_file_finder_path_hook_basename_scoped() -> str:
-    '''
-    **Lexically scoped basename** (i.e., ``.``-delimited unambiguously
-    identifying string of all lexical scopes) of the **standard file finder path
-    hook** (i.e., closure created and returned by the call to the
-    :meth:`importlib.machinery.FileFinder.path_hook` method in the standard
-    :mod:`importlib._bootstrap_external` module on Python startup), equivalent
-    to the value of the ``__qualname__`` dunder attribute defined on that hook.
-
-    This getter is memoized for efficiency.
-
-    Design
-    ------
-    This getter currently unconditionally returns the magic string constant
-    ``"FileFinder.path_hook.path_hook_for_FileFinder"`` under all actively
-    maintained Python releases. Technically, this implies that this getter could
-    simply be reduced to either trivially returning that constant *or* replaced
-    altogether by that constant. Pragmatically, doing so would render this
-    fragile submodule even more fragile against upstream changes outside our
-    control in Python's standard library.
-
-    This name is intentionally defined as the lexically scoped basename (as
-    introspected by the :func:`.get_object_basename_scoped` getter called below)
-    rather than as the fully-qualified name (as introspected by the
-    :func:`beartype._util.utilobjget.get_object_name` getter *not* called
-    below). In theory, the latter would be more precisely unambiguous and thus
-    preferable. In practice, the latter is unreliable and thus unusable. Why?
-    Because the standard :mod:`importlib` package modifies the fully-qualified
-    name of the standard file finder path hook it instantiates to pretend to be
-    defined by a different module (e.g., :mod:`_frozen_importlib_external`) than
-    the module actually defining that hook (e.g.,
-    :mod:`importlib._bootstrap_external`). Why? No idea, honestly. It doesn't
-    particularly matter, either. It's well beyond our control. All that's in our
-    control (and thus all that matters) is the observation that the module name
-    and thus the lexically scoped basename of the standard file finder path hook
-    can be unambiguously introspected by third-party packages. Consider:
-
-    .. code-block:: python
-
-       >>> from beartype._util.utilobjget import get_object_name
-       >>> from importlib.machinery import FileFinder
-
-       # Fully-qualified name of a standard file finder path hook manually
-       # instantiated outside the standard "importlib" machinery! This is awful.
-       >>> get_object_name(FileFinder.path_hook())
-       'importlib._bootstrap_external.FileFinder.path_hook.path_hook_for_FileFinder'
-
-       # Fully-qualified name of a standard file finder path hook automatically
-       # instantiated inside the standard "importlib" machinery. *UGH UGH UGH*.
-       >>> file_finder_path_hook = _find_standard_file_finder_path_hook()
-       >>> get_object_name(file_finder_path_hook)
-       '_frozen_importlib_external.FileFinder.path_hook.path_hook_for_FileFinder'
-    '''
-
-    # Standard file finder path hook manually instantiated outside the standard
-    # "importlib" machinery. Why? Chicken-and-egg issues. Merely finding the
-    # standard file finder path hook manually instantiated automatically
-    # instantiated inside the standard "importlib" machinery requires magically
-    # knowing the magic string constant introspected by this getter. We have no
-    # recourse but to create (and then immediately discard) an empty file finder
-    # path hook merely to introspect its lexically scoped basename.
-    path_hook = FileFinder.path_hook()
-
-    # Lexically scoped basename of this path hook.
-    path_hook_name = get_object_basename_scoped(path_hook)
-
-    # Return this lexically scoped basename.
-    return path_hook_name
-
-# ....................{ PRIVATE ~ finders                  }....................
-#FIXME: Unit test us up, please. *sigh*
-def _find_standard_file_finder_path_hook_index_or_none() -> (
-    Optional[FileFinderPathHookAndIndex]):
-    '''
-    2-tuple ``(path_hook, path_hook_index)`` such that ``path_hook`` is the
-    **standard file finder path hook** (i.e., closure created and returned by
-    the call to the :meth:`importlib.machinery.FileFinder.path_hook` method in
-    the standard :mod:`importlib._bootstrap_external` module on Python startup)
-    and ``path_hook_index`` is the current 0-based index of this hook in the
-    global :obj:`sys.path_hooks` list containing this hook if that list contains
-    this hook *or* :data:`None` otherwise (i.e., if that list no longer contains
-    this path hook).
-
-    This finder is intentionally *not* memoized (e.g., by the
-    ``@callable_cached`` decorator), as the value returned by this finder is
-    volatile and subject to change between calls. Since third-party packages and
-    modules frequently modify the global :obj:`sys.path_hooks` list searched by
-    this finder, those modifications can (and, in all likelihood, will) modify
-    the index of the standard file finder path hook discovered by the first call
-    to this finder and that same index discovered by subsequent calls.
-
-    Caveats
-    -------
-    **This function is non-thread-safe.** For both simplicity and efficiency,
-    the caller is expected to guarantee thread-safety through a higher-level
-    locking primitive managed directly by that caller.
-
-    Returns
-    -------
-    Optional[tuple[Callable, int]]
-        Either:
-
-        * If the global :obj:`sys.path_hooks` list still contains the standard
-          file finder path hook, then the 2-tuple ``(path_hook,
-          path_hook_index)`` where:
-
-          * ``path_hook`` is the standard file finder path hook.
-          * ``path_hook_index`` is the current 0-based index of this hook in the
-            global :obj:`sys.path_hooks` list containing this hook.
-
-        * Else, that list no longer contains that path hook, in which case this
-          finder returns :data:`None`. Ideally, this should *never* happen.
-          Pragmatically, this *could* happen if either:
-
-          * Some previously run third-party package or module maliciously
-            removed that path hook from that list.
-          * The active Python interpreter is *not* CPython but instead some
-            unexpectedly exotic third-party Python interpreter.
-
-    Warns
-    -----
-    BeartypeClawImportlibWarning
-        If the global :obj:`sys.path_hooks` list no longer contains the
-        **standard file finder path hook.** Ideally, this should *never* happen.
-        Pragmatically, this *could* happen if either:
-
-        * Some previously run third-party package or module maliciously removes
-          this path hook from the standard :obj:`sys.path_hooks` list.
-        * The active Python interpreter is *not* CPython but instead some
-          unexpectedly exotic third-party Python interpreter.
-    '''
-
-    # Lexically scoped basename of the standard file finder path hook.
-    path_hook_basename = _get_standard_file_finder_path_hook_basename_scoped()
-
-    # For the 0-based index of each import path hook previously registered with
-    # the standard "path_hooks" list *AND* that hook...
-    for path_hook_index, path_hook in enumerate(path_hooks):
-        # Lexically scope basename of the currently visited path hook.
-        path_hook_name = get_object_basename_scoped(path_hook)
-
-        # If this basename is that of the standard file finder path hook,
-        # short-circuit by returning both this hook and the index of this hook.
-        if path_hook_name == path_hook_basename:
-            return path_hook, path_hook_index
-        # Else, this basename is *NOT* that of the standard file finder path
-        # hook. In this case, silently continue to the next path hook.
-    # Else, the standard file finder path hook no longer exists.
-
-    # Return "None" as a last-ditch fallback. Truly, we have given up.
-    return None
 
 # ....................{ PRIVATE ~ permuters                }....................
 #FIXME: Unit test us up, please. *sigh*

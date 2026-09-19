@@ -589,6 +589,12 @@ test-tox = [
     #       TypeError: pyarrow must be installed to use pyarrow dtypes.
     # "pyarrow",
 
+    # ....................{ QA                             }....................
+    # QA (quality assurance)-centric optional test-time dependencies.
+
+    # Required by optional CrossHair-specific integration tests.
+    "crosshair-tool",
+
     # ....................{ TYPING                         }....................
     # Typing-centric optional test-time dependencies.
 

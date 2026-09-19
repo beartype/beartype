@@ -33,7 +33,7 @@ from beartype._cave._cavefast import (
     HintPep612ParamSpecType,
     HintPep646TypeVarTupleType,
     HintPep646692UnpackedType,
-    HintPep695TypeAliasTypes,
+    # HintPep695TypeAliasTypes,
     MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
@@ -53,6 +53,7 @@ from collections.abc import (
     Mapping,
     Set,
 )
+from importlib.abc import Loader
 from pathlib import Path
 from types import (
     CodeType,
@@ -62,6 +63,7 @@ from types import (
 from typing import (
     Any,
     Literal,
+    TypeAlias,
     TypeVar,
     Union,
 )
@@ -709,6 +711,40 @@ resolution can only find the parent callable lexically containing that nested
 class hierarchy on the current call stack (if any) by leveraging the total
 number of classes lexically nesting the currently decorated class as input
 metadata, as trivially provided by the length of this tuple.
+'''
+
+# ....................{ API ~ importlib                    }....................
+FileFinderPathHook: TypeAlias = Callable
+'''
+:pep:`585`-compliant type hint matching any **file finder path hook** (i.e.,
+closure created and returned by a call to the
+:meth:`importlib.machinery.FileFinder.path_hook` method).
+'''
+
+
+FileFinderPathHookAndIndex = tuple[FileFinderPathHook, int]
+'''
+:pep:`585`-compliant type hint matching any 2-tuple ``(path_hook,
+path_hook_index)`` where:
+
+* ``path_hook`` is a **file finder path hook** (i.e., closure created and
+  returned by a call to the :meth:`importlib.machinery.FileFinder.path_hook`
+  method).
+* ``path_hook_index`` is the 0-based index of either:
+
+  * If the global :obj:`sys.path_hooks` list already contains this hook, the
+    index of this hook in that list.
+  * Else, the index at which the caller should insert this hook into that list.
+'''
+
+
+FileFinderPathHookLoaderDetails = tuple[tuple[type[Loader], list[str]], ...]
+'''
+:pep:`585`-compliant type hint matching **import hook file finder loader
+details** (i.e., tuple-centric data structure associating each Python module
+filetype supported by the current platform with a corresponding import hook file
+loader class whose instances are responsible for loading Python modules of that
+filetype into imported in-memory module objects).
 '''
 
 # ....................{ API ~ pathlib                      }....................

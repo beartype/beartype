@@ -33,6 +33,13 @@ from typing import (
     Optional,
 )
 
+# ....................{ GLOBALS                            }....................
+claw_lock = RLock()
+'''
+Reentrant reusable thread-safe context manager gating access to the otherwise
+non-thread-safe :data:`.claw_state` global.
+'''
+
 # ....................{ PRIVATE ~ hints                    }....................
 _ImportPathHook = Callable[[str], PathEntryFinder]
 '''
@@ -167,10 +174,16 @@ class BeartypeClawState(object):
 
     def reinit(self) -> None:
         '''
-        Reinitialize *all* beartype import hook state encapsulated by this data
-        class back to their initial defaults, trivially clearing *all* metadata
-        pertaining to previously hooked packages and configurations installed by
-        previously called beartype import hooks.
+        Reinitialize *all* beartype import hook state encapsulated by this
+        dataclass back to their initial defaults, trivially clearing *all*
+        metadata pertaining to previously hooked packages and configurations
+        installed by previously called beartype import hooks.
+
+        Caveats
+        -------
+        **This function is non-thread-safe.** For both simplicity and
+        efficiency, the caller is expected to provide thread-safety through a
+        higher-level locking primitive managed by the caller.
         '''
         # print('Renitializing "beartype.claw" state...')
 
@@ -192,10 +205,9 @@ class BeartypeClawState(object):
 
     # ..................{ COPIERS                            }..................
     #FIXME: Unit test us up, please.
-    #FIXME: Comment out all of this for the moment, please. That includes the
-    #copy_deep() methods implemented below as well. They're not implemented
-    #correctly at the moment, sadly. They need to call themselves recursively.
-    #They don't. Thus, we all sigh. *sigh*
+    #FIXME: All of this is potentially useful and thus preserved. Sadly, these
+    #methods are *NOT* implemented correctly at the moment. They need to call
+    #themselves recursively. They don't. Thus, we all sigh. *sigh*
     # def copy_deep(self) -> 'BeartypeClawState':
     #     '''
     #     Deep copy of this beartype import hook state.
@@ -235,7 +247,7 @@ class BeartypeClawState(object):
             f')',
         ))
 
-# ....................{ PRIVATE ~ constants                }....................
+# ....................{ PRIVATE ~ globals                  }....................
 # Fully initialized by the _init() function called below.
 _PACKAGE_NAME_TO_TRIE_BLACKLISTED: PackageBasenameToTrieBlacklist = {}
 '''
@@ -290,16 +302,9 @@ def _init() -> None:
 # Initialize this submodule.
 _init()
 
-# ....................{ GLOBALS                            }....................
+# ....................{ GLOBALS ~ late                     }....................
 # These globals require this submodule to be fully initialized and are thus
 # intentionally defined *AFTER* all other code above. We sigh, fam. *sigh*
-
-claw_lock = RLock()
-'''
-Reentrant reusable thread-safe context manager gating access to the otherwise
-non-thread-safe :data:`.claw_state` global.
-'''
-
 
 claw_state = BeartypeClawState()
 '''
@@ -308,3 +313,20 @@ centralizing *all* global state maintained by beartype import hooks, enabling
 each external unit test in our test suite to trivially reset that state after
 completion of that test).
 '''
+
+# ....................{ INITIALIZERS                       }....................
+def reinit_claw_state() -> None:
+    '''
+    Reinitialize *all* beartype import hook state encapsulated by the
+    :class:`.BeartypeClawState` dataclass back to their initial defaults,
+    trivially clearing *all* metadata pertaining to previously hooked packages
+    and configurations installed by previously called beartype import hooks.
+
+    This function is thread-safe -- unlike the lower-level
+    :meth:`BeartypeClawState.reinit` method internally called by this
+    higher-level convenience method.
+    '''
+
+    # Thread-safely reinitialize *ALL* beartype import hook state.
+    with claw_lock:
+        claw_state.reinit()
