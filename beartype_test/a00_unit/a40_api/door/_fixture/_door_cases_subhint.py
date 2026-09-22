@@ -483,14 +483,36 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
 
         # ..................{ PEP 586                        }..................
         # PEP 586-compliant type hints.
-        (Literal[7], int, True),
-        (Literal["a"], str, True),
-        (Literal[7, 8, "3"], Union[int, str], True),
-        (Literal[7, 8, "3"], Union[list, int], False),
-        (Literal[True], Union[Literal[True], Literal[False]], True),
+
+        # PEP 586-compliant literal hints are subhints of larger PEP
+        # 586-compliant literal hints subscripted by a superset of the same
+        # child hints subscripting the former. The converse is *NOT* true.
         (Literal[7, 8], Literal[7, 8, 9], True),
+        (Literal[7, 8, 9], Literal[7, 8], False),
+
+        # PEP 586-compliant literal hints are subhints of the types of the child
+        # hints subscripting those literal hints. The converse is *NOT* true.
+        # See the LiteralTypeHint._is_subhint() method for further discussion.
+        (Literal[7], int, True),
         (int, Literal[7], False),
+        (Literal['Gainst the hot season'], str, True),
+        (str, Literal['Gainst the hot season'], False),
+
+        (Literal[7, 8, '3'], Union[int, str], True),
+        (Literal[7, 8, '3'], Union[list, int], False),
+
+        # PEP 586-compliant hints subscripted by one child hint are subhints of
+        # PEP 484-compliant unions subscripted by that some PEP 586-compliant
+        # hints and arbitrary other child hints. The converse is *NOT* true.
+        (Literal[True], Union[Literal[True], Literal[False]], True),
         (Union[Literal[True], Literal[False]], Literal[True], False),
+
+        # PEP 586-compliant hints subscripted by two or more child hints are
+        # subhints of PEP 604-compliant unions subscripted by PEP 586-compliant
+        # hints subscripted by each of those child hints individually (and
+        # arbitrary other child hints). Again, the converse is *NOT* true.
+        (Literal[1, 2], Literal[1] | Literal[2] | Literal[3], True,),
+        (Literal[1] | Literal[2] | Literal[3], Literal[1, 2], False,),
 
         # ..................{ PEP 589                        }..................
         # PEP 589-compliant type hints.

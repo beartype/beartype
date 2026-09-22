@@ -1187,6 +1187,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         attribute.
         '''
 
+        # World end dominator in the far haze, one-liner! *wat*
         return frozenset(self._args_wrapped_tuple)
 
 
