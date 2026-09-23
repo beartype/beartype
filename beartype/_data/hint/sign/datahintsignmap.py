@@ -317,6 +317,9 @@ extrinsically identifiable by signs to those signs).
 #       True
 #       >>> range(min, max).stop == max
 #       True
+# * Rejects numeric infinity (e.g., "float('inf')", "math.inf") by raising the
+#   standard "TypeError" exception on instantiation. Alternate approach *MUST*
+#   thus be used to signify greater-than-or-equal-to ranges.
 
 _ARGS_LEN_0 = range(0, 1)  # == [0, 1) == [0, 0]
 '''
@@ -358,6 +361,11 @@ subscriptable by either one or two child type hints).
 '''
 
 # ....................{ SIGNS ~ origin : args              }....................
+#FIXME: We could (probably) fold
+#"HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_ONE_OR_MORE" into this dictionary if we
+#wanted to be both sly and stupid. How? By representing positive integer
+#infinity with a sufficiently large magic integer constant and then manually
+#testing for that constant elsewhere. Seems pretty hokey, though. *shrug*
 # Fully initialized by the _init() function below.
 HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE: dict[HintSign, range] = {
     # Type hint factories subscriptable by exactly one child type hint.
@@ -421,6 +429,16 @@ class such that *all* objects satisfying type hints created by subscripting this
 factory are instances of this class) to this factory's **argument length range**
 (i.e., :class:`range` instance describing the minimum and maximum number of
 child type hints that may subscript this factory).
+
+Caveats
+-------
+**Callers confronted with arbitrary PEP-compliant type hint factories should
+first defer to the higher-level** 
+:data:`beartype._data.hint.sign.datahintsignset._SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_ONE_OR_MORE`
+**frozen set.** If the sign identifying a factory resides in that set, that
+factory is subscriptable by arbitrarily many child hints, in which case that
+sign is guaranteed to be absent from this dictionary (due to the :class:`range`
+builtin rejecting positive integer infinity as a valid maximum range).
 '''
 
 # ....................{ PRIVATE ~ main                     }....................

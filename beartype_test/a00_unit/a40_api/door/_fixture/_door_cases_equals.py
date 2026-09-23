@@ -48,6 +48,8 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
     from beartype._cave._cavefast import NoneType
+    from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
+        Pep484GenericT)
     from collections.abc import (
         Awaitable as Pep585Awaitable,
         Callable as Pep585Callable,
@@ -96,10 +98,40 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         # trivially reduces to the latter under PEP 484 semantics.
         (None, NoneType, True),
 
-        # ..................{ PEP 484 ~ sequence             }..................
-        # PEP 484-compliant sequence type hints.
+        # ..................{ PEP (484|585)                  }..................
+        # PEP 585-compliant unsubscripted hint factories are equal to equivalent
+        # PEP 484-compliant hint factories subscripted by the PEP 484-compliant
+        # "Any" singleton.
         (list, Pep484List[Any], True),
         (tuple, Pep484Tuple[Any, ...], True),
+
+        # PEP 585-compliant hints subscripted by the PEP 484-compliant "Any"
+        # singleton are unequal to to other such hints *NOT* also subscripted by
+        # "Any" (in the same exact child hint position).
+        (tuple[int, Any], tuple[int, Any], True),
+        (tuple[int, Any], tuple[int, str], False),
+
+        # PEP 484- and 585-compliant hints that differ only in their factory are
+        # equal.
+        (list[str], Pep484List[str], True),
+        (tuple[str, ...], Pep484Tuple[str, ...], True),
+
+        # PEP 585-compliant deeply nested hints are equal to themselves. *sigh*
+        (
+            Pep585Awaitable[Pep585Sequence[int]],
+            Pep585Awaitable[Pep585Sequence[int]],
+            True,
+        ),
+
+        # PEP 585-compliant unsubscripted callable hint is equal to a
+        # PEP 585-compliant callable hint subscripted by ignorable child hints.
+        (Pep585Callable, Pep585Callable[..., Any], True),
+
+        # ..................{ PEP (484|585) ~ generic        }..................
+        # PEP 484-compliant unsubscripted generics parametrized by one
+        # PEP 484-compliant type variable are equal to those same generics
+        # subscripted by the PEP 484-compliant "Any" singleton.
+        (Pep484GenericT, Pep484GenericT[Any], True),
 
         # ..................{ PEP (484|604) ~ union          }..................
         # PEP 484-compliant union type hints.
@@ -131,31 +163,6 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         (Any | int, int, False),
         (Any | int, Any | int, True),
         (Any | int, str | int, False),
-
-        # ..................{ PEP 585                        }..................
-        # PEP 585-compliant type hints.
-
-        # PEP 585-compliant deeply nested hints are equal to themselves. *sigh*
-        (
-            Pep585Awaitable[Pep585Sequence[int]],
-            Pep585Awaitable[Pep585Sequence[int]],
-            True,
-        ),
-
-        # PEP 585-compliant unsubscripted callable hint is equal to a
-        # PEP 585-compliant callable subscripted by ignorable child hints.
-        (Pep585Callable, Pep585Callable[..., Any], True),
-
-        # PEP 484- and 585-compliant hints that differ only in their factory are
-        # equal.
-        (list[str], Pep484List[str], True),
-        (tuple[str, ...], Pep484Tuple[str, ...], True),
-
-        # PEP 585-compliant hints subscripted by the PEP 484-compliant "Any"
-        # singleton are unequal to to other such hints *NOT* also subscripted by
-        # "Any" (in the same exact child hint position).
-        (tuple[int, Any], tuple[int, Any], True),
-        (tuple[int, Any], tuple[int, str], False),
 
         # ..................{ PEP 586                        }..................
         # PEP 586-compliant "typing.Literal" hints.
