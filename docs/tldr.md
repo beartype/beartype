@@ -156,7 +156,7 @@ def my_function(
 # Decorate coroutines as above but returning a coroutine type.
 @beartype
 async def my_coroutine() -> abc.Coroutine[None, None, int]:
-    from async import sleep
+    from asyncio import sleep
     await sleep(0)
     return 0xDEFECA7E
 
@@ -171,7 +171,7 @@ def my_sync_generator() -> abc.Generator[int, None, None]:
 # generator type.
 @beartype
 async def my_async_generator() -> abc.AsyncGenerator[int, None]:
-    from async import sleep
+    from asyncio import sleep
     await sleep(0)
     yield 0x8BADF00D
 
@@ -187,7 +187,7 @@ class MyOtherClass:
     # Annotate class methods as above without annotating "cls".
     @classmethod
     def my_classmethod(cls, regex: RegexTypes, wut: str) -> (
-        Callable[(), str]):
+        Callable[[], str]):
         import re
         return lambda: re.sub(regex, 'unbearable', str(cls._scalar) + wut)
 
@@ -331,7 +331,7 @@ IsNumpyArrayFloat = IsAttr['dtype', IsEqual[np.dtype(np.float64)]]
 NumpyArray1DFloat = Annotated[np.ndarray, IsNumpyArray1D, IsNumpyArrayFloat]
 
 # Validator matching only empty NumPy arrays, equivalent to but faster than:
-#     NumpyArrayEmpty = Annotated[np.ndarray, Is[lambda arr: arr.size != 0]]
+#     NumpyArrayEmpty = Annotated[np.ndarray, Is[lambda arr: arr.size == 0]]
 IsNumpyArrayEmpty = IsAttr['size', IsEqual[0]]
 NumpyArrayEmpty = Annotated[np.ndarray, IsNumpyArrayEmpty]
 
