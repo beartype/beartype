@@ -308,6 +308,14 @@ def get_hint_pep695_unsubbed_alias(
         )
     # Else, this hint is a PEP 695-compliant unsubscripted type alias.
 
+    # Set of the IDs of all nested type aliases already unwrapped below,
+    # guarding circular chains of type aliases (e.g., "type A = B" paired with
+    # "type B = A") against infinite iteration. Note that such chains are
+    # *NOT* merely recursive (e.g., "type Tree = int | list[Tree]"), which
+    # remain perfectly valid; such chains are *CONTENTLESS*, as neither alias
+    # ever reduces to a hint conveying any semantics whatsoever.
+    hint_ids_seen = {id(hint),}
+
     # While the Universe continues infinitely expanding...
     while True:
         # Reduce this type alias to the type hint aliased by this alias, which
@@ -320,8 +328,28 @@ def get_hint_pep695_unsubbed_alias(
         # If this type hint is *NOT* a nested type alias, break this iteration.
         if not isinstance(hint, HintPep695TypeAliasTypes):
             break
-        # Else, this type hint is a nested type alias. In this case, continue
-        # iteratively unwrapping this nested type alias.
+        # Else, this type hint is a nested type alias.
+        #
+        # If this nested type alias has already been unwrapped by this call,
+        # this chain of type aliases is circular. Since such a chain never
+        # reduces to a hint conveying any semantics, raise an exception rather
+        # than silently iterating until the heat death of the Universe.
+        elif id(hint) in hint_ids_seen:
+            raise BeartypeDecorHintPep695Exception(
+                f'{exception_prefix}PEP 695 type alias {repr(hint)} '
+                f'circularly aliases itself, thus conveying no semantics. '
+                f'Consider breaking this circularity: e.g.,\n'
+                f'    # Instead of a circular chain of type aliases...\n'
+                f'    type A = B\n'
+                f'    type B = A\n'
+                f'\n'
+                f'    # Prefer a recursive type alias with a base case.\n'
+                f'    type A = int | list[A]'
+            )
+        # Else, this nested type alias has yet to be unwrapped by this call.
+
+        # Note that this nested type alias has now been unwrapped.
+        hint_ids_seen.add(id(hint))
 
     # Return this unaliased type alias.
     return hint
@@ -838,3 +866,4 @@ def iter_hint_pep695_unsubbed_forwardrefs(
             # Store the unqualified basename of this previously undeclared
             # attribute for detection by the next iteration of this loop.
             hint_ref_name_prev = hint_ref_name
+
