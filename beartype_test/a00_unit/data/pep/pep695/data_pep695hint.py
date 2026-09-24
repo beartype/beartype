@@ -358,3 +358,30 @@ type AliasDoorBareT[T] = T
 '''
 Type alias whose aliased hint is its own bare type parameter.
 '''
+
+
+type AliasDoorWrapT[T] = list[T]
+'''
+Non-recursive type alias parametrized by one type variable.
+'''
+
+
+type AliasDoorTreeWrapped = int | AliasDoorWrapT[AliasDoorTreeWrapped]
+'''
+Recursive type alias referring to itself *only* through the child hints
+subscripting another non-recursive type alias.
+'''
+
+
+type AliasDoorVariadicLastT[*Ts, T] = T
+'''
+Type alias whose aliased hint is a bare type parameter following a
+:pep:`646`-compliant type variable tuple.
+'''
+
+
+type AliasDoorForwardRef = UndefinedDoorType  # noqa: F821
+'''
+Type alias whose aliased hint refers to an undefined attribute and is thus
+unevaluable.
+'''

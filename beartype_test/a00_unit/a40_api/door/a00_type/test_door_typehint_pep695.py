@@ -64,6 +64,7 @@ def test_door_pep695_alias_hint_aliased() -> None:
         AliasDoorInt,
         AliasDoorIntNested,
         AliasDoorListSetT,
+        AliasDoorVariadicLastT,
     )
 
     # Assert this property resolves an alias to the *SAME* singleton wrapper
@@ -81,6 +82,11 @@ def test_door_pep695_alias_hint_aliased() -> None:
     # which is *NOT* itself subscriptable.
     assert TypeHint(AliasDoorBareT[int]).hint_aliased is TypeHint(int)
     assert TypeHint(AliasDoorBareT[int]) == TypeHint(int)
+
+    # Assert this property substitutes a bare type parameter following a type
+    # variable tuple by the child hint at the same offset from the end.
+    assert TypeHint(AliasDoorVariadicLastT[int, str, bytes]).hint_aliased is (
+        TypeHint(bytes))
 
     # Assert this property is specific to type alias wrappers.
     assert not hasattr(TypeHint(int), 'hint_aliased')
@@ -108,42 +114,47 @@ def test_door_pep695_alias_hash() -> None:
 
 
 @skip_if_python_version_less_than('3.12.0')
-def test_door_pep695_alias_recursive() -> None:
+def test_door_pep695_alias_unsupported() -> None:
     '''
-    Test that **recursive type aliases** (e.g., ``type Tree = int |
-    list[Tree]``) are rejected at construction with the expected exception,
-    rather than recursing infinitely later.
+    Test that **unsupported type aliases** (i.e., recursive aliases like ``type
+    Tree = int | list[Tree]``, circular aliases, and unevaluable aliases) raise
+    the same :exc:`beartype.roar.BeartypeDoorNonpepException` raised for *all*
+    type aliases before type aliases were supported, preserving that contract
+    for downstream callers catching that exception.
     '''
 
     # Defer test-specific imports.
     from beartype.door import TypeHint
-    from beartype.roar import (
-        BeartypeDecorHintPep695Exception,
-        BeartypeDoorPepUnsupportedException,
-    )
+    from beartype.roar import BeartypeDoorNonpepException
     from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
         AliasCircularA,
+        AliasDoorForwardRef,
         AliasDoorMutual1,
         AliasDoorMutual2,
         AliasDoorTree,
+        AliasDoorTreeWrapped,
+        AliasDoorWrapT,
         AliasPep484604Recursive2T,
     )
     from pytest import raises
 
-    # For each recursive alias...
-    for hint_recursive in (
+    # For each unsupported alias...
+    for hint_unsupported in (
         AliasDoorTree,
         AliasDoorMutual1,
         AliasDoorMutual2,
+        AliasDoorTreeWrapped,
+        AliasDoorWrapT[AliasDoorTree],
         AliasPep484604Recursive2T[int],
+        AliasCircularA,
+        AliasDoorForwardRef,
     ):
         # Assert wrapping this alias raises the expected exception, twice. The
         # second attempt guards against the metaclass caching a wrapper whose
         # initialization failed.
         for _ in range(2):
-            with raises(BeartypeDoorPepUnsupportedException) as exception_info:
-                TypeHint(hint_recursive)
-            assert 'recursive' in str(exception_info.value)
+            with raises(BeartypeDoorNonpepException):
+                TypeHint(hint_unsupported)
 
     # Assert a recursive alias nested beneath a non-alias parent raises the
     # same exception on first semantic use requiring that alias, rather than
@@ -153,15 +164,10 @@ def test_door_pep695_alias_recursive() -> None:
     # inspecting child hints and thus (correctly) never wraps this alias.
     hint_parent = TypeHint(list[AliasDoorTree])
     for _ in range(2):
-        with raises(BeartypeDoorPepUnsupportedException):
+        with raises(BeartypeDoorNonpepException):
             hash(hint_parent)
-        with raises(BeartypeDoorPepUnsupportedException):
+        with raises(BeartypeDoorNonpepException):
             hint_parent.is_subhint(TypeHint(list[int]))
-
-    # Assert wrapping a circular chain of aliases raises the exception raised
-    # by the underlying getter.
-    with raises(BeartypeDecorHintPep695Exception):
-        TypeHint(AliasCircularA)
 
 
 @pytest.mark.xfail(

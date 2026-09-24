@@ -184,7 +184,9 @@ def test_is_hint_pep695_recursive() -> None:
         AliasDoorMutual2,
         AliasDoorShared,
         AliasDoorTree,
+        AliasDoorTreeWrapped,
         AliasDoorUnion,
+        AliasDoorWrapT,
         AliasPep484604Recursive2T,
     )
 
@@ -197,6 +199,10 @@ def test_is_hint_pep695_recursive() -> None:
         AliasPep484604Recursive2T[int],
         AliasDoorMutual1,
         AliasDoorMutual2,
+        # Recursion solely through the child hints subscripting another alias.
+        AliasDoorTreeWrapped,
+        # Non-recursive alias subscripted by a recursive alias.
+        AliasDoorWrapT[AliasDoorTree],
     ):
         assert is_hint_pep695_recursive(hint_recursive) is True
 
@@ -213,6 +219,7 @@ def test_is_hint_pep695_recursive() -> None:
         AliasDoorAnnotated,
         AliasDoorCallable,
         AliasDoorBareT[int],
+        AliasDoorWrapT[int],
     ):
         assert is_hint_pep695_recursive(hint_nonrecursive) is False
 
@@ -221,6 +228,51 @@ def test_is_hint_pep695_recursive() -> None:
     for hint_circular in (AliasCircularSelf, AliasCircularA):
         with raises(BeartypeDecorHintPep695Exception):
             is_hint_pep695_recursive(hint_circular)
+
+
+def test_is_hint_pep695_recursive_shared_chain() -> None:
+    '''
+    Test that the private
+    :func:`beartype._util.hint.pep.proposal.pep695.is_hint_pep695_recursive`
+    tester decides a long chain of non-recursive type aliases each reusing the
+    prior alias twice in linear rather than exponential time.
+
+    An exponential-time implementation effectively hangs on this chain, as the
+    number of paths through this chain doubles with each alias.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.hint.pep.proposal.pep695 import (
+        is_hint_pep695_recursive)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+
+    # If the active Python interpreter targets Python < 3.12, this interpreter
+    # fails to support PEP 695. In this case, reduce to a noop.
+    if not IS_PYTHON_AT_LEAST_3_12:
+        return
+    # Else, this interpreter supports PEP 695.
+
+    # ....................{ LOCALS                         }....................
+    # Number of type aliases in this chain.
+    ALIASES_LEN = 64
+
+    # Chain of type aliases "type A{i} = A{i-1} | list[A{i-1}]". Note that type
+    # alias statements are syntax errors under Python < 3.12 and are thus
+    # dynamically defined here.
+    aliases_scope: dict = {}
+    exec(
+        'type A0 = int\n' + ''.join(
+            f'type A{i} = A{i - 1} | list[A{i - 1}]\n'
+            for i in range(1, ALIASES_LEN)
+        ),
+        aliases_scope,
+    )
+
+    # ....................{ PASS                           }....................
+    # Assert this tester rejects the last alias in this chain.
+    assert is_hint_pep695_recursive(
+        aliases_scope[f'A{ALIASES_LEN - 1}']) is False
 
 # ....................{ TESTS ~ getter                     }....................
 def test_get_hint_pep695_parameterizable_typeparams() -> None:

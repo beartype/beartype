@@ -16,7 +16,8 @@ from beartype.door._cls.doorabc import (
     CollectionTypeHints,
     TypeHint,
 )
-from beartype.roar import BeartypeDoorPepUnsupportedException
+from beartype.roar import BeartypeDoorNonpepException
+from beartype._cave._cavefast import HintPep646TypeVarTupleType
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.func.utilcacheproperty import (
     get_property_var_name,
@@ -47,7 +48,9 @@ class Pep695TypeAliasTypeHint(TypeHint):
     Caveats
     -------
     **Recursive type aliases** (e.g., ``type Tree = int | list[Tree]``) are
-    currently unsupported. See also:
+    currently unsupported, raising the same
+    :exc:`beartype.roar.BeartypeDoorNonpepException` raised by *all* other type
+    hints unsupported by this API. See also:
         https://github.com/beartype/beartype/issues/701
     '''
 
@@ -59,10 +62,23 @@ class Pep695TypeAliasTypeHint(TypeHint):
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, hint: Hint) -> None:
 
+        # Attempt to decide whether this alias is recursive. Since the hint
+        # aliased by this alias is lazily evaluated by arbitrary user-defined
+        # code, doing so may raise an arbitrary exception (e.g., "NameError" for
+        # forward references to undefined attributes). In this case, raise the
+        # same exception raised by "TypeHint" for all unsupported hints.
+        try:
+            is_recursive = is_hint_pep695_recursive(hint)
+        except Exception as exception:
+            raise BeartypeDoorNonpepException(
+                f'PEP 695 type alias {repr(hint)} unevaluable and thus '
+                f'unsupported by "beartype.door.TypeHint".'
+            ) from exception
+
         # If this alias is recursive, raise an exception. Hashing and comparing
         # recursive aliases requires recursion guards throughout DOOR.
-        if is_hint_pep695_recursive(hint):
-            raise BeartypeDoorPepUnsupportedException(
+        if is_recursive:
+            raise BeartypeDoorNonpepException(
                 f'PEP 695 type alias {repr(hint)} recursive (i.e., '
                 f'transitively refers to itself) and thus currently '
                 f'unsupported by "beartype.door.TypeHint". See also:\n'
@@ -114,8 +130,22 @@ class Pep695TypeAliasTypeHint(TypeHint):
             # "type Alias[T] = T"), that hint is *NOT* subscriptable. Replace
             # that hint by the corresponding child hint directly.
             if hint_aliased in hint_typeparams:
-                hint_aliased = self._args[
-                    hint_typeparams.index(hint_aliased)]
+                # 0-based index of this type parameter.
+                hint_typeparam_index = hint_typeparams.index(hint_aliased)
+
+                # For each type parameter preceding this type parameter, if
+                # that parameter is a type variable tuple, that tuple consumes
+                # a variable number of child hints. In this case, this type
+                # parameter is the child hint at the same offset from the end.
+                for hint_typeparam in hint_typeparams[:hint_typeparam_index]:
+                    if isinstance(hint_typeparam, HintPep646TypeVarTupleType):
+                        hint_typeparam_index += (
+                            len(self._args) - len(hint_typeparams))
+                        break
+                    # Else, that parameter is *NOT* a type variable tuple.
+
+                # Replace this hint by the corresponding child hint.
+                hint_aliased = self._args[hint_typeparam_index]
             # Else, defer to CPython's own type parameter substitution, which
             # is thus guaranteed to comply with PEP 695.
             else:
