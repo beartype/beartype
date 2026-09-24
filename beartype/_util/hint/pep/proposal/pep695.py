@@ -299,6 +299,7 @@ def get_hint_pep695_unsubbed_alias(
         references** to undefined types.
     '''
 
+    # ....................{ VALIDATE                       }....................
     # If this hint is *NOT* a PEP 695-compliant unsubscripted type alias, raise
     # an exception.
     if not isinstance(hint, HintPep695TypeAliasTypes):
@@ -308,14 +309,33 @@ def get_hint_pep695_unsubbed_alias(
         )
     # Else, this hint is a PEP 695-compliant unsubscripted type alias.
 
-    # Set of the IDs of all nested type aliases already unwrapped below,
-    # guarding circular chains of type aliases (e.g., "type A = B" paired with
-    # "type B = A") against infinite iteration. Note that such chains are
-    # *NOT* merely recursive (e.g., "type Tree = int | list[Tree]"), which
-    # remain perfectly valid; such chains are *CONTENTLESS*, as neither alias
-    # ever reduces to a hint conveying any semantics whatsoever.
+    # ....................{ LOCALS                         }....................
+    # Set of the object identifiers of all nested type aliases already unwrapped
+    # below, guarding circular chains of type aliases (e.g., "type A = B" paired
+    # with "type B = A") against infinite iteration.
+    #
+    # Note that:
+    # * Circular type aliases are distinct from recursive type aliases (e.g.,
+    #   "type Tree = int | list[Tree]"). Whereas recursive type aliases convey
+    #   meaningful semantics and are thus valid, circular type aliases convey
+    #   *NO* meaningful semantics and are thus invalid.
+    # * Despite the suggestive nomenclature "object identifiers", object
+    #   identifiers are *NOT* unique in the worst case and thus do *NOT* offer a
+    #   safe means of identifying objects. In CPython, there exists a one-to-one
+    #   mapping between object identifiers and C-based memory addresses. Since
+    #   memory addresses are frequently recycled in long-running processes,
+    #   object identifiers are also frequently recycled in long-running CPython
+    #   processes. Object identifiers thus invite subtle issues with caching,
+    #   globals, mutable state, and thread concurrency. Interestingly, however,
+    #   this is probably one of the few cases where object identifiers are safe.
+    #   This object ID lookup is confined to this single callable introspecting
+    #   a single strong reference to an immutable object (namely, the passed
+    #   type hint), which only holds additional strong references to other
+    #   immutable objects (namely, the child hints transitively subscripting
+    #   that hint). Ergo, garbage collection is *NOT* a concern here.
     hint_ids_seen = {id(hint),}
 
+    # ....................{ UNWRAP                         }....................
     # While the Universe continues infinitely expanding...
     while True:
         # Reduce this type alias to the type hint aliased by this alias, which
@@ -351,6 +371,7 @@ def get_hint_pep695_unsubbed_alias(
         # Note that this nested type alias has now been unwrapped.
         hint_ids_seen.add(id(hint))
 
+    # ....................{ RETURN                         }....................
     # Return this unaliased type alias.
     return hint
 
@@ -562,19 +583,17 @@ def resolve_func_scope_pep695(
     '''
     Composite all **type parameter scopes** (i.e., lexical scopes induced by
     parametrizing the decorated callable *and* all lexical parent classes of
-    that callable with :pep:`695`-compliant implicitly instantiated **type
+    that callable with :pep:`695`-compliant **implicitly instantiated type
     parameters** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
-    parameter specifications, and :pep:`646`-compliant type variable tuples)
-    of the decorated callable into the **forward scope** (i.e., dictionary
+    parameter specifications, and :pep:`646`-compliant type variable tuples)) of
+    the passed callable into the passed **forward scope** (i.e., dictionary
     mapping from the names to values of all attributes accessible to the lexical
-    scope of the passed decorated callable where this scope comprises both the
-    global scope and all local lexical scopes enclosing that callable) of the
-    passed decorator metadata.
+    scope of the passed callable where this scope comprises both the global
+    scope and all local lexical scopes enclosing that callable).
 
-    Note that this resolver implicitly overwrites each global and local
-    attribute previously composited into this forward scope with each type
-    parameter of the same name, vaguely replicating the scoping rules dictated
-    by :pep:`695`.
+    This resolver implicitly overwrites each global and local attribute
+    previously composited into this forward scope with each type parameter of
+    the same name, vaguely replicating scoping rules dictated by :pep:`695`.
 
     Parameters
     ----------
@@ -602,6 +621,7 @@ def resolve_func_scope_pep695(
     assert isinstance(cls_stack, NoneTypeOr[tuple]), (
         f'{repr(cls_stack)} not type stack.')
 
+    # ....................{ NOOP                           }....................
     # If the active Python interpreter targets Python <= 3.11, this interpreter
     # fails to support PEP 695. In this case, silently reduce to a noop.
     if IS_PYTHON_AT_MOST_3_11:
@@ -609,6 +629,7 @@ def resolve_func_scope_pep695(
     # Else, this interpreter targets Python >= 3.12. In this case, this
     # interpreter supports PEP 695.
 
+    # ....................{ LOCALS                         }....................
     # PEP 695-specific lexical scope. Ideally, we'd simply reuse the existing
     # "decor_currfunc_wrappee_wrappee_scope_forward" scope rather than instantiate a
     # PEP 695-specific lexical scope. Although both trivial and efficient, such
@@ -626,6 +647,7 @@ def resolve_func_scope_pep695(
     #     https://peps.python.org/pep-0695/#type-parameter-scopes
     scope_pep695: LexicalScope = acquire_instance(dict)
 
+    # ....................{ SCOPES ~ type                  }....................
     # If one or more parent classes lexically enclose the decorated callable...
     if cls_stack:
         # For each parent class lexically enclosing the decorated callable (in
@@ -643,6 +665,7 @@ def resolve_func_scope_pep695(
             )
     # Else, *NO* parent classes lexically enclose the decorated callable.
 
+    # ....................{ SCOPES ~ callable              }....................
     # If the decorated callable is a pure-Python function, this function
     # unconditionally supports PEP 695-compliant type parametrization under
     # Python >= 3.12. In this case...
@@ -663,6 +686,7 @@ def resolve_func_scope_pep695(
     # case, that callable does *NOT* support PEP 695-compliant type
     # parametrization. Silently ignore that callable, whatever it is.
 
+    # ....................{ COMPOSITE                      }....................
     # Composite all type parameters parametrizing the decorated callable and all
     # lexical parent classes of that callable into this forward scope.
     func_scope.update(scope_pep695)  # type: ignore[union-attr]
@@ -730,10 +754,8 @@ def iter_hint_pep695_unsubbed_forwardrefs(
             # Reduce this alias to the type hint it lazily refers to. If this
             # alias contains *NO* forward references to undeclared attributes,
             # this reduction *SHOULD* succeed. Let's pretend we mean that.
-            #
-            # Note that _get_hint_pep695_unsubbed_alias() is memoized and
-            # thus intentionally called with positional arguments.
-            get_hint_pep695_unsubbed_alias(hint, exception_prefix)
+            get_hint_pep695_unsubbed_alias(
+                hint=hint, exception_prefix=exception_prefix)
 
             # This reduction raised *NO* exception and thus succeeded. In this
             # case, immediately halt iteration.
@@ -866,4 +888,3 @@ def iter_hint_pep695_unsubbed_forwardrefs(
             # Store the unqualified basename of this previously undeclared
             # attribute for detection by the next iteration of this loop.
             hint_ref_name_prev = hint_ref_name
-

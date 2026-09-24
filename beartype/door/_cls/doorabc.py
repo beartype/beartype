@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doormeta import _TypeHintMetaclass
+from beartype.door._cls._doorcache import typehint_method_cached_by_repr
 from beartype.door._cls._doortest import die_unless_typehint
 from beartype.door._func.doorfunc import (
     die_if_unbearable,
@@ -25,7 +26,6 @@ from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.typing.datatypingport import T_Hint
-from beartype._util.cache.func.utilcachefunc import method_cached_arg_by_id
 from beartype._util.cache.func.utilcacheproperty import (
     get_property_var_name,
     property_cached,
@@ -305,7 +305,9 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     # Note that we intentionally avoid typing this method as returning
     # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
     # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
-    @method_cached_arg_by_id
+    @typehint_method_cached_by_repr(
+        #FIXME: Comment us up, please. *sigh*
+        is_if_not_typehint_return_notimplemented=True)
     def __ne__(self, other: object) -> bool:
         '''
         :data:`True` only if the low-level type hint wrapped by this wrapper is
@@ -332,6 +334,8 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             # If that object is a type hint wrapper, defer to the
             # subclass-specific implementation of this test;
             not self._is_equal(other)
+            #FIXME: This test is now redundant due to passing
+            #"is_if_not_typehint_return_notimplemented=True" above. *sigh*
             if isinstance(other, TypeHint) else
             # Else, that object is *NOT* a type hint wrapper. See __eq__().
             NotImplemented
@@ -341,7 +345,9 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     # Note that we intentionally avoid typing this method as returning
     # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
     # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
-    @method_cached_arg_by_id
+    @typehint_method_cached_by_repr(
+        #FIXME: Comment us up, please. *sigh*
+        is_if_not_typehint_return_notimplemented=True)
     def __eq__(self, other: object) -> bool:
         '''
         :data:`True` only if the low-level type hint wrapped by this wrapper is
@@ -368,6 +374,8 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             # If the passed object is also a type hint wrapper, defer to the
             # subclass-specific implementation of this test passed that wrapper;
             self._is_equal(other)
+            #FIXME: This test is now redundant due to passing
+            #"is_if_not_typehint_return_notimplemented=True" above. *sigh*
             if isinstance(other, TypeHint) else
             # Else, the passed object is *NOT* a type hint wrapper. In this
             # case, defer to either:
@@ -888,18 +896,14 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         return is_bearable(obj=obj, hint=self._hint, conf=conf)  # pyright: ignore
 
     # ..................{ TESTERS ~ subhint                  }..................
-    # Note that the @method_cached_arg_by_id rather than @callable_cached
+    # Note that the @typehint_method_cached_by_repr rather than @callable_cached
     # decorator is *ABSOLUTELY* required here. Why? Because the @callable_cached
     # decorator internally caches the passed "other" argument as the key of a
     # dictionary. Subsequent calls to this method when passed the same argument
     # lookup that "other" in that dictionary. Since dictionary lookups
     # implicitly call other.__eq__() to resolve key collisions *AND* since the
     # TypeHint.__eq__() method calls TypeHint.is_subhint(), infinite recursion!
-
-    #FIXME: *EXTREMELY UNSAFE.* Object IDs are *NOT* globally unique
-    #identifiers. Refactor this immediately into a
-    #@method_cached_arg_by_hint_repr decorator instead, please.
-    @method_cached_arg_by_id
+    @typehint_method_cached_by_repr()
     def is_subhint(self, other: 'TypeHint') -> bool:
         '''
         :data:`True` only if this type hint is a **subhint** of the passed type
@@ -1249,16 +1253,21 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         '''
         # print(f'[_is_args_ignorable] {self}._args_wrapped_tuple: {self._args_wrapped_tuple}')
 
-        # Return true only if either...
-        return (
-            # This hint is unsubscripted *OR*...
-            not self._args or
-            # All child hints subscripting this parent hint are ignorable.
-            all(
-                hint_child.is_ignorable
-                for hint_child in self._args_wrapped_tuple
-            )
-        )
+        # If this hint is unsubscripted, return true immediately.
+        if not self._args:
+            return True
+        # Else, this hint is subscripted.
+
+        # For each child hint subscripting this parent hint...
+        for hint_child in self._args_wrapped_tuple:
+            # If this child hint is unignorable, return false immediately.
+            if not hint_child.is_ignorable:
+                return False
+            # Else, this child hint is ignorable.
+        # Else, all child hints are ignorable.
+
+        # Return true. The truth of Plato's QA cave has now been discerned.
+        return True
 
 # ....................{ HINTS                              }....................
 CollectionTypeHints = Collection[TypeHint]
