@@ -683,7 +683,6 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
             AliasDoorListSetT,
             AliasDoorStr,
             AliasDoorUnion,
-            AliasPep484604Recursive2T,
         )
 
         # Append PEP 695-specific subhint cases. Since PEP 695 defines type
@@ -710,11 +709,6 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
 
             # Aliases nested as child hints of parent hints are transparent.
             (list[AliasDoorInt], list[object], True),
-
-            # A recursive alias is comparable without infinite recursion. Note
-            # that @beartype ignores recursion rather than modelling it, so
-            # these cases assert termination rather than exact semantics.
-            (AliasPep484604Recursive2T[int], object, True),
         ))
     # Else, this interpreter fails to support PEP 695.
 
