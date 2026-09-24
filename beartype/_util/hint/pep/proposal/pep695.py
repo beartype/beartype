@@ -255,6 +255,96 @@ def is_hint_pep695_subbed(hint: Hint) -> bool:
     # alias. Yes. It really is this non-trivial, folks. *sigh*
     return isinstance(hint_origin, HintPep695TypeAliasTypes)
 
+
+def is_hint_pep695_recursive(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> bool:
+    '''
+    :data:`True` only if the passed :pep:`695`-compliant type alias is
+    **recursive** (i.e., transitively refers to itself through the hint it
+    aliases, either directly as in ``type Tree = int | list[Tree]`` or mutually
+    through one or more other type aliases).
+
+    Only type aliases are tracked. Since Python evaluates the hints aliased by
+    type aliases lazily, a hint can only ever refer to itself through a type
+    alias; any other self-reference raises :exc:`NameError` at definition time.
+    Type aliases are tracked *per path* rather than globally, as a type alias
+    may be safely reused by sibling child hints without recursion (e.g., ``type
+    Shared = Alias | list[Alias]``).
+
+    This tester is intentionally *not* memoized, as callers are expected to
+    call this tester at most once per type alias.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type alias to be inspected, either unsubscripted *or* subscripted.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this type alias is recursive.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If any type alias reachable from this alias is a circular chain of type
+        aliases (e.g., ``type A = B`` paired with ``type B = A``).
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_childs,
+        get_hint_pep_origin,
+    )
+
+    # Stack of 2-tuples "(hint, hint_aliases_path)" to be visited, where
+    # "hint_aliases_path" is the frozen set of all unsubscripted type aliases on
+    # the path from the passed alias to that hint. Note that type aliases are
+    # hashable by identity and thus safely usable as set members.
+    hints_unvisited: list[tuple[Hint, frozenset]] = [(hint, frozenset())]
+
+    # While one or more hints remain to be visited...
+    while hints_unvisited:
+        hint_curr, hint_aliases_path = hints_unvisited.pop()
+
+        # Unsubscripted type alias underlying this hint if this hint is a type
+        # alias *OR* "None" otherwise.
+        hint_alias = (
+            hint_curr
+            if isinstance(hint_curr, HintPep695TypeAliasTypes) else
+            get_hint_pep_origin(
+                hint=hint_curr, exception_prefix=exception_prefix)
+            if is_hint_pep695_subbed(hint_curr) else
+            None
+        )
+
+        # If this hint is a type alias...
+        if hint_alias is not None:
+            # If this alias is already on this path, this alias is recursive.
+            if hint_alias in hint_aliases_path:
+                return True
+            # Else, this alias is *NOT* already on this path.
+
+            # Extend this path by this alias and visit the hint it aliases.
+            # Note that this getter is memoized and thus called positionally.
+            hint_aliases_path = hint_aliases_path | {hint_alias}
+            hint_curr = get_hint_pep695_alias(hint_alias, exception_prefix)
+        # Else, this hint is *NOT* a type alias.
+
+        # Visit all child hints of this hint along this path.
+        for hint_child in get_hint_pep_childs(hint_curr):
+            hints_unvisited.append((hint_child, hint_aliases_path))
+
+    # Else, *NO* alias recurred on its own path. This alias is non-recursive.
+    return False
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep695_unsubbed_alias(

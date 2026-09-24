@@ -42,6 +42,7 @@ from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
     Pep585IterableTContainerT,
     Pep585IterableTupleSTContainerTupleST,
 )
+from collections.abc import Callable
 
 # ..................{ SIMPLE                                 }..................
 type AliasSimple = int | list[str]
@@ -314,4 +315,46 @@ type AliasDoorListSetT[T] = list[T] | set[T]
 Type alias parametrized by one type variable, aliasing a :pep:`604`-compliant
 new union of two :pep:`585`-compliant generics each subscripted by that same
 type variable.
+'''
+
+
+type AliasDoorShared = AliasDoorInt | list[AliasDoorInt]
+'''
+Type alias reusing :data:`.AliasDoorInt` twice *without* recursion.
+'''
+
+
+type AliasDoorAnnotated = Annotated[list[AliasDoorInt], 'metadata']
+'''
+Type alias nesting :data:`.AliasDoorInt` inside a :pep:`593` hint.
+'''
+
+
+type AliasDoorCallable = Callable[[AliasDoorInt], AliasDoorShared]
+'''
+Type alias nesting non-recursive aliases inside a callable hint.
+'''
+
+
+type AliasDoorTree = int | list[AliasDoorTree]
+'''
+Recursive type alias (i.e., alias referring to itself).
+'''
+
+
+type AliasDoorMutual1 = int | list[AliasDoorMutual2]
+'''
+Type alias mutually recursive with :data:`.AliasDoorMutual2`.
+'''
+
+
+type AliasDoorMutual2 = str | set[AliasDoorMutual1]
+'''
+Type alias mutually recursive with :data:`.AliasDoorMutual1`.
+'''
+
+
+type AliasDoorBareT[T] = T
+'''
+Type alias whose aliased hint is its own bare type parameter.
 '''

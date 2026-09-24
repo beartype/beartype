@@ -147,6 +147,81 @@ def test_is_hint_pep695_subbed() -> None:
     assert is_hint_pep695_subbed(
         'And thou, colossal Skeleton, that, still') is False
 
+
+def test_is_hint_pep695_recursive() -> None:
+    '''
+    Test the private
+    :func:`beartype._util.hint.pep.proposal.pep695.is_hint_pep695_recursive`
+    tester.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep695Exception
+    from beartype._util.hint.pep.proposal.pep695 import (
+        is_hint_pep695_recursive)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+    from pytest import raises
+
+    # If the active Python interpreter targets Python < 3.12, this interpreter
+    # fails to support PEP 695. In this case, reduce to a noop.
+    if not IS_PYTHON_AT_LEAST_3_12:
+        return
+    # Else, this interpreter supports PEP 695.
+
+    # ....................{ IMPORTS ~ version              }....................
+    # Defer version-specific imports.
+    from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
+        AliasCircularA,
+        AliasCircularSelf,
+        AliasDoorAnnotated,
+        AliasDoorBareT,
+        AliasDoorCallable,
+        AliasDoorInt,
+        AliasDoorIntNested,
+        AliasDoorListSetT,
+        AliasDoorMutual1,
+        AliasDoorMutual2,
+        AliasDoorShared,
+        AliasDoorTree,
+        AliasDoorUnion,
+        AliasPep484604Recursive2T,
+    )
+
+    # ....................{ PASS ~ recursive               }....................
+    # Assert this tester detects direct, generic, and mutual recursion from
+    # every entry point.
+    for hint_recursive in (
+        AliasDoorTree,
+        AliasPep484604Recursive2T,
+        AliasPep484604Recursive2T[int],
+        AliasDoorMutual1,
+        AliasDoorMutual2,
+    ):
+        assert is_hint_pep695_recursive(hint_recursive) is True
+
+    # ....................{ PASS ~ non-recursive           }....................
+    # Assert this tester rejects non-recursive aliases, including aliases
+    # reusing the same child alias more than once *WITHOUT* recursion.
+    for hint_nonrecursive in (
+        AliasDoorInt,
+        AliasDoorIntNested,
+        AliasDoorUnion,
+        AliasDoorListSetT,
+        AliasDoorListSetT[int],
+        AliasDoorShared,
+        AliasDoorAnnotated,
+        AliasDoorCallable,
+        AliasDoorBareT[int],
+    ):
+        assert is_hint_pep695_recursive(hint_nonrecursive) is False
+
+    # ....................{ FAIL                           }....................
+    # Assert this tester propagates circular-chain detection.
+    for hint_circular in (AliasCircularSelf, AliasCircularA):
+        with raises(BeartypeDecorHintPep695Exception):
+            is_hint_pep695_recursive(hint_circular)
+
 # ....................{ TESTS ~ getter                     }....................
 def test_get_hint_pep695_parameterizable_typeparams() -> None:
     '''
