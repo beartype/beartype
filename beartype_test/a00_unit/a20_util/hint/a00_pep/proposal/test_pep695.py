@@ -63,6 +63,59 @@ def test_get_hint_pep695_unsubbed_alias_circular() -> None:
         # Assert that this exception message is helpful.
         assert 'circularly aliases itself' in str(exception_info.value)
 
+
+def test_get_hint_pep695_alias() -> None:
+    '''
+    Test the private
+    :func:`beartype._util.hint.pep.proposal.pep695.get_hint_pep695_alias`
+    getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep695Exception
+    from beartype._util.hint.pep.proposal.pep695 import get_hint_pep695_alias
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+    from pytest import raises
+
+    # ....................{ FAIL                           }....................
+    # Assert this getter rejects objects that are *NOT* type aliases.
+    with raises(BeartypeDecorHintPep695Exception):
+        get_hint_pep695_alias(int)
+
+    # If the active Python interpreter targets Python < 3.12, this interpreter
+    # fails to support PEP 695. In this case, reduce to a noop.
+    if not IS_PYTHON_AT_LEAST_3_12:
+        return
+    # Else, this interpreter supports PEP 695.
+
+    # ....................{ IMPORTS ~ version              }....................
+    # Defer version-specific imports.
+    from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
+        AliasCircularA,
+        AliasDoorInt,
+        AliasDoorIntNested,
+        AliasDoorListSetT,
+    )
+
+    # ....................{ PASS                           }....................
+    # Assert this getter reduces an unsubscripted alias to its aliased hint.
+    assert get_hint_pep695_alias(AliasDoorInt) is int
+
+    # Assert this getter transitively unwraps an alias of an alias.
+    assert get_hint_pep695_alias(AliasDoorIntNested) is int
+
+    # Assert this getter reduces a subscripted alias to the hint aliased by the
+    # unsubscripted alias originating that alias, *BEFORE* substituting type
+    # parameters (i.e., still parametrized by "T").
+    assert get_hint_pep695_alias(AliasDoorListSetT[int]) == (
+        AliasDoorListSetT.__value__)
+
+    # ....................{ FAIL ~ circular                }....................
+    # Assert this getter propagates circular-chain detection.
+    with raises(BeartypeDecorHintPep695Exception):
+        get_hint_pep695_alias(AliasCircularA)
+
 # ....................{ TESTS ~ tester                     }....................
 def test_is_hint_pep695_subbed() -> None:
     '''

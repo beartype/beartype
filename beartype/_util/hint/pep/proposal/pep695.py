@@ -124,6 +124,7 @@ from beartype._data.typing.datatypingport import (
     TypeIs,
 )
 from beartype._metaverse import URL_ISSUES
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
     release_instance,
@@ -374,6 +375,61 @@ def get_hint_pep695_unsubbed_alias(
     # ....................{ RETURN                         }....................
     # Return this unaliased type alias.
     return hint
+
+
+@callable_cached
+def get_hint_pep695_alias(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> Hint:
+    '''
+    Hint aliased by the passed :pep:`695`-compliant type alias, which may be
+    either unsubscripted (e.g., ``type Alias = int``) *or* subscripted (e.g.,
+    ``Alias[int]`` for ``type Alias[T] = list[T]``).
+
+    For subscripted aliases, the hint returned is the hint aliased by the
+    unsubscripted alias originating that alias, *not* yet subscripted by the
+    child hints subscripting that alias. Callers requiring that substitution
+    must perform it themselves.
+
+    This getter is memoized for efficiency and thus *must* be called with
+    positional arguments.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type alias to be inspected.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages.
+
+    Returns
+    -------
+    Hint
+        Hint aliased by this alias.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this hint is *not* a type alias *or* is a circular chain of aliases.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin
+
+    # If this alias is subscripted, reduce this alias to the unsubscripted
+    # alias originating this alias.
+    if is_hint_pep695_subbed(hint):
+        hint = get_hint_pep_origin(
+            hint=hint, exception_prefix=exception_prefix)
+    # Else, this alias is either unsubscripted *OR* not an alias at all. In the
+    # latter case, the getter called below raises the expected exception.
+
+    # Return the hint aliased by this unsubscripted alias.
+    return get_hint_pep695_unsubbed_alias(
+        hint=hint, exception_prefix=exception_prefix)  # type: ignore[arg-type]
 
 # ....................{ ADDERS                             }....................
 #FIXME: Unit test us up, please.
