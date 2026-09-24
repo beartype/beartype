@@ -204,6 +204,7 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
             AliasDoorInt,
             AliasDoorIntNested,
+            AliasDoorListInt,
             AliasDoorListSetT,
             AliasDoorStr,
             AliasDoorUnion,
@@ -241,6 +242,16 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
             (list[AliasDoorInt], list[int], True),
             (dict[AliasDoorInt, AliasDoorStr], dict[int, str], True),
             (AliasDoorInt | bytes, int | bytes, True),
+
+            # An alias is equal to the non-union subscripted hint it aliases,
+            # regardless of which operand the alias is.
+            (list[int], AliasDoorListInt, True),
+
+            # Aliases subscripting unions are transparent as union branches.
+            (AliasDoorListInt | str, list[int] | str, True),
+
+            # An alias of a union subscripting another union is flattened.
+            (AliasDoorUnion | bytes, int | float | bytes, True),
         ))
     # Else, this interpreter fails to support PEP 695.
 

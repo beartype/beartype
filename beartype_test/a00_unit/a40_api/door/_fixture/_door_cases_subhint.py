@@ -680,6 +680,7 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         # Defer version-specific imports.
         from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
             AliasDoorInt,
+            AliasDoorListInt,
             AliasDoorListSetT,
             AliasDoorStr,
             AliasDoorUnion,
@@ -709,6 +710,10 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
 
             # Aliases nested as child hints of parent hints are transparent.
             (list[AliasDoorInt], list[object], True),
+
+            # Aliases subscripting unions are transparent as union branches.
+            (list[int], AliasDoorListInt | str, True),
+            (AliasDoorListInt, list[int] | str, True),
         ))
     # Else, this interpreter fails to support PEP 695.
 

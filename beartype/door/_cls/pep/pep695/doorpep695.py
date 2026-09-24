@@ -43,7 +43,9 @@ class Pep695TypeAliasTypeHint(TypeHint):
     alias. This wrapper thus preserves the alias itself (e.g., for the
     :attr:`hint` property and machine-readable representations) while deferring
     *all* semantic decisions (e.g., equality, hashing, subhint testing) to the
-    :attr:`hint_aliased` wrapper wrapping the hint aliased by that alias.
+    :attr:`hint_aliased` wrapper wrapping the hint aliased by that alias. The
+    :class:`TypeHint` superclass unwraps aliases at its public testers, so this
+    subclass need only defer hashing and branches.
 
     Caveats
     -------
@@ -133,16 +135,15 @@ class Pep695TypeAliasTypeHint(TypeHint):
                 # 0-based index of this type parameter.
                 hint_typeparam_index = hint_typeparams.index(hint_aliased)
 
-                # For each type parameter preceding this type parameter, if
-                # that parameter is a type variable tuple, that tuple consumes
-                # a variable number of child hints. In this case, this type
-                # parameter is the child hint at the same offset from the end.
-                for hint_typeparam in hint_typeparams[:hint_typeparam_index]:
-                    if isinstance(hint_typeparam, HintPep646TypeVarTupleType):
-                        hint_typeparam_index += (
-                            len(self._args) - len(hint_typeparams))
-                        break
-                    # Else, that parameter is *NOT* a type variable tuple.
+                # If a type variable tuple precedes this type parameter, that
+                # tuple consumes a variable number of child hints. In this case,
+                # this type parameter is the child hint at the same offset from
+                # the end.
+                if any(
+                    isinstance(hint_typeparam, HintPep646TypeVarTupleType)
+                    for hint_typeparam in hint_typeparams[:hint_typeparam_index]
+                ):
+                    hint_typeparam_index += len(self._args) - len(hint_typeparams)
 
                 # Replace this hint by the corresponding child hint.
                 hint_aliased = self._args[hint_typeparam_index]
@@ -160,14 +161,10 @@ class Pep695TypeAliasTypeHint(TypeHint):
     def _branches(self) -> CollectionTypeHints:
 
         # Defer to the branches of the hint aliased by this alias, guaranteeing
-        # that this alias is transparent when passed as the "other" operand of
-        # the is_subhint() tester.
+        # that this alias is transparent when subscripting a union. All other
+        # semantic decisions (e.g., equality, subhint testing) are deferred by
+        # the TypeHint superclass unwrapping aliases at its public entry points.
         return self.hint_aliased._branches
-
-
-    @property
-    def _is_args_ignorable(self) -> bool:
-        return self.hint_aliased._is_args_ignorable
 
     # ..................{ PRIVATE ~ getters                  }..................
     def _get_hash(self) -> int:
@@ -175,15 +172,3 @@ class Pep695TypeAliasTypeHint(TypeHint):
         # Hash this alias as the hint aliased by this alias, preserving
         # consistency between equality and hashing.
         return hash(self.hint_aliased)
-
-    # ..................{ PRIVATE ~ testers                  }..................
-    def _is_equal(self, other: TypeHint) -> bool:
-        return self.hint_aliased._is_equal(other)
-
-
-    def _is_subhint(self, other: TypeHint) -> bool:
-        return self.hint_aliased._is_subhint(other)
-
-
-    def _is_subhint_branch(self, branch: TypeHint) -> bool:
-        return self.hint_aliased._is_subhint_branch(branch)

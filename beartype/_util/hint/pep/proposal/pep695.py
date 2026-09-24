@@ -312,69 +312,52 @@ def is_hint_pep695_recursive(
     hint_aliases_expanding: set = set()
     hint_aliases_nonrecursive: set = set()
 
-
-    def _is_hint_recursive(hint_root: Hint) -> bool:
+    def _is_hint_recursive(hint_curr: Hint) -> bool:
         '''
         :data:`True` only if the passed hint transitively refers to a recursive
         type alias.
         '''
 
-        # Stack of all hints to be visited.
-        hints_unvisited = [hint_root]
+        # Unsubscripted type alias underlying this hint if this hint is a type
+        # alias *OR* "None" otherwise.
+        hint_alias = (
+            hint_curr
+            if isinstance(hint_curr, HintPep695TypeAliasTypes) else
+            get_hint_pep_origin(
+                hint=hint_curr, exception_prefix=exception_prefix)
+            if is_hint_pep695_subbed(hint_curr) else
+            None
+        )
 
-        # While one or more hints remain to be visited...
-        while hints_unvisited:
-            hint_curr = hints_unvisited.pop()
-
-            # Unsubscripted type alias underlying this hint if this hint is a
-            # type alias *OR* "None" otherwise.
-            hint_alias = (
-                hint_curr
-                if isinstance(hint_curr, HintPep695TypeAliasTypes) else
-                get_hint_pep_origin(
-                    hint=hint_curr, exception_prefix=exception_prefix)
-                if is_hint_pep695_subbed(hint_curr) else
-                None
-            )
-
-            # If this hint is a recursive type alias, return true.
-            if hint_alias is not None and _is_hint_alias_recursive(hint_alias):
+        # If this hint is a type alias *NOT* already found to be non-recursive...
+        if (
+            hint_alias is not None and
+            hint_alias not in hint_aliases_nonrecursive
+        ):
+            # If this alias is currently being expanded, this alias is
+            # recursive.
+            if hint_alias in hint_aliases_expanding:
                 return True
-            # Else, this hint is *NOT* a recursive type alias.
+            # Else, this alias has yet to be expanded.
 
-            # Visit all child hints of this hint, including the child hints
-            # subscripting this hint if this hint is a subscripted type alias.
-            hints_unvisited.extend(get_hint_pep_childs(hint_curr))
+            # Expand this alias. Note that this getter is memoized and thus
+            # called positionally.
+            hint_aliases_expanding.add(hint_alias)
+            if _is_hint_recursive(get_hint_pep695_alias(
+                hint_alias, exception_prefix)):
+                return True
+            hint_aliases_expanding.remove(hint_alias)
+            hint_aliases_nonrecursive.add(hint_alias)
+        # Else, this hint is either *NOT* a type alias or a type alias already
+        # found to be non-recursive.
 
-        # Else, *NO* recursive type alias is reachable from this hint.
-        return False
-
-
-    def _is_hint_alias_recursive(hint_alias: Hint) -> bool:
-        '''
-        :data:`True` only if the passed unsubscripted type alias is recursive.
-        '''
-
-        # If this alias is currently being expanded, this alias is recursive.
-        if hint_alias in hint_aliases_expanding:
-            return True
-        # Else if this alias was already found to be non-recursive, return
-        # false without re-expanding this alias.
-        elif hint_alias in hint_aliases_nonrecursive:
-            return False
-        # Else, this alias has yet to be expanded.
-
-        # Expand this alias. Note that this getter is memoized and thus called
-        # positionally.
-        hint_aliases_expanding.add(hint_alias)
-        if _is_hint_recursive(get_hint_pep695_alias(
-            hint_alias, exception_prefix)):
-            return True
-        hint_aliases_expanding.remove(hint_alias)
-
-        # Record this alias as non-recursive and return false.
-        hint_aliases_nonrecursive.add(hint_alias)
-        return False
+        # Return true only if any child hint of this hint (including the child
+        # hints subscripting this hint if this hint is a subscripted type alias)
+        # transitively refers to a recursive type alias.
+        return any(
+            _is_hint_recursive(hint_child)
+            for hint_child in get_hint_pep_childs(hint_curr)
+        )
 
     # Return true only if this alias transitively refers to a recursive alias.
     return _is_hint_recursive(hint)

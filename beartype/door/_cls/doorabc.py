@@ -333,7 +333,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         return (
             # If that object is a type hint wrapper, defer to the
             # subclass-specific implementation of this test;
-            not self._is_equal(other)
+            not _unalias(self)._is_equal(_unalias(other))
             #FIXME: This test is now redundant due to passing
             #"is_if_not_typehint_return_notimplemented=True" above. *sigh*
             if isinstance(other, TypeHint) else
@@ -373,7 +373,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         return (
             # If the passed object is also a type hint wrapper, defer to the
             # subclass-specific implementation of this test passed that wrapper;
-            self._is_equal(other)
+            _unalias(self)._is_equal(_unalias(other))
             #FIXME: This test is now redundant due to passing
             #"is_if_not_typehint_return_notimplemented=True" above. *sigh*
             if isinstance(other, TypeHint) else
@@ -934,7 +934,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
         # Return true only if this hint is a subhint of that hint (according to
         # each subclass-specific implementation of this test).
-        return self._is_subhint(other)
+        return _unalias(self)._is_subhint(_unalias(other))
 
 
     def is_superhint(self, other: 'TypeHint') -> bool:
@@ -1268,6 +1268,32 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
         # Return true. The truth of Plato's QA cave has now been discerned.
         return True
+
+# ....................{ PRIVATE ~ getters                  }....................
+def _unalias(typehint: TypeHint) -> TypeHint:
+    '''
+    Wrapper wrapping the hint aliased by the :pep:`695`-compliant type alias
+    wrapped by the passed wrapper if that wrapper wraps a type alias *or* that
+    wrapper as is otherwise.
+
+    Subclass-specific testers (e.g., :meth:`TypeHint._is_equal`) freely inspect
+    the private state of the other wrapper they are passed. Since type alias
+    wrappers intentionally preserve the alias rather than that state, callers
+    *must* pass those testers the wrapper returned by this getter instead.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype.door._cls.pep.pep695.doorpep695 import (
+        Pep695TypeAliasTypeHint)
+
+    # While this wrapper wraps a type alias, reduce this wrapper to the wrapper
+    # wrapping the hint aliased by that alias. Since recursive aliases are
+    # rejected at construction time, this iteration is guaranteed to halt.
+    while isinstance(typehint, Pep695TypeAliasTypeHint):
+        typehint = typehint.hint_aliased
+
+    # Return this wrapper.
+    return typehint
 
 # ....................{ HINTS                              }....................
 CollectionTypeHints = Collection[TypeHint]

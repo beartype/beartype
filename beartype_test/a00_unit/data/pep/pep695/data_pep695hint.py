@@ -385,3 +385,9 @@ type AliasDoorForwardRef = UndefinedDoorType  # noqa: F821
 Type alias whose aliased hint refers to an undefined attribute and is thus
 unevaluable.
 '''
+
+
+type AliasDoorListInt = list[int]
+'''
+Type alias aliasing a :pep:`585`-compliant subscripted builtin.
+'''
