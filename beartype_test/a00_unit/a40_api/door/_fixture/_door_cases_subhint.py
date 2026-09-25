@@ -205,19 +205,19 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (List[Any], List[int], True),
         (List[Any], List[str], True),
 
-        # ..................{ PEP 484 ~ argless : bare       }..................
-        # PEP 484-compliant unsubscripted type hints, which are necessarily
-        # subhints of themselves.
-        (list, list, True),
-        (list, List, True),
+        # ..................{ PEP 484 ~ argless : number     }..................
+        # Blame Guido.
+        (bool, int, True),
 
-        # PEP 484-compliant unsubscripted sequence type hints.
-        (Sequence, List, False),
-        (Sequence, list, False),
-        (List, Sequence, True),
-        (list, Sequence, True),
-        (list, SequenceABC, True),
-        (list, CollectionABC, True),
+        # PEP 484-compliant implicit numeric tower, which we explicitly and
+        # intentionally do *NOT* comply with. Floats are not integers. Notably,
+        # floats *CANNOT* losslessly represent many integers and are thus
+        # incompatible in general.
+        (float, int, False),
+        (complex, int, False),
+        (complex, float, False),
+        (int, float, False),
+        (float, complex, False),
 
         # ..................{ PEP 484 ~ argless : type       }..................
         # PEP 484-compliant argumentless abstract base classes (ABCs).
@@ -279,20 +279,6 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         # type variable. The converse is *NOT* the case.
         (T_bound_sequence, T, True),
         (T, T_bound_sequence, False),
-
-        # ..................{ PEP 484 ~ argless : number     }..................
-        # Blame Guido.
-        (bool, int, True),
-
-        # PEP 484-compliant implicit numeric tower, which we explicitly and
-        # intentionally do *NOT* comply with. Floats are not integers. Notably,
-        # floats *CANNOT* losslessly represent many integers and are thus
-        # incompatible in general.
-        (float, int, False),
-        (complex, int, False),
-        (complex, float, False),
-        (int, float, False),
-        (float, complex, False),
 
         # ..................{ PEP 484 ~ generic              }..................
         # "typing.Generic"-centric tests.
@@ -386,6 +372,20 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (int, Optional[int], True),
         (Optional[int], int, False),
         (list, Optional[Sequence], True),
+
+        # ..................{ PEP (484|585) ~ bare           }..................
+        # PEP 484-compliant unsubscripted type hints, which are necessarily
+        # subhints of themselves.
+        (list, list, True),
+        (list, List, True),
+
+        # PEP 484-compliant unsubscripted sequence type hints.
+        (Sequence, List, False),
+        (Sequence, list, False),
+        (List, Sequence, True),
+        (list, Sequence, True),
+        (list, SequenceABC, True),
+        (list, CollectionABC, True),
 
         # ..................{ PEP (484|585) ~ callable       }..................
         # PEP 484-compliant callable type hints.

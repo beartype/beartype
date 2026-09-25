@@ -4,11 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`-, :pep:`612`-, and :pep:`646`-compliant **type parameter
-representations** (i.e., low-level factories generically synthesizing unique
-machine-readable representations for :pep:`484`-compliant type variables,
-pep:`612`-compliant parameter specifications, and :pep:`646`-compliant type
-variable tuples).
+Project-wide **type parameter representation utilities** (i.e., low-level
+factories generically synthesizing unique machine-readable representations for
+:pep:`484`-compliant type variables, pep:`612`-compliant parameter
+specifications, and :pep:`646`-compliant type variable tuples).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -16,17 +15,17 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeDecorHintPep484612646Exception,
-    BeartypeException,
+    # BeartypeException,
 )
-from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+# from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import (
     Pep484612646TypeArgUnpacked,
     TypeException,
 )
 from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
-    get_hint_pep484612646_typearg_packed_name,
-    pack_hint_pep484612646_typearg_unpacked,
+    get_hint_typearg_packed_name,
+    pack_hint_typearg_unpacked,
 )
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.text.utiltextidentifier import is_dunder
@@ -34,21 +33,8 @@ from beartype._util.utilobjattr import get_object_attr_name_to_value
 from beartype._util.utilobjget import get_object_type_basename
 
 # ....................{ FACTORIES                          }....................
-#FIXME: Unit test us up, please. *sigh*
-#FIXME: Actually call us up as follows:
-#* Define a new memoized TypeHint.repr_unique() property. Internally, that
-#  property should:
-#  * The default TypeHint.repr_unique() should trivially resemble:
-#        @callable_cached
-#        def repr_unique(self) -> str:
-#            return repr(self._hint)
-#  * The custom TypeVarTypeHint.repr_unique() should non-trivially resemble:
-#        def repr_unique(self) -> str:
-#            return make_hint_pep484612646_typearg_unpacked_repr(self._hint)
-#* Refactor the typehint_method_cached_by_repr() function to internally defer to
-#  that new TypeHint.repr_unique() property. *sigh*
 @callable_cached
-def make_hint_pep484612646_typearg_unpacked_repr(
+def make_hint_typearg_unpacked_repr(
     # Mandatory parameters.
     hint: Pep484612646TypeArgUnpacked,
 
@@ -103,7 +89,7 @@ def make_hint_pep484612646_typearg_unpacked_repr(
     '''
 
     # Packed type parameter underlying this an unpacked type parameter.
-    hint = pack_hint_pep484612646_typearg_unpacked(  # type: ignore[assignment]
+    hint = pack_hint_typearg_unpacked(  # type: ignore[assignment]
         hint=hint,  # pyright: ignore
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
@@ -114,27 +100,38 @@ def make_hint_pep484612646_typearg_unpacked_repr(
     hint_type_basename = get_object_type_basename(hint)
 
     # Unqualified basename of this packed type parameter (e.g., "T").
-    hint_name = get_hint_pep484612646_typearg_packed_name(hint)  # type: ignore[arg-type]
+    hint_name = get_hint_typearg_packed_name(hint)  # type: ignore[arg-type]
 
-    #FIXME: Comment us up, please. *sigh*
+    # Frozen dictionary mapping from the name to value of each field (i.e.,
+    # meaningful instance variable) of the this packed type parameter.
     hint_field_name_to_value = (
-        _get_hint_pep484612646_typearg_unpacked_field_name_to_value(hint))
-    hint_repr = f'{hint_type_basename}("{hint_name}"'
+        _get_hint_typearg_packed_field_name_to_value(hint))
 
+    # Unique machine-readable representation to be iteratively constructed below
+    # and then returned, initialized to a class instantiation-style repr().
+    hint_repr = f'{hint_type_basename}({repr(hint_name)}'
+
+    # For the unqualified basename and value of each field of this packed type
+    # parameter...
     for hint_field_name, hint_field_value in hint_field_name_to_value.items():
+        # Append a comma-delimited repr() of this field.
+        #
         # Note that the first and last two characters of this field name are
         # guaranteed by the implementation of the
-        # _get_hint_pep484612646_typearg_unpacked_field_name_to_value() getter to be
-        # the ignorable dunder attribute character "_", which we thus slice off.
+        # _get_hint_typearg_packed_field_name_to_value() getter to
+        # be the ignorable dunder attribute character "_", which we slice off.
         hint_repr += f', {hint_field_name[2:-2]}={repr(hint_field_value)}'
 
+    # Finalize this repr() with a trailing parens.
     hint_repr += ')'
+
+    # Return this repr(), yo! Return it for Johnny.
     return hint_repr
 
 # ....................{ PRIVATE ~ constants                }....................
 _HINT_PEP484612646_TYPEARG_UNPACKED_ATTR_NAMES_NONFIELD = frozenset((
     # Type parameter instance variables already hard-coded for readability by
-    # the make_hint_pep484612646_typearg_unpacked_repr() factory into the
+    # the make_hint_typearg_unpacked_repr() factory into the
     # strings created and returned by that factory are effectively meaningless.
     # These include:
     # * The type parameter class.
@@ -151,11 +148,11 @@ meaningless instance variables of unpacked type parameters).
 '''
 
 # ....................{ PRIVATE ~ testers                  }....................
-def _is_hint_pep484612646_typearg_unpacked_field(
+def _is_hint_typearg_packed_field(
     attr_name: str, attr_value: object) -> bool:
     '''
     Predicate suitable for passing as the ``predicate`` parameter to the
-    :func:`._get_hint_pep484612646_typearg_unpacked_field_name_to_value` getter,
+    :func:`._get_hint_typearg_packed_field_name_to_value` getter,
     returning :data:`True` only if the passed attribute value constitutes an
     **unpacked type parameter field** (i.e., meaningful instance variable of an
     unpacked type parameter).
@@ -189,50 +186,56 @@ def _is_hint_pep484612646_typearg_unpacked_field(
 # ....................{ PRIVATE ~ getters                  }....................
 #FIXME: Improve docstring, please. *shrug*
 #FIXME: Unit test us up, please. *shrug*
-def _get_hint_pep484612646_typearg_unpacked_field_name_to_value(
+def _get_hint_typearg_packed_field_name_to_value(
     hint) -> FrozenDict[str, object]:
     '''
     Frozen dictionary mapping from the name to value of each **field** (i.e.,
-    meaningful instance variable) of the passed unpacked type parameter.
+    meaningful instance variable) of the passed packed type parameter.
 
     This getter is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator), as the only public function calling this
     getter is memoized.
     '''
 
-    # Attempt to...
-    try:
-        # Dynamically introspect this dictionary from this type parameter.
-        hint_field_name_to_value = get_object_attr_name_to_value(
-            hint,
-            # Retrieve only the proper subset of type parameter attributes that
-            # are actually meaningful fields.
-            predicate=_is_hint_pep484612646_typearg_unpacked_field,
-            # Retrieve type parameter attributes unsafely. Doing so permits this
-            # getter to raise unexpected exceptions in the event that type
-            # parameter properties raise exceptions (which is bad) but also
-            # permits this getter to return the values of those properties when
-            # they do *NOT* raise exceptions (which is a mandatory requirement
-            # of this getter and thus good). Mandatory >>>>>>> bad.
-            is_safe=False,
-        )
+    #FIXME: Actually, let's just passively let *ALL* exceptions unwind the call
+    #stack for the moment. Testing this is a bit of a nightmare. Without
+    #testing, the only safe assumption is that the caller deserves to know.
+    # # Attempt to...
+    # try:
 
-        # Coerce this mutable dictionary into a frozen dictionary.
-        hint_field_name_to_value = FrozenDict(hint_field_name_to_value)
-    # If doing so raises a beartype-specific exception, permit that exception to
-    # explosively unwind the call stack. We trust beartype to know what it's
-    # doing. Do you? Let none answer that landmine-laden question.
-    except BeartypeException:
-        raise
-    # If doing so raises *ANY* other exception (e.g., due to a type parameter
-    # property raising an unexpected exception, which typically occurs when a
-    # PEP 649- and 749-compliant type parameter field was defined to be an
-    # unquoted forward reference to an unresolvable type hint)...
-    except Exception as exception:
-        #FIXME: Coerce this fatal exception into a non-fatal warning. It's
-        #better than nuthin'. *shrug*
-        # Return the empty frozen dictionary. Yeah. We know. We also shrug.
-        hint_field_name_to_value = FROZENDICT_EMPTY
+    # Dynamically introspect this dictionary from this type parameter.
+    hint_field_name_to_value = get_object_attr_name_to_value(
+        hint,
+        # Retrieve only the proper subset of type parameter attributes that
+        # are actually meaningful fields.
+        predicate=_is_hint_typearg_packed_field,
+        # Retrieve type parameter attributes unsafely. Doing so permits this
+        # getter to raise unexpected exceptions in the event that type
+        # parameter properties raise exceptions (which is bad) but also
+        # permits this getter to return the values of those properties when
+        # they do *NOT* raise exceptions (which is a mandatory requirement
+        # of this getter and thus good). Mandatory >>>>>>> bad.
+        is_safe=False,
+    )
+
+    # Coerce this mutable dictionary into a frozen dictionary.
+    hint_field_name_to_value = FrozenDict(hint_field_name_to_value)
+
+    #FIXME: Preserved in the likelihood we'll want to resurrect this later...
+    # # If doing so raises a beartype-specific exception, permit that exception to
+    # # explosively unwind the call stack. We trust beartype to know what it's
+    # # doing. Do you? Let none answer that landmine-laden question.
+    # except BeartypeException:
+    #     raise
+    # # If doing so raises *ANY* other exception (e.g., due to a type parameter
+    # # property raising an unexpected exception, which typically occurs when a
+    # # PEP 649- and 749-compliant type parameter field was defined to be an
+    # # unquoted forward reference to an unresolvable type hint)...
+    # except Exception as exception:
+    #     #FIXME: Coerce this fatal exception into a non-fatal warning. It's
+    #     #better than nuthin'. *shrug*
+    #     # Return the empty frozen dictionary. Yeah. We know. We also shrug.
+    #     hint_field_name_to_value = FROZENDICT_EMPTY
 
     # Return this frozen dictionary.
     return hint_field_name_to_value

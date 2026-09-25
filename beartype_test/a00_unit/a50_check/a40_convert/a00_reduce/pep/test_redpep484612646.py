@@ -18,10 +18,10 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ factory                    }....................
-def test_make_hint_pep484612646_typearg_to_hint() -> None:
+def test_make_hint_typearg_to_hint() -> None:
     '''
     Test the private
-    :func:`beartype._check.convert._reduce._pep.pep646.redpep484612646typearg._make_hint_pep484612646_typearg_to_hint`
+    :func:`beartype._check.convert._reduce._pep.pep646.redpep484612646typearg._make_hint_typearg_to_hint`
     factory function.
     '''
 
@@ -32,7 +32,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         BeartypeDecorHintPep484TypeVarViolation,
     )
     from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
-        _make_hint_pep484612646_typearg_to_hint)
+        _make_hint_typearg_to_hint)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
@@ -53,7 +53,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
     # * "hints_child" is the input tuple of zero or more child hints to map
     #   these type parameters to.
     # * "typearg_to_hint" is the output dictionary expected to be returned from
-    #   the _make_hint_pep484612646_typearg_to_hint() factory when passed these
+    #   the _make_hint_typearg_to_hint() factory when passed these
     #   input tuples.
     typearg_mappings_valid = [
         # ....................{ PEP 484                    }....................
@@ -84,7 +84,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
     # * "hints_child" is the input tuple of zero or more child hints to map
     #   these type parameters to.
     # * "exception_type" is the type of output exception expected to be raised
-    #   by the _make_hint_pep484612646_typearg_to_hint() factory when passed
+    #   by the _make_hint_typearg_to_hint() factory when passed
     #   these input tuples.
     typearg_mappings_invalid = [
         # ....................{ CORE                       }....................
@@ -241,7 +241,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
     for hints_typearg, hints_child, typearg_to_hint_expected in (
         typearg_mappings_valid):
         # Dictionary mapping these type parameters to child hints.
-        typearg_to_hint = _make_hint_pep484612646_typearg_to_hint(
+        typearg_to_hint = _make_hint_typearg_to_hint(
             # Pretend these type parameters parametrized a valid type hint.
             # Since this factory only uses this hint to construct readable
             # exception messages, the value of this hint is irrelevant for
@@ -261,7 +261,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         # Assert that this factory raises the expected type of exception when
         # passed these input tuples.
         with raises(exception_type):
-            _make_hint_pep484612646_typearg_to_hint(
+            _make_hint_typearg_to_hint(
                 hintable=None,
                 hint=None,
                 hints_typearg=hints_typearg,

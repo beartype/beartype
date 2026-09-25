@@ -25,7 +25,7 @@ from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import TypeException
 from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
-    is_hint_pep484612646_typearg_unpacked)
+    is_hint_typearg_unpacked)
 from itertools import count
 from typing import (
     Optional,
@@ -736,7 +736,7 @@ def find_hint_pep484585_generic_args_full(
                 # print(f'Preseeding {hint_base_typearg} -> {hint_base_arg} (before parent replacement)...')
 
                 # If this child hint is *ALSO* a type parameter...
-                if is_hint_pep484612646_typearg_unpacked(hint_base_arg):  # pyright: ignore
+                if is_hint_typearg_unpacked(hint_base_arg):  # pyright: ignore
                     # "Bubble down" this type parameter subscripting this child
                     # pseudo-superclass (i.e., the generic subclassed by this
                     # parent pseudo-superclass) from this parent
@@ -892,7 +892,7 @@ def find_hint_pep484585_generic_args_full(
                 # If this child hint is *NOT* a type parameter, this child hint
                 # is already concrete. In this case, preserve this child hint as
                 # is and continue to the next.
-                if not is_hint_pep484612646_typearg_unpacked(
+                if not is_hint_typearg_unpacked(
                     hint_base_arg_full):
                     continue
                 # Else, this child hint is a type parameter.
@@ -933,7 +933,7 @@ def find_hint_pep484585_generic_args_full(
                 # parent pseudo-superclass is itself a type parameter, record
                 # that this child pseudo-superclass is now known to be
                 # subscripted by at least one type parameter.
-                if is_hint_pep484612646_typearg_unpacked(
+                if is_hint_typearg_unpacked(
                     hint_base_arg_full_new):  # pyright: ignore
                     # print(f'Recording base {hint_base} bubbled typevar {hint_base_arg_full_new}...')
                     is_hint_base_arg_typearg = True

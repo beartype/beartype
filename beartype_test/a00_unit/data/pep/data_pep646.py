@@ -21,13 +21,13 @@ Python 3.11.0.** If this is *not* the case, importing this submodule raises an
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import TypeVarTuple
 from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
     make_hint_pep646_tuple_unpacked_prefix,
     make_hint_pep646_tuple_unpacked_subbed,
     make_hint_pep646_typevartuple_unpacked_prefix,
     make_hint_pep646_typevartuple_unpacked_subbed,
 )
+from typing import TypeVarTuple
 
 # ....................{ HINTS ~ tuple : fixed              }....................
 tuple_fixed_empty_unpacked_prefix = make_hint_pep646_tuple_unpacked_prefix(())
@@ -68,16 +68,16 @@ tuple_variadic_strs_unpacked_subbed = make_hint_pep646_tuple_unpacked_subbed(
 subscripted by the builtin :class:`str` type followed by an ellipsis.
 '''
 
-# ....................{ TYPEARGS                           }....................
+# ....................{ TYPEARGS ~ packed                  }....................
 Ts = TypeVarTuple('Ts')
 '''
-Arbitrary :pep:`646`-compliant type variable tuple.
+Arbitrary :pep:`646`-compliant packed type variable tuple.
 '''
 
 
 Us = TypeVarTuple('Us')
 '''
-Arbitrary :pep:`646`-compliant type variable tuple.
+Arbitrary :pep:`646`-compliant packed type variable tuple.
 '''
 
 # ....................{ TYPEARGS ~ unpacked                }....................

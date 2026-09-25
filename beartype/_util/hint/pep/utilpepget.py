@@ -19,7 +19,7 @@ from beartype.roar import (
 from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype._cave._cavefast import (
     HintPep604Type,
-    HintPep646TypeVarTupleType,
+    HintPep646TypeVarTuplePackedType,
 )
 from beartype._data.cls.datacls import TYPES_NONPEP_TYPEARGS_PACKED
 from beartype._data.typing.datatypingport import (
@@ -430,7 +430,7 @@ def get_hint_pep_typeargs_unpacked(
         # If this is an undesirable PEP 646-compliant packed type variable
         # tuple, coerce this into a desirable PEP 646-compliant unpacked type
         # variable tuple.
-        if isinstance(hint_typearg, HintPep646TypeVarTupleType):
+        if isinstance(hint_typearg, HintPep646TypeVarTuplePackedType):
             hint_typearg = make_hint_pep646_typevartuple_unpacked_subbed(
                 hint_typearg)
         # Else, this is *NOT* an undesirable PEP 646-compliant packed type
