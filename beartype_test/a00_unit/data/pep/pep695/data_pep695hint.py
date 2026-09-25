@@ -42,6 +42,7 @@ from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
     Pep585IterableTContainerT,
     Pep585IterableTupleSTContainerTupleST,
 )
+from collections.abc import Callable
 
 # ..................{ SIMPLE                                 }..................
 type AliasSimple = int | list[str]
@@ -280,4 +281,113 @@ Type alias circularly aliasing itself through :data:`.AliasCircularA`.
 See Also
 --------
 :data:`.AliasCircularSelf`
+'''
+
+
+# ....................{ ALIASES ~ door                     }....................
+type AliasDoorInt = int
+'''
+Type alias aliasing a simple isinstanceable type.
+'''
+
+
+type AliasDoorIntNested = AliasDoorInt
+'''
+Type alias aliasing :data:`.AliasDoorInt` and thus transitively aliasing a
+simple isinstanceable type.
+'''
+
+
+type AliasDoorStr = str
+'''
+Type alias aliasing a different simple isinstanceable type.
+'''
+
+
+type AliasDoorUnion = int | float
+'''
+Type alias aliasing a :pep:`604`-compliant new union.
+'''
+
+
+type AliasDoorListSetT[T] = list[T] | set[T]
+'''
+Type alias parametrized by one type variable, aliasing a :pep:`604`-compliant
+new union of two :pep:`585`-compliant generics each subscripted by that same
+type variable.
+'''
+
+
+type AliasDoorShared = AliasDoorInt | list[AliasDoorInt]
+'''
+Type alias reusing :data:`.AliasDoorInt` twice *without* recursion.
+'''
+
+
+type AliasDoorAnnotated = Annotated[list[AliasDoorInt], 'metadata']
+'''
+Type alias nesting :data:`.AliasDoorInt` inside a :pep:`593` hint.
+'''
+
+
+type AliasDoorCallable = Callable[[AliasDoorInt], AliasDoorShared]
+'''
+Type alias nesting non-recursive aliases inside a callable hint.
+'''
+
+
+type AliasDoorTree = int | list[AliasDoorTree]
+'''
+Recursive type alias (i.e., alias referring to itself).
+'''
+
+
+type AliasDoorMutual1 = int | list[AliasDoorMutual2]
+'''
+Type alias mutually recursive with :data:`.AliasDoorMutual2`.
+'''
+
+
+type AliasDoorMutual2 = str | set[AliasDoorMutual1]
+'''
+Type alias mutually recursive with :data:`.AliasDoorMutual1`.
+'''
+
+
+type AliasDoorBareT[T] = T
+'''
+Type alias whose aliased hint is its own bare type parameter.
+'''
+
+
+type AliasDoorWrapT[T] = list[T]
+'''
+Non-recursive type alias parametrized by one type variable.
+'''
+
+
+type AliasDoorTreeWrapped = int | AliasDoorWrapT[AliasDoorTreeWrapped]
+'''
+Recursive type alias referring to itself *only* through the child hints
+subscripting another non-recursive type alias.
+'''
+
+
+type AliasDoorVariadicLastT[*Ts, T] = T
+'''
+Type alias whose aliased hint is a bare type parameter following a
+:pep:`646`-compliant type variable tuple.
+'''
+
+
+type AliasDoorForwardRef = UndefinedDoorType  # noqa: F821
+'''
+Type alias whose aliased hint refers to an undefined attribute and is thus
+unevaluable.
+'''
+
+
+type AliasDoorListInt = list[int]
+'''
+Type alias aliasing a :pep:`585`-compliant subscripted builtin.
 '''

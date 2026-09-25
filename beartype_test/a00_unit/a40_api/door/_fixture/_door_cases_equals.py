@@ -55,6 +55,7 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         Callable as Pep585Callable,
         Sequence as Pep585Sequence,
     )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from numbers import Number
 
     # Intentionally import from "typing" rather than "beartype.typing" to
@@ -194,6 +195,65 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         ),
 
     ]
+
+    # ..................{ PEP 695                            }..................
+    # If the active Python interpreter targets Python >= 3.12 and thus supports
+    # PEP 695-compliant type aliases...
+    if IS_PYTHON_AT_LEAST_3_12:
+        # Defer version-specific imports.
+        from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
+            AliasDoorInt,
+            AliasDoorIntNested,
+            AliasDoorListInt,
+            AliasDoorListSetT,
+            AliasDoorStr,
+            AliasDoorUnion,
+        )
+
+        # Append PEP 695-specific equality cases. PEP 695 defines type aliases
+        # to be *TRANSPARENT*: an alias conveys exactly the semantics of the
+        # hint aliased by that alias and *NO* semantics of its own.
+        HINT_EQUALITY_CASES.extend((
+            # An alias is equal to the hint aliased by that alias...
+            (AliasDoorInt, int, True),
+            # ...in either direction.
+            (int, AliasDoorInt, True),
+
+            # An alias of an alias transitively reduces to the same hint.
+            (AliasDoorIntNested, int, True),
+            (AliasDoorIntNested, AliasDoorInt, True),
+
+            # Aliases of differing hints are unequal.
+            (AliasDoorInt, AliasDoorStr, False),
+            (AliasDoorInt, str, False),
+
+            # An alias of a union is equal to that union.
+            (AliasDoorUnion, int | float, True),
+            (AliasDoorUnion, int | str, False),
+
+            # A subscripted alias is equal to the hint aliased by that alias
+            # with its type parameters replaced by those child hints.
+            (AliasDoorListSetT[int], list[int] | set[int], True),
+
+            # Subscripting an alias by differing child hints differs.
+            (AliasDoorListSetT[int], AliasDoorListSetT[str], False),
+
+            # Aliases nested as child hints of parent hints are transparent.
+            (list[AliasDoorInt], list[int], True),
+            (dict[AliasDoorInt, AliasDoorStr], dict[int, str], True),
+            (AliasDoorInt | bytes, int | bytes, True),
+
+            # An alias is equal to the non-union subscripted hint it aliases,
+            # regardless of which operand the alias is.
+            (list[int], AliasDoorListInt, True),
+
+            # Aliases subscripting unions are transparent as union branches.
+            (AliasDoorListInt | str, list[int] | str, True),
+
+            # An alias of a union subscripting another union is flattened.
+            (AliasDoorUnion | bytes, int | float | bytes, True),
+        ))
+    # Else, this interpreter fails to support PEP 695.
 
     # ..................{ RETURN                             }..................
     # Return this mutable list coerced into an immutable tuple for safety.

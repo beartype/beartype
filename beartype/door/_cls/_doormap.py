@@ -20,6 +20,7 @@ from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint
 from beartype.door._cls.pep.pep484.doorpep484any import AnyTypeHint
 from beartype.door._cls.pep.pep484.doorpep484newtype import NewTypeTypeHint
 from beartype.door._cls.pep.pep484.doorpep484typevar import TypeVarTypeHint
+from beartype.door._cls.pep.pep695.doorpep695 import Pep695TypeAliasTypeHint
 from beartype.door._cls.doorunsubbed import (
     UnsubscriptedTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
@@ -49,6 +50,8 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignTuple,
     HintSignPep484585TupleFixed,
     HintSignTypeVar,
+    HintSignPep695TypeAliasSubscripted,
+    HintSignPep695TypeAliasUnsubscripted,
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
@@ -160,6 +163,8 @@ _HINT_SIGN_TO_TYPEHINT_SUBTYPE: dict[HintSign, type[TypeHint]] = {
     HintSignTypeVar:                  TypeVarTypeHint,
     HintSignPep484585GenericSubbed:   GenericTypeHint,
     HintSignPep484585GenericUnsubbed: GenericTypeHint,
+    HintSignPep695TypeAliasSubscripted:   Pep695TypeAliasTypeHint,
+    HintSignPep695TypeAliasUnsubscripted: Pep695TypeAliasTypeHint,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
