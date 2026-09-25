@@ -441,8 +441,12 @@ test-tox = [
     # Required by optional Redis-specific integration tests.
     "redis",
 
-    # Required by optional SQLAlchemy-specific integration tests.
-    "sqlalchemy",
+    # Required by optional SQLAlchemy-specific integration tests. These tests
+    # leverage the even *MORE* optional "sqlalchemy.ext.asyncio" subpackage,
+    # whose usage requires that SQLAlchemy be installed with the corresponding
+    # "asyncio" extra here. That extra then brings in extraneous third-party
+    # dependencies imported by that subpackage (e.g., "greenlet"). *sigh*
+    "sqlalchemy[asyncio]",
 
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.

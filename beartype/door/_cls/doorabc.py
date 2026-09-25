@@ -222,37 +222,6 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         # _make_args() implementations to access these instance variables.
         self._args = self._make_args()
 
-    # ..................{ DUNDERS                            }..................
-    def __repr__(self) -> str:
-        '''
-        Memoized machine-readable representation of this type hint wrapper.
-
-        This dunder method is memoized for efficiency.
-        '''
-
-        # If a representation has already been precomputed by a prior call of
-        # this dunder method, efficiently reuse and return that representation.
-        if self._repr is not None:
-            return self._repr
-        # Else, this is the first call of this dunder method.
-
-        # Unqualified name of the concrete subclass wrapping this hint.
-        type_basename = get_object_type_basename(self)
-        # print('hint_wrapper_basename: {hint_wrapper_basename}')
-
-        # If this concrete subclass is currently private, deviously hide this
-        # implementation detail by defaulting to the unqualified name of this
-        # public "TypeHint" superclass instead.
-        if type_basename[0] == '_':
-            type_basename = 'TypeHint'
-        # Else, this concrete subclass is public.
-
-        # Cache this representation for subsequent lookup.
-        self._repr = f'{type_basename}({repr(self._hint)})'
-
-        # Return this representation.
-        return self._repr
-
     # ..................{ DUNDERS ~ hash                     }..................
     def __hash__(self) -> int:
         '''
@@ -301,12 +270,82 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         # Trivially hash "TypeHint" wrappers by the type hints they wrap, yo!
         return hash(self._hint)
 
+    # ..................{ DUNDERS ~ repr                     }..................
+    def __repr__(self) -> str:
+        '''
+        Possibly non-unique machine-readable representation of this type hint
+        wrapper.
+
+        This dunder method is internally memoized for efficiency.
+
+        Caveats
+        -------
+        **The higher-level private** :meth:`_repr_unique` **property should be
+        accessed in lieu of this lower-level dunder method if string uniqueness
+        is required** (e.g., for memoization purposes). The strings returned by
+        this dunder method are well-known to be non-unique across a proper
+        subset of type hints, especially type parameters. For example,
+        :pep:`484`-compliant type variables ambiguously that share the same name
+        *always* share the same :func:`repr` string, even if those type
+        variables differ in other parameters with which they were instantiated:
+
+        .. code-block:: pycon
+
+           >>> from typing import TypeVar
+           >>> repr(TypeVar('T'))
+           'T'  # <-- makes sense
+           >>> repr(TypeVar('T', bound=int))
+           'T'  # <-- *MAKES NO SENSE WTTTTTTTTTTF PYTHON*
+        '''
+
+        # If a representation has already been precomputed by a prior call of
+        # this dunder method, efficiently reuse and return that representation.
+        if self._repr is not None:
+            return self._repr
+        # Else, this is the first call of this dunder method.
+
+        # Unqualified name of the concrete subclass wrapping this hint.
+        type_basename = get_object_type_basename(self)
+        # print('hint_wrapper_basename: {hint_wrapper_basename}')
+
+        # If this concrete subclass is currently private, deviously hide this
+        # implementation detail by defaulting to the unqualified name of this
+        # public "TypeHint" superclass instead.
+        if type_basename[0] == '_':
+            type_basename = 'TypeHint'
+        # Else, this concrete subclass is public.
+
+        # Cache this representation for subsequent lookup.
+        self._repr = f'{type_basename}({repr(self._hint)})'
+
+        # Return this representation.
+        return self._repr
+
+
+    def _get_repr_unique(self) -> str:
+        '''
+        Unique machine-readable representation of this type hint wrapper.
+
+        This getter is internally memoized for efficiency.
+
+        See Also
+        --------
+        __repr__
+            Further details.
+        '''
+
+        # Return the possibly non-unique repr() of this wrapper by default.
+        # Subclasses known to encapsulate non-unique repr() strings *MUST*
+        # override this getter to instead return unique repr()-like strings.
+        return self.__repr__()
+
     # ..................{ DUNDERS ~ compare : equals         }..................
     # Note that we intentionally avoid typing this method as returning
     # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
     # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
     @typehint_method_cached_by_repr(
-        #FIXME: Comment us up, please. *sigh*
+        # Return the builtin "NotImplemented" type when erroneously passed an
+        # object that is *NOT* a type hint wrapper. See __eq__() for details.
         is_if_not_typehint_return_notimplemented=True)
     def __ne__(self, other: object) -> bool:
         '''
@@ -329,24 +368,24 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             :data:`True` only if this type hint is unequal to that other hint.
         '''
 
-        # Return either...
-        return (
-            # If that object is a type hint wrapper, defer to the
-            # subclass-specific implementation of this test;
-            not _unalias(self)._is_equal(_unalias(other))
-            #FIXME: This test is now redundant due to passing
-            #"is_if_not_typehint_return_notimplemented=True" above. *sigh*
-            if isinstance(other, TypeHint) else
-            # Else, that object is *NOT* a type hint wrapper. See __eq__().
-            NotImplemented
-        )
+        # Return the unmemoized subclass-specific implementation of this test.
+        #
+        # Note that the @typehint_method_cached_by_repr decorator explicitly
+        # guarantees that hint to be a type hint wrapper at this point.
+        return not _unalias(self)._is_equal(_unalias(other))  # type: ignore[arg-type]
 
 
     # Note that we intentionally avoid typing this method as returning
     # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
     # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
     @typehint_method_cached_by_repr(
-        #FIXME: Comment us up, please. *sigh*
+        # Return the builtin "NotImplemented" type when erroneously passed an
+        # object that is *NOT* a type hint wrapper. Doing so defers to either:
+        # * If the class of that object defines a similar __eq__() method
+        #   supporting the "TypeHint" API, that method.
+        # * Else, Python's builtin C-based fallback equality comparator that
+        #   merely compares whether two objects are identical (i.e., share the
+        #   same object ID).
         is_if_not_typehint_return_notimplemented=True)
     def __eq__(self, other: object) -> bool:
         '''
@@ -369,23 +408,12 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             :data:`True` only if this type hint is equal to that other hint.
         '''
 
-        # Return either...
-        return (
-            # If the passed object is also a type hint wrapper, defer to the
-            # subclass-specific implementation of this test passed that wrapper;
-            _unalias(self)._is_equal(_unalias(other))
-            #FIXME: This test is now redundant due to passing
-            #"is_if_not_typehint_return_notimplemented=True" above. *sigh*
-            if isinstance(other, TypeHint) else
-            # Else, the passed object is *NOT* a type hint wrapper. In this
-            # case, defer to either:
-            # * If the class of that object defines a similar __eq__() method
-            #   supporting the "TypeHint" API, that method.
-            # * Else, Python's builtin C-based fallback equality comparator that
-            #   merely compares whether two objects are identical (i.e., share
-            #   the same object ID).
-            NotImplemented
-        )
+        # Return the unmemoized subclass-specific implementation of this test.
+        #
+        # Note that the @typehint_method_cached_by_repr decorator explicitly
+        # guarantees that hint to be a type hint wrapper at this point. See
+        # _unalias() for why PEP 695 type aliases are unwrapped first.
+        return _unalias(self)._is_equal(_unalias(other))  # type: ignore[arg-type]
 
 
     def _is_equal(self, other: 'TypeHint') -> bool:
@@ -928,12 +956,12 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         '''
         # print(f'[TypeHint.is_subhint] Comparing {self} to {other}...')
 
-        # If the passed object is *NOT* a type hint wrapper, raise an exception.
-        die_unless_typehint(other)
-        # Else, that object is a type hint wrapper.
-
         # Return true only if this hint is a subhint of that hint (according to
         # each subclass-specific implementation of this test).
+        #
+        # Note that the @typehint_method_cached_by_repr decorator explicitly
+        # validates that hint to be a type hint wrapper by calling:
+        #     die_unless_typehint(other)
         return _unalias(self)._is_subhint(_unalias(other))
 
 

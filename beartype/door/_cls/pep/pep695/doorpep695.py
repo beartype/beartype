@@ -17,7 +17,7 @@ from beartype.door._cls.doorabc import (
     TypeHint,
 )
 from beartype.roar import BeartypeDoorNonpepException
-from beartype._cave._cavefast import HintPep646TypeVarTupleType
+from beartype._cave._cavefast import HintPep646TypeVarTuplePackedType
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.func.utilcacheproperty import (
     get_property_var_name,
@@ -45,7 +45,7 @@ class Pep695TypeAliasTypeHint(TypeHint):
     *all* semantic decisions (e.g., equality, hashing, subhint testing) to the
     :attr:`hint_aliased` wrapper wrapping the hint aliased by that alias. The
     :class:`TypeHint` superclass unwraps aliases at its public testers, so this
-    subclass need only defer hashing and branches.
+    subclass need only defer hashing, branches, and memoization keys.
 
     Caveats
     -------
@@ -140,7 +140,7 @@ class Pep695TypeAliasTypeHint(TypeHint):
                 # this type parameter is the child hint at the same offset from
                 # the end.
                 if any(
-                    isinstance(hint_typeparam, HintPep646TypeVarTupleType)
+                    isinstance(hint_typeparam, HintPep646TypeVarTuplePackedType)
                     for hint_typeparam in hint_typeparams[:hint_typeparam_index]
                 ):
                     hint_typeparam_index += len(self._args) - len(hint_typeparams)
@@ -172,3 +172,13 @@ class Pep695TypeAliasTypeHint(TypeHint):
         # Hash this alias as the hint aliased by this alias, preserving
         # consistency between equality and hashing.
         return hash(self.hint_aliased)
+
+
+    def _get_repr_unique(self) -> str:
+
+        # Key memoization on the hint aliased by this alias rather than this
+        # alias, whose repr() is merely its non-unique name (e.g., "type X =
+        # int" and "type X = str" in different modules). Since this alias
+        # conveys exactly the semantics of that hint, sharing memoized results
+        # with that hint is correct.
+        return self.hint_aliased._get_repr_unique()

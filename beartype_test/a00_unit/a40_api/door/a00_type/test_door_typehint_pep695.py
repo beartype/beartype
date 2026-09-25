@@ -17,7 +17,6 @@ subclass of the :class:`beartype.door.TypeHint` superclass.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
-import pytest
 
 # ....................{ TESTS                              }....................
 @skip_if_python_version_less_than('3.12.0')
@@ -170,10 +169,6 @@ def test_door_pep695_alias_unsupported() -> None:
             hint_parent.is_subhint(TypeHint(list[int]))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason='repr-keyed TypeHint memoization collides: beartype/beartype#700',
-)
 @skip_if_python_version_less_than('3.12.0')
 def test_door_pep695_alias_same_name() -> None:
     '''

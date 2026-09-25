@@ -194,13 +194,13 @@ def _assert_hint_typeargs_packed(
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
-        is_hint_pep484612646_typearg_packed)
+    from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
+        is_hint_typearg_packed)
 
     # ....................{ ASSERTS                        }....................
     # Assert all items of this tuple are actually packed type parameters.
     for hint_typearg in hint_typeargs_packed_actual:
-        assert is_hint_pep484612646_typearg_packed(hint_typearg) is True
+        assert is_hint_typearg_packed(hint_typearg) is True
 
     # If the type parameters parametrizing this hint are known at test time,
     # assert that this getter returns only these type parameters.

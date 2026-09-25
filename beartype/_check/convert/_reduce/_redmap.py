@@ -39,7 +39,7 @@ from beartype._check.convert._reduce._pep.pep484585.redpep484585subclass import 
 from beartype._check.convert._reduce._pep.pep646.redpep646tuple import (
     reduce_hint_pep646_tuple)
 from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
-    reduce_hint_pep484612646_typearg)
+    reduce_hint_typearg)
 from beartype._check.convert._reduce._pep.redpep544 import reduce_hint_pep544
 from beartype._check.convert._reduce._pep.redpep557 import (
     reduce_hint_pep557_initvar)
@@ -478,7 +478,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # those type variables then being subscripted by those concrete hints.
     #
     # tl;dr: the "typearg_to_hint" dictionary, which is uncached.
-    HintSignTypeVar: reduce_hint_pep484612646_typearg,
+    HintSignTypeVar: reduce_hint_typearg,
 
     # ..................{ PEP (484|585)                      }..................
     # If this hint is a PEP 484- or 585-compliant subscripted generic:
@@ -554,7 +554,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # variable tuples then being subscripted by those concrete hints.
     #
     # tl;dr: the "typearg_to_hint" dictionary, which is uncached.
-    HintSignPep646TypeVarTupleUnpacked: reduce_hint_pep484612646_typearg,
+    HintSignPep646TypeVarTupleUnpacked: reduce_hint_typearg,
 
     # ..................{ PEP 692                            }..................
     # Reduce PEP 692-compliant unpacked typed dictionaries (i.e., hints of the

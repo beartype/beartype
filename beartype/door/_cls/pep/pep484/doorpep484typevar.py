@@ -12,15 +12,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorabc import (
-    TupleTypeHints,
-    TypeHint,
-)
 from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
 from beartype._data.hint.sign.datahintsigns import HintSignUnion
-from beartype._util.cache.func.utilcacheproperty import property_cached
+# from beartype._util.cache.func.utilcacheproperty import property_cached
 from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     get_hint_pep484_typevar_bounded_constraints_or_none)
+from beartype._util.hint.pep.proposal.typearg.peptypeargrepr import (
+    make_hint_typearg_unpacked_repr)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from typing import (
@@ -47,14 +45,21 @@ class TypeVarTypeHint(UnionTypeHint):
         # This type variable is ignorable only if this type variable is either:
         # * Unconstrained by any bounds or constraints (and thus effectively
         #   bound only by the "typing.Any" catch-all).
-        # * Bound by an ignorable bound: e.g.,
-        #       TypeVar('T', bound=object)
+        # * Bound by an ignorable bound (e.g., "TypeVar('T', bound=object)").
         # * Constrained by one or more ignorable constraints. Since constraints
         #   effectively build a union over those constraints, even a single
-        #   ignorable constraint suffices to render the entire type variable
-        #   ignorable: e.g.,
-        #       TypeVar('T', object)
+        #   ignorable constraint suffices to render an entire type variable
+        #   ignorable (e.g., "TypeVar('T', object)").
         return self._is_args_ignorable
+
+    # ..................{ PRIVATE ~ getters                  }..................
+    def _get_repr_unique(self) -> str:
+
+        # Return a unique repr()-like string unambiguously encapsulating *ALL*
+        # type variable fields (i.e., meaningful instance variables) rather than
+        # the non-unique repr() strings known to be ambiguously returned for
+        # otherwise distinct type variables.
+        return make_hint_typearg_unpacked_repr(self._hint)
 
     # ..................{ PRIVATE ~ factories                }..................
     def _make_args(self) -> tuple:
@@ -81,12 +86,12 @@ class TypeVarTypeHint(UnionTypeHint):
         #     )
         # # Else, this type variable is invariant.
 
-        # Type variables may only be bound or constrained, but not both. The
-        # difference between the two has semantic meaning for static type
-        # checkers but relatively little meaning for us. Ultimately, we're only
-        # concerned with the set of compatible types present in either the bound
-        # or the constraints. We thus treat a type variable as a union of its
-        # constraints or bound. See also:
+        # Note that type variables may only be bound or constrained, but *NOT*
+        # both. The difference between the two has semantic meaning for static
+        # type checkers but relatively little meaning for us. Ultimately, we're
+        # only concerned with the set of compatible types present in either the
+        # bound or the constraints. We thus treat a type variable as a union of
+        # its constraints or bound. See also:
         #     https://docs.python.org/3/library/typing.html#typing.TypeVar
 
         # If this type variable was parametrized by:

@@ -31,7 +31,7 @@ from beartype._cave._cavefast import (
     HintPep484749RefObjectType,
     HintPep604Type,
     HintPep612ParamSpecType,
-    HintPep646TypeVarTupleType,
+    HintPep646TypeVarTuplePackedType,
     HintPep646692UnpackedType,
     # HintPep695TypeAliasTypes,
     MethodBoundInstanceOrClassType,
@@ -848,7 +848,7 @@ TupleTypeVars = tuple[TypeVar, ...]
 # standards collectively covering type parameters.
 
 Pep484612646TypeArgPacked = (
-    TypeVar | HintPep612ParamSpecType | HintPep646TypeVarTupleType)
+    TypeVar | HintPep612ParamSpecType | HintPep646TypeVarTuplePackedType)
 '''
 PEP-compliant type hint matching a :pep:`484`-, pep:`612`-, or
 :pep:`646`-compliant **packed type parameter** (i.e., :pep:`484`-compliant type

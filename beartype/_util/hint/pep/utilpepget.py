@@ -19,7 +19,7 @@ from beartype.roar import (
 from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype._cave._cavefast import (
     HintPep604Type,
-    HintPep646TypeVarTupleType,
+    HintPep646TypeVarTuplePackedType,
 )
 from beartype._data.cls.datacls import TYPES_NONPEP_TYPEARGS_PACKED
 from beartype._data.typing.datatypingport import (
@@ -430,7 +430,7 @@ def get_hint_pep_typeargs_unpacked(
         # If this is an undesirable PEP 646-compliant packed type variable
         # tuple, coerce this into a desirable PEP 646-compliant unpacked type
         # variable tuple.
-        if isinstance(hint_typearg, HintPep646TypeVarTupleType):
+        if isinstance(hint_typearg, HintPep646TypeVarTuplePackedType):
             hint_typearg = make_hint_pep646_typevartuple_unpacked_subbed(
                 hint_typearg)
         # Else, this is *NOT* an undesirable PEP 646-compliant packed type
@@ -547,17 +547,17 @@ def get_hint_pep_typeargs_packed(
        >>> UntypevaredGeneric.__mro__
        (__main__.UntypevaredGeneric, list, typing.Generic, object)
        >>> UntypevaredGeneric.__parameters__
-       ()
+       ()  # <-- empty, yo!
 
-    Likewise, parametrized hints are often but *not* always generic. For example,
-    consider this parametrized non-generic:
+    Likewise, parametrized hints are often but *not* always generic. For
+    example, consider this parametrized non-generic:
 
     .. code-block:: pycon
 
        >>> from typing import List, TypeVar
        >>> TypevaredNongeneric = List[TypeVar('T')]
        >>> type(TypevaredNongeneric).__mro__
-       (typing._GenericAlias, typing._Final, object)
+       (typing._GenericAlias, typing._Final, object)  # <-- no "typing.Generic"!
        >>> TypevaredNongeneric.__parameters__
        (~T,)
 
