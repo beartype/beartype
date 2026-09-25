@@ -75,8 +75,8 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
-        T_sequence,
-        T_int_or_str,
+        T_bound_sequence,
+        T_constraint_int_or_str,
     )
     from collections.abc import (
         Collection as CollectionABC,
@@ -234,18 +234,51 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
 
         # ..................{ PEP 484 ~ argless : typevar    }..................
         # PEP 484-compliant type variables.
-        (list, T_sequence, True),
-        (T_sequence, list, False),
-        (int, T_int_or_str, True),
-        (str, T_int_or_str, True),
-        (list, T_int_or_str, False),
-        (Union[int, str], T_int_or_str, True),
-        (Union[int, str, None], T_int_or_str, False),
-        (T, T_sequence, False),
-        (T_sequence, T, True),
-        (T_sequence, Any, True),
-        (Any, T, True),  # Any is compatible with an unconstrained TypeVar
-        (Any, T_sequence, True),
+
+        # "Any" is a subhint of any type variable, including both unbound and
+        # bound type variables.
+        (Any, T, True),
+        (Any, T_bound_sequence, True),
+
+        # Any type variable is also a subhint of "Any", including both unbound
+        # and bound type variables.
+        (T, Any, True),
+        (T_bound_sequence, Any, True),
+
+        # Any type is a subhint of any unbound type variable. The converse is
+        # *NOT* the case, of course.
+        (list, T, True),
+        (T, list, False),
+
+        # Any type is a subhint of any type variable bound to any superclass of
+        # that type. The converse is *NOT* the case.
+        (list, T_bound_sequence, True),
+        (T_bound_sequence, list, False),
+
+        # Any type is a subhint of any type variable constrained to any
+        # superclass of that type. The converse is *NOT* the case.
+        (int, T_constraint_int_or_str, True),
+        (T_constraint_int_or_str, int, False),
+        (str, T_constraint_int_or_str, True),
+        (T_constraint_int_or_str, str, False),
+
+        # Any type is *NOT* a subhint of any type variable constrained to other
+        # types unrelated to that first type.
+        (list, T_constraint_int_or_str, False),
+
+        # Any union comprising the same types to which a type variable is
+        # constrained is a subhint of that type variable.
+        (Union[int, str], T_constraint_int_or_str, True),
+
+        # Any union comprising the same types to which a type variable is
+        # constrained as well as one or more unrelated types is *NOT* a subhint
+        # of that type variable.
+        (Union[int, str, None], T_constraint_int_or_str, False),
+
+        # An arbitrary bound type variable is a subhint of an arbitrary unbound
+        # type variable. The converse is *NOT* the case.
+        (T_bound_sequence, T, True),
+        (T, T_bound_sequence, False),
 
         # ..................{ PEP 484 ~ argless : number     }..................
         # Blame Guido.
@@ -273,12 +306,12 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Pep484GenericT, Pep484GenericT, True),
         (Pep484GenericT, Pep484GenericT[int], False),
         (Pep484GenericT[int], Pep484GenericT, True),
-        (Pep484GenericT[int], Pep484GenericT[T_sequence], False),
-        (Pep484GenericT[list], Pep484GenericT[T_sequence], True),
+        (Pep484GenericT[int], Pep484GenericT[T_bound_sequence], False),
+        (Pep484GenericT[list], Pep484GenericT[T_bound_sequence], True),
         (Pep484GenericT[list], Pep484GenericT[Sequence], True),
-        (Pep484GenericT[str], Pep484GenericT[T_sequence], True),
+        (Pep484GenericT[str], Pep484GenericT[T_bound_sequence], True),
         (Pep484GenericT[Sequence], Pep484GenericT[list], False),
-        (Pep484GenericT[T_sequence], Pep484GenericT, True),
+        (Pep484GenericT[T_bound_sequence], Pep484GenericT, True),
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize changes above.
@@ -288,12 +321,12 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Pep484GenericTSubclass, Pep484GenericT, True),
         (Pep484GenericTSubclass, Pep484GenericT[int], False),
         (Pep484GenericTSubclass[int], Pep484GenericT, True),
-        (Pep484GenericTSubclass[int], Pep484GenericT[T_sequence], False),
-        (Pep484GenericTSubclass[list], Pep484GenericT[T_sequence], True),
+        (Pep484GenericTSubclass[int], Pep484GenericT[T_bound_sequence], False),
+        (Pep484GenericTSubclass[list], Pep484GenericT[T_bound_sequence], True),
         (Pep484GenericTSubclass[list], Pep484GenericT[Sequence], True),
-        (Pep484GenericTSubclass[str], Pep484GenericT[T_sequence], True),
+        (Pep484GenericTSubclass[str], Pep484GenericT[T_bound_sequence], True),
         (Pep484GenericTSubclass[Sequence], Pep484GenericT[list], False),
-        (Pep484GenericTSubclass[T_sequence], Pep484GenericT, True),
+        (Pep484GenericTSubclass[T_bound_sequence], Pep484GenericT, True),
         (Pep484GenericTSubclassSubclass[T], Pep484GenericT[str], False),
         (Pep484GenericTSubclassSubclass[str], Pep484GenericT[str], True),
         (
@@ -307,12 +340,12 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Pep484GenericSInt, Pep484GenericST, True),
         (Pep484GenericSInt, Pep484GenericST[int, int], False),
         (Pep484GenericSInt[int], Pep484GenericST, True),
-        (Pep484GenericSInt[int], Pep484GenericST[S, T_sequence], False),
-        (Pep484GenericSInt[list], Pep484GenericST[T_sequence, object], True),
+        (Pep484GenericSInt[int], Pep484GenericST[S, T_bound_sequence], False),
+        (Pep484GenericSInt[list], Pep484GenericST[T_bound_sequence, object], True),
         (Pep484GenericSInt[list], Pep484GenericST[Sequence, Any], True),
-        (Pep484GenericSInt[str], Pep484GenericST[T_sequence, S], True),
+        (Pep484GenericSInt[str], Pep484GenericST[T_bound_sequence, S], True),
         (Pep484GenericSInt[Sequence], Pep484GenericST[list, object], False),
-        (Pep484GenericSInt[T_sequence], Pep484GenericST, True),
+        (Pep484GenericSInt[T_bound_sequence], Pep484GenericST, True),
 
         # PEP 484-compliant generic subclasses subclassing exactly two generic
         # superclasses such that:
@@ -380,12 +413,12 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Pep585SequenceTSubbed, Sequence[T], True),
         (Pep585SequenceTSubbed, Sequence[int], False),
         (Pep585SequenceTSubbed[int], Sequence[T], True),
-        (Pep585SequenceTSubbed[int], Sequence[T_sequence], False),
-        (Pep585SequenceTSubbed[list], Sequence[T_sequence], True),
+        (Pep585SequenceTSubbed[int], Sequence[T_bound_sequence], False),
+        (Pep585SequenceTSubbed[list], Sequence[T_bound_sequence], True),
         (Pep585SequenceTSubbed[list], Sequence[Sequence], True),
-        (Pep585SequenceTSubbed[str], Sequence[T_sequence], True),
+        (Pep585SequenceTSubbed[str], Sequence[T_bound_sequence], True),
         (Pep585SequenceTSubbed[Sequence], Sequence[list], False),
-        (Pep585SequenceTSubbed[T_sequence], Sequence[T], True),
+        (Pep585SequenceTSubbed[T_bound_sequence], Sequence[T], True),
 
         # ..................{ PEP (484|585) ~ mapping        }..................
         # PEP 484-compliant mapping type hints.

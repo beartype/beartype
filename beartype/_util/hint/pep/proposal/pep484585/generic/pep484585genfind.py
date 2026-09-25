@@ -24,7 +24,7 @@ from beartype._data.typing.datatypingport import (
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import TypeException
 from beartype._util.cache.func.utilcachefunc import callable_cached
-from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
+from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
     is_hint_pep484612646_typearg_unpacked)
 from itertools import count
 from typing import (

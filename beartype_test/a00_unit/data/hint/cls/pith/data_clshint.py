@@ -289,7 +289,7 @@ class HintPepMetadata(HintNonpepMetadata):
         from beartype.door import TypeHint
         from beartype._data.hint.sign.datahintsigncls import HintSign
         from beartype._util.hint.utilhintget import get_hint_repr
-        from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
+        from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
             is_hint_pep484612646_typearg_packed)
 
         # Validate all passed parameters *EXCEPT* those with non-trivial

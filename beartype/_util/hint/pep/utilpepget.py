@@ -547,17 +547,17 @@ def get_hint_pep_typeargs_packed(
        >>> UntypevaredGeneric.__mro__
        (__main__.UntypevaredGeneric, list, typing.Generic, object)
        >>> UntypevaredGeneric.__parameters__
-       ()
+       ()  # <-- empty, yo!
 
-    Likewise, parametrized hints are often but *not* always generic. For example,
-    consider this parametrized non-generic:
+    Likewise, parametrized hints are often but *not* always generic. For
+    example, consider this parametrized non-generic:
 
     .. code-block:: pycon
 
        >>> from typing import List, TypeVar
        >>> TypevaredNongeneric = List[TypeVar('T')]
        >>> type(TypevaredNongeneric).__mro__
-       (typing._GenericAlias, typing._Final, object)
+       (typing._GenericAlias, typing._Final, object)  # <-- no "typing.Generic"!
        >>> TypevaredNongeneric.__parameters__
        (~T,)
 

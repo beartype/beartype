@@ -194,7 +194,7 @@ def _assert_hint_typeargs_packed(
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
+    from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
         is_hint_pep484612646_typearg_packed)
 
     # ....................{ ASSERTS                        }....................

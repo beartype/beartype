@@ -32,7 +32,6 @@ from functools import wraps
 # ....................{ DECORATORS                         }....................
 #FIXME: Unit test us up, please. *sigh*
 #FIXME: Docstring us up, please. *sigh*
-#FIXME: Correct internal line-wrapping, please. *sigh*
 def typehint_method_cached_by_repr(
     is_if_not_typehint_return_notimplemented: bool = False) -> (
     Callable[[CallableT], CallableT]):
@@ -41,39 +40,40 @@ def typehint_method_cached_by_repr(
     def _typehint_method_cached_by_repr_decorator(
         func: CallableT) -> CallableT:
         '''
-        **Memoize** (i.e., efficiently re-raise all exceptions previously raised by
-        the decorated method when passed the same *exact* parameters (i.e.,
+        **Memoize** (i.e., efficiently re-raise all exceptions previously raised
+        by the decorated method when passed the same *exact* parameters (i.e.,
         parameters whose machine-readable string representations are equal) as a
-        prior call to that method if any *or* return all values previously returned
-        by that method otherwise rather than inefficiently recalling that method)
-        the passed method.
+        prior call to that method if any *or* return all values previously
+        returned by that method otherwise rather than inefficiently recalling
+        that method) the passed method.
 
         Caveats
         -------
-        **This decorator is only intended to decorate bound methods** (i.e., either
-        class or instance methods bound to a class or instance). This decorator is
-        *not* intended to decorate functions or static methods.
+        **This decorator is only intended to decorate bound methods** (i.e.,
+        either class or instance methods bound to a class or instance). This
+        decorator is *not* intended to decorate functions or static methods.
 
-        **This decorator is only intended to decorate a method whose sole argument
-        is guaranteed to be a memoized singleton** (e.g.,
+        **This decorator is only intended to decorate a method whose sole
+        argument is guaranteed to be a memoized singleton** (e.g.,
         :class:`beartype.door.TypeHint` singleton). In this case, the
-        machine-readable string representation of that argument uniquely identifies
-        that argument across *all* calls to that method -- enabling this decorator
-        to memoize that method. Conversely, if that argument is *not* guaranteed to
-        be a memoized singleton, this decorator will fail to memoize that method
-        while wasting considerable space and time attempting to do so. In short,
-        caller caution is warranted.
+        machine-readable string representation of that argument uniquely
+        identifies that argument across *all* calls to that method -- enabling
+        this decorator to memoize that method. Conversely, if that argument is
+        *not* guaranteed to be a memoized singleton, this decorator will fail to
+        memoize that method while wasting considerable space and time attempting
+        to do so. In short, caller caution is warranted.
 
         This decorator is a micro-optimized variant of the more general-purpose
-        :func:`callable_cached` decorator, which should be preferred in most cases.
-        This decorator mostly exists for one specific edge case that the
+        :func:`callable_cached` decorator, which should be preferred in most
+        cases. This decorator mostly exists for one specific edge case that the
         :func:`callable_cached` decorator *cannot* by definition support:
-        user-defined classes implementing the ``__eq__`` dunder method to internally
-        call another method decorated by :func:`callable_cached` accepting an
-        instance of the same class. This design pattern appears astonishingly
-        frequently, including in our prominent :class:`beartype.door.TypeHint`
-        class. This edge case provokes infinite recursion. Consider this
-        minimal-length example (MLE) exhibiting the issue:
+        user-defined classes implementing the ``__eq__`` dunder method to
+        internally call another method decorated by :func:`callable_cached`
+        accepting an instance of the same class. This design pattern appears
+        astonishingly frequently, including in our prominent
+        :class:`beartype.door.TypeHint` class. This edge case provokes infinite
+        recursion. Consider this minimal-length example (MLE) exhibiting the
+        issue:
 
         .. code-block:: python
 
@@ -87,17 +87,18 @@ def typehint_method_cached_by_repr(
                def _is_equal(self, other: 'MuhClass') -> bool:
                    return True
 
-        :func:`callable_cached` internally caches the ``other`` argument passed to
-        the ``_is_equal()`` method as keys of various internal dictionaries. When
-        passed the same ``other`` argument, subsequent calls to that method lookup
-        that ``other`` argument in those dictionaries. Since dictionary lookups
-        implicitly call the ``other.__eq__()`` method to resolve key collisions
-        *and* since the ``__eq__()`` method has been overridden in terms of the
-        ``_is_equal()`` method, infinite recursion results.
+        :func:`callable_cached` internally caches the ``other`` argument passed
+        to the ``_is_equal()`` method as keys of various internal dictionaries.
+        When passed the same ``other`` argument, subsequent calls to that method
+        lookup that ``other`` argument in those dictionaries. Since dictionary
+        lookups implicitly call the ``other.__eq__()`` method to resolve key
+        collisions *and* since the ``__eq__()`` method has been overridden in
+        terms of the ``_is_equal()`` method, infinite recursion results.
 
-        This decorator circumvents this issue by internally looking up the object
-        identifier of the passed argument rather than that argument itself, which
-        then avoids implicitly calling the ``__eq__()`` method of that argument.
+        This decorator circumvents this issue by internally looking up the
+        object identifier of the passed argument rather than that argument
+        itself, which then avoids implicitly calling the ``__eq__()`` method of
+        that argument.
 
         Parameters
         ----------
@@ -125,7 +126,7 @@ def typehint_method_cached_by_repr(
         '''
         assert callable(func), f'{repr(func)} not callable.'
 
-        # ....................{ PREAMBLE                       }....................
+        # ....................{ PREAMBLE                   }....................
         # Lowest-level wrappee callable wrapped by this wrapper callable.
         func_wrappee = unwrap_func_all(func)
 
@@ -136,13 +137,14 @@ def typehint_method_cached_by_repr(
             func=func_wrappee,
             func_args_len_flexible=2,
             exception_cls=_BeartypeUtilCallableCachedException,
-            # Avoid unnecessary callable unwrapping as a negligible optimization.
+            # Avoid unnecessary callable unwrapping as a negligible
+            # optimization.
             is_unwrap=False,
         )
         # Else, this wrappee accepts exactly one flexible parameter.
 
-        # If this wrappee accepts variadic arguments (either positional or keyword),
-        # raise an exception.
+        # If this wrappee accepts variadic arguments (either positional or
+        # keyword), raise an exception.
         if is_func_arg_variadic(func_wrappee):
             raise _BeartypeUtilCallableCachedException(
                 f'@method_cached_arg_by_id {label_callable(func)} '
@@ -150,15 +152,15 @@ def typehint_method_cached_by_repr(
             )
         # Else, this wrappee accepts *NO* variadic arguments.
 
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize against the @callable_cached decorator above. For
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize against the @callable_cached decorator. For
         # speed, this decorator violates DRY by duplicating logic.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        # ....................{ LOCALS                         }....................
+        # ....................{ LOCALS                     }....................
         # Dictionary mapping a tuple of all flattened parameters passed to each
-        # prior call of the decorated callable with the value returned by that call
-        # if any (i.e., if that call did *NOT* raise an exception).
+        # prior call of the decorated callable with the value returned by that
+        # call if any (i.e., if that call did *NOT* raise an exception).
         args_flat_to_return_value: dict[tuple, object] = {}
 
         # get() method of this dictionary, localized for efficiency.
@@ -198,8 +200,8 @@ def typehint_method_cached_by_repr(
                 die_unless_typehint(other)
                 # Else, that object is a type hint wrapper.
 
-            # 2-tuple comprising the machine-readable string representations of the
-            # two positional parameters passed to the decorated method.
+            # 2-tuple comprising the machine-readable string representations of
+            # the two positional parameters passed to the decorated method.
             args_flat = (
                 get_hint_repr(self._hint),
                 get_hint_repr(other._hint),
@@ -207,25 +209,26 @@ def typehint_method_cached_by_repr(
 
             # Attempt to...
             try:
-                # Exception raised by a prior call to the decorated callable when
-                # passed these parameters *OR* the sentinel placeholder otherwise
-                # (i.e., if this callable either has yet to be called with these
-                # parameters *OR* has but failed to raise an exception).
+                # Exception raised by a prior call to the decorated callable
+                # when passed these parameters *OR* the sentinel placeholder
+                # otherwise (i.e., if this callable either has yet to be called
+                # with these parameters *OR* has but failed to raise an
+                # exception).
                 #
                 # Note that:
                 # * This statement raises a "TypeError" exception if any item of
                 #   this flattened tuple is unhashable.
-                # * A sentinel placeholder (e.g., "SENTINEL") is *NOT* needed here.
-                #   The values of the "args_flat_to_exception" dictionary are
-                #   guaranteed to *ALL* be exceptions. Since "None" is *NOT* an
-                #   exception, disambiguation between "None" and valid dictionary
-                #   values is *NOT* needed here. Although a sentinel placeholder
-                #   could still be employed, doing so would slightly reduce
-                #   efficiency for *NO* real-world gain.
+                # * A sentinel placeholder (e.g., "SENTINEL") is *NOT* needed
+                #   here. The values of the "args_flat_to_exception" dictionary
+                #   are guaranteed to *ALL* be exceptions. Since "None" is *NOT*
+                #   an exception, disambiguation between "None" and valid
+                #   dictionary values is *NOT* needed here. Although a sentinel
+                #   placeholder could still be employed, doing so would slightly
+                #   reduce efficiency for *NO* real-world gain.
                 exception = args_flat_to_exception_get(args_flat)
 
-                # If this callable previously raised an exception when called with
-                # these parameters, re-raise the same exception.
+                # If this callable previously raised an exception when called
+                # with these parameters, re-raise the same exception.
                 if exception:
                     raise exception  # pyright: ignore
                 # Else, this callable either has yet to be called with these
@@ -233,19 +236,22 @@ def typehint_method_cached_by_repr(
 
                 # Value returned by a prior call to the decorated callable when
                 # passed these parameters *OR* a sentinel placeholder otherwise
-                # (i.e., if this callable has yet to be passed these parameters).
-                return_value = args_flat_to_return_value_get(args_flat, SENTINEL)
+                # (i.e., if this callable has yet to be passed these
+                # parameters).
+                return_value = args_flat_to_return_value_get(
+                    args_flat, SENTINEL)
 
-                # If this callable has already been called with these parameters,
-                # return the value returned by that prior call.
+                # If this callable has already been called with these
+                # parameters, return the value returned by that prior call.
                 if return_value is not SENTINEL:
                     return return_value
-                # Else, this callable has yet to be called with these parameters.
+                # Else, this callable has yet to be called with these
+                # parameters.
 
                 # Attempt to...
                 try:
-                    # Call this parameter with these parameters and cache the value
-                    # returned by this call to these parameters.
+                    # Call this parameter with these parameters and cache the
+                    # value returned by this call to these parameters.
                     return_value = args_flat_to_return_value[args_flat] = func(
                         self, other)
                 # If this call raised an exception...
@@ -255,13 +261,14 @@ def typehint_method_cached_by_repr(
 
                     # Re-raise this exception.
                     raise exception
-            # If one or more objects either passed to *OR* returned from this call
-            # are unhashable, perform this call as is *WITHOUT* memoization. While
-            # non-ideal, stability is better than raising a fatal exception.
+            # If one or more objects either passed to *OR* returned from this
+            # call are unhashable, perform this call as is *WITHOUT*
+            # memoization. While non-ideal, stability is better than raising a
+            # fatal exception.
             except TypeError:
-                #FIXME: If testing, emit a non-fatal warning or possibly even raise
-                #a fatal exception. In either case, we want our test suite to notify
-                #us about this.
+                #FIXME: If testing, emit a non-fatal warning or possibly even
+                #raise a fatal exception. In either case, we want our test suite
+                #to notify us about this.
                 return func(self, other)
 
             # Return this value.

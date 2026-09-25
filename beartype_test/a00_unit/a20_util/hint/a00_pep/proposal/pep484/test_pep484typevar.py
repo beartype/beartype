@@ -31,8 +31,8 @@ def test_get_hint_pep484_typevar_bounded_constraints_or_none() -> None:
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
         get_hint_pep484_typevar_bounded_constraints_or_none)
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
-        T_int,
-        T_str_or_bytes,
+        T_bound_int,
+        T_constraint_str_or_bytes,
     )
     from pytest import raises
 
@@ -43,13 +43,13 @@ def test_get_hint_pep484_typevar_bounded_constraints_or_none() -> None:
 
     # Assert this getter reduces bounded type variables to their upper bound.
     assert get_hint_pep484_typevar_bounded_constraints_or_none(
-        hintable=None, hint=T_int) is int
+        hintable=None, hint=T_bound_int) is int
 
     # Union of all constraints parametrizing a constrained type variable,
     # reduced from that type variable.
     typevar_constraints_union = (
         get_hint_pep484_typevar_bounded_constraints_or_none(
-            hintable=None, hint=T_str_or_bytes))
+            hintable=None, hint=T_constraint_str_or_bytes))
 
     # Assert this union contains all constraints parametrizing this variable.
     assert str   in typevar_constraints_union.__args__

@@ -39,9 +39,9 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         T,
         U,
         V,
-        T_any,
-        T_sequence,
-        T_str_or_bytes,
+        T_bound_any,
+        T_bound_sequence,
+        T_constraint_str_or_bytes,
     )
     from pytest import raises
 
@@ -62,16 +62,16 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
 
         # A single PEP 484-compliant type variable bound to an ignorable hint
         # maps to a single child hint.
-        ((T_any,), (bool,), {T_any: bool}),
+        ((T_bound_any,), (bool,), {T_bound_any: bool}),
 
         # A single PEP 484-compliant type variable bound to an arbitrary type
         # maps to a single child hint satisfying that type.
-        ((T_sequence,), (list,), {T_sequence: list}),
+        ((T_bound_sequence,), (list,), {T_bound_sequence: list}),
 
         # A single PEP 484-compliant type variable constrained to two or more
         # types maps to a single child hint satisfying at least one of those
         # types.
-        ((T_str_or_bytes,), (bytes,), {T_str_or_bytes: bytes}),
+        ((T_constraint_str_or_bytes,), (bytes,), {T_constraint_str_or_bytes: bytes}),
 
         # Multiple PEP 484-compliant type variables map to multiple child hints.
         ((T, S,), (float, complex,), {S: complex, T: float}),
@@ -118,7 +118,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         # child hint violating the bounds of a passed PEP 484-compliant type
         # variable.
         (
-            (S, T, T_sequence,),
+            (S, T, T_bound_sequence,),
             (float, complex, int,),
             BeartypeDecorHintPep484TypeVarViolation,
         ),
@@ -128,7 +128,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         # # Assert that this mapper raises the expected violation when passed a type
         # # hint violating the constraints of a passed type variable.
         # (
-        #     (S, T, T_str_or_bytes,),
+        #     (S, T, T_constraint_str_or_bytes,),
         #     (float, complex, ,),
         #     BeartypeDecorHintPep484TypeVarViolation,
         # )

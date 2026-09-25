@@ -87,7 +87,7 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     get_hint_pep484_typevar_bounded_constraints_or_none,
     # is_hint_pep484_typevar,
 )
-from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
+from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
     die_unless_hint_pep484612646_typearg_unpacked,
     is_hint_pep484612646_typearg_unpacked,
     pack_hint_pep484612646_typearg_unpacked,

@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484612646Exception
-from beartype.typing import TypeVar
 from beartype._cave._cavefast import (
     HintPep646692UnpackedType,
     HintPep484612646TypeArgPackedTypes,
@@ -31,6 +30,7 @@ from beartype._data.typing.datatypingport import (
     TypeIs,
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
+from typing import TypeVar
 
 # ....................{ RAISERS                            }....................
 #FIXME: Unit test us up, please.
@@ -140,6 +140,13 @@ def is_hint_pep484612646_typearg_unpacked(
     parameter specification, or :pep:`646`-compliant unpacked type variable
     tuple).
 
+    Caveats
+    -------
+    **This tester should usually be called in lieu of calling the lower-level**
+    :func:`.is_hint_pep484612646_typearg_packed` **tester.** Why? Because type
+    parameters are *always* specified in unpacked rather than packed form.
+    Packed type parameters are thus useless for most intents and purposes.
+
     Parameters
     ----------
     hint : Hint
@@ -188,6 +195,15 @@ def is_hint_pep484612646_typearg_packed(
     (i.e., :pep:`484`-compliant type variable, pep:`612`-compliant parameter
     specification, or :pep:`646`-compliant type variable tuples).
 
+    Caveats
+    -------
+    **The higher-level** :func:`.is_hint_pep484612646_typearg_packed` **tester
+    should typically be called instead.** Why? Because type parameters are
+    *always* specified in unpacked rather than packed form. Packed type
+    parameters are thus useless for most intents and purposes. In fact, this
+    tester only exists because the low-level ``__parameters__`` dunder attribute
+    only lists type parameters in packed rather than unpacked form.
+
     Parameters
     ----------
     hint : Hint
@@ -219,7 +235,7 @@ def get_hint_pep484612646_typearg_packed_name(
     Parameters
     ----------
     hint : Pep484612646TypeArgPacked
-        Type parameter to be inspected.
+        Packed type parameter to be inspected.
     exception_cls : Type[Exception], default: BeartypeDecorHintPep484612646Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
@@ -230,12 +246,12 @@ def get_hint_pep484612646_typearg_packed_name(
     Returns
     -------
     str
-        Unqualified basename of this type parameter.
+        Unqualified basename of this packed type parameter.
 
     Raises
     ------
     exception_cls
-        If this object is *not* a type parameter.
+        If this object is *not* a packed type parameter.
     '''
 
     # If this hint is *NOT* a packed type parameter, raise an exception.
@@ -280,7 +296,7 @@ def pack_hint_pep484612646_typearg_unpacked(
     Parameters
     ----------
     hint : Pep484612646TypeArgPacked
-        Type parameter to be inspected.
+        Unpacked type parameter to be inspected.
     exception_cls : Type[Exception], default: BeartypeDecorHintPep484612646Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.

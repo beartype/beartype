@@ -305,9 +305,12 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     # Note that we intentionally avoid typing this method as returning
     # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
     # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
-    @typehint_method_cached_by_repr(
-        #FIXME: Comment us up, please. *sigh*
-        is_if_not_typehint_return_notimplemented=True)
+
+    #FIXME: Currently disabled until we have sufficient time to restore this.
+    #*WHATEVAHS*! *sigh*
+    # @typehint_method_cached_by_repr(
+    #     #FIXME: Comment us up, please. *sigh*
+    #     is_if_not_typehint_return_notimplemented=True)
     def __ne__(self, other: object) -> bool:
         '''
         :data:`True` only if the low-level type hint wrapped by this wrapper is
@@ -345,9 +348,12 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     # Note that we intentionally avoid typing this method as returning
     # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
     # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
-    @typehint_method_cached_by_repr(
-        #FIXME: Comment us up, please. *sigh*
-        is_if_not_typehint_return_notimplemented=True)
+
+    #FIXME: Currently disabled until we have sufficient time to restore this.
+    #*WHATEVAHS*! *sigh*
+    # @typehint_method_cached_by_repr(
+    #     #FIXME: Comment us up, please. *sigh*
+    #     is_if_not_typehint_return_notimplemented=True)
     def __eq__(self, other: object) -> bool:
         '''
         :data:`True` only if the low-level type hint wrapped by this wrapper is
@@ -903,7 +909,10 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     # lookup that "other" in that dictionary. Since dictionary lookups
     # implicitly call other.__eq__() to resolve key collisions *AND* since the
     # TypeHint.__eq__() method calls TypeHint.is_subhint(), infinite recursion!
-    @typehint_method_cached_by_repr()
+
+    #FIXME: Currently disabled until we have sufficient time to restore this.
+    #*WHATEVAHS*! *sigh*
+    # @typehint_method_cached_by_repr()
     def is_subhint(self, other: 'TypeHint') -> bool:
         '''
         :data:`True` only if this type hint is a **subhint** of the passed type
