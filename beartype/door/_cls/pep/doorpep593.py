@@ -61,6 +61,24 @@ class AnnotatedTypeHint(TypeHint):
         # Wrapper wrapping the first argument subscripting this hint.
         self._metahint_wrapper = TypeHint(get_hint_pep593_metahint(hint))
 
+        # Force the type originating this hint to be the root "object"
+        # superclass. For unknown reasons, the PEP 593-compliant
+        # "typing.Annotated" hint factory "helpfully" publishes the arbitrary
+        # first child hint subscripting that factory as the value of its
+        # "__origin__" dunder attribute despite the fact that arbitrary hints
+        # are typically *NOT* types. Python 3.10 compounds this madness, because
+        # PEP 585-compliant hints actually *ARE* types despite being neither
+        # isinstanceable nor issubclassable and thus being unusable as types for
+        # all practical intents and purposes. For example, under Python 3.10:
+        #     >>> Annotated[list[str], 'ugh'].__origin__
+        #     list[str]  # <-- really weird, but we're willing to accept it
+        #     >>> isinstance(list[str], type)
+        #     True  # <-- actually, wait. this is super messed-up, python 3.10!
+        #     >>> issubclass(list, list[str])
+        #     TypeError: issubclass() argument 2 cannot be a parameterized
+        #     generic  # <-- what a friggin' surprise
+        self._origin_type = object
+
     # ..................{ PRIVATE ~ properties               }..................
     @property
     def _is_args_ignorable(self) -> bool:

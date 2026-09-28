@@ -262,23 +262,36 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (str, T_constraint_int_or_str, True),
         (T_constraint_int_or_str, str, False),
 
-        # Any type is *NOT* a subhint of any type variable constrained to other
-        # types unrelated to that first type.
-        (list, T_constraint_int_or_str, False),
-
-        # Any union comprising the same types to which a type variable is
-        # constrained is a subhint of that type variable.
-        (Union[int, str], T_constraint_int_or_str, True),
-
-        # Any union comprising the same types to which a type variable is
-        # constrained as well as one or more unrelated types is *NOT* a subhint
-        # of that type variable.
-        (Union[int, str, None], T_constraint_int_or_str, False),
-
         # An arbitrary bound type variable is a subhint of an arbitrary unbound
         # type variable. The converse is *NOT* the case.
         (T_bound_sequence, T, True),
         (T, T_bound_sequence, False),
+
+        # Types that are *NOT* subhints of the types constraining type variables
+        # are also *NOT* subhints of those type variables.
+        (list, T_constraint_int_or_str, False),
+
+        # Arbitrary PEP-compliant type hint factories subscripted by arbitrary
+        # child hints are subhints of those same factories subscripted by
+        # unbound type variables. The converse is *NOT* the case.
+        (list[int], list[T], True),
+        (list[T], list[int], False),
+
+        # Arbitrary PEP-compliant type hint factories subscripted by arbitrary
+        # child hints are subhints of those same factories subscripted by
+        # type variables constrained by those same child hints and one or more
+        # other arbitrary child hints. The converse is *NOT* the case.
+        (list[int], list[T_constraint_int_or_str], True),
+        (list[T_constraint_int_or_str], list[int], False),
+
+        # Unions comprising the same types to which type variables are
+        # constrained are subhints of those type variables.
+        (Union[int, str], T_constraint_int_or_str, True),
+
+        # Union comprising the same types to which type variables are
+        # constrained as well as one or more unrelated types are *NOT* subhints
+        # of those type variables.
+        (Union[int, str, None], T_constraint_int_or_str, False),
 
         # ..................{ PEP 484 ~ generic              }..................
         # "typing.Generic"-centric tests.
@@ -554,16 +567,43 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         # ..................{ PEP 593                        }..................
         # PEP 593-compliant type hints.
 
-        # Annotated[{type}, ...] <= {type}.
-        (Annotated[int, 'a note'], int, True),
+        # PEP 593-compliant hints subscripted by metahints and arbitrary
+        # metadata are subhints of those same metahints. The converse is *NOT*
+        # the case.
+        (
+            Annotated[int, 'All lovely tales that we have heard or read:'],
+            int,
+            True,
+        ),
+        (
+            int,
+            Annotated[int, "Pouring unto us from the heaven's brink."],
+            False,
+        ),
+        (
+            Annotated[list[int], 'An endless fountain of immortal drink,'],
+            list[int],
+            True,
+        ),
+        (
+            list[int],
+            Annotated[list[int], 'Nor do we merely feel these essences'],
+            False,
+        ),
 
-        # {type} > Annotated[{type}, ...].
-        (int, Annotated[int, 'a note'], False),
+        # PEP 593-compliant unhashable hints subscripted by unhashable metadata
+        # are PEP-compliant and thus still comparable in the expected manner.
+        (Annotated[list[str], []], Annotated[list, []], True,),
 
-        (Annotated[list, True], Annotated[Sequence, True], True),
-        (Annotated[list, False], Annotated[Sequence, True], False),
-        (Annotated[list, 0, 0], Annotated[list, 0], False),  # must have same num args
-        (Annotated[List[int], 'metadata'], List[int], True),
+        # PEP 593-compliant hints subscripted by metahints and arbitrary
+        # metadata are *NOT* subhints of similar PEP 593-compliant hints
+        # subscripted by the same metahints and a differing number of metadata.
+        # In other words, the number of child hints subscripting a PEP
+        # 593-compliant hint is significant for subhint purposes.
+        (Annotated[list, 0, 0], Annotated[list, 0], False,),
+
+        (Annotated[list, True], Annotated[Sequence, True], True,),
+        (Annotated[list, False], Annotated[Sequence, True], False,),
     ]
 
     # ..................{ LISTS ~ cases : version            }..................

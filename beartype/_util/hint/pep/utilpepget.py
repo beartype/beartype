@@ -986,9 +986,20 @@ def get_hint_pep_origin_type_or_none(
 
     Caveats
     -------
-    **This high-level getter should always be called in lieu of either calling
-    the low-level** :func:`.get_hint_pep_origin_or_none` **getter or attempting
-    to directly access the low-level** ``__origin__`` **dunder attribute.**
+    **The even higher-level** :func:`.get_hint_pep_origin_type_isinstanceable`
+    **getter should typically be called in lieu of this lower-level getter.**
+    Whereas that higher-level getter guaranteed to return an isinstanceable
+    type, this lower-level getter is *not* guaranteed to return a type -- let
+    alone an isinstanceable type! The return hint annotating this getter is thus
+    an abject lie. Moreover, this getter could be said to return false
+    positives. For example, this getter returns the arbitrary first child hint
+    subscripting any :pep:`593`-compliant hint (e.g., ``list[str]`` when passed
+    ``typing.Annotated[list[str], 'Ugh.']``).
+
+    **Either of these high-level getters should be called in lieu of either
+    calling the low-level** :func:`.get_hint_pep_origin_or_none` **getter or
+    attempting to directly access the low-level** ``__origin__`` **dunder
+    attribute.**
 
     Parameters
     ----------
@@ -1046,10 +1057,11 @@ def get_hint_pep_origin_type_or_none(
             hint if (
                 # The caller requests the "self" fallback logic *AND*...
                 is_self_fallback and
-                # This hint is itself a type, this hint could be euphemistically
-                # said to originate from "itself." Fallback to this hint itself.
-                # Look. Just go with it. We wave our hands in the air, fam.
+                # This hint is itself a type *AND*...
                 isinstance(hint, type)
+                # Then this type could be euphemistically said to originate from
+                # "itself." Fallback to this hint itself. Look. Just go with it.
+                # We wave our hands in the air, fam.
             ) else
             # Else, either the caller did not request the "self" fallback logic
             # *OR* this hint is not a type. In either case, fallback to "None".

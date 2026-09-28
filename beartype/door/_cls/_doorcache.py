@@ -234,16 +234,25 @@ def typehint_method_cached_by_repr(
             else:
                 die_unless_typehint(other)
 
-            # 2-tuple comprising the machine-readable string representations of
-            # the two positional parameters passed to the decorated method.
+            # 2-tuple comprising the low-level hints encapsulated by the two
+            # positional parameters passed to the decorated method.
             #
-            # Note that we intentionally avoid calling the repr() builtin here,
-            # which is well-known to return non-unique and thus ambiguous
-            # strings for a proper subhint of hints (e.g., type parameters).
-            args_flat = (
-                self._get_repr_unique(),
-                other._get_repr_unique(),
-            )
+            # Note that we intentionally avoid calling:
+            # * Arbitrary hints are typically but *NOT* necessarily hashable
+            #   (e.g., the PEP 593-compliant "typing.Annotated[object, []]"
+            #   hint). If either of these hints is unhashable:
+            #   * The subsequent call to the args_flat_to_exception_get() getter
+            #     *WILL* raise the standard "TypeError" exception.
+            #   * The "except TypeError:" branch will then catch and handle that
+            #     exception by falling back to calling the decorated method in
+            #     an unmemoized manner. Although non-ideal, unhashable hints are
+            #     sufficiently rare to effectively render this a non-issue.
+            # * The id() builtin here, which is well-known to ambiguously
+            #   recycle object identifiers over long-running CPython processes.
+            # * The repr() builtin here, which is well-known to return
+            #   non-unique and thus ambiguous strings for a proper subhint of
+            #   hints (e.g., type parameters).
+            args_flat = (self._hint, other._hint)
 
             # Attempt to...
             try:

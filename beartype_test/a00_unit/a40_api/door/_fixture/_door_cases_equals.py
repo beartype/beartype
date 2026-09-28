@@ -193,6 +193,9 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
             False,
         ),
 
+        # PEP 593-compliant unhashable hints subscripted by unhashable metadata
+        # are PEP-compliant and thus still comparable in the expected manner.
+        (Annotated[list[str], []], Annotated[Pep484List[str], []], True,),
     ]
 
     # ..................{ RETURN                             }..................

@@ -201,25 +201,34 @@ def test_door_typehint_compare_equals(door_cases_equals: (
         is_equal_b_a_actual = (typehint_b == typehint_a)
         assert is_equal_b_a_actual is is_equal_expect
 
-        # If these wrappers compare equal, assert that these wrappers both share
-        # the same hash.
-        #
-        # Note that this well-known theoretical constraint applies to *ANY*
-        # language. Violating this constraint promotes inconsistent key and node
-        # hashing in hash-based data structures. Since Python's builtin "dict",
-        # "set", and "frozenset" types trivialize both usage and implementation
-        # of these structures, this constraint is doubly critical in Python; any
-        # caller inserting these wrappers into these structures implicitly
-        # triggers hashing via the TypeHint.__hash__() dunder method.
+        # If these wrappers compare equal...
         if is_equal_a_b_actual:
-            assert hash(typehint_a) == hash(typehint_b), (
-                f'TypeHint.__eq__() <-> TypeHint.__hash__() '
-                f'inconsistency detected: '
-                f'{typehint_a.__class__.__name__}({repr(hint_a)}) == '
-                f'{typehint_b.__class__.__name__}({repr(hint_b)}), but '
-                f'hash({typehint_a.__class__.__name__}({repr(hint_a)}) != '
-                f'hash({typehint_b.__class__.__name__}({repr(hint_b)}).'
-            )
+            # Attempt to assert that these wrappers both share the same hash.
+            #
+            # Note that this well-known theoretical constraint applies to *ANY*
+            # language. Violating this constraint promotes inconsistent key and
+            # node hashing in hash-based data structures. Since Python's builtin
+            # "dict", "set", and "frozenset" types trivialize both usage and
+            # implementation of these structures, this constraint is doubly
+            # critical in Python; any caller inserting these wrappers into these
+            # structures implicitly triggers hashing via the TypeHint.__hash__()
+            # dunder method.
+            try:
+                assert hash(typehint_a) == hash(typehint_b), (
+                    f'TypeHint.__eq__() <-> TypeHint.__hash__() '
+                    f'inconsistency detected: '
+                    f'{typehint_a.__class__.__name__}({repr(hint_a)}) == '
+                    f'{typehint_b.__class__.__name__}({repr(hint_b)}), but '
+                    f'hash({typehint_a.__class__.__name__}({repr(hint_a)}) != '
+                    f'hash({typehint_b.__class__.__name__}({repr(hint_b)}).'
+                )
+            # If the hash() builtin raises the standard "TypeError" when passed
+            # either wrapper, then the low-level hint encapsulated by that
+            # wrapper is unhashable. Although uncommon, numerous PEPs permit
+            # unhashable hints (e.g., the PEP 593-compliant unhashable hint
+            # "typing.Annotated[object, []]"). Silently ignore this edge case.
+            except TypeError:
+                pass
         # Else, these wrappers compare unequal. In these case, these wrappers
         # typically do *NOT* (but technically could) share the same hash.
         #

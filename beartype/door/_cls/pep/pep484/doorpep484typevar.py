@@ -52,15 +52,6 @@ class TypeVarTypeHint(UnionTypeHint):
         #   ignorable (e.g., "TypeVar('T', object)").
         return self._is_args_ignorable
 
-    # ..................{ PRIVATE ~ getters                  }..................
-    def _get_repr_unique(self) -> str:
-
-        # Return a unique repr()-like string unambiguously encapsulating *ALL*
-        # type variable fields (i.e., meaningful instance variables) rather than
-        # the non-unique repr() strings known to be ambiguously returned for
-        # otherwise distinct type variables.
-        return make_hint_typearg_unpacked_repr(self._hint)
-
     # ..................{ PRIVATE ~ factories                }..................
     def _make_args(self) -> tuple:
 

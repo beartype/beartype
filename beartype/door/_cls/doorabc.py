@@ -206,13 +206,32 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             # Fallback to euphemistically claiming that this hint originates
             # from either...
             self._origin_type = (
-                # If this hint is itself a type, itself. Ugh.
+                # This hint itself if this hint is an unsubscripted type,
+                # detected when...
                 hint
-                if isinstance(hint, type) else
-                # Else, this hint is *NOT* itself a type. In this case, the root
-                # superclass of *ALL* classes. Doing so guarantees sanity when
-                # this instance variable is passed as either the first or second
-                # parameters to the issubclass() builtin elsewhere. More "Ugh."
+                if (
+                    # This hint is a type *AND*...
+                    isinstance(hint, type) and
+                    # This type is unsubscripted.
+                    #
+                    # Note that types are subscriptable in edge cases. However,
+                    # such types tend to be neither isinstanceable nor
+                    # issubclassable and are thus unusable. This includes:
+                    # * PEP 585-compliant hints under Python <= 3.10: e.g.,
+                    #       >>> Annotated[list[str], 'ugh'].__origin__
+                    #       list[str]  # <-- really weird, but okay
+                    #       >>> isinstance(list[str], type)
+                    #       True  # <-- actually, wait. this is super messed-up!
+                    #       >>> issubclass(list, list[str]) TypeError:
+                    #       issubclass() argument 2 cannot be a parameterized
+                    #       generic  # <-- what a friggin' surprise
+                    not get_hint_pep_childs(hint)
+                ) else
+                # Else, this hint is *NOT* itself a unsubscripted type. In this
+                # case, the root superclass of *ALL* classes. Doing so
+                # guarantees sanity when this instance variable is passed as
+                # either the first or second parameters to the issubclass()
+                # builtin elsewhere. More "Ugh."
                 object
             )
 
@@ -320,24 +339,6 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
         # Return this representation.
         return self._repr
-
-
-    def _get_repr_unique(self) -> str:
-        '''
-        Unique machine-readable representation of this type hint wrapper.
-
-        This getter is internally memoized for efficiency.
-
-        See Also
-        --------
-        __repr__
-            Further details.
-        '''
-
-        # Return the possibly non-unique repr() of this wrapper by default.
-        # Subclasses known to encapsulate non-unique repr() strings *MUST*
-        # override this getter to instead return unique repr()-like strings.
-        return self.__repr__()
 
     # ..................{ DUNDERS ~ compare : equals         }..................
     # Note that we intentionally avoid typing this method as returning
@@ -1105,6 +1106,8 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             Further details.
         '''
         # print(f'Entering is_subhint_branch({self}, {branch})...')
+        # print(f'self._origin_type: {repr(self._origin_type)}')
+        # print(f'branch._origin_type: {repr(branch._origin_type)}')
 
         # If the type originating this hint is *NOT* a subclass of the type
         # originating that branch, this hint *CANNOT* be a subhint of that
