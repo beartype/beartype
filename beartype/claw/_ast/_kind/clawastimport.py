@@ -848,9 +848,13 @@ class BeartypeNodeTransformerImportMixin(object):
         node_beartype_decorator: expr = Name(
             id=BEARTYPE_DECORATOR_FUNC_NAME, ctx=NODE_CONTEXT_LOAD)
 
-        # Copy all source code metadata from this parent type or callable node
-        # onto this child decorator node.
-        copy_node_metadata(node_src=node, node_trg=node_beartype_decorator)
+        # Preserve the first line of an existing decorator chain. Otherwise,
+        # compiling this injected decorator changes the callable's first line,
+        # causing coverage to record generator exit arcs against a different
+        # line than it infers from the original source.
+        node_location = node.decorator_list[0] if node.decorator_list else node
+        copy_node_metadata(
+            node_src=node_location, node_trg=node_beartype_decorator)
 
         # ....................{ NODES ~ conf               }....................
         #FIXME: Isn't this pretty much *ALWAYS* the case? "beartype.claw" import
@@ -871,9 +875,9 @@ class BeartypeNodeTransformerImportMixin(object):
                 keywords=[self._make_node_keyword_conf(node_sibling=node)],  # type: ignore[attr-defined]
             )
 
-            # Copy all source code metadata from this parent callable node onto
-            # this child call node.
-            copy_node_metadata(node_src=node, node_trg=node_beartype_decorator)
+            # Keep the call on the same line as its injected decorator name.
+            copy_node_metadata(
+                node_src=node_location, node_trg=node_beartype_decorator)
         # Else, this configuration is simply the default beartype configuration.
         # In this case, avoid passing that configuration to the @beartype
         # decorator for both efficiency and simplicity.
