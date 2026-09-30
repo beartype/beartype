@@ -113,6 +113,28 @@ def test_get_frame() -> None:
     assert callable(get_frame) is True
 
 # ....................{ TESTS ~ getters : scope            }....................
+def test_get_frame_locals_class() -> None:
+    '''
+    Test that modifying copied frame locals preserves a live class namespace.
+    '''
+
+    from beartype._util.func.utilfuncframe import (
+        get_frame_locals,
+        get_frame_or_none,
+    )
+
+    def modify_caller_locals() -> None:
+        caller_locals = get_frame_locals(get_frame_or_none())
+        caller_locals.update(marker='modified', injected='unexpected')
+
+    class ClassScope:
+        marker = 'original'
+        modify_caller_locals()
+
+    assert ClassScope.marker == 'original'
+    assert ClassScope.__dict__.get('injected') is None
+
+
 def test_get_frame_parent_object_or_none() -> None:
     '''
     Test the

@@ -16,7 +16,6 @@ from beartype._data.typing.datatyping import (
     LexicalScope,
     # TypeException,
 )
-from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 # from beartype._util.cache.func.utilcachefunc import callable_cached
 from typing import Optional
 
@@ -101,7 +100,7 @@ def get_type_locals(cls: type) -> LexicalScope:
 
     Design
     ------
-    This getter currently reduces to a (mostly) trivial one-liner returning
+    This getter currently reduces to a trivial one-liner returning
     ``cls.__dict__`` and has thus been defined mostly just for orthogonality
     with the comparable
     :func:`beartype._util.func.utilfuncscope.find_func_locals_frame` getter.
@@ -169,83 +168,6 @@ def get_type_locals(cls: type) -> LexicalScope:
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
 
-    #FIXME: Report this issue to the CPython issue tracker when time permits.
-    #So, probably never. Convincing anyone that this isn't a @beartype issue is
-    #likely to be an exercise in QA futility. *sigh*
-    # Unsafe frozen dictionary of attributes directly defined by this class.
-    #
-    # Note that this dictionary:
-    # * Is actually an instance of the builtin C-based "mappingproxy" type,
-    #   which explicitly prohibits attribute assignment and is thus effectively
-    #   frozen: e.g.,
-    #       >>> class MuhClass: ...
-    #       >>> MuhClass.__dict__['ugh'] = 3
-    #       TypeError: 'mappingproxy' object does not support item assignment
-    # * Unsafely contains the __new__() dunder method for classes explicitly
-    #   defining that method. Ideally, including that method in the returned
-    #   dictionary would be safe. Unfortunately, it isn't. Even recent versions
-    #   of CPython appear to suffer an extremely subtle issue with respect to
-    #   PEP 435-compliant "enum.Enum" subclasses nested inside other arbitrary
-    #   classes when those subclasses define one or more methods annotated by
-    #   PEP 484-compliant stringified forward references: e.g.,
-    #       from beartype import beartype
-    #       import enum
-    #
-    #       class Outer:
-    #           @beartype
-    #           class Inner(enum.Enum):
-    #               ONE = 3
-    #
-    #               def muh_method(self, muh_str: 'str') -> str:
-    #                   return 'Guh! ' + muh_str
-    #
-    #       print(Outer.__new__)
-    #       Outer()
-    #
-    #   ...which first prints and then raises:
-    #       <function Enum.__new__ at 0x7f1466536090>
-    #       Traceback (most recent call last):
-    #         File "/home/leycec/tmp/mopy.py", line 51, in <module>
-    #           Outer()
-    #           ~~~~~^^
-    #       TypeError: Enum.__new__() missing 1 required positional argument:
-    #       'value'
-    #
-    #   In other words, @beartype somehow magically replaces the Outer.__new__()
-    #   dunder method by the Outer.Inner.__new__() dunder method! Except...
-    #   @beartype *IS NEVER DOING THAT*. CPython itself is doing that. Why?
-    #   Unclear. The low-level issue appears to concern the eval() builtin,
-    #   which @beartype calls to resolve the PEP 484-compliant stringified
-    #   forward reference annotating the Outer.Inner.muh_method() method. By
-    #   default, this low-level getter naively returns a dictionary containing
-    #   a key-value pair encapsulating the Outer.Inner.__new__() dunder method,
-    #   which the higher-level make_scope_forward_decor_curr() factory then
-    #   folds into the local scope it dynamically computes for the
-    #   Outer.Inner.muh_method() method, like so:
-    #       type_locals = get_type_locals(cls_curr)
-    #       func_locals.update(type_locals)
-    #
-    #   The even higher-level _resolve_hint_pep484_ref_str() resolver then
-    #   passes that scope to the eval() function, like so:
-    #       hint_resolved = eval(hint, scope_forward)
-    #
-    #   That eval() call then appears to dangerously perform the Outer.__new__()
-    #   dunder method replacement described above. Why? No idea. Filtering out
-    #   *ALL* "__new__" attributes from the dictionary returned by this getter
-    #   suffices to resolve this issue. That is thus what we do -- despite no
-    #   one actually understanding this issue.
-    #
-    #   Good luck convincing anyone that that is an issue outside @beartype.
-    #   It's *NOT* @beartype's fault. It just looks like it. A *LOT* like it.
-    type_locals_unsafe = cls.__dict__
-
-    # Safe frozen dictionary of attributes directly defined by this class,
-    # filtering out *ALL* unsafe "__new__" dunder attributes as detailed above.
-    type_locals_safe: LexicalScope = FrozenDict({
-        key: value
-        for key, value in type_locals_unsafe.items()
-        if key != '__new__'
-    })
-
-    # Return this frozen dictionary.
-    return type_locals_safe
+    # Return all attributes, including "__new__". Callers merging these into
+    # another scope must copy that scope before modifying it (issue #707).
+    return cls.__dict__  # type: ignore[return-value]
