@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 # from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    MappingStrToAny,
     # TypeException,
 )
 # from beartype._util.cache.func.utilcachefunc import callable_cached
@@ -93,9 +93,9 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
 #  entries to some sane threshold.
 #* Decorator this getter by that decorator. *sigh*
 # @callable_cached_lru
-def get_type_locals(cls: type) -> LexicalScope:
+def get_type_locals(cls: type) -> MappingStrToAny:
     '''
-    **Local scope** (i.e., dictionary mapping from the name to value of each
+    **Local scope** (i.e., mapping from the name to value of each
     attribute directly declared by that class) for the passed class.
 
     Design
@@ -157,7 +157,7 @@ def get_type_locals(cls: type) -> LexicalScope:
 
     Returns
     -------
-    LexicalScope
+    Mapping[str, object]
         Local scope for this class.
 
     Raises
@@ -170,4 +170,4 @@ def get_type_locals(cls: type) -> LexicalScope:
 
     # Return all attributes, including "__new__". Callers merging these into
     # another scope must copy that scope before modifying it (issue #707).
-    return cls.__dict__  # type: ignore[return-value]
+    return cls.__dict__
