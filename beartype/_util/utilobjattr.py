@@ -207,7 +207,8 @@ def get_object_attr_name_to_value(
           permitting this getter to return meaningful values for properties
           (which is good). Callers explicitly disabling this parameter *must*
           explicitly catch and handle any possible exception a property could
-          raise, which... is *all* of them in the worst case.
+          raise, which... is *all* of them, in the worst case. Not recommended,
+          but occasionally necessary. The perfidious darkness of Python is big.
 
         Defaults to :data:`True`.
     obj : object
@@ -470,12 +471,12 @@ def get_object_method_name_to_value(obj: object, **kwargs) -> DictStrToAny:
     )
 
 
-def get_object_nonmethod_name_to_value(obj: object, **kwargs) -> DictStrToAny:
+def get_object_uncallable_name_to_value(obj: object, **kwargs) -> DictStrToAny:
     '''
     Dictionary mapping from the name to **explicit value** (i.e., value
     retrieved *without* implicitly calling the :func:`property`-decorated method
     implementing this attribute if this attribute is a property) of each
-    non-method attribute bound to the passed object.
+    uncallable attribute bound to the passed object.
 
     Parameters
     ----------
@@ -487,17 +488,18 @@ def get_object_nonmethod_name_to_value(obj: object, **kwargs) -> DictStrToAny:
 
     Caveats
     -------
-    **This getter intentionally includes uncallable methods.** This includes
-    most C-based method descriptors, most of which are uncallable depending on
-    the version of the active Python interpreter. Why? Because some of these
-    method descriptors are actually C extension-specific unbound property method
+    **This getter intentionally includes uncallable methods,** despite
+    intentionally excluding callable methods. Uncallable methods include most
+    C-based method descriptors, most of which are uncallable depending on the
+    version of the active Python interpreter. Since some of these method
+    descriptors are actually C extension-specific unbound property method
     descriptors describing properties semantically equivalent to non-method
-    attributes. Python. It do be like that.
+    attributes, these descriptors are included. Python. It do be like that.
 
     Returns
     -------
     DictStrToAny
-        Dictionary mapping from the name to explicit value of each non-method
+        Dictionary mapping from the name to explicit value of each uncallable
         bound to the passed object.
 
     See Also

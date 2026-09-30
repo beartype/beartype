@@ -879,8 +879,17 @@ def get_hint_pep_origin_or_none(hint: Hint) -> HintOrNone:
     # Return this hint's origin object if any *OR* "None" otherwise.
     return getattr(hint, '__origin__', None)
 
-# ....................{ GETTERS ~ origin : type            }....................
+# ....................{ GETTERS ~ origin                   }....................
 #FIXME: Unit test us up, please.
+#FIXME: Refactor as follows:
+#* Rename to get_hint_pep_origin_hint() for disambiguity.
+#* Rename get_hint_pep_origin_type_or_none() to
+#  get_hint_pep_origin_hint_or_none() for disambiguity.
+#* Revise return annotation to:
+#      ) -> Hint:
+#* Revise return annotation for get_hint_pep_origin_hint_or_none to:
+#      ) -> Optional[Hint]:
+#* Revise docstrings accordingly.
 def get_hint_pep_origin_type(
     # Mandatory parameters.
     hint: Hint,
@@ -1072,7 +1081,7 @@ def get_hint_pep_origin_type_or_none(
     # Return this origin type.
     return hint_origin
 
-
+# ....................{ GETTERS ~ origin : isinstanceable  }....................
 def get_hint_pep_origin_type_isinstanceable(hint: Hint) -> type:
     '''
     **Isinstanceable origin type** (i.e., class passable as the second argument

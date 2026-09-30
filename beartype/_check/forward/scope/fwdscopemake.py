@@ -268,6 +268,7 @@ def make_scope_forward_decor_curr(
     #crude hack kinda suffices for the average case, this is what we're rolling
     #with for the moment as a temporary expedient. So much awfulness! Ohnoes...
     elif isinstance(decoratee, type):
+        # print(f'Detected class decoratee {repr(decoratee)}!')
         return make_scope_forward_caller_external(
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
@@ -467,6 +468,7 @@ def make_scope_forward_decor_curr(
             # lexical scopes for parent types of this type (including the root
             # decorated type) are *ALL* irrelevant.
             type_locals = get_type_locals(cls_curr)
+            # print(f'Nested type {cls_curr} locals: {type_locals}')
 
             # Forcefully merge this type scope into the current local scope,
             # implicitly overwriting any locals of the same name. Class

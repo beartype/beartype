@@ -13,7 +13,7 @@ constants are commonly inspected (and thus expected) by external automation.
 
 # ....................{ TODO                               }....................
 #FIXME: Consider significantly expanding the above module docstring, assuming
-#Sphinx presents this module in its generated frontmatter.
+#Zensical presents this module in its generated frontmatter.
 
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -31,7 +31,7 @@ constants are commonly inspected (and thus expected) by external automation.
 # the safe private "beartype._metaverse" submodule. All other modules and
 # packages (including both standard Python modules and packages as well as the
 # public "beartype.meta" submodule) should be assumed to be unsafe. See the
-# private "formeibeartype._metaverse" submodule for further commentary.
+# private "beartype._metaverse" submodule for further commentary.
 from beartype._metaverse import (
     VERSION as _VERSION,
     VERSION_PARTS as _VERSION_PARTS,

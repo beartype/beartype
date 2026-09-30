@@ -112,11 +112,13 @@ def beartype_type(
 
     # For the unqualified name and value of each direct (i.e., *NOT* indirectly
     # inherited) attribute of this class...
-    for attr_name, attr_value in cls.__dict__.items():  # pyright: ignore[reportGeneralTypeIssues]
+    for attr_name, attr_value in cls.__dict__.items():  # pyright: ignore
+        # print(f'Introspecting "{cls.__name__}.{attr_name}": {repr(attr_value)}')
+
         # If this attribute is...
         if (
-            # True only if this attribute is directly beartypeable (e.g., is either
-            # a function, class, or builtin method descriptor).
+            # True only if this attribute is directly beartypeable (e.g., is
+            # either a function, class, or builtin method descriptor).
             isinstance(attr_value, TYPES_BEARTYPEABLE) and
             # It is *NOT* the case that...
             #
@@ -172,7 +174,15 @@ def beartype_type(
                 not attr_value.__qualname__.startswith(cls.__qualname__)
             )
         ):
-            # print(f'Decorating {repr(cls)} attribute "{attr_name}"...')
+            # if attr_name == 'muh_method':
+            #     continue
+            # if attr_name != 'muh_method':
+            #     continue
+            # if attr_name != '__new__':
+            #     continue
+            # if attr_name == '__new__':
+            #     continue
+            # print(f'Decorating {repr(cls)} attribute "{attr_name}" value {repr(attr_value)}...')
 
             # This attribute decorated with type-checking configured by this
             # configuration if *NOT* already decorated.
@@ -186,7 +196,7 @@ def beartype_type(
                 # Safely replace this undecorated attribute with this decorated
                 # attribute.
                 set_type_attr(cls, attr_name, attr_value_beartyped)
-                # print(f'Decorated {repr(cls)} attribute "{attr_name}".')
+                # print(f'Decorated {repr(cls)} attribute "{attr_name}"!')
             # Else, this decorated attribute is the same as the original
             # attribute, implying that @beartype refused to decorate this
             # attribute with type-checking (e.g., due to this attribute being

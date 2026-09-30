@@ -191,6 +191,9 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         self._hint_sign = get_hint_pep_sign_or_none(hint)
 
         # ..................{ ORIGIN                         }..................
+        #FIXME: *NOPE*. The get_hint_pep_origin_type_or_none() getter returns
+        #non-types and is thus fundamentally unsafe. Call the higher-level
+        #get_hint_pep_origin_type_isinstanceable() getter instead, please.
         # Type originating this hint if any *OR* "None" otherwise (i.e., if this
         # hint originates from *NO* type).
         self._origin_type = get_hint_pep_origin_type_or_none(  # type: ignore[assignment]
@@ -212,6 +215,10 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
                 if (
                     # This hint is a type *AND*...
                     isinstance(hint, type) and
+                    #FIXME: Overly specific and thus non-ideal. Ideally, we
+                    #instead want to test whether this type is isinstanceable.
+                    #Notably, replace this specific test with this general test:
+                    #   is_type_isinstanceable(hint)
                     # This type is unsubscripted.
                     #
                     # Note that types are subscriptable in edge cases. However,

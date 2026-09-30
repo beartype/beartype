@@ -137,6 +137,7 @@ class BeartypeCallDecorDataABC(BeartypeCallDataABC):
         exception_cls: TypeException = BeartypeDecorHintForwardRefException,
         exception_prefix: str = '',
     ) -> Hint:
+        # print(f'Resolving PEP 484 forward reference {repr(hint)} under {self}...')
 
         # Avoid circular import dependencies.
         from beartype._check.forward.fwdresolve import (

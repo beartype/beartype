@@ -30,7 +30,7 @@ def test_get_object_attr_name_to_value() -> None:
     from beartype._util.utilobjattr import (
         get_object_attr_name_to_value,
         get_object_method_name_to_value,
-        get_object_nonmethod_name_to_value,
+        get_object_uncallable_name_to_value,
     )
     from beartype._util.text.utiltextidentifier import is_dunder
     from pytest import raises
@@ -217,7 +217,7 @@ def test_get_object_attr_name_to_value() -> None:
     # Assert that this getter returns the expected dictionary of non-method
     # attributes when passed this object *WITHOUT* a predicate. Note that
     # similar caveats apply as above.
-    of_fever_nonmethods_actual = get_object_nonmethod_name_to_value(of_fever)
+    of_fever_nonmethods_actual = get_object_uncallable_name_to_value(of_fever)
     assert (
         OF_FEVER_NONMETHOD_NAME_TO_VALUE.items() <=
         of_fever_nonmethods_actual.items()
