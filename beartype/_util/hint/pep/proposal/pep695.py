@@ -22,38 +22,24 @@ This private submodule is *not* intended for importation by downstream callers.
 #        type local_alias = ...
 #        die_if_unbearable('lolwut', local_alias)  # <-- raises an exception
 #
-#The reasons are obscure. Very well. CPython's current implementation of local
-#type aliases is probably very buggy. An upstream issue describing this
-#bugginess should be submitted. When doing so, please publicly declare that PEP
-#695 appears to have been poorly tested. As evidence, note that PEP 695 itself
-#advises use of the following idiom:
-#    # A type alias that includes a forward reference
-#    type AnimalOrVegetable = Animal | "Vegetable"
+#Local names bound later in the enclosing function are captured as local cells.
+#Our module-global proxy workaround cannot initialize those cells, so alias
+#evaluation before the local binding still raises "NameError". This follows
+#normal lexical scoping rather than a defect in PEP 695:
+#    https://docs.python.org/3/reference/executionmodel.html#resolution-of-names
 #
-#*THAT DOES NOT ACTUALLY WORK AT RUNTIME.* Nobody tested that. This is why I
-#facepalm. Notably, PEP 604-compliant new-style unions prohibit strings. They
-#probably shouldn't, but they've *ALWAYS* behaved that way, and nobody's updated
-#them to behave more intelligently -- probably because doing so would require
-#updating the isinstance() builtin (which also accepts PEP 604-compliant
-#new-style unions) to behave more intelligiently and ain't nobody goin' there:
-#e.g.,
-#
-#    $ python3.12
-#    >>> type AnimalOrVegetable = "Animal" | "Vegetable"
-#    >>> AnimalOrVegetable.__value__
-#    Traceback (most recent call last):
-#      Cell In[3], line 1
-#        AnimalOrVegetable.__value__
-#      Cell In[2], line 1 in AnimalOrVegetable
-#        type AnimalOrVegetable = "Animal" | "Vegetable"
-#    TypeError: unsupported operand type(s) for |: 'str' and 'str'
+#Separately, accessing an alias's "__value__" evaluates its expression. Unquoted
+#forward references resolve after their targets are bound, as specified by:
+#    https://peps.python.org/pep-0695/#lazy-evaluation
+#Quoted union members (e.g., "Animal | 'Vegetable'") raise "TypeError" during
+#value evaluation because runtime unions do not support string operands:
+#    https://github.com/python/cpython/issues/90015
 #
 #For further details, see the comment below prefixed by:
-#           # If that module fails to define this alias as a global variable,
+#           # If this attribute is the same as that of the prior iteration of
 #
-#Since CPython is unlikely to resolve its bugginess anytime soon, it inevitably
-#falls to @beartype to resolve this. Thankfully, @beartype *CAN* resolve this.
-#Unthankfully, doing so will require @beartype to implement a new PEP
+#Supporting these local forward references requires a workaround that respects
+#local bindings. One possible approach to investigate is a new PEP
 #695-specific AST transform from the "beartype.claw" subpackage augmenting *ALL*
 #PEP 695-compliant local type aliases (so, probably *ALL* type aliases
 #regardless of scope for simplicity) as follows:
@@ -799,31 +785,23 @@ def iter_hint_pep695_unsubbed_forwardrefs(
             # define this attribute as a global variable of that module. In this
             # case, raise an exception.
             #
-            # Note that this should *NEVER* happen. Of course, this frequently
-            # happens. Specifically, this happens whenever the caller defines a
-            # callable defining type alias as a local variable containing one or
-            # more unquoted relative forward reference to user-defined classes
-            # that have yet to be defined. Why? Because CPython's low-level
-            # C-based implementation of PEP 695-compliant type aliases currently
-            # fails to properly resolve unquoted relative forward references
-            # defined in a local rather than global scope: e.g.,
+            # This can happen when an alias captures a local name that has not
+            # yet been bound in its enclosing function: e.g.,
             #    >>> def foo():
             #    ...     type bar = wut
             #    ...     globals()['wut'] = str
             #    ...     print(bar.__value__)
-            #    ...     class wut(object): pass  # <-- causes madness; WTF!?!?
+            #    ...     class wut: pass
             #    >>> foo()
             #    NameError: cannot access free variable 'wut' where it is not
             #    associated with a value in enclosing scope
             #
-            # Why does this matter? Because the abstract syntax tree (AST)
-            # transformation implemented by "beartype.claw" import hooks
-            # dynamically declares the objects that these forward references
-            # refer. Due to deficiencies [read: bugs] in CPython's type alias
-            # implementation, local type aliases remain unable to resolve either
-            # global *OR* local referees that are defined dynamically. Ergo, we
-            # have no recourse but to detect this edge case and raise a
-            # human-readable exception advising the caller with recommendations.
+            # The later class declaration makes "wut" local throughout foo().
+            # Updating module globals cannot fill that captured local cell.
+            # Evaluating the alias after the class definition succeeds, just
+            # as calling an ordinary closure that reads "wut" would. This is
+            # normal lexical scoping, but our global proxy workaround does not
+            # support it. Detect the repeated failure and advise the caller.
             if hint_ref_name == hint_ref_name_prev:
                 raise BeartypeDecorHintPep695Exception(
                     f'{exception_prefix}PEP 695 local type alias "{hint_name}" '
