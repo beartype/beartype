@@ -16,14 +16,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorabc import TypeHint
 from beartype.door._cls.nonpep.doornonpepclass import ClassTypeHint
-from beartype.door._cls.doorsubbed import (
-    SubscriptedTypeHint as SubscriptedTypeHint)
+from beartype.door._cls.doorsubbed import SubscriptedTypeHint
 from beartype.roar import BeartypeDoorIsSubhintException
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genfind import (
     find_hint_pep484585_generic_args_full)
 
 # ....................{ SUBCLASSES                         }....................
-class GenericTypeHint(TypeHint):
+class GenericTypeHint(SubscriptedTypeHint):
     '''
     **Generic type hint wrapper** (i.e., high-level object encapsulating a
     low-level subclass of the :pep:`484`-compliant :class:`typing.Generic`
@@ -37,31 +36,53 @@ class GenericTypeHint(TypeHint):
         # print(f'Entering GenericTypeHint._is_subhint_branch({self}, {branch})...')
 
         # ..................{ NOOP                           }..................
-        # If the unsubscripted type originating this generic is *NOT* a subclass
-        # of the unsubscripted type originating that branch, this generic is
-        # *NOT* a subhint of that branch. In this case, return false.
-        if not issubclass(self._origin_type, branch._origin_type):
+        # If it is the case that *NEITHER*...
+        if not (
+            # This generic and the passed branch are commensurable (i.e.,
+            # encapsulated by type hint wrappers supporting comparison between a
+            # generic and a possibly non-generic type hint) *NOR*...
+            isinstance(branch, _GENERIC_IS_SUBHINT_TYPES_COMMENSURABLE) and
+            # The unsubscripted type originating this generic is a subclass of
+            # the unsubscripted type originating that branch.
+            issubclass(self._origin_type, branch._origin_type)
+        ):
+            # Then either:
+            # * This generic and that subscripted branch are incommensurable
+            #   (i.e., encapsulated by incomparable type hint wrappers *NOT*
+            #   supporting comparison between a generic and a possibly
+            #   non-generic type hint), this generic *CANNOT* be a subhint of
+            #   that branch.
+            # * The unsubscripted type originating this generic is *NOT* a
+            #   subclass of the unsubscripted type originating the passed
+            #   branch, this generic *CANNOT* be a subhint of that branch.
+            #
+            # In either case, immediately return false.
             # print(f'{self._origin_type} not subclass of {branch._origin_type})!')
             return False
-        # Else, the unsubscripted type originating this generic is a subclass
-        # of the unsubscripted type originating that branch. Note, however, that
-        # this does *NOT* imply this generic to be a subhint of that branch.
-        # The issubclass() builtin ignores parametrizations and thus returns
-        # false positives for parametrized generics: e.g.,
+        # Else, it is the case that both:
+        # * This generic and that branch are commensurable.
+        # * The unsubscripted type originating this generic is a subclass of the
+        #   unsubscripted type originating that branch.
+        #
+        # Note, however, that this does *NOT* imply this generic to be a subhint
+        # of that branch. The issubclass() builtin ignores parametrizations and
+        # thus returns false positives for parametrized generics: e.g.,
         #     >>> from typing import Generic, TypeVar
         #     >>> T = TypeVar('T')
         #     >>> class MuhGeneric(Generic[T]): pass
         #     >>> issubclass(MuhGeneric, MuhGeneric[int])
         #     True
         #
-        # Clearly, the unsubscripted generic "MuhGeneric" is a superhint
-        # (rather than a subhint) of the subscripted generic
-        # "MuhGeneric[int]". Further introspection is needed.
+        # Clearly, the unsubscripted generic "MuhGeneric" is a superhint (rather
+        # than a subhint) of the subscripted generic "MuhGeneric[int]". Further
+        # introspection is thus needed.
         #
-        # If that branch is unsubscripted, assume that branch to have been
-        # subscripted by "Any". Since *ANY* child hint subscripting this hint is
-        # necessarily a subhint of "Any", this hint is a subhint of that branch.
-        # Return true immediately.
+        # If that branch is either unsubscripted *OR* only subscripted by one or
+        # more ignorable child hints, assume that branch to have been
+        # subscripted by the PEP 484-compliant "typing.Any" catch-all singleton.
+        # Since *ANY* child hint subscripting this generic is necessarily a
+        # subhint of "Any", this generic *MUST* be a subhint of that branch.
+        # Ergo, return true immediately.
         #
         # Note that this this common edge case implicitly handles comparison of
         # this generic against an unsubscripted simple class encapsulated by the
@@ -71,25 +92,23 @@ class GenericTypeHint(TypeHint):
         elif branch._is_args_ignorable:
             # print(f'is_subhint_branch({self}, {branch} [unsubscripted])')
             return True
-        # Else, that branch is subscripted.
-        #
-        # If this generic and that subscripted branch are incommensurable (i.e.,
-        # encapsulated by incomparable type hint wrappers *NOT* supporting
-        # comparison between a generic and a possibly non-generic type hint),
-        # this generic is *NOT* a subhint of that branch. In this case, return
-        # false.
-        elif not isinstance(branch, _IS_SUBHINT_TYPES_COMMENSURABLE):
-            # print(f'{branch.__class__} not in {_IS_SUBHINT_TYPES_COMMENSURABLE})!')
-            return False
-        # Else, this generic and that subscripted branch are commensurable
-        # (i.e., encapsulated by comparable type hint wrappers supporting
-        # comparison between a generic and a possibly non-generic type hint).
-        #
-        # By elimination, that branch *MUST* now be encapsulated by either:
+        # Else, that branch is subscripted and thus encapsulated by either:
         # * If that branch is also a PEP 484- or 585-compliant user-defined
         #   subscripted generic, "GenericTypeHint".
         # * Else, that branch *MUST* be a PEP 484- or 585-compliant subscripted
-        #   non-generic (e.g., "list[int]", "collections.abc.Sized[str]").
+        #   non-generic (e.g., "list[int]", "collections.abc.Sized[str]"). In
+        #   this case, "SubscriptedTypeHint".
+
+        # Validate that that branch is, in fact, encapsulated by one of those
+        # concrete "TypeHint" subclasses.
+        assert isinstance(
+            branch, _GENERIC_SUBBED_IS_SUBHINT_TYPES_COMMENSURABLE), (
+            f'{branch} neither '
+            f'PEP 484 or 585 subscripted generic '
+            f'(i.e., "beartype.door.GenericTypeHint" instance) nor '
+            f'PEP 484 or 585 subscripted non-generic '
+            f'(i.e., "beartype.door.SubscriptedTypeHint" instance).'
+        )
 
         # ..................{ LOCALS                         }..................
         # Human-readable substring prefixing exception messages raised below.
@@ -102,14 +121,14 @@ class GenericTypeHint(TypeHint):
         # transitively subscripted by the tuple of all child hints directly
         # subscripting this generic and all pseudo-superclasses of this generic.
         #
-        # Deciding this tuple requires a highly non-trivial algorithm
-        # performing a recursive depth-first search (DFS) over the
-        # pseudo-superclass hierarchy implied by this generic. Doing so greedily
-        # replaces in the original tuple as many abstract PEP 484-compliant type
-        # variables (i.e., "typing.TypeVar" objects) as there are concrete child
-        # hints directly subscripting this generic. Doing so effectively
+        # Deciding this tuple requires a non-trivial algorithm performing a
+        # recursive depth-first search (DFS) over the pseudo-superclass
+        # hierarchy implied by this generic. Doing so greedily replaces in the
+        # original tuple as many abstract PEP-compliant type parameters (e.g.,
+        # PEP 484-compliant "typing.TypeVar" objects) as there are concrete
+        # child hints directly subscripting this generic. Doing so effectively
         # "bubbles up" these concrete children up the class hierarchy into the
-        # "empty placeholders" established by the type variables transitively
+        # "empty placeholders" established by the type parameters transitively
         # subscripting all pseudo-superclasses of this generic.  # <-- lolwat
         #
         # Note that this getter is memoized for efficiency and thus
@@ -190,12 +209,13 @@ class GenericTypeHint(TypeHint):
         # ..................{ GENERIC                        }..................
         # In this case...
         else:
-            # print(f'Comparing against subscripted generic {branch}...')
+            # print(f'Comparing subscripted generics {self} and {branch}...')
 
             # Validate that that branch is, in fact, a subscripted generic.
             assert isinstance(branch, GenericTypeHint), (
                 f'{branch} not PEP 484 or 585 subscripted generic '
-                f'(i.e., "beartype.door.GenericTypeHint" instance).')
+                f'(i.e., "beartype.door.GenericTypeHint" instance).'
+            )
 
             # Tuple of the zero or more child hints transitively subscripting
             # that generic branch. See above for further details.
@@ -265,17 +285,38 @@ class GenericTypeHint(TypeHint):
         return True
 
 # ....................{ PRIVATE ~ constants                }....................
-_IS_SUBHINT_TYPES_COMMENSURABLE = (
-    # Generics are commensurable with other generics, clearly.
+_GENERIC_SUBBED_IS_SUBHINT_TYPES_COMMENSURABLE = (
+    # Subscripted generics are commensurable with other subscripted generics.
     GenericTypeHint,
 
-    # Generics are also commensurable with subscripted type hints: e.g.,
+    # Subscripted generics are also commensurable with subscripted type hints:
+    # e.g.,
     #     >>> from collections.abc import Sequence
     #     >>> class MuhSequence[T](Sequence[T]): pass
     #     >>> is_subhint(MuhSequence[int], Sequence[int])
     #     True
     SubscriptedTypeHint,
+)
+'''
+Tuple of all **commensurable subscripted generic types** (i.e., concrete
+:class:`.TypeHint` subclasses such that the
+:meth:`GenericTypeHint._is_subhint_branch` method returns :data:`False` if this
+current generic is subscripted *and* the passed ``branch`` parameter is not an
+instance of a type in this tuple).
 
+When passed a ``branch`` parameter that is *not* an instance of a type in this
+tuple, the :meth:`GenericTypeHint._is_subhint_branch` method returns
+:data:`False` due to that parameter being **incommensurable** (i.e.,
+incomparable) with a :pep:`484`- or :pep:`585`-compliant subscripted generic.
+'''
+
+
+_GENERIC_IS_SUBHINT_TYPES_COMMENSURABLE = (
+    # Generics are commensurable with:
+    # * Other generics, clearly.
+    # * Subscripted type hints (regardless of whether the current generic is
+    #   subscripted or unsubscripted).
+    _GENERIC_SUBBED_IS_SUBHINT_TYPES_COMMENSURABLE) + (
     # Generics are also commensurable with unsubscripted simple classes: e.g.,
     #     >>> from collections.abc import Sequence
     #     >>> class MuhSequence[T](Sequence[T]): pass
@@ -287,10 +328,11 @@ _IS_SUBHINT_TYPES_COMMENSURABLE = (
 Tuple of all **commensurable generic types** (i.e., concrete :class:`.TypeHint`
 subclasses such that the :meth:`GenericTypeHint._is_subhint_branch` method
 returns :data:`False` if the passed ``branch`` parameter is *not* an instance of
-a type in this tuple).
+a type in this tuple, regardless of whether this current generic is subscripted
+or unsubscripted).
 
 When passed a ``branch`` parameter that is *not* an instance of a type in this
 tuple, the :meth:`GenericTypeHint._is_subhint_branch` method returns
 :data:`False` due to that parameter being **incommensurable** (i.e.,
-incomparable) with a :pep:`484`-compliant :class:`typing.Generic`.
+incomparable) with a :pep:`484`- or :pep:`585`-compliant generic.
 '''

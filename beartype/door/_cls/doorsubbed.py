@@ -18,6 +18,8 @@ from beartype.door._cls.doorabc import TypeHint
 from beartype.roar import BeartypeDoorPepArgsLenException
 from beartype._data.hint.sign.datahintsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
+from beartype._data.hint.sign.datahintsignset import (
+    HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_ZERO_OR_MORE)
 
 # ....................{ SUBCLASSES                         }....................
 class SubscriptedTypeHint(TypeHint):
@@ -72,6 +74,17 @@ class SubscriptedTypeHint(TypeHint):
             If this hint is *not* subscripted by the expected number of child
             hints.
         '''
+
+        # If the sign uniquely identifying this hint is in the set of all signs
+        # uniquely identifying hints subscripted by one or more child hints,
+        # this hint is already necessarily subscripted by the expected number of
+        # child hints. In this case, silently reduce to a noop.
+        if self._hint_sign in (
+            HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_ZERO_OR_MORE):
+            return
+        # Else, the sign uniquely identifying this hint is *NOT* in the set of
+        # all signs uniquely identifying hints subscripted by one or more child
+        # hints.
 
         # Argument length range (i.e., "range" object covering the minimum and
         # maximum number of child type hints that may subscript this low-level
@@ -153,6 +166,45 @@ class SubscriptedTypeHint(TypeHint):
             raise BeartypeDoorPepArgsLenException(exception_message)
         # Else, this hint was subscripted by the expected number of child hints.
 
+    # ..................{ PRIVATE ~ testers                  }..................
+    def _is_equal(self, other: TypeHint) -> bool:
+
+        # ..................{ NOOP                           }..................
+        # If *ALL* of the child hints subscripting both of these hints are
+        # ignorable, return true only if both of these hints originate from the
+        # same low-level type.
+        if self._is_args_ignorable and other._is_args_ignorable:
+            return self._origin_type == other._origin_type
+        # Else, one or more of the child type hints subscripting either of these
+        # hints are unignorable.
+        #
+        # If either...
+        elif (
+            # These hints are identified by differing signs *OR*...
+            self._hint_sign is not other._hint_sign or
+            # These hints are subscripted by differing numbers of child hints...
+            len(self._args_wrapped_tuple) != len(other._args_wrapped_tuple)
+        ):
+            # Then these hints are unequal.
+            return False
+        # Else, these hints share the same sign and number of child hints.
+
+        # ..................{ RETURN                         }..................
+        # For each pair of child hints subscripting the same index of both of
+        # these parent hints...
+        for this_child, that_child in zip(
+            self._args_wrapped_tuple, other._args_wrapped_tuple):
+            # If this child hint is unequal to that child hint, this parent hint
+            # is unequal to that parent hint. In this case, return false.
+            if this_child != that_child:
+                return False
+            # Else, this child hint is equal to that child hint, implying this
+            # parent hint *COULD* be equal to that parent hint. Continue to the
+            # next child hint to decide.
+
+        # Return true as a safe fallback.
+        return True
+
     # ..................{ PRIVATE ~ getters                  }..................
     def _get_hash(self) -> int:
 
@@ -182,41 +234,3 @@ class SubscriptedTypeHint(TypeHint):
 
         # Hash this wrapper by this hashable.
         return hash(wrapper_hashable)
-
-    # ..................{ PRIVATE ~ testers                  }..................
-    def _is_equal(self, other: TypeHint) -> bool:
-
-        # If *ALL* of the child hints subscripting both of these parent hints
-        # are ignorable, return true only if these parent hints both originate
-        # from the same low-level type.
-        if self._is_args_ignorable and other._is_args_ignorable:
-            return self._origin_type == other._origin_type
-        # Else, one or more of the child type hints subscripting either of these
-        # parent hints are unignorable.
-        #
-        # If either...
-        elif (
-            # These hints have differing signs *OR*...
-            self._hint_sign is not other._hint_sign or
-            # These parent hints are subscripting by a differing number of child
-            # hints...
-            len(self._args_wrapped_tuple) != len(other._args_wrapped_tuple)
-        ):
-            # Then these hints are unequal.
-            return False
-        # Else, these hints share the same sign and number of child hints.
-
-        # For each pair of child hints subscripting the same index of these
-        # parent hints...
-        for this_child, that_child in zip(
-            self._args_wrapped_tuple, other._args_wrapped_tuple):
-            # If this child hint is unequal to that child hint, this parent hint
-            # is unequal to that parent hint. In this case, return false.
-            if this_child != that_child:
-                return False
-            # Else, this child hint is equal to that child hint, implying this
-            # parent hint *COULD* be equal to that parent hint. Continue to the
-            # next child hints to decide.
-
-        # Return true as a safe fallback.
-        return True

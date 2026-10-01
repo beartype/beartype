@@ -19,6 +19,53 @@ from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                              }....................
 @skip_unless_package('coverage')
+def test_coverage_beartype_claw_generator_branch(
+    tmp_path: 'pathlib.Path',
+) -> None:
+    '''A hooked, fully consumed generator has no missing exit branch.'''
+    from os import environ, pathsep
+    from pathlib import Path
+    from subprocess import run
+    from sys import executable
+    import beartype
+
+    package_dir = tmp_path / 'pkg'
+    package_dir.mkdir()
+    (package_dir / '__init__.py').write_text(
+        'from collections.abc import Iterator\n'
+        'from beartype import beartype\n'
+        '\n'
+        '@beartype\n'
+        'def values() -> Iterator[int]:\n'
+        '    for value in (1, 2):\n'
+        '        yield value\n'
+    )
+    (tmp_path / 'run.py').write_text(
+        'from beartype.claw import beartype_package\n'
+        'beartype_package("pkg")\n'
+        'from pkg import values\n'
+        'assert list(values()) == [1, 2]\n'
+    )
+
+    # Make the checkout available when the child process runs outside it.
+    beartype_parent = str(Path(beartype.__file__).resolve().parent.parent)
+    child_env = dict(environ)
+    child_env['PYTHONPATH'] = pathsep.join(filter(None, (
+        beartype_parent, child_env.get('PYTHONPATH', ''))))
+    run(
+        (executable, '-m', 'coverage', 'run', '--branch', '--source=pkg',
+         'run.py'),
+        cwd=tmp_path, env=child_env, check=True, capture_output=True,
+        text=True,
+    )
+    run(
+        (executable, '-m', 'coverage', 'report', '--fail-under=100'),
+        cwd=tmp_path, env=child_env, check=True, capture_output=True,
+        text=True,
+    )
+
+
+@skip_unless_package('coverage')
 def test_coverage_beartype_claw(tmp_path: 'pathlib.Path') -> None:
     '''
     Integration test validating that :func:`beartype.claw` import hooks

@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doormeta import _TypeHintMetaclass
+from beartype.door._cls._doorcache import typehint_method_cached_by_repr
 from beartype.door._cls._doortest import die_unless_typehint
 from beartype.door._func.doorfunc import (
     die_if_unbearable,
@@ -25,7 +26,6 @@ from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.typing.datatypingport import T_Hint
-from beartype._util.cache.func.utilcachefunc import method_cached_arg_by_id
 from beartype._util.cache.func.utilcacheproperty import (
     get_property_var_name,
     property_cached,
@@ -191,6 +191,9 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         self._hint_sign = get_hint_pep_sign_or_none(hint)
 
         # ..................{ ORIGIN                         }..................
+        #FIXME: *NOPE*. The get_hint_pep_origin_type_or_none() getter returns
+        #non-types and is thus fundamentally unsafe. Call the higher-level
+        #get_hint_pep_origin_type_isinstanceable() getter instead, please.
         # Type originating this hint if any *OR* "None" otherwise (i.e., if this
         # hint originates from *NO* type).
         self._origin_type = get_hint_pep_origin_type_or_none(  # type: ignore[assignment]
@@ -206,13 +209,36 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             # Fallback to euphemistically claiming that this hint originates
             # from either...
             self._origin_type = (
-                # If this hint is itself a type, itself. Ugh.
+                # This hint itself if this hint is an unsubscripted type,
+                # detected when...
                 hint
-                if isinstance(hint, type) else
-                # Else, this hint is *NOT* itself a type. In this case, the root
-                # superclass of *ALL* classes. Doing so guarantees sanity when
-                # this instance variable is passed as either the first or second
-                # parameters to the issubclass() builtin elsewhere. More "Ugh."
+                if (
+                    # This hint is a type *AND*...
+                    isinstance(hint, type) and
+                    #FIXME: Overly specific and thus non-ideal. Ideally, we
+                    #instead want to test whether this type is isinstanceable.
+                    #Notably, replace this specific test with this general test:
+                    #   is_type_isinstanceable(hint)
+                    # This type is unsubscripted.
+                    #
+                    # Note that types are subscriptable in edge cases. However,
+                    # such types tend to be neither isinstanceable nor
+                    # issubclassable and are thus unusable. This includes:
+                    # * PEP 585-compliant hints under Python <= 3.10: e.g.,
+                    #       >>> Annotated[list[str], 'ugh'].__origin__
+                    #       list[str]  # <-- really weird, but okay
+                    #       >>> isinstance(list[str], type)
+                    #       True  # <-- actually, wait. this is super messed-up!
+                    #       >>> issubclass(list, list[str]) TypeError:
+                    #       issubclass() argument 2 cannot be a parameterized
+                    #       generic  # <-- what a friggin' surprise
+                    not get_hint_pep_childs(hint)
+                ) else
+                # Else, this hint is *NOT* itself a unsubscripted type. In this
+                # case, the root superclass of *ALL* classes. Doing so
+                # guarantees sanity when this instance variable is passed as
+                # either the first or second parameters to the issubclass()
+                # builtin elsewhere. More "Ugh."
                 object
             )
 
@@ -221,37 +247,6 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         # all other instance variables. Deferring this call allows subclass
         # _make_args() implementations to access these instance variables.
         self._args = self._make_args()
-
-    # ..................{ DUNDERS                            }..................
-    def __repr__(self) -> str:
-        '''
-        Memoized machine-readable representation of this type hint wrapper.
-
-        This dunder method is memoized for efficiency.
-        '''
-
-        # If a representation has already been precomputed by a prior call of
-        # this dunder method, efficiently reuse and return that representation.
-        if self._repr is not None:
-            return self._repr
-        # Else, this is the first call of this dunder method.
-
-        # Unqualified name of the concrete subclass wrapping this hint.
-        type_basename = get_object_type_basename(self)
-        # print('hint_wrapper_basename: {hint_wrapper_basename}')
-
-        # If this concrete subclass is currently private, deviously hide this
-        # implementation detail by defaulting to the unqualified name of this
-        # public "TypeHint" superclass instead.
-        if type_basename[0] == '_':
-            type_basename = 'TypeHint'
-        # Else, this concrete subclass is public.
-
-        # Cache this representation for subsequent lookup.
-        self._repr = f'{type_basename}({repr(self._hint)})'
-
-        # Return this representation.
-        return self._repr
 
     # ..................{ DUNDERS ~ hash                     }..................
     def __hash__(self) -> int:
@@ -301,11 +296,65 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         # Trivially hash "TypeHint" wrappers by the type hints they wrap, yo!
         return hash(self._hint)
 
+    # ..................{ DUNDERS ~ repr                     }..................
+    def __repr__(self) -> str:
+        '''
+        Possibly non-unique machine-readable representation of this type hint
+        wrapper.
+
+        This dunder method is internally memoized for efficiency.
+
+        Caveats
+        -------
+        **The higher-level private** :meth:`_repr_unique` **property should be
+        accessed in lieu of this lower-level dunder method if string uniqueness
+        is required** (e.g., for memoization purposes). The strings returned by
+        this dunder method are well-known to be non-unique across a proper
+        subset of type hints, especially type parameters. For example,
+        :pep:`484`-compliant type variables ambiguously that share the same name
+        *always* share the same :func:`repr` string, even if those type
+        variables differ in other parameters with which they were instantiated:
+
+        .. code-block:: pycon
+
+           >>> from typing import TypeVar
+           >>> repr(TypeVar('T'))
+           'T'  # <-- makes sense
+           >>> repr(TypeVar('T', bound=int))
+           'T'  # <-- *MAKES NO SENSE WTTTTTTTTTTF PYTHON*
+        '''
+
+        # If a representation has already been precomputed by a prior call of
+        # this dunder method, efficiently reuse and return that representation.
+        if self._repr is not None:
+            return self._repr
+        # Else, this is the first call of this dunder method.
+
+        # Unqualified name of the concrete subclass wrapping this hint.
+        type_basename = get_object_type_basename(self)
+        # print('hint_wrapper_basename: {hint_wrapper_basename}')
+
+        # If this concrete subclass is currently private, deviously hide this
+        # implementation detail by defaulting to the unqualified name of this
+        # public "TypeHint" superclass instead.
+        if type_basename[0] == '_':
+            type_basename = 'TypeHint'
+        # Else, this concrete subclass is public.
+
+        # Cache this representation for subsequent lookup.
+        self._repr = f'{type_basename}({repr(self._hint)})'
+
+        # Return this representation.
+        return self._repr
+
     # ..................{ DUNDERS ~ compare : equals         }..................
     # Note that we intentionally avoid typing this method as returning
     # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
     # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
-    @method_cached_arg_by_id
+    @typehint_method_cached_by_repr(
+        # Return the builtin "NotImplemented" type when erroneously passed an
+        # object that is *NOT* a type hint wrapper. See __eq__() for details.
+        is_if_not_typehint_return_notimplemented=True)
     def __ne__(self, other: object) -> bool:
         '''
         :data:`True` only if the low-level type hint wrapped by this wrapper is
@@ -327,21 +376,25 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             :data:`True` only if this type hint is unequal to that other hint.
         '''
 
-        # Return either...
-        return (
-            # If that object is a type hint wrapper, defer to the
-            # subclass-specific implementation of this test;
-            not self._is_equal(other)
-            if isinstance(other, TypeHint) else
-            # Else, that object is *NOT* a type hint wrapper. See __eq__().
-            NotImplemented
-        )
+        # Return the unmemoized subclass-specific implementation of this test.
+        #
+        # Note that the @typehint_method_cached_by_repr decorator explicitly
+        # guarantees that hint to be a type hint wrapper at this point.
+        return not self._is_equal(other)  # type: ignore[arg-type]
 
 
     # Note that we intentionally avoid typing this method as returning
     # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
     # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
-    @method_cached_arg_by_id
+    @typehint_method_cached_by_repr(
+        # Return the builtin "NotImplemented" type when erroneously passed an
+        # object that is *NOT* a type hint wrapper. Doing so defers to either:
+        # * If the class of that object defines a similar __eq__() method
+        #   supporting the "TypeHint" API, that method.
+        # * Else, Python's builtin C-based fallback equality comparator that
+        #   merely compares whether two objects are identical (i.e., share the
+        #   same object ID).
+        is_if_not_typehint_return_notimplemented=True)
     def __eq__(self, other: object) -> bool:
         '''
         :data:`True` only if the low-level type hint wrapped by this wrapper is
@@ -363,21 +416,11 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             :data:`True` only if this type hint is equal to that other hint.
         '''
 
-        # Return either...
-        return (
-            # If the passed object is also a type hint wrapper, defer to the
-            # subclass-specific implementation of this test passed that wrapper;
-            self._is_equal(other)
-            if isinstance(other, TypeHint) else
-            # Else, the passed object is *NOT* a type hint wrapper. In this
-            # case, defer to either:
-            # * If the class of that object defines a similar __eq__() method
-            #   supporting the "TypeHint" API, that method.
-            # * Else, Python's builtin C-based fallback equality comparator that
-            #   merely compares whether two objects are identical (i.e., share
-            #   the same object ID).
-            NotImplemented
-        )
+        # Return the unmemoized subclass-specific implementation of this test.
+        #
+        # Note that the @typehint_method_cached_by_repr decorator explicitly
+        # guarantees that hint to be a type hint wrapper at this point.
+        return self._is_equal(other)  # type: ignore[arg-type]
 
 
     def _is_equal(self, other: 'TypeHint') -> bool:
@@ -888,18 +931,14 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         return is_bearable(obj=obj, hint=self._hint, conf=conf)  # pyright: ignore
 
     # ..................{ TESTERS ~ subhint                  }..................
-    # Note that the @method_cached_arg_by_id rather than @callable_cached
+    # Note that the @typehint_method_cached_by_repr rather than @callable_cached
     # decorator is *ABSOLUTELY* required here. Why? Because the @callable_cached
     # decorator internally caches the passed "other" argument as the key of a
     # dictionary. Subsequent calls to this method when passed the same argument
     # lookup that "other" in that dictionary. Since dictionary lookups
     # implicitly call other.__eq__() to resolve key collisions *AND* since the
     # TypeHint.__eq__() method calls TypeHint.is_subhint(), infinite recursion!
-
-    #FIXME: *EXTREMELY UNSAFE.* Object IDs are *NOT* globally unique
-    #identifiers. Refactor this immediately into a
-    #@method_cached_arg_by_hint_repr decorator instead, please.
-    @method_cached_arg_by_id
+    @typehint_method_cached_by_repr()
     def is_subhint(self, other: 'TypeHint') -> bool:
         '''
         :data:`True` only if this type hint is a **subhint** of the passed type
@@ -924,12 +963,12 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         '''
         # print(f'[TypeHint.is_subhint] Comparing {self} to {other}...')
 
-        # If the passed object is *NOT* a type hint wrapper, raise an exception.
-        die_unless_typehint(other)
-        # Else, that object is a type hint wrapper.
-
         # Return true only if this hint is a subhint of that hint (according to
         # each subclass-specific implementation of this test).
+        #
+        # Note that the @typehint_method_cached_by_repr decorator explicitly
+        # validates that hint to be a type hint wrapper by calling:
+        #     die_unless_typehint(other)
         return self._is_subhint(other)
 
 
@@ -1074,6 +1113,8 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
             Further details.
         '''
         # print(f'Entering is_subhint_branch({self}, {branch})...')
+        # print(f'self._origin_type: {repr(self._origin_type)}')
+        # print(f'branch._origin_type: {repr(branch._origin_type)}')
 
         # If the type originating this hint is *NOT* a subclass of the type
         # originating that branch, this hint *CANNOT* be a subhint of that
@@ -1187,6 +1228,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         attribute.
         '''
 
+        # World end dominator in the far haze, one-liner! *wat*
         return frozenset(self._args_wrapped_tuple)
 
 
@@ -1248,16 +1290,21 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         '''
         # print(f'[_is_args_ignorable] {self}._args_wrapped_tuple: {self._args_wrapped_tuple}')
 
-        # Return true only if either...
-        return (
-            # This hint is unsubscripted *OR*...
-            not self._args or
-            # All child hints subscripting this parent hint are ignorable.
-            all(
-                hint_child.is_ignorable
-                for hint_child in self._args_wrapped_tuple
-            )
-        )
+        # If this hint is unsubscripted, return true immediately.
+        if not self._args:
+            return True
+        # Else, this hint is subscripted.
+
+        # For each child hint subscripting this parent hint...
+        for hint_child in self._args_wrapped_tuple:
+            # If this child hint is unignorable, return false immediately.
+            if not hint_child.is_ignorable:
+                return False
+            # Else, this child hint is ignorable.
+        # Else, all child hints are ignorable.
+
+        # Return true. The truth of Plato's QA cave has now been discerned.
+        return True
 
 # ....................{ HINTS                              }....................
 CollectionTypeHints = Collection[TypeHint]

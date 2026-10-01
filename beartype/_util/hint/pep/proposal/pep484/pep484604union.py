@@ -204,7 +204,7 @@ def is_hint_pep604(hint: object) -> TypeIs[Hint]:
 @callable_cached
 def make_hint_pep484604_union(hint_childs: SequenceHints) -> Hint:
     '''
-    :pep:`604`- or :pep:`484`-compliant union type hint synthesized from the
+    :pep:`484`- or :pep:`604`-compliant union type hint synthesized from the
     passed sequence of two or more PEP-compliant type hints if this sequence
     contains two or more items, the one PEP-compliant type hint in this sequence
     if this sequence contains only one item, *or* raise an exception otherwise
@@ -283,7 +283,7 @@ def make_hint_pep484604_union(hint_childs: SequenceHints) -> Hint:
     # If *ANY* exception whatsoever is raised, one or more of these items are
     # PEP 604-noncompliant. In this case, silently ignore this exception in
     # favour of falling back to a PEP 484-compliant old-style union below. We
-    # don't make breaky. We only fix breaky, people.
+    # don't make breaky. We only fix breaky. Throw your hands up in the air!
     except Exception:
         pass
 

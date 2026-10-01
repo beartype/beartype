@@ -1316,7 +1316,7 @@ objects annotating variadic parameters with syntax resembling
 # type-checker, ignore false positives complaining that these types are not
 # types.
 if TYPE_CHECKING:
-    class HintPep646TypeVarTupleType(object): pass
+    class HintPep646TypeVarTuplePackedType(object): pass
     class HintPep646692UnpackedType(object): pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker.
@@ -1324,11 +1324,12 @@ if TYPE_CHECKING:
 # If the active Python interpreter targets at least Python >= 3.11 and thus
 # supports PEP 646, define these types properly. *sigh*
 elif IS_PYTHON_AT_LEAST_3_11:
-    HintPep646TypeVarTupleType = _typing.TypeVarTuple
+    HintPep646TypeVarTuplePackedType = _typing.TypeVarTuple
     '''
-    C-based type of all :pep:`646`-compliant **type variable tuples** (i.e.,
-    low-level C-based :obj:`typing.TypeVarTuple` objects) if the active Python
-    interpreter targets Python >= 3.11 *or* :class:`.UnavailableType` otherwise.
+    C-based type of all :pep:`646`-compliant **packed type variable tuples**
+    (i.e., low-level C-based :obj:`typing.TypeVarTuple` objects) if the active
+    Python interpreter targets Python >= 3.11 *or* :class:`.UnavailableType`
+    otherwise.
 
     This type is a version-agnostic generalization of the standard
     :class:`typing.TypeVarTuple` type available only under Python >= 3.11.
@@ -1336,7 +1337,7 @@ elif IS_PYTHON_AT_LEAST_3_11:
 
 
     HintPep646692UnpackedType = type(
-        _typing.Unpack[HintPep646TypeVarTupleType('Ts')])
+        _typing.Unpack[HintPep646TypeVarTuplePackedType('Ts')])
     '''
     Pure-Python type of all :pep:`646`- and :pep:`692`-compliant **unpacked
     type hints** (i.e., parent hints expanding the single child hints
@@ -1362,16 +1363,29 @@ elif IS_PYTHON_AT_LEAST_3_11:
 # Else, the active Python interpreter targets Python < 3.11 and thus fails to
 # support PEP 646. In this case, define these types as placeholders. *sigh*
 else:
-    HintPep646TypeVarTupleType = UnavailableType
+    HintPep646TypeVarTuplePackedType = UnavailableType
     HintPep646692UnpackedType = UnavailableType
 
 
-HintPep484612646TypeArgPackedTypes = (
-    _typing.TypeVar, HintPep612ParamSpecType, HintPep646TypeVarTupleType)
+HintPep484612TypeArgUnpackedTypes = (_typing.TypeVar, HintPep612ParamSpecType)
+'''
+Tuple of all **unambiguously unpacked type parameters types** (i.e., types of
+:pep:`484`-compliant type variables and pep:`612`-compliant parameter
+specifications, both of which are necessarily unpacked and thus unambiguously
+unpacked).
+
+This tuple intentionally excludes the :class:`.HintPep646692UnpackedType` type,
+which is the ambiguous type of both pep:`646`-compliant unpacked type variable
+tuples *and* :pep:`692`-compliant unpacked typed dictionaries.
+'''
+
+
+HintPep484612646TypeArgPackedTypes = HintPep484612TypeArgUnpackedTypes + (
+    HintPep646TypeVarTuplePackedType,)
 '''
 Tuple of all **packed type parameters types** (i.e., types of
 :pep:`484`-compliant type variables, pep:`612`-compliant parameter
-specifications, and :pep:`646`-compliant type variable tuples).
+specifications, and :pep:`646`-compliant packed type variable tuples).
 '''
 
 # ....................{ TYPES ~ hint : pep : 749           }....................

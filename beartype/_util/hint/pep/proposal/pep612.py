@@ -13,11 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep612Exception
-from beartype.typing import (
-    Callable,
-    Optional,
-    Union,
-)
 from beartype._cave._cavefast import (
     EllipsisType,
     HintPep612ParamSpecType,
@@ -51,6 +46,11 @@ from beartype._util.func.arg.utilfuncargtest import (
     is_func_arg_name_variadic_positional,
 )
 from beartype._data.kind.datakindiota import SENTINEL
+from collections.abc import Callable
+from typing import (
+    Optional,
+    Union,
+)
 
 # ....................{ GETTERS                            }....................
 def get_hint_pep612_paramspec(
@@ -553,7 +553,8 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     # Type hint subscripting the other variadic parameter if any *OR* the
     # sentinel placeholder otherwise.
-    other_arg_hint = call_curr.decoratee_annotations.get(other_arg_name, SENTINEL)
+    other_arg_hint = call_curr.decoratee_annotations.get(
+        other_arg_name, SENTINEL)
 
     # If the other variadic parameter is unannotated, raise an exception.
     if other_arg_hint is SENTINEL:
@@ -592,6 +593,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     # other variadic positional or keyword parameter type hint required by PEP
     # 612 to be paired with the passed hint, raise an exception.
 
+    # ....................{ RETURN                         }....................
     # Reduce *ALL* PEP 612 type hints to an arbitrary ignorable type hint.
     return object
 

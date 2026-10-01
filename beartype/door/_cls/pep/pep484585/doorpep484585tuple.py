@@ -60,19 +60,6 @@ class TupleFixedTypeHint(SubscriptedTypeHint):
         # Return these child hints.
         return args
 
-    # ..................{ PRIVATE ~ raisers                  }..................
-    def _die_unless_args_len_range(self, args: tuple) -> None:
-
-        # Silently reduce to a noop. As the superclass method docstring
-        # suggests, the superclass implementation of this method applies *ONLY*
-        # to hints subscripted by a fixed number of child hints. However,
-        # fixed-length tuple hints are subscripted by a variable number of child
-        # hints. Since *ALL* possible variations in length constitute valid
-        # fixed-length tuple hints -- even the empty fixed-length tuple hint
-        # (i.e., "tuple[()]"). That leaves this validator with *NOTHING* to
-        # validate. Ergo, we intentionally reduce this validator to a noop.
-        pass
-
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
 

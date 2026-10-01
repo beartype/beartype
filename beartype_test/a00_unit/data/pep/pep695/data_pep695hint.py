@@ -250,3 +250,34 @@ generic type hints recursively subscripted by:
   of this same alias, inducing recursion via an indirect chain of aliases.
 * This same alias.
 '''
+
+
+# ....................{ ALIASES ~ circular                 }....................
+type AliasCircularSelf = AliasCircularSelf
+'''
+Type alias circularly aliasing *only* itself.
+
+Unlike a **recursive type alias** (e.g., ``type Tree = int | list[Tree]``),
+which conveys meaningful semantics, this alias conveys *no* semantics
+whatsoever: unwrapping this alias yields only this alias, endlessly.
+'''
+
+
+type AliasCircularA = AliasCircularB
+'''
+Type alias circularly aliasing itself through :data:`.AliasCircularB`.
+
+See Also
+--------
+:data:`.AliasCircularSelf`
+'''
+
+
+type AliasCircularB = AliasCircularA
+'''
+Type alias circularly aliasing itself through :data:`.AliasCircularA`.
+
+See Also
+--------
+:data:`.AliasCircularSelf`
+'''

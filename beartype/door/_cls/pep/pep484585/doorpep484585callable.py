@@ -154,15 +154,6 @@ class CallableTypeHint(SubscriptedTypeHint):
         # Return these child hints.
         return args
 
-    # ..................{ PRIVATE ~ raisers                  }..................
-    def _die_unless_args_len_range(self, args: tuple) -> None:
-
-        # Silently reduce to a noop. As the superclass method docstring
-        # suggests, the superclass implementation of this method applies *ONLY*
-        # to hints subscripted by a fixed number of child hints. However,
-        # callable hints are subscripted by a variable number of child hints.
-        pass
-
     # ..................{ PRIVATE ~ properties               }..................
     @property
     @property_cached

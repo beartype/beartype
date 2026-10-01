@@ -4,20 +4,19 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`-, :pep:`612`-, and :pep:`646`-compliant **type parameter
-utilities** (i.e., low-level callables generically handling :pep:`484`-compliant
-type variables, pep:`612`-compliant parameter specifications, and
-:pep:`646`-compliant type variable tuples).
+Project-wide **type parameter utilities** (i.e., low-level callables generically
+handling :pep:`484`-compliant type variables, pep:`612`-compliant parameter
+specifications, and :pep:`646`-compliant type variable tuples).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484612646Exception
-from beartype.typing import TypeVar
 from beartype._cave._cavefast import (
-    HintPep646692UnpackedType,
+    HintPep484612TypeArgUnpackedTypes,
     HintPep484612646TypeArgPackedTypes,
+    HintPep646692UnpackedType,
 )
 from beartype._data.hint.sign.datahintsigns import (
     HintSignPep646TypeVarTupleUnpacked)
@@ -31,10 +30,11 @@ from beartype._data.typing.datatypingport import (
     TypeIs,
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
+from typing import TypeVar
 
 # ....................{ RAISERS                            }....................
 #FIXME: Unit test us up, please.
-def die_unless_hint_pep484612646_typearg_unpacked(
+def die_unless_hint_typearg_unpacked(
     # Mandatory parameters.
     hint: Pep484612646TypeArgUnpacked,
 
@@ -51,7 +51,7 @@ def die_unless_hint_pep484612646_typearg_unpacked(
     Parameters
     ----------
     hint : Pep484612646TypeArgUnpacked
-        Type hint to be validated.
+        Type parameter to be validated.
     exception_cls : Type[Exception], default: BeartypeDecorHintPep484612646Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep484612646Exception`.
@@ -66,7 +66,7 @@ def die_unless_hint_pep484612646_typearg_unpacked(
     '''
 
     # If this hint is *NOT* an unpacked type parameter, raise an exception.
-    if not is_hint_pep484612646_typearg_unpacked(hint):  # pyright: ignore
+    if not is_hint_typearg_unpacked(hint):  # pyright: ignore
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception subclass.')
         assert isinstance(exception_prefix, str), (
@@ -83,7 +83,7 @@ def die_unless_hint_pep484612646_typearg_unpacked(
 
 
 #FIXME: Unit test us up, please.
-def die_unless_hint_pep484612646_typearg_packed(
+def die_unless_hint_typearg_packed(
     # Mandatory parameters.
     hint: Pep484612646TypeArgPacked,
 
@@ -114,7 +114,7 @@ def die_unless_hint_pep484612646_typearg_packed(
     '''
 
     # If this hint is *NOT* a packed type parameter, raise an exception.
-    if not is_hint_pep484612646_typearg_packed(hint):  # pyright: ignore
+    if not is_hint_typearg_packed(hint):  # pyright: ignore
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception subclass.')
         assert isinstance(exception_prefix, str), (
@@ -131,14 +131,19 @@ def die_unless_hint_pep484612646_typearg_packed(
     # Else, this hint is an unpacked type parameter.
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
-def is_hint_pep484612646_typearg_unpacked(
-    hint: Hint) -> TypeIs[Pep484612646TypeArgUnpacked]:  # pyright: ignore
+def is_hint_typearg_unpacked(hint: Hint) -> TypeIs[Pep484612646TypeArgUnpacked]:  # pyright: ignore
     '''
     :data:`True` only if the passed type hint is an **unpacked type parameter**
     (i.e., :pep:`484`-compliant type variable, :pep:`612`-compliant unpacked
     parameter specification, or :pep:`646`-compliant unpacked type variable
     tuple).
+
+    Caveats
+    -------
+    **This tester should usually be called in lieu of calling the lower-level**
+    :func:`.is_hint_typearg_packed` **tester.** Why? Because type
+    parameters are *always* specified in unpacked rather than packed form.
+    Packed type parameters are thus useless for most intents and purposes.
 
     Parameters
     ----------
@@ -152,9 +157,10 @@ def is_hint_pep484612646_typearg_unpacked(
     '''
 
     # ....................{ PEP 484                        }....................
-    # If this hint is a PEP 484-compliant type variable, this hint is a type
-    # parameter. In this case, immediately return true.
-    if isinstance(hint, TypeVar):
+    # If this hint is a PEP 484-compliant type variable *OR* PEP 612-compliant
+    # parameter specification, this hint is an unpacked type parameter by
+    # definition. In this case, immediately return true.
+    if isinstance(hint, HintPep484612TypeArgUnpackedTypes):
         return True
     # Else, this hint is *NOT* a PEP 484-compliant type variable. This hint
     # could still be a PEP 646-compliant unpacked type variable tuple, though.
@@ -180,13 +186,20 @@ def is_hint_pep484612646_typearg_unpacked(
     return hint_sign is HintSignPep646TypeVarTupleUnpacked
 
 
-#FIXME: Unit test us up, please.
-def is_hint_pep484612646_typearg_packed(
-    hint: Hint) -> TypeIs[Pep484612646TypeArgPacked]:  # pyright: ignore
+def is_hint_typearg_packed(hint: Hint) -> TypeIs[Pep484612646TypeArgPacked]:  # pyright: ignore
     '''
     :data:`True` only if the passed type hint is a **packed type parameter**
     (i.e., :pep:`484`-compliant type variable, pep:`612`-compliant parameter
     specification, or :pep:`646`-compliant type variable tuples).
+
+    Caveats
+    -------
+    **The higher-level** :func:`.is_hint_typearg_packed` **tester
+    should typically be called instead.** Why? Because type parameters are
+    *always* specified in unpacked rather than packed form. Packed type
+    parameters are thus useless for most intents and purposes. In fact, this
+    tester only exists because the low-level ``__parameters__`` dunder attribute
+    only lists type parameters in packed rather than unpacked form.
 
     Parameters
     ----------
@@ -203,7 +216,7 @@ def is_hint_pep484612646_typearg_packed(
     return isinstance(hint, HintPep484612646TypeArgPackedTypes)
 
 # ....................{ GETTERS                            }....................
-def get_hint_pep484612646_typearg_packed_name(
+def get_hint_typearg_packed_name(
     # Mandatory parameters.
     hint: Pep484612646TypeArgPacked,
 
@@ -219,7 +232,7 @@ def get_hint_pep484612646_typearg_packed_name(
     Parameters
     ----------
     hint : Pep484612646TypeArgPacked
-        Type parameter to be inspected.
+        Packed type parameter to be inspected.
     exception_cls : Type[Exception], default: BeartypeDecorHintPep484612646Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
@@ -230,16 +243,16 @@ def get_hint_pep484612646_typearg_packed_name(
     Returns
     -------
     str
-        Unqualified basename of this type parameter.
+        Unqualified basename of this packed type parameter.
 
     Raises
     ------
     exception_cls
-        If this object is *not* a type parameter.
+        If this object is *not* a packed type parameter.
     '''
 
     # If this hint is *NOT* a packed type parameter, raise an exception.
-    die_unless_hint_pep484612646_typearg_packed(
+    die_unless_hint_typearg_packed(
         hint=hint,  # pyright: ignore
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
@@ -251,7 +264,7 @@ def get_hint_pep484612646_typearg_packed_name(
     return hint.__name__  # type: ignore[union-attr]
 
 # ....................{ PACKERS                            }....................
-def pack_hint_pep484612646_typearg_unpacked(
+def pack_hint_typearg_unpacked(
     # Mandatory parameters.
     hint: Pep484612646TypeArgUnpacked,
 
@@ -270,17 +283,16 @@ def pack_hint_pep484612646_typearg_unpacked(
 
     * A :pep:`484`-compliant type variable, this function returns the same type
       variable unmodified.
-    * A pep:`612`-compliant unpacked parameter specification, this function
-      returns the lower-level packed parameter specification underlying this
-      unpacked parameter specification (e.g., from ``*P`` to merely ``P``).
-    * A pep:`646`-compliant unpacked type variable tuple, this function
-      returns the lower-level packed type variable tuple underlying this
-      unpacked type variable tuple (e.g., from ``*Ts`` to merely ``Ts``).
+    * A pep:`612`-compliant parameter specification, this function returns the
+      same parameter unmodified.
+    * A pep:`646`-compliant unpacked type variable tuple, this function returns
+      the lower-level packed type variable tuple underlying this unpacked type
+      variable tuple (e.g., from ``*Ts`` to merely ``Ts``).
 
     Parameters
     ----------
     hint : Pep484612646TypeArgPacked
-        Type parameter to be inspected.
+        Unpacked type parameter to be inspected.
     exception_cls : Type[Exception], default: BeartypeDecorHintPep484612646Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
@@ -299,24 +311,26 @@ def pack_hint_pep484612646_typearg_unpacked(
         If this object is *not* a type parameter.
     '''
 
+    # ....................{ VALIDATE                       }....................
     # If this hint is *NOT* an unpacked type parameter, raise an exception.
-    die_unless_hint_pep484612646_typearg_unpacked(
+    die_unless_hint_typearg_unpacked(
         hint=hint,  # pyright: ignore
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
     # Else, this hint is an unpacked type parameter.
 
-    # If this hint is a PEP 484-compliant type variable, this type parameter's
-    # packed and unpacked forms are equivalent. In this case, return this type
-    # variable as is.
-    if isinstance(hint, TypeVar):
+    # ....................{ NOOP                           }....................
+    # If this hint is a PEP 484-compliant type variable *OR* PEP 612-compliant
+    # parameter specification, this type parameter's packed and unpacked forms
+    # are equivalent. In this case, return this type parameter as is.
+    if isinstance(hint, HintPep484612TypeArgUnpackedTypes):
         return hint
-    # Else, this hint is *NOT* a PEP 484-compliant type variable. By
-    # elimination, this hint *MUST* be either:
-    # * A PEP 612-compliant unpacked parameter specification.
-    # * A PEP 646-compliant unpacked type variable tuple.
+    # Else, this hint is neither a PEP 484-compliant type variable *NOR* PEP
+    # 612-compliant parameter specification. By elimination, this hint *MUST*
+    # now be a PEP 646-compliant unpacked type variable tuple.
 
+    # ....................{ UNPACK                         }....................
     # Tuple of the zero or more child hints subscripting this unpacked type
     # parameter.
     hint_args = get_hint_pep_childs(hint)
@@ -335,12 +349,13 @@ def pack_hint_pep484612646_typearg_unpacked(
     hint_packed = hint_args[0]
 
     # If this hint is *NOT* a packed type parameter, raise an exception.
-    die_unless_hint_pep484612646_typearg_packed(
+    die_unless_hint_typearg_packed(
         hint=hint_packed,  # pyright: ignore
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
     # Else, this hint is an packed type parameter.
 
+    # ....................{ RETURN                         }....................
     # Return this packed type parameter.
     return hint_packed

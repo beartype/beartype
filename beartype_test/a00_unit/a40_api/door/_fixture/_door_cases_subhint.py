@@ -75,8 +75,8 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
-        T_sequence,
-        T_int_or_str,
+        T_bound_sequence,
+        T_constraint_int_or_str,
     )
     from collections.abc import (
         Collection as CollectionABC,
@@ -205,19 +205,19 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (List[Any], List[int], True),
         (List[Any], List[str], True),
 
-        # ..................{ PEP 484 ~ argless : bare       }..................
-        # PEP 484-compliant unsubscripted type hints, which are necessarily
-        # subhints of themselves.
-        (list, list, True),
-        (list, List, True),
+        # ..................{ PEP 484 ~ argless : number     }..................
+        # Blame Guido.
+        (bool, int, True),
 
-        # PEP 484-compliant unsubscripted sequence type hints.
-        (Sequence, List, False),
-        (Sequence, list, False),
-        (List, Sequence, True),
-        (list, Sequence, True),
-        (list, SequenceABC, True),
-        (list, CollectionABC, True),
+        # PEP 484-compliant implicit numeric tower, which we explicitly and
+        # intentionally do *NOT* comply with. Floats are not integers. Notably,
+        # floats *CANNOT* losslessly represent many integers and are thus
+        # incompatible in general.
+        (float, int, False),
+        (complex, int, False),
+        (complex, float, False),
+        (int, float, False),
+        (float, complex, False),
 
         # ..................{ PEP 484 ~ argless : type       }..................
         # PEP 484-compliant argumentless abstract base classes (ABCs).
@@ -234,32 +234,64 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
 
         # ..................{ PEP 484 ~ argless : typevar    }..................
         # PEP 484-compliant type variables.
-        (list, T_sequence, True),
-        (T_sequence, list, False),
-        (int, T_int_or_str, True),
-        (str, T_int_or_str, True),
-        (list, T_int_or_str, False),
-        (Union[int, str], T_int_or_str, True),
-        (Union[int, str, None], T_int_or_str, False),
-        (T, T_sequence, False),
-        (T_sequence, T, True),
-        (T_sequence, Any, True),
-        (Any, T, True),  # Any is compatible with an unconstrained TypeVar
-        (Any, T_sequence, True),
 
-        # ..................{ PEP 484 ~ argless : number     }..................
-        # Blame Guido.
-        (bool, int, True),
+        # "Any" is a subhint of any type variable, including both unbound and
+        # bound type variables.
+        (Any, T, True),
+        (Any, T_bound_sequence, True),
 
-        # PEP 484-compliant implicit numeric tower, which we explicitly and
-        # intentionally do *NOT* comply with. Floats are not integers. Notably,
-        # floats *CANNOT* losslessly represent many integers and are thus
-        # incompatible in general.
-        (float, int, False),
-        (complex, int, False),
-        (complex, float, False),
-        (int, float, False),
-        (float, complex, False),
+        # Any type variable is also a subhint of "Any", including both unbound
+        # and bound type variables.
+        (T, Any, True),
+        (T_bound_sequence, Any, True),
+
+        # Any type is a subhint of any unbound type variable. The converse is
+        # *NOT* the case, of course.
+        (list, T, True),
+        (T, list, False),
+
+        # Any type is a subhint of any type variable bound to any superclass of
+        # that type. The converse is *NOT* the case.
+        (list, T_bound_sequence, True),
+        (T_bound_sequence, list, False),
+
+        # Any type is a subhint of any type variable constrained to any
+        # superclass of that type. The converse is *NOT* the case.
+        (int, T_constraint_int_or_str, True),
+        (T_constraint_int_or_str, int, False),
+        (str, T_constraint_int_or_str, True),
+        (T_constraint_int_or_str, str, False),
+
+        # An arbitrary bound type variable is a subhint of an arbitrary unbound
+        # type variable. The converse is *NOT* the case.
+        (T_bound_sequence, T, True),
+        (T, T_bound_sequence, False),
+
+        # Types that are *NOT* subhints of the types constraining type variables
+        # are also *NOT* subhints of those type variables.
+        (list, T_constraint_int_or_str, False),
+
+        # Arbitrary PEP-compliant type hint factories subscripted by arbitrary
+        # child hints are subhints of those same factories subscripted by
+        # unbound type variables. The converse is *NOT* the case.
+        (list[int], list[T], True),
+        (list[T], list[int], False),
+
+        # Arbitrary PEP-compliant type hint factories subscripted by arbitrary
+        # child hints are subhints of those same factories subscripted by
+        # type variables constrained by those same child hints and one or more
+        # other arbitrary child hints. The converse is *NOT* the case.
+        (list[int], list[T_constraint_int_or_str], True),
+        (list[T_constraint_int_or_str], list[int], False),
+
+        # Unions comprising the same types to which type variables are
+        # constrained are subhints of those type variables.
+        (Union[int, str], T_constraint_int_or_str, True),
+
+        # Union comprising the same types to which type variables are
+        # constrained as well as one or more unrelated types are *NOT* subhints
+        # of those type variables.
+        (Union[int, str, None], T_constraint_int_or_str, False),
 
         # ..................{ PEP 484 ~ generic              }..................
         # "typing.Generic"-centric tests.
@@ -273,12 +305,12 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Pep484GenericT, Pep484GenericT, True),
         (Pep484GenericT, Pep484GenericT[int], False),
         (Pep484GenericT[int], Pep484GenericT, True),
-        (Pep484GenericT[int], Pep484GenericT[T_sequence], False),
-        (Pep484GenericT[list], Pep484GenericT[T_sequence], True),
+        (Pep484GenericT[int], Pep484GenericT[T_bound_sequence], False),
+        (Pep484GenericT[list], Pep484GenericT[T_bound_sequence], True),
         (Pep484GenericT[list], Pep484GenericT[Sequence], True),
-        (Pep484GenericT[str], Pep484GenericT[T_sequence], True),
+        (Pep484GenericT[str], Pep484GenericT[T_bound_sequence], True),
         (Pep484GenericT[Sequence], Pep484GenericT[list], False),
-        (Pep484GenericT[T_sequence], Pep484GenericT, True),
+        (Pep484GenericT[T_bound_sequence], Pep484GenericT, True),
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize changes above.
@@ -288,12 +320,12 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Pep484GenericTSubclass, Pep484GenericT, True),
         (Pep484GenericTSubclass, Pep484GenericT[int], False),
         (Pep484GenericTSubclass[int], Pep484GenericT, True),
-        (Pep484GenericTSubclass[int], Pep484GenericT[T_sequence], False),
-        (Pep484GenericTSubclass[list], Pep484GenericT[T_sequence], True),
+        (Pep484GenericTSubclass[int], Pep484GenericT[T_bound_sequence], False),
+        (Pep484GenericTSubclass[list], Pep484GenericT[T_bound_sequence], True),
         (Pep484GenericTSubclass[list], Pep484GenericT[Sequence], True),
-        (Pep484GenericTSubclass[str], Pep484GenericT[T_sequence], True),
+        (Pep484GenericTSubclass[str], Pep484GenericT[T_bound_sequence], True),
         (Pep484GenericTSubclass[Sequence], Pep484GenericT[list], False),
-        (Pep484GenericTSubclass[T_sequence], Pep484GenericT, True),
+        (Pep484GenericTSubclass[T_bound_sequence], Pep484GenericT, True),
         (Pep484GenericTSubclassSubclass[T], Pep484GenericT[str], False),
         (Pep484GenericTSubclassSubclass[str], Pep484GenericT[str], True),
         (
@@ -307,12 +339,12 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Pep484GenericSInt, Pep484GenericST, True),
         (Pep484GenericSInt, Pep484GenericST[int, int], False),
         (Pep484GenericSInt[int], Pep484GenericST, True),
-        (Pep484GenericSInt[int], Pep484GenericST[S, T_sequence], False),
-        (Pep484GenericSInt[list], Pep484GenericST[T_sequence, object], True),
+        (Pep484GenericSInt[int], Pep484GenericST[S, T_bound_sequence], False),
+        (Pep484GenericSInt[list], Pep484GenericST[T_bound_sequence, object], True),
         (Pep484GenericSInt[list], Pep484GenericST[Sequence, Any], True),
-        (Pep484GenericSInt[str], Pep484GenericST[T_sequence, S], True),
+        (Pep484GenericSInt[str], Pep484GenericST[T_bound_sequence, S], True),
         (Pep484GenericSInt[Sequence], Pep484GenericST[list, object], False),
-        (Pep484GenericSInt[T_sequence], Pep484GenericST, True),
+        (Pep484GenericSInt[T_bound_sequence], Pep484GenericST, True),
 
         # PEP 484-compliant generic subclasses subclassing exactly two generic
         # superclasses such that:
@@ -354,6 +386,20 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Optional[int], int, False),
         (list, Optional[Sequence], True),
 
+        # ..................{ PEP (484|585) ~ bare           }..................
+        # PEP 484-compliant unsubscripted type hints, which are necessarily
+        # subhints of themselves.
+        (list, list, True),
+        (list, List, True),
+
+        # PEP 484-compliant unsubscripted sequence type hints.
+        (Sequence, List, False),
+        (Sequence, list, False),
+        (List, Sequence, True),
+        (list, Sequence, True),
+        (list, SequenceABC, True),
+        (list, CollectionABC, True),
+
         # ..................{ PEP (484|585) ~ callable       }..................
         # PEP 484-compliant callable type hints.
         (Callable, Callable[..., Any], True),
@@ -380,12 +426,12 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Pep585SequenceTSubbed, Sequence[T], True),
         (Pep585SequenceTSubbed, Sequence[int], False),
         (Pep585SequenceTSubbed[int], Sequence[T], True),
-        (Pep585SequenceTSubbed[int], Sequence[T_sequence], False),
-        (Pep585SequenceTSubbed[list], Sequence[T_sequence], True),
+        (Pep585SequenceTSubbed[int], Sequence[T_bound_sequence], False),
+        (Pep585SequenceTSubbed[list], Sequence[T_bound_sequence], True),
         (Pep585SequenceTSubbed[list], Sequence[Sequence], True),
-        (Pep585SequenceTSubbed[str], Sequence[T_sequence], True),
+        (Pep585SequenceTSubbed[str], Sequence[T_bound_sequence], True),
         (Pep585SequenceTSubbed[Sequence], Sequence[list], False),
-        (Pep585SequenceTSubbed[T_sequence], Sequence[T], True),
+        (Pep585SequenceTSubbed[T_bound_sequence], Sequence[T], True),
 
         # ..................{ PEP (484|585) ~ mapping        }..................
         # PEP 484-compliant mapping type hints.
@@ -483,14 +529,36 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
 
         # ..................{ PEP 586                        }..................
         # PEP 586-compliant type hints.
-        (Literal[7], int, True),
-        (Literal["a"], str, True),
-        (Literal[7, 8, "3"], Union[int, str], True),
-        (Literal[7, 8, "3"], Union[list, int], False),
-        (Literal[True], Union[Literal[True], Literal[False]], True),
+
+        # PEP 586-compliant literal hints are subhints of larger PEP
+        # 586-compliant literal hints subscripted by a superset of the same
+        # child hints subscripting the former. The converse is *NOT* true.
         (Literal[7, 8], Literal[7, 8, 9], True),
+        (Literal[7, 8, 9], Literal[7, 8], False),
+
+        # PEP 586-compliant literal hints are subhints of the types of the child
+        # hints subscripting those literal hints. The converse is *NOT* true.
+        # See the LiteralTypeHint._is_subhint() method for further discussion.
+        (Literal[7], int, True),
         (int, Literal[7], False),
+        (Literal['Gainst the hot season'], str, True),
+        (str, Literal['Gainst the hot season'], False),
+
+        (Literal[7, 8, '3'], Union[int, str], True),
+        (Literal[7, 8, '3'], Union[list, int], False),
+
+        # PEP 586-compliant hints subscripted by one child hint are subhints of
+        # PEP 484-compliant unions subscripted by that some PEP 586-compliant
+        # hints and arbitrary other child hints. The converse is *NOT* true.
+        (Literal[True], Union[Literal[True], Literal[False]], True),
         (Union[Literal[True], Literal[False]], Literal[True], False),
+
+        # PEP 586-compliant hints subscripted by two or more child hints are
+        # subhints of PEP 604-compliant unions subscripted by PEP 586-compliant
+        # hints subscripted by each of those child hints individually (and
+        # arbitrary other child hints). Again, the converse is *NOT* true.
+        (Literal[1, 2], Literal[1] | Literal[2] | Literal[3], True,),
+        (Literal[1] | Literal[2] | Literal[3], Literal[1, 2], False,),
 
         # ..................{ PEP 589                        }..................
         # PEP 589-compliant type hints.
@@ -499,16 +567,43 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         # ..................{ PEP 593                        }..................
         # PEP 593-compliant type hints.
 
-        # Annotated[{type}, ...] <= {type}.
-        (Annotated[int, 'a note'], int, True),
+        # PEP 593-compliant hints subscripted by metahints and arbitrary
+        # metadata are subhints of those same metahints. The converse is *NOT*
+        # the case.
+        (
+            Annotated[int, 'All lovely tales that we have heard or read:'],
+            int,
+            True,
+        ),
+        (
+            int,
+            Annotated[int, "Pouring unto us from the heaven's brink."],
+            False,
+        ),
+        (
+            Annotated[list[int], 'An endless fountain of immortal drink,'],
+            list[int],
+            True,
+        ),
+        (
+            list[int],
+            Annotated[list[int], 'Nor do we merely feel these essences'],
+            False,
+        ),
 
-        # {type} > Annotated[{type}, ...].
-        (int, Annotated[int, 'a note'], False),
+        # PEP 593-compliant unhashable hints subscripted by unhashable metadata
+        # are PEP-compliant and thus still comparable in the expected manner.
+        (Annotated[list[str], []], Annotated[list, []], True,),
 
-        (Annotated[list, True], Annotated[Sequence, True], True),
-        (Annotated[list, False], Annotated[Sequence, True], False),
-        (Annotated[list, 0, 0], Annotated[list, 0], False),  # must have same num args
-        (Annotated[List[int], 'metadata'], List[int], True),
+        # PEP 593-compliant hints subscripted by metahints and arbitrary
+        # metadata are *NOT* subhints of similar PEP 593-compliant hints
+        # subscripted by the same metahints and a differing number of metadata.
+        # In other words, the number of child hints subscripting a PEP
+        # 593-compliant hint is significant for subhint purposes.
+        (Annotated[list, 0, 0], Annotated[list, 0], False,),
+
+        (Annotated[list, True], Annotated[Sequence, True], True,),
+        (Annotated[list, False], Annotated[Sequence, True], False,),
     ]
 
     # ..................{ LISTS ~ cases : version            }..................

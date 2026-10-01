@@ -17,6 +17,7 @@ from beartype.door._cls.doorabc import (
     CollectionTypeHints,
     TypeHint,
 )
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.func.utilcacheproperty import (
     get_property_var_name,
     property_cached,

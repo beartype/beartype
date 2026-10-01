@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep646692Exception
 from beartype._cave._cavefast import (
     HintGenericSubscriptedType,
-    HintPep646TypeVarTupleType,
+    HintPep646TypeVarTuplePackedType,
 )
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import (
@@ -65,7 +65,7 @@ def die_unless_hint_pep646_typevartuple_packed(
     '''
 
     # If this hint is *NOT* a PEP 646-compliant type variable tuple...
-    if not isinstance(hint, HintPep646TypeVarTupleType):
+    if not isinstance(hint, HintPep646TypeVarTuplePackedType):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception type.')
         assert isinstance(exception_prefix, str), (
@@ -365,7 +365,7 @@ def disambiguate_hint_pep646692_unpacked_sign(
     # unpacked type variable tuple.
     #
     # Note this test is fast and thus intentionally performed first.
-    if isinstance(hint_child, HintPep646TypeVarTupleType):
+    if isinstance(hint_child, HintPep646TypeVarTuplePackedType):
         return HintSignPep646TypeVarTupleUnpacked
     # Else, this child hint is *NOT* a PEP 646-compliant unpacked type variable
     # tuple.
@@ -492,8 +492,8 @@ def make_hint_pep646_tuple_unpacked_prefix(hints_child: TupleHints) -> Hint:
 #FIXME: Unit test us up, please. *sigh*
 def make_hint_pep646_tuple_unpacked_subbed(hints_child: TupleHints) -> Hint:
     '''
-    Dynamically create and return a new :pep:`646`-compliant **subscription-based
-    unpacked child tuple hint** (i.e., of the form
+    Dynamically create and return a new :pep:`646`-compliant
+    **subscription-based unpacked child tuple hint** (i.e., of the form
     "typing.Unpack[tuple[{hint_child_child_1}, ..., {hint_child_child_M}]]"
     subscripting a parent tuple hint of the form "tuple[{hint_child_1}, ...,
     typing.Unpack[tuple[{hint_child_child_1}, ..., {hint_child_child_M}]], ...,
@@ -532,7 +532,7 @@ def make_hint_pep646_tuple_unpacked_subbed(hints_child: TupleHints) -> Hint:
 # ....................{ FACTORIES ~ typevartuple           }....................
 #FIXME: Unit test us up, please. *sigh*
 def make_hint_pep646_typevartuple_unpacked_prefix(
-    hint: HintPep646TypeVarTupleType) -> Hint:
+    hint: HintPep646TypeVarTuplePackedType) -> Hint:
     '''
     Dynamically create and return a new :pep:`646`-compliant **prefix-based
     unpacked type variable tuple** (i.e., of the form ``*hint``) prefixing the
@@ -540,7 +540,7 @@ def make_hint_pep646_typevartuple_unpacked_prefix(
 
     Parameters
     ----------
-    hint: HintPep646TypeVarTupleType
+    hint: HintPep646TypeVarTuplePackedType
         Type variable tuple to be unpacked.
 
     Returns
@@ -582,7 +582,7 @@ def make_hint_pep646_typevartuple_unpacked_prefix(
 
 #FIXME: Unit test us up, please. *sigh*
 def make_hint_pep646_typevartuple_unpacked_subbed(
-    hint: HintPep646TypeVarTupleType) -> Hint:
+    hint: HintPep646TypeVarTuplePackedType) -> Hint:
     '''
     Dynamically create and return a new :pep:`646`-compliant
     **subscription-based unpacked type variable tuple** (i.e., of the form
@@ -590,7 +590,7 @@ def make_hint_pep646_typevartuple_unpacked_subbed(
 
     Parameters
     ----------
-    hint: HintPep646TypeVarTupleType
+    hint: HintPep646TypeVarTuplePackedType
         Type variable tuple to be unpacked.
 
     Returns

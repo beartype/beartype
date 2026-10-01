@@ -12,10 +12,15 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep586Exception
 from beartype._data.cls.datacls import TYPES_PEP586_ARG
-from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import TypeException
+from beartype._data.typing.datatypingport import (
+    Hint,
+    TupleHints,
+)
 from beartype._data.hint.sign.datahintsigns import HintSignLiteral
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.text.utiltextjoin import join_types_commaed_or
+from typing import Literal
 
 # ....................{ VALIDATORS                         }....................
 def die_unless_hint_pep586(
@@ -28,7 +33,7 @@ def die_unless_hint_pep586(
 ) -> None:
     '''
     Raise an exception of the passed type unless the passed object is a
-    :pep:`586`-compliant type hint (i.e., subscription of either the
+    :pep:`586`-compliant **literal type hint** (i.e., subscription of either the
     :attr:`typing.Literal` or :attr:`typing_extensions.Literal` type hint
     factories).
 
@@ -52,12 +57,12 @@ def die_unless_hint_pep586(
     ----------
     hint : Hint
         Object to be inspected.
-    exception_cls : TypeException, optional
-        Type of exception to be raised in the event of fatal error. Defaults to
-        :exc:`.BeartypeDecorHintPep586Exception`.
-    exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
+    exception_cls : TypeException, BeartypeDecorHintPep586Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep586Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -159,7 +164,7 @@ def get_hint_pep586_literals(
 ) -> tuple:
     '''
     Tuple of zero or more literal objects subscripting the passed
-    :pep:`586`-compliant type hint (i.e., subscription of either the
+    :pep:`586`-compliant **literal type hint** (i.e., subscription of either the
     :attr:`typing.Literal` or :attr:`typing_extensions.Literal` type hint
     factories).
 
@@ -177,12 +182,12 @@ def get_hint_pep586_literals(
     ----------
     hint : Hint
         :pep:`586`-compliant type hint to be inspected.
-    exception_cls : TypeException
-        Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep586Exception`.
-    exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
+    exception_cls : TypeException, BeartypeDecorHintPep586Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep586Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -201,3 +206,38 @@ def get_hint_pep586_literals(
 
     # Return the standard tuple of all literals subscripting this hint.
     return hint.__args__  # pyright: ignore
+
+# ....................{ FACTORIES                          }....................
+#FIXME: Unit test us up, please.
+@callable_cached
+def make_hint_pep586_literal(hints: TupleHints) -> Hint:
+    '''
+    :pep:`586`-compliant **literal type hint** (i.e., subscription of the
+    :attr:`typing.Literal` type hint factory) subscripted by the zero or more
+    literal objects in the passed (possibly empty) tuple.
+
+    This factory is memoized for efficiency. Sadly, the :pep:`586`-compliant 
+    :attr:`typing.Literal` type hint factory is *not* intrinsically memoized:
+
+    .. code-block:: pycon
+
+       >>> from typing import Literal
+       >>> Literal[1] is Literal[1]
+       False  # <-- what are we even doing here, python
+
+    Parameters
+    ----------
+    hint : TupleHints
+        Tuple of all literal objects with which to subscript the new returned
+        literal type hint.
+
+    Returns
+    -------
+    Hint
+        Literal type hint subscripted by these child hints.
+    '''
+    assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
+
+    # Return the PEP 586-compliant union dynamically created by deferring to
+    # the pure-Python typing.Union.__getitem__() instance method.
+    return Literal.__getitem__(hints)  # type: ignore[return-value]
