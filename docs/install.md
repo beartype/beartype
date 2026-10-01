@@ -9,13 +9,13 @@ Child Markdown document detailing installation instructions.
 
 # Install
 
-Install beartype with [pip](https://pip.pypa.io), because [PyPI](https://pypi.org/project/beartype) is the [cheese shop](https://pypi.org) and you too enjoy a [fine Venezuelan beaver cheese](https://en.wikipedia.org/wiki/Cheese_Shop_sketch) while mashing disconsolately on your keyboard late on a rain-soaked Friday evening. Wherever expensive milk byproducts ferment, beartype will be there.
+Install beartype with [pip], because [PyPI][beartype PyPI] is the [cheese shop][PyPI] and you too enjoy a [fine Venezuelan beaver cheese][cheese shop sketch] while mashing disconsolately on your keyboard late on a rain-soaked Friday evening. Wherever expensive milk byproducts ferment, beartype will be there.
 
 ```bash
 pip3 install beartype
 ```
 
-Install beartype with [Anaconda](https://docs.conda.io/en/latest/miniconda.html), because package managers named after vicious South American murder reptiles have finally inspired your team to embrace more mammal-friendly packages. Your horoscope also reads: "Avoid reckless ecotourism in places that rain alot."
+Install beartype with [Anaconda], because package managers named after vicious South American murder reptiles have finally inspired your team to embrace more mammal-friendly packages. Your horoscope also reads: "Avoid reckless ecotourism in places that rain alot."
 
 ```bash
 conda config --add channels conda-forge
@@ -30,23 +30,23 @@ Beartype is also installable with platform-specific package managers, because so
 
 ### macOS
 
-Let's install beartype with [Homebrew](https://brew.sh) on [macOS](https://en.wikipedia.org/wiki/MacOS) courtesy [our third-party tap](https://github.com/beartype/homebrew-beartype):
+Let's install beartype with [Homebrew][HomeBrew] on [macOS] courtesy [our third-party tap][beartype Homebrew]:
 
 ```bash
 brew install beartype/beartype/beartype
 ```
 
-Let's install beartype with [MacPorts](https://www.macports.org) on [macOS](https://en.wikipedia.org/wiki/MacOS):
+Let's install beartype with [MacPorts] on [macOS]:
 
 ```bash
 sudo port install py-beartype
 ```
 
-A big bear hug to [our official macOS package maintainer @harens](https://github.com/harens) for [packaging beartype for our Apple-appreciating audience](https://ports.macports.org/port/py-beartype).
+A big bear hug to [our official macOS package maintainer @harens][harens] for [packaging beartype for our Apple-appreciating audience][beartype MacPorts].
 
 ### Arch Linux
 
-Let's install beartype with `pacman` on [Arch Linux](https://archlinux.org) – where beartype is now [officially packaged](https://aur.archlinux.org/packages/python-beartype) in the [Arch User Repository (AUR)](https://aur.archlinux.org/packages/python-beartype) itself:
+Let's install beartype with `pacman` on [Arch Linux] – where beartype is now [officially packaged][beartype Arch] in the [Arch User Repository (AUR)][beartype Arch] itself:
 
 ```bash
 git clone https://aur.archlinux.org/python-beartype.git
@@ -58,7 +58,7 @@ Truly, Arch Linux has now seen the face of quality assurance. It looks like a gr
 
 ### Gentoo Linux
 
-Let's install beartype with `emerge` on [Gentoo Linux](https://www.gentoo.org) – where beartype is now [officially packaged](https://packages.gentoo.org/packages/dev-python/beartype) in the Portage tree itself:
+Let's install beartype with `emerge` on [Gentoo Linux] – where beartype is now [officially packaged][beartype Gentoo] in the Portage tree itself:
 
 ```bash
 emerge beartype

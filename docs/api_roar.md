@@ -33,7 +33,7 @@ When that happens, don't be the guy that ignores this chapter.
 
 **Beartype decorator exception superclass.** *All* exceptions raised by the `@beartype` decorator at decoration time (i.e., while dynamically generating type-checking wrappers for decorated callables and classes) are guaranteed to be instances of concrete subclasses of this abstract base class (ABC). Since decoration-time exceptions are typically raised from module scope early in the lifetime of a Python process, you are unlikely to manually catch and handle decorator exceptions.
 
-A detailed list of subclasses of this ABC is quite inconsequential. Very well. [@leycec](https://github.com/leycec) admits he was too tired to type it all out. [@leycec](https://github.com/leycec) also admits he played exploitative video games all night instead... *again*. [@leycec](https://github.com/leycec) is grateful nobody reads these API notes. <sup>checkmate, readthedocs.</sup>
+A detailed list of subclasses of this ABC is quite inconsequential. Very well. [@leycec] admits he was too tired to type it all out. [@leycec] also admits he played exploitative video games all night instead... *again*. [@leycec] is grateful nobody reads these API notes. <sup>checkmate, readthedocs.</sup>
 
 ### BeartypeCallException
 
@@ -146,7 +146,7 @@ except BeartypeCallHintViolation as violation:
 **Caveats apply.** This property makes a good-faith effort to list the most significant culprits responsible for this type-checking violation. In two edge cases beyond our control, this property falls back to listing truncated snapshots of the machine-readable representations of those culprits (e.g., the first 10,000 characters or so of their `repr` strings). This safe fallback is triggered for each culprit that:
 
 - Has **already been garbage-collected.** To avoid memory leaks, this property only weakly (rather than strongly) refers to these culprits and is thus best accessed only where these culprits are accessible. Technically, this property is safely accessible from any context. Practically, this property is most usefully accessed from the `except ...:` block directly catching this violation. Since these culprits may be garbage-collected at any time thereafter, this property *cannot* be guaranteed to refer to these culprits outside that block. If this property is accessed from any other context and one or more of these culprits have sadly passed away, this property dynamically reduces the corresponding items of this tuple to only the machine-readable representations of those culprits.[^the-haunting]
-- Is a **builtin variable-sized C-based object** (e.g., `dict`, `int`, `list`, `str`). Long-standing limitations within CPython itself prevent beartype from weakly referring to those objects. Openly riot on the [CPython bug tracker](https://github.com/python/cpython/issues) if this displeases you as much as it does us.
+- Is a **builtin variable-sized C-based object** (e.g., `dict`, `int`, `list`, `str`). Long-standing limitations within CPython itself prevent beartype from weakly referring to those objects. Openly riot on the [CPython bug tracker] if this displeases you as much as it does us.
 
 Let us examine what this means for your malding CTO:
 
@@ -185,7 +185,7 @@ except BeartypeCallHintViolation as violation:
 
 We see that beartype correctly identified the root culprit as the passed list of lists of byte-strings (rather than strings) *and* the leaf culprit as that byte-string. We also see that beartype only returned the `repr` of both culprits rather than those culprits. Why? Because CPython prohibits weak references to both lists *and* byte-strings.
 
-This is why we facepalm ourselves in the morning. We did it this morning. We'll do it next morning, too. Until the `weakref` module improves, [@leycec](https://github.com/leycec)'s forehead *will* be swollen with an angry mass of unsightly red welts that are now festering unbeknownst to his wife.
+This is why we facepalm ourselves in the morning. We did it this morning. We'll do it next morning, too. Until the `weakref` module improves, [@leycec]'s forehead *will* be swollen with an angry mass of unsightly red welts that are now festering unbeknownst to his wife.
 
 !!! note "Added in 0.12.0"
 
@@ -197,7 +197,7 @@ Beartype emits non-fatal warnings whenever something looks it might explode in y
 
 ### PEP 585 Deprecations
 
-Beartype may occasionally emit non-fatal [PEP 585](https://peps.python.org/pep-0585) deprecation warnings under Python ≥ 3.9 resembling:
+Beartype may occasionally emit non-fatal [PEP 585] deprecation warnings under Python ≥ 3.9 resembling:
 
     /home/kumamon/beartype/_util/hint/pep/utilpeptest.py:377:
     BeartypeDecorHintPep585DeprecationWarning: PEP 484 type hint
@@ -211,7 +211,7 @@ This is that discussion topic. Let's dissect this like a mantis shrimp repeatedl
 
 #### What Does This Mean?
 
-The [PEP 585](https://peps.python.org/pep-0585) standard first introduced by Python 3.9.0 deprecated (obsoleted) *most* of the [PEP 484](https://peps.python.org/pep-0484) standard first introduced by Python 3.5.0 in the official `typing` module. All deprecated type hints are slated to "be removed from the `typing` module in the first Python version released 5 years after the release of Python 3.9.0." Spoiler: Python 3.9.0 was released on October 5th, 2020. Altogether, this means that:
+The [PEP 585] standard first introduced by Python 3.9.0 deprecated (obsoleted) *most* of the [PEP 484] standard first introduced by Python 3.5.0 in the official `typing` module. All deprecated type hints are slated to "be removed from the `typing` module in the first Python version released 5 years after the release of Python 3.9.0." Spoiler: Python 3.9.0 was released on October 5th, 2020. Altogether, this means that:
 
 !!! warning
     **Most of the "typing" module will be removed in 2025 or 2026.**
@@ -238,12 +238,12 @@ Season Eight of *Game of Thrones* previously answered this question, but let's t
     #import typing
     ```
 
-    The public `beartype.typing` API is a [mypy](http://mypy-lang.org)-compliant replacement for the `typing` API offering improved forward compatibility with future Python releases. For example:
+    The public `beartype.typing` API is a [mypy]-compliant replacement for the `typing` API offering improved forward compatibility with future Python releases. For example:
 
-    - `beartype.typing.Set is set` under Python ≥ 3.9 for [PEP 585](https://peps.python.org/pep-0585) compliance.
-    - `beartype.typing.Set is typing.Set` under Python \< 3.9 for [PEP 484](https://peps.python.org/pep-0484) compliance.
+    - `beartype.typing.Set is set` under Python ≥ 3.9 for [PEP 585] compliance.
+    - `beartype.typing.Set is typing.Set` under Python \< 3.9 for [PEP 484] compliance.
 
-2.  **Drop Python \< 3.9.** The next easiest (but worst) solution is to brutally drop support for Python \< 3.9 by globally replacing all deprecated [PEP 484](https://peps.python.org/pep-0484)-compliant type hints with equivalent [PEP 585](https://peps.python.org/pep-0585)-compliant type hints (e.g., `typing.List[int]` with `list[int]`). This is really only ideal for closed-source proprietary projects with a limited userbase. All other projects should prefer saner solutions outlined below.
+2.  **Drop Python \< 3.9.** The next easiest (but worst) solution is to brutally drop support for Python \< 3.9 by globally replacing all deprecated [PEP 484]-compliant type hints with equivalent [PEP 585]-compliant type hints (e.g., `typing.List[int]` with `list[int]`). This is really only ideal for closed-source proprietary projects with a limited userbase. All other projects should prefer saner solutions outlined below.
 
 3.  **Hide warnings.** The reprehensible (but understandable) middle-finger way is to just squelch all deprecation warnings with an ignore warning filter targeting the `BeartypeDecorHintPep585DeprecationWarning` category. On the one hand, this will still fail in 2025 or 2026 with fiery explosions and thus only constitutes a temporary workaround at best. On the other hand, this has the obvious advantage of preserving Python \< 3.9 support with minimal to no refactoring costs. The two ways to do this have differing tradeoffs depending on who you want to suffer most – your developers or your userbase:
 
@@ -265,7 +265,7 @@ Season Eight of *Game of Thrones* previously answered this question, but let's t
         ...
     ```
 
-4.  **Type aliases.** The hardest (but best) solution is to use [type aliases](https://peps.python.org/pep-0484/#type-aliases) to conditionally annotate callables with either [PEP 484](https://peps.python.org/pep-0484) *or* [PEP 585](https://peps.python.org/pep-0585) type hints depending on the major version of the current Python interpreter. Since this is life, the hard way is also the best way – but also hard. Unlike the **drop Python \< 3.9** approach, this approach preserves backward compatibility with Python \< 3.9. Unlike the **hide warnings** approach, this approach also preserves forward compatibility with Python ≥ 3.14159265. [Type aliases](https://peps.python.org/pep-0484/#type-aliases) means defining a new private `{your_package}._typing` submodule resembling:
+4.  **Type aliases.** The hardest (but best) solution is to use [type aliases] to conditionally annotate callables with either [PEP 484] *or* [PEP 585] type hints depending on the major version of the current Python interpreter. Since this is life, the hard way is also the best way – but also hard. Unlike the **drop Python \< 3.9** approach, this approach preserves backward compatibility with Python \< 3.9. Unlike the **hide warnings** approach, this approach also preserves forward compatibility with Python ≥ 3.14159265. [Type aliases][type aliases] means defining a new private `{your_package}._typing` submodule resembling:
 
     ```python
     # In "{your_package}._typing":
@@ -279,7 +279,7 @@ Season Eight of *Game of Thrones* previously answered this question, but let's t
         from typing import List, Tuple, ...
     ```
 
-    Then globally refactor all deprecated [PEP 484](https://peps.python.org/pep-0484) imports from `typing` to `{your_package}._typing` instead:
+    Then globally refactor all deprecated [PEP 484] imports from `typing` to `{your_package}._typing` instead:
 
     ```python
     # Instead of this...

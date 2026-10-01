@@ -9,7 +9,7 @@ Child Markdown document presenting a beartype cheatsheet.
 
 # Too Long; Didn't Read (tl;dr)
 
-Let's type-check like [greased lightning](https://www.youtube.com/watch?v=H-kL8A4RNQ8)! Thanks to cheatsheets like this, you no longer have to know how to use software to use software. `\o/`
+Let's type-check like [greased lightning]! Thanks to cheatsheets like this, you no longer have to know how to use software to use software. `\o/`
 
 ```python
 # ..................{              IMPORTS                }..................
