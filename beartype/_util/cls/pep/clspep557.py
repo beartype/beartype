@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep557Exception
 from beartype._data.typing.datatyping import TypeException
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from dataclasses import (  # type: ignore[attr-defined]
     # Public attributes of the "dataclasses" module.
     is_dataclass,

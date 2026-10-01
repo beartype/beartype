@@ -23,9 +23,9 @@ from beartype._data.typing.datatypingport import (
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import TypeException
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
-    is_hint_pep484612646_typearg_unpacked)
+from beartype._util.cache.func.utilcachefunc import callable_cached
+from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
+    is_hint_typearg_unpacked)
 from itertools import count
 from typing import (
     Optional,
@@ -211,7 +211,7 @@ def find_hint_pep484585_generic_args_full(
     #be strictly less than or equal to the number of unbound type parameters
     #parametrizing the *UNSUBSCRIPTED* form of that generic. In other words, the
     #following runtime equality *MUST* hold (in the inclusive range):
-    #    len(get_hint_pep_args(hint)) <= [
+    #    len(get_hint_pep_childs(hint)) <= [
     #        0,
     #        len(get_hint_pep484585_generic_unsubbed_type(
     #            get_hint_pep_typeargs_packed(hint))),
@@ -228,7 +228,7 @@ def find_hint_pep484585_generic_args_full(
     #Then subscriptions of that generic *MUST* obey the above maxim, yet:
     #    # Show the equality holds for a valid subscription.
     #    >>> hint = Pep484585SequenceUGenericIntTListU[bool, float]
-    #    >>> len(get_hint_pep_args(hint))
+    #    >>> len(get_hint_pep_childs(hint))
     #    2
     #    >>> len(get_hint_pep484585_generic_unsubbed_type(
     #    ...     get_hint_pep_typeargs_packed(hint)))
@@ -241,7 +241,7 @@ def find_hint_pep484585_generic_args_full(
     #    # Note that CPython itself should prohibit this at subscription time,
     #    # but doesn't. Ergo, @beartype itself will need to validate this.
     #    >>> hint = Pep484585SequenceUGenericIntTListU[bool, int, float]
-    #    >>> len(get_hint_pep_args(hint))
+    #    >>> len(get_hint_pep_childs(hint))
     #    3
     #    >>> len(get_hint_pep484585_generic_unsubbed_type(
     #    ...     get_hint_pep_typeargs_packed(hint)))
@@ -450,7 +450,7 @@ def find_hint_pep484585_generic_args_full(
         is_hint_pep484585_generic_user,
     )
     from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
+        get_hint_pep_childs,
         get_hint_pep_typeargs_unpacked,
     )
 
@@ -683,7 +683,7 @@ def find_hint_pep484585_generic_args_full(
             # Tuple of the zero or more child hints directly subscripting this
             # pseudo-superclass if this pseudo-superclass is subscripted *OR*
             # the empty tuple if this pseudo-superclass is unsubscripted.
-            hint_base_args = get_hint_pep_args(hint_base)
+            hint_base_args = get_hint_pep_childs(hint_base)
 
             # Number of unbound type parameters transitively parametrizing this
             # pseudo-superclass in unsubscripted form.
@@ -736,7 +736,7 @@ def find_hint_pep484585_generic_args_full(
                 # print(f'Preseeding {hint_base_typearg} -> {hint_base_arg} (before parent replacement)...')
 
                 # If this child hint is *ALSO* a type parameter...
-                if is_hint_pep484612646_typearg_unpacked(hint_base_arg):  # pyright: ignore
+                if is_hint_typearg_unpacked(hint_base_arg):  # pyright: ignore
                     # "Bubble down" this type parameter subscripting this child
                     # pseudo-superclass (i.e., the generic subclassed by this
                     # parent pseudo-superclass) from this parent
@@ -850,7 +850,7 @@ def find_hint_pep484585_generic_args_full(
             # of zero or more child hints directly subscripting this
             # pseudo-superclass is semantically equivalent to what that list
             # would have been (had that list actually been defined).
-            list(get_hint_pep_args(hint_base))  # type: ignore[assignment]
+            list(get_hint_pep_childs(hint_base))  # type: ignore[assignment]
             if is_hint_base_leaf else
             # Else, this is *NOT* a terminal leaf pseudo-superclass. In this
             # case, the list of zero or more child hints transitively
@@ -892,7 +892,7 @@ def find_hint_pep484585_generic_args_full(
                 # If this child hint is *NOT* a type parameter, this child hint
                 # is already concrete. In this case, preserve this child hint as
                 # is and continue to the next.
-                if not is_hint_pep484612646_typearg_unpacked(
+                if not is_hint_typearg_unpacked(
                     hint_base_arg_full):
                     continue
                 # Else, this child hint is a type parameter.
@@ -933,7 +933,7 @@ def find_hint_pep484585_generic_args_full(
                 # parent pseudo-superclass is itself a type parameter, record
                 # that this child pseudo-superclass is now known to be
                 # subscripted by at least one type parameter.
-                if is_hint_pep484612646_typearg_unpacked(
+                if is_hint_typearg_unpacked(
                     hint_base_arg_full_new):  # pyright: ignore
                     # print(f'Recording base {hint_base} bubbled typevar {hint_base_arg_full_new}...')
                     is_hint_base_arg_typearg = True

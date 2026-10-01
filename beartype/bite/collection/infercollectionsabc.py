@@ -58,7 +58,7 @@ protocols).
 # ....................{ IMPORTS                            }....................
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import FrozenSetStrs
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.utilobjattr import get_object_method_name_to_value
 from collections.abc import (
     Collection as CollectionABC,

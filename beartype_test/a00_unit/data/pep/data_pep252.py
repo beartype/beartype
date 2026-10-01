@@ -193,7 +193,7 @@ class DataDescriptorStrSelfSwapCase(object):
         dynamically looks up on both classes and instances to which this
         descriptor is bound to the passed basename.
 
-        The :class:`type.__new__` constructor explicitly calls this
+        The standard :class:`type.__new__` constructor explicitly calls this
         :pep:`487`-compliant dunder method on each class variable whose value is
         an instance of this descriptor *after* otherwise constructing that
         class.
@@ -308,6 +308,7 @@ class DataAndNondataDescriptorStore(object):
     immutable dynamic access to the attribute with the initialized name on both
     this class and instances of this class.
     '''
+
 
     var_writable = DataDescriptor(attr_name='attr_writeable')
     '''

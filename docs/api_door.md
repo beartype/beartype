@@ -406,8 +406,8 @@ True  # <-- blowing minds over here.
 - Are **immutable**, **hashable**, and thus safely usable both as dictionary keys and set members.
 - Support efficient **lookup** of child type hints – just like **dictionaries** and **sets**.
 - Support efficient **iteration** over and **random access** of child type hints – just like **lists** and **tuples**.
-- Are **partially ordered** over the set of all type hints (according to the `subhint relation <.is_subhint>`) and safely usable in any algorithm accepting a partial ordering (e.g., [topological sort](https://en.wikipedia.org/wiki/Topological_sorting)).
-- Guarantee similar performance as `beartype.beartype` itself. All `TypeHint` methods and properties run in (possibly [amortized](https://en.wikipedia.org/wiki/Amortized_analysis)) **constant time** with negligible constants.
+- Are **partially ordered** over the set of all type hints (according to the `subhint relation <.is_subhint>`) and safely usable in any algorithm accepting a partial ordering (e.g., [topological sort]).
+- Guarantee similar performance as `beartype.beartype` itself. All `TypeHint` methods and properties run in (possibly [amortized][amortized analysis]) **constant time** with negligible constants.
 
 Open the DOOR to a whole new world. <sup>Sing along, everybody! “A whole new worl– \*choking noises\*”</sup>
 
@@ -501,7 +501,7 @@ Seriously. That's it. That's the property. This isn't *Principia Mathematica*. T
 - `typing.Any`, by design. Anything is ignorable. You heard it here.
 
 - `object`, the root superclass of all types. All objects are instances of `object`, so `object` conveys no semantic meaning. Much like @leycec on Monday morning, squint when you see `object`.
-- The unsubscripted `typing.Optional` singleton, which expands to the implicit `Optional[Any]` type hint under [PEP 484](https://peps.python.org/pep-0484). But [PEP 484](https://peps.python.org/pep-0484) also stipulates that all `Optional[t]` type hints expand to `Union[t, type(None)]` type hints for arbitrary arguments `t`. So, `Optional[Any]` expands to merely `Union[Any, type(None)]`. Since all unions subscripted by `typing.Any` reduce to merely `typing.Any`, the unsubscripted `typing.Optional` singleton also reduces to merely `typing.Any`. This intentionally excludes the `Optional[type(None)]` type hint, which the standard `typing` module reduces to merely `type(None)`.
+- The unsubscripted `typing.Optional` singleton, which expands to the implicit `Optional[Any]` type hint under [PEP 484]. But [PEP 484] also stipulates that all `Optional[t]` type hints expand to `Union[t, type(None)]` type hints for arbitrary arguments `t`. So, `Optional[Any]` expands to merely `Union[Any, type(None)]`. Since all unions subscripted by `typing.Any` reduce to merely `typing.Any`, the unsubscripted `typing.Optional` singleton also reduces to merely `typing.Any`. This intentionally excludes the `Optional[type(None)]` type hint, which the standard `typing` module reduces to merely `type(None)`.
 - The unsubscripted `typing.Union` singleton, which reduces to `typing.Any` by the same argument.
 - Any subscription of `typing.Union` by one or more ignorable type hints. There exists a countably infinite number of such subscriptions, many of which are non-trivial to find by manual inspection. The ignorability of a union is a transitive property propagated "virally" from child to parent type hints. Consider:
 

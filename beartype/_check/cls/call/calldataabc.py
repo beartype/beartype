@@ -16,13 +16,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from abc import (
-    ABCMeta,
-    abstractmethod,
-)
+from abc import abstractmethod
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confmain import BeartypeConf
+from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatyping import (
     Decoratee,
     Pep649749HintableAnnotations,
@@ -37,7 +35,7 @@ from typing import (
 )
 
 # ....................{ SUBCLASSES                         }....................
-class BeartypeCallDataABC(object, metaclass=ABCMeta):
+class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
     '''
     **Beartype call metadata dataclass superclass** (i.e., abstract base class
     (ABC) of all dataclass subclasses encapsulating the user-defined callable,

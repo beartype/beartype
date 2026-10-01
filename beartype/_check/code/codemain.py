@@ -132,7 +132,7 @@ from beartype._util.hint.pep.proposal.pep593 import (
     get_hint_pep593_metahint,
 )
 from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
+    get_hint_pep_childs,
     get_hint_pep_origin_type_isinstanceable,
 )
 from beartype._util.hint.pep.utilpeptest import (
@@ -513,7 +513,7 @@ def make_check_expr(
                 # type-checked against that type *AND is either...
                 hint_curr_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
                     # Unsubscripted *OR*...
-                    not get_hint_pep_args(hint_curr) or
+                    not get_hint_pep_childs(hint_curr) or
                     # Currently unsupported with deep type-checking...
                     hint_curr_sign not in HINT_SIGNS_SUPPORTED_DEEP
                 )
@@ -552,7 +552,7 @@ def make_check_expr(
                 # Note that the "__args__" dunder attribute is *NOT* guaranteed
                 # to exist for arbitrary PEP-compliant type hints. Ergo, we
                 # obtain this attribute via a higher-level utility getter.
-                hint_childs = get_hint_pep_args(hint_curr)
+                hint_childs = get_hint_pep_childs(hint_curr)
 
                 # Number of these child hints.
                 hint_childs_len = len(hint_childs)

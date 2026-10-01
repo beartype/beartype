@@ -12,12 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 # from beartype.roar._roarexc import _BeartypeUtilTypeException
-from beartype.typing import Optional
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    MappingStrToAny,
     # TypeException,
 )
-# from beartype._util.cache.utilcachecall import callable_cached
+# from beartype._util.cache.func.utilcachefunc import callable_cached
+from typing import Optional
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up.
@@ -86,17 +86,26 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
 #in-memory string that has no relation to "sys.modules". Care is thus warranted.
 
 #FIXME: Unit test us up, please.
-def get_type_locals(cls: type) -> LexicalScope:
+#FIXME: Memoize this getter. Doing so, however, could prove non-trivial. It's
+#unsafe to memoize an arbitrarily large number of decorated classes. Ergo, we
+#instead want to:
+#* Define a new @callable_cached_lru decorator bounding the number of memoized
+#  entries to some sane threshold.
+#* Decorator this getter by that decorator. *sigh*
+# @callable_cached_lru
+def get_type_locals(cls: type) -> MappingStrToAny:
     '''
-    **Local scope** (i.e., dictionary mapping from the name to value of each
+    **Local scope** (i.e., mapping from the name to value of each
     attribute directly declared by that class) for the passed class.
 
+    Design
+    ------
     This getter currently reduces to a trivial one-liner returning
     ``cls.__dict__`` and has thus been defined mostly just for orthogonality
     with the comparable
-    :func:`beartype._util.func.utilfuncscope.find_func_locals_frame` getter. That
-    said, :pep:`563` suggests this non-trivial heuristic for computing the local
-    scope of a given class:
+    :func:`beartype._util.func.utilfuncscope.find_func_locals_frame` getter.
+    That said, :pep:`563` suggests this non-trivial heuristic for computing the
+    local scope of a given class:
 
         For classes, localns can be composed by chaining vars of the given class
         and its base classes (in the method resolution order). Since slots can
@@ -148,7 +157,7 @@ def get_type_locals(cls: type) -> LexicalScope:
 
     Returns
     -------
-    LexicalScope
+    Mapping[str, object]
         Local scope for this class.
 
     Raises
@@ -159,5 +168,6 @@ def get_type_locals(cls: type) -> LexicalScope:
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
 
-    # Return the dictionary of class attributes bundled with this class.
-    return cls.__dict__  # type: ignore[return-value]
+    # Return all attributes, including "__new__". Callers merging these into
+    # another scope must copy that scope before modifying it (issue #707).
+    return cls.__dict__

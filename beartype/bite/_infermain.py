@@ -95,7 +95,7 @@ def infer_hint(
     from those containers.
 
     **This function cannot be reasonably memoized** (e.g., via the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator).
+    :func:`beartype._util.cache.func.utilcachefunc.callable_cached` decorator).
     Technically, this function *could* be memoized... *sorta.* Pragmatically,
     this function *cannot* be memoized. Most arbitrary objects are mutable and
     thus unhashable and thus unmemoizable. While feasible, memoizing this

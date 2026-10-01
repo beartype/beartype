@@ -140,9 +140,9 @@ def hints_pep484_meta() -> (
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
-        T_any,
-        T_int,
-        T_str_or_bytes,
+        T_bound_any,
+        T_bound_int,
+        T_constraint_str_or_bytes,
         U,
     )
     from collections import (
@@ -330,7 +330,7 @@ def hints_pep484_meta() -> (
 
         # User-defined constrained type variable.
         HintPepMetadata(
-            hint=T_str_or_bytes,
+            hint=T_constraint_str_or_bytes,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
             is_typing=False,
@@ -352,7 +352,7 @@ def hints_pep484_meta() -> (
 
         # User-defined bounded type variable.
         HintPepMetadata(
-            hint=T_int,
+            hint=T_bound_int,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
             is_typing=False,
@@ -371,7 +371,7 @@ def hints_pep484_meta() -> (
 
         # User-defined unbounded type variable.
         HintPepMetadata(
-            hint=T_any,
+            hint=T_bound_any,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
             is_ignorable=True,
@@ -3589,7 +3589,7 @@ def hints_pep484_reduction_meta() -> (
     from beartype_test.a00_unit.data.data_type import Class
     from beartype_test.a00_unit.data.hint.cls.data_clshintreduce import (
         HintReductionValid)
-    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import T_str_or_bytes
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import T_constraint_str_or_bytes
 
     # List of all PEP-specific type hint reduction metadata to be returned.
     hints_pep_reduction_meta = [
@@ -3645,7 +3645,7 @@ def hints_pep484_reduction_meta() -> (
         # A PEP 484-compliant constrained type variable reduces to the PEP 484-
         # or 604-compliant union of those constraints.
         HintReductionValid(
-            hint_unreduced=T_str_or_bytes,
+            hint_unreduced=T_constraint_str_or_bytes,
             hint_reduced=make_hint_pep484604_union((str, bytes,)),
         ),
     ]

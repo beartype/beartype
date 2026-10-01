@@ -25,11 +25,14 @@ from beartype._cave._cavefast import (
     ClassType,
     EnumMemberType,
     FunctionType,
-    HintPep695TypeAlias,
+    HintPep695TypeAliasTypes,
     MethodDecoratorBuiltinTypes,
     NoneType,
 )
-from beartype._data.typing.datatyping import TupleTypes
+from beartype._data.typing.datatyping import (
+    FrozenSetTypes,
+    TupleTypes,
+)
 from collections.abc import Set
 from pathlib import Path
 
@@ -113,17 +116,19 @@ object dictionary) fails to define a given attribute or name).
 '''
 
 # ....................{ TYPES ~ non-pep                    }....................
-TYPES_NONPEP_TYPEARGS_PACKED = frozenset((
-    # ....................{ PEP (484|604)                  }....................
-    # The PEP 484- and 604-compliant unsubscripted "typing.Union" hint
-    # semantically equivalent to the subscripted "typing.Union[typing.Any]" hint
-    # is a valid C-based type whose whose "__parameters__" dunder attribute is a
-    # C-based slotted class attribute of some obscure type under Python >= 3.14:
-    #     >>> from typing import Union
-    #     >>> Union.__parameters__
-    #     <attribute '__parameters__' of 'typing.Union' objects>
-    Union,
-
+TYPES_NONPEP_TYPEARGS_PACKED: FrozenSetTypes = frozenset(
+    (  # type: ignore[operator]
+        # ....................{ PEP (484|604)              }....................
+        # The PEP 484- and 604-compliant unsubscripted "typing.Union" hint
+        # semantically equivalent to the subscripted "typing.Union[typing.Any]"
+        # hint is a valid C-based type whose whose "__parameters__" dunder
+        # attribute is a C-based slotted class attribute of some obscure type
+        # under Python >= 3.14:
+        #     >>> from typing import Union
+        #     >>> Union.__parameters__
+        #     <attribute '__parameters__' of 'typing.Union' objects>
+        Union,
+    ) +
     # ....................{ PEP 695                        }....................
     # The PEP 695-compliant "typing.TypeAliasType" type of all PEP 695-compliant
     # type aliases of the syntactic form "type = {alias}" is a valid C-based
@@ -132,8 +137,8 @@ TYPES_NONPEP_TYPEARGS_PACKED = frozenset((
     #     >>> from typing import TypeAliasType
     #     >>> TypeAliasType.__parameters__
     #     <attribute '__parameters__' of 'typing.TypeAliasType' objects>
-    HintPep695TypeAlias,
-))
+    HintPep695TypeAliasTypes
+)
 '''
 Frozen set of all **PEP-noncompliant packed type parameters types** (i.e.,
 standard types well-known to violate PEP standards by defining the

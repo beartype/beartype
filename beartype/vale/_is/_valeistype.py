@@ -24,7 +24,7 @@ from beartype._data.typing.datatyping import (
     LexicalScope,
     TypeOrTupleTypes,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.clspep3119 import (
     die_unless_type_isinstanceable,

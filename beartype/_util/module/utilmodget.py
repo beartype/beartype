@@ -48,35 +48,6 @@ def get_module_imported_or_none(module_name: str) -> Optional[ModuleType]:
     return sys_modules.get(module_name)
 
 # ....................{ GETTERS ~ object                   }....................
-def get_object_module_or_none(obj: object) -> Optional[ModuleType]:
-    '''
-    Module declaring the passed object if this object defines the ``__module__``
-    dunder instance variable *or* :data:`None` otherwise.
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-
-    Returns
-    -------
-    Optional[ModuleType]
-        Either:
-
-        * Module declaring this object if this object declares a ``__module__``
-          dunder attribute.
-        * :data:`None` otherwise.
-    '''
-
-    # Fully-qualified name of the module defining this object if any or "None".
-    module_name = get_object_module_name_or_none(obj)
-
-    # Return either:
-    # * If a module defines this object, that module.
-    # * Else, "None".
-    return get_module_imported_or_none(module_name) if module_name else None
-
-
 def get_object_module(obj: object) -> ModuleType:
     '''
     Module declaring the passed object if this object defines the ``__module__``
@@ -116,6 +87,35 @@ def get_object_module(obj: object) -> ModuleType:
 
     # Return this module.
     return module
+
+
+def get_object_module_or_none(obj: object) -> Optional[ModuleType]:
+    '''
+    Module declaring the passed object if this object defines the ``__module__``
+    dunder instance variable *or* :data:`None` otherwise.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    -------
+    Optional[ModuleType]
+        Either:
+
+        * Module declaring this object if this object declares a ``__module__``
+          dunder attribute.
+        * :data:`None` otherwise.
+    '''
+
+    # Fully-qualified name of the module defining this object if any or "None".
+    module_name = get_object_module_name_or_none(obj)
+
+    # Return either:
+    # * If a module defines this object, that module.
+    # * Else, "None".
+    return get_module_imported_or_none(module_name) if module_name else None
 
 # ....................{ GETTERS ~ object : line            }....................
 def get_object_module_line_number_begin(obj: object) -> int:

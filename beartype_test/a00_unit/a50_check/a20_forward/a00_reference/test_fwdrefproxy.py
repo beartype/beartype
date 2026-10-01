@@ -65,8 +65,10 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     # higher-level, ensuring that lower-level failures are caught before
     # higher-level failures.
 
-    # ....................{ PASS ~ attr                    }....................
-    # Validate lowest-level class variables bound to these proxies.
+    # ....................{ PASS ~ attr : early            }....................
+    # Validate lowest-level class variables bound to these proxies by the call
+    # to the low-level make_type() factory function performed by the
+    # higher-level _proxy_hint_ref() proxy function.
 
     # Assert that these proxies have the expected class names.
     assert type_ref_str_proxy_absolute.__name__ == TYPE_BASENAME
@@ -122,23 +124,23 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     # ....................{ PASS ~ property                }....................
     # Validate higher-level dynamic properties defined on these proxies.
 
-    # Assert that this property of these forward reference proxies all evaluate
-    # to the expected type hints.
+    # Assert that this property of these forward reference proxies *ALL*
+    # resolve to the expected type hints.
     assert hint_ref_str_proxy_absolute.__resolved_hint_beartype__ is Pep585Hint
     assert type_ref_str_proxy_absolute.__resolved_hint_beartype__ is Class
     assert type_ref_str_proxy_relative.__resolved_hint_beartype__ is Class
     assert type_ref_str_proxy_module_absolute_class.__resolved_hint_beartype__ is (
         Class)
 
-    # Assert that this property of these forward reference proxies all evaluate
-    # to the expected types.
+    # Assert that this property of these forward reference proxies *ALL*
+    # resolve to the expected types.
     assert type_ref_str_proxy_absolute.__resolved_type_beartype__ is Class
     assert type_ref_str_proxy_relative.__resolved_type_beartype__ is Class
     assert type_ref_str_proxy_module_absolute_class.__resolved_type_beartype__ is (
         Class)
 
-    # Assert that this property of these forward reference proxies all evaluate
-    # to the same expected types while also issuing non-fatal warnings.
+    # Assert that this property of these forward reference proxies *ALL*
+    # resolve to the same expected types while also issuing non-fatal warnings.
     with warns_uncached(DeprecationWarning):
         assert type_ref_str_proxy_absolute.__type_beartype__ is Class
 
@@ -162,6 +164,17 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     assert issubclass(Subclass, type_ref_str_proxy_relative)
     assert issubclass(Subclass, type_ref_str_proxy_module_absolute_class)
 
+    # ....................{ PASS ~ attr : late             }....................
+    # Validate high-level class attributes dynamically accessed on the target
+    # referent type hint this forward reference proxy refers to *AFTER* that
+    # same forward reference proxy has already resolved its referent by a prior
+    # call to the isinstance() or issubclass() builtins against this proxy.
+
+    # Assert that accessing this class attribute on this proxy resolves to the
+    # class attribute of same name defined on the target referent type hint this
+    # proxy refers to. Phew!
+    assert type_ref_str_proxy_absolute.NestedClass is Class.NestedClass
+
     # ....................{ FAIL                           }....................
     # Assertions are intentionally ordered in the exact same order as above.
 
@@ -178,8 +191,8 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
 
     # Assert that attempting to test an undefined *NON-DUNDER* attribute of a
     # forward reference proxy raises the expected exception *AFTER* that same
-    # forward reference proxy has already resolved its referent due to a prior
-    # call to the isinstance() or issubclass() builtins against this proxy.
+    # forward reference proxy has already resolved its referent by a prior call
+    # to the isinstance() or issubclass() builtins against this proxy.
     with raises_uncached(AttributeError):
         type_ref_str_proxy_module_absolute_class.and_buried_from_all_godlike_exercise
 

@@ -163,7 +163,7 @@ def iter_hints_piths_meta(hints_piths_meta) -> (
       those tests when explicitly called *before* other tests. Crucially,
       however, note that tests attempting to deterministically validate that the
       expected warnings are issued by the expected hints *must* explicitly call
-      the low-level :func:`.beartype._util.cache.utilcacheclear.clear_caches`
+      the low-level :func:`.beartype._cache.cacheclear.clear_caches`
       function for each metadata instance yielded by this generator closure.
       Doing so clears warning memoization that would otherwise obstruct
       deterministic validation of warning issuance.

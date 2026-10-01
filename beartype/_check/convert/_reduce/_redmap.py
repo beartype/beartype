@@ -39,7 +39,7 @@ from beartype._check.convert._reduce._pep.pep484585.redpep484585subclass import 
 from beartype._check.convert._reduce._pep.pep646.redpep646tuple import (
     reduce_hint_pep646_tuple)
 from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
-    reduce_hint_pep484612646_typearg)
+    reduce_hint_typearg)
 from beartype._check.convert._reduce._pep.redpep544 import reduce_hint_pep544
 from beartype._check.convert._reduce._pep.redpep557 import (
     reduce_hint_pep557_initvar)
@@ -306,7 +306,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #            _infer_hint_factory_collection_builtin)
     #        from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
     #        from beartype._util.hint.pep.utilpepget import (
-    #            get_hint_pep_args,
+    #            get_hint_pep_childs,
     #            get_hint_pep_origin_type,
     #        )
     #
@@ -328,7 +328,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #                # Defer heavyweight imports.
     #                from beartype.vale import IsInstance
     #
-    #                hint_args = get_hint_pep_args(hint)
+    #                hint_args = get_hint_pep_childs(hint)
     #
     #                #FIXME: Unsure if this works. If not, try:
     #                #    hint_builtin = builtin_factory.__getitem__(*hint_args)
@@ -406,12 +406,6 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # reduce this hint to the standard "str" type.
     HintSignLiteralString: reduce_hint_pep675,
 
-    # ..................{ NON-PEP ~ numpy                    }..................
-    # If this hint is a PEP-noncompliant typed NumPy array (e.g.,
-    # "numpy.typing.NDArray[np.float64]"), reduce this hint to the equivalent
-    # well-supported beartype validator.
-    HintSignNumpyArray: reduce_hint_numpy_ndarray,
-
     # ..................{ NON-PEP ~ pandera                  }..................
     # If this hint is *ANY* PEP-noncompliant Pandera type hint (e.g.,
     # "pandera.typing.DataFrame[...]"), reduce this hint to an arbitrary
@@ -484,7 +478,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # those type variables then being subscripted by those concrete hints.
     #
     # tl;dr: the "typearg_to_hint" dictionary, which is uncached.
-    HintSignTypeVar: reduce_hint_pep484612646_typearg,
+    HintSignTypeVar: reduce_hint_typearg,
 
     # ..................{ PEP (484|585)                      }..................
     # If this hint is a PEP 484- or 585-compliant subscripted generic:
@@ -560,7 +554,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # variable tuples then being subscripted by those concrete hints.
     #
     # tl;dr: the "typearg_to_hint" dictionary, which is uncached.
-    HintSignPep646TypeVarTupleUnpacked: reduce_hint_pep484612646_typearg,
+    HintSignPep646TypeVarTupleUnpacked: reduce_hint_typearg,
 
     # ..................{ PEP 692                            }..................
     # Reduce PEP 692-compliant unpacked typed dictionaries (i.e., hints of the
@@ -601,6 +595,12 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # * If this hint annotates the return of some callable, the "bool" type.
     # * Else, raise an exception.
     HintSignTypeIs: reduce_hint_pep647742,
+
+    # ..................{ NON-PEP ~ numpy                    }..................
+    # If this hint is a PEP-noncompliant typed NumPy array (e.g.,
+    # "numpy.typing.NDArray[np.float64]"), reduce this hint to the equivalent
+    # well-supported beartype validator.
+    HintSignNumpyArray: reduce_hint_numpy_ndarray,
 }
 '''
 Dictionary mapping from each sign uniquely identifying various type hints to

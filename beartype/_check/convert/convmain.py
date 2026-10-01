@@ -238,7 +238,7 @@ def sanify_hint_root_statement(
     type hinting annotation like a user-defined class variable, callable
     parameter or return, or assignment statement). Such factories include:
 
-    * The private :func:`beartype._check.checkmake.make_func_tester` factory,
+    * The private :func:`beartype._check.make.checkmakefunc.make_func_tester` factory,
       internally called by:
 
       * The public :func:`beartype.door.die_if_unbearable` function.

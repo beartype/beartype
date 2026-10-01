@@ -8,7 +8,7 @@ package installed when you installed beartype. But all beartype documentation
 begins with `beartype.beartype`, just like all rivers run to the sea.[^endorheic_basins]
 
 [^endorheic_basins]: That's a lie, actually. Numerous river tributaries just pour out into
-deserts. Do [endorheic basins](https://en.wikipedia.org/wiki/Endorheic_basin) mean nothing
+deserts. Do [endorheic basins] mean nothing
 to you, beartype? Wikipedia: *the more you click, the less you know.*
 
 ## The Left-Paw Path

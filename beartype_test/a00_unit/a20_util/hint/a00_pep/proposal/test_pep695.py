@@ -16,6 +16,53 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# ....................{ TESTS ~ getter                     }....................
+def test_get_hint_pep695_unsubbed_alias_circular() -> None:
+    '''
+    Test that the
+    :func:`beartype._util.hint.pep.proposal.pep695.get_hint_pep695_unsubbed_alias`
+    getter raises the expected exception when passed a **circular chain of type
+    aliases** (i.e., one or more type aliases each aliasing only the next, the
+    last of which aliases the first).
+
+    Such a chain never reduces to a type hint conveying any semantics. Absent
+    detection, unwrapping such a chain silently iterates forever.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep695Exception
+    from beartype._util.hint.pep.proposal.pep695 import (
+        get_hint_pep695_unsubbed_alias)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+    from pytest import raises
+
+    # If the active Python interpreter targets Python < 3.12, this interpreter
+    # fails to support PEP 695. In this case, reduce to a noop.
+    if not IS_PYTHON_AT_LEAST_3_12:
+        return
+    # Else, this interpreter supports PEP 695.
+
+    # ....................{ IMPORTS ~ version              }....................
+    # Defer version-specific imports.
+    from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
+        AliasCircularA,
+        AliasCircularB,
+        AliasCircularSelf,
+    )
+
+    # ....................{ FAIL                           }....................
+    # For each circular type alias...
+    for hint_circular in (
+        AliasCircularSelf, AliasCircularA, AliasCircularB):
+        # Assert that this getter raises the expected exception when passed
+        # this alias rather than silently iterating forever.
+        with raises(BeartypeDecorHintPep695Exception) as exception_info:
+            get_hint_pep695_unsubbed_alias(hint_circular)
+
+        # Assert that this exception message is helpful.
+        assert 'circularly aliases itself' in str(exception_info.value)
+
 # ....................{ TESTS ~ tester                     }....................
 def test_is_hint_pep695_subbed() -> None:
     '''

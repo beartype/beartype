@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Dict
 from beartype._data.api.standard.datatyping import TYPING_MODULE_NAMES
 from beartype._data.typing.datatyping import (
     DictStrToHintSign,
@@ -74,7 +73,7 @@ from beartype._data.hint.sign.datahintsigns import (
 )
 
 # ....................{ HINTS                              }....................
-HintSignTrie = Dict[str, DictStrToHintSign]
+HintSignTrie = dict[str, DictStrToHintSign]
 '''
 PEP-compliant type hint matching a **hint sign trie** (i.e.,
 dictionary-of-dictionaries tree data structure mapping from the fully-qualified
@@ -318,6 +317,9 @@ extrinsically identifiable by signs to those signs).
 #       True
 #       >>> range(min, max).stop == max
 #       True
+# * Rejects numeric infinity (e.g., "float('inf')", "math.inf") by raising the
+#   standard "TypeError" exception on instantiation. Alternate approach *MUST*
+#   thus be used to signify greater-than-or-equal-to ranges.
 
 _ARGS_LEN_0 = range(0, 1)  # == [0, 1) == [0, 0]
 '''
@@ -359,8 +361,13 @@ subscriptable by either one or two child type hints).
 '''
 
 # ....................{ SIGNS ~ origin : args              }....................
+#FIXME: We could (probably) fold
+#"HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_ONE_OR_MORE" into this dictionary if we
+#wanted to be both sly and stupid. How? By representing positive integer
+#infinity with a sufficiently large magic integer constant and then manually
+#testing for that constant elsewhere. Seems pretty hokey, though. *shrug*
 # Fully initialized by the _init() function below.
-HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE: Dict[HintSign, range] = {
+HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE: dict[HintSign, range] = {
     # Type hint factories subscriptable by exactly one child type hint.
     HintSignAbstractSet: _ARGS_LEN_1,
     HintSignAsyncIterable: _ARGS_LEN_1,
@@ -388,6 +395,19 @@ HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE: Dict[HintSign, range] = {
     HintSignValuesView: _ARGS_LEN_1,
 
     # Type hint factories subscriptable by exactly two child type hints.
+    #
+    # Note that PEP 484- and 585-compliant "collections.abc.Callable[{args},
+    # {return}]" hints are intentionally excluded. Why? Because:
+    # * Semantically subscriptable by exactly two child type hints.
+    # * Technically subscriptable by *ONE OR MORE* child type hints. Bear
+    #   witness to these horrors, QA children:
+    #       >>> from collections.abc import Callable
+    #       >>> Callable[..., object].__args__
+    #       (Ellipsis, <class 'object'>)  # <-- good. this is good.
+    #       >>> Callable[[], object].__args__
+    #       (<class 'object'>,)  # <-- *BAD*. this is bad. this is very bad.
+    #       >>> Callable[[int, str], object].__args__
+    #       (<class 'int'>, <class 'str'>, <class 'object'>)  # <-- okay then
     HintSignAsyncGenerator: _ARGS_LEN_2,
     HintSignChainMap: _ARGS_LEN_2,
     HintSignDefaultDict: _ARGS_LEN_2,
@@ -409,6 +429,16 @@ class such that *all* objects satisfying type hints created by subscripting this
 factory are instances of this class) to this factory's **argument length range**
 (i.e., :class:`range` instance describing the minimum and maximum number of
 child type hints that may subscript this factory).
+
+Caveats
+-------
+**Callers confronted with arbitrary PEP-compliant type hint factories should
+first defer to the higher-level** 
+:data:`beartype._data.hint.sign.datahintsignset._SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_ONE_OR_MORE`
+**frozen set.** If the sign identifying a factory resides in that set, that
+factory is subscriptable by arbitrarily many child hints, in which case that
+sign is guaranteed to be absent from this dictionary (due to the :class:`range`
+builtin rejecting positive integer infinity as a valid maximum range).
 '''
 
 # ....................{ PRIVATE ~ main                     }....................

@@ -87,7 +87,7 @@ from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
     is_hint_pep484585646_tuple_variadic_unpacked_if_needed,
     make_hint_pep484585_tuple_fixed,
 )
-from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from typing import Optional
 
@@ -134,7 +134,7 @@ def reduce_hint_pep646_tuple(hint: Hint) -> Hint:
     # disambiguating PEP 484- and 585-compliant tuple hints from this PEP
     # 646-compliant tuple hint has already pre-validated this tuple hint to be
     # subscripted by two or more child hints.
-    hint_childs = get_hint_pep_args(hint)
+    hint_childs = get_hint_pep_childs(hint)
 
     # Number of child hints subscripting this parent tuple hint.
     hint_childs_len = len(hint_childs)
@@ -215,7 +215,7 @@ def reduce_hint_pep646_tuple(hint: Hint) -> Hint:
             # hint.
             #
             # Note that:
-            # * The lower-level get_hint_pep_args() only correctly unpacks these
+            # * The lower-level get_hint_pep_childs() only correctly unpacks these
             #   child hints if this is a PEP 646-compliant prefix- but *NOT*
             #   subscription-flavoured unpacked tuple hint. Transparently
             #   unpacking both flavours of unpacked tuple hints requires a

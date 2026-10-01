@@ -13,13 +13,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeModuleUnimportableWarning
 from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype.typing import Optional
 from beartype._cave._cavefast import ModuleType
 from beartype._data.typing.datatyping import TypeException
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype._util.text.utiltextversion import convert_str_version_to_tuple
 from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
+from typing import Optional
 
 # ....................{ RAISERS                            }....................
 def die_unless_module_attr_name(
@@ -113,8 +113,8 @@ def is_module(
     exception_prefix: str = 'Module ',
 ) -> bool:
     '''
-    :data:`True` only if the module or C extension with the passed
-    fully-qualified name is importable under the active Python interpreter.
+    :data:`True` only if the module with the passed fully-qualified name is
+    importable under the active Python interpreter.
 
     This tester is intentionally *not* memoized (e.g., by ``@callable_cached``),
     as the importability of modules can dynamically change throughout the
@@ -132,7 +132,7 @@ def is_module(
     Parameters
     ----------
     module_name : str
-        Fully-qualified name of the module to be imported.
+        Fully-qualified name of the module to be inspected.
     is_ignore_import_exception : bool, default: False
         Either:
 
@@ -166,8 +166,6 @@ def is_module(
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    # from beartype._util.module.utilmodget import get_module_imported_or_none
-    # from beartype._util.module.utilmodimport import importlib_import_module
     from beartype._util.module.utilmodimport import import_module_or_none
 
     # ....................{ LOCALS                         }....................
@@ -196,9 +194,31 @@ def is_module(
     # If doing so raises a standard "ImportError" exception possibly implying
     # this module to be importable but only currently partially initialized...
     except ImportError as exception:
+        #FIXME: Odd. Doesn't work. Oh, well. We movin' on. *shrug*
+        # # If this exception was raised due to this module to be only currently
+        # # partially initialized, charitably assume this module to be
+        # # subsequently fully initialized at some later time and thus importable
+        # # at that time by immediately returning true. (Just accept this. We do.)
+        # #
+        # # Note that we could also implement this test via a trivial substring
+        # # test against this exception's message: e.g.,
+        # #     if "' from partially initialized module '" in str(exception):
+        # #         return True
+        # #
+        # # In fact, we once did just that. We stopped because substring tests are
+        # # overly fragile for no demonstrable gain. This sane approach is saner.
+        # if is_module_initted_partial(module_name):
+        #     # print(f'Ignoring partially initialized module "{module_name}"!')
+        #     return True
+        # # Else, this exception was *NOT* raised due to this module to be only
+        # # currently partially initialized.
+
         # Message raised by this exception.
         exception_message = str(exception)
 
+        #FIXME: *UNSAFE*. This exception message format could change at any
+        #time. Refactor this to call our new is_module_initted_partial() tester,
+        #please. *sigh*
         # If this message claims this module to be only currently partially
         # initialized, charitably assume this module to be subsequently fully
         # initialized and thus importable by immediately returning true.
@@ -231,7 +251,7 @@ def is_module(
     # Return false as a fallback.
     return False
 
-
+# ....................{ TESTERS ~ version                  }....................
 #FIXME: Unit test us up against @beartype itself, the only third-party package
 #guaranteed to be importable.
 def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:

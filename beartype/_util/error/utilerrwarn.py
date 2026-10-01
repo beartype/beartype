@@ -6,7 +6,7 @@
 '''
 Project-wide **warning handlers** (i.e., low-level callables manipulating
 non-fatal warnings -- which, technically, are also exceptions -- in a
-human-readable, general-purpose manner).
+human-readable general-purpose manner).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -106,6 +106,7 @@ def warnings_ignored(
                 yield
 
 # ....................{ WARNERS                            }....................
+#FIXME: Unit test us up, please. *sigh*
 # If the active Python interpreter targets Python >= 3.12, the standard
 # warnings.warn() function supports the optional "skip_file_prefixes" parameter
 # critical for emitting more useful warnings. In this case, define our
@@ -117,13 +118,7 @@ if IS_PYTHON_AT_LEAST_3_12:
     from os.path import dirname
 
     # ....................{ WARNERS                        }....................
-    def issue_warning(
-        # Mandatory parameters.
-        message: str,
-
-        # Optional parameters.
-        warning_cls: TypeWarning = UserWarning,
-    ) -> None:
+    def issue_warning(warning_cls: TypeWarning, message: str) -> None:
 
         # The warning you gave us is surely our last!
         warn(  # type: ignore[call-overload]
@@ -149,13 +144,7 @@ if IS_PYTHON_AT_LEAST_3_12:
 # Else, the active Python interpreter targets Python < 3.12. In this case,
 # define our issue_warning() warner to avoid passing that parameter.
 else:
-    def issue_warning(
-        # Mandatory parameters.
-        message: str,
-
-        # Optional parameters.
-        warning_cls: TypeWarning = UserWarning,
-    ) -> None:
+    def issue_warning(warning_cls: TypeWarning, message: str) -> None:
 
         # Time to cry your tears! Now cry!
         warn(message, warning_cls)
@@ -176,15 +165,14 @@ issue_warning.__doc__ = (
 
     Parameters
     ----------
+    warning_cls: type[Warning]
+        Type of warning to be issued.
     message: str
         Human-readable warning message to be issued.
-    warning_cls: type[Warning], default: UserWarning
-        Type of warning to be issued. Defaults to the builtin
-        :exc:`.UserWarning` type.
 
     Warns
     -----
-    cls
+    warning_cls
         Unconditionally.
     '''
 )
@@ -233,7 +221,7 @@ def issue_deprecation(
     )
 
     # Issue this warning.
-    issue_warning(message=warning_message, warning_cls=warning_cls)
+    issue_warning(warning_cls=warning_cls, message=warning_message)
 
 # ....................{ REWARNERS                          }....................
 def reissue_warnings_placeholder(
@@ -255,9 +243,9 @@ def reissue_warnings_placeholder(
     ----------
     warnings : Iterable[WarningMessage]
         Iterable of zero or more **warning objects** (i.e.,
-        :class:`warnings.WarningMessage` instances), typically produced by
-        an external call to the standard
-        ``warnings.catch_warnings(record=True)`` context manager.
+        :class:`warnings.WarningMessage` instances), typically produced by an
+        external call to the standard ``warnings.catch_warnings(record=True)``
+        context manager.
     target_str : str
         Target human-readable format substring to replace the passed source
         substring previously hard-coded into this warning's message.
@@ -305,11 +293,14 @@ def reissue_warnings_placeholder(
             # makes no sense. Pragmatically, that makes no sense. But mypy says
             # it's true. We are too tired to argue with static type-checkers at
             # 4:11AM in the morning.
+            #
+            # *OR*...
             isinstance(warning, str) or
-            # This warning is conventional...
+            # This warning encapsulates a string message...
             is_exception_message_str(warning)
-        # Then this warning is or has a standard message. In this case...
         ):
+        # Then this warning either already is *OR* has a standard message. In
+        # either case...
             # Original warning message, coerced from the original warning.
             #
             # Note that the poorly named "message" attribute is the original

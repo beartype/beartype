@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._check.forward.reference.fwdreftyping import BeartypeForwardRef
-from beartype._check.forward.reference._cls.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.forward.reference._cls.fwdrefmeta import BeartypeForwardRefMetaclass
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import TypeIs
 
@@ -32,7 +32,7 @@ def die_unless_beartype_ref_proxy(
     '''
     Raise an exception unless the passed object is a :mod:`beartype`-specific
     **forward reference proxy** (i.e., class whose
-    :class:`.BeartypeForwardRefMeta` metaclass defers the resolution of a
+    :class:`.BeartypeForwardRefMetaclass` metaclass defers the resolution of a
     forward reference type hint referencing a type hint that has yet to be
     defined in the lexical scope of an external caller).
 
@@ -77,7 +77,7 @@ def is_beartype_ref_proxy(ref_proxy: object) -> TypeIs[BeartypeForwardRef]:
     '''
     :data:`True` only if the passed object is a :mod:`beartype`-specific
     **forward reference proxy** (i.e., class whose
-    :class:`.BeartypeForwardRefMeta` metaclass defers the resolution of a
+    :class:`.BeartypeForwardRefMetaclass` metaclass defers the resolution of a
     forward reference type hint referencing a type hint that has yet to be
     defined in the lexical scope of an external caller).
 
@@ -102,4 +102,4 @@ def is_beartype_ref_proxy(ref_proxy: object) -> TypeIs[BeartypeForwardRef]:
 
     # Return true only if the class of this object is the metaclass of all
     # forward reference subclasses, implying this object to be such a subclass.
-    return ref_proxy.__class__ is BeartypeForwardRefMeta
+    return ref_proxy.__class__ is BeartypeForwardRefMetaclass

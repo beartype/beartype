@@ -383,7 +383,7 @@
 #          hint_pep484585_generic_subbed = getattr(obj, '__orig_class__', None)
 #
 #          if hint_pep484585_generic_subbed is not None:
-#              hints_child = get_hint_pep_args(hint_pep484585_generic_subbed)
+#              hints_child = get_hint_pep_childs(hint_pep484585_generic_subbed)
 #              beartype_pep484585_generic_subbed_object(
 #                  obj=self, hints_child=hints_child)
 #
@@ -850,7 +850,7 @@
 #is_inferred_subhint_callable() to:
 #     from beartype.door._func.doorinfer import _infer_hint_callable
 #     from beartype._cave._cavefast import FunctionType
-#     from beartype._util.cache.utilcachecall import callable_cached
+#     from beartype._util.cache.func.utilcachefunc import callable_cached
 #     from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 #     from collections.abc import Callable
 #

@@ -16,7 +16,7 @@ from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._data.hint.sign.datahintsigns import HintSignLiteral
 from beartype._util.hint.pep.proposal.pep586 import get_hint_pep586_literals
 from beartype._util.text.utiltextansi import color_type
-from beartype._util.text.utiltextjoin import join_delimited_disjunction
+from beartype._util.text.utiltextjoin import join_strings_commaed_or
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ FINDERS                            }....................
@@ -93,7 +93,7 @@ def find_cause_pep586_literal(cause: HintTreeError) -> HintTreeError:
     # ....................{ VIOLATE ~ deep                 }....................
     # Human-readable comma-delimited disjunction of the machine-readable
     # representations of all literal objects subscripting this hint.
-    cause_literals_unsatisfied = join_delimited_disjunction(
+    cause_literals_unsatisfied = join_strings_commaed_or(
         repr(hint_literal) for hint_literal in hint_literals)
 
     # Deep output cause to be returned, permuted from this input cause such that

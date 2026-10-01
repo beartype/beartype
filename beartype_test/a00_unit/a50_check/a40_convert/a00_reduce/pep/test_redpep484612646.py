@@ -18,10 +18,10 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ factory                    }....................
-def test_make_hint_pep484612646_typearg_to_hint() -> None:
+def test_make_hint_typearg_to_hint() -> None:
     '''
     Test the private
-    :func:`beartype._check.convert._reduce._pep.pep646.redpep484612646typearg._make_hint_pep484612646_typearg_to_hint`
+    :func:`beartype._check.convert._reduce._pep.pep646.redpep484612646typearg._make_hint_typearg_to_hint`
     factory function.
     '''
 
@@ -32,16 +32,16 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         BeartypeDecorHintPep484TypeVarViolation,
     )
     from beartype._check.convert._reduce._pep.pep646.redpep484612646typearg import (
-        _make_hint_pep484612646_typearg_to_hint)
+        _make_hint_typearg_to_hint)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
         U,
         V,
-        T_any,
-        T_sequence,
-        T_str_or_bytes,
+        T_bound_any,
+        T_bound_sequence,
+        T_constraint_str_or_bytes,
     )
     from pytest import raises
 
@@ -53,7 +53,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
     # * "hints_child" is the input tuple of zero or more child hints to map
     #   these type parameters to.
     # * "typearg_to_hint" is the output dictionary expected to be returned from
-    #   the _make_hint_pep484612646_typearg_to_hint() factory when passed these
+    #   the _make_hint_typearg_to_hint() factory when passed these
     #   input tuples.
     typearg_mappings_valid = [
         # ....................{ PEP 484                    }....................
@@ -62,16 +62,16 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
 
         # A single PEP 484-compliant type variable bound to an ignorable hint
         # maps to a single child hint.
-        ((T_any,), (bool,), {T_any: bool}),
+        ((T_bound_any,), (bool,), {T_bound_any: bool}),
 
         # A single PEP 484-compliant type variable bound to an arbitrary type
         # maps to a single child hint satisfying that type.
-        ((T_sequence,), (list,), {T_sequence: list}),
+        ((T_bound_sequence,), (list,), {T_bound_sequence: list}),
 
         # A single PEP 484-compliant type variable constrained to two or more
         # types maps to a single child hint satisfying at least one of those
         # types.
-        ((T_str_or_bytes,), (bytes,), {T_str_or_bytes: bytes}),
+        ((T_constraint_str_or_bytes,), (bytes,), {T_constraint_str_or_bytes: bytes}),
 
         # Multiple PEP 484-compliant type variables map to multiple child hints.
         ((T, S,), (float, complex,), {S: complex, T: float}),
@@ -84,7 +84,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
     # * "hints_child" is the input tuple of zero or more child hints to map
     #   these type parameters to.
     # * "exception_type" is the type of output exception expected to be raised
-    #   by the _make_hint_pep484612646_typearg_to_hint() factory when passed
+    #   by the _make_hint_typearg_to_hint() factory when passed
     #   these input tuples.
     typearg_mappings_invalid = [
         # ....................{ CORE                       }....................
@@ -118,7 +118,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         # child hint violating the bounds of a passed PEP 484-compliant type
         # variable.
         (
-            (S, T, T_sequence,),
+            (S, T, T_bound_sequence,),
             (float, complex, int,),
             BeartypeDecorHintPep484TypeVarViolation,
         ),
@@ -128,7 +128,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         # # Assert that this mapper raises the expected violation when passed a type
         # # hint violating the constraints of a passed type variable.
         # (
-        #     (S, T, T_str_or_bytes,),
+        #     (S, T, T_constraint_str_or_bytes,),
         #     (float, complex, ,),
         #     BeartypeDecorHintPep484TypeVarViolation,
         # )
@@ -241,7 +241,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
     for hints_typearg, hints_child, typearg_to_hint_expected in (
         typearg_mappings_valid):
         # Dictionary mapping these type parameters to child hints.
-        typearg_to_hint = _make_hint_pep484612646_typearg_to_hint(
+        typearg_to_hint = _make_hint_typearg_to_hint(
             # Pretend these type parameters parametrized a valid type hint.
             # Since this factory only uses this hint to construct readable
             # exception messages, the value of this hint is irrelevant for
@@ -261,7 +261,7 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
         # Assert that this factory raises the expected type of exception when
         # passed these input tuples.
         with raises(exception_type):
-            _make_hint_pep484612646_typearg_to_hint(
+            _make_hint_typearg_to_hint(
                 hintable=None,
                 hint=None,
                 hints_typearg=hints_typearg,

@@ -160,7 +160,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
     from beartype._check.forward.reference._cls.fwdrefmeta import (
-        BeartypeForwardRefMeta)
+        BeartypeForwardRefMetaclass)
     from beartype._util.hint.pep.proposal.pep695 import (
         iter_hint_pep695_unsubbed_forwardrefs)
     from pytest import raises
@@ -188,7 +188,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     # passed type alias containing only that reference.
     and_saw_by = iter_hint_pep695_unsubbed_forwardrefs(sudden_she_rose)
     the_warm_light_of = next(and_saw_by)
-    assert isinstance(the_warm_light_of, BeartypeForwardRefMeta)
+    assert isinstance(the_warm_light_of, BeartypeForwardRefMetaclass)
     assert the_warm_light_of.__name__ == 'ItsBurstingBurthen'
 
     # Assert this iterator raises the expected exception when attempting to
@@ -216,7 +216,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     her_glowing_limbs = iter_hint_pep695_unsubbed_forwardrefs(
         as_if_her_heart)
     beneath_the_sinuous_veil = next(her_glowing_limbs)
-    assert isinstance(beneath_the_sinuous_veil, BeartypeForwardRefMeta)
+    assert isinstance(beneath_the_sinuous_veil, BeartypeForwardRefMetaclass)
     assert beneath_the_sinuous_veil.__name__ == 'ImpatientlyEndured'
 
     class ImpatientlyEndured(object):
@@ -230,7 +230,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     # Assert that this iterator lastly yields a forward reference proxy
     # referring to the last unquoted forward reference in this type alias.
     of_woven_wind = next(her_glowing_limbs)
-    assert isinstance(of_woven_wind, BeartypeForwardRefMeta)
+    assert isinstance(of_woven_wind, BeartypeForwardRefMetaclass)
     assert of_woven_wind.__name__ == 'AtTheSoundHeTurned'
 
     class AtTheSoundHeTurned(object):

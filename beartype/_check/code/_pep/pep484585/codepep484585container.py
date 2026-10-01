@@ -22,7 +22,7 @@ from beartype._data.hint.sign.datahintsigns import HintSignTuple
 from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
     get_hint_pep484585_arg)
 from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
+    get_hint_pep_childs,
     get_hint_pep_origin_type_isinstanceable,
 )
 
@@ -66,7 +66,7 @@ def make_hint_pep484585_container_check_expr(hint_tree: HintTreeCode) -> None:
     # Note that the "__args__" dunder attribute is *NOT* guaranteed to exist for
     # arbitrary PEP-compliant type hints. Ergo, we obtain this attribute via a
     # higher-level utility getter.
-    hint_childs = get_hint_pep_args(hint)
+    hint_childs = get_hint_pep_childs(hint)
 
     # Possibly ignorable insane child hint subscripting this parent hint,
     # defined as either...

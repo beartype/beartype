@@ -120,7 +120,7 @@ jobs:
       - name: "Checking out repository..."
         uses: 'actions/checkout@v7'
       - name: "Installing latest stable Python 3.x..."
-        uses: 'actions/setup-python@v6'
+        uses: 'actions/setup-python@v7'
         with:
           python-version: '3.x'
       - name: 'Installing uv...'

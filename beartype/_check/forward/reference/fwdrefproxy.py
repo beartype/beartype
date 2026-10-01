@@ -37,7 +37,7 @@ from beartype._data.typing.datatyping import (
     LexicalScope,
     TupleTypes,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.cls.utilclsmake import make_type
 from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
     get_hint_pep484749_ref_names)

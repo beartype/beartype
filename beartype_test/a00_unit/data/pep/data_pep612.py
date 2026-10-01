@@ -8,7 +8,7 @@ Test-wide :pep:`612` **data submodule.**
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import ParamSpec
+from typing import ParamSpec
 
 # ....................{ TYPEARGS                           }....................
 P = ParamSpec('P')

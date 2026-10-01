@@ -23,7 +23,7 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._decor._type._pep.decortypepep557 import (
     beartype_pep557_dataclass)
-from beartype._util.cache.utilcacheclear import clear_caches
+from beartype._cache.cacheclear import clear_caches
 from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
 from beartype._util.cls.utilclsset import set_type_attr
 from beartype._util.cache.utilcacheobjattr import (
@@ -112,11 +112,13 @@ def beartype_type(
 
     # For the unqualified name and value of each direct (i.e., *NOT* indirectly
     # inherited) attribute of this class...
-    for attr_name, attr_value in cls.__dict__.items():  # pyright: ignore[reportGeneralTypeIssues]
+    for attr_name, attr_value in cls.__dict__.items():  # pyright: ignore
+        # print(f'Introspecting "{cls.__name__}.{attr_name}": {repr(attr_value)}')
+
         # If this attribute is...
         if (
-            # True only if this attribute is directly beartypeable (e.g., is either
-            # a function, class, or builtin method descriptor).
+            # True only if this attribute is directly beartypeable (e.g., is
+            # either a function, class, or builtin method descriptor).
             isinstance(attr_value, TYPES_BEARTYPEABLE) and
             # It is *NOT* the case that...
             #
@@ -172,7 +174,15 @@ def beartype_type(
                 not attr_value.__qualname__.startswith(cls.__qualname__)
             )
         ):
-            # print(f'Decorating {repr(cls)} attribute "{attr_name}"...')
+            # if attr_name == 'muh_method':
+            #     continue
+            # if attr_name != 'muh_method':
+            #     continue
+            # if attr_name != '__new__':
+            #     continue
+            # if attr_name == '__new__':
+            #     continue
+            # print(f'Decorating {repr(cls)} attribute "{attr_name}" value {repr(attr_value)}...')
 
             # This attribute decorated with type-checking configured by this
             # configuration if *NOT* already decorated.
@@ -186,7 +196,7 @@ def beartype_type(
                 # Safely replace this undecorated attribute with this decorated
                 # attribute.
                 set_type_attr(cls, attr_name, attr_value_beartyped)
-                # print(f'Decorated {repr(cls)} attribute "{attr_name}".')
+                # print(f'Decorated {repr(cls)} attribute "{attr_name}"!')
             # Else, this decorated attribute is the same as the original
             # attribute, implying that @beartype refused to decorate this
             # attribute with type-checking (e.g., due to this attribute being
@@ -330,6 +340,8 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
             # wrapper functions to raise erroneous type-checking violations.
             clear_caches()
 
+            #FIXME: Should just be performed inside the clear_caches() function
+            #called above, obviously. *sigh*
             # Clear the previously accessed set of the unqualified basenames of
             # *ALL* classes in that module previously decorated by this
             # decorator. Technically, this is optional. Pragmatically, this

@@ -25,8 +25,8 @@ from beartype.claw._package._clawpkgmake import (
     make_package_names_from_args,
 )
 from beartype.claw._importlib.clawimpmain import (
-    add_beartype_pathhook,
-    # remove_beartype_pathhook,
+    add_beartype_path_hook,
+    # remove_beartype_path_hook,
 )
 from beartype.roar import BeartypeClawHookException
 from beartype._conf.confmain import BeartypeConf
@@ -172,7 +172,7 @@ def hook_packages(
         #   registered the desired packages with our global trie. Why? This path
         #   hook subsequently calls the companion get_package_conf_or_none()
         #   function, which accesses that trie.
-        add_beartype_pathhook()
+        add_beartype_path_hook()
 
 # ....................{ PRIVATE ~ blacklisters             }....................
 #FIXME: Docstring us up, please.

@@ -17,7 +17,10 @@ from beartype.roar import (
     BeartypeDecorHintPepNumberedException,
 )
 from beartype.roar._roarexc import _BeartypeUtilTypeException
-from beartype._cave._cavefast import HintPep646TypeVarTupleType
+from beartype._cave._cavefast import (
+    HintPep604Type,
+    HintPep646TypeVarTuplePackedType,
+)
 from beartype._data.cls.datacls import TYPES_NONPEP_TYPEARGS_PACKED
 from beartype._data.typing.datatypingport import (
     Hint,
@@ -34,7 +37,7 @@ from beartype._data.typing.datatyping import (
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic_subbed)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
@@ -57,7 +60,7 @@ from typing import (
 # PEP 747-compliant "typing.TypeForm[...]" type hints, as pyright in particular
 # currently fails to support PEP 747 properly.
 
-def get_hint_pep_args(hint: object) -> tuple:
+def get_hint_pep_childs(hint: object) -> tuple:
     '''
     Tuple of the zero or more **child type hints** subscripting (indexing) the
     passed PEP-compliant type hint if this hint was subscripted *or* the empty
@@ -131,10 +134,10 @@ def get_hint_pep_args(hint: object) -> tuple:
 
        >>> import typing
        >>> from beartype._util.hint.pep.utilpepget import (
-       ...     get_hint_pep_args)
-       >>> get_hint_pep_args(typing.Any)
+       ...     get_hint_pep_childs)
+       >>> get_hint_pep_childs(typing.Any)
        ()
-       >>> get_hint_pep_args(typing.List[int, str, typing.Dict[str, str]])
+       >>> get_hint_pep_childs(typing.List[int, str, typing.Dict[str, str]])
        (int, str, typing.Dict[str, str])
     '''
 
@@ -150,18 +153,36 @@ def get_hint_pep_args(hint: object) -> tuple:
     #
     # If this attribute is *NOT* a tuple...
     elif not isinstance(hint_args, tuple):
-        # If this hint is the unsubscripted "typing.Union" hint semantically
-        # equivalent to the subscripted "typing.Union[typing.Any]" hint, this
-        # hint is a C-based type whose "__args__" dunder attribute is
-        # implemented as a C-based slotted class attribute of some obscure type
-        # under Python >= 3.14. Since unsubscripted "typing.Union" hints are
-        # valid hints, this "__args__" implementation is *TECHNICALLY* also
-        # valid albeit semantically meaningless. In this case, simply return the
-        # empty tuple.
-        if hint is Union:
+        # If this hint is either...
+        #
+        # Note that arbitrary hints are *NOT* necessarily hashable and thus
+        # *NOT* testable against a hypothetical frozenset efficiently congealing
+        # the two unsubscripted union factories tested below.
+        if (
+            # The PEP 484-compliant "typing.Union" unsubscripted union factory
+            # *OR*...
+            #
+            # Note that:
+            # * This unsubscripted union factory is semantically equivalent to
+            #   the PEP 484-compliant "typing.Union[typing.Any]" union, which
+            #   itself is semantically equivalent to the PEP 484-compliant
+            #   "typing.Any" catch-all singleton. "typing.Any" constitutes a
+            #   valid hint, this unsubscripted union factory also constitutes a
+            #   valid hint.
+            hint is Union or
+            # The PEP 604-compliant "types.UnionType" unsubscripted union
+            # factory.
+            hint is HintPep604Type
+        ):
+            # Then this hint is a C-based type whose "__args__" dunder attribute
+            # is implemented as a C-based slotted class attribute of some
+            # obscure type under Python >= 3.14. Since both of the unsubscripted
+            # union factories detected above are themselves valid hints, this
+            # "__args__" implementation is *TECHNICALLY* also valid (albeit
+            # semantically meaningless). In this case, return the empty tuple.
             return ()
-        # Else, this hint is *NOT* the unsubscripted "typing.Union" hint. In
-        # this case, raise an exception.
+        # Else, this hint is *NOT* such an unsubscripted union factory. In this
+        # case, raise an exception.
         else:
             raise BeartypeDecorHintPepException(
                 f'PEP-noncompliant hint {repr(hint)} '
@@ -266,7 +287,7 @@ def get_hint_pep_args_of_len(
     assert args_len >= 1, f'{args_len} < 0.'
 
     # Tuple of all arguments subscripting this hint.
-    hint_args = get_hint_pep_args(hint)
+    hint_args = get_hint_pep_childs(hint)
 
     # If this hint is *NOT* subscripted by the expected number of child hints...
     if len(hint_args) != args_len:
@@ -409,7 +430,7 @@ def get_hint_pep_typeargs_unpacked(
         # If this is an undesirable PEP 646-compliant packed type variable
         # tuple, coerce this into a desirable PEP 646-compliant unpacked type
         # variable tuple.
-        if isinstance(hint_typearg, HintPep646TypeVarTupleType):
+        if isinstance(hint_typearg, HintPep646TypeVarTuplePackedType):
             hint_typearg = make_hint_pep646_typevartuple_unpacked_subbed(
                 hint_typearg)
         # Else, this is *NOT* an undesirable PEP 646-compliant packed type
@@ -526,17 +547,17 @@ def get_hint_pep_typeargs_packed(
        >>> UntypevaredGeneric.__mro__
        (__main__.UntypevaredGeneric, list, typing.Generic, object)
        >>> UntypevaredGeneric.__parameters__
-       ()
+       ()  # <-- empty, yo!
 
-    Likewise, parametrized hints are often but *not* always generic. For example,
-    consider this parametrized non-generic:
+    Likewise, parametrized hints are often but *not* always generic. For
+    example, consider this parametrized non-generic:
 
     .. code-block:: pycon
 
        >>> from typing import List, TypeVar
        >>> TypevaredNongeneric = List[TypeVar('T')]
        >>> type(TypevaredNongeneric).__mro__
-       (typing._GenericAlias, typing._Final, object)
+       (typing._GenericAlias, typing._Final, object)  # <-- no "typing.Generic"!
        >>> TypevaredNongeneric.__parameters__
        (~T,)
 
@@ -858,8 +879,17 @@ def get_hint_pep_origin_or_none(hint: Hint) -> HintOrNone:
     # Return this hint's origin object if any *OR* "None" otherwise.
     return getattr(hint, '__origin__', None)
 
-# ....................{ GETTERS ~ origin : type            }....................
+# ....................{ GETTERS ~ origin                   }....................
 #FIXME: Unit test us up, please.
+#FIXME: Refactor as follows:
+#* Rename to get_hint_pep_origin_hint() for disambiguity.
+#* Rename get_hint_pep_origin_type_or_none() to
+#  get_hint_pep_origin_hint_or_none() for disambiguity.
+#* Revise return annotation to:
+#      ) -> Hint:
+#* Revise return annotation for get_hint_pep_origin_hint_or_none to:
+#      ) -> Optional[Hint]:
+#* Revise docstrings accordingly.
 def get_hint_pep_origin_type(
     # Mandatory parameters.
     hint: Hint,
@@ -965,9 +995,20 @@ def get_hint_pep_origin_type_or_none(
 
     Caveats
     -------
-    **This high-level getter should always be called in lieu of either calling
-    the low-level** :func:`.get_hint_pep_origin_or_none` **getter or attempting
-    to directly access the low-level** ``__origin__`` **dunder attribute.**
+    **The even higher-level** :func:`.get_hint_pep_origin_type_isinstanceable`
+    **getter should typically be called in lieu of this lower-level getter.**
+    Whereas that higher-level getter guaranteed to return an isinstanceable
+    type, this lower-level getter is *not* guaranteed to return a type -- let
+    alone an isinstanceable type! The return hint annotating this getter is thus
+    an abject lie. Moreover, this getter could be said to return false
+    positives. For example, this getter returns the arbitrary first child hint
+    subscripting any :pep:`593`-compliant hint (e.g., ``list[str]`` when passed
+    ``typing.Annotated[list[str], 'Ugh.']``).
+
+    **Either of these high-level getters should be called in lieu of either
+    calling the low-level** :func:`.get_hint_pep_origin_or_none` **getter or
+    attempting to directly access the low-level** ``__origin__`` **dunder
+    attribute.**
 
     Parameters
     ----------
@@ -1025,10 +1066,11 @@ def get_hint_pep_origin_type_or_none(
             hint if (
                 # The caller requests the "self" fallback logic *AND*...
                 is_self_fallback and
-                # This hint is itself a type, this hint could be euphemistically
-                # said to originate from "itself." Fallback to this hint itself.
-                # Look. Just go with it. We wave our hands in the air, fam.
+                # This hint is itself a type *AND*...
                 isinstance(hint, type)
+                # Then this type could be euphemistically said to originate from
+                # "itself." Fallback to this hint itself. Look. Just go with it.
+                # We wave our hands in the air, fam.
             ) else
             # Else, either the caller did not request the "self" fallback logic
             # *OR* this hint is not a type. In either case, fallback to "None".
@@ -1039,7 +1081,7 @@ def get_hint_pep_origin_type_or_none(
     # Return this origin type.
     return hint_origin
 
-
+# ....................{ GETTERS ~ origin : isinstanceable  }....................
 def get_hint_pep_origin_type_isinstanceable(hint: Hint) -> type:
     '''
     **Isinstanceable origin type** (i.e., class passable as the second argument
@@ -1148,7 +1190,7 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
 _HINT_ARGS_EMPTY_TUPLE = ((),)
 '''
 Tuple containing only the empty tuple, to be returned from the
-:func:`.get_hint_pep_args` getter when passed either:
+:func:`.get_hint_pep_childs` getter when passed either:
 
 * A :pep:`585`-compliant type hint subscripted by the empty tuple (e.g.,
   ``tuple[()]``).

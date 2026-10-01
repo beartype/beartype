@@ -5,7 +5,7 @@
 
 '''
 Unit tests validating that the recursion guard internally implemented by the
-private :class:`beartype.claw._importlib._clawimpfileloader.BeartypeSourceFileLoader`
+:class:`beartype.claw._importlib._clawimpfileloader.BeartypeSourceFileLoader`
 subclass behaves as expected.
 '''
 

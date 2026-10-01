@@ -31,9 +31,9 @@ from beartype._cave._cavefast import (
     HintPep484749RefObjectType,
     HintPep604Type,
     HintPep612ParamSpecType,
-    HintPep646TypeVarTupleType,
+    HintPep646TypeVarTuplePackedType,
     HintPep646692UnpackedType,
-    HintPep695TypeAlias,
+    # HintPep695TypeAliasTypes,
     MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
@@ -53,6 +53,7 @@ from collections.abc import (
     Mapping,
     Set,
 )
+from importlib.abc import Loader
 from pathlib import Path
 from types import (
     CodeType,
@@ -62,6 +63,7 @@ from types import (
 from typing import (
     Any,
     Literal,
+    TypeAlias,
     TypeVar,
     Union,
 )
@@ -711,6 +713,40 @@ number of classes lexically nesting the currently decorated class as input
 metadata, as trivially provided by the length of this tuple.
 '''
 
+# ....................{ API ~ importlib                    }....................
+FileFinderPathHook: TypeAlias = Callable
+'''
+:pep:`585`-compliant type hint matching any **file finder path hook** (i.e.,
+closure created and returned by a call to the
+:meth:`importlib.machinery.FileFinder.path_hook` method).
+'''
+
+
+FileFinderPathHookAndIndex = tuple[FileFinderPathHook, int]
+'''
+:pep:`585`-compliant type hint matching any 2-tuple ``(path_hook,
+path_hook_index)`` where:
+
+* ``path_hook`` is a **file finder path hook** (i.e., closure created and
+  returned by a call to the :meth:`importlib.machinery.FileFinder.path_hook`
+  method).
+* ``path_hook_index`` is the 0-based index of either:
+
+  * If the global :obj:`sys.path_hooks` list already contains this hook, the
+    index of this hook in that list.
+  * Else, the index at which the caller should insert this hook into that list.
+'''
+
+
+FileFinderPathHookLoaderDetails = tuple[tuple[type[Loader], list[str]], ...]
+'''
+:pep:`585`-compliant type hint matching **import hook file finder loader
+details** (i.e., tuple-centric data structure associating each Python module
+filetype supported by the current platform with a corresponding import hook file
+loader class whose instances are responsible for loading Python modules of that
+filetype into imported in-memory module objects).
+'''
+
 # ....................{ API ~ pathlib                      }....................
 # Type hints specific to the standard "pathlib" package.
 
@@ -812,7 +848,7 @@ TupleTypeVars = tuple[TypeVar, ...]
 # standards collectively covering type parameters.
 
 Pep484612646TypeArgPacked = (
-    TypeVar | HintPep612ParamSpecType | HintPep646TypeVarTupleType)
+    TypeVar | HintPep612ParamSpecType | HintPep646TypeVarTuplePackedType)
 '''
 PEP-compliant type hint matching a :pep:`484`-, pep:`612`-, or
 :pep:`646`-compliant **packed type parameter** (i.e., :pep:`484`-compliant type
@@ -894,7 +930,9 @@ to the type hint annotating that parameter, return, or variable).
 '''
 
 # ....................{ PEP ~ 695                          }....................
-Pep695Parameterizable = type | FunctionType | HintPep695TypeAlias
+#FIXME: Uncomment the "| typing.TypeAliasType" branch *AFTER* dropping support
+#for Python 3.12. *sigh*
+Pep695Parameterizable = type | FunctionType  # | typing.TypeAliasType
 '''
 :pep:`695`-compliant type hint matching *any* :pep:`695` **parameterizable**
 (i.e., object that may be parametrized by a :pep:`695`-compliant list of one or
@@ -912,11 +950,11 @@ Specifically, this hint matches:
 # ....................{ TYPE                               }....................
 TypeException = type[Exception]
 '''
-PEP-compliant type hint matching *any* exception class.
+:pep:`585`-compliant type hint matching *any* exception class.
 '''
 
 
 TypeWarning = type[Warning]
 '''
-PEP-compliant type hint matching *any* warning category.
+:pep:`585`-compliant type hint matching *any* warning category.
 '''
