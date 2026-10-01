@@ -71,7 +71,7 @@ def is_hint_pep484585646_tuple_variadic_unpacked_if_needed(hint: Hint) -> bool:
     # conditionally unpacking these child hints if this is a PEP 646-compliant
     # prefix- or subscription-flavoured unpacked tuple hint.
     #
-    # Note that the lower-level get_hint_pep_args() only correctly unpacks these
+    # Note that the lower-level get_hint_pep_childs() only correctly unpacks these
     # child hints if this is a PEP 646-compliant prefix- but *NOT*
     # subscription-flavoured unpacked tuple hint. Transparently unpacking both
     # flavours of unpacked tuple hints requires a higher-level getter.
@@ -212,15 +212,15 @@ def get_hint_pep484585646_tuple_args_unpacked_if_needed(
     ``__args__`` dunder attributes of both should ideally share the same
     semantics as well. They do not. Blindly passing :pep:`646`-compliant
     unpacked tuple type hints to the lower-level
-    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_args` getter thus
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_childs` getter thus
     results in semantically inconsistent behaviour, as expected from above:
 
     .. code-block:: python
 
-       >>> from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-       >>> get_hint_pep_args(hint_tuple_prefixed)
+       >>> from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
+       >>> get_hint_pep_childs(hint_tuple_prefixed)
        (<class 'str'>, Ellipsis)  # <-- *GOOD*
-       >>> get_hint_pep_args(hint_tuple_subbed)
+       >>> get_hint_pep_childs(hint_tuple_subbed)
        (tuple[str, ...],)  # <-- *OHNOESTHISSUCKS*
 
     This getter eliminates this semantic inconsistency and should thus be
@@ -258,7 +258,7 @@ def get_hint_pep484585646_tuple_args_unpacked_if_needed(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
     from beartype._util.hint.pep.utilpepsign import (
         get_hint_pep_sign_ambiguous_or_none)
     from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
@@ -267,7 +267,7 @@ def get_hint_pep484585646_tuple_args_unpacked_if_needed(
     # Tuple of the zero or more child hints subscripting this hint if this hint
     # defines of the "__args__" dunder attribute *OR* "None" otherwise (i.e., if
     # this hint fails to define this attribute).
-    hint_args = get_hint_pep_args(hint)
+    hint_args = get_hint_pep_childs(hint)
     # print(f'hint: {hint}')
     # print(f'hint_args: {hint_args}')
 
@@ -300,7 +300,7 @@ def get_hint_pep484585646_tuple_args_unpacked_if_needed(
                 # subscription-based unpacked tuple hint in a similar manner as
                 # CPython itself would expand a prefix-based unpacked tuple hint.
                 # See the docstring for a deep discussion.
-                hint_args = get_hint_pep_args(hint_child)
+                hint_args = get_hint_pep_childs(hint_child)
             # Else, this child hint is *NOT* a PEP 646-compliant
             # subscription-based unpacked tuple hint.
         # Else, this hint is *NOT* a PEP 646- or 692-compliant
@@ -365,13 +365,13 @@ def disambiguate_hint_pep484585646_tuple_sign(hint: Hint) -> HintSign:
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
     from beartype._util.hint.pep.utilpepsign import (
         get_hint_pep_sign_ambiguous_or_none)
 
     # ....................{ LOCALS                         }....................
     # Child hints subscripting this parent tuple hint.
-    hint_childs = get_hint_pep_args(hint)
+    hint_childs = get_hint_pep_childs(hint)
     # print(f'hint_childs: {hint_childs}')
 
     # Number of child hints subscripting this parent tuple hint.

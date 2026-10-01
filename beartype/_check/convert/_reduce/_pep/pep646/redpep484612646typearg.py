@@ -29,7 +29,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #Python >= 3.13:
 #    https://peps.python.org/pep-0696
 #
-#This PEP induces edge cases in _make_hint_pep484612646_typearg_to_hint().
+#This PEP induces edge cases in _make_hint_typearg_to_hint().
 #Notably, when the caller passes more type parameters than child hints to that
 #factory, we currently silently ignore and thus preserve those "excess" type
 #parameters. Under Python >= 3.13, however, we *MUST* instead now:
@@ -41,7 +41,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Note that:
 #* Some (or even all) of the above logic may actually already be implicitly
-#  supported due to the reduce_hint_pep484612646_typearg() reducer, which now
+#  supported due to the reduce_hint_typearg() reducer, which now
 #  supports PEP 696-compliant defaults.
 #* This does apply to both PEP 484-compliant type variables *AND* PEP
 #  646-compliant unpacked type variable tuples. Both can be defaulted.
@@ -87,17 +87,17 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     get_hint_pep484_typevar_bounded_constraints_or_none,
     # is_hint_pep484_typevar,
 )
-from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
-    die_unless_hint_pep484612646_typearg_unpacked,
-    is_hint_pep484612646_typearg_unpacked,
-    pack_hint_pep484612646_typearg_unpacked,
+from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
+    die_unless_hint_typearg_unpacked,
+    is_hint_typearg_unpacked,
+    pack_hint_typearg_unpacked,
 )
 from beartype._util.hint.pep.proposal.pep646.pep646692unpack import (
     make_hint_pep646_tuple_unpacked_prefix)
 from beartype._util.hint.pep.proposal.pep696 import (
-    get_hint_pep484612646_typearg_packed_default_or_sentinel)
+    get_hint_typearg_packed_default_or_sentinel)
 from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
+    get_hint_pep_childs,
     get_hint_pep_origin,
     get_hint_pep_typeargs_unpacked,
 )
@@ -106,7 +106,7 @@ from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from typing import Optional
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep484612646_typearg(
+def reduce_hint_typearg(
     call_curr: BeartypeCallDataABC,
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
@@ -114,9 +114,9 @@ def reduce_hint_pep484612646_typearg(
     **kwargs
 ) -> HintSane:
     '''
-    Reduce the passed :pep:`484`-, :pep:`612`-, or :pep:`646`-compliant **type
-    parameter** (i.e., :pep:`484`-compliant type variable, :pep:`612`-compliant
-    parameter specification, or :pep:`646`-compliant type variable tuple) to a
+    Reduce the passed PEP-compliant **unpacked type parameter** (i.e.,
+    :pep:`484`-compliant type variable, :pep:`612`-compliant unpacked parameter
+    specification, or :pep:`646`-compliant unpacked type variable tuple) to a
     lower-level type hint currently supported by :mod:`beartype`.
 
     This reducer is intentionally *not* memoized (e.g., by the
@@ -264,7 +264,7 @@ def reduce_hint_pep484612646_typearg(
                 # have yet to be reduced by this iteration *AND*...
                 typearg_to_hint_stack and
                 # This hint is still a type parameter...
-                is_hint_pep484612646_typearg_unpacked(hint_reduced)
+                is_hint_typearg_unpacked(hint_reduced)
             ):
                 # Hint mapped to by this type parameter if one or more parent
                 # hints previously mapped this type parameter to a hint *OR* this
@@ -291,15 +291,15 @@ def reduce_hint_pep484612646_typearg(
 
     # ....................{ PHASE ~ 2 : default            }....................
     # If this hint is still an unpacked type parameter...
-    if is_hint_pep484612646_typearg_unpacked(hint_reduced):
+    if is_hint_typearg_unpacked(hint_reduced):
         # Packed type parameter underlying this unpacked type parameter.
-        hint_packed = pack_hint_pep484612646_typearg_unpacked(
+        hint_packed = pack_hint_typearg_unpacked(
             hint=hint_reduced, exception_prefix=exception_prefix)
 
         # PEP 696-compliant default parametrizing this type parameter if any
         # *OR* the sentinel placeholder otherwise (i.e., if this type parameter
         # has *NO* default).
-        hint_default = get_hint_pep484612646_typearg_packed_default_or_sentinel(
+        hint_default = get_hint_typearg_packed_default_or_sentinel(
             hintable=call_curr.decoratee,
             hint=hint_packed,
             exception_prefix=exception_prefix,
@@ -408,11 +408,12 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     '''
     Reduce the passed **subscripted hint** (i.e., derivative hint produced by
     subscripting an unsubscripted hint originally parametrized by one or more
-    **type parameters** (i.e., :pep:`484`-compliant type variables or
-    :pep:`646`-compliant type variable tuples) with one or more child hints) to
-    that unsubscripted hint and corresponding **type parameter lookup table**
-    (i.e., immutable dictionary mapping from those same type parameters to those
-    same child hints).
+    PEP-compliant **unpacked type parameters** (i.e., :pep:`484`-compliant type
+    variables, :pep:`612`-compliant unpacked parameter specifications, or
+    :pep:`646`-compliant unpacked type variable tuples) with one or more child
+    hints) to that unsubscripted hint and corresponding **type parameter lookup
+    table** (i.e., immutable dictionary mapping from those same type parameters
+    to those same child hints).
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as reducers cannot be memoized.
@@ -522,7 +523,7 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     #discards a full-blown list object just to create this unpacked tuple.
     #Instead, we should:
     #* Call get_hint_pep_typeargs_packed() instead here.
-    #* In the _make_hint_pep484612646_typearg_to_hint() factory:
+    #* In the _make_hint_typearg_to_hint() factory:
     #  * Detect packed rather than unpacked type variable tuples everywhere.
     #  * Manually pack the detected type variable tuple when mapping this type
     #    variable tuple to another hint: e.g.,
@@ -561,7 +562,7 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     # print(f'hints_typearg: {hints_typearg}')
 
     # Tuple of all child hints subscripting this subscripted hint.
-    hints_child = get_hint_pep_args(hint)
+    hints_child = get_hint_pep_childs(hint)
     # print(f'hints_child: {hints_child}')
 
     # ....................{ REDUCE                         }....................
@@ -605,7 +606,7 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     try:
         # Type parameter lookup table mapping from each of these type parameters
         # to each of these corresponding child hints.
-        typearg_to_hint = _make_hint_pep484612646_typearg_to_hint(
+        typearg_to_hint = _make_hint_typearg_to_hint(
             hintable=call_curr.decoratee,
             hint=hint,
             hints_typearg=hints_typearg,
@@ -782,13 +783,13 @@ def _die_unless_hint_pep484_typevar_bound_bearable(
     # hint to be unpacked type parameters. Nonetheless, the caller is under no
     # such constraints. To guard against dev bitrot, we validate this.
     else:
-        die_unless_hint_pep484612646_typearg_unpacked(
+        die_unless_hint_typearg_unpacked(
             hint=hint_typearg, exception_prefix=EXCEPTION_PLACEHOLDER)  # pyright: ignore
 
 # ....................{ PRIVATE ~ factories                }....................
 #FIXME: Unit test that this reducer reduces PEP 646-compliant unpacked type
 #variable tuples, please. *sigh*
-def _make_hint_pep484612646_typearg_to_hint(
+def _make_hint_typearg_to_hint(
     hintable : Optional[Pep649749Hintable],
     hint: Hint,
     hints_typearg: TuplePep484612646TypeArgsUnpacked,
@@ -1265,7 +1266,7 @@ def _make_hint_pep484612646_typearg_to_hint(
             # this is technically that. This edge case is required to correctly
             # map unpacked type variable tuples to other unpacked type variable
             # tuples *WITHOUT* triggering infinite recursion. Why? Because the
-            # reduce_hint_pep484612646_typearg() function reduces unpacked type
+            # reduce_hint_typearg() function reduces unpacked type
             # variable tuples that have been previously mapped to unpacked type
             # variable tuples with iteration over the returned "typearg_to_hint"
             # dictionary. For efficiency and simplicity, that iteration only

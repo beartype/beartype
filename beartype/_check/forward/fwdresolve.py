@@ -179,8 +179,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
         f'{repr(exception_prefix)} not string.')
     assert isinstance(exception_cls, type), (
         f'{repr(exception_cls)} not exception type.')
-
-    # print(f'Resolving decorator-time stringified type hint {repr(hint)}...')
+    # print(f'Resolving decorator-time PEP 484 forward reference {repr(hint)} under {repr(decor_curr)}...')
 
     # ..................{ LOCALS                             }..................
     # Decorated callable and metadata associated with that callable, localized
@@ -242,6 +241,8 @@ def resolve_hint_pep484_ref_str_decor_curr(
         # pure-Python callable or type)...
         func_is_nested
     ):
+        # print(f'Detected nested hint {repr(hint)} in directly decorated callable...')
+
         # Non-empty frozen set of the unqualified basenames of all parent
         # callables and types lexically containing this nested decorated
         # callable (including this nested decorated callable itself).
@@ -433,7 +434,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
         exception_prefix=exception_prefix,
     )
     # print(f'Resolving {repr(decor_curr)} string hint {repr(hint)} to forward reference proxy...')
-    # print(f'Resolving string hint {repr(hint)} against {repr(decor_currfunc_wrappee_wrappee_scope_forward)}...')
+    # print(f'Resolving string hint {repr(hint)} against {repr(decoratee_scope_forward)}...')
 
     # ..................{ RESOLVE                            }..................
     # Non-string type hint resolved from this stringified type hint against both

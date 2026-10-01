@@ -26,7 +26,7 @@ from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_TYPE_MIMIC,
 )
 from beartype._data.api.standard.datatyping import TYPING_MODULE_NAMES
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobjget import get_object_type_unless_type
 from typing import NoReturn
@@ -393,7 +393,7 @@ def is_hint_pep_subbed(hint: object) -> bool:
     (i.e., indexed by one or more child type hints).
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator), as
+    :func:`beartype._util.cache.func.utilcachefunc.callable_cached` decorator), as
     the implementation trivially reduces to an efficient one-liner.
 
     Parameters
@@ -408,11 +408,11 @@ def is_hint_pep_subbed(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 
     # Return true only if the tuple of all child type hints subscripting this
     # hint contains one or more child type hints.
-    return bool(get_hint_pep_args(hint))
+    return bool(get_hint_pep_childs(hint))
 
 
 @callable_cached

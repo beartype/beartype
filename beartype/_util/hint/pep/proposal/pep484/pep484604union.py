@@ -22,7 +22,7 @@ from beartype._data.typing.datatypingport import (
     SequenceHints,
     TypeIs,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from collections.abc import Sequence
 from functools import reduce
 from operator import __or__ as or_operator
@@ -179,7 +179,7 @@ def die_if_hint_pep604_inconsistent(hint: Hint) -> None:
     # Else, the representation of this new union is prefixed by the
     # representation of this hint as expected.
 
-# ....................{ TESTERS                        }....................
+# ....................{ TESTERS                            }....................
 def is_hint_pep604(hint: object) -> TypeIs[Hint]:
     '''
     :data:`True` only if the passed object is a :pep:`604`-compliant **union**
@@ -199,13 +199,12 @@ def is_hint_pep604(hint: object) -> TypeIs[Hint]:
     # Release the werecars, Bender!
     return isinstance(hint, HintPep604Type)
 
-
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_hint_pep484604_union(hint_childs: SequenceHints) -> Hint:
     '''
-    :pep:`604`- or :pep:`484`-compliant union type hint synthesized from the
+    :pep:`484`- or :pep:`604`-compliant union type hint synthesized from the
     passed sequence of two or more PEP-compliant type hints if this sequence
     contains two or more items, the one PEP-compliant type hint in this sequence
     if this sequence contains only one item, *or* raise an exception otherwise
@@ -284,7 +283,7 @@ def make_hint_pep484604_union(hint_childs: SequenceHints) -> Hint:
     # If *ANY* exception whatsoever is raised, one or more of these items are
     # PEP 604-noncompliant. In this case, silently ignore this exception in
     # favour of falling back to a PEP 484-compliant old-style union below. We
-    # don't make breaky. We only fix breaky, people.
+    # don't make breaky. We only fix breaky. Throw your hands up in the air!
     except Exception:
         pass
 

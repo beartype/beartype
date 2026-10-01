@@ -28,7 +28,7 @@ from typing import Optional
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please. *sigh*
-def get_hint_pep484612646_typearg_packed_default_or_sentinel(
+def get_hint_typearg_packed_default_or_sentinel(
     # Mandatory parameters.
     hintable: Optional[Pep649749Hintable],
     hint: Pep484612646TypeArgPacked,
@@ -94,13 +94,13 @@ def get_hint_pep484612646_typearg_packed_default_or_sentinel(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
-        die_unless_hint_pep484612646_typearg_packed)
+    from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
+        die_unless_hint_typearg_packed)
     from beartype._util.hint.pep.proposal.pep749.pep749evaluate import (
         get_hint_pep749_evaluator_optional)
 
     # If this hint is *NOT* a packed type parameter, raise an exception.
-    die_unless_hint_pep484612646_typearg_packed(
+    die_unless_hint_typearg_packed(
         hint=hint,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,

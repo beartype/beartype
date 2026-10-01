@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep591Exception
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Remove *AFTER* deeply type-checking "Final[...]" type hints. For now,
@@ -51,7 +51,7 @@ def reduce_hint_pep591(hint: Hint) -> Hint:
     '''
 
     # Tuple of zero or more child type hints subscripting this type hint.
-    hint_args = get_hint_pep_args(hint)
+    hint_args = get_hint_pep_childs(hint)
 
     # Number of child type hints subscripting this type hint.
     hint_args_len = len(hint_args)

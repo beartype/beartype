@@ -50,7 +50,6 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_14,
     IS_PYTHON_AT_MOST_3_13,
     IS_PYTHON_AT_LEAST_3_13,
-    IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_11,
 )
 from collections import deque as _deque
@@ -72,6 +71,7 @@ from enum import (
     Enum as _Enum,
     EnumMeta as _EnumMeta,
 )
+from importlib import import_module as importlib_import_module
 from io import IOBase as _IOBase
 from typing import (
     TYPE_CHECKING,
@@ -111,21 +111,6 @@ from types import (
     TracebackType as _TracebackType,
 )
 
-# ....................{ IMPORTS ~ conditional              }....................
-#FIXME: Preserve for when we inevitably require similar logic in the future.
-
-# # Attempt to import types unavailable under Python 3.5, all of which should
-# # be passed through the intermediary _get_type_or_unavailable() helper
-# # function first before being assigned to module globals below. The
-# # docstrings for such globals should contain a sentence resembling:
-# #     **This type is unavailable under Python 3.5,** where it defaults to
-# #     :class:`UnavailableType` for safety.
-# try:
-#     _Collection = type(list[str])
-# # If this is Python 3.5, define placeholder globals of the same name.
-# except ImportError:
-#     _Collection = None
-
 # ....................{ CLASSES                            }....................
 class UnavailableType(object):
     '''
@@ -143,7 +128,7 @@ class UnavailableType(object):
             f'{self} not passable as the second parameter to issubclass().')
 
 
-# This is private, as it's unclear whether anyone requires access to this yet.
+# Currently private, as it's unclear whether anyone requires access to this yet.
 class _UnavailableTypesTuple(tuple):
     '''
     Type of any **tuple of unavailable types** (i.e., types *not* available
@@ -152,6 +137,123 @@ class _UnavailableTypesTuple(tuple):
     '''
 
     pass
+
+
+UnavailableTypes = _UnavailableTypesTuple()
+'''
+**Tuple of unavailable types** (i.e., types *not* available under the active
+Python interpreter, typically due to insufficient Python version or
+non-installed third-party dependencies).
+
+This tuple is implicitly supported as the second parameter accepted by the
+:func:`isinstance` builtin: e.g.,
+
+.. code-block:: pycon
+
+   >>> isinstance(int, ())
+   False
+
+Caveats
+-------
+**This tuple should always be used in lieu of the empty tuple.** Although
+technically equivalent to the empty tuple, functionality throughout this
+codebase *could* (but doesn't actually at the moment) explicitly distinguish
+between this tuple and the empty tuple.
+'''
+
+# ....................{ PRIVATE ~ globals                  }....................
+_TYPING_MODULES: list[_ModuleType] = [_typing,]
+'''
+List of all **typing modules** (i.e., at least the standard :mod:`typing` module
+and possibly also the third-party :mod:`typing_extensions` module if importable
+under the active Python interpreter.)
+'''
+
+
+# Attempt to...
+try:
+    # Third-party "typing_extensions" module dynamically imported if that module
+    # has been installed under the active Python interpreter *OR* raise the
+    # standard "ModuleNotFoundError" exception otherwise.
+    _typing_extensions = importlib_import_module('typing_extensions')
+
+    # Append this module to the above list.
+    _TYPING_MODULES.append(_typing_extensions)  # type: ignore[arg-type]
+# If that module does *NOT* exist, ignore that module.
+except ModuleNotFoundError:
+    pass
+
+#FIXME: Preserve for when we inevitably require similar logic in the future.
+
+# # Attempt to import types unavailable under Python 3.5, all of which should
+# # be passed through the intermediary _get_type_or_unavailable() helper
+# # function first before being assigned to module globals below. The
+# # docstrings for such globals should contain a sentence resembling:
+# #     **This type is unavailable under Python 3.5,** where it defaults to
+# #     :class:`UnavailableType` for safety.
+# try:
+#     _Collection = type(list[str])
+# # If this is Python 3.5, define placeholder globals of the same name.
+# except ImportError:
+#     _Collection = None
+
+# ....................{ PRIVATE ~ factories                }....................
+def _get_typing_attrs(attr_basename: str) -> tuple:
+    '''
+    Tuple of all **typing attributes** (i.e., objects declared at module scope
+    by either the :mod:`typing` or :mod:`typing_extensions` modules) with the
+    passed unqualified basenames dynamically imported from either one or both of
+    these modules.
+
+    Parameters
+    ----------
+    attr_basename : str
+        Unqualified basename of the attribute to be imported from a typing
+        module.
+
+    Returns
+    -------
+    tuple
+        Tuple of either:
+
+        * If one or more typing modules define this attribute, all such
+          attributes dynamically imported from those modules.
+        * Else, :data:`.UnavailableTypes` (i.e., the placeholder empty tuple of
+          types).
+    '''
+    assert isinstance(attr_basename, str), f'{repr(attr_basename)} not string.'
+
+    # Note that this getter is intentionally defined in a low-level manner
+    # *WITHOUT* attempting to import related higher-level functionality from the
+    # "beartype._util.api.standard.utiltyping" submodule (e.g.,
+    # import_typing_attr_or_fallback()). Doing so circumvents circular import
+    # dependencies that would otherwise arise.
+
+    # List of all typing attributes to be returned.
+    typing_attrs = []
+
+    # For each typing module importable under the active Python interpreter...
+    for typing_module in _TYPING_MODULES:
+        # This attribute if defined by this typing module *OR* "None" otherwise
+        # (i.e., if this typing module fails to define this attribute).
+        typing_module_attr = getattr(typing_module, attr_basename, None)
+
+        # If this typing module defines this attribute, append this attribute to
+        # this list.
+        if typing_module_attr is not None:
+            typing_attrs.append(typing_module_attr)
+        # Else, this typing module fails to define this attribute.
+
+    # Return either...
+    return (
+        # If one or more typing modules define this attribute, this list coerced
+        # into a tuple (e.g., for use as the second parameter to the
+        # builtin isinstance() and issubclass() parameters).
+        tuple(typing_attrs)
+        if typing_attrs else
+        # Else, the placeholder empty tuple of types.
+        UnavailableTypes
+    )
 
 # ....................{ TYPES ~ core                       }....................
 AnyType = object
@@ -1069,8 +1171,9 @@ that enumeration's type and should be directly referenced as such: e.g.,
 # type-checker, ignore false positives complaining that this type is not a type.
 # Notably, mypy inexplicably refuses to accept this by emitting "errors"
 # resembling the following wherever this type is accessed:
-#     beartype._util.hint.pep.proposal.pep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695TypeAlias" is not valid as a type [valid-type]
-#     beartype._util.hint.pep.proposal.pep695.py:120: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+#     beartype._util.hint.pep.proposal.pep695.py:120: error: Variable
+#     "beartype._cave._cavefast.HintGenericSubscriptedType" is not valid as a
+#     type [valid-type]
 if TYPE_CHECKING:
     class HintGenericSubscriptedType(object): pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
@@ -1115,10 +1218,13 @@ else:
 #FIXME: Excise the obsolete "HintPep604Type" type *AFTER* dropping Python 3.13
 #support, please. Under Python >= 3.14, this type is a trivial alias of the
 #standard "typing.Union" type.
+#FIXME: Actually, just rename this to "HintPep484604UnionType" at that point.
+#This unambiguous name is still quite useful for clarity, as this is frankly a
+#super-confusing topic. *sigh*
 HintPep604Type = _types.UnionType
 '''
-C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
-created by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
+C-based type of all :pep:`604`-compliant **new unions** (i.e., objects created
+by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
 
 This type is a version-agnostic generalization of the standard
 :class:`types.UnionType` type available only under Python >= 3.10.
@@ -1131,7 +1237,10 @@ Tuple of all :pep:`604`-compliant **new union item types** (i.e., types of all
 objects permissible as the items of new unions), including:
 
 * The C-based type of all types (e.g., the type of the first item in the new
-  union ``list | None``).
+  union ``list | None``). Note that the :pep:`484`-compliant :class:`typing.Any`
+  hint is also defined as a pure-Python type and thus implicitly matched by this
+  :class:`type` root superclass, which is good; :class:`typing.Any` constitutes
+  a valid member of any :pep:`604`-compliant new union (e.g., ``Any | int``).
 * The C-based type of all subscripted generics (e.g., the type of the first item
   in the new union ``list[dict[str, int]] | None``).
 '''
@@ -1207,7 +1316,7 @@ objects annotating variadic parameters with syntax resembling
 # type-checker, ignore false positives complaining that these types are not
 # types.
 if TYPE_CHECKING:
-    class HintPep646TypeVarTupleType(object): pass
+    class HintPep646TypeVarTuplePackedType(object): pass
     class HintPep646692UnpackedType(object): pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker.
@@ -1215,11 +1324,12 @@ if TYPE_CHECKING:
 # If the active Python interpreter targets at least Python >= 3.11 and thus
 # supports PEP 646, define these types properly. *sigh*
 elif IS_PYTHON_AT_LEAST_3_11:
-    HintPep646TypeVarTupleType = _typing.TypeVarTuple
+    HintPep646TypeVarTuplePackedType = _typing.TypeVarTuple
     '''
-    C-based type of all :pep:`646`-compliant **type variable tuples** (i.e.,
-    low-level C-based :obj:`typing.TypeVarTuple` objects) if the active Python
-    interpreter targets Python >= 3.11 *or* :class:`.UnavailableType` otherwise.
+    C-based type of all :pep:`646`-compliant **packed type variable tuples**
+    (i.e., low-level C-based :obj:`typing.TypeVarTuple` objects) if the active
+    Python interpreter targets Python >= 3.11 *or* :class:`.UnavailableType`
+    otherwise.
 
     This type is a version-agnostic generalization of the standard
     :class:`typing.TypeVarTuple` type available only under Python >= 3.11.
@@ -1227,7 +1337,7 @@ elif IS_PYTHON_AT_LEAST_3_11:
 
 
     HintPep646692UnpackedType = type(
-        _typing.Unpack[HintPep646TypeVarTupleType('Ts')])
+        _typing.Unpack[HintPep646TypeVarTuplePackedType('Ts')])
     '''
     Pure-Python type of all :pep:`646`- and :pep:`692`-compliant **unpacked
     type hints** (i.e., parent hints expanding the single child hints
@@ -1253,16 +1363,29 @@ elif IS_PYTHON_AT_LEAST_3_11:
 # Else, the active Python interpreter targets Python < 3.11 and thus fails to
 # support PEP 646. In this case, define these types as placeholders. *sigh*
 else:
-    HintPep646TypeVarTupleType = UnavailableType
+    HintPep646TypeVarTuplePackedType = UnavailableType
     HintPep646692UnpackedType = UnavailableType
 
 
-HintPep484612646TypeArgPackedTypes = (
-    _typing.TypeVar, HintPep612ParamSpecType, HintPep646TypeVarTupleType)
+HintPep484612TypeArgUnpackedTypes = (_typing.TypeVar, HintPep612ParamSpecType)
+'''
+Tuple of all **unambiguously unpacked type parameters types** (i.e., types of
+:pep:`484`-compliant type variables and pep:`612`-compliant parameter
+specifications, both of which are necessarily unpacked and thus unambiguously
+unpacked).
+
+This tuple intentionally excludes the :class:`.HintPep646692UnpackedType` type,
+which is the ambiguous type of both pep:`646`-compliant unpacked type variable
+tuples *and* :pep:`692`-compliant unpacked typed dictionaries.
+'''
+
+
+HintPep484612646TypeArgPackedTypes = HintPep484612TypeArgUnpackedTypes + (
+    HintPep646TypeVarTuplePackedType,)
 '''
 Tuple of all **packed type parameters types** (i.e., types of
 :pep:`484`-compliant type variables, pep:`612`-compliant parameter
-specifications, and :pep:`646`-compliant type variable tuples).
+specifications, and :pep:`646`-compliant packed type variable tuples).
 '''
 
 # ....................{ TYPES ~ hint : pep : 749           }....................
@@ -1359,34 +1482,30 @@ often the case, :pep:`585` has the right of it.
 # type-checker, ignore false positives complaining that this type is not a type.
 # Notably, mypy inexplicably refuses to accept this by emitting "errors"
 # resembling the following wherever this type is accessed:
-#     beartype._util.hint.pep.proposal.pep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695TypeAlias" is not valid as a type [valid-type]
-#     beartype._util.hint.pep.proposal.pep695.py:120: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+#     beartype._util.hint.pep.proposal.pep695.py:120: error: Variable
+#     "beartype._cave._cavefast.HintPep695TypeAliasTypes" is not valid as a type
+#     [valid-type]
 if TYPE_CHECKING:
-    class HintPep695TypeAlias(object): pass
+    #FIXME: Uncomment once we drop support for Python <= 3.14, maybe? Probably
+    #an earlier Python release, but who even knows anymore. *sigh*
+    # HintPep695TypeAliasTypes = _typing.TypeAliasType
+    class HintPep695TypeAliasTypes(object): ...
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker. In this case, define this type properly. *sigh*
 else:
-    # Define this type as either...
-    HintPep695TypeAlias = (
-        # If the active Python interpreter targets at least Python >= 3.12 and
-        # thus supports PEP 695, this type;
-        _typing.TypeAliasType
-        if IS_PYTHON_AT_LEAST_3_12 else
-        # Else, a placeholder type.
-        UnavailableType
-    )
+    HintPep695TypeAliasTypes = _get_typing_attrs('TypeAliasType')
     '''
-    C-based type of all :pep:`695`-compliant **type aliases** (i.e., objects
-    created by statements of the form ``type {alias_name} = {alias_value}``) if
-    the active Python interpreter targets Python >= 3.12 *or*
-    :class:`.UnavailableType` otherwise.
+    Tuple of the types of all :pep:`695`-compliant **type aliases** (i.e.,
+    objects created by statements of the form ``type {alias_name} =
+    {alias_value}``) if any *or* :data:`.UnavailableTypes` otherwise.
 
     This type is a version-agnostic generalization of the standard
     :class:`typing.TypeAliasType` type available only under Python >= 3.12.
     '''
 
 
-Pep695ParameterizableTypes = (type, FunctionType, HintPep695TypeAlias)
+Pep695ParameterizableTypes: tuple[type, ...] = (  # type: ignore[operator]
+    type, FunctionType,) + HintPep695TypeAliasTypes
 '''
 Tuple of all :pep:`695`-compliant **parameterizable types** (i.e., types of
 objects that may be parametrized by :pep:`695`-compliant lists of one or more
@@ -1523,28 +1642,6 @@ RegexMatchType = _re.Match
 '''
 Type of all **regular expression match objects** (i.e., objects returned by the
 :func:`re.match` function).
-'''
-
-# ....................{ TUPLES ~ unavailable               }....................
-# Unavailable types are defined *BEFORE* any subsequent types, as the latter
-# commonly leverage the former.
-
-UnavailableTypes = _UnavailableTypesTuple()
-'''
-**Tuple of unavailable types** (i.e., types *not* available under the active
-Python interpreter, typically due to insufficient Python version or
-non-installed third-party dependencies).
-
-Caveats
-----------
-**This tuple should always be used in lieu of the empty tuple.** Although
-technically equivalent to the empty tuple, the :func:`beartype.beartype`
-decorator explicitly distinguishes between this tuple and the empty tuple.
-Specifically, for any callable parameter or return type annotated with:
-
-* This tuple, :func:`beartype.beartype` emits a non-fatal warning ignorable
-  with a simple :mod:`warnings` filter.
-* The empty tuple, :func:`beartype.beartype` raises a fatal exception.
 '''
 
 # ....................{ TUPLES ~ core                      }....................

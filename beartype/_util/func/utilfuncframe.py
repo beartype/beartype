@@ -525,9 +525,8 @@ def get_frame_locals(frame: CallableFrameType) -> LexicalScope:
     (i.e., :class:`.CallableFrameType` instance encapsulating all metadata
     describing a single call on the current call stack).
 
-    As a caller convenience, this getter intentionally returns a new mutable
-    dictionary rather than the immutable non-dictionary originally providing
-    this stack frame's local scope.
+    This getter always returns a new mutable dictionary. Modifying this copy
+    does not modify the local namespace used by the frame.
 
     Parameters
     ----------
@@ -542,9 +541,12 @@ def get_frame_locals(frame: CallableFrameType) -> LexicalScope:
     assert isinstance(frame, CallableFrameType), (
         f'{repr(frame)} not stack frame.')
 
-    # Local scope of this frame to be yielded to the caller, possibly coerced
-    # from a non-dictionary into a dictionary.
-    frame_locals = _coerce_mapping_to_scope(frame.f_locals)
+    # Always copy this namespace, even when it is already a dictionary. For
+    # class and module frames, "f_locals" directly references the live namespace.
+    # Mutating that dictionary while resolving a forward reference would mutate
+    # the enclosing class or module before eval() is called (issue #707).
+    # See https://peps.python.org/pep-0667/#the-frame-f-locals-attribute
+    frame_locals = dict(frame.f_locals)
 
     # Return this local scope.
     return frame_locals

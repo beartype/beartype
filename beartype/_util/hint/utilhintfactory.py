@@ -19,7 +19,7 @@ from beartype.typing import (
     Type,
 )
 from beartype._data.typing.datatyping import T
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 
 # ....................{ METACLASSES                        }....................
 class _TypeHintTypeFactoryMeta(type):
@@ -85,10 +85,10 @@ class TypeHintTypeFactory(Generic[T], metaclass=_TypeHintTypeFactoryMeta):
 
     .. code-block:: python
 
-       from beartype.typing import TYPE_CHECKING
-       from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
        from beartype._util.api.standard.utiltyping import (
            import_typing_attr_or_fallback)
+       from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
+       from typing import TYPE_CHECKING
 
        if TYPE_CHECKING:
            from typing_extensions import TypeIs

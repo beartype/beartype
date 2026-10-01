@@ -46,14 +46,11 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype.typing import (
-        Any,
-        Tuple,
-    )
     from beartype.vale import Is
     from beartype._data.hint.sign.datahintsigns import (
-        HintSignNumpyArray,
         HintSignPep484585TupleFixed,
+        HintSignPep695TypeAliasSubscripted,
+        HintSignPep695TypeAliasUnsubscripted,
     )
     from beartype._util.api.standard.utiltyping import import_typing_attr
     from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
@@ -62,6 +59,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
+    from typing import Any
 
     # Defer NumPy-specific imports.
     from numpy import (
@@ -92,9 +90,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         # Untyped unsubscripted NumPy array.
         HintPepMetadata(
             hint=NDArray,
-            pep_sign=HintSignNumpyArray,
-            is_pep585_builtin_subbed=True,
-            is_type_typing=False,
+            pep_sign=HintSignPep695TypeAliasUnsubscripted,
             is_typing=False,
             # Oddly, NumPy implicitly parametrizes the "NDArray[Any]" type hint
             # by expanding that hint to "numpy.typing.NDArray[+ScalarType]",
@@ -122,7 +118,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         # Untyped subscripted NumPy array.
         HintPepMetadata(
             hint=NDArray[Any],
-            pep_sign=HintSignNumpyArray,
+            pep_sign=HintSignPep695TypeAliasSubscripted,
             is_pep585_builtin_subbed=True,
             is_type_typing=False,
             is_typing=False,
@@ -151,7 +147,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         # of the "numpy.dtype" class).
         HintPepMetadata(
             hint=NDArray[dtype(float64)],
-            pep_sign=HintSignNumpyArray,
+            pep_sign=HintSignPep695TypeAliasSubscripted,
             is_pep585_builtin_subbed=True,
             is_type_typing=False,
             is_typing=False,
@@ -181,7 +177,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         # data types are *NOT* actual data types, this exercises an edge case.
         HintPepMetadata(
             hint=NDArray[float64],
-            pep_sign=HintSignNumpyArray,
+            pep_sign=HintSignPep695TypeAliasSubscripted,
             is_pep585_builtin_subbed=True,
             is_type_typing=False,
             is_typing=False,
@@ -210,7 +206,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         # Typed NumPy array subscripted by a data type superclass.
         HintPepMetadata(
             hint=NDArray[floating],
-            pep_sign=HintSignNumpyArray,
+            pep_sign=HintSignPep695TypeAliasSubscripted,
             is_pep585_builtin_subbed=True,
             is_type_typing=False,
             is_typing=False,
@@ -236,10 +232,10 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         # ................{ NUMPY ~ array : nested             }................
         # 2-tuple of one-dimensional typed NumPy arrays of 64-bit floats.
         HintPepMetadata(
-            hint=Tuple[Numpy1DFloat64Array, Numpy1DFloat64Array],
+            hint=tuple[Numpy1DFloat64Array, Numpy1DFloat64Array],
             pep_sign=HintSignPep484585TupleFixed,
             isinstanceable_type=tuple,
-            is_pep585_builtin_subbed=Tuple is tuple,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # 2-tuple of NumPy arrays containing only 64-bit floats.
                 PithSatisfiedMetadata((
@@ -253,8 +249,9 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
                         "cylindroid‐cindered cleft, and",
                     ),
                     # Match that the exception message raised for this object
-                    # embeds the representation of the expected class.
-                    exception_str_match_regexes=(r'\bnumpy\.ndarray\b',),
+                    # embeds the representation of the expected PEP
+                    # 695-compliant type alias.
+                    exception_str_match_regexes=(r'\bNDArray\b',),
                 ),
                 # 2-tuple of NumPy arrays containing only integers.
                 PithUnsatisfiedMetadata(

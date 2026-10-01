@@ -139,11 +139,14 @@ def is_object_attr_names_any(
     return bool(attr_names_any & frozenset(obj_dir))
 
 # ....................{ GETTERS                            }....................
+#FIXME: Revise docstring to account for the new "is_safe" parameter. *sigh*
+#FIXME: Unit test up the new "is_safe" parameter, please. *sigh*
 def get_object_attr_name_to_value(
     # Mandatory parameters.
     obj: object,
 
     # Optional parameters.
+    is_safe: bool = True,
     obj_dir: Optional[ListStrs] = None,
     predicate: Optional[Callable[[str, object], bool]] = None,
     predicate_attr_names_all: Optional[FrozenSetStrs] = None,
@@ -188,6 +191,26 @@ def get_object_attr_name_to_value(
 
     Parameters
     ----------
+    is_safe : bool, default: True
+        Either:
+
+        * If :data:`True`, this getter safely retrieves attribute values by
+          calling the high-level :func:`inspect.getattr_static` rather than the
+          low-level :func:`getattr` builtin. Doing so prevents this getter from
+          raising unexpected exceptions (which is good) while *also* preventing
+          this getter from returning meaningful values for properties (which is
+          bad). Pick your poison, folks.
+        * If :data:`False`, this getter unsafely retrieves attribute values by
+          calling the low-level :func:`getattr` builtin rather than the
+          high-level :func:`inspect.getattr_static`. Doing so permits this
+          getter to raise unexpected exceptions (which is bad) while *also*
+          permitting this getter to return meaningful values for properties
+          (which is good). Callers explicitly disabling this parameter *must*
+          explicitly catch and handle any possible exception a property could
+          raise, which... is *all* of them, in the worst case. Not recommended,
+          but occasionally necessary. The perfidious darkness of Python is big.
+
+        Defaults to :data:`True`.
     obj : object
         Object to be introspected.
     obj_dir : Optional[list[str]], default: None
@@ -280,6 +303,7 @@ def get_object_attr_name_to_value(
           matches the passed predicate (in ascending lexicographic order of
           attribute name).
     '''
+    assert isinstance(is_safe, bool), f'{repr(is_safe)} not boolean.'
     assert isinstance(obj_dir, NoneTypeOr[list]), (
         f'{repr(obj_dir)} neither list of strings nor "None".')
     assert isinstance(predicate, NoneTypeOr[Callable]), (
@@ -338,6 +362,9 @@ def get_object_attr_name_to_value(
     # that attribute.
     attrs_name_to_value = None  # type: ignore[assignment]
 
+    # getattr()-style function to be called below.
+    getattr_func = getattr_static if is_safe else getattr
+
     # ....................{ PREDICATE                      }....................
     # If the caller passed a predicate...
     if predicate:
@@ -368,7 +395,7 @@ def get_object_attr_name_to_value(
             # a property. Since that call could conceivably raise unwanted
             # exceptions *AND* since this function explicitly ignores
             # properties, static attribute retrievable is unavoidable.
-            attr_value = getattr_static(obj, attr_name)
+            attr_value = getattr_func(obj, attr_name)
 
             # If this attribute matches this predicate...
             if predicate(attr_name, attr_value):
@@ -383,7 +410,7 @@ def get_object_attr_name_to_value(
     else:
         # Trivially define this dictionary via a dictionary comprehension.
         attrs_name_to_value = {
-            attr_name: getattr_static(obj, attr_name)
+            attr_name: getattr_func(obj, attr_name)
             for attr_name in obj_dir
         }
 
@@ -444,13 +471,12 @@ def get_object_method_name_to_value(obj: object, **kwargs) -> DictStrToAny:
     )
 
 
-#FIXME: Unit test us up, please. *sigh*
-def get_object_nonmethod_name_to_value(obj: object, **kwargs) -> DictStrToAny:
+def get_object_uncallable_name_to_value(obj: object, **kwargs) -> DictStrToAny:
     '''
     Dictionary mapping from the name to **explicit value** (i.e., value
     retrieved *without* implicitly calling the :func:`property`-decorated method
     implementing this attribute if this attribute is a property) of each
-    non-method attribute bound to the passed object.
+    uncallable attribute bound to the passed object.
 
     Parameters
     ----------
@@ -462,17 +488,18 @@ def get_object_nonmethod_name_to_value(obj: object, **kwargs) -> DictStrToAny:
 
     Caveats
     -------
-    **This getter intentionally includes uncallable methods.** This includes
-    most C-based method descriptors, most of which are uncallable depending on
-    the version of the active Python interpreter. Why? Because some of these
-    method descriptors are actually C extension-specific unbound property method
+    **This getter intentionally includes uncallable methods,** despite
+    intentionally excluding callable methods. Uncallable methods include most
+    C-based method descriptors, most of which are uncallable depending on the
+    version of the active Python interpreter. Since some of these method
+    descriptors are actually C extension-specific unbound property method
     descriptors describing properties semantically equivalent to non-method
-    attributes. Python. It do be like that.
+    attributes, these descriptors are included. Python. It do be like that.
 
     Returns
     -------
     DictStrToAny
-        Dictionary mapping from the name to explicit value of each non-method
+        Dictionary mapping from the name to explicit value of each uncallable
         bound to the passed object.
 
     See Also

@@ -15,10 +15,7 @@ actively whitelisting; skipping is the action of actively blacklisting.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    List,
-    Union,
-)
+from typing import Union
 
 # from beartype.claw._importlib.clawimpcache import module_name_to_beartype_conf
 # print(f'this_submodule conf: {repr(module_name_to_beartype_conf)}')
@@ -36,7 +33,7 @@ assert isinstance(and_winter_robing, bytes)
 
 # ....................{ FUNCTIONS                          }....................
 def of_starry_ice(the_grey_grass_and_bare_boughs: Union[str, complex]) -> (
-    Union[complex, List[bytes]]):
+    Union[complex, list[bytes]]):
     '''
     Arbitrary method neither implicitly *nor* explicitly type-checked by the
     :func:`beartype.beartype` decorator.

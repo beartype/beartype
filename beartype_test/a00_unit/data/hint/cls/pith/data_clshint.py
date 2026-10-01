@@ -289,8 +289,8 @@ class HintPepMetadata(HintNonpepMetadata):
         from beartype.door import TypeHint
         from beartype._data.hint.sign.datahintsigncls import HintSign
         from beartype._util.hint.utilhintget import get_hint_repr
-        from beartype._util.hint.pep.proposal.pep646.pep484612646typevar import (
-            is_hint_pep484612646_typearg_packed)
+        from beartype._util.hint.pep.proposal.typearg.peptypeargmain import (
+            is_hint_typearg_packed)
 
         # Validate all passed parameters *EXCEPT* those with non-trivial
         # defaults handled below.
@@ -300,7 +300,7 @@ class HintPepMetadata(HintNonpepMetadata):
         assert isinstance(typeargs_packed_unsubbed, tuple), (
             f'{repr(typeargs_packed_unsubbed)} not tuple.')
         assert all(
-            is_hint_pep484612646_typearg_packed(typevar)
+            is_hint_typearg_packed(typevar)
             for typevar in typeargs_packed_unsubbed
         ), (
             f'{repr(typeargs_packed_unsubbed)} not '
@@ -379,7 +379,7 @@ class HintPepMetadata(HintNonpepMetadata):
         assert isinstance(typeargs_packed_subbed, tuple), (
             f'{repr(typeargs_packed_subbed)} not tuple.')
         assert all(
-            is_hint_pep484612646_typearg_packed(typevar)
+            is_hint_typearg_packed(typevar)
             for typevar in typeargs_packed_subbed
         ), (
             f'{repr(typeargs_packed_subbed)} not '

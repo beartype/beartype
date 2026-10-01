@@ -21,7 +21,7 @@ def test_die_if_mappings_two_items_collide() -> None:
     '''
     Test the
     :func:`beartype._util.kind.maplike.utilmaptest.die_if_mappings_two_items_collide`
-    validator.
+    raiser.
     '''
 
     # Defer test-specific imports.

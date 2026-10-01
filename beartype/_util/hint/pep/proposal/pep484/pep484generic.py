@@ -16,7 +16,7 @@ from beartype.typing import Generic
 from beartype._data.cls.datacls import TYPES_PEP484544_GENERIC
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import TypeException
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
@@ -105,7 +105,7 @@ def is_hint_pep484_generic_unsubbed(hint: Hint) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 
     # Return true only if this hint is a subclass of the "typing.Generic"
     # superclass, in which case this hint is a generic.
@@ -176,7 +176,7 @@ def is_hint_pep484_generic_unsubbed(hint: Hint) -> bool:
             # superclass *AND*...
             is_type_subclass(hint, Generic) and  # type: ignore[arg-type]
             # This PEP 484-compliant generic is unsubscripted.
-            not get_hint_pep_args(hint)
+            not get_hint_pep_childs(hint)
         )
     )
 

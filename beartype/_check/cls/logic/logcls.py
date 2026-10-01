@@ -13,25 +13,23 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from abc import (
-    ABCMeta,
-    abstractmethod,
-)
+from abc import abstractmethod
 from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.cls.hint.tree.hinttreecode import HintTreeCode
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.typing.datatyping import (
-    EnumeratorItem,
-    Enumerator,
-)
+from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._data.check.code.pep.datacodepep484585 import (
     CODE_PEP484585_SEQUENCE_NONRANDOM_PITH_CHILD_EXPR,
     CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR,
     CODE_PEP484585_QUASIITERABLE_format,
     CODE_PEP484585_REITERABLE_OR_SEQUENCE_format,
     CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR_format,
+)
+from beartype._data.typing.datatyping import (
+    EnumeratorItem,
+    Enumerator,
 )
 from collections.abc import (
     Callable,
@@ -63,7 +61,7 @@ Callables matched by this hint return 2-tuples of the standard form
 '''
 
 # ....................{ SUPERCLASSES                       }....................
-class HintLogicABC(object, metaclass=ABCMeta):
+class HintLogicABC(object, metaclass=BeartypeSlottedABCMeta):
     '''
     Abstract base class (ABC) of all **hint logic** (i.e., dataclasses
     encapsulating all low-level Python code snippets and associated metadata

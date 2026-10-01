@@ -143,7 +143,7 @@ IS_PYTHON_AT_MOST_3_12 = not IS_PYTHON_AT_LEAST_3_13
 IS_PYTHON_AT_LEAST_3_12 = IS_PYTHON_AT_LEAST_3_13 or version_info >= (3, 12)
 '''
 :data:`True` only if the active Python interpreter targets at least Python
-3.13.0.
+3.12.0.
 '''
 
 

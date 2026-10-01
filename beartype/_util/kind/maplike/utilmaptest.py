@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilMappingException
-from beartype.typing import AbstractSet
 from collections.abc import (
     Hashable,
     Mapping,
@@ -142,9 +141,7 @@ def die_if_mappings_two_items_collide(
     raise _BeartypeUtilMappingException(exception_message)
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
-def is_mapping_keys_all(
-    mapping: Mapping, keys: AbstractSet[Hashable]) -> bool:
+def is_mapping_keys_all(mapping: Mapping, keys: Set[Hashable]) -> bool:
     '''
     :data:`True` only if the passed mapping contains *all* of the passed keys.
 
@@ -152,7 +149,7 @@ def is_mapping_keys_all(
     ----------
     mapping: Mapping
         Mapping to be tested.
-    keys: AbstractSet[Hashable]
+    keys: Set[Hashable]
         Set of one or more keys to test this mapping against.
 
     Returns
@@ -174,9 +171,7 @@ def is_mapping_keys_all(
     return keys <= mapping.keys()
 
 
-#FIXME: Unit test us up, please.
-def is_mapping_keys_any(
-    mapping: Mapping, keys: AbstractSet[Hashable]) -> bool:
+def is_mapping_keys_any(mapping: Mapping, keys: Set[Hashable]) -> bool:
     '''
     :data:`True` only if the passed mapping contains *any* (i.e., one or more,
     at least one) of the passed keys.
@@ -185,7 +180,7 @@ def is_mapping_keys_any(
     ----------
     mapping: Mapping
         Mapping to be tested.
-    keys: AbstractSet[Hashable]
+    keys: Set[Hashable]
         Set of one or more keys to test this mapping against.
 
     Returns

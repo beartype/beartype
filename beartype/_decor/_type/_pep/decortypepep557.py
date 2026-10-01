@@ -37,7 +37,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        NON-TRIVIAL*. The exact details elude me at the moment, but we'll
 #        basically need to do something resembling:
 #        * Rename the existing make_func_checker() factory in the existing
-#          "beartype._check.checkmake" submodule to make_func_checker_bearable()
+#          "beartype._check.make.checkmakefunc" submodule to make_func_checker_bearable()
 #          for disambiguity.
 #        * Define a new make_func_checker_satisfies() factory in that submodule,
 #          initially just copy-pasted from make_func_checker_bearable().
@@ -50,7 +50,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        * At this point, the "checkmake" submodule has almost certainly
 #          exploded into 10,000,000 lines of madness. Consequently:
 #          * Define a new "beartype._check.make" subpackage.
-#          * Rename "beartype._check.checkmake" to
+#          * Rename "beartype._check.make.checkmakefunc" to
 #            "beartype._check.make.checkmakefunc".
 #          * Split up "beartype._check.make.checkmakefunc" into appropriate new
 #            submodules. *shrugs nonchalantly*
@@ -59,7 +59,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #  *INDEED*. Performance almost certainly degrades as the number of optional
 #  parameters increases, based on the implementation of our
-#  "beartype._check.checkmake.make_func_checker() factory alone. Why? Because
+#  "beartype._check.make.checkmakefunc.make_func_checker() factory alone. Why? Because
 #  the tuple size of "CACHE_KEY" increases. Ergo, we should have *ALREADY* done
 #  this. So much sighing can be distantly heard.
 #
@@ -516,6 +516,21 @@ def beartype_pep557_dataclass(
 
         # If this dataclass attribute is annotated and thus a field...
         if attr_hint is not SENTINEL:
+            #FIXME: [SPEED] We can do substantially better than merely calling
+            #is_bearable() here. Calling die_if_unbearable() below is fine, as
+            #speed no longer matters at that late point. At this early point,
+            #though, speed *ABSOLUTELY* matters. Instead:
+            #* Define a new *PUBLIC* beartype.door.make_hint_tester() factory
+            #  function, which basically does the first half of what
+            #  is_bearable() internally does: dynamically generate (or reuse a
+            #  previously generated) tester function specific to the passed
+            #  hint. make_hint_tester() then simply returns that function.
+            #* Refactor is_bearable() to internally call make_hint_tester().
+            #* Call make_hint_tester() above immediately *AFTER* sanitizing each
+            #  hint.
+            #* Call the corresponding hint tester created by each such call
+            #  below rather than calling is_bearable() below.
+
             # If the new value of this field violates this hint...
             #
             # Note that this is a non-negligible optimization. Technically, this

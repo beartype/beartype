@@ -54,7 +54,7 @@ from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
 from beartype._check.forward.fwdresolve import resolve_hint_pep484_ref_str_decor_curr
 from beartype._check.cls.call.calldatadecorfunc import BeartypeCallDecorFuncData
-from beartype._util.cache.map.utilmapunbounded import CacheUnboundedStrong
+from beartype._cache.cls.cacheclsmega import CacheMegaStrongCaller
 from beartype._util.hint.pep.proposal.pep484.pep484union import (
     make_hint_pep484_union)
 from beartype._util.hint.utilhintget import get_hint_repr
@@ -352,7 +352,7 @@ def coerce_hint_any(hint: Hint) -> Hint:
     who, what, or how is caching those type hints -- only that they are cached
     before being passed to utility functions in the :mod:`beartype` codebase.
     Why? Because most such utility functions are memoized for efficiency by the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator, which
+    :func:`beartype._util.cache.func.utilcachefunc.callable_cached` decorator, which
     maps passed parameters (typically including the standard ``hint`` parameter
     accepting a type hint) based on object identity to previously cached return
     values. You see the problem, we trust.
@@ -416,9 +416,9 @@ def coerce_hint_any(hint: Hint) -> Hint:
         # print(f'Self-caching type hint {repr(hint)}...')
 
         #FIXME: [SPEED] Globalize the
-        #_hint_repr_to_hint.cache_or_get_cached_value() bound method and call
+        #_hint_repr_to_hint.cache_value() bound method and call
         #that globalized bound method here instead as a negligible speedup.
-        hint = _hint_repr_to_hint.cache_or_get_cached_value(  # type: ignore[return-value]
+        hint = _hint_repr_to_hint.cache_value(  # type: ignore[return-value]
             key=get_hint_repr(hint), value=hint)
     # Else, this hint is (hopefully) self-caching.
 
@@ -427,7 +427,7 @@ def coerce_hint_any(hint: Hint) -> Hint:
     return hint
 
 # ....................{ PRIVATE ~ mappings                 }....................
-_hint_repr_to_hint = CacheUnboundedStrong()
+_hint_repr_to_hint = CacheMegaStrongCaller()
 '''
 **Type hint cache** (i.e., thread-safe cache mapping from the machine-readable
 representations of all non-self-cached type hints to cached singleton instances
@@ -459,7 +459,7 @@ contending over that variable, this dictionary *must* be thread-safe.
 
 **This dictionary is intentionally designed as a naive dictionary rather than a
 robust LRU cache,** for the same reasons that callables accepting hints are
-memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
+memoized by the :func:`beartype._util.cache.func.utilcachefunc.callable_cached`
 rather than the :func:`functools.lru_cache` decorator. Why? Because:
 
 * The number of different type hints instantiated across even worst-case

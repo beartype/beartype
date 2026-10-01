@@ -30,7 +30,7 @@ def prefix_object(obj: object, **kwargs) -> str:
         Object to be labelled.
 
     All remaining parameters are passed as is to the lower-level
-    :func:`.label_object` function.
+    :func:`beartype._util.text.utiltextlabel.label_object` labeller.
 
     Returns
     -------

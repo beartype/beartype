@@ -30,6 +30,12 @@ BLACKLIST_PACKAGE_NAMES = frozenset((
     # These first-party packages and modules residing in the standard Python
     # library employ the "if False:" antipattern and are thus runtime-hostile.
 
+    #FIXME: Technically resolved by Python 3.15.0rc1 (thanks to the super-hard
+    #efforts of @DavidCEllis), but preserved in the likelihood that we'll need
+    #something like this again in the near future. Consider this a horrifying
+    #template we hope we'll never need but know deep down we absolutely will.
+    #FIXME: *WAIT*. Still busted, yo. Oh, wells. Who cares anymore!? We gotta
+    #ship @beartype 0.23.0 out the door. Let's do this, yoooooooooooooooooooo!
     # The private pure-Python "_colorize" module introduced by Python 3.15
     # employs the "if False:" antipattern: e.g.,
     #     # types

@@ -19,7 +19,7 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 
 # ....................{ MIXINS                             }....................
 class BeartypeHintable(object):

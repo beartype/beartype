@@ -14,7 +14,7 @@ from beartype.roar._roarexc import (
     _BeartypeUtilPythonInterpreterException,
 )
 from beartype._data.typing.datatyping import CommandWords
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from platform import python_implementation
 from sys import executable as sys_executable
 from typing import TYPE_CHECKING

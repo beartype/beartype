@@ -22,7 +22,7 @@ from beartype._data.typing.datatyping import (
     Pep3119Checkable,
     TypeException,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 
 # ....................{ RAISERS ~ isinstanceable           }....................
 def die_unless_object_isinstanceable(
@@ -935,7 +935,7 @@ def _die_unless_object_builtin_checkable(
             f'{repr(exception_prefix)} not string.')
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+        from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
         from beartype._util.text.utiltextlabel import (
             label_exception_traceback)
         from beartype._util.utilobjget import (
@@ -998,7 +998,7 @@ def _die_unless_object_builtin_checkable(
             # Else, this object is a new union. Define these locals accordingly.
             else:
                 message_prefix = 'PEP 604 new union type hint '
-                obj_items = get_hint_pep_args(obj)
+                obj_items = get_hint_pep_childs(obj)
                 obj_item_prefix = 'new union child '
 
             # For the 0-based index of each item of this container and that
@@ -1377,7 +1377,7 @@ def _is_exception_sufficient(exception: Exception) -> bool:
        isinstance(), due to raising "BeartypeCallHintForwardRefException:
        Forward reference "OfPearl" unimportable from module
        "beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve"." from
-       metaclass BeartypeForwardRefMeta.__instancecheck__() method).
+       metaclass BeartypeForwardRefMetaclass.__instancecheck__() method).
 
     Parameters
     ----------

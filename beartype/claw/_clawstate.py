@@ -33,6 +33,13 @@ from typing import (
     Optional,
 )
 
+# ....................{ GLOBALS                            }....................
+claw_lock = RLock()
+'''
+Reentrant reusable thread-safe context manager gating access to the otherwise
+non-thread-safe :data:`.claw_state` global.
+'''
+
 # ....................{ PRIVATE ~ hints                    }....................
 _ImportPathHook = Callable[[str], PathEntryFinder]
 '''
@@ -51,14 +58,14 @@ class BeartypeClawState(object):
 
     Attributes
     ----------
-    beartype_pathhook : Optional[_ImportPathHook]
+    beartype_path_hook : Optional[_ImportPathHook]
         Either:
 
         * If the
-          :func:`beartype.claw._importlib.clawimpmain.add_beartype_pathhook`
+          :func:`beartype.claw._importlib.clawimpmain.add_beartype_path_hook`
           function has been previously called at least once under the active
           Python interpreter and the
-          :func:`beartype.claw._importlib.clawimpmain.remove_beartype_pathhook`
+          :func:`beartype.claw._importlib.clawimpmain.remove_beartype_path_hook`
           function has not been called more recently, the **beartype import path
           hook singleton** (i.e., factory closure creating and returning a new
           :class:`importlib.machinery.FileFinder` instance itself creating and
@@ -66,6 +73,14 @@ class BeartypeClawState(object):
         * Else, :data:`None`.
 
         Initialized to :data:`None`.
+    is_warned_if_beartype_path_hook_inactive : bool
+        :data:`True` only if the
+        :func:`beartype.claw._importlib.clawimpmain.warn_if_beartype_claw_inactive`
+        function has already issued a non-fatal warning under the active Python
+        interpreter. That function internally guards against issuing the same
+        warning multiple times via this crude cache. That warning is extremely
+        verbose and thus likely to incite more bad than good in end users overly
+        exposed to that warning. Initialized to :data:`False`.
     module_name_to_beartype_conf : ModuleNameToBeartypeConf
         **Hooked module beartype configuration cache** (i.e., non-thread-safe
         dictionary mapping from the fully-qualified name of each previously
@@ -104,7 +119,8 @@ class BeartypeClawState(object):
     # Slot all instance variables defined on this object to reduce the costs of
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
-        'beartype_pathhook',
+        'beartype_path_hook',
+        'is_warned_if_beartype_path_hook_inactive',
         'module_name_to_beartype_conf',
         'node_scope_beforelist_global',
         'packages_trie_blacklist',
@@ -114,7 +130,8 @@ class BeartypeClawState(object):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        beartype_pathhook: Optional[_ImportPathHook]
+        beartype_path_hook: Optional[_ImportPathHook]
+        is_warned_if_beartype_path_hook_inactive: bool
         module_name_to_beartype_conf: ModuleNameToBeartypeConf
         node_scope_beforelist_global: BeartypeNodeScopeBeforelist
         packages_trie_blacklist: PackagesTrieBlacklist
@@ -125,7 +142,8 @@ class BeartypeClawState(object):
 
         # Nullify the proper subset of instance variables requiring
         # nullification *BEFORE* reinitializing this singleton.
-        self.beartype_pathhook: Optional[_ImportPathHook] = None
+        self.beartype_path_hook: Optional[_ImportPathHook] = None
+        self.is_warned_if_beartype_path_hook_inactive = False
 
         # Reinitialize this singleton safely.
         self._reinit_safe()
@@ -145,9 +163,9 @@ class BeartypeClawState(object):
         # One one-liner to reinitialize them all.
         self.module_name_to_beartype_conf = ModuleNameToBeartypeConf()
         self.node_scope_beforelist_global = make_node_scope_beforelist_global()
-        self.packages_trie_whitelist = PackagesTrieWhitelist()
         self.packages_trie_blacklist = PackagesTrieBlacklist(
             subpackage_basename_to_trie=_PACKAGE_NAME_TO_TRIE_BLACKLISTED)
+        self.packages_trie_whitelist = PackagesTrieWhitelist()
         # print(f'node_scope_beforelist_global: {self.node_scope_beforelist_global}')
 
         #FIXME: Preserved because the above will inevitably break. *sigh*
@@ -156,16 +174,22 @@ class BeartypeClawState(object):
 
     def reinit(self) -> None:
         '''
-        Reinitialize *all* beartype import hook state encapsulated by this data
-        class back to their initial defaults, trivially clearing *all* metadata
-        pertaining to previously hooked packages and configurations installed by
-        previously called beartype import hooks.
+        Reinitialize *all* beartype import hook state encapsulated by this
+        dataclass back to their initial defaults, trivially clearing *all*
+        metadata pertaining to previously hooked packages and configurations
+        installed by previously called beartype import hooks.
+
+        Caveats
+        -------
+        **This function is non-thread-safe.** For both simplicity and
+        efficiency, the caller is expected to provide thread-safety through a
+        higher-level locking primitive managed by the caller.
         '''
         # print('Renitializing "beartype.claw" state...')
 
         # Avoid circular import dependencies.
         from beartype.claw._importlib.clawimpmain import (
-            remove_beartype_pathhook)
+            remove_beartype_path_hook)
 
         # Perform the subset of reinitialization that is safe to be called from
         # the __init__() method.
@@ -177,14 +201,13 @@ class BeartypeClawState(object):
         # Remove our beartype import path hook if this path hook has already
         # been added (e.g., by a prior call to an import hook) *OR* silently
         # reduce to a noop otherwise.
-        remove_beartype_pathhook()
+        remove_beartype_path_hook()
 
     # ..................{ COPIERS                            }..................
     #FIXME: Unit test us up, please.
-    #FIXME: Comment out all of this for the moment, please. That includes the
-    #copy_deep() methods implemented below as well. They're not implemented
-    #correctly at the moment, sadly. They need to call themselves recursively.
-    #They don't. Thus, we all sigh. *sigh*
+    #FIXME: All of this is potentially useful and thus preserved. Sadly, these
+    #methods are *NOT* implemented correctly at the moment. They need to call
+    #themselves recursively. They don't. Thus, we all sigh. *sigh*
     # def copy_deep(self) -> 'BeartypeClawState':
     #     '''
     #     Deep copy of this beartype import hook state.
@@ -206,7 +229,7 @@ class BeartypeClawState(object):
     #         self.packages_trie_whitelist.copy_deep())
     #
     #     # Shallowly copy *ALL* remaining instance variables.
-    #     claw_state_copy.beartype_pathhook = self.beartype_pathhook
+    #     claw_state_copy.beartype_path_hook = self.beartype_path_hook
     #
     #     # Return this deep copy.
     #     return claw_state_copy
@@ -216,7 +239,7 @@ class BeartypeClawState(object):
 
         return '\n'.join((
             f'{self.__class__.__name__}(\n',
-            f'    beartype_pathhook={repr(self.beartype_pathhook)},\n',
+            f'    beartype_path_hook={repr(self.beartype_path_hook)},\n',
             f'    module_name_to_beartype_conf={repr(self.module_name_to_beartype_conf)},\n',
             f'    node_scope_beforelist_global={repr(self.node_scope_beforelist_global)},\n',
             f'    packages_trie_blacklist={repr(self.packages_trie_blacklist)},\n',
@@ -224,7 +247,7 @@ class BeartypeClawState(object):
             f')',
         ))
 
-# ....................{ PRIVATE ~ constants                }....................
+# ....................{ PRIVATE ~ globals                  }....................
 # Fully initialized by the _init() function called below.
 _PACKAGE_NAME_TO_TRIE_BLACKLISTED: PackageBasenameToTrieBlacklist = {}
 '''
@@ -279,16 +302,9 @@ def _init() -> None:
 # Initialize this submodule.
 _init()
 
-# ....................{ GLOBALS                            }....................
+# ....................{ GLOBALS ~ late                     }....................
 # These globals require this submodule to be fully initialized and are thus
 # intentionally defined *AFTER* all other code above. We sigh, fam. *sigh*
-
-claw_lock = RLock()
-'''
-Reentrant reusable thread-safe context manager gating access to the otherwise
-non-thread-safe :data:`.claw_state` global.
-'''
-
 
 claw_state = BeartypeClawState()
 '''
@@ -297,3 +313,20 @@ centralizing *all* global state maintained by beartype import hooks, enabling
 each external unit test in our test suite to trivially reset that state after
 completion of that test).
 '''
+
+# ....................{ INITIALIZERS                       }....................
+def reinit_claw_state() -> None:
+    '''
+    Reinitialize *all* beartype import hook state encapsulated by the
+    :class:`.BeartypeClawState` dataclass back to their initial defaults,
+    trivially clearing *all* metadata pertaining to previously hooked packages
+    and configurations installed by previously called beartype import hooks.
+
+    This function is thread-safe -- unlike the lower-level
+    :meth:`BeartypeClawState.reinit` method internally called by this
+    higher-level convenience method.
+    '''
+
+    # Thread-safely reinitialize *ALL* beartype import hook state.
+    with claw_lock:
+        claw_state.reinit()

@@ -195,9 +195,21 @@ dependencies = []
 # extras in comma-delimited fashion: e.g.,
 #     $ pip install beartype[doc-rtd,test-tox]
 #
-# Note that PEP 621 explicitly supports dependency composition through
-# self-referential "extras". See also this awesome StackOverflow answer:
-#     https://stackoverflow.com/a/72524073/2809027
+# Note that:
+# * PEP 508 standardized dependency conditionals via so-called "environment
+#   markers" or "dependency specifiers."
+# * PEP 621 standardized dependency composition through self-referential
+#   "extras". See also this awesome StackOverflow answer:
+#       https://stackoverflow.com/a/72524073/2809027
+# * PEP 780 extends PEP 508 with additional support for exposing low-level ABI
+#   features intrinsic to the active Python interpreter as environment markers.
+#   If accepted, this PEP would enable dependencies listed below to
+#   conditionally apply *ONLY* to non-free-threaded builds. Sadly, this PEP has
+#   yet to be accepted (and might never be). Until accepted, we effectively have
+#   *NO* means of safely installing dependencies that remain hostile to
+#   free-threaded builds and thus *NO* means of safely testing free-threaded
+#   builds at all. Free-threading: still a mess after all these years. See also:
+#       https://peps.python.org/pep-0780
 [project.optional-dependencies]
 
 #FIXME: Most of these "extras" should be transformed into PEP 735-compliant
@@ -429,8 +441,12 @@ test-tox = [
     # Required by optional Redis-specific integration tests.
     "redis",
 
-    # Required by optional SQLAlchemy-specific integration tests.
-    "sqlalchemy",
+    # Required by optional SQLAlchemy-specific integration tests. These tests
+    # leverage the even *MORE* optional "sqlalchemy.ext.asyncio" subpackage,
+    # whose usage requires that SQLAlchemy be installed with the corresponding
+    # "asyncio" extra here. That extra then brings in extraneous third-party
+    # dependencies imported by that subpackage (e.g., "greenlet"). *sigh*
+    "sqlalchemy[asyncio]",
 
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.
@@ -487,33 +503,37 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : numpy    }....................
     # NumPy-specific optional test-time dependencies.
 
-    #FIXME: Re-enable Python >= 3.15 support *AFTER* NumPy supports Python 3.15.
+    #FIXME: Re-enable Python >= 3.15 support *AFTER* NumPy supports Python 3.15
+    #with officially published wheels. *sigh*
     #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
     #explicitly supporting PyPy.
-    # Require NumPy. NumPy has become *EXTREMELY* non-trivial to install under
-    # macOS with "pip", due to the conjunction of multiple issues. These
-    # include:
-    # * NumPy > 1.18.0, whose initial importation now implicitly detects
-    #   whether the BLAS implementation NumPy was linked against is sane and
-    #   raises a "RuntimeError" exception if that implementation is insane:
-    #       RuntimeError: Polyfit sanity test emitted a warning, most
-    #       likely due to using a buggy Accelerate backend. If you
-    #       compiled yourself, more information is available at
-    #       https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
-    #       Otherwise report this to the vendor that provided NumPy.
-    #       RankWarning: Polyfit may be poorly conditioned
-    # * Apple's blatantly broken multithreaded implementation of their
-    #   "Accelerate" BLAS replacement, which neither NumPy nor "pip" have *ANY*
-    #   semblance of control over.
-    # * "pip" under PyPy, which for unknown reasons fails to properly install
-    #   NumPy even when the "--force-reinstall" option is explicitly passed to
-    #   "pip". Oddly, passing that option to "pip" under CPython resolves this
-    #   issue -- which is why we only selectively disable NumPy installation
-    #   under macOS + PyPy.
+    # Required by optional NumPy-specific integration tests. Note that:
+    # * The minimal NumPy version required by these tests is best specified
+    #   elsewhere by the
+    #   "beartype._metaverse.LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY" global.
+    # * NumPy has become *EXTREMELY* non-trivial to install under macOS with
+    #   "pip", due to the conjunction of multiple issues. These include:
+    #   * NumPy > 1.18.0, whose initial importation now implicitly detects
+    #     whether the BLAS implementation NumPy was linked against is sane and
+    #     raises a "RuntimeError" exception if that implementation is insane:
+    #         RuntimeError: Polyfit sanity test emitted a warning, most
+    #         likely due to using a buggy Accelerate backend. If you
+    #         compiled yourself, more information is available at
+    #         https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
+    #         Otherwise report this to the vendor that provided NumPy.
+    #         RankWarning: Polyfit may be poorly conditioned
+    #   * Apple's blatantly broken multithreaded implementation of their
+    #     "Accelerate" BLAS replacement, which neither NumPy nor "pip" have
+    #     *ANY* semblance of control over.
+    #   * "pip" under PyPy, which for unknown reasons fails to properly install
+    #     NumPy even when the "--force-reinstall" option is explicitly passed to
+    #     "pip". Oddly, passing that option to "pip" under CPython resolves this
+    #     issue -- which is why we only selectively disable NumPy installation
+    #     under macOS + PyPy.
     #
-    # See also this upstream NumPy issue:
-    #     https://github.com/numpy/numpy/issues/15947
+    #   See also this upstream NumPy issue:
+    #       https://github.com/numpy/numpy/issues/15947
     """numpy; \
        python_version < '3.15.0' and \
        sys_platform != 'darwin' and \
@@ -553,10 +573,13 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : pydantic }....................
     # Pydantic-specific optional test-time dependencies.
 
-    #FIXME: Re-enable Python >= 3.15 support *AFTER* explicitly supported.
-    # Required by optional FastMCP-specific integration tests. Note that FastMCP
-    # requires Pydantic.
-    "fastmcp; python_version < '3.15.0'",
+    #FIXME: Re-enable Python >= 3.16 support *AFTER* explicitly supported.
+    # Required by optional FastMCP-specific integration tests. Note that:
+    # * FastMCP requires Pydantic.
+    # * The @beartype test suite requires FastMCP >= 4.0.0, which broke backward
+    #   compatibility with prior versions by fundamentally revising its
+    #   client-server protocol.
+    "fastmcp >= 4.0.0; python_version < '3.16.0'",
 
     #FIXME: Actually, let's *NOT* install "pyarrow". "pyarrow" is super-intense,
     #because Apache Arrow is super-intense. Since nothing in @beartype requires
@@ -569,6 +592,12 @@ test-tox = [
     # resembling:
     #       TypeError: pyarrow must be installed to use pyarrow dtypes.
     # "pyarrow",
+
+    # ....................{ QA                             }....................
+    # QA (quality assurance)-centric optional test-time dependencies.
+
+    # Required by optional CrossHair-specific integration tests.
+    "crosshair-tool",
 
     # ....................{ TYPING                         }....................
     # Typing-centric optional test-time dependencies.

@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import HintPep484749RefObjectType
 from beartype._check.forward.reference._cls.fwdrefmeta import (
-    BeartypeForwardRefMeta)
+    BeartypeForwardRefMetaclass)
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
     LexicalScope,
@@ -34,23 +34,38 @@ from typing import (
 #
 # If this is *NOT* done, these variables could induce a namespace conflict with
 # user-defined subpackages, submodules, and classes of the same names
-# concatenated via the BeartypeForwardRefMeta.__getattr__() dunder method.
+# concatenated via the BeartypeForwardRefMetaclass.__getattr__() dunder method.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #FIXME: Unit test us up, please.
-class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
+class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     '''
     Abstract base class (ABC) of all **forward reference proxy subclasses**
-    (i.e., classes whose :class:`.BeartypeForwardRefMeta` metaclass defers the
-    resolution of forward reference type hints referencing type hints that have
-    yet to be defined in the lexical scopes of external callers).
+    (i.e., classes whose
+    :class:`beartype._check.forward.reference._cls.fwdrefmeta.BeartypeForwardRefMetaclass`
+    metaclass defers the resolution of forward reference type hints referencing
+    type hints that have yet to be defined in the lexical scopes of external
+    callers).
+
+    Note that the call to the low-level
+    :func:`beartype._util.cls.utilclsmake.make_type` factory function performed
+    by the higher-level
+    :func:`beartype._check.forward.reference.fwdrefproxy._proxy_hint_ref` proxy
+    function defines these additional class attributes on *all* subclasses of
+    this ABC, which are thus guaranteed to exist at early proxy creation without
+    requiring this proxy to be resolved to its target referent type hint:
+
+    * ``__module__``, the fully-qualified name of the module containing the
+      target referent type hint this proxy subclass refers to.
+    * ``__name__``, the unqualified basename of the target referent type hint
+      this proxy subclass refers to.
 
     Caveats
     -------
     **This ABC prohibits instantiation.** This ABC *only* exists to sanitize,
     simplify, and streamline the definition of subclasses passed as the second
     parameter to the :func:`isinstance` builtin, whose
-    :class:`.BeartypeForwardRefMeta.__instancecheck__` dunder method then
+    :class:`.BeartypeForwardRefMetaclass.__instancecheck__` dunder method then
     implicitly resolves the forward references encapsulated by those subclasses.
     The :func:`.make_forwardref_subtype` function dynamically creates and
     returns one concrete subclass of this ABC for each unique forward reference
@@ -322,7 +337,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
 class BeartypeForwardRefSubbedABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscripted forward reference
-    subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMeta`
+    subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMetaclass`
     metaclass defers the resolution of stringified type hints referencing actual
     type hints that have yet to be defined, subscripted by any arbitrary
     positional and keyword parameters).
@@ -358,7 +373,7 @@ class BeartypeForwardRefSubbedABC(BeartypeForwardRefABC):
 class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscriptable forward reference
-    subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMeta`
+    subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMetaclass`
     metaclass defers the resolution of stringified type hints referencing actual
     type hints that have yet to be defined, transparently permitting these type
     hints to be subscripted by any arbitrary positional and keyword parameters).

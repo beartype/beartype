@@ -30,7 +30,7 @@ from beartype._cave._cavefast import (
 from beartype._data.typing.datatyping import (
     DictTypeToAny,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from collections import (
     ChainMap as ChainMapType,
     Counter as CounterType,

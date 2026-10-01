@@ -12,32 +12,47 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorhint import TupleTypeHints
-from beartype.door._cls.doorsuper import TypeHint
-from beartype.roar import BeartypeDoorPepUnsupportedException
-from beartype.typing import (
-    Any,
-    Tuple,
+from beartype.door._cls.doorabc import (
+    TypeHint,
+    TupleTypeHints,
 )
+from beartype.door._cls.doorsubbed import SubscriptedTypeHint
+from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_PEP612_CALLABLE_ARGLIST)
-from beartype._util.cache.utilcachecall import property_cached
+from beartype._util.cache.func.utilcacheproperty import (
+    get_property_var_name,
+    property_cached,
+)
 from beartype._util.hint.pep.proposal.pep484585.pep484585callable import (
     get_hint_pep484585_callable_params,
     get_hint_pep484585_callable_return,
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+from typing import Any
 
 # ....................{ SUBCLASSES                         }....................
-class CallableTypeHint(TypeHint):
+class CallableTypeHint(SubscriptedTypeHint):
     '''
     **Callable type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`- or :pep:`585`-compliant ``Callable[...]`` type hint).
     '''
 
+    # ..................{ CLASS VARIABLES                    }..................
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently called
+    # @beartype decorations. Slotting has been shown to reduce read and write
+    # costs by approximately ~10%, which is non-trivial.
+    __slots__ = (
+        # Instance variables implicitly defined by each decoration of a property
+        # method by the @property_cached decorator below, whose names are
+        # dynamically precomputed by this getter. It doesn't have to make sense.
+        get_property_var_name('param_hints'),
+    )
+
     # ..................{ INITIALIZERS                       }..................
     def _make_args(self) -> tuple:
-        # print(f'{self}._origin: {self._origin}')
+        # print(f'{self}._origin_type: {self._origin_type}')
 
         # Tuple of all child type hints subscripting this callable type hint,
         # localized for both readability and negligible efficiency gains.
@@ -141,7 +156,7 @@ class CallableTypeHint(TypeHint):
 
     # ..................{ PRIVATE ~ properties               }..................
     @property
-    # @property_cached
+    @property_cached
     def _args_wrapped_tuple(self) -> TupleTypeHints:
 
         # Tuple of all child type hints subscripting this callable type hint.
@@ -166,7 +181,7 @@ class CallableTypeHint(TypeHint):
             # Return a 2-tuple consisting of...
             args_wrapped_tuple = (
                 # Empty parameter list.
-                TypeHint(Tuple[()]),  # pyright: ignore
+                TypeHint(tuple[()]),  # pyright: ignore
                 # Return type hint.
                 TypeHint(args[-1]),
             )
@@ -228,12 +243,14 @@ class CallableTypeHint(TypeHint):
         return self.is_params_ignorable and self.is_return_ignorable
 
 
+    #FIXME: Docstring us up, please. *sigh*
     @property
     def is_params_ignorable(self) -> bool:
         # Callable[..., ???]
         return self._args[0] is Ellipsis
 
 
+    #FIXME: Docstring us up, please. *sigh*
     @property
     def is_return_ignorable(self) -> bool:
         # Callable[???, Any]
@@ -245,26 +262,26 @@ class CallableTypeHint(TypeHint):
         # print(f'{branch}._is_args_ignorable: {branch._is_args_ignorable}')
 
         # If that branch is unsubscripted (e.g., "typing.Callable"), assume that
-        # branch to be subscripted as the maximally wide callable type hint
-        # "typing.Callable[..., Any]". Since *ALL* callable type hints are
+        # branch to be subscripted as the maximally wide callable hint
+        # "typing.Callable[..., Any]". Since *ALL* callable hints are
         # necessarily subhints of that hint, return true only if the class
-        # originating this hint is a subclass of the class
-        # originating that branch.
+        # originating this hint is a subclass of the class originating that
+        # branch.
         if branch._is_args_ignorable:
-            return issubclass(self._origin, branch._origin)
+            return issubclass(self._origin_type, branch._origin_type)
         # Else, that branch is subscripted (e.g., "typing.Callable[..., int]").
         #
-        # If that branch is *NOT* a callable type hint, this callable type hint
-        # is incommensurable with that branch and thus *CANNOT* be a subhint of
+        # If that branch is *NOT* a callable hint, this callable hint is
+        # incommensurable with that branch and thus *CANNOT* be a subhint of
         # that branch. Return false.
         elif not isinstance(branch, CallableTypeHint):
             return False
-        # Else, that branch is a callable type hint.
+        # Else, that branch is a callable hint.
 
         #FIXME: [SPEED] *INEFFICIENT.* The any() builtin has been profiled to be
         #almost twice as slow as equivalent manual iteration! The zip() builtin
-        #is likely to fare no better. Iterate manually, please. *sigh*
-        #FIXME: Internally comment us up, please.
+        #is surprisingly fast. any() isn't. Iterate manually, please. *sigh*
+        #FIXME: Internally comment us up, please. *sigh*
         elif not branch.is_params_ignorable and (
             (
                 self.is_params_ignorable or
@@ -277,13 +294,7 @@ class CallableTypeHint(TypeHint):
             )
         ):
             return False
-
-        # FIXME: Insufficient, sadly. There are *MANY* different type hints that
-        # are ignorable and thus semantically equivalent to "Any". It's likely
-        # we should just reduce this to a one-liner resembling:
-        #    return self.return_hint <= branch.return_hint
-        #
-        # Are we missing something? We're probably missing something. *sigh*
+        #FIXME: Internally comment us up, please. *sigh*
         elif not branch.is_return_ignorable:
             return (
                 False

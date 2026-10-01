@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep695Exception
 from beartype.typing import Optional
-from beartype._cave._cavefast import HintPep695TypeAlias
+from beartype._cave._cavefast import HintPep695TypeAliasTypes
 from beartype._check.convert._reduce._redrecurse import (
     is_hint_recursive,
     make_hint_sane_recursable,
@@ -201,7 +201,7 @@ def reduce_hint_pep695_unsubbed(
 
     Parameters
     ----------
-    hint : HintPep695TypeAlias
+    hint : HintPep695TypeAliasTypes
         Unsubscripted type alias to be reduced.
     hint_parent_sane : Optional[HintSane]
         Either:
@@ -233,7 +233,7 @@ def reduce_hint_pep695_unsubbed(
         beartype import hooks in favour of manually decorating callables and
         classes with the :func:`beartype.beartype` decorator.
     '''
-    assert isinstance(hint, HintPep695TypeAlias), (
+    assert isinstance(hint, HintPep695TypeAliasTypes), (
         f'{repr(hint)} not PEP 695-compliant unsubscripted type alias.')
 
     # ....................{ RECURSE                        }....................

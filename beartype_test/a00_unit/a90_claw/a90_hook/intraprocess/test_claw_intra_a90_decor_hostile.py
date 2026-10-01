@@ -5,7 +5,7 @@
 
 '''
 Beartype **import hook decorator-hostile intraprocess unit tests** (i.e.,
-exercising edge cases of :mod:`beartype.claw` import hooks unique to
+validating edge cases of :mod:`beartype.claw` import hooks unique to
 **decorator-hostile decorators** (i.e., decorators hostile to other decorators
 by prohibiting other decorators from being applied after they are applied in a
 chain of one or more decorators) within the active Python process).
@@ -39,10 +39,7 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.claw import beartype_package
-    from beartype.claw._clawstate import (
-        claw_lock,
-        claw_state,
-    )
+    from beartype.claw._clawstate import reinit_claw_state
     from beartype.roar import BeartypeDecorWrappeeException
     from beartype._conf.decorplace.confplacetrie import (
         BeartypeDecorPlacePackagesTrie,
@@ -51,13 +48,13 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     )
     from beartype._data.shame import datashamedecor
     from beartype_test.a00_unit.data.func.data_decor import decorator_hostile
-    from pytest import raises
+    from beartype_test._util.error.pyterrraise import raises_uncached
 
     # ....................{ MONKEY-PATCH                   }....................
     #FIXME: *TRASH.* This is crude, unsafe, and frankly dumb. Instead, we should
     #just define a new "BeartypeConf" recognizing this testing-specific
     #decorator-hostile decorator as such. Sadly, "BeartypeConf" currently fails
-    #to provide an option enabling this. *sigh*
+    #to provide any option enabling this. *sigh*
 
     # Monkey-patch these testing-specific decorator-hostile decorator attributes
     # into this decorator-hostile decorator attribute name trie. Note that:
@@ -88,10 +85,8 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     )
     # print(datashamedecor.DECOR_HOSTILE_ATTR_NAME_TRIE)
 
-    # With a submodule-specific thread-safe reentrant lock, reset our import
-    # hook state back to its initial defaults to respect the above monkey-patch.
-    with claw_lock:
-        claw_state.reinit()
+    # Thread-safely reinitialize *ALL* beartype import hook state.
+    reinit_claw_state()
 
     # ....................{ PREAMBLE                       }....................
     # Validate that the decorator-hostile decorator leveraged by the package
@@ -99,7 +94,7 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     # package. Since the @beartype decorator is permissive by both design and
     # necessity, defining decorator-hostile decorators unsupported by the
     # @beartype decorator is surprisingly non-trivial. Prove we actually did so.
-    with raises(BeartypeDecorWrappeeException):
+    with raises_uncached(BeartypeDecorWrappeeException):
         @beartype
         @decorator_hostile
         def even_now_while_Saturn() -> None:
@@ -121,9 +116,8 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     # configured by the default beartype configuration.
     beartype_package(PACKAGE_NAME)
 
-    #FIXME: Uncomment after this actually works, please. *sigh*
     # Import the package hooked above, which then imports all submodules of that
-    # package, exercising that these submodules are transitively subject to that
+    # package, validating that these submodules are transitively subject to that
     # import hook.
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package import (
         decor_hostile)

@@ -28,7 +28,7 @@ from beartype._data.typing.datatyping import (
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import SENTINEL
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_base_extrinsic_sign_or_none,
     get_hint_pep484585_generic_bases_unerased,

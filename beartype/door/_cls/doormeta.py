@@ -13,10 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from abc import ABCMeta
+from beartype._cache.cls.cacheclsmega import CacheMegaStrongCaller
 from beartype._cave._cavefast import NoneType
+from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.cache.map.utilmapunbounded import CacheUnboundedStrong
 from threading import RLock
 from typing import TYPE_CHECKING
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 # ....................{ METACLASSES                        }....................
 #FIXME: Unit test us up, please.
-class _TypeHintMetaclass(ABCMeta):
+class _TypeHintMetaclass(BeartypeSlottedABCMeta):
     '''
     Metaclass of all **type hint wrapper** (i.e., high-level object
     encapsulating a low-level type hint augmented with a magically
@@ -100,7 +100,7 @@ class _TypeHintMetaclass(ABCMeta):
 
         # ................{ IMPORTS                            }................
         # Avoid circular import dependencies.
-        from beartype.door._cls.doorsuper import TypeHint
+        from beartype.door._cls.doorabc import TypeHint
 
         # ................{ UNCACHED                           }................
         # If the type to be instantiated is *NOT* the "TypeHint" abstract base
@@ -112,8 +112,8 @@ class _TypeHintMetaclass(ABCMeta):
         if cls is not TypeHint:
             # print('!!!!!!!!!!!!! [ _TypeHintMetaclass.__call__ ] instantiating subclass... !!!!!!!!!!!!!!!')
             return super().__call__(hint)
-        # Else, this type is that ABC. In this case, instantiate that ABC in a
-        # non-standard way.
+        # Else, this type is the "TypeHint" ABC. In this case, instantiate that
+        # ABC in a non-standard way.
         #
         # If this low-level type hint is already a high-level type hint wrapper,
         # return this wrapper as is. This guarantees the following constraint:
@@ -130,7 +130,7 @@ class _TypeHintMetaclass(ABCMeta):
         # each duplicate hint subsequently passed to this factory is wrapped by
         # the same instance under this Python interpreter.
         wrapper: 'beartype.door.TypeHint' = (
-            _HINT_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(  # type: ignore[assignment]
+            _hint_to_wrapper.cache_func_return_passed_arg(  # type: ignore[assignment]
                 # Cache this wrapper singleton under this hint.
                 key=hint,
                 # If a wrapper singleton has yet to be instantiated for this
@@ -150,7 +150,7 @@ class _TypeHintMetaclass(ABCMeta):
         **Type hint wrapper factory** (i.e., low-level private method creating
         and returning a new :class:`beartype.door.TypeHint` instance wrapping
         the passed type hint), intended to be called by the
-        :meth:`CacheUnboundedStrong.cache_or_get_cached_func_return_passed_arg`
+        :meth:`CacheMegaStrongCaller.cache_func_return_passed_arg`
         method to create a new type hint wrapper singleton for the passed hint.
 
         Parameters
@@ -176,7 +176,7 @@ class _TypeHintMetaclass(ABCMeta):
 
         # ................{ IMPORTS                            }................
         # Avoid circular import dependencies.
-        from beartype.door._cls.util.doorclsmap import get_typehint_subclass
+        from beartype.door._cls._doormap import get_typehint_subclass
 
         # ................{ REDUCTION                          }................
         # Reduce this hint to a more amenable form suitable for mapping to a
@@ -217,6 +217,7 @@ class _TypeHintMetaclass(ABCMeta):
         # wrapper = super(_TypeHintMetaclass, wrapper_subclass).__call__(hint)
         # print('!!!!!!!!!!!!! [ _TypeHintMetaclass.__call__ ] caching and returning singleton... !!!!!!!!!!!!!!!')
 
+        # ................{ RETURN                             }................
         # Return this wrapper.
         return wrapper
 
@@ -227,16 +228,16 @@ class _TypeHintMetaclass(ABCMeta):
 # '''
 # PEP-compliant type hint matching the type hint wrapper cache defined below.
 # '''
-# _HINT_TO_WRAPPER: _HINT_TO_WRAPPER_HINT = CacheUnboundedStrong(  # type: ignore[assignment]
+# _hint_to_wrapper: _HINT_TO_WRAPPER_HINT = CacheMegaStrongCaller(  # type: ignore[assignment]
 
 
-_HINT_TO_WRAPPER = CacheUnboundedStrong(
+_hint_to_wrapper = CacheMegaStrongCaller(
     # Prefer the slower reentrant lock type for safety. As the subpackage name
     # implies, the DOOR API is recursive and thus requires reentrancy.
     lock_type=RLock,
 )
 '''
-**Type hint wrapper cache** (i.e., non-thread-safe cache mapping from the
+**Type hint wrapper cache** (i.e., thread-safe cache mapping from the
 machine-readable representations of all type hints to cached singleton instances
 of concrete subclasses of the :class:`beartype.door.TypeHint` abstract base
 class (ABC) wrapping those hints).
@@ -252,7 +253,7 @@ contending over those globals, this dictionary *must* be thread-safe.
 
 **This dictionary is intentionally designed as a naive dictionary rather than a
 robust LRU cache,** for the same reasons that callables accepting hints are
-memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
+memoized by the :func:`beartype._util.cache.func.utilcachefunc.callable_cached`
 rather than the :func:`functools.lru_cache` decorator. Why? Because:
 
 * The number of different type hints instantiated across even worst-case
@@ -280,7 +281,7 @@ collisions and why we are *not* going to do so.
 
 Likewise, this dictionary intentionally caches machine-readable representations
 of low-level type hints rather than those hints themselves. Since increasingly
-many hints are no longer self-caching (e.g., PEP 585-compliant type hints like
-"list[str]"), the latter *cannot* be guaranteed to be singletons and thus safely
-used as cache keys.
+many hints are no longer self-caching (e.g., :pep:`585`-compliant type hints
+like ``list[str]``), the latter *cannot* be guaranteed to be singletons and thus
+safely used as cache keys.
 '''

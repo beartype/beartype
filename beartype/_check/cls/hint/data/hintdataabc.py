@@ -13,9 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from abc import ABCMeta
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.cls.hint.hintsane import HintSane
+from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from typing import (
     TYPE_CHECKING,
@@ -24,7 +24,7 @@ from typing import (
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Unit test us up, please.
-class HintDataABC(metaclass=ABCMeta):
+class HintDataABC(metaclass=BeartypeSlottedABCMeta):
     '''
     **Type-checking type hint abstract base class (ABC)** (i.e., superclass
     whose subclasses store metadata describing each iteration of a recursive

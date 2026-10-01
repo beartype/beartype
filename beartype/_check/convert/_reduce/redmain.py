@@ -47,6 +47,7 @@ from beartype._metaverse import URL_ISSUES
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.kind.maplike.utilmapset import remove_mapping_keys
 from typing import Optional
 
@@ -63,6 +64,7 @@ def reduce_hint(
     hint_parent_sane: Optional[HintSane] = None,
     hint_sign_seed: HintSignOrNoneOrSentinel = SENTINEL,
     is_hint_ignorable_preserved: bool = False,
+    is_hint_nonpep_irreducible: bool = False,
     pith_name: Optional[str] = None,
     reductions_count: int = 0,
     exception_prefix: str = EXCEPTION_PLACEHOLDER,
@@ -147,13 +149,13 @@ def reduce_hint(
     is_hint_ignorable_preserved : bool, default: False
         Either:
 
-        * If data:`True`, then the caller prefers that ignorable hints reduced
+        * If :data:`True`, then the caller prefers that ignorable hints reduced
           to a unique :data:`.HintSane` object *not* equal to the standard
           :data:`.HINT_SANE_IGNORABLE` singleton but instead encapsulating the
           :data:`.HINT_IGNORABLE` type hint and unique metadata describing the
           ignored hint reduce to that :data:`.HintSane` object rather than the
           :data:`.HINT_SANE_IGNORABLE` singleton.
-        * If data:`False`, then the caller prefers that ignorable hints reduced
+        * If :data:`False`, then the caller prefers that ignorable hints reduced
           to a unique :data:`.HintSane` object *not* equal to the standard
           :data:`.HINT_SANE_IGNORABLE` singleton be transparently reduced to the
           :data:`.HINT_SANE_IGNORABLE` singleton. This preference is
@@ -165,6 +167,24 @@ def reduce_hint(
         reduced to unique :data:`.HintSane` objects *not* equal to the standard
         :data:`.HINT_SANE_IGNORABLE` singleton. Most callers only expect the
         :data:`.HINT_SANE_IGNORABLE` singleton. Look. It's complicated.
+    is_hint_nonpep_irreducible: bool = False,
+        Either:
+
+        * If :data:`True`, then the caller permissively requests that this
+          reducer return PEP-noncompliant hints as is (rather than raising the
+          usual :exc:`beartype.roar.BeartypeDecorHintNonpepException` exception
+          on attempting to reduce the first PEP-noncompliant hint). This can be
+          useful when reducing PEP-noncompliant third-party hints (e.g.,
+          NumPy-specific ``numpy.typing.NDArray[...]`), which due to being
+          defined by third-party packages are often subscriptable by
+          PEP-noncompliant child hints (e.g., NumPy-style dtypes). This is
+          usually *not* useful, however. Most hints are PEP-compliant and thus
+          benefit from a strict adherence to PEP-compliance.
+        * If :data:`False`, then the caller strictly requests that this reducer
+          raise the usual :exc:`beartype.roar.BeartypeDecorHintNonpepException`
+          exception on attempting to reduce the first PEP-noncompliant hint.
+
+        Defaults to :data:`False` for safety.
     pith_name : Optional[str], default: None
         Either:
 
@@ -213,6 +233,8 @@ def reduce_hint(
         f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
     assert isinstance(is_hint_ignorable_preserved, bool), (
         f'{repr(is_hint_ignorable_preserved)} not boolean.')
+    assert isinstance(is_hint_nonpep_irreducible, bool), (
+        f'{repr(is_hint_nonpep_irreducible)} not boolean.')
     assert isinstance(pith_name, NoneTypeOr[str]), (
         f'{repr(pith_name)} neither string nor "None".')
     assert isinstance(reductions_count, int), (
@@ -256,6 +278,23 @@ def reduce_hint(
             for hint_reducer in _HINT_REDUCERS:
                 # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} by {hint_reducer}...')
                 # print(f'[reduce_hint] ...after prior reduction to {hint_or_sane_prev}...')
+
+                # If...
+                if (
+                    # The caller permissively requests that this reducer return
+                    # PEP-noncompliant hints as is *AND*...
+                    is_hint_nonpep_irreducible and
+                    # This hint is PEP-noncompliant...
+                    not is_hint_pep(hint_curr)
+                ):
+                    # Then halt reducing immediately.
+                    break
+                # Else, the caller either:
+                # * Strictly requests that this reducer raise the usual
+                #   "BeartypeDecorHintNonpepException" exception on attempting
+                #   to reduce the first PEP-noncompliant hint.
+                # * Permissively requests that this reducer return
+                #   PEP-noncompliant hints as is but this hint is PEP-compliant.
 
                 # Either:
                 # * If this reducer reduces this hint:

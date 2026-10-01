@@ -18,7 +18,7 @@ from beartype._check.forward.reference._cls.fwdreffake import (
 
 # ....................{ HINTS ~ type                       }....................
 #FIXME: Replace all unsafe external references to the private
-#"BeartypeForwardRefMeta" type with safe references to this type hint instead.
+#"BeartypeForwardRefMetaclass" type with safe references to this type hint instead.
 BeartypeForwardRef = type[BeartypeForwardRefABC]
 '''
 :pep:`585`-compliant type hint matching a :mod:`beartype`-specific **forward

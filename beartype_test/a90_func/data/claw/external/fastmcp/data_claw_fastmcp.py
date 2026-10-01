@@ -33,7 +33,15 @@ input and output) transport protocol.
 '''
 
 
-fastmcp_client = Client(fastmcp_server)
+fastmcp_client = Client(
+    fastmcp_server,
+    # Required to avoid spurious exceptions when calling the
+    # data_claw_fastmcp_main() coroutine defined below awaits the
+    # fastmcp_client.ping() method under FastMCP >= 4.0.0. Failure to do so
+    # induces non-human-readable exceptions resembling:
+    #     mcp.shared.exceptions.MCPError: Method not found
+    mode='legacy',
+)
 '''
 Arbitrary in-memory FastMCP client connecting to this server of that protocol.
 '''
@@ -43,7 +51,7 @@ Arbitrary in-memory FastMCP client connecting to this server of that protocol.
 def with_stride_colossal(on_from_hall_to_hall: str) -> int:
     '''
     Arbitrary function trivially satisfying FastMCP's runnable protocol by
-    accepting an arbitrary string of mock input data and returning a byte string
+    accepting an arbitrary string of mock input data and returning an integer
     mocking the output text response of a model context protocol (MCP) passed
     that input.
 

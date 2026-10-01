@@ -99,15 +99,23 @@ def test_get_object_name() -> None:
     # print(f'meet_in_the_vale.__module__: {meet_in_the_vale.__module__}')
 
     # ....................{ PASS                           }....................
-    # Assert this getter returns the expected name for a nested function.
+    # Assert that this getter returns the expected name for a nested function.
     meet_in_the_vale_name = get_object_name(meet_in_the_vale)
     assert meet_in_the_vale_name == (
         'beartype_test.a00_unit.a20_util.a00_core.test_utilobjget.'
         'test_get_object_name.meet_in_the_vale'
     )
 
+    # Assert that this getter returns the expected name when passed both an
+    # arbitrary object declaring neither the "__qualname__" nor "__name__"
+    # dunder attributes *AND* the "is_fallback_type_name=True" parameter.
+    function_partial_name = get_object_name(
+        obj=function_partial, is_fallback_type_name=True)
+    assert function_partial_name == 'functools.partial'
+
     # ....................{ FAIL                           }....................
-    # Assert this getter raises "AttributeError" exceptions when passed objects
-    # declaring neither "__qualname__" nor "__name__" dunder attributes.
+    # Assert that this getter raises "AttributeError" exceptions when passed
+    # an arbitrary object declaring neither the "__qualname__" nor "__name__"
+    # dunder attributes.
     with raises(_BeartypeUtilObjectNameException):
         get_object_name(function_partial)
