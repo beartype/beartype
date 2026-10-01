@@ -7,6 +7,7 @@ See "LICENSE" for further details.
 MkDocs Material theme override injecting a site-wide announcement banner.
 Mirrors the "rst_prolog" tip admonition from the legacy Sphinx configuration.
 -->
+
 {% extends "base.html" %}
 
 {% block announce %}
@@ -16,4 +17,8 @@ Mirrors the "rst_prolog" tip admonition from the legacy Sphinx configuration.
   <strong>Follow us</strong> <a href="https://leycec.bsky.social">on Bluesky</a>.
   <strong>Friendzone us</strong> <a href="https://beartype.zulipchat.com">at Zulip</a>.
   Your generous support is our quality assurance. 💗
+  <br>
+  💖 Financially fueled by
+  <strong><a href="https://trymirai.com">ml (Mirai Labs)</a></strong> —
+  On-device AI for Apple Silicon, powered by bears. 💖
 {% endblock %}

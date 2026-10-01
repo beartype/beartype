@@ -10,22 +10,46 @@ documents for this project.
 
 # Welcome
 
-<!-- Hide the title defined above in favour of the banner displayed below while
-     still listing this title in the site-wide navigation block to the left.
-  -->
+<!--
+Hide the title defined above in favour of the banner displayed below while
+still listing this title in the site-wide navigation block to the left.
+-->
+
 <style>
   #welcome {
     display: none;
   }
 </style>
 
+<!--
+------------------( LOGO                                     )------------------
+-->
+
 [![beartype —\[ the bare-metal type-checker \]—](https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.svg)][beartype]
+
+<!--
+------------------( BADGES                                   )------------------
+FIXME: Let's add these badges to our new "_links.md" database, too! *sigh*
+-->
 
 [![beartype test coverage status](https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ)](https://codecov.io/gh/beartype/beartype) [![beartype continuous integration (CI) status](https://github.com/beartype/beartype/actions/workflows/python_test.yml/badge.svg)][beartype tests] [![beartype Read The Docs (RTD) status](https://readthedocs.org/projects/beartype/badge/?version=latest)](https://beartype.readthedocs.io/en/latest/?badge=latest)
 
-**Beartype** is an [open-source][beartype license] [pure-Python](faq.md#what-does-pure-python-mean) [PEP-compliant](pep.md) [near-real-time](faq.md#what-does-near-real-time-even-mean-are-you-just-making-stuff-up) [hybrid runtime-static](faq.md#what-does-hybrid-runtime-static-mean-pretty-sure-you-made-that-up-too) [third-generation](faq.md#third-generation-type-checker-doesnt-mean-anything-does-it) [type-checker](eli5.md) emphasizing efficiency, usability, unsubstantiated jargon we just made up, and thrilling puns.
+<!--
+------------------( INTRODUCTION                             )------------------
+-->
 
-Beartype enforces [type hints](eli5.md#standard-hints) across your entire app in [two lines of runtime code with no runtime overhead](api_claw.md). If seeing is believing, prepare to do both those things.
+**Beartype** is an [open-source][beartype license]
+[pure-Python](faq.md#what-does-pure-python-mean) [PEP-compliant](pep.md)
+[near-real-time](faq.md#what-does-near-real-time-even-mean-are-you-just-making-stuff-up)
+[hybrid
+runtime-static](faq.md#what-does-hybrid-runtime-static-mean-pretty-sure-you-made-that-up-too)
+[third-generation](faq.md#third-generation-type-checker-doesnt-mean-anything-does-it)
+[type-checker](eli5.md) emphasizing efficiency, usability, unsubstantiated
+jargon we just made up, and thrilling puns.
+
+Beartype enforces [type hints](eli5.md#standard-hints) across your entire app in
+[two lines of runtime code with no runtime overhead](api_claw.md). If seeing is
+believing, prepare to do both those things.
 
 ```bash
 # Install beartype.
@@ -56,9 +80,19 @@ beartype_this_package()                                        # <-- raise excep
 beartype_all(conf=BeartypeConf(violation_type=UserWarning))    # <-- emit warnings from other code
 ```
 
-Beartype now implicitly type-checks *all* annotated classes, callables, and variable assignments across *all* submodules of *all* packages. When **your** package violates type safety, beartype raises an exception. When any **other** package violates type safety, beartype just emits a warning. The triumphal fanfare you hear is probably your userbase cheering. This is how the QA was won.
+Beartype now implicitly type-checks *all* annotated classes, callables, and
+variable assignments across *all* submodules of *all* packages. When **your**
+package violates type safety, beartype raises an exception. When any **other**
+package violates type safety, beartype just emits a warning. The triumphal
+fanfare you hear is probably your userbase cheering. This is how the QA was won.
 
-Beartype also publishes a [plethora of APIs for fine-grained control over type-checking](api.md). For those who are about to QA, beartype salutes you. Would you like to know more?
+<!--
+------------------( DEEP DIVE                                )------------------
+-->
+
+Beartype also publishes a [plethora of APIs for fine-grained control over
+type-checking](api.md). For those who are about to QA, beartype salutes you.
+Would you like to know more?
 
 ```bash
 # So let's do this.
@@ -165,6 +199,10 @@ list[
 
 # ...all righty then. Guess I'll just take your word for that, BeartypeAI™.
 ```
+
+<!--
+------------------( CONCLUSION                               )------------------
+-->
 
 Beartype brings [Rust]- and [C++]-inspired [zero-cost abstractions][zero-cost abstraction] into the lawless world of [dynamically-typed][dynamic typing] Python by [enforcing type safety at the granular level of functions and methods](eli5.md) against [type hints standardized by the Python community](pep.md) in $O(1)$ [non-amortized worst-case time with negligible constant factors](math.md#nobody-expects-the-linearithmic-time). If the prior sentence was unreadable jargon, see [our friendly and approachable FAQ for a human-readable synopsis](faq.md).
 

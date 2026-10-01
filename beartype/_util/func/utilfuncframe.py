@@ -511,8 +511,37 @@ def get_frame_globals(frame: CallableFrameType) -> LexicalScope:
         f'{repr(frame)} not stack frame.')
 
     # Local scope of this frame to be yielded to the caller, possibly coerced
-    # from a non-dictionary into a dictionary.
-    frame_globals = _coerce_mapping_to_scope(frame.f_globals)
+    # from a non-dictionary into a dictionary. Specifically, if this scope-like
+    # is *NOT* a "dict" instance, coerce this scope-like into a "dict" instance.
+    # Why? Several justifiable reasons:
+    # * Higher-level callers calling this lower-level coercer are typically
+    #   annotated as returning a "LexicalScope", which is currently just a
+    #   readable alias for "DictStrToAny", which is itself an efficiency alias
+    #   for "Dict[Str, object]". Ergo, static type-checkers expect this getter
+    #   to return "dict" instances.
+    # * Under Python <= 3.11, the "CallerFrameType.f_locals" instance variable
+    #   actually is a "dict" instance.
+    # * Under Python >= 3.12, the "CallerFrameType.f_locals" instance variable
+    #   actually is instead a "mappingproxy" instance. Although interchangeable
+    #   for most purposes, "dict" and "mappingproxy" instances are *NOT*
+    #   perfectly interchangeable. In particular, callers of this function
+    #   frequently pass this local scope to the dict.update() method -- which
+    #   expects the passed mapping to also be a "dict" instance: e.g.,
+    #       cls_curr_locals = get_type_locals(
+    #           cls=cls_curr, exception_cls=exception_cls)
+    #   >   func_locals.update(cls_curr_locals)
+    #   E   TypeError: update() argument must be dict or another FrameLocalsProxy
+    #
+    #   Why? No idea. Ideally, the dict.update() method would accept arbitrary
+    #   mappings -- but it doesn't. Since it doesn't, we have *NO* recourse but
+    #   to preserve forward compatibility with future Python versions by
+    #   coercing non-"dict" to "dict" instances here on behalf of the caller. It
+    #   is what it is. We sigh! *sigh*
+    frame_globals = frame.f_globals
+    frame_globals = (
+        frame_globals if isinstance(frame_globals, dict) else
+        dict(frame_globals)
+    )
 
     # Return this global scope.
     return frame_globals
@@ -541,11 +570,12 @@ def get_frame_locals(frame: CallableFrameType) -> LexicalScope:
     assert isinstance(frame, CallableFrameType), (
         f'{repr(frame)} not stack frame.')
 
-    # Always copy this namespace, even when it is already a dictionary. For
-    # class and module frames, "f_locals" directly references the live namespace.
+    # Unconditional copy of this local scope, even if this local scope is
+    # already technically a dictionary. For class and module frames, the
+    # "f_locals" attribute accessed here directly references the live namespace.
     # Mutating that dictionary while resolving a forward reference would mutate
-    # the enclosing class or module before eval() is called (issue #707).
-    # See https://peps.python.org/pep-0667/#the-frame-f-locals-attribute
+    # the enclosing class or module before eval() is called. See also:
+    #     https://peps.python.org/pep-0667/#the-frame-f-locals-attribute
     frame_locals = dict(frame.f_locals)
 
     # Return this local scope.
@@ -1311,52 +1341,3 @@ def iter_frames(
 
         # Iterate to the next frame on the call stack.
         func_frame = func_frame.f_back
-
-# ....................{ PRIVATE ~ coercers                 }....................
-#FIXME: Unit test us up, please. *sigh*
-def _coerce_mapping_to_scope(scopelike: MappingStrToAny) -> LexicalScope:
-    '''
-    **Lexical scope** (i.e., dictionary mapping from strings to arbitrary
-    objects) converted if necessary from the passed **lexical scope-like
-    mapping** (i.e., possibly immutable mapping from strings to arbitrary
-    objects).
-
-    Parameters
-    ----------
-    scopelike : Mapping[str, object]
-        Lexical scope-like mapping to be converted into a lexical scope.
-
-    Returns
-    ----------
-    dict[str, object]
-        Lexical scope converted from this lexical scope-like mapping.
-    '''
-    assert isinstance(scopelike, Mapping), f'{repr(scopelike)} not mapping.'
-
-    # If this scope-like is *NOT* a "dict" instance, coerce this scope-like
-    # into a "dict" instance. Why? Several justifiable reasons:
-    # * Higher-level callers calling this lower-level coercer are typically
-    #   annotated as returning a "LexicalScope", which is currently just a
-    #   readable alias for "DictStrToAny", which is itself an efficiency alias
-    #   for "Dict[Str, object]". Ergo, static type-checkers expect this getter
-    #   to return "dict" instances.
-    # * Under Python <= 3.11, the "CallerFrameType.f_locals" instance variable
-    #   actually is a "dict" instance.
-    # * Under Python >= 3.12, the "CallerFrameType.f_locals" instance variable
-    #   actually is instead a "mappingproxy" instance. Although interchangeable
-    #   for most purposes, "dict" and "mappingproxy" instances are *NOT*
-    #   perfectly interchangeable. In particular, callers of this function
-    #   frequently pass this local scope to the dict.update() method -- which
-    #   expects the passed mapping to also be a "dict" instance: e.g.,
-    #       cls_curr_locals = get_type_locals(
-    #           cls=cls_curr, exception_cls=exception_cls)
-    #   >   func_locals.update(cls_curr_locals)
-    #   E   TypeError: update() argument must be dict or another FrameLocalsProxy
-    #
-    #   Why? No idea. Ideally, the dict.update() method would accept arbitrary
-    #   mappings -- but it doesn't. Since it doesn't, we have *NO* recourse but
-    #   to preserve forward compatibility with future Python versions by
-    #   coercing non-"dict" to "dict" instances here on behalf of the caller. It
-    #   is what it is. We sigh! *sigh*
-    return scopelike if isinstance(scopelike, dict) else dict(scopelike)
-    # Else, this local scope is already a "dict" instance.

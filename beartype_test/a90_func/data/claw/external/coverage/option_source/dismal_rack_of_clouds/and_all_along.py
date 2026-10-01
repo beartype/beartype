@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Coverage-specific test placeholder submodule whose only purpose is simply to
+Coverage.py-specific test placeholder submodule whose only purpose is simply to
 exist and which thus defines *no* meaningful content.
 '''
 

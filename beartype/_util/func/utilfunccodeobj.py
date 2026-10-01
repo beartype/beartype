@@ -173,7 +173,7 @@ def get_func_codeobject_or_none(
     ----------
     func : Any
         Codeobjable to be inspected.
-    is_unwrap: bool, optional
+    is_unwrap: bool, default: False
         :data:`True` only if this getter implicitly calls the
         :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function to
         unwrap this possibly higher-level wrapper into a possibly lower-level

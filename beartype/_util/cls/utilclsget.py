@@ -95,7 +95,7 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
 # @callable_cached_lru
 def get_type_locals(cls: type) -> MappingStrToAny:
     '''
-    **Local scope** (i.e., mapping from the name to value of each
+    Immutable **local scope** (i.e., mapping from the name to value of each
     attribute directly declared by that class) for the passed class.
 
     Design
@@ -168,6 +168,12 @@ def get_type_locals(cls: type) -> MappingStrToAny:
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
 
-    # Return all attributes, including "__new__". Callers merging these into
-    # another scope must copy that scope before modifying it (issue #707).
+    # Frozen dictionary of attributes directly defined by this class.
+    #
+    # Note that this dictionary is actually an instance of the builtin C-based
+    # "mappingproxy" type, which explicitly prohibits attribute assignment and
+    # is thus effectively frozen: e.g.,
+    #     >>> class MuhClass: ...
+    #     >>> MuhClass.__dict__['ugh'] = 3
+    #     TypeError: 'mappingproxy' object does not support item assignment
     return cls.__dict__

@@ -495,7 +495,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # module is hooked under its fully-qualified name *OR* "None" otherwise
         # (i.e., if that module is unhooked).
         conf = get_package_conf_or_none(fullname)
-        # print(f'Imported module "{fullname}" package "{package_name}" conf: {repr(self._module_conf)}')
+        # print(f'Imported module "{fullname}" conf: {repr(self._module_conf)}')
 
         # If that module is unhooked, preserve that module as is by simply
         # deferring to the superclass method *WITHOUT* monkey-patching

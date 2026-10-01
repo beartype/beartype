@@ -26,7 +26,9 @@ def test_decor_pep435_subclass_nested() -> None:
     See Also
     --------
     https://github.com/beartype/beartype/issues/707
-        Class namespace mutation exercised by this unit test.
+        Outer class instantiation exercised by this unit test.
+    https://github.com/beartype/beartype/issues/710
+        Outer class namespace mutation exercised by this unit test.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -71,13 +73,18 @@ def test_decor_pep435_subclass_nested() -> None:
     THAT_WHISPER_ROUND = ForOneShortHour.EvenAsTheTrees(3)
 
     # ....................{ PASS                           }....................
-    # Resolving the inner method's forward reference must not copy the enum's
-    # attributes into the enclosing class namespace (issue #707).
+    # Assert that the outer class defined above is instantiable. You are now
+    # thinking: "Uh. Why wouldn't it be?" Because issue #707. Please don't ask.
+    assert isinstance(ForOneShortHour(), ForOneShortHour)
+
+    # Assert that the @beartype decorator preserved (rather than erroneously
+    # overwriting) the namespace of the outer class defined above when it
+    # internally resolved the PEP 484-compliant forward reference annotating the
+    # method defined on the inner enumeration contained inside that outer class.
     assert ForOneShortHour.THAT_WHISPER_ROUND == 'outer value'
     assert ForOneShortHour.__new__ is object.__new__
     assert ForOneShortHour.__dict__.get('a_temple') is None
     assert ForOneShortHour.__dict__.get('_member_map_') is None
-    assert isinstance(ForOneShortHour(), ForOneShortHour)
 
     # Assert that the method defined above returns the expected value when
     # passed a valid value.
