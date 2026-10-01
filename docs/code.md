@@ -23,7 +23,7 @@ We begin by wading into the torpid waters of the many ways beartype avoids doing
 ```python
 from collections.abc import Callable
 
-def identity_decorator(func: Callable): -> Callable:
+def identity_decorator(func: Callable) -> Callable:
     return func
 ```
 
@@ -504,7 +504,7 @@ Let's take this from the top.
 15. **Stage these changes.**
 
     ```bash
-    git add -a
+    git add -A
     ```
 
 16. **Commit these changes.**

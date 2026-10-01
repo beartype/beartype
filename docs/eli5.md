@@ -318,7 +318,7 @@ from typing import Any, Union
 
 @beartype
 def toomai_of_the_elephants(memory: Union[Integral, Mapping[Any, Any]]) -> (
-    Union[Integral, Callable[(Any,), Any]]):
+    Union[Integral, Callable[[Any], Any]]):
     return memory if isinstance(memory, Integral) else lambda key: memory[key]
 ```
 
