@@ -347,7 +347,9 @@ def iter_func_args(
         is_arg_var_pos,
         is_arg_var_kw,
     ) = get_func_args_lens(
-        func=func,
+        # When supplied, the code object is authoritative. functools.wraps()
+        # can copy a cached parameter count from a different callable.
+        func=func_codeobj if func_codeobj is not None else func,
         is_unwrap=False,  # <-- "func" was already unwrapped above. I sigh.
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,

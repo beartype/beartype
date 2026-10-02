@@ -22,16 +22,25 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.cls.call.calldatadecorfunc import BeartypeCallDecorFuncData
-from beartype._check.make.checkmakesig import make_func_signature
-from beartype._data.check.code.func.datacodefuncwrap import CODE_WRAPPER_SIGNATURE
+from beartype._check.make.checkmakesig import (
+    make_func_signature as make_func_signature_generic)
+from beartype._data.check.code.func.datacodefuncwrap import (
+    CODE_INIT_RANDOM_INT,
+    CODE_WRAPPER_SIGNATURE,
+)
 from beartype._data.check.code.datacodename import (
     ARG_NAME_CALL_META,
     ARG_NAME_FUNC,
+    ARG_NAME_GETRANDBITS,
 )
+from beartype._util.func.arg.utilfuncargmake import make_func_signature
 from beartype._decor._nontype._wrap._wrapargs import (
     code_check_args as _code_check_args)
 from beartype._decor._nontype._wrap._wrapreturn import (
     code_check_return as _code_check_return)
+from inspect import (
+    CO_ASYNC_GENERATOR, CO_COROUTINE, CO_GENERATOR, CO_VARARGS, CO_VARKEYWORDS)
+from types import FunctionType
 
 # ....................{ GENERATORS                         }....................
 def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
@@ -115,16 +124,41 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
         happen, a private non-human-readable exception is raised in this case.
     '''
 
+    # Specialize only undecorated synchronous functions whose parameters are
+    # all required and keyword-only. Defaults must retain their existing policy
+    # of being unchecked when omitted. Transparent decorators may accept more
+    # arguments than their underlying functions. Coroutine and generator
+    # factories must retain their existing argument-error timing.
+    func = decor_func.func_wrappee
+    codeobj = decor_func.func_wrappee_wrappee_codeobj
+    arg_names = codeobj.co_varnames[:codeobj.co_kwonlyargcount]
+    is_signature_explicit = (
+        isinstance(func, FunctionType) and
+        func is decor_func.func_wrappee_wrappee and
+        codeobj.co_argcount == 0 and
+        codeobj.co_kwonlyargcount > 0 and
+        not codeobj.co_flags & (
+            CO_VARARGS | CO_VARKEYWORDS | CO_COROUTINE |
+            CO_GENERATOR | CO_ASYNC_GENERATOR) and
+        not func.__kwdefaults__ and
+        decor_func.func_wrapper_name.isidentifier() and
+        all(not name.startswith('__bear') for name in arg_names)
+    )
+    func_call_args = (
+        ', '.join(f'{name}={name}' for name in arg_names)
+        if is_signature_explicit else '*args, **kwargs'
+    )
+
     # ....................{ ARGS                           }....................
     # Python code snippet type-checking all callable parameters if one or more
     # such parameters are annotated with unignorable type hints *OR* the empty
     # string otherwise.
-    code_check_params = _code_check_args(decor_func)
+    code_check_params = _code_check_args(decor_func, is_signature_explicit)
 
     # ....................{ (RETURN|YIELD)                 }....................
     # Python code snippet type-checking the callable return if this return is
     # annotated with an unignorable type hint *OR* the empty string otherwise.
-    code_check_return = _code_check_return(decor_func)
+    code_check_return = _code_check_return(decor_func, func_call_args)
 
     # If the callable return requires *NO* type-checking...
     #
@@ -142,7 +176,12 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
 
         # Python code snippet calling this callable unchecked, returning the
         # value returned by this callable from this wrapper.
-        code_check_return = decor_func.func_wrapper_code_return_unchecked
+        code_check_return = (
+            f'\n    # Forward explicitly bound keyword-only parameters.\n'
+            f'    return {ARG_NAME_FUNC}({func_call_args})'
+            if is_signature_explicit else
+            decor_func.func_wrapper_code_return_unchecked
+        )
     # Else, the callable return requires type-checking.
 
     # ....................{ SCOPE                          }....................
@@ -170,13 +209,25 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
     # Python code snippet declaring the signature of this type-checking wrapper
     # function, deferred for efficiency until *AFTER* confirming that a wrapper
     # function is even required.
-    code_signature = make_func_signature(
-        func_name=decor_func.func_wrapper_name,
-        func_scope=func_scope,
-        code_signature_format=CODE_WRAPPER_SIGNATURE,
-        code_signature_prefix=decor_func.func_wrapper_code_signature_prefix,
-        conf=decor_func.conf,
-    )
+    if is_signature_explicit:
+        code_signature = make_func_signature(
+            func=func,
+            func_name=decor_func.func_wrapper_name,
+            func_scope=func_scope,
+            conf=decor_func.conf,
+            # update_wrapper() copies original annotation metadata afterward.
+            is_annotated=False,
+        )
+        if ARG_NAME_GETRANDBITS in func_scope:
+            code_signature += CODE_INIT_RANDOM_INT
+    else:
+        code_signature = make_func_signature_generic(
+            func_name=decor_func.func_wrapper_name,
+            func_scope=func_scope,
+            code_signature_format=CODE_WRAPPER_SIGNATURE,
+            code_signature_prefix=decor_func.func_wrapper_code_signature_prefix,
+            conf=decor_func.conf,
+        )
 
     # ....................{ TYPE-CHECK                     }....................
     # Return Python code defining the wrapper type-checking this callable.

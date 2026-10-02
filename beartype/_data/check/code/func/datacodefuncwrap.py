@@ -142,6 +142,18 @@ https://eli.thegreenplace.net/2018/slow-and-fast-methods-for-generating-random-i
 '''
 
 # ....................{ CODE ~ arg                         }....................
+CODE_ARG_LOCALIZE_KEYWORD_REQUIRED = f'''
+    # Localize this required keyword-only parameter, already bound by Python.
+    {VAR_NAME_PITH_ROOT} = {{arg_name}}
+
+    # Preserve the existing sentinel policy for type-checking this parameter.
+    if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_GET_VIOLATION}:'''
+'''
+Code snippet localizing a required keyword-only parameter from an explicit
+wrapper signature, rather than looking up that parameter in a kwargs dictionary.
+'''
+
+
 ARG_KIND_TO_CODE_LOCALIZE = {
     # Snippet localizing any positional-only parameter (e.g.,
     # "{posonlyarg}, /") by lookup in the wrapper's "*args" dictionary.
@@ -216,7 +228,7 @@ next parameter to be type-checked.
 CODE_CALL_CHECKED = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {VAR_NAME_PITH_ROOT} = {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)
+    {VAR_NAME_PITH_ROOT} = {{func_call_prefix}}{ARG_NAME_FUNC}({{func_call_args}})
 
     # Noop required to artificially increase indentation level. Note that
     # CPython implicitly optimizes this conditional away. Isn't that nice?
