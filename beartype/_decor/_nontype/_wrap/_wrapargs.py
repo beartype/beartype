@@ -82,6 +82,7 @@ from beartype._check.cls.hint.hintsane import (
 from beartype._data.check.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_INIT_ARGS_LEN,
+    CODE_ARG_LOCALIZE_KEYWORD_REQUIRED,
     ARG_KIND_TO_CODE_LOCALIZE,
 )
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
@@ -102,7 +103,10 @@ from typing import Optional
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
-def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
+def code_check_args(
+    decor_func: BeartypeCallDecorFuncData,
+    is_signature_explicit: bool = False,
+) -> str:
     '''
     Generate a Python code snippet type-checking all annotated parameters of the
     decorated callable if any *or* the empty string otherwise (i.e., if these
@@ -112,6 +116,9 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
     ----------
     decor_func : BeartypeCallDecorFuncData
         Decorated callable to be type-checked.
+    is_signature_explicit : bool, optional
+        Whether required keyword-only parameters are already bound to local
+        variables by a callable-specific signature. Defaults to false.
 
     Returns
     -------
@@ -377,8 +384,11 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
                 #        arg_kind, None)
                 # Python code template localizing this parameter if this kind of
                 # parameter is supported *OR* "None" otherwise.
-                ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE.get(  # type: ignore
-                    arg_kind, None)
+                ARG_LOCALIZE_TEMPLATE = (
+                    CODE_ARG_LOCALIZE_KEYWORD_REQUIRED
+                    if is_signature_explicit and arg_kind is ArgKind.KEYWORD_ONLY else
+                    ARG_KIND_TO_CODE_LOCALIZE.get(arg_kind, None)
+                )
 
                 # If this kind of parameter is unsupported, raise an exception.
                 #
