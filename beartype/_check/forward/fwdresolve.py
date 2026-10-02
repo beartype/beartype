@@ -181,6 +181,11 @@ def resolve_hint_pep484_ref_str_decor_curr(
         f'{repr(exception_cls)} not exception type.')
     # print(f'Resolving decorator-time PEP 484 forward reference {repr(hint)} under {repr(decor_curr)}...')
 
+    # Unlike a named forward reference, the None keyword requires no namespace.
+    # Resolve it even for dynamically defined callables without a module.
+    if hint == 'None':
+        return None
+
     # ..................{ LOCALS                             }..................
     # Decorated callable and metadata associated with that callable, localized
     # to improve both readability and negligible efficiency when accessed below.
