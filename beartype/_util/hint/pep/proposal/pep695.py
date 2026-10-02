@@ -124,6 +124,7 @@ from beartype._data.typing.datatypingport import (
     TypeIs,
 )
 from beartype._metaverse import URL_ISSUES
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
     release_instance,
@@ -254,6 +255,113 @@ def is_hint_pep695_subbed(hint: Hint) -> bool:
     # alias. Yes. It really is this non-trivial, folks. *sigh*
     return isinstance(hint_origin, HintPep695TypeAliasTypes)
 
+
+def is_hint_pep695_recursive(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> bool:
+    '''
+    :data:`True` only if the passed :pep:`695`-compliant type alias is
+    **recursive** (i.e., either transitively refers to itself or transitively
+    refers to another type alias transitively referring to itself), either
+    directly as in ``type Tree = int | list[Tree]``, mutually through one or
+    more other type aliases, or through the child hints subscripting another
+    type alias as in ``type Tree = int | Alias[Tree]``.
+
+    Only type aliases are tracked, as the hints aliased by type aliases are
+    lazily evaluated and thus the only means of self-reference detectable here.
+    Each type alias is expanded at most once per call, guaranteeing linear
+    rather than exponential time on type aliases reusing other type aliases
+    (e.g., ``type Shared = Alias | list[Alias]``).
+
+    This tester is intentionally *not* memoized, as callers are expected to
+    call this tester at most once per type alias.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type alias to be inspected, either unsubscripted *or* subscripted.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this type alias is recursive.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If any type alias reachable from this alias is a circular chain of type
+        aliases (e.g., ``type A = B`` paired with ``type B = A``).
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_childs,
+        get_hint_pep_origin,
+    )
+
+    # Set of all unsubscripted type aliases currently being expanded (i.e., on
+    # the current path) and set of all unsubscripted type aliases already
+    # expanded and found to be non-recursive. Note that type aliases are
+    # hashable by identity and thus safely usable as set members.
+    hint_aliases_expanding: set = set()
+    hint_aliases_nonrecursive: set = set()
+
+    def _is_hint_recursive(hint_curr: Hint) -> bool:
+        '''
+        :data:`True` only if the passed hint transitively refers to a recursive
+        type alias.
+        '''
+
+        # Unsubscripted type alias underlying this hint if this hint is a type
+        # alias *OR* "None" otherwise.
+        hint_alias = (
+            hint_curr
+            if isinstance(hint_curr, HintPep695TypeAliasTypes) else
+            get_hint_pep_origin(
+                hint=hint_curr, exception_prefix=exception_prefix)
+            if is_hint_pep695_subbed(hint_curr) else
+            None
+        )
+
+        # If this hint is a type alias *NOT* already found to be non-recursive...
+        if (
+            hint_alias is not None and
+            hint_alias not in hint_aliases_nonrecursive
+        ):
+            # If this alias is currently being expanded, this alias is
+            # recursive.
+            if hint_alias in hint_aliases_expanding:
+                return True
+            # Else, this alias has yet to be expanded.
+
+            # Expand this alias. Note that this getter is memoized and thus
+            # called positionally.
+            hint_aliases_expanding.add(hint_alias)
+            if _is_hint_recursive(get_hint_pep695_alias(
+                hint_alias, exception_prefix)):
+                return True
+            hint_aliases_expanding.remove(hint_alias)
+            hint_aliases_nonrecursive.add(hint_alias)
+        # Else, this hint is either *NOT* a type alias or a type alias already
+        # found to be non-recursive.
+
+        # Return true only if any child hint of this hint (including the child
+        # hints subscripting this hint if this hint is a subscripted type alias)
+        # transitively refers to a recursive type alias.
+        return any(
+            _is_hint_recursive(hint_child)
+            for hint_child in get_hint_pep_childs(hint_curr)
+        )
+
+    # Return true only if this alias transitively refers to a recursive alias.
+    return _is_hint_recursive(hint)
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep695_unsubbed_alias(
@@ -374,6 +482,61 @@ def get_hint_pep695_unsubbed_alias(
     # ....................{ RETURN                         }....................
     # Return this unaliased type alias.
     return hint
+
+
+@callable_cached
+def get_hint_pep695_alias(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> Hint:
+    '''
+    Hint aliased by the passed :pep:`695`-compliant type alias, which may be
+    either unsubscripted (e.g., ``type Alias = int``) *or* subscripted (e.g.,
+    ``Alias[int]`` for ``type Alias[T] = list[T]``).
+
+    For subscripted aliases, the hint returned is the hint aliased by the
+    unsubscripted alias originating that alias, *not* yet subscripted by the
+    child hints subscripting that alias. Callers requiring that substitution
+    must perform it themselves.
+
+    This getter is memoized for efficiency and thus *must* be called with
+    positional arguments.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type alias to be inspected.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages.
+
+    Returns
+    -------
+    Hint
+        Hint aliased by this alias.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this hint is *not* a type alias *or* is a circular chain of aliases.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin
+
+    # If this alias is subscripted, reduce this alias to the unsubscripted
+    # alias originating this alias.
+    if is_hint_pep695_subbed(hint):
+        hint = get_hint_pep_origin(
+            hint=hint, exception_prefix=exception_prefix)
+    # Else, this alias is either unsubscripted *OR* not an alias at all. In the
+    # latter case, the getter called below raises the expected exception.
+
+    # Return the hint aliased by this unsubscripted alias.
+    return get_hint_pep695_unsubbed_alias(
+        hint=hint, exception_prefix=exception_prefix)  # type: ignore[arg-type]
 
 # ....................{ ADDERS                             }....................
 #FIXME: Unit test us up, please.
