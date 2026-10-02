@@ -291,8 +291,9 @@ def add_func_scope_types(
         * :data:`None`, in which case this function reduces this parameter to
           either:
 
-          * :data:`True` if ``types`` is a :class:`tuple`.
-          * :data:`False` if ``types`` is a :class:`set`.
+          * :data:`True` if ``types`` is a :class:`collections.abc.Set`,
+            including dictionary key views, which are already duplicate-free.
+          * :data:`False` if ``types`` is a :class:`tuple`.
 
         This tri-state boolean does *not* simply enable an edge-case
         optimization, though it certainly does that; this boolean enables
@@ -355,9 +356,11 @@ def add_func_scope_types(
     # Else, this container either contains two or more types.
 
     # If the caller did *NOT* explicitly pass the "is_unique" parameter, default
-    # this parameter to true *ONLY* if this container is a set.
+    # this parameter to true *ONLY* if this container satisfies the set ABC.
+    # Dictionary key views are already unique and preserve union child order.
+    # Converting those views through a builtin set needlessly loses that order.
     if is_unique is None:
-        is_unique = isinstance(types, set)
+        is_unique = isinstance(types, Set)
     # Else, the caller explicitly passed the "is_unique" parameter.
     #
     # In either case, "is_unique" is now a proper bool.

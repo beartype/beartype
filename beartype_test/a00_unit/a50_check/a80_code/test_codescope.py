@@ -257,6 +257,67 @@ def test_add_func_scope_types() -> None:
         add_func_scope_types(
             types=(bool, NonIsinstanceableClass, float), func_scope=func_scope)
 
+def test_add_func_scope_types_ordered_key_view() -> None:
+    '''Dictionary key views retain their existing order without deduplication.'''
+    from beartype._check.code.codescope import add_func_scope_types
+
+    types = (str, int, float, bytes)
+    for ordered_types in (types, types[::-1]):
+        func_scope = {}
+        types_scope_name = add_func_scope_types(
+            types=dict.fromkeys(ordered_types).keys(), func_scope=func_scope)
+        assert func_scope[types_scope_name] == ordered_types
+
+
+def test_union_custom_instancecheck_order() -> None:
+    '''Union checks short-circuit in caller order for custom metaclasses.'''
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
+    from typing import Union
+
+    checked_types = []
+
+    class CheckingMeta(type):
+        def __hash__(cls):
+            return cls.check_order
+
+        def __instancecheck__(cls, value):
+            checked_types.append(cls)
+            return value == 'valid'
+
+    class First(metaclass=CheckingMeta):
+        check_order = 1
+
+    class Second(metaclass=CheckingMeta):
+        check_order = 2
+
+    # Distinct small hashes avoid allocation-dependent hash collisions.
+    # Reverse set order so redundant set conversion loses caller order.
+    ordered_types = tuple(set((First, Second)))[::-1]
+    for is_pep604 in (False, True):
+        body_calls = []
+        hint = (
+            ordered_types[0] | ordered_types[1]
+            if is_pep604 else Union[ordered_types])
+
+        def check(value):
+            body_calls.append(value)
+            return value
+
+        check.__annotations__ = {'value': hint}
+        check = beartype(check)
+        checked_types.clear()
+
+        assert check('valid') == 'valid'
+        assert checked_types == [ordered_types[0]]
+        assert body_calls == ['valid']
+
+        with raises(BeartypeCallHintParamViolation):
+            check('invalid')
+        assert body_calls == ['valid']
+
+
 # ....................{ TESTS ~ expresser                  }....................
 #FIXME: Refactor into an equivalent unit test validating that beartype correctly
 #reduces forward references to non-string type hints. The
