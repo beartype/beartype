@@ -309,13 +309,17 @@ documents in this project via the "rst_epilog" setting in "conf.py").
 [redis]: https://redis.readthedocs.io
 [redis.Redis]: https://redis.readthedocs.io/en/stable/connections.html#redis.Redis
 
-<!-- -------------( LINKS ~ py : package : zensical          )-------------- -->
-[Zensical]: https://zensical.org
+<!-- -------------( LINKS ~ py : package : sphinx            )-------------- -->
+[Sphinx]: https://www.sphinx-doc.org
+[sphinx.ext.autodoc]: https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 
 <!-- -------------( LINKS ~ py : package : test              )-------------- -->
 [Codecov]: https://about.codecov.io
 [pytest]: https://docs.pytest.org
 [tox]: https://tox.readthedocs.io
+
+<!-- -------------( LINKS ~ py : package : zensical          )-------------- -->
+[Zensical]: https://zensical.org
 
 <!-- -------------( LINKS ~ py : pep                         )-------------- -->
 [PEPs]: https://peps.python.org
