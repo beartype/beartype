@@ -8,6 +8,8 @@ Root Markdown document transitively referencing all other child Markdown
 documents for this project.
 -->
 
+<!-- -------------( TITLE                                    )-------------- -->
+
 # Welcome
 
 <!--
@@ -21,22 +23,16 @@ still listing this title in the site-wide navigation block to the left.
   }
 </style>
 
-<!--
-------------------( LOGO                                     )------------------
--->
+<!-- -------------( LOGO                                     )-------------- -->
 
 [![beartype —\[ the bare-metal type-checker \]—](https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.svg)][beartype]
 
-<!--
-------------------( BADGES                                   )------------------
-FIXME: Let's add these badges to our new "_links.md" database, too! *sigh*
--->
+<!-- -------------( BADGES                                   )-------------- -->
+<!-- FIXME: Let's add these badges to our new "_links.md" database, too! *sigh* -->
 
 [![beartype test coverage status](https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ)](https://codecov.io/gh/beartype/beartype) [![beartype continuous integration (CI) status](https://github.com/beartype/beartype/actions/workflows/python_test.yml/badge.svg)][beartype tests] [![beartype Read The Docs (RTD) status](https://readthedocs.org/projects/beartype/badge/?version=latest)](https://beartype.readthedocs.io/en/latest/?badge=latest)
 
-<!--
-------------------( INTRODUCTION                             )------------------
--->
+<!-- -------------( INTRODUCTION                             )-------------- -->
 
 **Beartype** is an [open-source][beartype license]
 [pure-Python](faq.md#what-does-pure-python-mean) [PEP-compliant](pep.md)
@@ -78,6 +74,11 @@ from beartype import BeartypeConf                              # <-- this isn't 
 from beartype.claw import beartype_all, beartype_this_package  # <-- you didn't sign up for this
 beartype_this_package()                                        # <-- raise exceptions in your code
 beartype_all(conf=BeartypeConf(violation_type=UserWarning))    # <-- emit warnings from other code
+
+# (OPTIONAL) Issue a non-fatal warning if some competing third-party package
+# registered its own import hook reducing the above beartype_*() calls to noops.
+from beartype.claw import warn_if_beartype_claw_inactive       # <-- boilerplate intensifies
+warn_if_beartype_claw_inactive()  # <-- if the above calls did nothing, at least now you know :(
 ```
 
 Beartype now implicitly type-checks *all* annotated classes, callables, and
@@ -86,9 +87,7 @@ package violates type safety, beartype raises an exception. When any **other**
 package violates type safety, beartype just emits a warning. The triumphal
 fanfare you hear is probably your userbase cheering. This is how the QA was won.
 
-<!--
-------------------( DEEP DIVE                                )------------------
--->
+<!-- -------------( DEEP DIVE                                )-------------- -->
 
 Beartype also publishes a [plethora of APIs for fine-grained control over
 type-checking](api.md). For those who are about to QA, beartype salutes you.
@@ -200,16 +199,29 @@ list[
 # ...all righty then. Guess I'll just take your word for that, BeartypeAI™.
 ```
 
-<!--
-------------------( CONCLUSION                               )------------------
--->
+<!-- -------------( CONCLUSION                               )-------------- -->
 
-Beartype brings [Rust]- and [C++]-inspired [zero-cost abstractions][zero-cost abstraction] into the lawless world of [dynamically-typed][dynamic typing] Python by [enforcing type safety at the granular level of functions and methods](eli5.md) against [type hints standardized by the Python community](pep.md) in $O(1)$ [non-amortized worst-case time with negligible constant factors](math.md#nobody-expects-the-linearithmic-time). If the prior sentence was unreadable jargon, see [our friendly and approachable FAQ for a human-readable synopsis](faq.md).
+Beartype brings [Rust]- and [C++]-inspired [zero-cost abstractions][zero-cost
+abstraction] into the lawless world of [dynamically-typed][dynamic typing]
+Python by [enforcing type safety at the granular level of functions and
+methods](eli5.md) against [type hints standardized by the Python
+community](pep.md) in $O(1)$ [non-amortized worst-case time with negligible
+constant factors](math.md#nobody-expects-the-linearithmic-time). If the prior
+sentence was unreadable jargon, see [our friendly and approachable FAQ for a
+human-readable synopsis](faq.md).
 
-Beartype is [portably implemented][beartype codebase] in [Python 3][Python], [continuously stress-tested][beartype tests] via [GitHub Actions] **×** [tox] **×** [pytest] **×** [Codecov], and [permissively distributed][beartype license] under the [MIT license]. Beartype has *no* runtime dependencies, [only one test-time dependency][pytest], and [only one documentation-time dependency][Sphinx]. Beartype supports [all actively developed Python versions][Python status], [all Python package managers](install.md), and [multiple platform-specific package managers](install.md).
+Beartype is [portably implemented][beartype codebase] in [Python 3][Python],
+[continuously stress-tested][beartype tests] via [GitHub Actions] **×** [tox]
+**×** [pytest] **×** [Codecov], and [permissively distributed][beartype license]
+under the [MIT license]. Beartype has *no* runtime dependencies, [only one
+test-time dependency][pytest], and [only one documentation-time
+dependency][Zensical]. Beartype supports [all actively developed Python
+versions][Python status], [all Python package managers](install.md), and
+[multiple platform-specific package managers](install.md).
 
 Beartype [powers quality assurance across the Python ecosystem][beartype dependents].
 
+<!-- -------------( TABLE OF CONTENTS                        )-------------- -->
 <!--
 ## The Typing Tree
 
@@ -217,7 +229,8 @@ Welcome to the **Bearpedia** – your one-stop Encyclopedia Beartanica for all t
 
 **Bear with Us**
 
-<!-- This ... does not work. It only renders the *page's* headings as a TOC, *not* an expanded TOC for the entire *site* -->
+<!-- FIXME: This ... does not work. It only renders the *page's* headings as a
+TOC, *not* an expanded TOC for the entire *site*
 [TOC]
   -->
 
@@ -225,11 +238,19 @@ Welcome to the **Bearpedia** – your one-stop Encyclopedia Beartanica for all t
 
 Beartype plugins adjacent to your interests include:
 
-- [ipython-beartype], beartype's official [IPython] plugin. Type-check:
+- **[pytest-beartype]**, beartype's official [pytest] plugin. Type-check
+  packages *only* at [pytest] test-time. Fatally obsessed with speed? Fatally
+  accepting of critical failure? Can't bear to type-check at runtime? When your
+  team lacks trust, your team chooses [pytest-beartype].
+- **[ipython-beartype]**, beartype's official [IPython] plugin. Type-check:
   - Browser-based [Jupyter], [Marimo], and [Google Colab] notebook cells.
   - IDE-based [Zasper] notebook cells.
   - Terminal-based [IPython] REPLs.
-- [pytest-beartype], beartype's official [pytest] plugin. Type-check packages *only* at [pytest] test-time. Fatally obsessed with speed? Fatally accepting of critical failure? Can't bear to type-check at runtime? When your team lacks trust, your team chooses [pytest-beartype].
+- **[bearshape]**, beartype's official tensor type-checker. Type-check:
+  - [NumPy] arrays.
+  - [JAX] arrays.
+  - [PyTorch] arrays.
+  - [CuPy] arrays.
 
 ## License
 

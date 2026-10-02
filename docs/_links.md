@@ -1,22 +1,23 @@
-<!-- ------------------( LICENSE                             )------------------ -->
-<!-- Copyright (c) 2014-2026 Beartype authors. -->
-<!-- See "LICENSE" for further details. -->
+<!--
+------------------( LICENSE                                  )------------------
+Copyright (c) 2014-2026 Beartype authors.
+See "LICENSE" for further details.
 
-<!-- ------------------( SYNOPSIS                            )------------------ -->
-<!-- URI repository (i.e., hidden reStructuredText (reST) document centralizing -->
-<!-- common URI links in reST format, automatically exposed to all other reST -->
-<!-- documents in this project via the "rst_epilog" setting in "conf.py"). -->
+------------------( SYNOPSIS                                 )------------------
+URI repository (i.e., hidden reStructuredText (reST) document centralizing
+common URI links in reST format, automatically exposed to all other reST
+documents in this project via the "rst_epilog" setting in "conf.py").
 
-<!-- ------------------( IMAGES ~ badge                      )------------------ -->
+<!-- -------------( IMAGES ~ badge                           )-------------- -->
 
-<!-- ------------------( IMAGES ~ downstream                 )------------------ -->
+<!-- -------------( IMAGES ~ downstream                      )-------------- -->
 <!-- Insert links to GitHub Sponsors funding at the icon level here, please! -->
 
-<!-- ------------------( LINKS ~ beartype : maintainer       )------------------ -->
+<!-- -------------( LINKS ~ beartype : maintainer            )-------------- -->
 [@leycec]: https://github.com/leycec
 [leycec]: https://github.com/leycec
 
-<!-- ------------------( LINKS ~ beartype : funding          )------------------ -->
+<!-- -------------( LINKS ~ beartype : funding               )-------------- -->
 [BETSE]: https://github.com/betsee/betse
 [BETSEE]: https://github.com/betsee/betsee
 [GitHub Sponsors]: https://github.com/sponsors/leycec
@@ -29,7 +30,7 @@
 [Tufts University]: https://www.tufts.edu
 [beadspace9]: https://beadspace9.ca
 
-<!-- ------------------( LINKS ~ beartype : github           )------------------ -->
+<!-- -------------( LINKS ~ beartype : github                )-------------- -->
 [beartype]: https://github.com/beartype/beartype
 [beartype 1.0.0]: https://github.com/beartype/beartype/issues/7
 [beartype codebase]: https://github.com/beartype/beartype/tree/main/beartype
@@ -42,22 +43,22 @@
 [beartype stars]: https://github.com/beartype/beartype/stargazers
 [beartype tests]: https://github.com/beartype/beartype/actions?workflow=tests
 
-<!-- ------------------( LINKS ~ beartype : github : security)------------------ -->
+<!-- -------------( LINKS ~ beartype : github : security     )-------------- -->
 [GitHub Advisory Database]: https://github.com/advisories
 [beartype security]: https://github.com/beartype/beartype/blob/main/.github/SECURITY.md
 
-<!-- ------------------( LINKS ~ beartype : github : time    )------------------ -->
+<!-- -------------( LINKS ~ beartype : github : time         )-------------- -->
 [beartype profiler]: https://github.com/beartype/beartype/blob/main/bin/profile.bash
 [beartype profiler Cisco]: https://github.com/beartype/beartype/issues/58#issuecomment-940100279
 
-<!-- ------------------( LINKS ~ beartype : github : user    )------------------ -->
+<!-- -------------( LINKS ~ beartype : github : user         )-------------- -->
 [patrick-kidger]: https://github.com/patrick-kidger
 [harens]: https://github.com/harens
 
-<!-- ------------------( LINKS ~ beartype : local            )------------------ -->
+<!-- -------------( LINKS ~ beartype : github : local        )-------------- -->
 [beartype license]: https://github.com/beartype/beartype/blob/main/LICENSE
 
-<!-- ------------------( LINKS ~ beartype : local : module   )------------------ -->
+<!-- -------------( LINKS ~ beartype : github : local : mod  )-------------- -->
 [beartype errormain]: https://github.com/beartype/beartype/blob/main/beartype/_decor/_code/_pep/_error/errormain.py
 [beartype pephint]: https://github.com/beartype/beartype/blob/main/beartype/_decor/_code/_pep/_pephint.py
 [beartype test data pep]: https://github.com/beartype/beartype/blob/main/beartype_test/unit/data/hint/pep/proposal/
@@ -67,7 +68,7 @@
 [beartype util data pep parent]: https://github.com/beartype/beartype/blob/main/beartype/_util/hint/data/pep/utilhintdatapep.py
 [beartype util pep]: https://github.com/beartype/beartype/blob/main/beartype/_util/hint/pep/proposal
 
-<!-- ------------------( LINKS ~ beartype : api              )------------------ -->
+<!-- -------------( LINKS ~ beartype : api                   )-------------- -->
 [beartype.claw]: api_claw.md
 [beartype.door]: api_door.md
 [beartype.vale]: api_vale.md
@@ -88,7 +89,7 @@
 [beartype.vale.IsInstance]: api_vale.md#isinstance
 [beartype.vale.IsSubclass]: api_vale.md#issubclass
 
-<!-- ------------------( LINKS ~ beartype : package          )------------------ -->
+<!-- -------------( LINKS ~ beartype : package               )-------------- -->
 [beartype Anaconda]: https://anaconda.org/conda-forge/beartype
 [beartype Arch]: https://aur.archlinux.org/packages/python-beartype
 [beartype Gentoo]: https://packages.gentoo.org/packages/dev-python/beartype
@@ -96,26 +97,31 @@
 [beartype MacPorts]: https://ports.macports.org/port/py-beartype
 [beartype PyPI]: https://pypi.org/project/beartype
 
-<!-- ------------------( LINKS ~ beartype : package : meta   )------------------ -->
+<!-- -------------( LINKS ~ beartype : package : meta        )-------------- -->
 [Libraries.io]: https://libraries.io
 
-<!-- ------------------( LINKS ~ beartype : plugin           )------------------ -->
+<!-- -------------( LINKS ~ beartype : plugin                )-------------- -->
+[bearshape]: https://github.com/beartype/bearshape
 [ipython-beartype]: https://pypi.org/project/ipython-beartype
 [ipython-beartype GitHub]: https://github.com/beartype/ipython-beartype
 [pytest-beartype]: https://pypi.org/project/pytest-beartype
 [pytest-beartype GitHub]: https://github.com/beartype/pytest-beartype
 
-<!-- ------------------( LINKS ~ beartype : social           )------------------ -->
+<!-- -------------( LINKS ~ beartype : social                )-------------- -->
 [beartype Bluesky]: https://leycec.bsky.social
 [beartype Zulip]: https://beartype.zulipchat.com
 
-<!-- ------------------( LINKS ~ github                      )------------------ -->
+<!-- -------------( LINKS ~ author : kipling                 )-------------- -->
+[The Jungle Book]: https://www.gutenberg.org/files/236/236-h/236-h.htm
+[Shere Khan]: https://en.wikipedia.org/wiki/Shere_Khan
+
+<!-- -------------( LINKS ~ github                           )-------------- -->
 [GitHub Actions]: https://github.com/features/actions
 [GitHub account signin]: https://github.com/login
 [GitHub account signup]: https://github.com/join
 [gitter]: https://gitter.im
 
-<!-- ------------------( LINKS ~ idea                        )------------------ -->
+<!-- -------------( LINKS ~ concept                          )-------------- -->
 [Denial-of-Service]: https://en.wikipedia.org/wiki/Denial-of-service_attack
 [DRY]: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
 [IDE]: https://en.wikipedia.org/wiki/Integrated_development_environment
@@ -146,26 +152,22 @@
 [type inference]: https://en.wikipedia.org/wiki/Type_inference
 [zero-cost abstraction]: https://boats.gitlab.io/blog/post/zero-cost-abstractions
 
-<!-- ------------------( LINKS ~ kipling                     )------------------ -->
-[The Jungle Book]: https://www.gutenberg.org/files/236/236-h/236-h.htm
-[Shere Khan]: https://en.wikipedia.org/wiki/Shere_Khan
-
-<!-- ------------------( LINKS ~ math                        )------------------ -->
+<!-- -------------( LINKS ~ math                             )-------------- -->
 [Euler–Mascheroni constant]: https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant
 [coupon collector's problem]: https://en.wikipedia.org/wiki/Coupon_collector%27s_problem
 [Big O]: https://en.wikipedia.org/wiki/Big_O_notation
 
-<!-- ------------------( LINKS ~ math : set                  )------------------ -->
+<!-- -------------( LINKS ~ math : set                       )-------------- -->
 [conjunction]: https://en.wikipedia.org/wiki/Logical_conjunction
 [disjunction]: https://en.wikipedia.org/wiki/Logical_disjunction
 [intersection]: https://en.wikipedia.org/wiki/Intersection_(set_theory)
 [complementation]: https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement
 [relative set complement]: https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement
 
-<!-- ------------------( LINKS ~ math : type                 )------------------ -->
+<!-- -------------( LINKS ~ math : type                      )-------------- -->
 [type variance]: https://en.wikipedia.org/wiki/Type_variance
 
-<!-- ------------------( LINKS ~ meme                        )------------------ -->
+<!-- -------------( LINKS ~ meme                             )-------------- -->
 [RNGesus]: https://knowyourmeme.com/memes/rngesus
 [Up]: https://www.youtube.com/watch?v=F2bk_9T482g
 [goes up to eleven]: https://www.youtube.com/watch?v=uMSV4OteqBE
@@ -174,31 +176,31 @@
 [ludicrous speed]: https://www.youtube.com/watch?v=6tTvklMXeFE
 [the gripping hand]: http://catb.org/jargon/html/O/on-the-gripping-hand.html
 
-<!-- ------------------( LINKS ~ os : linux                  )------------------ -->
+<!-- -------------( LINKS ~ os : linux                       )-------------- -->
 [Gentoo Linux]: https://www.gentoo.org
 
-<!-- ------------------( LINKS ~ os : linux : arch           )------------------ -->
+<!-- -------------( LINKS ~ os : linux : arch                )-------------- -->
 [Arch Linux]: https://archlinux.org
 [AUR]: https://aur.archlinux.org/packages/python-beartype
 
-<!-- ------------------( LINKS ~ os : macos                  )------------------ -->
+<!-- -------------( LINKS ~ os : macos                       )-------------- -->
 [macOS]: https://en.wikipedia.org/wiki/MacOS
 [HomeBrew]: https://brew.sh
 [MacPorts]: https://www.macports.org
 
-<!-- ------------------( LINKS ~ other                       )------------------ -->
+<!-- -------------( LINKS ~ other                            )-------------- -->
 [heliotrope]: https://en.wikipedia.org/wiki/Heliotropium
 
-<!-- ------------------( LINKS ~ py                          )------------------ -->
+<!-- -------------( LINKS ~ py                               )-------------- -->
 [Python]: https://www.python.org
 [Python status]: https://devguide.python.org/versions/#versions
 [pip]: https://pip.pypa.io
 
-<!-- ------------------( LINKS ~ py : cli                    )------------------ -->
+<!-- -------------( LINKS ~ py : cli                         )-------------- -->
 [-O]: https://docs.python.org/3/using/cmdline.html#cmdoption-o
 [PYTHONOPTIMIZE]: https://docs.python.org/3/using/cmdline.html#envvar-PYTHONOPTIMIZE
 
-<!-- ------------------( LINKS ~ py : interpreter            )------------------ -->
+<!-- -------------( LINKS ~ py : interpreter                 )-------------- -->
 [Brython]: https://brython.info
 [CPython]: https://github.com/python/cpython
 [Cython]: https://cython.org
@@ -206,21 +208,22 @@
 [PyPy]: https://www.pypy.org
 [Pyodide]: https://pyodide.org
 
-<!-- ------------------( LINKS ~ py : interpreter : cpython  )------------------ -->
+<!-- -------------( LINKS ~ py : interpreter : cpython       )-------------- -->
 [CPython bug tracker]: https://github.com/python/cpython/issues
 
-<!-- ------------------( LINKS ~ py : lang                   )------------------ -->
+<!-- -------------( LINKS ~ py : lang                        )-------------- -->
 [generic alias parameters]: https://docs.python.org/3/library/stdtypes.html#genericalias.__parameters__
 [isinstancecheck]: https://docs.python.org/3/reference/datamodel.html#customizing-instance-and-subclass-checks
 [mro]: https://docs.python.org/3/library/stdtypes.html#class.__mro__
 [object]: https://docs.python.org/3/reference/datamodel.html#basic-customization
 [operator precedence]: https://docs.python.org/3/reference/expressions.html#operator-precedence
 
-<!-- ------------------( LINKS ~ py : misc                   )------------------ -->
+<!-- -------------( LINKS ~ py : misc                        )-------------- -->
 [Guido van Rossum]: https://en.wikipedia.org/wiki/Guido_van_Rossum
 [RealPython]: https://realpython.com/python-type-checking
 
-<!-- ------------------( LINKS ~ py : package                )------------------ -->
+<!-- -------------( LINKS ~ py : package                     )-------------- -->
+[CuPy]: https://cupy.dev
 [Django]: https://www.djangoproject.com
 [Hypothesis]: https://hypothesis.readthedocs.io
 [NetworkX]: https://networkx.org
@@ -235,41 +238,41 @@
 [typing_extensions]: https://pypi.org/project/typing-extensions
 [xarray]: https://docs.xarray.dev
 
-<!-- ------------------( LINKS ~ py : package : boto3        )------------------ -->
+<!-- -------------( LINKS ~ py : package : boto3             )-------------- -->
 [Boto3]: https://aws.amazon.com/sdk-for-python
 [bearboto3]: https://github.com/beartype/bearboto3
 [mypy-boto3]: https://mypy-boto3.readthedocs.io
 
-<!-- ------------------( LINKS ~ py : package : click        )------------------ -->
+<!-- -------------( LINKS ~ py : package : click             )-------------- -->
 [click]: https://click.palletsprojects.com
 [rich_click]: https://ewels.github.io/rich-click
 [celery.Celery]: https://docs.celeryq.dev/en/stable/reference/celery.html#celery.Celery
 [celery.Celery.task]: https://docs.celeryq.dev/en/stable/userguide/tasks.html
 
-<!-- ------------------( LINKS ~ py : package : equinox      )------------------ -->
+<!-- -------------( LINKS ~ py : package : equinox           )-------------- -->
 [equinox]: https://docs.kidger.site/equinox
 [equinox.Module]: https://docs.kidger.site/equinox/api/module/module
 [equinox.filter_jit]: https://docs.kidger.site/equinox/api/transformations/#equinox.filter_jit
 
-<!-- ------------------( LINKS ~ py : package : ipython      )------------------ -->
+<!-- -------------( LINKS ~ py : package : ipython           )-------------- -->
 [Google Colab]: https://colab.research.google.com
 [IPython]: https://ipython.org
 [Jupyter]: https://jupyter.org
 [Marimo]: https://marimo.io
 [Zasper]: https://zasper.io
 
-<!-- ------------------( LINKS ~ py : package : jax          )------------------ -->
+<!-- -------------( LINKS ~ py : package : jax               )-------------- -->
 [jax]: https://jax.readthedocs.io
 [jax.jit]: https://jax.readthedocs.io/en/latest/_autosummary/jax.jit.html#jax.jit
 [jax.numpy]: https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html
 [jaxtyping]: https://github.com/google/jaxtyping
 [jaxtyping.jaxtyped]: https://docs.kidger.site/jaxtyping/api/runtime-type-checking/#jaxtyping.jaxtyped
 
-<!-- ------------------( LINKS ~ py : package : numba        )------------------ -->
+<!-- -------------( LINKS ~ py : package : numba             )-------------- -->
 [numba]: https://numba.pydata.org
 [numba.njit]: https://numba.readthedocs.io/en/stable/user/jit.html
 
-<!-- ------------------( LINKS ~ py : package : numpy        )------------------ -->
+<!-- -------------( LINKS ~ py : package : numpy             )-------------- -->
 [NumPy]: https://numpy.org
 [numpy.dtype]: https://numpy.org/doc/stable/reference/arrays.dtypes.html
 [numpy.dtype.type]: https://numpy.org/doc/stable/reference/arrays.dtypes.html
@@ -280,19 +283,19 @@
 [numpy.typing]: https://numpy.org/devdocs/reference/typing.html
 [numpy.typing.NDArray]: https://numpy.org/devdocs/reference/typing.html#ndarray
 
-<!-- ------------------( LINKS ~ py : package : pandas       )------------------ -->
+<!-- -------------( LINKS ~ py : package : pandas            )-------------- -->
 <!-- Note that "pandas" is officially lowercase. -->
 [pandas]: https://pandas.pydata.org
 [pandas.DataFrame]: https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html
 
-<!-- ------------------( LINKS ~ py : package : panderas     )------------------ -->
+<!-- -------------( LINKS ~ py : package : pandera           )-------------- -->
 <!-- Note that "pandera" is officially lowercase. -->
 [pandera]: https://pandera.readthedocs.io
 [pandera.check_types]: https://pandera.readthedocs.io/en/stable/reference/generated/pandera.decorators.check_types.html
 [pandera.typing]: https://pandera.readthedocs.io/en/stable/reference/generated/pandera.typing.html
 [pandera.typing.DataFrame]: https://pandera.readthedocs.io/en/stable/dataframe_models.html
 
-<!-- ------------------( LINKS ~ py : package : pydantic     )------------------ -->
+<!-- -------------( LINKS ~ py : package : pydantic          )-------------- -->
 [Pydantic]: https://docs.pydantic.dev
 [fastmcp.FastMCP]: https://gofastmcp.com/servers
 [fastmcp.FastMCP.tool]: https://gofastmcp.com/servers/tools
@@ -301,20 +304,20 @@
 [langchain_core.runnables]: https://python.langchain.com/api_reference/core/runnables.html
 [langchain_core.runnables.chain]: https://python.langchain.com/api_reference/core/runnables/langchain_core.runnables.base.chain.html
 
+<!-- -------------( LINKS ~ py : package : redis             )-------------- -->
 <!-- ------------------( LINKS ~ py : package : redis        )------------------ -->
 [redis]: https://redis.readthedocs.io
 [redis.Redis]: https://redis.readthedocs.io/en/stable/connections.html#redis.Redis
 
-<!-- ------------------( LINKS ~ py : package : sphinx       )------------------ -->
-[Sphinx]: https://www.sphinx-doc.org
-[sphinx.ext.autodoc]: https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+<!-- -------------( LINKS ~ py : package : zensical          )-------------- -->
+[Zensical]: https://zensical.org
 
-<!-- ------------------( LINKS ~ py : package : test         )------------------ -->
+<!-- -------------( LINKS ~ py : package : test              )-------------- -->
 [Codecov]: https://about.codecov.io
 [pytest]: https://docs.pytest.org
 [tox]: https://tox.readthedocs.io
 
-<!-- ------------------( LINKS ~ py : pep                    )------------------ -->
+<!-- -------------( LINKS ~ py : pep                         )-------------- -->
 [PEPs]: https://peps.python.org
 [PEP 0]: https://peps.python.org/pep-0000
 [PEP 20]: https://peps.python.org/pep-0020
@@ -362,38 +365,38 @@
 [PEP 3102]: https://peps.python.org/pep-3102
 [PEP 3141]: https://peps.python.org/pep-3141
 
-<!-- ------------------( LINKS ~ py : pep : 3119             )------------------ -->
+<!-- -------------( LINKS ~ py : 3119                        )-------------- -->
 [PEP 3119]: https://peps.python.org/pep-3119
 [virtual base classes]: https://peps.python.org/pep-3119/#id33
 
-<!-- ------------------( LINKS ~ py : pep : 484              )------------------ -->
+<!-- -------------( LINKS ~ py : 484                         )-------------- -->
 [PEP 484]: https://peps.python.org/pep-0484
 [implicit numeric tower]: https://peps.python.org/pep-0484/#the-numeric-tower
 [relative forward references]: https://peps.python.org/pep-0484/#forward-references
 [type aliases]: https://peps.python.org/pep-0484/#type-aliases
 
-<!-- ------------------( LINKS ~ py : pep : 560              )------------------ -->
+<!-- -------------( LINKS ~ py : 560                         )-------------- -->
 [PEP 560]: https://peps.python.org/pep-0560
 [mro_entries]: https://peps.python.org/pep-0560/#id20
 
-<!-- ------------------( LINKS ~ py : service                )------------------ -->
+<!-- -------------( LINKS ~ py : service                     )-------------- -->
 [Anaconda]: https://docs.conda.io/en/latest/miniconda.html
 
-<!-- ------------------( LINKS ~ py : service : pypi         )------------------ -->
+<!-- -------------( LINKS ~ py : service : pypi              )-------------- -->
 [PyPI]: https://pypi.org
 [PyPI cheese shop]: https://pypi.org
 [cheese shop sketch]: https://en.wikipedia.org/wiki/Cheese_Shop_sketch
 
-<!-- ------------------( LINKS ~ py : stdlib                 )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib                      )-------------- -->
 [linecache]: https://docs.python.org/3/library/linecache.html
 [weakref]: https://docs.python.org/3/library/weakref.html
 [weakref.ref]: https://docs.python.org/3/library/weakref.html#weakref.ref
 
-<!-- ------------------( LINKS ~ py : stdlib : abc           )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : abc                )-------------- -->
 [abc]: https://docs.python.org/3/library/abc.html
 [abc.ABCMeta]: https://docs.python.org/3/library/abc.html#abc.ABCMeta
 
-<!-- ------------------( LINKS ~ py : stdlib : builtins      )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : builtins           )-------------- -->
 [builtins]: https://docs.python.org/3/library/stdtypes.html
 [None]: https://docs.python.org/3/library/constants.html#None
 [NotImplemented]: https://docs.python.org/3/library/constants.html#NotImplemented
@@ -409,7 +412,7 @@
 [tuple]: https://docs.python.org/3/library/stdtypes.html#tuples
 [type]: https://docs.python.org/3/library/stdtypes.html#bltin-type-objects
 
-<!-- ------------------( LINKS ~ py : stdlib : collections   }------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : collections        )-------------- -->
 [collections]: https://docs.python.org/3/library/collections.html
 [collections.ChainMap]: https://docs.python.org/3/library/collections.html#collections.ChainMap
 [collections.Counter]: https://docs.python.org/3/library/collections.html#collections.Counter
@@ -417,7 +420,7 @@
 [collections.defaultdict]: https://docs.python.org/3/library/collections.html#collections.defaultdict
 [collections.deque]: https://docs.python.org/3/library/collections.html#collections.deque
 
-<!-- ------------------( LINKS ~ py : stdlib : collections.abc  }--------------- -->
+<!-- -------------( LINKS ~ py : stdlib : collections.abc    )-------------- -->
 [collections.abc]: https://docs.python.org/3/library/collections.abc.html
 [collections.abc.AsyncGenerator]: https://docs.python.org/3/library/collections.abc.html#collections.abc.AsyncGenerator
 [collections.abc.AsyncIterable]: https://docs.python.org/3/library/collections.abc.html#collections.abc.AsyncIterable
@@ -444,56 +447,56 @@
 [collections.abc.Set]: https://docs.python.org/3/library/collections.abc.html#collections.abc.Set
 [collections.abc.ValuesView]: https://docs.python.org/3/library/collections.abc.html#collections.abc.ValuesView
 
-<!-- ------------------( LINKS ~ py : stdlib : abc           )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : abc                )-------------- -->
 [dataclasses]: https://docs.python.org/3/library/dataclasses.html
 [dataclasses.InitVar]: https://docs.python.org/3/library/dataclasses.html#init-only-variables
 [dataclasses.dataclass]: https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass
 
-<!-- ------------------( LINKS ~ py : stdlib : contextlib    )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : contextlib         )-------------- -->
 [contextlib]: https://docs.python.org/3/library/contextlib.html
 [contextlib.AbstractAsyncContextManager]: https://docs.python.org/3/library/contextlib.html#contextlib.AbstractAsyncContextManager
 [contextlib.AbstractContextManager]: https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager
 [contextlib.asynccontextmanager]: https://docs.python.org/3/library/contextlib.html#contextlib.asynccontextmanager
 [contextlib.contextmanager]: https://docs.python.org/3/library/contextlib.html#contextlib.contextmanager
 
-<!-- ------------------( LINKS ~ py : stdlib : enum          )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : enum               )-------------- -->
 [enum]: https://docs.python.org/3/library/enum.html
 [enum.Enum]: https://docs.python.org/3/library/enum.html#enum.Enum
 [enum.StrEnum]: https://docs.python.org/3/library/enum.html#enum.StrEnum
 
-<!-- ------------------( LINKS ~ py : stdlib : functools     )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : functools          )-------------- -->
 [functools]: https://docs.python.org/3/library/functools.html
 [functools.lru_cache]: https://docs.python.org/3/library/functools.html#functools.lru_cache
 
-<!-- ------------------( LINKS ~ py : stdlib : inspect       )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : inspect            )-------------- -->
 [inspect]: https://docs.python.org/3/library/inspect.html
 [inspect.isasyncgenfunction]: https://docs.python.org/3/library/inspect.html#inspect.isasyncgenfunction
 [inspect.isgeneratorfunction]: https://docs.python.org/3/library/inspect.html#inspect.isgeneratorfunction
 
-<!-- ------------------( LINKS ~ py : stdlib : io            )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : io                 )-------------- -->
 [io]: https://docs.python.org/3/library/io.html
 
-<!-- ------------------( LINKS ~ py : stdlib : os            )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : os                 )-------------- -->
 [os]: https://docs.python.org/3/library/os.html
 [os.PathLike]: https://docs.python.org/3/library/os.html#os.PathLike
 [os.walk]: https://docs.python.org/3/library/os.html#os.walk
 
-<!-- ------------------( LINKS ~ py : stdlib : random        )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : random             )-------------- -->
 [random]: https://docs.python.org/3/library/random.html
 [random.getrandbits]: https://docs.python.org/3/library/random.html#random.getrandbits
 [random twister]: https://stackoverflow.com/a/11704178/2809027
 
-<!-- ------------------( LINKS ~ py : stdlib : re            )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : re                 )-------------- -->
 [re]: https://docs.python.org/3/library/re.html
 [re.Match]: https://docs.python.org/3/library/re.html#match-objects
 [re.Pattern]: https://docs.python.org/3/library/re.html#regular-expression-objects
 
-<!-- ------------------( LINKS ~ py : stdlib : threading     )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : threading          )-------------- -->
 [threading]: https://docs.python.org/3/library/threading.html
 [threading.Lock]: https://docs.python.org/3/library/threading.html#threading.Lock
 [threading.RLock]: https://docs.python.org/3/library/threading.html#threading.RLock
 
-<!-- ------------------( LINKS ~ py : stdlib : typing : attr )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : typing : attr      )-------------- -->
 [typing]: https://docs.python.org/3/library/typing.html
 [typing.AbstractSet]: https://docs.python.org/3/library/typing.html#typing.AbstractSet
 [typing.Annotated]: https://docs.python.org/3/library/typing.html#typing.Annotated
@@ -581,22 +584,18 @@
 [typing.no_type_check]: https://docs.python.org/3/library/typing.html#typing.no_type_check
 [typing.override]: https://docs.python.org/3/library/typing.html#typing.override
 
-<!-- ------------------( LINKS ~ py : stdlib : warnings      )------------------ -->
+<!-- -------------( LINKS ~ py : stdlib : warnings           )-------------- -->
 [warnings]: https://docs.python.org/3/library/warnings.html
 [deprecated]: https://docs.python.org/3/library/warnings.html#warnings.deprecated
 
-<!-- ------------------( LINKS ~ py : type : runtime         )------------------ -->
+<!-- -------------( LINKS ~ py : type : runtime              )-------------- -->
 [enforce]: https://github.com/RussBaz/enforce
 [enforce_typing]: https://github.com/matchawine/python-enforce-typing
 [pytypes]: https://github.com/Stewori/pytypes
 [typeen]: https://github.com/k2bd/typen
 [typical]: https://github.com/seandstewart/typical
 
-<!-- ------------------( LINKS ~ py : type : runtime : typeg )------------------ -->
-[typeguard]: https://github.com/agronholm/typeguard
-[typeguard.check_type]: https://typeguard.readthedocs.io/en/latest/userguide.html#checking-types-directly
-
-<!-- ------------------( LINKS ~ py : type : runtime : data  )------------------ -->
+<!-- -------------( LINKS ~ py : type : runtime : dataclass  )-------------- -->
 [PyContracts]: https://github.com/AlexandruBurlacu/pycontracts
 [contracts]: https://pypi.org/project/contracts
 [covenant]: https://github.com/kisielk/covenant
@@ -605,48 +604,43 @@
 [pyadbc]: https://pypi.org/project/pyadbc
 [pcd]: https://pypi.org/project/pcd
 
-<!-- ------------------( LINKS ~ py : type : static          )------------------ -->
+<!-- -------------( LINKS ~ py : type : runtime : typeguard  )-------------- -->
+[typeguard]: https://github.com/agronholm/typeguard
+[typeguard.check_type]: https://typeguard.readthedocs.io/en/latest/userguide.html#checking-types-directly
+
+<!-- -------------( LINKS ~ py : type : static               )-------------- -->
 [Pyre]: https://pyre-check.org
 [pytype]: https://github.com/google/pytype
 
-<!-- ------------------( LINKS ~ py : type : static : pyright)------------------ -->
+<!-- -------------( LINKS ~ py : type : static : pyright     )-------------- -->
 [pyright]: https://github.com/Microsoft/pyright
 [pyright plugins]: https://github.com/microsoft/pyright/issues/607#issuecomment-873467941
 [pyright PEP violation #1]: https://github.com/beartype/beartype/issues/126
 [pyright PEP violation #2]: https://github.com/beartype/beartype/issues/127
 
-<!-- ------------------( LINKS ~ py : type : static : mypy   )------------------ -->
+<!-- -------------( LINKS ~ py : type : static : mypy        )-------------- -->
 [mypy]: http://mypy-lang.org
 [mypy install]: https://mypy.readthedocs.io/en/stable/getting_started.html
 [mypy plugin]: https://mypy.readthedocs.io/en/stable/extending_mypy.html
 [type narrowing]: https://mypy.readthedocs.io/en/stable/type_narrowing.html
 
-<!-- ------------------( LINKS ~ py : type : tensor          )------------------ -->
-<!-- FIXME: This link is preserved as a comment because it appeared in the
-original source. However, it's *also* defined under py : package above, and
-having two references produces a `shadowed link definition` warning during
-zensical build. Either this entry should be removed, or `shadowed_definitions =
-false` should be added to the `[product.validation]` section in zensical.toml.
--->
-<!-- [nptyping]: https://github.com/ramonhagenaars/nptyping -->
-
-<!-- ------------------( LINKS ~ soft : ide                  )------------------ -->
+<!-- -------------( LINKS ~ soft : ide                       )-------------- -->
 [PyCharm]: https://en.wikipedia.org/wiki/PyCharm
 [Vim]: https://www.vim.org
 
-<!-- ------------------( LINKS ~ soft : ide : vscode         )------------------ -->
+<!-- -------------( LINKS ~ soft : ide : vscode              )-------------- -->
 [Pylance]: https://github.com/microsoft/pylance-release
 [VSCode]: https://code.visualstudio.com
 [VSCode Mypy extension]: https://marketplace.visualstudio.com/items?itemName=matangover.mypy
 
-<!-- ------------------( LINKS ~ soft : lang                 )------------------ -->
+<!-- -------------( LINKS ~ soft : lang                      )-------------- -->
 [C]: https://en.wikipedia.org/wiki/C_(programming_language)
 [C++]: https://en.wikipedia.org/wiki/C%2B%2B
 [Ruby]: https://www.ruby-lang.org
 [Rust]: https://www.rust-lang.org
 
-<!-- ------------------( LINKS ~ soft : license              )------------------ -->
+<!-- -------------( LINKS ~ soft : license                   )-------------- -->
 [MIT license]: https://opensource.org/licenses/MIT
 
-<!-- ------------------( LINKS ~ soft : web                  )------------------ -->
+<!-- -------------( LINKS ~ soft : web                       )-------------- -->
 [React]: https://reactjs.org

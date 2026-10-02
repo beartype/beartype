@@ -100,6 +100,42 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #We're currently unclear whether anyone actually cares about this. Ergo, we
 #adopted the quick-and-dirty approach of raising exceptions instead. Yikes!
+#FIXME: Actually, most of the above no longer seems to apply. Yes, it's true
+#that PEP 695 advises weird broken stuff like:
+#    type AnimalOrVegetable = Animal | "Vegetable"
+#
+#But... who cares, really? Right? Nobody. Instead, let's:
+#* Carefully refactor the above commentary into working unit tests validating
+#  that @beartype now behaves as expected. For example, both
+#  beartype.door.is_bearable() and die_if_unbearable() transparently support PEP
+#  695-compliant type aliases inside nested callables. I honestly can't even
+#  recall exactly when beartype began doing that – but all that matters is that
+#  beartype does do that, contrary to these comments:
+#      # Should be refactored into some sort of unit test, if we haven't already.
+#      # Who even knows anymore? *sigh*
+#      from beartype.door import die_if_unbearable
+#      def muh_func() -> None:
+#          type local_alias = str | None
+#          die_if_unbearable('lolwut', local_alias)  # <-- this works. *GOOD*
+#          die_if_unbearable(b'lolwut', local_alias) # <-- this works, too. *GOOD*
+#
+#      # This now raises the expected traceback:
+#      #   Traceback (most recent call last):
+#      #     File "/home/leycec/tmp/mopy.py", line 8, in <module>
+#      #       muh_func()
+#      #       ~~~~~~~~^^
+#      #     File "/home/leycec/tmp/mopy.py", line 7, in muh_func
+#      #       die_if_unbearable(b'lolwut', local_alias)
+#      #       ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+#      #     File "/home/leycec/py/beartype/beartype/door/_func/doorfunc.py", line 127, in die_if_unbearable
+#      #       func_raiser(obj)  # pyright: ignore
+#      #       ~~~~~~~~~~~^^^^^
+#      #     File "<@beartype(__beartype_checker_0) at 0x560c74a60cb0>", line 25, in __beartype_checker_0
+#      #   beartype.roar.BeartypeDoorHintViolation: Die_if_unbearable() value
+#      #   b'lolwut' violates type hint muh_func.<locals>.local_alias, as bytes
+#      #   b'lolwut' not <class "builtins.NoneType"> or str.
+#      muh_func()
+#* Remove the above comment entirely after doing so. *sigh*
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep695Exception
@@ -109,7 +145,8 @@ from beartype._cave._cavefast import (
     Pep695ParameterizableTypes,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.forward.reference._cls.fwdrefmeta import BeartypeForwardRefMetaclass
+from beartype._check.forward.reference._cls.fwdrefmeta import (
+    BeartypeForwardRefMetaclass)
 from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
 from beartype._data.typing.datatyping import (

@@ -181,6 +181,7 @@ Let's chart exactly *what* beartype complies with and *when* beartype first did 
 |                            | [`AbstractContextManager`][contextlib.AbstractContextManager]           | **0.5.0**—*current*  | *none*                 |
 |                            | [`asynccontextmanager`][contextlib.asynccontextmanager]                 | —                    | **0.20.0**—*current*   |
 |                            | [`contextmanager`][contextlib.contextmanager]                           | —                    | **0.15.0**—*current*   |
+| [crosshair]                | *all*                                                                   | —                    | **0.23.0**—*current*   |
 | [dataclasses]              | [`InitVar`][dataclasses.InitVar]                                        | —                    | **0.10.0**—*current*   |
 |                            | [`dataclass`][dataclasses.dataclass]                                    | **0.10.0**—*current* | *none*                 |
 | [enum]                     | [`Enum`][enum.Enum]                                                     | **0.16.0**—*current* | *none*                 |

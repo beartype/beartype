@@ -5,31 +5,23 @@ See "LICENSE" for further details.
 
 ------------------( SYNOPSIS                                 )------------------
 Front-facing Markdown document displayed by default on our GitHub repository!
-
-------------------( LOGO                                     )------------------
 -->
+
+<!-- -------------( LOGO                                     )-------------- -->
 
 [![beartype —\[ the bare-metal type checker \]—](https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.svg)](https://beartype.readthedocs.io)
 
-<!--
-------------------( BADGES                                   )------------------
--->
+<!-- -------------( BADGES                                   )-------------- -->
 
 [![beartype Read The Docs (RTD) status](https://readthedocs.org/projects/beartype/badge/?version=latest)](https://beartype.readthedocs.io/en/latest/?badge=latest) [![beartype continuous integration (CI) status](https://github.com/beartype/beartype/actions/workflows/python_test.yml/badge.svg)](https://github.com/beartype/beartype/actions?workflow=tests) [![beartype test coverage status](https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ)](https://codecov.io/gh/beartype/beartype)
 
-<!--
-------------------( SPONSORS                                 )------------------
--->
+<!-- -------------( SPONSORS                                 )-------------- -->
 
-> 💖 [Beartype is financially fueled by these **phenomenal GitHub
-> Sponsors**](https://github.com/sponsors/leycec)! 💖
->
-> * [**ml (Mirai Labs)**](https://trymirai.com) — On-device AI for Apple
->   Silicon, powered by bears.
+> 💖 [Financially fueled](https://github.com/sponsors/leycec) by [**ml (Mirai
+> Labs)**](https://trymirai.com) —On-device AI for Apple Silicon, powered by
+> bears. 💖
 
-<!--
-------------------( FRONTISPIECE                             )------------------
--->
+<!-- -------------( FRONTISPIECE                             )-------------- -->
 
 > 🥳 [Beartype documentation officially lives at **GitHub
 > Pages**](https://beartype.github.io/beartype). 🥳
@@ -44,9 +36,7 @@ Front-facing Markdown document displayed by default on our GitHub repository!
 > induce migraines in 22% of the whole devops population. For your safety, that
 > document no longer exists. This is how much beartype cares.
 
-<!--
-------------------( INTRODUCTION                             )------------------
--->
+<!-- -------------( INTRODUCTION                             )-------------- -->
 
 **Beartype** is an
 [open-source](https://github.com/beartype/beartype/blob/main/LICENSE)
@@ -88,7 +78,12 @@ infectious diseases is *that* code? You're about to find out.
 from beartype import BeartypeConf                              # <-- this isn't your fault
 from beartype.claw import beartype_all, beartype_this_package  # <-- you didn't sign up for this
 beartype_this_package()                                        # <-- raise exceptions in your code
-beartype_all(conf=BeartypeConf(violation_type=UserWarning))     # <-- emit warnings from other code
+beartype_all(conf=BeartypeConf(violation_type=UserWarning))    # <-- emit warnings from other code
+
+# (OPTIONAL) Issue a non-fatal warning if some competing third-party package
+# registered its own import hook reducing the above beartype_*() calls to noops.
+from beartype.claw import warn_if_beartype_claw_inactive       # <-- boilerplate intensifies
+warn_if_beartype_claw_inactive()  # <-- if the above calls did nothing, at least now you know :(
 ```
 
 Beartype now implicitly type-checks *all* annotated classes, callables, and
@@ -97,9 +92,7 @@ package violates type safety, beartype raises an exception. When any **other**
 package violates type safety, beartype just emits a warning. The triumphal
 fanfare you hear is probably your userbase cheering. This is how the QA was won.
 
-<!--
-------------------( DEEP DIVE                                )------------------
--->
+<!-- -------------( DEEP DIVE                                )-------------- -->
 
 Beartype also publishes a [plethora of APIs for fine-grained control over
 type-checking](https://beartype.readthedocs.io/en/latest/api). For those who are
@@ -211,9 +204,7 @@ list[
 # ...all righty then. Guess I'll just take your word for that, BeartypeAI™.
 ```
 
-<!--
-------------------( CONCLUSION                               )------------------
--->
+<!-- -------------( CONCLUSION                               )-------------- -->
 
 Beartype brings [Rust](https://www.rust-lang.org)- and
 [C++](https://en.wikipedia.org/wiki/C%2B%2B)-inspired [zero-cost
@@ -238,7 +229,7 @@ stress-tested](https://github.com/beartype/beartype/actions?workflow=tests) via
 distributed](https://github.com/beartype/beartype/blob/main/LICENSE) under the
 [MIT license](https://opensource.org/licenses/MIT). Beartype has *no* runtime
 dependencies, [only one test-time dependency](https://docs.pytest.org), and
-[only one documentation-time dependency](https://www.sphinx-doc.org). Beartype
+[only one documentation-time dependency](https://zensical.org). Beartype
 supports [all actively developed Python
 versions](https://devguide.python.org/versions/#versions), [all Python package
 managers](https://beartype.readthedocs.io/en/latest/install), and [multiple
