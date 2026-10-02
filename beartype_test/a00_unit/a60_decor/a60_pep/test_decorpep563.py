@@ -32,6 +32,99 @@ from beartype_test._util.mark.pytskip import (
     skip_if_python_version_greater_than_or_equal_to,
 )
 
+# ....................{ TESTS ~ dynamic                    }....................
+def test_pep563_dynamic_none_return() -> None:
+    '''Postponed ``None`` returns need no defining module.'''
+
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintReturnViolation
+    from pytest import raises
+
+    namespace = {}
+    exec(compile(
+        'from __future__ import annotations\n'
+        'def dynamic_none_return(value) -> None:\n'
+        '    return value\n',
+        '<dynamic_none_return>', 'exec', dont_inherit=True), namespace)
+    func = namespace['dynamic_none_return']
+    assert func.__module__ is None
+    assert func.__annotations__ == {'return': 'None'}
+
+    func_checked = beartype(func)
+    assert func_checked(None) is None
+    with raises(BeartypeCallHintReturnViolation):
+        func_checked(1)
+
+
+def test_pep563_dynamic_none_parameter() -> None:
+    '''Postponed ``None`` parameters retain their runtime checks.'''
+
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
+
+    namespace = {}
+    exec(compile(
+        'from __future__ import annotations\n'
+        'def dynamic_none_parameter(value: None):\n'
+        '    return value\n',
+        '<dynamic_none_parameter>', 'exec', dont_inherit=True), namespace)
+    func = namespace['dynamic_none_parameter']
+    assert func.__module__ is None
+    assert func.__annotations__ == {'value': 'None'}
+
+    func_checked = beartype(func)
+    assert func_checked(None) is None
+    with raises(BeartypeCallHintParamViolation):
+        func_checked(1)
+
+
+def test_pep563_dynamic_none_resolve() -> None:
+    '''The public resolver also resolves module-independent ``None`` hints.'''
+
+    from beartype.peps import resolve_pep563
+
+    namespace = {}
+    exec(compile(
+        'from __future__ import annotations\n'
+        'def dynamic_none_resolve(value: None) -> None:\n'
+        '    return value\n',
+        '<dynamic_none_resolve>', 'exec', dont_inherit=True), namespace)
+    func = namespace['dynamic_none_resolve']
+    assert func.__module__ is None
+    assert func.__annotations__ == {'value': 'None', 'return': 'None'}
+
+    resolve_pep563(func)
+    assert func.__annotations__ == {'value': None, 'return': None}
+    assert func(None) is None
+
+
+def test_pep563_dynamic_named_reference_without_module() -> None:
+    '''Named references still require a defining module, even with globals.'''
+
+    from beartype import beartype
+    from beartype.peps import resolve_pep563
+    from beartype.roar import (
+        BeartypeDecorHintForwardRefException,
+        BeartypePep563Exception,
+    )
+    from pytest import raises
+
+    namespace = {'DynamicType': int}
+    exec(compile(
+        'from __future__ import annotations\n'
+        'def dynamic_named(value: DynamicType):\n'
+        '    return value\n',
+        '<dynamic_named>', 'exec', dont_inherit=True), namespace)
+    func = namespace['dynamic_named']
+    assert func.__module__ is None
+
+    with raises(BeartypeDecorHintForwardRefException, match='__module__'):
+        beartype(func)
+    with raises(BeartypePep563Exception, match='__module__'):
+        resolve_pep563(func)
+
+
 # .....................{ TESTS ~ club                      }....................
 def test_pep563_class_self_reference_reloaded() -> None:
     '''
