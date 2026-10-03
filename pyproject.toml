@@ -59,7 +59,7 @@ license-files = ["LICENSE"]
 
 # Relative filename of the top-level file describing this project. Read it and
 # then weep as your eyes bleed! \o/
-readme = "README.rst"
+readme = "README.md"
 
 # List of all lowercase alphabetic keywords synopsising this project.
 #
@@ -231,16 +231,6 @@ doc-ghp = [
     # Extend your tenticles,
     # To welcome, welcome, welcome, welcome Zensical!
     "zensical >=0.0.43",
-
-    # ....................{ EXTENSIONS                     }....................
-    # API reference generation stack -- which transitively requires a reasonably
-    # recent version of the third-party "mkdocstrings" extension as well.
-    "mkdocstrings-python >=2.0.3",
-
-    # "mkdocstrings-python"-specific third-party extension expanding the default
-    # "mkdocstrings-python" support for absolute cross-references with
-    # additional support for relative cross-references.
-    "mkdocstrings-python-xref >=2.1.1",
 ]
 
 #FIXME: Remove *AFTER* successfully migrating from RTD to GHP.
@@ -394,13 +384,7 @@ test-tox = [
     # Documentation-centric optional test-time dependencies.
 
     #FIXME: Replace with Zensical equivalents when time permits to convert all
-    #obsolete Docutils- and Sphinx-specific integration tests, please! *sigh*
-    # # Required by optional Docutils-specific integration tests. Dismantled, this
-    # # is:
-    # # * "docutils 0.22.0" deprecated the "writer_name" parameter accepted by the
-    # #   docutils.core.publish_parts() function.
-    # "docutils >=0.22.0",
-    #
+    #obsolete Sphinx-specific integration tests, please! *sigh*
     # # Required by optional Sphinx-specific integration tests.
     # "sphinx",
 
@@ -667,7 +651,7 @@ dev = ["beartype[doc-rtd,test]"]
 # Table (i.e., dictionary) mapping from the PyPI-recognized name of each
 # relevant project URL to that URL.
 [project.urls]
-Docs =     "https://beartype.readthedocs.io"
+Docs =     "https://beartype.github.io/beartype"
 GitHub =   "https://github.com/beartype/beartype"
 Forums =   "https://github.com/beartype/beartype/discussions"
 Issues =   "https://github.com/beartype/beartype/issues"
@@ -779,6 +763,7 @@ include = [
     # Yes, this is confusing. The obsolete "doc/" subdirectory will be
     # permanently removed at some point. For now, it lingers like a bad smell.
     "/docs/*.md",
+    "/docs/assets/*.svg",
     "/docs/js/*.js",
     "/doc/Makefile",
     "/doc/*.bat",

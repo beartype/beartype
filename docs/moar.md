@@ -19,6 +19,8 @@ Related type-checking resources include:
 
 **Runtime type checkers** (i.e., third-party Python packages dynamically validating callables annotated by type hints at runtime, typically via decorators, function calls, and import hooks) include:
 
+<!-- Note: intentionally sorted in lexicographic order to avoid bias. -->
+
 | package                                                               | active  | PEP-compliant | time multiplier[^1] |
 |-----------------------------------------------------------------------|---------|---------------|---------------------|
 | beartype                                                              | **yes** | **yes**       | 1 ✕ beartype        |
@@ -42,6 +44,8 @@ Like [static type checkers](#static-type-checkers), runtime type checkers *alway
 
 **Runtime data validators** (i.e., third-party Python packages dynamically validating callables decorated by caller-defined contracts, constraints, and validation routines at runtime) include:
 
+<!-- Note: intentionally sorted in lexicographic order to avoid bias. -->
+
 - [PyContracts].
 - [contracts].
 - [covenant].
@@ -58,6 +62,8 @@ Unlike both [runtime type checkers](#runtime-type-checkers) and [static type che
 ## Static Type Checkers
 
 **Static type checkers** (i.e., third-party tooling validating Python callable and/or variable types across an application stack at static analysis time rather than Python runtime) include:
+
+<!-- Note: Intentionally sorted in lexicographic order to avoid subjective bias. -->
 
 - [mypy], Python's official static type checker.
 - [Pyre], published by Meta. <sup>...yah.</sup>

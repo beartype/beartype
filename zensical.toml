@@ -25,11 +25,6 @@
 #FIXME: Define all remaining relevant configuration options specified here:
 #    https://zensical.org/docs/setup/basics/
 
-#FIXME: Pretty sure we need to include "black" in the "doc-ghp" extra. Why?
-#Because "mkdocstrings-python" appears to optionally require that in common edge
-#cases we will definitely hit. See also:
-#    https://mkdocstrings.github.io/python/usage/configuration/signatures/#line_length
-
 #FIXME: Enable some combination of "mkdocs-autoapi" and/or "mkdocs-api-autonav"
 #to auto-generate an API reference. Maybe? @beartype is kinda non-trivial, but
 #it would also be unfortunate if we had to do this manually. Research us up!
@@ -175,128 +170,13 @@ toc = {permalink = true}
 #canonical_version = "latest"
 #deploy_prefix = "public"
 
-# Automatically generate API reference documentation from Python docstrings
-# embedded inside the Python package defined by this project. See also:
+#FIXME: Re-enable the "mkdocstrings" plugin *AFTER* documenting the API with
+#":::" directives. No page uses this plugin now. The configuration formerly
+#defined here is in the "zensical.toml" file of commit 063252fa. Then also
+#consider "black" for the "doc-ghp" extra. If "black" is installed,
+#"mkdocstrings-python" uses it to format long signatures. See also:
 #     https://zensical.org/docs/setup/extensions/mkdocstrings/
-[project.plugins.mkdocstrings.handlers.python]
-
-# ....................{ PLUGINS ~ mkdocstrings ~ core       }...................
-# List of all dirnames relative to this configuration file under which to
-# discover documentation.
-paths = ["."]
-
-# List of all inventories (i.e., external URLs to Sphinx-formatted inventory
-# files listing all Python attributes provided by the APIs hosted at those
-# URLs). Third-party attributes provided by an inventory listed below will be
-# implicitly linked to; all other third-party attributes will remain unlinked.
-inventories = [
-  # Official inventory providing:
-  # * All Python builtins.
-  # * The standard Python library.
-  "https://docs.python.org/3/objects.inv",
-  # Third-party inventory providing the NumPy API.
-  "https://numpy.org/doc/stable/objects.inv",
-]
-
-# ....................{ PLUGINS ~ mkdocstrings ~ options    }...................
-[project.plugins.mkdocstrings.handlers.python.options]
-
-# Prefer NumpyDoc-style Python docstrings. By default, "mkdocstrings" assumes
-# Google-style Python docstrings.
-docstring_style = "numpy"
-
-# Style used to render docstrings sections. Choices include:
-# * "table": a simple table, usually with type, name and description columns.
-# * "list": a simple list, akin to what you get with the ReadTheDocs Sphinx
-#   theme.
-# * "spacy": a poor implementation of the amazing tables in Spacy's
-#   documentation. See also: https://spacy.io/api/doc
-#
-# Defaults to "table". Unsurprisingly, everyone prefers "spacy".
-docstring_section_style = "spacy"
-
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Synchronize this list with the corresponding "doc-ghp:" extra in
-# our top-level "pyproject.toml" configuration.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# List of one or more third-party "mkdocstrings-python" extensions to enable.
-extensions = [
-  # Expand the default "mkdocstrings-python" support for absolute
-  # cross-references with additional support for relative cross-references.
-  #
-  # Note that "mkdocstrings-python" technically already provides out-of-the-box
-  # support for relative cross-references -- but *ONLY* for paid subscribers.
-  # We get it. Really, we do. Like, *REALLY* really. We're dead-broke, too.
-  # But a well-maintained free-as-in-beer open-source alternative already
-  # exists! It's hard to compete with free. Which is why @beartype doesn't go
-  # there. Paid-only functionality only incentivizes competition.
-  #
-  # See also:
-  # * Upstream documentation:
-  #     https://analog-garage.github.io/mkdocstrings-python-xref
-  # * Comparable paid "mkdocstrings-python" functionality:
-  #     https://mkdocstrings.github.io/python/usage/configuration/docstrings/#relative_crossrefs
-  "mkdocstrings-python-xref",
-]
-
-# ....................{ PLUGINS ~ mkdocstrings ~ heading    }...................
-# See also:
-#   https://mkdocstrings.github.io/python/usage/configuration/headings
-
-# Show one heading for each grouped category (i.e., kind of similar attribute)
-# defined by a submodule.
-show_category_heading = true
-
-# Show classnames as headings. By default, classnames are hidden.
-# That makes no sense, Zensical. Nobody wants that! *sigh*
-show_root_heading = true
-
-# Prefix headings by Sphinx-style domain names disambiguating the kinds of
-# those headings:
-# * "attr" for attributes.
-# * "class" for classes.
-# * "func" for functions.
-# * "meth" for methods.
-# * "mod" for modules.
-show_symbol_type_heading = true
-
-# Prefix headings by the same names in the Table of Contents (ToC).
-show_symbol_type_toc = true
-
-# ....................{ PLUGINS ~ mkdocstrings ~ members    }...................
-# See also:
-#   https://mkdocstrings.github.io/python/usage/configuration/members
-
-# Show attributes inherited into subclasses by their superclasses.
-inherited_members = true
-
-# ....................{ PLUGINS ~ mkdocstrings ~ signature  }...................
-# See also:
-#   https://mkdocstrings.github.io/python/usage/configuration/signatures
-
-# Show callable signatures of all @typing.overload-decorated callables in code
-# blocks below headers.
-show_overloads = true
-
-# Hide the implementation signature of overloaded callables, defined as the
-# signature associated with the overloaded callable containing a non-empty body
-# and *NOT* decorated by the PEP 484-compliant @typing.overload decorator.
-overloads_only = true
-
-# Show callable signatures in code blocks below headers. By default, callable
-# signatures are embedded in headers. Since signatures commonly contain type
-# hints and parameters, this unwise default commonly results in overly verbose
-# and unreadable headers.
-separate_signature = true
-
-# Show both type hints and parameters in signatures. Naturally, both are
-# disabled by default. *sigh*
-show_signature_annotations = true
-show_signature_type_parameters = true
-
-#FIXME: This might be accessible only to paid subscribers. No idea!
-# Show cross-references to type hints in signatures.
-signature_crossrefs = true
+#     https://mkdocstrings.github.io/python/usage/configuration/signatures/#line_length
 
 # ....................{ THEME                               }...................
 # Third-party Zensical UI theme currently employed by this project.
@@ -316,6 +196,11 @@ custom_dir = "overrides"
 # different sizes in that thar icon, I tellya) and we wanted to avoid repo
 # bloat. But now, it's a svelte 8k .svg. Maybe we should just copy it here?
 favicon = "https://raw.githubusercontent.com/beartype/beartype-assets/main/favicon.svg"
+
+# Relative filename of the "Bear-ified" badge displayed as the site logo in the
+# header, relative to the "docs_dir" setting above. Ported from the legacy
+# Sphinx "html_logo" setting in "doc/src/conf.py".
+logo = "assets/beartype_logo.svg"
 
 # Theme-specific features.
 features = [

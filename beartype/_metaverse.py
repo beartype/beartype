@@ -135,7 +135,8 @@ repository, also colloquially known as the "cheeseshop").
 URL_RTD = f'https://readthedocs.org/projects/{PACKAGE_NAME}'
 '''
 URL of this project's entry on **ReadTheDocs (RTD)** (i.e., popular Python
-documentation host, shockingly hosting this project's documentation).
+documentation host, now hosting only documentation for older releases of this
+project).
 '''
 
 
@@ -147,14 +148,15 @@ project userbase).
 '''
 
 # ....................{ METADATA ~ urls : docs             }....................
-URL_HOMEPAGE = f'https://{PACKAGE_NAME}.readthedocs.io'
+URL_HOMEPAGE = f'https://{PACKAGE_NAME}.github.io/{PACKAGE_NAME}'
 '''
-URL of this project's homepage.
+URL of this project's homepage (i.e., this project's GitHub Pages-hosted
+documentation site).
 '''
 
 
 URL_PEP585_DEPRECATIONS = (
-    f'{URL_HOMEPAGE}/en/latest/api_roar/#pep-585-deprecations')
+    f'{URL_HOMEPAGE}/api_roar/#pep-585-deprecations')
 '''
 URL documenting :pep:`585` deprecations of :pep:`484` type hints.
 '''

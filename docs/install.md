@@ -9,6 +9,17 @@ Child Markdown document detailing installation instructions.
 
 # Install
 
+<!-- FIXME: Non-ideal. Ideally, this should be fully refactored from the ground
+up to leverage tabs. Under Sphinx, this meant the third-party "sphinx-design"
+extension. Under Zensical, this means "content tabs" implemented by the
+"pymdownx.tabbed" extension, which "zensical.toml" does *NOT* yet enable.
+
+The idea here is that rather than enumerate all instructions as an iterative
+series of subsections, we instead isolate each platform-specific set of
+instructions to its own tab. The default tab displays "pip" instructions, of
+course. Users are then free to switch tabs to an alternate platform listing
+instructions for that platform. Score one for sanity. -->
+
 Install beartype with [pip], because [PyPI][beartype PyPI] is the [cheese shop][PyPI] and you too enjoy a [fine Venezuelan beaver cheese][cheese shop sketch] while mashing disconsolately on your keyboard late on a rain-soaked Friday evening. Wherever expensive milk byproducts ferment, beartype will be there.
 
 ```bash
@@ -22,7 +33,7 @@ conda config --add channels conda-forge
 conda install beartype
 ```
 
-[Commemorate this moment in time](#badge) with [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io), our over*bear*ing project shield. What says quality like [a bear on a badge](#badge), amirite?
+[Commemorate this moment in time](#badge) with [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.github.io/beartype), our over*bear*ing project shield. What says quality like [a bear on a badge](#badge), amirite?
 
 ## Platform
 
@@ -70,14 +81,14 @@ Source-based Linux distributions are the CPU-bound nuclear option. *What could b
 
 If you're feeling the quality assurance and want to celebrate, consider signaling that you're now publicly *bear-*ified:
 
-> YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io)!
+> YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.github.io/beartype)!
 
 All this magic and possibly more can be yours with:
 
 - **Markdown**:
 
   ```md
-  YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io)!
+  YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.github.io/beartype)!
   ```
 
 - **reStructuredText**:
@@ -88,14 +99,14 @@ All this magic and possibly more can be yours with:
   .. # See https://docutils.sourceforge.io/docs/ref/rst/directives.html#image
   .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
      :align: top
-     :target: https://beartype.readthedocs.io
+     :target: https://beartype.github.io/beartype
      :alt: bear-ified
   ```
 
 - **Raw HTML**:
 
   ```html
-  YummySoft is now <a href="https://beartype.readthedocs.io"><img
+  YummySoft is now <a href="https://beartype.github.io/beartype"><img
     src="https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg"
     alt="bear-ified"
     style="vertical-align: middle;"></a>!
