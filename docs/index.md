@@ -30,7 +30,7 @@ still listing this title in the site-wide navigation block to the left.
 <!-- -------------( BADGES                                   )-------------- -->
 <!-- FIXME: Let's add these badges to our new "_links.md" database, too! *sigh* -->
 
-[![beartype test coverage status](https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ)](https://codecov.io/gh/beartype/beartype) [![beartype continuous integration (CI) status](https://github.com/beartype/beartype/actions/workflows/python_test.yml/badge.svg)][beartype tests] [![beartype Read The Docs (RTD) status](https://readthedocs.org/projects/beartype/badge/?version=latest)](https://beartype.readthedocs.io/en/latest/?badge=latest)
+[![beartype test coverage status](https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ)](https://codecov.io/gh/beartype/beartype) [![beartype continuous integration (CI) status](https://github.com/beartype/beartype/actions/workflows/python_test.yml/badge.svg)][beartype tests] [![beartype documentation build status](https://github.com/beartype/beartype/actions/workflows/python_docs.yml/badge.svg)][beartype docs]
 
 <!-- -------------( INTRODUCTION                             )-------------- -->
 
