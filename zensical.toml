@@ -47,6 +47,10 @@ site_author = "Beartype"
 # third-party theme configured below.
 copyright = "Copyright (c) 2014-2026 Beartype authors."
 
+# URL of the root of this site. mike needs this URL. For each version, Zensical
+# adds the version to this URL (e.g., "/beartype/0.23/").
+site_url = "https://beartype.github.io/beartype/"
+
 # URL of the repository documented by this site.
 repo_url = "https://github.com/beartype/beartype"
 
@@ -165,18 +169,27 @@ toc = {permalink = true}
 # ....................{ PLUGINS ~ third-party               }...................
 # Third-party Zensical plugins external to Zensical itself.
 
-#FIXME: Uncomment if and when we leverage versioning for @beartype docs.
-#[project.plugins.mike]
-#canonical_version = "latest"
-#deploy_prefix = "public"
+# Publish one version of the documentation for each release with mike. The
+# ".github/workflows/python_docs.yml" workflow installs mike. See also:
+#     https://zensical.org/docs/compatibility/mkdocs/mike/
+[project.plugins.mike]
+
+# Point the canonical URL of each page to the same page in the "latest"
+# version. Search engines then do not index each version as a copy.
+canonical_version = "latest"
 
 #FIXME: Re-enable the "mkdocstrings" plugin *AFTER* documenting the API with
 #":::" directives. No page uses this plugin now. The configuration formerly
 #defined here is in the "zensical.toml" file of commit 063252fa. Then also
-#consider "black" for the "doc-ghp" extra. If "black" is installed,
+#consider "black" for the "docs" dependency group. If "black" is installed,
 #"mkdocstrings-python" uses it to format long signatures. See also:
 #     https://zensical.org/docs/setup/extensions/mkdocstrings/
 #     https://mkdocstrings.github.io/python/usage/configuration/signatures/#line_length
+
+# ....................{ EXTRA                               }...................
+# Show a menu in the page header to select the version.
+[project.extra.version]
+provider = "mike"
 
 # ....................{ THEME                               }...................
 # Third-party Zensical UI theme currently employed by this project.

@@ -221,18 +221,6 @@ dependencies = []
 #* Official PEP 735 proposal:
 #      https://peps.python.org/pep-0735
 
-# GitHub Pages (GHP)-specific documentation-time package dependencies required
-# to automatically build documentation for this project from GitHub's homegrown
-# hosting service.
-doc-ghp = [
-    # ....................{ THEME                          }....................
-    # It's now sensical
-    # To prep for Zensical
-    # Extend your tenticles,
-    # To welcome, welcome, welcome, welcome Zensical!
-    "zensical >=0.0.43",
-]
-
 #FIXME: Remove *AFTER* successfully migrating from RTD to GHP.
 # Read The Docs (RTD)-specific documentation-time package dependencies required
 # to automatically build documentation for this project from the third-party RTD
@@ -646,6 +634,29 @@ test = [
 # requests (PRs) for this project. Notably, this includes *ALL* test- and
 # documentation-time dependencies.
 dev = ["beartype[doc-rtd,test]"]
+
+# ....................{ PEP 735 ~ dependency groups        }....................
+# Dependency groups. Unlike the extras above, dependency groups are *NOT* part
+# of the package published to PyPI. A dependency group can thus list a
+# dependency that PyPI does not accept (e.g., a git URL).
+[dependency-groups]
+
+# GitHub Pages (GHP)-specific documentation-time package dependencies required
+# to build documentation for this project. Install with:
+#     $ pip install --group docs
+docs = [
+    # ....................{ THEME                          }....................
+    # It's now sensical
+    # To prep for Zensical
+    # Extend your tenticles,
+    # To welcome, welcome, welcome, welcome Zensical!
+    "zensical >=0.0.62",
+
+    # ....................{ VERSIONING                     }....................
+    # Zensical fork of mike, which publishes one version of the documentation
+    # for each release. This fork is available only from git.
+    "mike @ git+https://github.com/squidfunk/mike.git@2.2.0+zensical-0.1.0",
+]
 
 # ....................{ PEP 621 ~ urls                     }....................
 # Table (i.e., dictionary) mapping from the PyPI-recognized name of each

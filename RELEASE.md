@@ -13,7 +13,9 @@ Stable releases are manually published with a rigorous procedure. The tl;dr is:
    of both source tarballs and binary wheels of this stable commit in various
    popular formats to both [GitHub] itself and [PyPI] using the [GitHub]
    Actions CI/CD workflow configured by the `.github/workflows/python_release.yml`
-   file. (*Phew!*)
+   file. (*Phew!*) The same push also starts the
+   `.github/workflows/python_docs.yml` workflow, which publishes the
+   documentation for this release.
 
 While technically optional, this procedure reduces the likelihood of
 installation and usage woes by downstream consumers (*e.g.,* end users, package
@@ -303,6 +305,12 @@ Beartype is releasable to all supported platforms as follows:
     managers (e.g., [Anaconda][Anaconda package]) and platforms (e.g., Linux
     distributions), which typically require manual intervention. **This
     release has now been officially distributed to GitHub and PyPI.**
+
+    The "docs" workflow also publishes the documentation for this release as
+    version `X.Y` (e.g., `0.23`), and points the `latest` alias to it. A patch
+    release (e.g., `0.23.1`) replaces the `0.23` documentation. A release
+    candidate tag does not publish documentation. When the workflow finishes,
+    check <https://beartype.github.io/beartype/latest/>.
 
     ```shell-session
     $ git push && git push --tags
