@@ -470,7 +470,7 @@ Let's take this from the top.
     pip uninstall beartype
     ```
 
-11. Install beartype with `pip` in **editable mode.** This synchronizes changes made to your fork against the beartype package imported in Python. Note the `[dev]` extra installs developer-specific mandatory dependencies required at test or documentation time.
+11. Install beartype with `pip` in **editable mode.** This synchronizes changes made to your fork against the beartype package imported in Python. The `[dev]` extra installs the dependencies that the tests need.
 
     ```bash
     pip3 install -e .[dev]
