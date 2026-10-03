@@ -230,7 +230,14 @@ doc-ghp = [
     # To prep for Zensical
     # Extend your tenticles,
     # To welcome, welcome, welcome, welcome Zensical!
-    "zensical >=0.0.43",
+    #
+    # Zensical 0.0.62 and later accept the mike settings in "zensical.toml".
+    "zensical >=0.0.62",
+
+    # ....................{ VERSIONING                     }....................
+    # This list does not include mike. The Zensical fork of mike is available
+    # only from git, and PyPI does not accept a package that depends on a git
+    # URL. The ".github/workflows/python_docs.yml" workflow installs mike.
 
     # ....................{ EXTENSIONS                     }....................
     # API reference generation stack -- which transitively requires a reasonably

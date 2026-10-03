@@ -52,6 +52,10 @@ site_author = "Beartype"
 # third-party theme configured below.
 copyright = "Copyright (c) 2014-2026 Beartype authors."
 
+# URL of the root of this site. mike needs this URL. For each version, Zensical
+# adds the version to this URL (e.g., "/beartype/0.23/").
+site_url = "https://beartype.github.io/beartype/"
+
 # URL of the repository documented by this site.
 repo_url = "https://github.com/beartype/beartype"
 
@@ -170,10 +174,14 @@ toc = {permalink = true}
 # ....................{ PLUGINS ~ third-party               }...................
 # Third-party Zensical plugins external to Zensical itself.
 
-#FIXME: Uncomment if and when we leverage versioning for @beartype docs.
-#[project.plugins.mike]
-#canonical_version = "latest"
-#deploy_prefix = "public"
+# Publish one version of the documentation for each release with mike. The
+# ".github/workflows/python_docs.yml" workflow installs mike. See also:
+#     https://zensical.org/docs/compatibility/mkdocs/mike/
+[project.plugins.mike]
+
+# Point the canonical URL of each page to the same page in the "latest"
+# version. Search engines then do not index each version as a copy.
+canonical_version = "latest"
 
 # Automatically generate API reference documentation from Python docstrings
 # embedded inside the Python package defined by this project. See also:
@@ -297,6 +305,11 @@ show_signature_type_parameters = true
 #FIXME: This might be accessible only to paid subscribers. No idea!
 # Show cross-references to type hints in signatures.
 signature_crossrefs = true
+
+# ....................{ EXTRA                               }...................
+# Show a menu in the page header to select the version.
+[project.extra.version]
+provider = "mike"
 
 # ....................{ THEME                               }...................
 # Third-party Zensical UI theme currently employed by this project.

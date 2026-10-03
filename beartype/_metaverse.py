@@ -151,12 +151,13 @@ project userbase).
 URL_HOMEPAGE = f'https://{PACKAGE_NAME}.github.io/{PACKAGE_NAME}'
 '''
 URL of this project's homepage (i.e., this project's GitHub Pages-hosted
-documentation site).
+documentation site, whose root redirects to the documentation for the most
+recent stable release).
 '''
 
 
 URL_PEP585_DEPRECATIONS = (
-    f'{URL_HOMEPAGE}/api_roar/#pep-585-deprecations')
+    f'{URL_HOMEPAGE}/latest/api_roar/#pep-585-deprecations')
 '''
 URL documenting :pep:`585` deprecations of :pep:`484` type hints.
 '''
