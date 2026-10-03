@@ -667,7 +667,7 @@ dev = ["beartype[doc-rtd,test]"]
 # Table (i.e., dictionary) mapping from the PyPI-recognized name of each
 # relevant project URL to that URL.
 [project.urls]
-Docs =     "https://beartype.readthedocs.io"
+Docs =     "https://beartype.github.io/beartype"
 GitHub =   "https://github.com/beartype/beartype"
 Forums =   "https://github.com/beartype/beartype/discussions"
 Issues =   "https://github.com/beartype/beartype/issues"

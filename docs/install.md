@@ -22,7 +22,7 @@ conda config --add channels conda-forge
 conda install beartype
 ```
 
-[Commemorate this moment in time](#badge) with [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io), our over*bear*ing project shield. What says quality like [a bear on a badge](#badge), amirite?
+[Commemorate this moment in time](#badge) with [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.github.io/beartype), our over*bear*ing project shield. What says quality like [a bear on a badge](#badge), amirite?
 
 ## Platform
 
@@ -70,14 +70,14 @@ Source-based Linux distributions are the CPU-bound nuclear option. *What could b
 
 If you're feeling the quality assurance and want to celebrate, consider signaling that you're now publicly *bear-*ified:
 
-> YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io)!
+> YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.github.io/beartype)!
 
 All this magic and possibly more can be yours with:
 
 - **Markdown**:
 
   ```md
-  YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io)!
+  YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.github.io/beartype)!
   ```
 
 - **reStructuredText**:
@@ -88,14 +88,14 @@ All this magic and possibly more can be yours with:
   .. # See https://docutils.sourceforge.io/docs/ref/rst/directives.html#image
   .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
      :align: top
-     :target: https://beartype.readthedocs.io
+     :target: https://beartype.github.io/beartype
      :alt: bear-ified
   ```
 
 - **Raw HTML**:
 
   ```html
-  YummySoft is now <a href="https://beartype.readthedocs.io"><img
+  YummySoft is now <a href="https://beartype.github.io/beartype"><img
     src="https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg"
     alt="bear-ified"
     style="vertical-align: middle;"></a>!

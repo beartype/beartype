@@ -28,9 +28,9 @@ Beartype import hooks implicitly perform both:
 - Standard **runtime type-checking** (ala the `beartype.beartype` decorator).
 - Standard **static type-checking** (ala [mypy] and [pyright]) but **at runtime** – and that ain't standard.
 
-Automate the `beartype.beartype` decorator away today with magical import hooks published by the `beartype.claw` subpackage. When you install import hooks from beartype, you augment beartype from a `pure-runtime
-second-generation type-checker <faq:third>` into a `hybrid runtime-static
-third-generation type-checker <faq:hybrid>`. That's right.
+Automate the `beartype.beartype` decorator away today with magical import hooks published by the `beartype.claw` subpackage. When you install import hooks from beartype, you augment beartype from a [pure-runtime
+second-generation type-checker](faq.md#third-generation-type-checker-doesnt-mean-anything-does-it) into a [hybrid runtime-static
+third-generation type-checker](faq.md#what-does-hybrid-runtime-static-mean-pretty-sure-you-made-that-up-too). That's right.
 
 Beartype is now a tentacular cyberpunk horror like that mutant brain baby from Katsuhiro Otomo's dystopian 80's masterpiece *Akira*. You can't look away!
 
@@ -49,7 +49,7 @@ Let's begin by outlining exactly **what** `beartype_this_package` does.
 As the simplest and most convenient of several import hooks published by the `beartype.claw` subpackage, `beartype_this_package` type-checks *all* subsequently imported submodules of `{your_package}`. Notably, `beartype_this_package`:
 
 - Implicitly decorates *all* callables and classes across `{your_package}` by the `beartype.beartype` decorator. Rejoice, fellow mammals! You no longer need to explicitly decorate anything by `beartype.beartype` ever again. Of course, you *can* if you want to – but there's no compelling reason to do so and many compelling reasons *not* to do so. You have probably just thought of five, but there are even more.
-- Implicitly appends *every* `526`-compliant annotated variable assignment (e.g., `muh_int: int = 'Pretty sure this isn't an integer, but not sure.'`) across `{your_package}` by a new statement at the same indentation level calling the `beartype.door.die_if_unbearable` function passed both that variable and that type hint. Never do that manually. Now, you never do.
+- Implicitly appends *every* [PEP 526]-compliant annotated variable assignment (e.g., `muh_int: int = 'Pretty sure this isn't an integer, but not sure.'`) across `{your_package}` by a new statement at the same indentation level calling the `beartype.door.die_if_unbearable` function passed both that variable and that type hint. Never do that manually. Now, you never do.
 
 Examples or we're lying again. `beartype_this_package` transforms your `{your_package}.{buggy_submodule}` from this quietly broken code that you insist you never knew about, you swear:
 
@@ -124,6 +124,8 @@ Global beartype import hooks are... well, *global*. Their claws extend to a hori
 
 With great globality comes great responsibility.
 
+<div id="beartype.claw.beartype_this_package"></div>
+
 #### beartype_this_package
 
 `def beartype.claw.beartype_this_package(*, conf: beartype.BeartypeConf = beartype.BeartypeConf()) -> None`
@@ -164,6 +166,8 @@ When in doubt, have no doubt. Just call `beartype_this_package`.
 ![fierce determined face](https://user-images.githubusercontent.com/217028/272775398-761b9f11-95c2-4410-ad56-fd1ebe99bf04.png)
 
 <sup>beartype_this_package(): It do be like that.</sup>
+
+<div id="beartype.claw.beartype_package"></div>
 
 #### beartype_package
 
@@ -226,6 +230,8 @@ Pretend you didn't see that. Just call `beartype_package`.
 
 <sup>Truer words were never spoken, wizened psychic baby lady.</sup>
 
+<div id="beartype.claw.beartype_packages"></div>
+
 #### beartype_packages
 
 `def beartype.claw.beartype_packages( package_names: collections.abc.Iterable[str], *, conf: beartype.BeartypeConf = beartype.BeartypeConf() ) -> None`
@@ -263,14 +269,15 @@ beartype_packages((
 ), conf=BeartypeConf(is_pep484_tower=True))  # <-- so. u 2 h8 precision.
 ```
 
-This hook is the penultimate force in `global import hooks
-<api_claw:global>`. The terser `beartype_this_package` and `beartype_package` hooks are effectively syntactic sugar for this verboser hook.
+This hook is the penultimate force in [global import hooks](#global-import-hooks). The terser `beartype_this_package` and `beartype_package` hooks are effectively syntactic sugar for this verboser hook.
 
 > One hook to QA them all, and in the darkness of your codebase bind them.
 
 !!! note "Added in 0.15.0"
 
 <sup>It’s almost as if we know what “penultimate” means.</sup>
+
+<div id="beartype.claw.beartype_all"></div>
 
 #### beartype_all
 
@@ -293,8 +300,7 @@ beartype_all(conf=BeartypeConf(claw_is_pep526=False))  # <-- U WILL BE ASSIMILAT
 
 This hook is the ultimate import hook, spasmodically unleashing a wave of bug-defenestrating action over **the entire Python ecosystem.** After calling this hook, *any* package or module authored by *anybody* (including packages and modules in CPython's standard library) will be subject to the iron claw of `beartype.claw`. Its rule is law!
 
-This hook is the runtime equivalent of a full-blown `pure-static
-<faq:third>` type-checker like mypy or pyright, enabling full-stack `runtime-static <faq:hybrid>` type-checking over your entire app. This includes submodules defined by both:
+This hook is the runtime equivalent of a full-blown [pure-static](faq.md#third-generation-type-checker-doesnt-mean-anything-does-it) type-checker like mypy or pyright, enabling full-stack [runtime-static](faq.md#what-does-hybrid-runtime-static-mean-pretty-sure-you-made-that-up-too) type-checking over your entire app. This includes submodules defined by both:
 
 - First-party proprietary packages authored explicitly for this app.
 - Third-party open-source packages authored and maintained elsewhere.
