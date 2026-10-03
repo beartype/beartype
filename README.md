@@ -23,14 +23,14 @@ Front-facing Markdown document displayed by default on our GitHub repository!
 
 <!-- -------------( FRONTISPIECE                             )-------------- -->
 
-> 🥳 [Beartype documentation officially lives at **GitHub
-> Pages**](https://beartype.github.io/beartype). 🥳
+> 🥳 [Beartype documentation officially lives at **ReadTheDocs
+> (RTD)**](https://beartype.readthedocs.io). 🥳
 >
 > It's readable, structured, and soothing to the deep folds of your big galactic
 > brain. Open your mind to an ocean of mundane knowledge that will exhaust you
 > at work. Enter... **the Bearpedia:**
 >
-> > <https://beartype.github.io/beartype>
+> > <https://beartype.readthedocs.io>
 >
 > The document you are now reading was once a monolithic ~316Kb file known to
 > induce migraines in 22% of the whole devops population. For your safety, that
@@ -40,12 +40,12 @@ Front-facing Markdown document displayed by default on our GitHub repository!
 
 **Beartype** is an
 [open-source](https://github.com/beartype/beartype/blob/main/LICENSE)
-[pure-Python](https://beartype.readthedocs.io/en/latest/faq/#faq-pure)
-[PEP-compliant](https://beartype.readthedocs.io/en/latest/pep)
-[near-real-time](https://beartype.readthedocs.io/en/latest/faq) [hybrid
-runtime-static](https://beartype.readthedocs.io/en/latest/faq/#faq-hybrid)
-[third-generation](https://beartype.readthedocs.io/en/latest/faq/#faq-third)
-[type checker](https://beartype.readthedocs.io/en/latest/eli5) emphasizing
+[pure-Python](https://beartype.readthedocs.io/en/latest/faq/#what-does-pure-python-mean)
+[PEP-compliant](https://beartype.readthedocs.io/en/latest/pep/)
+[near-real-time](https://beartype.readthedocs.io/en/latest/faq/) [hybrid
+runtime-static](https://beartype.readthedocs.io/en/latest/faq/#what-does-hybrid-runtime-static-mean-pretty-sure-you-made-that-up-too)
+[third-generation](https://beartype.readthedocs.io/en/latest/faq/#third-generation-type-checker-doesnt-mean-anything-does-it)
+[type checker](https://beartype.readthedocs.io/en/latest/eli5/) emphasizing
 efficiency, usability, unsubstantiated jargon we just made up, and thrilling
 puns.
 
@@ -95,7 +95,7 @@ fanfare you hear is probably your userbase cheering. This is how the QA was won.
 <!-- -------------( DEEP DIVE                                )-------------- -->
 
 Beartype also publishes a [plethora of APIs for fine-grained control over
-type-checking](https://beartype.readthedocs.io/en/latest/api). For those who are
+type-checking](https://beartype.readthedocs.io/en/latest/api/). For those who are
 about to QA, beartype salutes you. Would you like to know more?
 
 ``` bash
@@ -211,13 +211,13 @@ Beartype brings [Rust](https://www.rust-lang.org)- and
 abstractions](https://boats.gitlab.io/blog/post/zero-cost-abstractions) into the
 lawless world of [dynamically-typed](https://en.wikipedia.org/wiki/Type_system)
 Python by [enforcing type safety at the granular level of functions and
-methods](https://beartype.readthedocs.io/en/latest/eli5) against [type hints
+methods](https://beartype.readthedocs.io/en/latest/eli5/) against [type hints
 standardized by the Python
-community](https://beartype.readthedocs.io/en/latest/pep) in [O(1) non-amortized
+community](https://beartype.readthedocs.io/en/latest/pep/) in [O(1) non-amortized
 worst-case time with negligible constant
-factors](https://beartype.readthedocs.io/en/latest/math). If the prior sentence
+factors](https://beartype.readthedocs.io/en/latest/math/). If the prior sentence
 was unreadable jargon, [see our friendly and approachable FAQ for a
-human-readable synopsis](https://beartype.readthedocs.io/en/latest/faq).
+human-readable synopsis](https://beartype.readthedocs.io/en/latest/faq/).
 
 Beartype is [portably
 implemented](https://github.com/beartype/beartype/tree/main/beartype) in [Python
@@ -232,9 +232,14 @@ dependencies, [only one test-time dependency](https://docs.pytest.org), and
 [only one documentation-time dependency](https://zensical.org). Beartype
 supports [all actively developed Python
 versions](https://devguide.python.org/versions/#versions), [all Python package
-managers](https://beartype.readthedocs.io/en/latest/install), and [multiple
+managers](https://beartype.readthedocs.io/en/latest/install/), and [multiple
 platform-specific package
-managers](https://beartype.readthedocs.io/en/latest/install).
+managers](https://beartype.readthedocs.io/en/latest/install/).
+
+<!-- FIXME: Gah! Libraries.io has fallen down and cannot get back up... *AGAIN.*
+    Beartype [powers quality assurance across the Python
+    ecosystem](https://libraries.io/pypi/beartype/dependents).
+-->
 
 <!--
 ------------------( IMAGES                                   )------------------

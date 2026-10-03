@@ -149,7 +149,7 @@ project userbase).
 # ....................{ METADATA ~ urls : docs             }....................
 URL_HOMEPAGE = f'https://{PACKAGE_NAME}.readthedocs.io'
 '''
-URL of this project's homepage.
+URL of this project's homepage (i.e., this project's documentation site).
 '''
 
 
