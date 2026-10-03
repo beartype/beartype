@@ -14,7 +14,8 @@
 # ....................{ METADATA                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this name *MUST* be manually synchronized with:
-# * The "|GitHub Actions badge|" image URL in our top-level "README.rst" file.
+# * The GitHub Actions badge image URLs in our top-level "README.md" and
+#   "docs/index.md" files.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Non-human-readable (i.e., machine-readable) label associated with this GitHub
 # Actions workflow.

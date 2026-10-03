@@ -4,9 +4,11 @@ Copyright (c) 2014-2026 Beartype authors.
 See "LICENSE" for further details.
 
 ------------------( SYNOPSIS                                 )------------------
-URI repository (i.e., hidden reStructuredText (reST) document centralizing
-common URI links in reST format, automatically exposed to all other reST
-documents in this project via the "rst_epilog" setting in "conf.py").
+URI repository (i.e., hidden Markdown document centralizing common URI links as
+Markdown reference-style link definitions, automatically appended to all other
+Markdown documents in this project via the "auto_append" option of the
+"pymdownx.snippets" extension in "zensical.toml").
+-->
 
 <!-- -------------( IMAGES ~ badge                           )-------------- -->
 
