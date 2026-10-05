@@ -376,7 +376,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
 
                >>> import numpy as np
                >>> matrix = np.array([[2, 1], [1, 2]])
-               >>> is_all = np.all(matrix > 0))
+               >>> is_all = np.all(matrix > 0)
                >>> type(is_all)
                <class 'numpy.bool_'>
                >>> is_all
