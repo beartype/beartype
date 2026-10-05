@@ -79,6 +79,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
     --------
     .. code-block:: pycon
 
+       >>> from typing import Any, Callable, Sequence, Union
        >>> from beartype.door import TypeHint
        >>> hint_a = TypeHint(Callable[[str], list])
        >>> hint_b = TypeHint(Callable[Union[int, str], Sequence[Any]])
@@ -89,7 +90,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
        >>> hint_a.is_subhint(hint_b)
        True
        >>> list(hint_b)
-       [TypeHint(typing.Union[int, str]), TypeHint(typing.Sequence[typing.Any])]
+       [UnionTypeHint(int | str), SubscriptedTypeHint(typing.Sequence[typing.Any])]
 
     Attributes
     ----------
@@ -318,10 +319,10 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         .. code-block:: pycon
 
            >>> from typing import TypeVar
-           >>> repr(TypeVar('T'))
-           'T'  # <-- makes sense
-           >>> repr(TypeVar('T', bound=int))
-           'T'  # <-- *MAKES NO SENSE WTTTTTTTTTTF PYTHON*
+           >>> repr(TypeVar('T'))  # <-- makes sense
+           '~T'
+           >>> repr(TypeVar('T', bound=int))  # <-- *MAKES NO SENSE WTTTTTTTTTTF PYTHON*
+           '~T'
         '''
 
         # If a representation has already been precomputed by a prior call of
@@ -777,7 +778,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
           .. code-block:: pycon
 
-             >>> from typing as Protocol
+             >>> from typing import Protocol
              >>> isinstance(object(), Protocol)
              True
              >>> isinstance('wtfbro', Protocol)
@@ -863,12 +864,12 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
            >>> from beartype.door import TypeHint
            >>> TypeHint(list[str]).die_if_unbearable(
-           ...     ['And', 'what', 'rough', 'beast,'], )
-           >>> TypeHint(list[str]).die_if_unbearable(
-           ...     ['its', 'hour', 'come', 'round'], list[int])
-           beartype.roar.BeartypeDoorHintViolation: Object ['its', 'hour',
-           'come', 'round'] violates type hint list[int], as list index 0 item
-           'its' not instance of int.
+           ...     ['And', 'what', 'rough', 'beast',])
+           >>> TypeHint(list[int]).die_if_unbearable(
+           ...     ['its', 'hour', 'come', 'round'])
+           beartype.roar.BeartypeDoorHintViolation: Die_if_unbearable() value
+           ['its', 'hour', 'come', 'round'] violates type hint list[int], as
+           list index 0 item str 'its' not instance of int.
         '''
 
         # One-liner, one love, one heart. Let's get together and code alright.
@@ -1280,8 +1281,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
 
            # These type hints are all semantically equivalent despite being
            # mostly syntactically unrelated.
-           >>> TypeHint(tuple) == TypeHint(typing.Tuple) == \
-           ... TypeHint(typing.Tuple[Any, ...])
+           >>> TypeHint(tuple) == TypeHint(Tuple) == TypeHint(Tuple[Any, ...])
            True
 
         Note that this property is *not* equivalent to the :meth:`is_ignorable`
