@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2014-2026 Beartype authors.
+# See "LICENSE" for further details.
+
 '''
 Minimal :pep:`526` import-hook regression fixture for recursive aliases.
 '''

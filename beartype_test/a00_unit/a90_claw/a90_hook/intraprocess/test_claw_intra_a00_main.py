@@ -128,16 +128,27 @@ def test_claw_intraprocess_recursive_pep526_alias() -> None:
 
     # Defer test-specific imports.
     from beartype.claw import beartype_package
-    from beartype.roar import BeartypeDecorHintRecursionException
-    from pytest import raises
+    from beartype.roar import (
+        BeartypeDecorHintPep613DeprecationWarning,
+        BeartypeDecorHintRecursionException,
+    )
+    from pytest import raises, warns
 
     package_name = (
         'beartype_test.a00_unit.data.claw.intraprocess.hookable_package')
     beartype_package(package_name)
 
-    with raises(BeartypeDecorHintRecursionException) as exception_info:
-        from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep.pep526 import (
-            data_claw_pep526_recursive)
+    with warns(
+        BeartypeDecorHintPep613DeprecationWarning,
+        match=r'RecursiveAlias.*PEP 613 type hint .*deprecated by PEP 695',
+    ) as warning_info:
+        with raises(BeartypeDecorHintRecursionException) as exception_info:
+            from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep.pep526 import (
+                data_claw_pep526_recursive)
+
+    assert len(warning_info) == 1
+    assert 'RecursiveAlias' in str(warning_info[0].message)
+    assert 'typing.TypeAlias' in str(warning_info[0].message)
 
     exception_message = str(exception_info.value)
     assert 'check_local_recursive_alias()' in exception_message
