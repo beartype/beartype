@@ -61,7 +61,7 @@ recall that the fastest decorator at decoration- *and* call-time is the
 
    from collections.abc import Callable
 
-   def identity_decorator(func: Callable): -> Callable:
+   def identity_decorator(func: Callable) -> Callable:
        return func
 
 Beartype silently reduces to the identity decorator whenever it can, which is
