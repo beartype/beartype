@@ -157,3 +157,48 @@ def test_make_check_expr() -> None:
             # PEP 673-compliant self root hints.
             assert_hint_check_expr_is_uncached(
                 call_curr=decor_curr_pep673, hint=Self)
+
+
+def test_make_check_expr_recursive_hint_diagnostic() -> None:
+    '''
+    Test that an unbounded recursive union raises the public recursion
+    exception with a useful diagnostic rather than leaking an implementation
+    exception while generating its checker.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import die_if_unbearable
+    from beartype.roar import BeartypeDecorHintRecursionException
+    from pytest import raises
+
+    # This runtime union is intentionally recursive through a string forward
+    # reference, matching the recursive local-variable path exercised by the
+    # import hook while carrying no PEP 613 provenance.
+    def assert_recursive_diagnostic(
+        alias_name: str, recursive_hint: object, value: object) -> None:
+        alias_missing = object()
+        alias_previous = globals().get(alias_name, alias_missing)
+        globals()[alias_name] = recursive_hint
+        try:
+            with raises(BeartypeDecorHintRecursionException) as exception_info:
+                die_if_unbearable(value, recursive_hint)
+        finally:
+            if alias_previous is alias_missing:
+                globals().pop(alias_name, None)
+            else:
+                globals()[alias_name] = alias_previous
+
+        exception_message = str(exception_info.value)
+        assert 'Die_if_unbearable()' in exception_message
+        hint_repr = repr(recursive_hint)
+        assert f'root type hint {hint_repr}' in exception_message
+        assert f'child type hint {hint_repr}' in exception_message
+
+    # The ordinary checker between these recursive checks makes the public
+    # sequence exercise the same pooled checker lifecycle used in production.
+    first_hint = str | list['first_recursive_alias']
+    assert_recursive_diagnostic('first_recursive_alias', first_hint, ['a'])
+    die_if_unbearable(['a'], str | list[str])
+
+    second_hint = int | list['second_recursive_alias']
+    assert_recursive_diagnostic('second_recursive_alias', second_hint, [1])

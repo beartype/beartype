@@ -120,6 +120,32 @@ def test_claw_intraprocess_beartype_package() -> None:
 
 
 @pytest.mark.run_in_subprocess
+def test_claw_intraprocess_recursive_pep526_alias() -> None:
+    '''
+    Test the import-hook diagnostic for a recursive :pep:`613` alias used by a
+    local :pep:`526` assignment.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.claw import beartype_package
+    from beartype.roar import BeartypeDecorHintRecursionException
+    from pytest import raises
+
+    package_name = (
+        'beartype_test.a00_unit.data.claw.intraprocess.hookable_package')
+    beartype_package(package_name)
+
+    with raises(BeartypeDecorHintRecursionException) as exception_info:
+        from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep.pep526 import (
+            data_claw_pep526_recursive)
+
+    exception_message = str(exception_info.value)
+    assert 'check_local_recursive_alias()' in exception_message
+    assert "root type hint str | list['RecursiveAlias']" in exception_message
+    assert "child type hint str | list['RecursiveAlias']" in exception_message
+
+
+@pytest.mark.run_in_subprocess
 def test_claw_intraprocess_beartype_packages() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_packages` import hook against multiple
