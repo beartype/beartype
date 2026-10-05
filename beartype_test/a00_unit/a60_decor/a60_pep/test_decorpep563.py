@@ -14,16 +14,15 @@ This submodule unit tests :pep:`563` support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-# WARNING: The "from __future__ import annotations" import appears to be subtly
-# broken under Python >= 3.10, where performing that import prevents the
-# "f_locals" attribute of stack frames from capturing locals defined by parent
-# callables and accessed *ONLY* in type hints annotating one or more parameters
-# of nested callables contained in those parent callables. Oddly, this breakage
-# does *NOT* extend to type hints annotating returns of those nested callables
-# -- only parameters. Ergo, we can only conclude this to be a subtle bug. We
-# should probably issue an upstream CPython report. For now, conditionally
-# disable *ALL* PEP 563-specific tests importing from another module containing
-# an "from __future__ import annotations" import.
+# WARNING: Under Python >= 3.10, names used only in PEP 563 stringized
+# annotations do not create closure cells. This deliberate symbol-table change
+# applies to both parameter and return annotations:
+#     https://github.com/python/cpython/pull/25583
+# Such names may therefore be absent from an enclosing frame's "f_locals".
+# Body references still capture locals. In the nested-closure fixture,
+# "IntLike" is used only in annotations, whereas "InnerReturnType" is read in
+# the enclosing function body when assigning "ReturnType". This explains the
+# different availability of these names, without a parameter/return asymmetry.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 from beartype_test._util.mark.pytskip import (
@@ -294,8 +293,9 @@ def test_pep563_closure_nonnested() -> None:
 #uses to dynamically construct that dictionary on-the-fly. Admittedly, this was
 #an edge case that basically didn't matter until PEP 563 landed -- at which
 #point this edge case *REALLY* mattered.
-#FIXME: CPython is subtly broken with respect to "from __future__ import
-#annotations" imports under Python >= 3.10. Until resolved, disable this.
+#FIXME: This test relies on annotation-only names remaining in closure cells.
+#Python >= 3.10 intentionally omits those cells under PEP 563 (see above).
+#Re-enable once the fixture or resolution strategy handles that limitation.
 
 @skip_if_pypy()
 @skip_if_python_version_greater_than_or_equal_to('3.10.0')
