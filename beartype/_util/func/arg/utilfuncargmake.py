@@ -22,7 +22,7 @@ from beartype._util.func.arg.utilfuncargiter import (
 )
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.func.utilfunccodeobj import get_func_codeobject
-from beartype._util.func.utilfunctest import is_func_boundmethod, is_func_coro
+from beartype._util.func.utilfunctest import is_func_coro, is_func_async_generator
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
 from keyword import iskeyword
@@ -38,6 +38,7 @@ def make_func_signature(
     # Optional parameters.
     func_name: Optional[str] = None,
     is_annotated: bool = True,
+    arg_default_override: object = ArgMandatory,
 ) -> str:
     '''
     Generate a callable-specific wrapper signature augmented by hidden scope
@@ -66,12 +67,19 @@ def make_func_signature(
         copying annotation metadata with ``functools.update_wrapper`` may
         disable this to avoid redundant annotation evaluation.
 
+    arg_default_override : object, optional
+        Replacement for all optional parameter defaults, or ``ArgMandatory``
+        to preserve their original values. Wrapper generators may use an
+        omission sentinel to distinguish omitted defaults from explicitly
+        supplied values. The wrapper body must restore omitted defaults before
+        forwarding the call.
+
     Returns
     -------
     str
-        Function declaration ending in a colon and newline. Coroutine functions
-        use ``async def``. Generator factories use ``def`` so a wrapper can
-        return their generator object without awaiting it.
+        Function declaration ending in a colon and newline. Coroutine and
+        asynchronous generator functions use ``async def``. Synchronous
+        generator functions use ``def``.
 
     Raises
     ------
@@ -95,21 +103,15 @@ def make_func_signature(
     # Validate the callable before accessing Python-specific attributes.
     func_codeobj = get_func_codeobject(func, is_unwrap=False)
     annotations = func.__annotations__ if is_annotated else {}
-    signature = f'{"async " if is_func_coro(func) else ""}def {func_name}(\n'
+    is_async = is_func_coro(func) or is_func_async_generator(func)
+    signature = f'{"async " if is_async else ""}def {func_name}(\n'
     is_keyword_only = False
     is_positional_only = False
     code_variadic_keyword = ''
 
     # Explicit code metadata avoids a parameter-count cache copied by wraps().
-    is_bound = is_func_boundmethod(func)
-    for arg_index, (arg_kind, arg_name, arg_default) in enumerate(iter_func_args(
-        func, func_codeobj=func_codeobj, is_unwrap=False,
-        is_omit_boundmethod_arg_first=False)):
-        # Bound methods supply the first fixed positional parameter implicitly,
-        # including positional-only and optional first parameters.
-        if is_bound and arg_index == 0 and arg_kind in (
-            ArgKind.POSITIONAL_ONLY, ArgKind.POSITIONAL_OR_KEYWORD):
-            continue
+    for arg_kind, arg_name, arg_default in iter_func_args(
+        func, func_codeobj=func_codeobj, is_unwrap=False):
         if arg_name.startswith('__bear'):
             raise BeartypeDecorParamNameException(
                 f'Parameter {repr(arg_name)} reserved by @beartype.')
@@ -137,7 +139,9 @@ def make_func_signature(
             hint_name = add_func_scope_attr(arg_hint, func_scope)
             declaration += f': {hint_name}'
         if arg_default is not ArgMandatory:
-            default_name = add_func_scope_attr(arg_default, func_scope)
+            default_name = add_func_scope_attr(
+                arg_default if arg_default_override is ArgMandatory else
+                arg_default_override, func_scope)
             declaration += f'={default_name}'
 
         declaration = f'    {declaration},\n'

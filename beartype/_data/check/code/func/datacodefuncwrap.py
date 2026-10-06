@@ -17,6 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.check.code.datacodename import (
     ARG_NAME_ARGS_NAME_KEYWORDABLE,
     ARG_NAME_FUNC,
+    ARG_NAME_DEFAULT_SENTINEL,
     ARG_NAME_GET_VIOLATION,
     VAR_NAME_ARGS_LEN,
     VAR_NAME_PITH_ROOT,
@@ -142,15 +143,38 @@ https://eli.thegreenplace.net/2018/slow-and-fast-methods-for-generating-random-i
 '''
 
 # ....................{ CODE ~ arg                         }....................
-CODE_ARG_LOCALIZE_KEYWORD_REQUIRED = f'''
-    # Localize this required keyword-only parameter, already bound by Python.
+CODE_ARG_LOCALIZE_EXPLICIT = f'''
+    # Localize this parameter, already bound by Python.
     {VAR_NAME_PITH_ROOT} = {{arg_name}}
 
     # Preserve the existing sentinel policy for type-checking this parameter.
     if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_GET_VIOLATION}:'''
 '''
-Code snippet localizing a required keyword-only parameter from an explicit
-wrapper signature, rather than looking up that parameter in a kwargs dictionary.
+Code snippet localizing a required fixed parameter from an explicit signature.
+'''
+
+
+CODE_ARG_LOCALIZE_EXPLICIT_OPTIONAL = f'''
+    # Localize this optional parameter, already bound by Python.
+    {VAR_NAME_PITH_ROOT} = {{arg_name}}
+
+    # Omitted defaults remain unchecked. Explicitly supplied values are checked.
+    if ({VAR_NAME_PITH_ROOT} is not {ARG_NAME_DEFAULT_SENTINEL} and
+        {VAR_NAME_PITH_ROOT} is not {ARG_NAME_GET_VIOLATION}):'''
+'''
+Code snippet localizing an optional fixed parameter from an explicit signature.
+'''
+
+
+ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT = {
+    ArgKind.VARIADIC_POSITIONAL: f'''
+    for {VAR_NAME_PITH_ROOT} in {{arg_name}}:''',
+    ArgKind.VARIADIC_KEYWORD: f'''
+    for {VAR_NAME_PITH_ROOT} in {{arg_name}}.values():''',
+}
+'''
+Code snippets checking the variadic parameters already separated by Python
+binding from fixed parameters, regardless of their user-defined names.
 '''
 
 
@@ -277,7 +301,7 @@ non-generator callable decorated by :func:`beartype.beartype`).
 CODE_NORMAL_RETURN_UNCHECKED_SYNC = f'''
     # Call this function with all passed parameters and return the value
     # returned from this call as is (without being type-checked).
-    return {ARG_NAME_FUNC}(*args, **kwargs)'''
+    return {ARG_NAME_FUNC}({{func_call_args}})'''
 '''
 Code snippet calling the **normal synchronous callable** (non-generator callable
 decorated by :func:`beartype.beartype` defined with the ``def`` rather than
@@ -289,7 +313,7 @@ decorated by :func:`beartype.beartype` defined with the ``def`` rather than
 CODE_NORMAL_RETURN_UNCHECKED_ASYNC = f'''
     # Call this function with all passed parameters and return the value
     # returned from this call as is (without being type-checked).
-    return await {ARG_NAME_FUNC}(*args, **kwargs)'''
+    return await {ARG_NAME_FUNC}({{func_call_args}})'''
 '''
 Code snippet calling the **normal asynchronous callable** (non-generator
 callable decorated by :func:`beartype.beartype` defined with the ``async def``

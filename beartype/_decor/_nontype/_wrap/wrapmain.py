@@ -31,6 +31,7 @@ from beartype._data.check.code.func.datacodefuncwrap import (
 from beartype._data.check.code.datacodename import (
     ARG_NAME_CALL_META,
     ARG_NAME_FUNC,
+    ARG_NAME_DEFAULT_SENTINEL,
     ARG_NAME_GETRANDBITS,
 )
 from beartype._util.func.arg.utilfuncargmake import make_func_signature
@@ -38,9 +39,8 @@ from beartype._decor._nontype._wrap._wrapargs import (
     code_check_args as _code_check_args)
 from beartype._decor._nontype._wrap._wrapreturn import (
     code_check_return as _code_check_return)
-from inspect import (
-    CO_ASYNC_GENERATOR, CO_COROUTINE, CO_GENERATOR, CO_VARARGS, CO_VARKEYWORDS)
-from types import FunctionType
+from beartype._util.func.arg.utilfuncargiter import (
+    ArgKind, ArgMandatory, iter_func_args)
 
 # ....................{ GENERATORS                         }....................
 def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
@@ -124,30 +124,61 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
         happen, a private non-human-readable exception is raised in this case.
     '''
 
-    # Specialize only undecorated synchronous functions whose parameters are
-    # all required and keyword-only. Defaults must retain their existing policy
-    # of being unchecked when omitted. Transparent decorators may accept more
-    # arguments than their underlying functions. Coroutine and generator
-    # factories must retain their existing argument-error timing.
+    # Bind all parameter kinds natively whenever the callable supplying the
+    # signature also supplies the annotations being checked. Isomorphic
+    # decorators may consume extra arguments or alter defaults, so those
+    # retain generic forwarding and checks against their underlying wrappee.
     func = decor_func.func_wrappee
-    codeobj = decor_func.func_wrappee_wrappee_codeobj
-    arg_names = codeobj.co_varnames[:codeobj.co_kwonlyargcount]
+    args_meta = tuple(iter_func_args(
+        func=decor_func.func_wrappee_wrappee,
+        func_codeobj=decor_func.func_wrappee_wrappee_codeobj,
+        is_unwrap=False,
+    ))
     is_signature_explicit = (
-        isinstance(func, FunctionType) and
         func is decor_func.func_wrappee_wrappee and
-        codeobj.co_argcount == 0 and
-        codeobj.co_kwonlyargcount > 0 and
-        not codeobj.co_flags & (
-            CO_VARARGS | CO_VARKEYWORDS | CO_COROUTINE |
-            CO_GENERATOR | CO_ASYNC_GENERATOR) and
-        not func.__kwdefaults__ and
         decor_func.func_wrapper_name.isidentifier() and
-        all(not name.startswith('__bear') for name in arg_names)
+        all(not name.startswith('__bear') for _, name, _ in args_meta)
     )
-    func_call_args = (
-        ', '.join(f'{name}={name}' for name in arg_names)
-        if is_signature_explicit else '*args, **kwargs'
-    )
+    func_scope = decor_func.func_wrapper_locals
+    code_restore_defaults = ''
+    if is_signature_explicit:
+        func_call_parts = []
+        args_len_positional = sum(
+            kind in (ArgKind.POSITIONAL_ONLY, ArgKind.POSITIONAL_OR_KEYWORD)
+            for kind, _, _ in args_meta)
+        arg_index_positional = -1
+        for arg_kind, arg_name, arg_default in args_meta:
+            if arg_kind in (ArgKind.POSITIONAL_ONLY, ArgKind.POSITIONAL_OR_KEYWORD):
+                func_call_parts.append(arg_name)
+                arg_index_positional += 1
+            elif arg_kind is ArgKind.VARIADIC_POSITIONAL:
+                func_call_parts.append(f'*{arg_name}')
+            elif arg_kind is ArgKind.KEYWORD_ONLY:
+                func_call_parts.append(f'{arg_name}={arg_name}')
+            else:
+                func_call_parts.append(f'**{arg_name}')
+
+            if arg_default is not ArgMandatory:
+                # A distinct sentinel preserves the policy of checking only
+                # supplied values, even when an explicitly supplied value is
+                # identical to the original default object.
+                if ARG_NAME_DEFAULT_SENTINEL not in func_scope:
+                    func_scope[ARG_NAME_DEFAULT_SENTINEL] = object()
+                # Read the live default so replacing the original callable's
+                # default values after decoration remains observable.
+                default_expr = (
+                    f'{ARG_NAME_FUNC}.__kwdefaults__[{arg_name!r}]'
+                    if arg_kind is ArgKind.KEYWORD_ONLY else
+                    f'{ARG_NAME_FUNC}.__defaults__['
+                    f'{arg_index_positional - args_len_positional}]'
+                )
+                code_restore_defaults += (
+                    f'\n    if {arg_name} is {ARG_NAME_DEFAULT_SENTINEL}:\n'
+                    f'        {arg_name} = {default_expr}\n'
+                )
+        func_call_args = ', '.join(func_call_parts)
+    else:
+        func_call_args = '*args, **kwargs'
 
     # ....................{ ARGS                           }....................
     # Python code snippet type-checking all callable parameters if one or more
@@ -176,12 +207,10 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
 
         # Python code snippet calling this callable unchecked, returning the
         # value returned by this callable from this wrapper.
-        code_check_return = (
-            f'\n    # Forward explicitly bound keyword-only parameters.\n'
-            f'    return {ARG_NAME_FUNC}({func_call_args})'
-            if is_signature_explicit else
-            decor_func.func_wrapper_code_return_unchecked
-        )
+        # Use the existing return/yield protocol for normal functions,
+        # coroutines, and both kinds of generators with the new forwarding.
+        code_check_return = decor_func.func_wrapper_code_return_unchecked.format(
+            func_call_args=func_call_args)
     # Else, the callable return requires type-checking.
 
     # ....................{ SCOPE                          }....................
@@ -217,6 +246,8 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
             conf=decor_func.conf,
             # update_wrapper() copies original annotation metadata afterward.
             is_annotated=False,
+            arg_default_override=func_scope.get(
+                ARG_NAME_DEFAULT_SENTINEL, ArgMandatory),
         )
         if ARG_NAME_GETRANDBITS in func_scope:
             code_signature += CODE_INIT_RANDOM_INT
@@ -241,4 +272,5 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
     #
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is the most ideal. KISS, bro.
-    return f'{code_signature}{code_check_params}{code_check_return}'
+    return (f'{code_signature}{code_check_params}'
+            f'{code_restore_defaults}{code_check_return}')

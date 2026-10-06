@@ -82,7 +82,9 @@ from beartype._check.cls.hint.hintsane import (
 from beartype._data.check.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_INIT_ARGS_LEN,
-    CODE_ARG_LOCALIZE_KEYWORD_REQUIRED,
+    CODE_ARG_LOCALIZE_EXPLICIT,
+    CODE_ARG_LOCALIZE_EXPLICIT_OPTIONAL,
+    ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT,
     ARG_KIND_TO_CODE_LOCALIZE,
 )
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
@@ -93,6 +95,7 @@ from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
+    ArgMandatory,
     iter_func_args,
 )
 from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
@@ -117,8 +120,8 @@ def code_check_args(
     decor_func : BeartypeCallDecorFuncData
         Decorated callable to be type-checked.
     is_signature_explicit : bool, optional
-        Whether required keyword-only parameters are already bound to local
-        variables by a callable-specific signature. Defaults to false.
+        Whether parameters are already bound to local variables by a
+        callable-specific signature. Defaults to false.
 
     Returns
     -------
@@ -203,7 +206,7 @@ def code_check_args(
         #   type-checked by existing logic, due to the non-triviality of
         #   deciding whether a keyword parameter even is "excess" or not.
         set()
-        if is_func_arg_variadic_keyword(
+        if not is_signature_explicit and is_func_arg_variadic_keyword(
             # See the call to the iter_func_args() generator function below for
             # further commentary on these parameters.
             func=decor_func.func_wrappee_wrappee, is_unwrap=False) else
@@ -258,7 +261,7 @@ def code_check_args(
         (
             arg_kind,
             arg_name,
-            _,  # arg_default,
+            arg_default,
         ) = arg_meta
 
         # If...
@@ -375,7 +378,7 @@ def code_check_args(
                 # nested *BEFORE* validating this parameter to be unignorable,
                 # beartype would fail to reduce to a noop for otherwise
                 # ignorable callables -- which would be rather bad, really.
-                if arg_kind in _ARG_KINDS_POSITIONAL:
+                if not is_signature_explicit and arg_kind in _ARG_KINDS_POSITIONAL:
                     is_args_positional = True
                 # Else, this parameter *CANNOT* be passed positionally.
 
@@ -384,11 +387,18 @@ def code_check_args(
                 #        arg_kind, None)
                 # Python code template localizing this parameter if this kind of
                 # parameter is supported *OR* "None" otherwise.
-                ARG_LOCALIZE_TEMPLATE = (
-                    CODE_ARG_LOCALIZE_KEYWORD_REQUIRED
-                    if is_signature_explicit and arg_kind is ArgKind.KEYWORD_ONLY else
-                    ARG_KIND_TO_CODE_LOCALIZE.get(arg_kind, None)
-                )
+                ARG_LOCALIZE_TEMPLATE: Optional[str]
+                if is_signature_explicit:
+                    ARG_LOCALIZE_TEMPLATE = (
+                        ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT[arg_kind]
+                        if arg_kind in ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT else
+                        CODE_ARG_LOCALIZE_EXPLICIT
+                        if arg_default is ArgMandatory else
+                        CODE_ARG_LOCALIZE_EXPLICIT_OPTIONAL
+                    )
+                else:
+                    ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE.get(
+                        arg_kind, None)
 
                 # If this kind of parameter is unsupported, raise an exception.
                 #
