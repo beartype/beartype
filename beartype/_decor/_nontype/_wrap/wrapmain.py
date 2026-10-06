@@ -41,6 +41,7 @@ from beartype._decor._nontype._wrap._wrapreturn import (
     code_check_return as _code_check_return)
 from beartype._util.func.arg.utilfuncargiter import (
     ArgKind, ArgMandatory, iter_func_args)
+import builtins
 
 # ....................{ GENERATORS                         }....................
 def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
@@ -137,7 +138,10 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
     is_signature_explicit = (
         func is decor_func.func_wrappee_wrappee and
         decor_func.func_wrapper_name.isidentifier() and
-        all(not name.startswith('__bear') for _, name, _ in args_meta)
+        # Explicit user locals must not shadow builtins used by type checks,
+        # warning emission, or generator protocol forwarding.
+        all(not name.startswith('__bear') and name not in builtins.__dict__
+            for _, name, _ in args_meta)
     )
     func_scope = decor_func.func_wrapper_locals
     code_restore_defaults = ''

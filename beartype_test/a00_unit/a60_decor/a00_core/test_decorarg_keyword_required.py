@@ -5,6 +5,60 @@
 
 '''Callable-specific wrapper signature and forwarding tests.'''
 
+
+def test_decor_builtin_parameter_names_fallback() -> None:
+    '''User parameters cannot shadow builtins or bypass generated checks.'''
+    from beartype import beartype, BeartypeConf
+    from beartype.roar import BeartypeCallHintParamViolation
+    from inspect import CO_VARKEYWORDS
+    from pytest import raises, warns
+
+    @beartype
+    def accepts(value: int, isinstance=None):
+        return value
+
+    assert accepts(1) == 1
+    assert accepts(1, isinstance=lambda *args: True) == 1
+    assert accepts.__code__.co_flags & CO_VARKEYWORDS == CO_VARKEYWORDS
+    with raises(BeartypeCallHintParamViolation):
+        accepts('wrong', isinstance=lambda *args: True)
+
+    @beartype
+    def container(value: list[int], /, len=None):
+        return value
+
+    assert container([1]) == [1]
+    with raises(BeartypeCallHintParamViolation):
+        container(['wrong'], lambda *args: 0)
+
+    @beartype(conf=BeartypeConf(violation_param_type=UserWarning))
+    def warning(value: int, *, str=None, type=None):
+        return value
+
+    with warns(UserWarning):
+        assert warning('wrong') == 'wrong'
+
+
+async def test_decor_builtin_async_generator_parameter_fallback() -> None:
+    '''Generator protocol builtins remain callable despite matching names.'''
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from collections.abc import AsyncIterator
+    from pytest import raises
+
+    @beartype
+    async def values(value: int, *, anext=1, BaseException=2,
+                     GeneratorExit=3, StopAsyncIteration=4) -> AsyncIterator[int]:
+        yield value
+
+    assert [value async for value in values(1)] == [1]
+    with raises(BeartypeCallHintParamViolation):
+        assert [value async for value in values('wrong')] == []
+    generator = values(2)
+    assert await generator.asend(None) == 2
+    await generator.aclose()
+
+
 def test_decor_required_keyword_signature_and_validation() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
