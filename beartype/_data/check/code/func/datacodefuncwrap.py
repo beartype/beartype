@@ -144,25 +144,14 @@ https://eli.thegreenplace.net/2018/slow-and-fast-methods-for-generating-random-i
 
 # ....................{ CODE ~ arg                         }....................
 CODE_ARG_LOCALIZE_EXPLICIT = f'''
-    # Localize this parameter, already bound by Python.
-    {VAR_NAME_PITH_ROOT} = {{arg_name}}
-
-    # Preserve the existing sentinel policy for type-checking this parameter.
-    if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_GET_VIOLATION}:'''
-'''
-Code snippet localizing a required fixed parameter from an explicit signature.
-'''
-
-
-CODE_ARG_LOCALIZE_EXPLICIT_OPTIONAL = f'''
-    # Localize this optional parameter, already bound by Python.
+    # Localize this fixed parameter, already bound by Python.
     {VAR_NAME_PITH_ROOT} = {{arg_name}}
 
     # Omitted defaults remain unchecked. Explicitly supplied values are checked.
     if ({VAR_NAME_PITH_ROOT} is not {ARG_NAME_DEFAULT_SENTINEL} and
         {VAR_NAME_PITH_ROOT} is not {ARG_NAME_GET_VIOLATION}):'''
 '''
-Code snippet localizing an optional fixed parameter from an explicit signature.
+Code snippet localizing a fixed parameter from an explicit signature.
 '''
 
 

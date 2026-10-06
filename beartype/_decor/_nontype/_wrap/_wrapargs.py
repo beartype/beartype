@@ -83,7 +83,6 @@ from beartype._data.check.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABL
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_INIT_ARGS_LEN,
     CODE_ARG_LOCALIZE_EXPLICIT,
-    CODE_ARG_LOCALIZE_EXPLICIT_OPTIONAL,
     ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT,
     ARG_KIND_TO_CODE_LOCALIZE,
 )
@@ -95,7 +94,6 @@ from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
-    ArgMandatory,
     iter_func_args,
 )
 from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
@@ -393,8 +391,6 @@ def code_check_args(
                         ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT[arg_kind]
                         if arg_kind in ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT else
                         CODE_ARG_LOCALIZE_EXPLICIT
-                        if arg_default is ArgMandatory else
-                        CODE_ARG_LOCALIZE_EXPLICIT_OPTIONAL
                     )
                 else:
                     ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE.get(

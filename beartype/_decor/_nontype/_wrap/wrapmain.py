@@ -39,6 +39,7 @@ from beartype._decor._nontype._wrap._wrapargs import (
     code_check_args as _code_check_args)
 from beartype._decor._nontype._wrap._wrapreturn import (
     code_check_return as _code_check_return)
+from beartype._decor._nontype._wrap._wrapsignature import die_if_args_missing
 from beartype._util.func.arg.utilfuncargiter import (
     ArgKind, ArgMandatory, iter_func_args)
 import builtins
@@ -144,14 +145,17 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
             for _, name, _ in args_meta)
     )
     func_scope = decor_func.func_wrapper_locals
+    code_check_missing = ''
     code_restore_defaults = ''
     if is_signature_explicit:
         func_call_parts = []
+        omitted_conditions = []
+        missing_conditions = []
         args_len_positional = sum(
             kind in (ArgKind.POSITIONAL_ONLY, ArgKind.POSITIONAL_OR_KEYWORD)
             for kind, _, _ in args_meta)
         arg_index_positional = -1
-        for arg_kind, arg_name, arg_default in args_meta:
+        for arg_kind, arg_name, _ in args_meta:
             if arg_kind in (ArgKind.POSITIONAL_ONLY, ArgKind.POSITIONAL_OR_KEYWORD):
                 func_call_parts.append(arg_name)
                 arg_index_positional += 1
@@ -162,14 +166,31 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
             else:
                 func_call_parts.append(f'**{arg_name}')
 
-            if arg_default is not ArgMandatory:
+            if arg_kind not in (
+                ArgKind.VARIADIC_POSITIONAL, ArgKind.VARIADIC_KEYWORD
+            ):
                 # A distinct sentinel preserves the policy of checking only
                 # supplied values, even when an explicitly supplied value is
                 # identical to the original default object.
                 if ARG_NAME_DEFAULT_SENTINEL not in func_scope:
                     func_scope[ARG_NAME_DEFAULT_SENTINEL] = object()
-                # Read the live default so replacing the original callable's
-                # default values after decoration remains observable.
+                # Required parameters also use an omission sentinel: adding
+                # or removing defaults can change requiredness at any time.
+                # Validate omissions before type checks, then restore defaults
+                # afterward so omitted defaults remain unchecked.
+                missing_default = (
+                    f'{ARG_NAME_FUNC}.__kwdefaults__ is None or '
+                    f'{arg_name!r} not in {ARG_NAME_FUNC}.__kwdefaults__'
+                    if arg_kind is ArgKind.KEYWORD_ONLY else
+                    f'{ARG_NAME_FUNC}.__defaults__ is None or '
+                    f'len({ARG_NAME_FUNC}.__defaults__) < '
+                    f'{args_len_positional - arg_index_positional}'
+                )
+                missing_conditions.append(
+                    f'({arg_name} is {ARG_NAME_DEFAULT_SENTINEL} and '
+                    f'({missing_default}))')
+                omitted_conditions.append(
+                    f'{arg_name} is {ARG_NAME_DEFAULT_SENTINEL}')
                 default_expr = (
                     f'{ARG_NAME_FUNC}.__kwdefaults__[{arg_name!r}]'
                     if arg_kind is ArgKind.KEYWORD_ONLY else
@@ -181,6 +202,25 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
                     f'        {arg_name} = {default_expr}\n'
                 )
         func_call_args = ', '.join(func_call_parts)
+        if missing_conditions:
+            func_scope['__beartype_die_if_args_missing'] = die_if_args_missing
+            func_scope['__beartype_args_meta'] = tuple(
+                (kind, name) for kind, name, _ in args_meta)
+            arg_values = ', '.join(name for _, name, _ in args_meta)
+            # Complete calls need neither live-default validation nor
+            # restoration. Keep both off the normal forwarding path.
+            code_check_missing = (
+                f'\n    __beartype_args_omitted = '
+                f'{" or ".join(omitted_conditions)}\n'
+                f'    if __beartype_args_omitted:\n'
+                f'        if {" or ".join(missing_conditions)}:\n'
+                f'            __beartype_die_if_args_missing(\n'
+                f'                {ARG_NAME_FUNC}, __beartype_args_meta, '
+                f'({arg_values},), {ARG_NAME_DEFAULT_SENTINEL})\n'
+            )
+            code_restore_defaults = (
+                '\n    if __beartype_args_omitted:' +
+                code_restore_defaults.replace('\n    ', '\n        '))
     else:
         func_call_args = '*args, **kwargs'
 
@@ -276,5 +316,5 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
     #
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is the most ideal. KISS, bro.
-    return (f'{code_signature}{code_check_params}'
+    return (f'{code_signature}{code_check_missing}{code_check_params}'
             f'{code_restore_defaults}{code_check_return}')

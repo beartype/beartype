@@ -68,10 +68,11 @@ def make_func_signature(
         disable this to avoid redundant annotation evaluation.
 
     arg_default_override : object, optional
-        Replacement for all optional parameter defaults, or ``ArgMandatory``
-        to preserve their original values. Wrapper generators may use an
-        omission sentinel to distinguish omitted defaults from explicitly
-        supplied values. The wrapper body must restore omitted defaults before
+        Replacement default for all fixed parameters, including required
+        parameters, or ``ArgMandatory`` to preserve the original defaults.
+        Wrapper generators may use an omission sentinel to support changes to
+        the original callable's defaults after decoration. The wrapper body
+        must validate missing arguments and restore live defaults before
         forwarding the call.
 
     Returns
@@ -138,7 +139,11 @@ def make_func_signature(
         if arg_hint is not SENTINEL:
             hint_name = add_func_scope_attr(arg_hint, func_scope)
             declaration += f': {hint_name}'
-        if arg_default is not ArgMandatory:
+        if arg_default is not ArgMandatory or (
+            arg_default_override is not ArgMandatory and
+            arg_kind not in (
+                ArgKind.VARIADIC_POSITIONAL, ArgKind.VARIADIC_KEYWORD)
+        ):
             default_name = add_func_scope_attr(
                 arg_default if arg_default_override is ArgMandatory else
                 arg_default_override, func_scope)

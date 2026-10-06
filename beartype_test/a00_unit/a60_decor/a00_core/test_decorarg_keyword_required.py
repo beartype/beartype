@@ -510,9 +510,10 @@ async def test_decor_explicit_async_optional_and_returns() -> None:
     async def noreturn(value: int) -> NoReturn:
         return value
 
-    # Binding errors precede coroutine creation, while checks run on await.
+    # Missing arguments depend on live defaults and are checked on await.
     with raises(TypeError):
-        checked()
+        await checked()
+    # Other native binding errors still precede coroutine creation.
     with raises(TypeError):
         checked(1, 2)
     with raises(BeartypeCallHintReturnViolation):
@@ -611,3 +612,134 @@ def test_decor_explicit_live_default_values() -> None:
     original.__kwdefaults__['third'] = 'new third'
     assert checked() == ('new first', 'new second', 'new third')
     assert checked(1, third=3) == (1, 'new second', 3)
+
+
+def test_decor_explicit_live_default_structure() -> None:
+    '''Adding and removing positional and keyword defaults changes binding.'''
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
+
+    seen = []
+
+    def original(first: int, /, second: int, *, third: int):
+        seen.append((first, second, third))
+        return first, second, third
+
+    checked = beartype(original)
+    original.__defaults__ = ('first', 'second')
+    original.__kwdefaults__ = {'third': 'third'}
+    assert checked() == original() == ('first', 'second', 'third')
+    assert checked(1, third=3) == (1, 'second', 3)
+    with raises(BeartypeCallHintParamViolation):
+        checked(second='wrong')
+
+    original.__defaults__ = (2,)
+    assert checked(1) == original(1) == (1, 2, 'third')
+    seen.clear()
+    # Missing arguments precede type violations and never execute the body.
+    with raises(TypeError) as native:
+        original(second='wrong')
+    with raises(TypeError) as wrapped:
+        checked(second='wrong')
+    assert str(wrapped.value) == str(native.value)
+    assert seen == []
+
+    original.__defaults__ = ()
+    original.__kwdefaults__.clear()
+    with raises(TypeError) as native:
+        original(1, 2)
+    with raises(TypeError) as wrapped:
+        checked(1, 2)
+    assert str(wrapped.value) == str(native.value)
+    original.__defaults__ = None
+    original.__kwdefaults__ = None
+    with raises(TypeError) as native:
+        original()
+    with raises(TypeError) as wrapped:
+        checked()
+    assert str(wrapped.value) == str(native.value)
+    assert seen == []
+    assert checked(1, 2, third=3) == (1, 2, 3)
+
+
+def test_decor_explicit_missing_argument_messages() -> None:
+    '''Missing-argument counts, ordering, and names match native binding.'''
+    from beartype import beartype
+    from pytest import raises
+
+    def original(first: int, second: int, third: int, *,
+                 one: int, two: int, three: int):
+        raise AssertionError('Missing arguments must not execute the body.')
+
+    checked = beartype(original)
+    for args in ((), (1,), (1, 2), (1, 2, 3)):
+        with raises(TypeError) as native:
+            original(*args)
+        with raises(TypeError) as wrapped:
+            checked(*args)
+        assert str(wrapped.value) == str(native.value)
+    for kwargs in ({'one': 1}, {'one': 1, 'two': 2}):
+        with raises(TypeError) as native:
+            original(1, 2, 3, **kwargs)
+        with raises(TypeError) as wrapped:
+            checked(1, 2, 3, **kwargs)
+        assert str(wrapped.value) == str(native.value)
+
+
+def test_decor_explicit_bound_method_live_default_structure() -> None:
+    '''Live default indexes account for the implicitly supplied instance.'''
+    from beartype import beartype
+    from pytest import raises
+
+    class Methods:
+        def accepts(self, value: int, /, *, label: str):
+            return value, label
+
+    instance = Methods()
+    original = instance.accepts
+    checked = beartype(original)
+    original.__func__.__defaults__ = (3,)
+    original.__func__.__kwdefaults__ = {'label': 'x'}
+    assert checked() == original() == (3, 'x')
+    original.__func__.__defaults__ = None
+    original.__func__.__kwdefaults__ = None
+    with raises(TypeError) as native:
+        original(label='x')
+    with raises(TypeError) as wrapped:
+        checked(label='x')
+    assert str(wrapped.value) == str(native.value)
+    assert checked(4, label='y') == (4, 'y')
+
+
+async def test_decor_explicit_lazy_live_default_structure() -> None:
+    '''Coroutines and both generator kinds retain live-default behavior.'''
+    from beartype import beartype
+    from collections.abc import AsyncIterator, Iterator
+    from pytest import raises
+
+    async def coroutine(value: int) -> int:
+        return value
+
+    def generator(value: int) -> Iterator[int]:
+        yield value
+
+    async def async_generator(value: int) -> AsyncIterator[int]:
+        yield value
+
+    checked_coroutine = beartype(coroutine)
+    checked_generator = beartype(generator)
+    checked_async_generator = beartype(async_generator)
+    for func in (coroutine, generator, async_generator):
+        func.__defaults__ = (3,)
+    assert await checked_coroutine() == 3
+    assert list(checked_generator()) == [3]
+    assert [value async for value in checked_async_generator()] == [3]
+    for func in (coroutine, generator, async_generator):
+        func.__defaults__ = None
+    with raises(TypeError):
+        await checked_coroutine()
+    with raises(TypeError):
+        next(checked_generator())
+    with raises(TypeError):
+        await checked_async_generator().__anext__()
