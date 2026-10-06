@@ -24,8 +24,8 @@ from beartype._check.convert._reduce._pep.pep484.redpep484core import (
     reduce_hint_pep484_never,
     reduce_hint_pep484_none,
 )
-from beartype._check.convert._reduce._pep.pep484.redpep484ref import (
-    reduce_hint_pep484_ref)
+from beartype._check.convert._reduce._pep.pep484.redpep484749ref import (
+    reduce_hint_pep484749_ref)
 from beartype._check.convert._reduce._pep.pep484.redpep484604union import (
     reduce_hint_pep484604_union)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
@@ -470,7 +470,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # references refer to only if those objects are efficiently accessible at
     # this early decoration time *WITHOUT* requiring unsafe dynamic importation
     # of third-party packages or modules.
-    HintSignForwardRef: reduce_hint_pep484_ref,
+    HintSignForwardRef: reduce_hint_pep484749_ref,
 
     # Reduce PEP 484-compliant type variables that have subsequently been
     # semantically (but *NOT* syntactically) "replaced" by concrete hints to

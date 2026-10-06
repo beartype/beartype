@@ -222,7 +222,7 @@ def add_func_scope_type(
         # (i.e., "_BeartypeForwardRefABC" subtype). Although prohibiting such
         # proxies from consideration as supported types is typically desirable,
         # this lower-level adder is passed such proxies produced by the
-        # higher-level reduce_hint_pep484_ref() reducer. Ergo, such proxies are
+        # higher-level reduce_hint_pep484749_ref() reducer. Ergo, such proxies are
         # valid for this specific use case.
         is_ref_proxy_valid=True,
         exception_prefix=exception_prefix,

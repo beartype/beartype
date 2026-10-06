@@ -181,10 +181,18 @@ def resolve_hint_pep484_ref_str_decor_curr(
         f'{repr(exception_cls)} not exception type.')
     # print(f'Resolving decorator-time PEP 484 forward reference {repr(hint)} under {repr(decor_curr)}...')
 
-    # Unlike a named forward reference, the None keyword requires no namespace.
-    # Resolve it even for dynamically defined callables without a module.
-    if hint == 'None':
-        return None
+    #FIXME: Non-ideal. *ALL* builtin objects that are valid as type hints (so,
+    #"None" and all builtin types, basically) should be handled similarly.
+    #Special-casing "None" like this may be trivial, but it's also insufficient.
+    #
+    #Perhaps more importantly, however, this fails to account for *SHADOWING*.
+    #Although inadvisable, Python permits both globals and locals to shadow
+    #builtins. Ergo, this doesn't work for even "None" in the general case.
+
+    # # Unlike a named forward reference, the None keyword requires no namespace.
+    # # Resolve it even for dynamically defined callables without a module.
+    # if hint == 'None':
+    #     return None
 
     # ..................{ LOCALS                             }..................
     # Decorated callable and metadata associated with that callable, localized
@@ -199,41 +207,6 @@ def resolve_hint_pep484_ref_str_decor_curr(
     # * Else, defer to the is_func_nested() tester.
     func_is_nested = bool(cls_stack) or is_func_nested(func)
 
-    # Fully-qualified name of the module declaring the decorated callable if
-    # that callable defines the "__module__" dunder attribute *OR* "None"
-    # otherwise (i.e., if that callable fails to define that attribute).
-    func_module_name = get_object_module_name_or_none(func)
-
-    # If the decorated callable fails to define the "__module__" dunder
-    # attribute, there exists *NO* known module against which to resolve this
-    # stringified type hint. Since this implies that this hint *CANNOT* be
-    # reliably resolved, raise an exception.
-    #
-    # Note that this is an uncommon edge case that nonetheless occurs frequently
-    # enough to warrant explicit handling by raising a more human-readable
-    # exception than would otherwise be raised (e.g., if the lower-level
-    # get_object_module_name() getter were called instead above). Notably, the
-    # third-party "markdown-exec" package behaved like this -- and possibly
-    # still does. See also:
-    #     https://github.com/beartype/beartype/issues/381
-    if not func_module_name:
-        # Fully-qualified name of the currently decorated callable.
-        func_name = get_object_name(func)
-
-        # Human-readable label describing that callable.
-        func_label = label_callable(func)
-
-        # Raise this exception.
-        raise exception_cls(
-            f'{exception_prefix}'
-            f'PEP 484 forward reference type hint "{hint}" unresolvable, as '
-            f'callable "{func_name}.__module__" dunder attribute undefined '
-            f'(e.g., as {func_label} defined dynamically in-memory). '
-            f'So much bad stuff is happening here all at once that '
-            f'@beartype can no longer cope with the explosion in badness.'
-        )
-    # Else, the decorated callable defines that attribute.
-
     # ..................{ AMBIGUITY                          }..................
     # If...
     if (
@@ -243,7 +216,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
         # decorator) *AND*...
         cls_stack is None and
         # That callable is nested (i.e., declared in the body of another
-        # pure-Python callable or type)...
+        # pure-Python callable or class)...
         func_is_nested
     ):
         # print(f'Detected nested hint {repr(hint)} in directly decorated callable...')
@@ -269,7 +242,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
         func_basenames_scoped = frozenset(
             get_object_basename_scoped(func).rsplit(sep='.'))
 
-        # If this hint is the unqualified basename of a parent callable or type
+        # If this hint is the unqualified basename of a parent callable or class
         # of the decorated callable, this hint is a relative forward reference
         # to a parent callable or type of the decorated callable that is
         # currently being defined but has yet to be defined in full. If PEP 563
@@ -380,6 +353,46 @@ def resolve_hint_pep484_ref_str_decor_curr(
         #"Outer.Inner"). Resolve this once somebody actually complains. Ugh!
         if hint in func_basenames_scoped:
             # print(f'Proxying nested hint {repr(hint)}...')
+
+            # Fully-qualified name of the module declaring the decorated
+            # callable if that callable defines the "__module__" dunder
+            # attribute *OR* "None" otherwise (i.e., if that callable fails to
+            # define that attribute).
+            func_module_name = get_object_module_name_or_none(func)
+
+            # If the decorated callable fails to define the "__module__" dunder
+            # attribute, there exists *NO* known module against which to resolve
+            # this stringified type hint. Since this implies that this hint
+            # *CANNOT* be reliably resolved, raise an exception.
+            #
+            # Note that this is an uncommon edge case that nonetheless occurs
+            # frequently enough to warrant explicit handling by raising a more
+            # human-readable exception than would otherwise be raised (e.g., if
+            # the lower-level get_object_module_name() getter were called
+            # instead above). Notably, the third-party "markdown-exec" package
+            # behaved like this -- and possibly still does. See also:
+            #     https://github.com/beartype/beartype/issues/381
+            if not func_module_name:
+                # Fully-qualified name of the currently decorated callable.
+                func_name = get_object_name(func)
+
+                # Human-readable label describing that callable.
+                func_label = label_callable(func)
+
+                # Raise this exception.
+                raise exception_cls(
+                    f'{exception_prefix}'
+                    f'PEP 484 stringified forward reference type hint "{hint}" '
+                    f'referring to parent callable or class unresolvable, as '
+                    f'this hint annotates '
+                    f'@beartype-decorated nested callable {func_label} with '
+                    f'undefined "__module__" dunder attribute '
+                    f'(e.g., as {func_label} defined dynamically in-memory). '
+                    f'So much bad stuff is happening here all at once that '
+                    f'@beartype can no longer cope with the explosion in '
+                    f'badness.'
+                )
+            # Else, the decorated callable defines that attribute.
 
             # Beartype-specific forward reference proxy deferring the detection
             # of this type until required by a runtime type-check performed

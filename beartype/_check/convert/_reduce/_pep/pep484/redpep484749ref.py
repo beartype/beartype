@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`-compliant **forward reference reducers** (i.e.,
-low-level callables converting :pep:`484`-compliant forward references to
-lower-level type hints more readily consumable by :mod:`beartype`).
+Project-wide :pep:`484`- and :pep:`749`-compliant **forward reference reducers**
+(i.e., low-level callables converting :pep:`484`- or :pep:`749`-compliant
+forward references to lower-level type hints more readily consumable by
+:mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -18,8 +19,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #continue doing that and many reasons to stop doing that. Thus:
 #* Continue identifying "typing.ForwardRef" objects as "HintSignForwardRef".
 #* Define a new "HintSignPep484ForwardRefStr" sign.
-#* Continue strings as "HintSignPep484ForwardRefStr" instead.
-#* Split the existing reduce_hint_pep484_ref() reducer into two disparate
+#* Identify strings as "HintSignPep484ForwardRefStr" instead.
+#* Split the existing reduce_hint_pep484749_ref() reducer into two disparate
 #  reducers with two distinct code paths:
 #  * reduce_hint_pep484_ref_annotationlib().
 #  * reduce_hint_pep484_ref_str().
@@ -103,7 +104,7 @@ from typing import Optional
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
-def reduce_hint_pep484_ref(
+def reduce_hint_pep484749_ref(
     call_curr: BeartypeCallDataABC,
     conf: BeartypeConf,
     hint: HintPep484749Ref,
@@ -166,7 +167,8 @@ def reduce_hint_pep484_ref(
 
     # ....................{ REDUCERS ~ object              }....................
     # If this hint is a PEP 484- and 749-compliant object-oriented forward
-    # reference (rather than a stringified forward reference)...
+    # reference (rather than merely a PEP 484-compliant stringified forward
+    # reference)...
     if isinstance(hint, HintPep484749RefObjectType):
         # print(f'Reducing PEP 749 "ForwardRef" hint {repr(hint)}...')
 

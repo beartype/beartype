@@ -49,7 +49,7 @@ from beartype._util.hint.pep.proposal.pep695 import (
     is_object_pep695_parameterizable,
     resolve_func_scope_pep695,
 )
-from beartype._util.module.utilmodget import get_object_module_name
+from beartype._util.module.utilmodget import get_object_module_name_or_none
 from collections.abc import Callable
 
 # ....................{ FACTORIES ~ caller                 }....................
@@ -287,11 +287,9 @@ def make_scope_forward_decor_curr(
     func_globals = get_func_globals(func=decoratee, exception_cls=exception_cls)
 
     # Fully-qualified name of the module declaring the decorated callable if
-    # that callable defines the "__module__" dunder attribute.
-    #
-    # Note the parent resolve_hint_pep484_ref_str_decor_curr() call already
-    # guarantees this attribute to be non-"None" and thus raise *NO* exception.
-    func_module_name = get_object_module_name(decoratee)
+    # that callable defines the "__module__" dunder attribute *OR* "None"
+    # otherwise (i.e., if that callable fails to define that attribute).
+    func_module_name = get_object_module_name_or_none(decoratee)
 
     # Weak reference to the code object of the parent callable or type
     # locally declaring the decorated callable if any *OR* "None", initialized

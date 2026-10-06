@@ -15,9 +15,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ TODO                               }....................
 #FIXME: The BeartypeForwardScope.__init__() "scope_dict: LexicalScope" parameter
 #should probably instead be typed as:
-#from collections import ChainMap
-#...
-#    def __init__(self, scope_dict: ChainMap, scope_name: str) -> None:
+#    from collections import ChainMap
+#    ...
+#        def __init__(self, scope_dict: ChainMap, scope_name: str) -> None:
 #
 #Why? Because "ChainMap" exists to literally solve this *EXACT* problem.
 #Notably, the current approach effectively forces a "BeartypeForwardScope" to
@@ -35,10 +35,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import WeakrefCallableType
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.forward.reference._cls.fwdrefabc import (
-    BeartypeForwardRefSubbableABC)
 from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
+from beartype._check.forward.reference._cls.fwdrefabc import (
+    BeartypeForwardRefSubbableABC)
 from beartype._data.py.databuiltins import BUILTIN_NAME_TO_VALUE
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,

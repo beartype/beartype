@@ -55,11 +55,11 @@ def make_func(
         signature prefixed by zero or more decorations *and* body. **This
         snippet must be unindented.** If this snippet is indented, this factory
         raises a syntax error.
-    func_globals : dict[str, Any] | None
+    func_globals : dict[str, Any] | None, default: {}
         Dictionary mapping from the name to value of each **globally scoped
         attribute** (i.e., internally referenced in the body of the function
         declared by this code snippet). Defaults to the empty dictionary.
-    func_locals : dict[str, Any] | None
+    func_locals : dict[str, Any] | None, default: {}
         Dictionary mapping from the name to value of each **locally scoped
         attribute** (i.e., internally referenced either in the signature of
         the function declared by this code snippet *or* as decorators

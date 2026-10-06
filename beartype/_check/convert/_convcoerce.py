@@ -123,7 +123,7 @@ def coerce_func_hint_root(
 
     # ..................{ FORWARD REFERENCE                  }..................
     #FIXME: Unconvinced this is universally useful. Lower-level reducers (e.g.,
-    #reduce_hint_pep484_ref()) already efficiently reduce forward references to
+    #reduce_hint_pep484749_ref()) already efficiently reduce forward references to
     #more useful objects across a variety of common use cases. We *REALLY* don't
     #want to duplicate that logic across both those reducers *AND* the
     #resolve_hint_pep484_ref_str_decor_curr() function called below.
@@ -135,7 +135,7 @@ def coerce_func_hint_root(
     #instead? In other words, this logic smells. The smell is wafting badly.
     #FIXME: For generality, shouldn't this also apply to "typing.ForwardRef"
     #instances? That's yet another reason to defer to the more general-purpose
-    #reduce_hint_pep484_ref() reducer discussed above.
+    #reduce_hint_pep484749_ref() reducer discussed above.
 
     # If this hint is stringified (e.g., as a PEP 484- or 563-compliant forward
     # reference), resolve this hint to the non-string hint to which this hint
