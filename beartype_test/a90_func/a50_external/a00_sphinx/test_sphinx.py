@@ -15,14 +15,19 @@ respect to the third-party Sphinx documentation build toolchain.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from pytest import mark
 from beartype_test._util.mark.pytskip import (
     skip,
     skip_unless_package,
 )
 
 # ....................{ TESTS                              }....................
+# Sphinx 5.x imports imghdr, deprecated in Python 3.11.
+@mark.filterwarnings(
+    "ignore:^'imghdr' is deprecated and slated for removal in Python 3\\.13$:"
+    "DeprecationWarning:^sphinx\\.util\\.images$")
 @skip_unless_package('sphinx')
-def test_sphinx_conf(tmp_path) -> None:
+def test_sphinx_conf(make_app, tmp_path) -> None:
     '''
     Sphinx builds documentation with type-checked ``conf.py`` functions.
 
@@ -32,23 +37,42 @@ def test_sphinx_conf(tmp_path) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.py.utilpyinterpreter import (
-        get_interpreter_command_words)
-    from beartype_test._util.command.pytcmdrun import run_command_forward_output
+    from io import StringIO
+    from pathlib import Path
+    from shutil import copytree
+    from sphinx import version_info
     from beartype_test._util.path.pytpathtest import (
         get_test_func_data_external_sphinx_dir)
 
-    run_command_forward_output(command_words=get_interpreter_command_words() + (
-        '-m', 'sphinx',
-        '-E', '-b', 'html', '-T', '-W',
-        str(get_test_func_data_external_sphinx_dir() / 'conf_py'),
-        str(tmp_path),
-    ))
+    # SphinxTestApp builds beneath its source directory by default. Copy the
+    # document tree so that all build artifacts remain in the temporary tree.
+    source_dir = tmp_path / 'source'
+    copytree(get_test_func_data_external_sphinx_dir() / 'conf_py', source_dir)
+
+    # Sphinx < 7.2 requires its legacy path type rather than pathlib.Path.
+    if version_info < (7, 2):
+        from sphinx.testing.path import path
+        source_dir = path(str(source_dir))
+
+    warnings = StringIO()
+    app = make_app(
+        srcdir=source_dir,
+        buildername='html',
+        freshenv=True,
+        warning=warnings,
+    )
+    app.build()
+
+    assert app.statuscode == 0
+    # Checking the captured warnings also supports older SphinxTestApp versions
+    # that do not accept the warningiserror keyword argument.
+    assert warnings.getvalue() == ''
+    output_dir = Path(app.outdir)
 
     # The marker proves that Sphinx invoked the decorated callback and that its
     # runtime checks ran, rather than merely accepting the configuration.
-    assert (tmp_path / 'beartype-conf-checked.txt').read_text() == 'checked'
-    assert (tmp_path / 'index.html').is_file()
+    assert (output_dir / 'beartype-conf-checked.txt').read_text() == 'checked'
+    assert (output_dir / 'index.html').is_file()
 
 
 #FIXME: *THIS IS HORRIFYING.* Clearly, requiring an obsolete Sphinx is becoming
