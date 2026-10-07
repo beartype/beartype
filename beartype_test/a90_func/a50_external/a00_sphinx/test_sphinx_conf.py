@@ -26,6 +26,12 @@ except ImportError:
     pass
 
 # ....................{ TESTS                              }....................
+# Keep compatibility with Sphinx 5.x while the doc-rtd extra requires Sphinx
+# < 6 and the dev extra includes doc-rtd. This lets this regression test merge
+# before the legacy documentation is removed. Once the following PR removes
+# those dependencies, this warning filter and the legacy path conversion below
+# can be removed:
+#     https://github.com/beartype/beartype/pull/722
 # Sphinx 5.x imports imghdr, deprecated in Python 3.11.
 @mark.filterwarnings(
     "ignore:^'imghdr' is deprecated and slated for removal in Python 3\\.13$:"
