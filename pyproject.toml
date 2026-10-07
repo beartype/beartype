@@ -393,15 +393,7 @@ test-tox = [
     # ....................{ DOCUMENTATION                  }....................
     # Documentation-centric optional test-time dependencies.
 
-    #FIXME: Replace obsolete Docutils-specific integration tests with Zensical
-    #equivalents when time permits, please! *sigh*
-    # # Required by optional Docutils-specific integration tests. Dismantled, this
-    # # is:
-    # # * "docutils 0.22.0" deprecated the "writer_name" parameter accepted by the
-    # #   docutils.core.publish_parts() function.
-    # "docutils >=0.22.0",
-
-    # Required by optional Sphinx-specific conf.py integration tests.
+    # Required by optional Sphinx-specific integration tests.
     "sphinx",
 
     # ....................{ DOOR                           }....................
