@@ -1,13 +1,21 @@
-# The issue chooser is where a reporter decides how to file. SECURITY.md asks
-# that a vulnerability never be a public issue, so the private route has to be
-# visible here, next to the public templates, not only in a file the reporter
-# may never open.
+---
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2014-2026 Beartype authors.
+# See "LICENSE" for further details.
 #
-# Blank issues stay enabled: that was the behaviour before this file existed,
-# and this file only adds a route, it does not take one away.
+# --------------------( SYNOPSIS                           )--------------------
+# GitHub-specific issue template, describing with human-readable language the
+# process by which responsible end users submit security vulnerabilities as
+# initially private GitHub-managed security advisories targeting this repository.
 
+# ....................{ MAIN                               }....................
 blank_issues_enabled: true
+
+# ....................{ LINKS                              }....................
 contact_links:
   - name: Report a security vulnerability
     url: https://github.com/beartype/beartype/security/advisories/new
-    about: Do not open a public issue. Report it privately here. See SECURITY.md.
+    about: >-
+      Please do not open a public issue for security vulnerabilities.
+      Report it privately here instead. Thank you so much! See our top-level
+      "SECURITY.md" document for boring details.
