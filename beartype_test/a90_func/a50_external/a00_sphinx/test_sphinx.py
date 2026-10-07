@@ -21,6 +21,36 @@ from beartype_test._util.mark.pytskip import (
 )
 
 # ....................{ TESTS                              }....................
+@skip_unless_package('sphinx')
+def test_sphinx_conf(tmp_path) -> None:
+    '''
+    Sphinx builds documentation with type-checked ``conf.py`` functions.
+
+    Exercise the unnamed namespace in which Sphinx executes ``conf.py`` through
+    an actual HTML build, including runtime checks in a Sphinx event callback.
+    See https://github.com/beartype/beartype/issues/487.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.py.utilpyinterpreter import (
+        get_interpreter_command_words)
+    from beartype_test._util.command.pytcmdrun import run_command_forward_output
+    from beartype_test._util.path.pytpathtest import (
+        get_test_func_data_external_sphinx_dir)
+
+    run_command_forward_output(command_words=get_interpreter_command_words() + (
+        '-m', 'sphinx',
+        '-E', '-b', 'html', '-T', '-W',
+        str(get_test_func_data_external_sphinx_dir() / 'conf_py'),
+        str(tmp_path),
+    ))
+
+    # The marker proves that Sphinx invoked the decorated callback and that its
+    # runtime checks ran, rather than merely accepting the configuration.
+    assert (tmp_path / 'beartype-conf-checked.txt').read_text() == 'checked'
+    assert (tmp_path / 'index.html').is_file()
+
+
 #FIXME: *THIS IS HORRIFYING.* Clearly, requiring an obsolete Sphinx is becoming
 #a pressing issue. With all due haste, un-skip this test *AFTER* updating our
 #"pyproject.toml" to allow sane Sphinx versions. *gulp*
