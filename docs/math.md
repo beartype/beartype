@@ -206,7 +206,7 @@ If `@beartype` *still* isn't ludicrously speedy enough for you under CPython, we
 
 Most runtime type-checkers exhibit $O(n)$ time complexity (where $n$ is the total number of items recursively contained in a container to be checked) by recursively and repeatedly checking *all* items of *all* containers passed to or returned from *all* calls of decorated callables.
 
-Beartype guarantees $O(1)$ time complexity by non-recursively but repeatedly checking *one* random item at *all* nesting levels of *all* containers passed to or returned from *all* calls of decorated callables, thus amortizing the cost of deeply checking containers across calls.
+Beartype guarantees $O(1)$ time complexity by non-recursively but repeatedly checking *one* random item at *all* nesting levels of *all* containers passed to or returned from *all* calls of decorated callables, thus amortizing the cost of deeply checking containers across calls. (See the subsection on [@beartype-generated code deeply type-checking arbitrarily nested containers in constant time](code.md#constant-nested-deep-sequence-decoration) for what this means in practice.)
 
 Beartype exploits the [well-known coupon collector's problem][coupon collector's problem] applied to abstract trees of nested type hints, enabling us to statistically predict the number of calls required to fully type-check all items of an arbitrary container on average. Formally, let:
 

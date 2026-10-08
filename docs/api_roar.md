@@ -18,6 +18,8 @@ Beartype raises fatal exceptions whenever something explodes. Most are self-expl
 
 When that happens, don't be the guy that ignores this chapter.
 
+<div id="beartype.roar.BeartypeException"></div>
+
 ### BeartypeException
 
 *Superclasses:* `Exception`
@@ -27,6 +29,8 @@ When that happens, don't be the guy that ignores this chapter.
 - `Beartype{subclass_name}Violation` for type-checking violations (e.g., `BeartypeCallHintReturnViolation`).
 - `Beartype{subclass_name}Exception` for non-type-checking violations (e.g., `BeartypeDecorHintPep3119Exception`).
 
+<div id="beartype.roar.BeartypeDecorException"></div>
+
 ### BeartypeDecorException
 
 *Superclasses:* `BeartypeException`
@@ -34,6 +38,8 @@ When that happens, don't be the guy that ignores this chapter.
 **Beartype decorator exception superclass.** *All* exceptions raised by the `@beartype` decorator at decoration time (i.e., while dynamically generating type-checking wrappers for decorated callables and classes) are guaranteed to be instances of concrete subclasses of this abstract base class (ABC). Since decoration-time exceptions are typically raised from module scope early in the lifetime of a Python process, you are unlikely to manually catch and handle decorator exceptions.
 
 A detailed list of subclasses of this ABC is quite inconsequential. Very well. [@leycec] admits he was too tired to type it all out. [@leycec] also admits he played exploitative video games all night instead... *again*. [@leycec] is grateful nobody reads these API notes. <sup>checkmate, readthedocs.</sup>
+
+<div id="beartype.roar.BeartypeCallException"></div>
 
 ### BeartypeCallException
 
@@ -49,6 +55,8 @@ In fact, you're encouraged to do so. Repeat after Kermode Bear:
 
 *Gotta catch 'em all!*
 
+<div id="beartype.roar.BeartypeCallHintException"></div>
+
 ### BeartypeCallHintException
 
 *Superclasses:* `BeartypeCallException`
@@ -56,6 +64,8 @@ In fact, you're encouraged to do so. Repeat after Kermode Bear:
 **Beartype type-checking exception superclass.** Beartype type-checkers (including `beartype.door.die_if_unbearable` and `beartype.beartype`-decorated callables) raise instances of concrete subclasses of this abstract base class (ABC) when failing a type-check at call time – typically due to you passing a parameter or returning a value violating a type hint annotating that parameter or return.
 
 For once, we're not the ones to blame. The relief in our cubicle is palpable.
+
+<div id="beartype.roar.BeartypeCallHintForwardRefException"></div>
 
 ### BeartypeCallHintForwardRefException
 
@@ -80,6 +90,8 @@ As we gaze forward in time, so too do we glimpse ourselves – unshaven and shab
 Forward reference "salmon.of.course" unimportable.
 ```
 
+<div id="beartype.roar.BeartypeCallHintViolation"></div>
+
 ### BeartypeCallHintViolation
 
 *Superclasses:* `BeartypeCallHintException`
@@ -94,6 +106,8 @@ Beartype type-checkers raise an instance of this exception class when an object 
 - User-defined functions and methods decorated by the `beartype.beartype` decorator, which then themselves become beartype type-checkers.
 
 Because type-checking violations are why we are all here, instances of this exception class offer additional read-only public properties to assist you in debugging. Inspect these properties at runtime to resolve any lingering doubts about which coworker(s) you intend to blame in your next twenty Git commits:
+
+<div id="beartype.roar.BeartypeCallHintViolation.culprits"></div>
 
 #### culprits
 

@@ -109,18 +109,3 @@ def get_main_mypy_config_file() -> Path:
 
     # Obverse obviation!
     return FileRelative(get_main_dir(), 'mypy.ini')
-
-
-@callable_cached
-def get_main_readme_file() -> Path:
-    '''
-    :mod:`Path` encapsulating the absolute filename of the **project readme
-    file** (i.e., this project's front-facing ``README.rst`` file) if found *or*
-    raise an exception otherwise.
-
-    Note that the :meth:`.Path.read_text` method of this object trivially yields
-    the decoded plaintext contents of this file as a string.
-    '''
-
-    # Perverse pomposity!
-    return FileRelative(get_main_dir(), 'README.rst')

@@ -9,6 +9,14 @@ Child Markdown document charting this project's feature compliance matrix.
 
 # Features
 
+<!-- FIXME: This preamble turned out to be a *LOT* less funny than I thought.
+```text
+It's a big bear AAAAAAAAFTER all!
+It's a big bear AAAAAAAAFTER all!
+It's a big b——— *squelching sound, then blessed silence*
+```
+-->
+
 Beartype complies with vast swaths of Python's `typing` landscape and lint-filled laundry list of [Python Enhancement Proposals (PEPs)][PEPs] – but nobody's perfect. Not even the hulking form of beartype does everything. <sup>\</audience_gasps\></sup>
 
 Let's chart exactly *what* beartype complies with and *when* beartype first did so. Introducing... Beartype's **feature matrix of bloated doom!** It will bore you into stunned disbelief that somebody typed all this.[^1]

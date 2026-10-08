@@ -29,6 +29,23 @@ still listing this title in the site-wide navigation block to the left.
 
 <!-- -------------( BADGES                                   )-------------- -->
 <!-- FIXME: Let's add these badges to our new "_links.md" database, too! *sigh* -->
+<!-- FIXME: Replace and/or supplement badges shown below with third-party badges
+published by "https://shields.io"; the look-and-feel of shields.io badges is
+the flat design favoured by modern apps and thus ostensibly superior to
+anything else I've seen. Relevant HTML resembles:
+    <a href="https://github.com/beartype/beartype/stargazers">
+    <img src="https://img.shields.io/github/stars/beartype/beartype?style=for-the-badge" alt="@beartype stars"/>
+    </a>
+    <a href="https://github.com/beartype/beartype/fork">
+    <img src="https://img.shields.io/github/forks/beartype/beartype?style=for-the-badge" alt="@beartype forks"/>
+    </a>
+    </a>
+    <a href="https://github.com/beartype/beartype/releases">
+    <img src="https://img.shields.io/github/release/beartype/beartype?&label=Latest&style=for-the-badge"/>
+
+See also this exhaustive list of all GitHub-specific shield.io badges:
+    https://shields.io/category/activity
+-->
 
 [![beartype test coverage status](https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ)](https://codecov.io/gh/beartype/beartype) [![beartype continuous integration (CI) status](https://github.com/beartype/beartype/actions/workflows/python_test.yml/badge.svg)][beartype tests] [![beartype Read The Docs (RTD) status](https://readthedocs.org/projects/beartype/badge/?version=latest)](https://beartype.readthedocs.io/en/latest/?badge=latest)
 
@@ -46,6 +63,22 @@ jargon we just made up, and thrilling puns.
 Beartype enforces [type hints](eli5.md#standard-hints) across your entire app in
 [two lines of runtime code with no runtime overhead](api_claw.md). If seeing is
 believing, prepare to do both those things.
+
+<!-- FIXME: Once we actually receive a sponsor at this tier, please remove this
+placeholder as well as the icon links below. kthx
+The [Bear Team][beartype organization] gratefully thanks [our family of
+breathtaking GitHub Sponsors][beartype sponsorship]:
+
+* **Your iconic URL here.** [Let us bestow you with eyeballs][beartype
+  sponsorship].
+-->
+
+<!-- FIXME: Replace most or all of the following code blocks with a
+Javascript-animated terminal widget implemented as an MkDocs plugin named
+"termynal.py". Extensive research suggests this to be the *ONLY* modern
+actively maintained Javascript-animated terminal widget, interestingly:
+    https://github.com/termynal/termynal.py
+Note that Zensical support for this third-party MkDocs plugin is unverified. -->
 
 ```bash
 # Install beartype.
