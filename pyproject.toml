@@ -135,7 +135,7 @@ dynamic = [
 #     ".github/workflows/python_test.yml" file.
 # * Integration test data, including:
 #   * The "beartype_test/a90_func/data/external/poetry/pyproject.toml" file.
-# * Front-facing documentation (e.g., "doc/src/pep.rst").
+# * Front-facing documentation (e.g., "docs/pep.md").
 # * Signs declared by the private "beartype._data.hint.pep.datapepsign"
 #   submodule, which *MUST* be synchronized against the "__all__" dunder list
 #   global of the "typing" module bundled with the most recent CPython release.
@@ -221,132 +221,16 @@ dependencies = []
 #* Official PEP 735 proposal:
 #      https://peps.python.org/pep-0735
 
-# GitHub Pages (GHP)-specific documentation-time package dependencies required
-# to automatically build documentation for this project from GitHub's homegrown
+# Read The Docs (RTD)-specific documentation-time package dependencies required
+# to automatically build documentation for this project from the third-party RTD
 # hosting service.
-doc-ghp = [
+doc-rtd = [
     # ....................{ THEME                          }....................
     # It's now sensical
     # To prep for Zensical
     # Extend your tenticles,
     # To welcome, welcome, welcome, welcome Zensical!
     "zensical >=0.0.43",
-]
-
-#FIXME: Remove *AFTER* successfully migrating from RTD to GHP.
-# Read The Docs (RTD)-specific documentation-time package dependencies required
-# to automatically build documentation for this project from the third-party RTD
-# hosting service. For consistency, these dependencies are often constrained to
-# build documentation with a single well-tested configuration.
-doc-rtd = [
-    #FIXME: Relax the maximum Sphinx version restriction (e.g., by simply
-    #removing the restriction on "<6.0.0").
-    # Sphinx itself. Specifically, this project requires:
-    # * sphinx >= 4.2.0, which resolved a severe compatibility issue under
-    #   Python >= 3.10. See also this upstream issue:
-    #       https://github.com/sphinx-doc/sphinx/issues/9816
-    # * sphinx < 6.0.0, as more recent versions currently conflict with our
-    #   Sphinx theme. See again the same upstream issue as above.
-    "sphinx >=4.2.0,<6.0.0",
-
-    #FIXME: Switch! So, "pydata-sphinx-theme" is ostensibly *MOSTLY* great.
-    #However, there are numerous obvious eccentricities in "pydata-sphinx-theme"
-    #that we strongly disagree with -- especially that theme's oddball division
-    #in TOC heading levels between the top and left sidebars.
-    #
-    #Enter "sphinx-book-theme", stage left. "sphinx-book-theme" is based on
-    #"pydata-sphinx-theme", but entirely dispenses with all of the obvious
-    #eccentricities that hamper usage of "pydata-sphinx-theme". We no longer
-    #have adequate time to maintain custom documentation CSS against the moving
-    #target that is "pydata-sphinx-theme". Ergo, we should instead let
-    #"sphinx-book-theme" do all of that heavy lifting for us. Doing so will
-    #enable us to:
-    #* Lift the horrifying constraint above on a maximum Sphinx version. *gulp*
-    #* Substantially simplify our Sphinx configuration. Notably, the entire
-    #  fragile "doc/src/_templates/" subdirectory should be *ENTIRELY* excised
-    #  away.
-    #
-    #Please transition to "sphinx-book-theme" as time permits.
-
-    # Third-party Sphinx theme (i.e., extension providing the custom HTML theme
-    # preferred by this documentation). This theme was selected according to
-    # mostly objective (albeit ultimately subjective) heuristic criteria. In
-    # descending order of importance, we selected the theme with:
-    #
-    # 1. The most frequent git commit history.
-    # 2. The open issues and pull requests (PRs).
-    # 3. The most GitHub stars as a crude proxy for aggregate rating.
-    # 4. **IS NOT STRONGLY OPINIONATED** (i.e., is configurable with standard
-    #    Sphinx settings and directives).
-    #
-    # Furo
-    # ----
-    # Furo handily bested all other themes across the first three criteria. Furo
-    # is very well-maintained, frequently closes out open issues and merges open
-    # PRs, and sports the highest quantity of GitHub stars by an overwhelming
-    # margin. Sadly, Furo handily loses against literally unmaintained themes
-    # across the final criteria. Furo is absurdly strongly opinionated to an
-    # authoritarian degree we rarely find in open-source software. Why? Because
-    # it's principal maintainer is. Like maintainer, like software. Furo
-    # routinely ignores standard Sphinx settings and directives due to
-    # subjective opinions held by its maintainer, including:
-    #
-    # * Most user-defined ":toctree:" settings used to configure both global and
-    #   local tables of contents (TOCs) and thus the leftmost navigation
-    #   sidebar, effectively preventing users from using that sidebar to
-    #   navigate to anything. We are *NOT* kidding. ":toctree:" settings
-    #   ignored by Furo include:
-    #
-    #   * ":maxdepth:". Internally, Furo forces the ":titlesonly:" setting by
-    #     passing "titles_only=True" to Sphinx's "toctree()" function at
-    #     runtime. Doing so effectively coerces ":maxdepth: 1", thus
-    #     intentionally hiding *all* document structure from the navigation
-    #     sidebar -- where (usually) *all* document structure is displayed.
-    #     Users thus have no means of directly jumping from the root landing
-    #     page to child leaf documents, significantly obstructing user
-    #     experience (UX) and usability. See also this feature request
-    #     discussion to relax these constraints:
-    #         https://github.com/pradyunsg/furo/discussions/146
-    #
-    #     ...to which the Furo maintainer caustically replied:
-    #
-    #         No, there isn't any (supported) way to do this.
-    #
-    #         Separating the page content hierarchy and site structure was an
-    #         explicit design goal.
-    #
-    # We fundamentally disagree with those goals and thus permanently switched
-    # away from Furo. Unjustified opinions are the little death of sanity.
-    #
-    # PyData
-    # ------
-    # Furo and PyData are neck-and-neck with respect to git commit history; both
-    # are extremely well-maintained. Furo leaps ahead with respect to both issue
-    # and PR resolution, however; PyData has an extreme number of open issues
-    # and PRs, where Furo enjoys none. Moreover, Furo also enjoys dramatically
-    # more GitHub stars.
-    #
-    # Nonetheless, PyData is *NOT* strongly opinionated; Furo is. PyData does
-    # *not* silently ignore standard Sphinx settings and directives for largely
-    # indefensible reasons. Consequently, PyData wins by default. In fact, *ANY*
-    # other theme (including even unmaintained dead themes) wins by default;
-    # *NO* other theme (to my limited knowledge) forcefully ignores standard
-    # Sphinx settings and directives to the extent that Furo does.
-    #
-    # PyData wins by literally doing nothing. Laziness prevails. All hail
-    # La-Z-Boy.
-    "pydata-sphinx-theme <=0.7.2",
-
-    # The older version of "pydata-sphinx-theme" currently required above to
-    # build this documentation assumes that Python bundles the "distutils"
-    # package, which Python >= 3.12 no longer does. Instead, explicitly install
-    # the third-party "setuptools" toolchain, which implicitly installs
-    # "distutils" as well... via a horribly antiquated hack. Just do it. \o/
-    "setuptools",
-
-    # Third-party Sphinx extensions.
-    "autoapi >=0.9.0",
-    "sphinxext-opengraph >=0.7.5",
 ]
 
 # Tox-specific test-time dependencies required to test this package via
@@ -383,10 +267,8 @@ test-tox = [
     # ....................{ DOCUMENTATION                  }....................
     # Documentation-centric optional test-time dependencies.
 
-    #FIXME: Replace with Zensical equivalents when time permits to convert all
-    #obsolete Sphinx-specific integration tests, please! *sigh*
-    # # Required by optional Sphinx-specific integration tests.
-    # "sphinx",
+    # Required by optional Sphinx-specific integration tests.
+    "sphinx",
 
     # ....................{ DOOR                           }....................
     # DOOR-specific optional test-time dependencies required to exercise all
@@ -738,7 +620,6 @@ include = [
     # Relative basenames of all requisite top-level installation-time files.
     "/LICENSE",
     "/*.md",
-    "/*.rst",
     "/conftest.py",
     "/mypy",
     "/mypy.ini",
@@ -746,7 +627,6 @@ include = [
     "/pyright",
     "/pytest",
     "/pytest.ini",
-    "/sphinx",
     "/tox",
     "/tox.ini",
     "/.codecov.yml",
@@ -754,22 +634,11 @@ include = [
     "/.readthedocs.yaml",
 
     # Relative dirnames of all requisite top-level installation-time
-    # directories, including:
-    # * All up-to-date Zensical-specific files documenting this project in the
-    #   top-level "docs/" subdirectory.
-    # * All obsolete Sphinx-specific files documenting this project in the
-    #   top-level "doc/" subdirectory.
-    #
-    # Yes, this is confusing. The obsolete "doc/" subdirectory will be
-    # permanently removed at some point. For now, it lingers like a bad smell.
+    # directories, including all Zensical-specific files documenting this
+    # project in the top-level "docs/" subdirectory.
     "/docs/*.md",
     "/docs/assets/*.svg",
     "/docs/js/*.js",
-    "/doc/Makefile",
-    "/doc/*.bat",
-    "/doc/*.md",
-    "/doc/*.rst",
-    "/doc/src",
 
     # Glob expression recursively matching *ALL* Python submodules in this
     # project's test suite.
