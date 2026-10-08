@@ -270,11 +270,22 @@
 #Clearly, type variables have names. Clearly, those names mean something.
 #Indeed, @beartype *ABSOLUTELY* can safely assume that there exists a one-to-one
 #mapping between a type variable and its name for the scope of a single
-#callable. In turn, this means that the local variable
-#f"__beartype_typevar_free_{hint.name}" uniquely provides the value of the type
-#bound to that type variable for the duration of the current type-checking
-#wrapper function call -- regardless of whether that type variable was assigned
-#to in the same "if" conditional checking the current parameter or not. *WOAH*.
+#callable. Mostly. Actually... we probably can't. Type variable names are
+#actually ambiguous across "TypeVar" constructor parameters. For example,
+#"TypeVar('T')" and "TypeVar('T', bound=int)" share the same name "T" despite
+#being fundamentally different type variables. Thankfully, we already resolved
+#this ambiguity: the make_hint_typearg_unpacked_repr() string factory function,
+#which we actually tested heavily despite not calling that factory anywhere at
+#the moment. *START CALLING THAT FACTORY* is what we're saying. It works. Thus,
+#synthesize these local variables as follows:
+#    typevar_name = make_hint_typearg_unpacked_repr(hint)
+#    typevar_free_name = f"__beartype_typevar_free_{typevar_name}"
+#
+#In turn, this means that the "typevar_free_name" local variable uniquely
+#provides the value of the type bound to that type variable for the duration of
+#the current type-checking wrapper function call -- regardless of whether that
+#type variable was assigned to in the same "if" conditional checking the current
+#parameter or not. *WOAH*.
 #
 #This is pretty ridiculous, honestly. I invented all of this accidentally on a
 #warm summer's Saturday evening rather than playing video games. WHATAMIDOING!?!

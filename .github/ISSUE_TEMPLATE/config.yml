@@ -13,9 +13,11 @@ blank_issues_enabled: true
 
 # ....................{ LINKS                              }....................
 contact_links:
-  - name: Report a security vulnerability
-    url: https://github.com/beartype/beartype/security/advisories/new
+  - name: >-
+      Report a security vulnerability (via a private draft security advisory)
     about: >-
       Please do not open a public issue for security vulnerabilities.
-      Report it privately here instead. Thank you so much! See our top-level
-      "SECURITY.md" document for boring details.
+      Report it privately here instead. Thank you so much! See the prior
+      "Report a security vulnerability" link (which simply redirects to our
+      top-level `SECURITY.md` document) for boring details.
+    url: https://github.com/beartype/beartype/security/advisories/new
