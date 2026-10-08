@@ -501,27 +501,41 @@ Let's take this from the top.
         pypy37: commands succeeded
         congratulations :)
 
-15. **Stage these changes.**
+15. (*Optional*) **Preview documentation changes.** If you changed anything under `docs/`, preview the site before you commit. The `[dev]` extra installed above includes [Zensical], our documentation generator.
+
+    ```bash
+    zensical serve --open
+    ```
+
+    This builds the site, opens <http://localhost:8000/en/latest/> in your browser, and rebuilds when you save a file. Press `Ctrl-C` to stop the server.
+
+    Before you commit, build the site once in strict mode. Strict mode stops on the first warning (e.g., a broken link). The site builds into the `site/` subdirectory, which `git` ignores.
+
+    ```bash
+    zensical build --strict
+    ```
+
+16. **Stage these changes.**
 
     ```bash
     git add -A
     ```
 
-16. **Commit these changes.**
+17. **Commit these changes.**
 
     ```bash
     git commit
     ```
 
-17. **Push these changes** to your remote fork.
+18. **Push these changes** to your remote fork.
 
     ```bash
     git push
     ```
 
-18. **Click the "Create pull request" button** in the upper right-hand corner of your fork page.
+19. **Click the "Create pull request" button** in the upper right-hand corner of your fork page.
 
-19. Afterward, **routinely pull upstream changes** to avoid desynchronization with [the "beartype/beartype" repository][beartype].
+20. Afterward, **routinely pull upstream changes** to avoid desynchronization with [the "beartype/beartype" repository][beartype].
 
     ```bash
     git checkout main && git pull upstream main
