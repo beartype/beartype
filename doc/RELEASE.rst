@@ -294,13 +294,13 @@ Beartype is releasable to all supported platforms as follows:
       $ git tag -a v{version}
 
 #. **Bump release metadata.** In preparation for developing the next release,
-   the ``beartype.meta.VERSION`` global should be incremented according to
+   the ``beartype._metaverse.VERSION`` global should be incremented according to
    the `best practices <Version Nomenclature_>`__ detailed below.
 
 #. **Create another announcement commit.** This commit should have a message
    whose first line is of the format ``"beartype {version} started."``, where
-   ``{version}`` is the new value of the ``beartype.__version__`` global.
-   Since no changelog for this release yet exists, a single-line message
+   ``{version}`` is that new value of the ``beartype._metaverse.VERSION``
+   global. Since no changelog for this release yet exists, a single-line message
    suffices for this commit. For example::
 
        **Beartype 0.4.1** started.
