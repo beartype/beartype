@@ -93,6 +93,14 @@ def hints_pep544_meta() -> (
         return FileIO(SUBMODULE_FILENAME, 'rb')
 
     # ..................{ FACTORIES ~ text                   }..................
+    # Note that we intentionally avoid defining a comparable open_text_fileio()
+    # factory below. Why? Because the standard "io.FileIO" type underlying such
+    # a hypothetical factory appears to coerce text into binary modes,
+    # preventing meaningful use of such a hypothetical factory: e.g.,
+    #     >>> from io import FileIO
+    #     >>> FileIO(__file__, mode='r').mode
+    #     'rb'  # <-- *WTF PYTHON* no. seriously. wtf.
+
     def open_text_file() -> TextIO:
         '''
         Factory returning an open read-only file handle in text mode via the
@@ -325,7 +333,6 @@ def hints_pep544_meta() -> (
         PithUnsatisfiedMetadata(pith=open_text_stringio, is_pith_factory=True),
     )
 
-    #FIXME: Use us up below, please. *sigh*
     # Tuple of one or more "PithUnsatisfiedMetadata" instances validating
     # objects either satisfying or violating either "typing.TextIO" *OR* its
     # subscripted alias "typing.IO[str]".

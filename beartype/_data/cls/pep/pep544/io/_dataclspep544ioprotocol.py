@@ -170,13 +170,13 @@ class Pep544TextIO(Pep544IO[str], Protocol):
     :func:`issubclass` **builtin.** Moreover, the uniquely subclass-specific
     attributes required by this protocol subclass are *all* non-method
     attributes. Whereas the :func:`issubclass`-friendly
-    :class:`Pep544IOMethodsOnly` superclass of the :func:`issubclass`-hostile
-    :class:`.IO` superclass could be defined, *no* similar hypothetical
-    :func:`issubclass`-friendly ``Pep544TextIOMethodsOnly`` superclass of this
-    :func:`issubclass`-hostile protocol can be defined. That superclass would be
-    empty and thus effectively useless. Ergo, the *only* means of detecting
-    whether a given type satisfies this protocol is to manually introspect the
-    non-method attributes of that type. Python: "Ugh."
+    :class:`.Pep544IOMethodsOnly` superclass of the :func:`issubclass`-hostile
+    :class:`.IO` superclass could be (and therefore is) defined above, *no*
+    similar hypothetical :func:`issubclass`-friendly ``Pep544TextIOMethodsOnly``
+    superclass of this :func:`issubclass`-hostile protocol can be defined. That
+    superclass would be empty and thus effectively useless. Ergo, the *only*
+    means of detecting whether a given type satisfies this protocol is to
+    manually introspect the non-method attributes of that type. Python: "Ugh."
     '''
 
     @property
