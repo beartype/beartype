@@ -45,7 +45,7 @@ generator factory wrapped by :func:`beartype.beartype`-driven type-checking.
 
 
 CODE_PEP342_RETURN_UNCHECKED = f'''
-    return (yield from {ARG_NAME_FUNC}(*args, **kwargs))'''
+    return (yield from {ARG_NAME_FUNC}({{func_call_args}}))'''
 '''
 :pep:`342`-compliant code snippet facilitating full-blown bidirectional
 communication between the higher-level caller and lower-level synchronous

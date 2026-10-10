@@ -37,7 +37,10 @@ from typing import NoReturn
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
-def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
+def code_check_return(
+    decor_func: BeartypeCallDecorFuncData,
+    func_call_args: str = '*args, **kwargs',
+) -> str:
     '''
     Generate a Python code snippet type-checking the annotated return declared
     by the decorated callable if any *or* the empty string otherwise (i.e., if
@@ -47,6 +50,9 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
     ----------
     decor_func : BeartypeCallDecorFuncData
         Decorated callable to be type-checked.
+    func_call_args : str, optional
+        Expressions forwarding wrapper arguments to that callable. Defaults to
+        forwarding the generic variadic positional and keyword parameters.
 
     Returns
     -------
@@ -138,7 +144,8 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
                 # Pre-generated code snippet validating this callable to *NEVER*
                 # successfully return by unconditionally generating a violation.
                 code_noreturn_check = PEP484_CODE_CHECK_NORETURN.format(
-                    func_call_prefix=decor_func.func_wrapper_code_call_prefix)
+                    func_call_prefix=decor_func.func_wrapper_code_call_prefix,
+                    func_call_args=func_call_args)
 
                 # Code snippet handling the previously generated violation by
                 # either raising that violation as a fatal exception *OR*
@@ -170,7 +177,8 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
                 # Code snippets prefixing and suffixing the type-checking of
                 # this return.
                 code_return_check_prefix = CODE_CALL_CHECKED_format(
-                    func_call_prefix=decor_func.func_wrapper_code_call_prefix)
+                    func_call_prefix=decor_func.func_wrapper_code_call_prefix,
+                    func_call_args=func_call_args)
                 code_return_check_suffix = (
                     decor_func.func_wrapper_code_return_checked)
 
