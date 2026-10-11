@@ -90,6 +90,9 @@ class UnionTypeHint(TypeHint):
               same hash with one another.
             * If this union is subscripted by two or more subhint-unique child
               hints, the frozenset of those child hints.
+            * If this is an unsubscripted ``typing.Union`` or
+              ``typing.Optional`` accepted by ``TypeHint``, the empty
+              frozenset.
         '''
 
         # ..................{ IMPORTS                        }..................
@@ -219,9 +222,14 @@ class UnionTypeHint(TypeHint):
             # union currently being visited by this outer "while" loop.
             branch_this_index += 1
 
-        # Assert that this union is subscripted by at least one subhint-unique
-        # child hint (as a crude sanity check). By definition, *ALL* unions
-        # *MUST* satisfy this basic constraint.
+        # Unsubscripted "typing.Union" and "typing.Optional" are accepted by
+        # "TypeHint" despite having no child hints. Preserve that empty branch
+        # set as a valid equality and hash key.
+        if not branches_unique:
+            return frozenset()
+
+        # Assert that every other union has at least one subhint-unique child
+        # hint (as a crude sanity check).
         assert len(branches_unique) >= 1, (
             f'PEP 484 or 604 union type hint wrapper '
             f'{repr(self)} subscripted by no subhint-unique child type hints.'

@@ -148,6 +148,29 @@ def test_door_typehint_repr() -> None:
     hint = TypeHint(annotation)
     assert repr(annotation) in repr(hint)
 
+
+def test_door_typehint_unsubscripted_union_equals_and_hashes() -> None:
+    '''
+    Test equality and hashing of accepted unsubscripted union special forms.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import TypeHint
+
+    # Intentionally import from "typing" rather than "beartype.typing" to
+    # guarantee PEP 484-compliant special forms.
+    from typing import (
+        Optional,
+        Union,
+    )
+
+    for hint in (Union, Optional):
+        hint_a = TypeHint(hint)
+        hint_b = TypeHint(hint)
+        assert hint_a == hint_b
+        assert hint_b == hint_a
+        assert hash(hint_a) == hash(hint_b)
+
 # ....................{ TESTS ~ dunders : compare          }....................
 def test_door_typehint_compare_equals(door_cases_equals: (
     'tuple[tuple[object, object, bool]]')) -> None:
