@@ -63,6 +63,59 @@ def test_get_hint_pep695_unsubbed_alias_circular() -> None:
         # Assert that this exception message is helpful.
         assert 'circularly aliases itself' in str(exception_info.value)
 
+
+def test_get_hint_pep695_alias() -> None:
+    '''
+    Test the private
+    :func:`beartype._util.hint.pep.proposal.pep695.get_hint_pep695_alias`
+    getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep695Exception
+    from beartype._util.hint.pep.proposal.pep695 import get_hint_pep695_alias
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+    from pytest import raises
+
+    # ....................{ FAIL                           }....................
+    # Assert this getter rejects objects that are *NOT* type aliases.
+    with raises(BeartypeDecorHintPep695Exception):
+        get_hint_pep695_alias(int)
+
+    # If the active Python interpreter targets Python < 3.12, this interpreter
+    # fails to support PEP 695. In this case, reduce to a noop.
+    if not IS_PYTHON_AT_LEAST_3_12:
+        return
+    # Else, this interpreter supports PEP 695.
+
+    # ....................{ IMPORTS ~ version              }....................
+    # Defer version-specific imports.
+    from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
+        AliasCircularA,
+        AliasDoorInt,
+        AliasDoorIntNested,
+        AliasDoorListSetT,
+    )
+
+    # ....................{ PASS                           }....................
+    # Assert this getter reduces an unsubscripted alias to its aliased hint.
+    assert get_hint_pep695_alias(AliasDoorInt) is int
+
+    # Assert this getter transitively unwraps an alias of an alias.
+    assert get_hint_pep695_alias(AliasDoorIntNested) is int
+
+    # Assert this getter reduces a subscripted alias to the hint aliased by the
+    # unsubscripted alias originating that alias, *BEFORE* substituting type
+    # parameters (i.e., still parametrized by "T").
+    assert get_hint_pep695_alias(AliasDoorListSetT[int]) == (
+        AliasDoorListSetT.__value__)
+
+    # ....................{ FAIL ~ circular                }....................
+    # Assert this getter propagates circular-chain detection.
+    with raises(BeartypeDecorHintPep695Exception):
+        get_hint_pep695_alias(AliasCircularA)
+
 # ....................{ TESTS ~ tester                     }....................
 def test_is_hint_pep695_subbed() -> None:
     '''
@@ -93,6 +146,133 @@ def test_is_hint_pep695_subbed() -> None:
     # subscripted builtins.
     assert is_hint_pep695_subbed(
         'And thou, colossal Skeleton, that, still') is False
+
+
+def test_is_hint_pep695_recursive() -> None:
+    '''
+    Test the private
+    :func:`beartype._util.hint.pep.proposal.pep695.is_hint_pep695_recursive`
+    tester.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep695Exception
+    from beartype._util.hint.pep.proposal.pep695 import (
+        is_hint_pep695_recursive)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+    from pytest import raises
+
+    # If the active Python interpreter targets Python < 3.12, this interpreter
+    # fails to support PEP 695. In this case, reduce to a noop.
+    if not IS_PYTHON_AT_LEAST_3_12:
+        return
+    # Else, this interpreter supports PEP 695.
+
+    # ....................{ IMPORTS ~ version              }....................
+    # Defer version-specific imports.
+    from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
+        AliasCircularA,
+        AliasCircularSelf,
+        AliasDoorAnnotated,
+        AliasDoorBareT,
+        AliasDoorCallable,
+        AliasDoorInt,
+        AliasDoorIntNested,
+        AliasDoorListSetT,
+        AliasDoorMutual1,
+        AliasDoorMutual2,
+        AliasDoorShared,
+        AliasDoorTree,
+        AliasDoorTreeWrapped,
+        AliasDoorUnion,
+        AliasDoorWrapT,
+        AliasPep484604Recursive2T,
+    )
+
+    # ....................{ PASS ~ recursive               }....................
+    # Assert this tester detects direct, generic, and mutual recursion from
+    # every entry point.
+    for hint_recursive in (
+        AliasDoorTree,
+        AliasPep484604Recursive2T,
+        AliasPep484604Recursive2T[int],
+        AliasDoorMutual1,
+        AliasDoorMutual2,
+        # Recursion solely through the child hints subscripting another alias.
+        AliasDoorTreeWrapped,
+        # Non-recursive alias subscripted by a recursive alias.
+        AliasDoorWrapT[AliasDoorTree],
+    ):
+        assert is_hint_pep695_recursive(hint_recursive) is True
+
+    # ....................{ PASS ~ non-recursive           }....................
+    # Assert this tester rejects non-recursive aliases, including aliases
+    # reusing the same child alias more than once *WITHOUT* recursion.
+    for hint_nonrecursive in (
+        AliasDoorInt,
+        AliasDoorIntNested,
+        AliasDoorUnion,
+        AliasDoorListSetT,
+        AliasDoorListSetT[int],
+        AliasDoorShared,
+        AliasDoorAnnotated,
+        AliasDoorCallable,
+        AliasDoorBareT[int],
+        AliasDoorWrapT[int],
+    ):
+        assert is_hint_pep695_recursive(hint_nonrecursive) is False
+
+    # ....................{ FAIL                           }....................
+    # Assert this tester propagates circular-chain detection.
+    for hint_circular in (AliasCircularSelf, AliasCircularA):
+        with raises(BeartypeDecorHintPep695Exception):
+            is_hint_pep695_recursive(hint_circular)
+
+
+def test_is_hint_pep695_recursive_shared_chain() -> None:
+    '''
+    Test that the private
+    :func:`beartype._util.hint.pep.proposal.pep695.is_hint_pep695_recursive`
+    tester decides a long chain of non-recursive type aliases each reusing the
+    prior alias twice in linear rather than exponential time.
+
+    An exponential-time implementation effectively hangs on this chain, as the
+    number of paths through this chain doubles with each alias.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.hint.pep.proposal.pep695 import (
+        is_hint_pep695_recursive)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+
+    # If the active Python interpreter targets Python < 3.12, this interpreter
+    # fails to support PEP 695. In this case, reduce to a noop.
+    if not IS_PYTHON_AT_LEAST_3_12:
+        return
+    # Else, this interpreter supports PEP 695.
+
+    # ....................{ LOCALS                         }....................
+    # Number of type aliases in this chain.
+    ALIASES_LEN = 64
+
+    # Chain of type aliases "type A{i} = A{i-1} | list[A{i-1}]". Note that type
+    # alias statements are syntax errors under Python < 3.12 and are thus
+    # dynamically defined here.
+    aliases_scope: dict = {}
+    exec(
+        'type A0 = int\n' + ''.join(
+            f'type A{i} = A{i - 1} | list[A{i - 1}]\n'
+            for i in range(1, ALIASES_LEN)
+        ),
+        aliases_scope,
+    )
+
+    # ....................{ PASS                           }....................
+    # Assert this tester rejects the last alias in this chain.
+    assert is_hint_pep695_recursive(
+        aliases_scope[f'A{ALIASES_LEN - 1}']) is False
 
 # ....................{ TESTS ~ getter                     }....................
 def test_get_hint_pep695_parameterizable_typeparams() -> None:
