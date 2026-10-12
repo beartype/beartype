@@ -46,14 +46,25 @@ class UnionTypeHint(TypeHint):
     )
 
     # ..................{ PRIVATE ~ properties               }..................
-    @property
+    @property  # type: ignore
+    @property_cached
     def _branches(self) -> CollectionTypeHints:
 
         # Immutable iterable of all branches (i.e., high-level type hint
         # wrappers encapsulating all low-level child hints subscripting
         # (indexing) the low-level parent hint encapsulated by this high-level
         # parent type hint wrapper. Look. Just go with it. We do. Every day.
-        return self._args_wrapped_frozenset
+        #
+        # Note that each child hint contributes its own branches rather than
+        # itself, reducing PEP 695-compliant type aliases (e.g., "type Alias =
+        # int | str") to the branches of the hints they alias. Branches are
+        # passed to subclass-specific testers inspecting their private state,
+        # which type alias wrappers intentionally do *NOT* expose.
+        return frozenset(
+            branch
+            for hint_child in self._args_wrapped_tuple
+            for branch in hint_child._branches
+        )
 
 
     @property  # type: ignore
@@ -124,7 +135,7 @@ class UnionTypeHint(TypeHint):
         # Efficiently indexable tuple of all trivially unique child hints (i.e.,
         # child hints that are *NOT* trivial duplicates of one another)
         # subscripting this union.
-        branches = tuple(self._args_wrapped_frozenset)
+        branches = tuple(self._branches)
 
         # Total number of trivially unique child hints subscripting this union.
         branches_len = len(branches)
