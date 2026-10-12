@@ -16,10 +16,44 @@ to **PEP-noncompliant type hints** (i.e., :mod:`beartype`-specific annotations
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import (
+    skip_if_python_version_greater_than_or_equal_to)
 
 # ....................{ TODO                               }....................
 #FIXME: Define new unit tests exercising:
 #* Python >= 3.8-specific keyword-only parameters.
+
+# ....................{ TESTS ~ type : union               }....................
+@skip_if_python_version_greater_than_or_equal_to('3.14.0')
+def test_nonpep_uniontype() -> None:
+    '''
+    Test parameter and return annotations using the pre-Python 3.14 union type
+    as a runtime class.
+    '''
+
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import (
+        BeartypeCallHintParamViolation,
+        BeartypeCallHintReturnViolation,
+    )
+    from pytest import raises
+    from types import UnionType
+
+    @beartype
+    def identity(union: UnionType) -> UnionType:
+        return union
+
+    @beartype
+    def invalid_return() -> UnionType:
+        return 1
+
+    union = int | str
+    assert identity(union) is union
+    with raises(BeartypeCallHintParamViolation):
+        identity(1)
+    with raises(BeartypeCallHintReturnViolation):
+        invalid_return()
 
 # ....................{ TESTS ~ pass : param : kind        }....................
 def test_nonpep_param_kind_positional_or_keyword_pass() -> None:

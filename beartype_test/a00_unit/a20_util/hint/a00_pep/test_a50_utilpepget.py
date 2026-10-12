@@ -165,6 +165,33 @@ def test_get_hint_pep_typeargs_packed(
         get_hint_pep_typeargs_packed(HisSovereigntyAndRuleAndMajesty)
 
 
+def test_get_hint_pep_typeargs_packed_uniontype() -> None:
+    '''
+    Test that the union type itself has no packed type parameters, while union
+    instances retain their type parameters.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPepException
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed
+    from pytest import raises
+    from types import UnionType
+    from typing import TypeVar
+
+    T = TypeVar('T')
+
+    assert get_hint_pep_typeargs_packed(UnionType) == ()
+    assert get_hint_pep_typeargs_packed(int | str) == ()
+    assert get_hint_pep_typeargs_packed(list[T] | str) == (T,)
+
+    # A user-defined class borrowing the same descriptor is still invalid.
+    class InvalidTypeParameters:
+        __parameters__ = UnionType.__parameters__
+
+    with raises(BeartypeDecorHintPepException):
+        get_hint_pep_typeargs_packed(InvalidTypeParameters)
+
+
 def _assert_hint_typeargs_packed(
     hint_typeargs_packed_actual: (
         'beartype._data.typing.datatyping.TuplePep484612646TypeArgsPacked'),

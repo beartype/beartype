@@ -25,6 +25,7 @@ from beartype._cave._cavefast import (
     ClassType,
     EnumMemberType,
     FunctionType,
+    HintPep604Type,
     HintPep695TypeAliasTypes,
     MethodDecoratorBuiltinTypes,
     NoneType,
@@ -128,6 +129,13 @@ TYPES_NONPEP_TYPEARGS_PACKED: FrozenSetTypes = frozenset(
         #     >>> Union.__parameters__
         #     <attribute '__parameters__' of 'typing.Union' objects>
         Union,
+        # The "types.UnionType" runtime class similarly defines a slotted
+        # "__parameters__" class attribute under Python < 3.14:
+        #     >>> from types import UnionType
+        #     >>> UnionType.__parameters__
+        #     <attribute '__parameters__' of 'types.UnionType' objects>
+        # Under Python >= 3.14, this class aliases "typing.Union" above.
+        HintPep604Type,
     ) +
     # ....................{ PEP 695                        }....................
     # The PEP 695-compliant "typing.TypeAliasType" type of all PEP 695-compliant

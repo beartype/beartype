@@ -23,9 +23,32 @@ This submodule unit tests the subset of the public API of the public
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytmark import ignore_warnings
+from beartype_test._util.mark.pytskip import (
+    skip_if_python_version_greater_than_or_equal_to)
 # from beartype_test._util.mark.pytskip import skip
 
 # ....................{ TESTS ~ raisers                    }....................
+@skip_if_python_version_greater_than_or_equal_to('3.14.0')
+def test_door_bearable_uniontype() -> None:
+    '''
+    Test the union type as a runtime class before Python 3.14 aliases it to
+    the unsubscripted ``typing.Union`` hint.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import die_if_unbearable, is_bearable
+    from beartype.roar import BeartypeDoorHintViolation
+    from pytest import raises
+    from types import UnionType
+
+    union = int | str
+    assert is_bearable(union, UnionType) is True
+    assert is_bearable(1, UnionType) is False
+    die_if_unbearable(union, UnionType)
+    with raises(BeartypeDoorHintViolation):
+        die_if_unbearable(1, UnionType)
+
+
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by this test. Urgh!
 @ignore_warnings(DeprecationWarning)
