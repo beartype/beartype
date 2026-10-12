@@ -37,9 +37,9 @@ performance improvements.
 #        @classmethod
 #        def broken_classmethod(cls) -> object:
 #            pass
-#    
+#
 #    class BrokenClass(object): pass
-#    
+#
 #    assert isinstance(BrokenClass, BrokenProtocol) is False
 
 # ....................{ IMPORTS                            }....................
@@ -564,7 +564,7 @@ class Protocol(
                 # superclass, we *MUST* pass that rather than this
                 # superclass to trigger that conditional appropriately.
                 _ProtocolSlow
-                if cls is Protocol else
+                if cls is _ProtocolFast else
                 # Else, a user-defined subclass of this "Protocol"
                 # superclass is being subclassed by one or more type
                 # variables *OR* types satisfying the type variables
@@ -671,6 +671,9 @@ class SupportsRound(_SupportsRoundSlow[_T_co], Protocol, Generic[_T_co]):
     __module__: str = 'beartype.typing'
     __slots__: Any = ()
 
+_ProtocolFast = Protocol
+Protocol = _ProtocolSlow  # type: ignore[misc]
+
 # ....................{ MONKEY-PATCHES                     }....................
 # If the active Python interpreter targets Python >= 3.12, monkey-patch the
 # standard "typing" module to support our "Protocol" superclass.
@@ -691,7 +694,7 @@ if IS_PYTHON_AT_LEAST_3_12:
         # silently replace that with "typing.Protocol" *BEFORE* calling the
         # standard typing._generic_class_getitem() utility function -- which
         # explicitly only supports the latter.
-        if cls is Protocol:
+        if cls is _ProtocolFast:
             cls = _ProtocolSlow
         # Else, the passed class is *NOT* our "beartype.typing.Protocol"
         # superclass. In this case, preserve that class as is.
