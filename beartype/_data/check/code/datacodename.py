@@ -160,3 +160,10 @@ VAR_NAME_PITH_ROOT = f'{VAR_NAME_PITH_PREFIX}0'
 Name of the local variable providing the **root pith** (i.e., value of the
 current parameter or return value being type-checked by the current call).
 '''
+
+
+ARG_NAME_DEFAULT_SENTINEL = f'{NAME_PREFIX}default_sentinel'
+'''
+Name of the private sentinel distinguishing omitted optional parameters from
+explicitly passed values in callable-specific wrappers.
+'''

@@ -232,7 +232,7 @@ https://github.com/rbroderi/future-async-yield-from
 
 
 CODE_PEP525_RETURN_UNCHECKED = f'''
-    {VAR_NAME_PITH_ROOT} = {ARG_NAME_FUNC}(*args, **kwargs)
+    {VAR_NAME_PITH_ROOT} = {ARG_NAME_FUNC}({{func_call_args}})
     {CODE_PEP525_RETURN_CHECKED}'''
 '''
 :pep:`525`-compliant code snippet facilitating full-blown bidirectional
