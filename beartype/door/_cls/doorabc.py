@@ -1307,10 +1307,19 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMetaclass):
         return True
 
 # ....................{ HINTS                              }....................
+#FIXME: Shift these into a new private sibling "_doortyping" submodule. *sigh*
+
 CollectionTypeHints = Collection[TypeHint]
 '''
 :pep:`585`-compliant type hint matching any arbitrary collection of zero or more
 **type hint wrappers** (i.e., :data:`.TypeHint` objects).
+'''
+
+
+FrozenSetTypeHints = frozenset[TypeHint]
+'''
+:pep:`585`-compliant type hint matching any frozen set of zero or more **type
+hint wrappers** (i.e., :data:`.TypeHint` objects).
 '''
 
 

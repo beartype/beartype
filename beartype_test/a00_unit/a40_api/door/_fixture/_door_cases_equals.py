@@ -90,6 +90,8 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         # AnyTypeHint._is_equal() implementation for further commentary.
         (Any, str, False),
         (Any, list[str], False),
+        (Any, Optional, False),
+        (Any, Union, False),
 
         # ..................{ PEP 484 ~ none                 }..................
         # PEP 484-compliant "None" singleton is equal to itself, of course.
