@@ -17,12 +17,15 @@ from beartype.door._cls.doorabc import (
     CollectionTypeHints,
     TypeHint,
 )
-from beartype._data.typing.datatypingport import Hint
+# from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.func.utilcacheproperty import (
     get_property_var_name,
     property_cached,
 )
-from typing import Union
+from typing import (
+    Any,
+    Union,
+)
 
 # ....................{ SUBCLASSES                         }....................
 class UnionTypeHint(TypeHint):
@@ -53,6 +56,10 @@ class UnionTypeHint(TypeHint):
         # wrappers encapsulating all low-level child hints subscripting
         # (indexing) the low-level parent hint encapsulated by this high-level
         # parent type hint wrapper. Look. Just go with it. We do. Every day.
+        #
+        # Note that union-specific logic defined throughout this submodule
+        # should typically instead access the higher-level union-specific
+        # "_branches_unique" property defined below.
         return self._args_wrapped_frozenset
 
 
@@ -75,6 +82,10 @@ class UnionTypeHint(TypeHint):
           :obj:`typing.Any` singleton, this property trivially returns
           :obj:`typing.Any` regardless of what other child hints subscript this
           union.
+        * If this union is unsubscripted, this union is implicitly subscripted
+          by :obj:`typing.Any` under :pep:`484` conventions. This property
+          pretends this union was explicitly subscripted by :obj:`typing.Any` by
+          trivially returning :obj:`typing.Any`.
 
         Returns
         -------
@@ -95,6 +106,26 @@ class UnionTypeHint(TypeHint):
         # ..................{ IMPORTS                        }..................
         # Avoid circular import dependencies.
         from beartype.door._cls.pep.pep484.doorpep484any import AnyTypeHint
+
+        # ..................{ PREAMBLE                       }..................
+        # Frozen set of the zero or more high-level child "TypeHint" wrappers
+        # wrapping the low-level child hints subscripting this union.
+        args_wrapped_frozenset = self._args_wrapped_frozenset
+
+        # If this union is unsubscripted (e.g., is the unsubscripted
+        # PEP 484-compliant "typing.Union" type hint factory), this union is
+        # implicitly subscripted by the PEP 484-compliant "typing.Any" child
+        # type hint singleton under PEP 484 conventions. In this case, pretend
+        # this union was explicitly subscripted by that child hint *BEFORE*
+        # introspecting child hints below.
+        #
+        # Note that this property is memoized and thus computed once for the
+        # unsubscripted PEP 484-compliant "typing.Union" type hint factory for
+        # the lifetime of the active Python interpreter. Ergo, there is *NO*
+        # benefit to explicitly caching this frozen set (e.g., as a global).
+        if not args_wrapped_frozenset:
+            args_wrapped_frozenset = frozenset((TypeHint(Any),))
+        # Else, this union is subscripted by one or more child hints.
 
         # ..................{ LOCALS                         }..................
         # List of all subhint-unique child hints subscripting this union, where
@@ -124,7 +155,7 @@ class UnionTypeHint(TypeHint):
         # Efficiently indexable tuple of all trivially unique child hints (i.e.,
         # child hints that are *NOT* trivial duplicates of one another)
         # subscripting this union.
-        branches = tuple(self._args_wrapped_frozenset)
+        branches = tuple(args_wrapped_frozenset)
 
         # Total number of trivially unique child hints subscripting this union.
         branches_len = len(branches)

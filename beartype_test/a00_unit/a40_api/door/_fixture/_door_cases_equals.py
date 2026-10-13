@@ -63,6 +63,7 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         Annotated,
         Any,
         Literal,
+        Optional,
         Union,
         List as Pep484List,
         Tuple as Pep484Tuple,
@@ -133,7 +134,22 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         # subscripted by the PEP 484-compliant "Any" singleton.
         (Pep484GenericT, Pep484GenericT[Any], True),
 
-        # ..................{ PEP (484|604) ~ union          }..................
+        # ..................{ PEP (484|604) ~ optional|union }..................
+        # PEP 484-compliant unsubscripted "typing.Optional" and "typing.Union"
+        # type hint factories are equal both to themselves and to each other.
+        #
+        # Although surprising, "TypeHint(Optional) == TypeHint(Union)" is
+        # semantically true. Under PEP 484 conventions, unsubscripted type hint
+        # factories are implicitly subscripted by the PEP 484-compliant
+        # "typing.Any" singleton. However, both "Optional[Any]" and "Union[Any]"
+        # semantically reduce to "Any". Ergo, the unsubscripted "Optional" and
+        # "Union" type hint factories implicitly expand to "Optional[Any]" and
+        # "Union[Any]", both of which then implicitly reduce to "Any", which is
+        # clearly equal to itself. Look. Just go with it. We did. *sigh*
+        (Optional, Optional, True),
+        (Union, Union, True),
+        (Optional, Union, True),
+
         # PEP 484-compliant union type hints.
         (Union[int, str], Union[str, list], False),
         (Union[Number, int], Union[Number, float], True),
