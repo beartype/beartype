@@ -146,6 +146,8 @@ def test_get_hint_pep_typeargs_packed(
         # parameters when passed the unsubscripted form of this hint.
         if hint_pep_meta.is_typeargs:
             assert hint_typeargs_packed_unsubbed
+        # Else, the unsubscripted form of this hint is parametrized by *NO* type
+        # parameters.
 
         # Assert that the contents of these tuples are as expected.
         _assert_hint_typeargs_packed(

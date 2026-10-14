@@ -25,6 +25,7 @@ from beartype._cave._cavefast import (
     ClassType,
     EnumMemberType,
     FunctionType,
+    HintPep604Type,
     HintPep695TypeAliasTypes,
     MethodDecoratorBuiltinTypes,
     NoneType,
@@ -70,7 +71,7 @@ Note that the :class:`Set` abstract base class (ABC) rather than the concrete
 :class:`set` subclass is intentionally listed here, as the concrete
 :class:`frozenset` subclass subclasses the former but *not* latter: e.g.,
 
-.. code-block:: python
+.. code-block:: pycon
 
    >>> from collections.abc import Set
    >>> issubclass(frozenset, Set)
@@ -119,15 +120,25 @@ object dictionary) fails to define a given attribute or name).
 TYPES_NONPEP_TYPEARGS_PACKED: FrozenSetTypes = frozenset(
     (  # type: ignore[operator]
         # ....................{ PEP (484|604)              }....................
-        # The PEP 484- and 604-compliant unsubscripted "typing.Union" hint
-        # semantically equivalent to the subscripted "typing.Union[typing.Any]"
-        # hint is a valid C-based type whose whose "__parameters__" dunder
-        # attribute is a C-based slotted class attribute of some obscure type
-        # under Python >= 3.14:
+        # The PEP 484- and 604-compliant unsubscripted "typing.Union" type hint
+        # factory semantically equivalent to the subscripted
+        # "typing.Union[typing.Any]" hint is a valid C-based type whose whose
+        # "__parameters__" dunder attribute is a C-based slotted class attribute
+        # of some obscure type under Python >= 3.14:
         #     >>> from typing import Union
         #     >>> Union.__parameters__
         #     <attribute '__parameters__' of 'typing.Union' objects>
         Union,
+        # The PEP 484-compliant "types.UnionType" runtime class defines a
+        # similar slotted "__parameters__" class attribute under Python <= 3.13:
+        #     >>> from types import UnionType
+        #     >>> UnionType.__parameters__
+        #     <attribute '__parameters__' of 'types.UnionType' objects>
+        #
+        # Under Python >= 3.14, this attribute trivially aliases the
+        # "typing.Union" type handled above and thus effectively "disappears"
+        # once deduplicated into this frozen set.
+        HintPep604Type,
     ) +
     # ....................{ PEP 695                        }....................
     # The PEP 695-compliant "typing.TypeAliasType" type of all PEP 695-compliant

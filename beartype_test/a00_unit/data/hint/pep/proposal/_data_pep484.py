@@ -34,7 +34,7 @@ Note that:
   fragile and frequently non-portable at runtime. Only :pep:`649` standardized
   the API for forward reference proxies.
 * **Unions** are intentionally tested in the
-  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep604` submodule
+  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep484604` submodule
   rather than here despite being specified by :pep:`484` and available under
   Python < 3.10. Why? Because CPython now implicitly reduces *all* unions --
   including older :pep:`484`-compliant ``typing.Union[...]`` and

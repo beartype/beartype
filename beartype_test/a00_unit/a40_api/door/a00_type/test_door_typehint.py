@@ -532,12 +532,12 @@ def test_door_typehint_is_ignorable(
     # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorException, BeartypeDoorNonpepException
-    from beartype.typing import TypeVar
-    from beartype._check.convert.convmain import sanify_hint_any
     from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
+    from beartype._check.convert.convmain import sanify_hint_any
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
         get_hint_pep484_typevar_bounded_constraints_or_none)
     from contextlib import suppress
+    from typing import TypeVar
 
     # ....................{ PASS                           }....................
     # Assert this property accepts ignorable type hints.
@@ -554,8 +554,9 @@ def test_door_typehint_is_ignorable(
         # Hint to be tested.
         hint = hint_pep_meta.hint
 
-        # True only if the @beartype decorator currently ignores this hint.
-        hint_is_ignorable = hint_pep_meta.is_ignorable
+        # True only if the @beartype decorator (and thus typically also the
+        # "beartype.door" API) is expected to ignore this hint.
+        hint_is_ignorable_expect = hint_pep_meta.is_ignorable
 
         # If this hint is a type variable...
         #
@@ -578,8 +579,8 @@ def test_door_typehint_is_ignorable(
                     hint=hint,
                 ))
 
-            # This type hint is ignorable only if either...
-            hint_is_ignorable = (
+            # This type hint is expected to be ignorable only if either...
+            hint_is_ignorable_expect = (
                 # This type hint is unconstrained *OR*...
                 hint_typevar_bound is None or
                 # This type hint is constrained by one or more ignorable
@@ -592,9 +593,9 @@ def test_door_typehint_is_ignorable(
         #all currently unsupported type hints. Most of these will be
         #"BeartypeDoorNonpepException", but there are some covariant type hints
         #(e.g. numpy.dtype[+ScalarType]) that will raise a "not invariant"
-        #exception in the "TypeVarTypeHint" subclass.
+        #exception in the "TypeVarTypeHint" subclass. *WHATEVAHS*. /le sigh/
         with suppress(BeartypeDoorException):
-            assert TypeHint(hint).is_ignorable is hint_is_ignorable
+            assert TypeHint(hint).is_ignorable is hint_is_ignorable_expect
             # assert TypeHint(hint_pep_meta.hint).is_ignorable is (
             #     hint_pep_meta.is_ignorable)
 

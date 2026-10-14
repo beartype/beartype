@@ -34,11 +34,13 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
         EllipsisType,
         FunctionType,
         FunctionOrMethodCType,
+        HintPep604Type,
         MethodBoundInstanceOrClassType,
         ModuleType,
         NoneType,
         NotImplementedType,
     )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_13
     from beartype_test.a00_unit.data.data_type import Class
     from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintNonpepMetadata)
@@ -46,14 +48,17 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
-    from typing import NamedTuple
+    from typing import (
+        NamedTuple,
+        Union,
+    )
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-noncompliant type hint metadata to be returned.
     hints_piths_nonpep_meta = []
 
     #FIXME: *WOOPS.* We should have read the standards a bit closer. Neither
-    #"typing.NamedTuple" or "typing.TypedDict" are intended for direct use as
+    #"typing.NamedTuple" nor "typing.TypedDict" are intended for direct use as
     #type hints. To quote official "typing" documentation:
     #    These are not used in annotations. They are building blocks for
     #    declaring types.
@@ -414,6 +419,28 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
             ),
         ),
     ))
+
+    # ..................{ VERSIONS                           }..................
+    # If the active Python interpreter targets Python <= 3.13, the seemingly PEP
+    # 604-compliant unsubscripted "types.UnionType" type is technically only the
+    # PEP-noncompliant isinstanceable type of all PEP 604-compliant new unions.
+    # Test this, yo!
+    if IS_PYTHON_AT_MOST_3_13:
+        hints_piths_nonpep_meta.extend((
+            HintNonpepMetadata(
+                hint=HintPep604Type,
+                piths_meta=(
+                    # PEP 604-compliant new union.
+                    PithSatisfiedMetadata(int | str),
+                    # PEP 484-compliant old union.
+                    PithUnsatisfiedMetadata(Union[int, str]),
+                    # String constant.
+                    PithUnsatisfiedMetadata(
+                        'Is growing fresh before me as the green'),
+                ),
+            ),
+        ))
+    # Else, the active Python interpreter targets Python <= 3.13.
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-noncompliant type hint metadata.

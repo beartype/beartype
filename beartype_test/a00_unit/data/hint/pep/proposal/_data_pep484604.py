@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`604`-compliant **union type hint test data.**
+Test-wide :pep:`484`- and :pep:`604`-compliant **union type hint test data.**
 
 **Unions** are intentionally tested in this submodule rather than in the
 :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep484` submodule
@@ -17,13 +17,14 @@ centralization now performed by CPython itself.
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep604_meta() -> 'list[HintPepMetadata]':
+def hints_pep484604_meta() -> 'list[HintPepMetadata]':
     '''
-    Session-scoped fixture returning a list of :pep:`604`-compliant **type hint
-    metadata** (i.e.,
+    Session-scoped fixture returning a list of :pep:`484`- and
+    :pep:`604`-compliant **type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintPepMetadata`
-    instances describing test-specific :pep:`604`-compliant sample type hints
-    with metadata generically leveraged by various PEP-agnostic unit tests).
+    instances describing test-specific :pep:`484`- and :pep:`604`-compliant
+    sample type hints with metadata generically leveraged by various
+    PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS ~ version                  }..................
@@ -31,6 +32,7 @@ def hints_pep604_meta() -> 'list[HintPepMetadata]':
     from beartype import BeartypeConf
     from beartype.door import UnionTypeHint
     from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
+    from beartype._cave._cavefast import HintPep604Type
     from beartype._data.hint.sign.datahintsigns import (
         HintSignList,
         HintSignMutableSequence,
@@ -79,183 +81,70 @@ def hints_pep604_meta() -> 'list[HintPepMetadata]':
     _HINT_SIGN_OPTIONAL = (
         HintSignUnion if IS_PYTHON_AT_LEAST_3_14 else HintSignOptional)
 
-    #
     # True only if the type of *ALL* PEP 604-compliant union hints is defined by
     # the standard "typing" module or not. The module defining this type differs
     # depending on Python version. Specifically:
-    # * If the active Python interpreter targets Python >= 3.14, the
-    #   canonical definition resides at "typing.Union".
     # * If the active Python interpreter targets Python <= 3.13, the
     #   canonical definition resides at "types.UnionType".
+    # * If the active Python interpreter targets Python >= 3.14, the
+    #   canonical definition resides at "typing.Union".
     _PEP604_IS_TYPING = IS_PYTHON_AT_LEAST_3_14
 
     # ..................{ TUPLES                             }..................
     # List of all PEP-specific type hint metadata to be returned.
     hints_piths_pep_meta = [
-        # ................{ NEW UNION                          }................
-        # Union of one non-"typing" type and an originative "typing" type,
-        # exercising a prominent edge case when raising human-readable
-        # exceptions describing the failure of passed parameters or returned
-        # values to satisfy this union.
-        #
-        # Interestingly, Python preserves this union as a PEP 604-compliant
-        # new-style union rather than implicitly coercing this into a PEP
-        # 484-compliant old-style union: e.g.,
-        #     >>> int | list[str]
-        #     int | list[str]
+        # ................{ UNSUBSCRIPTED                      }................
+        # PEP 484-compliant unsubscripted "typing.Optional" type hint factory.
         HintPepMetadata(
-            hint=int | list[str],
-            pep_sign=HintSignUnion,
-            is_type_typing=_PEP604_IS_TYPING,
-            piths_meta=(
-                # Integer constant.
-                PithSatisfiedMetadata(87),
-                # List of string items.
-                PithSatisfiedMetadata([
-                    'Into, my myopic mandrake‐manhandling, '
-                    'panhandling slakes of',
-                    'Televisual, dis‐informative Lakes, unsaintly, of',
-                ]),
-                # Floating-point constant.
-                PithUnsatisfiedMetadata(
-                    pith=10100.00101,
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\blist\b',
-                        r'\bint\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-
-                # List of integers.
-                PithUnsatisfiedMetadata(
-                    pith=([1, 10, 271, 36995]),
-                    # Match that the exception message raised for this object...
-                    exception_str_match_regexes=(
-                        # Contains a bullet point declaring the non-"typing"
-                        # type *NOT* satisfied by this object.
-                        r'\n\*\s.*\bint\b',
-                        # Contains a bullet point declaring the index of the
-                        # random list item *NOT* satisfying this hint.
-                        r'\n\*\s.*\b[Ll]ist index \d+ item\b',
-                    ),
-                ),
-            ),
+            hint=Optional,
+            # The unsubscripted "Optional" attribute is *ALWAYS* identified by
+            # its own unique sign, even under Python >= 3.14 where subscripted
+            # "Optional[...]" hints are identified by the "HintSignUnion" sign.
+            pep_sign=HintSignOptional,
+            typehint_cls=UnionTypeHint,
+            is_ignorable=True,  # <-- see below, yo *sigh*
+            #FIXME: Define "piths_meta" in a similar manner as below, please!
         ),
 
-        # ................{ NEW UNION ~ nested                 }................
-        # Nested unions exercising edge cases induced by Python >= 3.8
-        # optimizations leveraging PEP 572-style assignment expressions.
-
-        # Nested union of multiple non-"typing" types.
-        HintPepMetadata(
-            hint=list[int | str],
-            pep_sign=HintSignList,
-            isinstanceable_type=list,
-            is_pep585_builtin_subbed=True,
-            piths_meta=(
-                # List containing a mixture of integer and string constants.
-                PithSatisfiedMetadata([
-                    'Telemarketing affirmative‐mined Ketamine’s',
-                    470,
-                ]),
-                # String constant.
-                PithUnsatisfiedMetadata(
-                    pith='Apolitically',
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\bint\b',
-                        r'\bstr\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-
-                # List of bytestring items.
-                PithUnsatisfiedMetadata(
-                    pith=[
-                        b'Apoplectic hints of',
-                        b'Stenographically',
-                    ],
-                    # Match that the exception message raised for this object...
-                    exception_str_match_regexes=(
-                        # Declares all non-"typing" types *NOT* satisfied by a
-                        # random list item *NOT* satisfying this hint.
-                        r'\bint\b',
-                        r'\bstr\b',
-                        # Declares the index of the random list item *NOT*
-                        # satisfying this hint.
-                        r'\b[Ll]ist index \d+ item\b',
-                    ),
-                ),
-            ),
-        ),
-
-        # ................{ NEW UNION ~ optional               }................
-        # Optional isinstance()-able "typing" type.
-        HintPepMetadata(
-            hint=tuple[str, ...] | None,
-            # Note that although Python >= 3.10 distinguishes equivalent PEP
-            # 484-compliant "typing.Union[...]" and "typing.Optional[...]" type
-            # hints via differing machine-readable representations, the same
-            # does *NOT* apply to PEP 604-compliant |-style unions, which remain
-            # PEP 604-compliant and thus unions rather than optional. This
-            # includes PEP 604-compliant |-style unions including the "None"
-            # singleton signifying an optional type hint. Go figure.
-            pep_sign=HintSignUnion,
-            is_type_typing=_PEP604_IS_TYPING,
-            piths_meta=(
-                # None singleton.
-                PithSatisfiedMetadata(None),
-                # Tuple of string items.
-                PithSatisfiedMetadata((
-                    'Stentorian tenor of',
-                    'Stunted numbness (in',
-                )),
-                # Floating-point constant.
-                PithUnsatisfiedMetadata(
-                    pith=2397.7932,
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\bNoneType\b',
-                        r'\btuple\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-            ),
-        ),
-
-        # ................{ OLD UNION                          }................
-        # Note that unions of one argument (e.g., "Union[str]") *CANNOT* be
-        # listed here, as the "typing" module implicitly reduces these unions
-        # to only that argument (e.g., "str") on our behalf.
-        #
-        # Thanks. Thanks alot, "typing".
-
-        # Ignorable unsubscripted "Union" attribute.
+        # PEP 484-compliant unsubscripted "typing.Union" type hint factory.
         HintPepMetadata(
             hint=Union,
             pep_sign=HintSignUnion,
             typehint_cls=UnionTypeHint,
-            is_ignorable=True,
+            is_ignorable=True,  # <-- see below, yo *sigh*
+            piths_meta=(
+                (
+                    # PEP 484-compliant old union.
+                    PithSatisfiedMetadata(Union[int, str]),
+                    # String constant. Under PEP 484 semantics, unsubscripted
+                    # type hint factories (thus including "typing.Union) are
+                    # implicitly subscripted by the PEP 484-compliant
+                    # "typing.Any" singleton. Since "typing.Union[typing.Any]"
+                    # reduces to "typing.Any", the PEP 484-compliant
+                    # unsubscripted "typing.Union" type hint factory effectively
+                    # matches *ALL* objects and is thus semantically ignorable.
+                    PithSatisfiedMetadata(
+                        'Into my being, and each pleasant scene'),
+                ) + (
+                    # If the active Python interpreter targets Python >= 3.14,
+                    # additionally test that the PEP 484-compliant unsubscripted
+                    # "typing.Union" type hint factory trivially aliases the
+                    # 604-compliant "types.UnionType" type and thus also matches
+                    # PEP 604-compliant new unions.
+                    (PithSatisfiedMetadata(int | str),)
+                    if IS_PYTHON_AT_LEAST_3_14 else
+                    ()
+                )
+            ),
         ),
+
+        # ................{ PEP 484                            }................
+        # Note that unions subscripted by only one PEP-noncompliant child hint
+        # (e.g., "Union[str]") *CANNOT* be safely listed here, as the "typing"
+        # module implicitly reduces these unions to only that child hint (e.g.,
+        # "str") on our behalf. Such unions are thus technically
+        # PEP-noncompliant from the runtime perspective and *MUST* thus be
+        # listed elsewhere. Thanks. Thanks alot, "typing". *somuchsighing*
 
         # Union of one non-"typing" type and an originative "typing" type,
         # exercising a prominent edge case when raising human-readable
@@ -474,7 +363,7 @@ def hints_pep604_meta() -> 'list[HintPepMetadata]':
             ),
         ),
 
-        # ................{ UNION ~ nested                     }................
+        # ................{ PEP 484 ~ nested                   }................
         # Nested unions exercising edge cases induced by Python >= 3.8
         # optimizations leveraging PEP 572-style assignment expressions.
 
@@ -625,18 +514,7 @@ def hints_pep604_meta() -> 'list[HintPepMetadata]':
             ),
         ),
 
-        # ................{ UNION ~ optional                   }................
-        # Ignorable unsubscripted "Optional" attribute.
-        HintPepMetadata(
-            hint=Optional,
-            # The unsubscripted "Optional" attribute is *ALWAYS* identified by
-            # its own unique sign, even under Python >= 3.14 where subscripted
-            # "Optional[...]" hints are identified by the "HintSignUnion" sign.
-            pep_sign=HintSignOptional,
-            typehint_cls=UnionTypeHint,
-            is_ignorable=True,
-        ),
-
+        # ................{ PEP 484 ~ optional                 }................
         # Optional isinstance()-able "typing" type.
         HintPepMetadata(
             hint=Optional[Sequence[str]],
@@ -678,7 +556,7 @@ def hints_pep604_meta() -> 'list[HintPepMetadata]':
             ),
         ),
 
-        # ................{ UNION ~ tower                      }................
+        # ................{ PEP 484 ~ tower                    }................
         # Type hints pertaining to the implicit numeric tower (i.e., optional
         # PEP 484-compliant (sub)standard in which type hints defined as broad
         # numeric types implicitly match all narrower numeric types as well by
@@ -758,7 +636,183 @@ def hints_pep604_meta() -> 'list[HintPepMetadata]':
                 ),
             ),
         ),
+
+        # ................{ PEP 604                            }................
+        # PEP 604-compliant new union of one non-"typing" type and an
+        # originative "typing" type, exercising a prominent edge case when
+        # raising human-readable exceptions describing the failure of passed
+        # parameters or returned values to satisfy this union.
+        #
+        # Interestingly, Python preserves this union as a PEP 604-compliant
+        # new-style union rather than implicitly coercing this into a PEP
+        # 484-compliant old-style union: e.g.,
+        #     >>> int | list[str]
+        #     int | list[str]
+        HintPepMetadata(
+            hint=int | list[str],
+            pep_sign=HintSignUnion,
+            is_type_typing=_PEP604_IS_TYPING,
+            piths_meta=(
+                # Integer constant.
+                PithSatisfiedMetadata(87),
+                # List of string items.
+                PithSatisfiedMetadata([
+                    'Into, my myopic mandrake‐manhandling, '
+                    'panhandling slakes of',
+                    'Televisual, dis‐informative Lakes, unsaintly, of',
+                ]),
+                # Floating-point constant.
+                PithUnsatisfiedMetadata(
+                    pith=10100.00101,
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\blist\b',
+                        r'\bint\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+
+                # List of integers.
+                PithUnsatisfiedMetadata(
+                    pith=([1, 10, 271, 36995]),
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Contains a bullet point declaring the non-"typing"
+                        # type *NOT* satisfied by this object.
+                        r'\n\*\s.*\bint\b',
+                        # Contains a bullet point declaring the index of the
+                        # random list item *NOT* satisfying this hint.
+                        r'\n\*\s.*\b[Ll]ist index \d+ item\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ PEP 604 ~ nested                   }................
+        # Nested unions exercising edge cases induced by Python >= 3.8
+        # optimizations leveraging PEP 572-style assignment expressions.
+
+        # Nested union of multiple non-"typing" types.
+        HintPepMetadata(
+            hint=list[int | str],
+            pep_sign=HintSignList,
+            isinstanceable_type=list,
+            is_pep585_builtin_subbed=True,
+            piths_meta=(
+                # List containing a mixture of integer and string constants.
+                PithSatisfiedMetadata([
+                    'Telemarketing affirmative‐mined Ketamine’s',
+                    470,
+                ]),
+                # String constant.
+                PithUnsatisfiedMetadata(
+                    pith='Apolitically',
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bint\b',
+                        r'\bstr\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+
+                # List of bytestring items.
+                PithUnsatisfiedMetadata(
+                    pith=[
+                        b'Apoplectic hints of',
+                        b'Stenographically',
+                    ],
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Declares all non-"typing" types *NOT* satisfied by a
+                        # random list item *NOT* satisfying this hint.
+                        r'\bint\b',
+                        r'\bstr\b',
+                        # Declares the index of the random list item *NOT*
+                        # satisfying this hint.
+                        r'\b[Ll]ist index \d+ item\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ PEP 604 ~ optional                 }................
+        # Optional isinstance()-able "typing" type.
+        HintPepMetadata(
+            hint=tuple[str, ...] | None,
+            # Note that although Python >= 3.10 distinguishes equivalent PEP
+            # 484-compliant "typing.Union[...]" and "typing.Optional[...]" type
+            # hints via differing machine-readable representations, the same
+            # does *NOT* apply to PEP 604-compliant |-style unions, which remain
+            # PEP 604-compliant and thus unions rather than optional. This
+            # includes PEP 604-compliant |-style unions including the "None"
+            # singleton signifying an optional type hint. Go figure.
+            pep_sign=HintSignUnion,
+            is_type_typing=_PEP604_IS_TYPING,
+            piths_meta=(
+                # None singleton.
+                PithSatisfiedMetadata(None),
+                # Tuple of string items.
+                PithSatisfiedMetadata((
+                    'Stentorian tenor of',
+                    'Stunted numbness (in',
+                )),
+                # Floating-point constant.
+                PithUnsatisfiedMetadata(
+                    pith=2397.7932,
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bNoneType\b',
+                        r'\btuple\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+            ),
+        ),
     ]
+
+    # ..................{ VERSIONS                           }..................
+    # If the active Python interpreter targets Python >= 3.14, the PEP
+    # 604-compliant unsubscripted "types.UnionType" type trivially aliases the
+    # PEP 484-compliant unsubscripted "typing.Union" type hint factory and is
+    # thus effectively a valid type PEP 484-compliant type hint. Test this, yo!
+    if IS_PYTHON_AT_LEAST_3_14:
+        hints_piths_pep_meta.extend((
+            HintPepMetadata(
+                hint=HintPep604Type,
+                pep_sign=HintSignUnion,
+                is_ignorable=True,  # <-- see above, yo *sigh*
+                is_type_typing=_PEP604_IS_TYPING,
+                typehint_cls=UnionTypeHint,
+                piths_meta=(
+                    # PEP 484-compliant old union.
+                    PithSatisfiedMetadata(Union[int, str]),
+                    # PEP 604-compliant new union.
+                    PithSatisfiedMetadata(int | str),
+                    # String constant. See above, yo. *moar sigh*
+                    PithSatisfiedMetadata(
+                        'The very music of the name has gone'),
+                ),
+            ),
+        ))
+    # Else, the active Python interpreter targets Python <= 3.13.
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
