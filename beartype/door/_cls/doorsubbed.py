@@ -182,12 +182,15 @@ class SubscriptedTypeHint(TypeHint):
         elif (
             # These hints are identified by differing signs *OR*...
             self._hint_sign is not other._hint_sign or
+            # These hints originate from differing low-level types *OR*...
+            self._origin_type != other._origin_type or
             # These hints are subscripted by differing numbers of child hints...
             len(self._args_wrapped_tuple) != len(other._args_wrapped_tuple)
         ):
             # Then these hints are unequal.
             return False
-        # Else, these hints share the same sign and number of child hints.
+        # Else, these hints share the same sign, origin, and number of child
+        # hints.
 
         # ..................{ RETURN                         }..................
         # For each pair of child hints subscripting the same index of both of
