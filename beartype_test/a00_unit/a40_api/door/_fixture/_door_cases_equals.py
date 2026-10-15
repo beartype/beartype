@@ -49,7 +49,10 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
     # Defer fixture-specific imports.
     from beartype._cave._cavefast import NoneType
     from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
-        Pep484GenericT)
+        Pep484GenericSInt,
+        Pep484GenericT,
+        Pep484GenericTSubclass,
+    )
     from collections.abc import (
         Awaitable as Pep585Awaitable,
         Callable as Pep585Callable,
@@ -66,6 +69,7 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         Optional,
         Union,
         List as Pep484List,
+        Sequence as Pep484Sequence,
         Tuple as Pep484Tuple,
     )
 
@@ -118,6 +122,8 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         # equal.
         (list[str], Pep484List[str], True),
         (tuple[str, ...], Pep484Tuple[str, ...], True),
+        (tuple[int, str], Pep484Tuple[int, str], True),
+        (Pep585Sequence[int], Pep484Sequence[int], True),
 
         # PEP 585-compliant deeply nested hints are equal to themselves. *sigh*
         (
@@ -135,6 +141,19 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         # PEP 484-compliant type variable are equal to those same generics
         # subscripted by the PEP 484-compliant "Any" singleton.
         (Pep484GenericT, Pep484GenericT[Any], True),
+
+        # Subscripted generics with the same origin compare their child hints.
+        (Pep484GenericT[int], Pep484GenericT[int], True),
+        (Pep484GenericT[int], Pep484GenericT[str], False),
+
+        # Generics with different origins remain unequal even when their child
+        # hints are equal, including subclasses and unrelated generics. These
+        # cases regress issue #745, reported by @nstarman.
+        (Pep484GenericT[int], Pep484GenericTSubclass[int], False),
+        (Pep484GenericT[int], Pep484GenericSInt[int], False),
+        (Pep484GenericT[Any], Pep484GenericTSubclass[Any], False),
+        (list[Pep484GenericT[int]], list[Pep484GenericTSubclass[int]], False),
+        (list[Pep484GenericT[int]], Pep484List[Pep484GenericT[int]], True),
 
         # ..................{ PEP (484|604) ~ optional|union }..................
         # PEP 484-compliant unsubscripted "typing.Optional" and "typing.Union"
