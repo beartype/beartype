@@ -44,7 +44,7 @@ def test_poetry(
         get_interpreter_command_words)
     from beartype_test._util.command.pytcmdrun import (
         run_command_forward_output)
-    from beartype_test._util.path.pytpathmain import get_main_dir
+    from beartype_test._util.path.pytpathmain import get_main_repo_dir
     from beartype_test._util.path.pytpathtest import (
         get_test_func_data_external_poetry_dir)
 
@@ -73,7 +73,7 @@ def test_poetry(
     # ....................{ LOCALS                         }....................
     # Path object encapsulating the absolute dirname of the top-level directory
     # providing the entirety of beartype.
-    beartype_dir_src = get_main_dir()
+    beartype_dir_src = get_main_repo_dir()
 
     # Path object encapsulating the absolute dirname of this same directory
     # symbolically linked into this temporary directory under the dirname

@@ -67,7 +67,7 @@ def test_pep561_mypy() -> None:
         # run_command_return_stdout_stderr,
     )
     from beartype_test._util.path.pytpathmain import (
-        get_main_mypy_config_file,
+        get_main_repo_mypy_config_file,
         get_main_package_dir,
     )
 
@@ -80,7 +80,7 @@ def test_pep561_mypy() -> None:
         # Absolute dirname of this project's top-level mypy configuration. Since
         # our "tox" configuration isolates testing to a temporary directory,
         # mypy is unable to find its configuration without assistance.
-        '--config-file', str(get_main_mypy_config_file()),
+        '--config-file', str(get_main_repo_mypy_config_file()),
 
         # Absolute dirname of this project's top-level package.
         str(get_main_package_dir()),
