@@ -6,40 +6,14 @@
 # Project-wide Read The Docs (RTD) configuration. RTD builds the documentation
 # for each version of this project with Zensical. See also:
 #     https://docs.readthedocs.com/platform/stable/intro/zensical.html
+#
+# --------------------( SEE ALSO                           )--------------------
+# * Zensical-specific RTD integration instructions:
+#       https://docs.readthedocs.com/platform/latest/intro/zensical.html
 
 # ....................{ METADATA                           }....................
 # RTD configuration scheme version this file complies with.
 version: 2
-
-# ....................{ BUILD                              }....................
-build:
-  # Build under the most recent Long Term Service (LTS) release of Ubuntu.
-  os: ubuntu-24.04
-  tools:
-    # Build under the most recently released minor version of CPython.
-    python: latest
-
-  # Replace the default build with a Zensical build.
-  jobs:
-    # Set the "site_url" setting in "zensical.toml" to the URL of the
-    # version that RTD builds (e.g.,
-    # "https://beartype.readthedocs.io/en/0.23/"). See also:
-    #     https://docs.readthedocs.com/platform/latest/intro/zensical.html
-    pre_build:
-      - sed -i "s|^site_url = .*|site_url = \"${READTHEDOCS_CANONICAL_URL}\"|" zensical.toml
-      - grep "^site_url = \"${READTHEDOCS_CANONICAL_URL}\"$" zensical.toml
-
-    # Build the documentation in strict mode, which stops on the first warning
-    # (e.g., a broken link).
-    build:
-      html:
-        - zensical build --strict
-
-    # Copy the documentation to the directory that RTD publishes. Zensical
-    # builds into the "site/" subdirectory by default.
-    post_build:
-      - mkdir -p "${READTHEDOCS_OUTPUT}/html/"
-      - cp --recursive site/* "${READTHEDOCS_OUTPUT}/html/"
 
 # ....................{ PYTHON                             }....................
 python:
@@ -53,3 +27,62 @@ python:
       path: .
       extra_requirements:
         - doc-rtd
+
+# ....................{ BUILD                              }....................
+build:
+  # Build under the most recent Long Term Service (LTS) release of Ubuntu.
+  os: ubuntu-lts-latest
+
+  # Build under the most recently released minor version of CPython.
+  tools:
+    python: latest
+
+  # Build this Zensical-driven doco static site, yo! \o/
+  jobs:
+    # *BEFORE* running the "pre_build" phase below...
+    install:
+      # Install documentation dependencies by effectively running this command:
+      #     $ pip install -e .[doc-rtd]
+      #
+      # That is, instruct RTD to install the "doc-rtd" extra defined by our
+      # top-level "pyproject.toml" file, preserving DRY.
+      #
+      # Note that this would ideally be specified above via a top-level
+      # "python:" dictionary in this file resembling:
+      #   python:
+      #     install:
+      #       - method: pip
+      #         path: .
+      #         extra_requirements:
+      #           - doc-rtd
+      #
+      # In fact, this file once did exactly that. Unfortunately, for unknown
+      # reasons, RTD silently ignores those instructions when this "jobs:"
+      # subdictionary is defined -- requiring us to manually replicate that
+      # "python:" dictionary by hand here. *Such a pain. Such an RTD.*
+      - pip install -e '.[doc-rtd]'
+
+    # *BEFORE* running the "build" phase below...
+    pre_build:
+      # Replace in our top-level "zensical.toml" configuration file:
+      # * The default host-agnostic "site_dir" setting defined by that file
+      #   with a host-specific non-default "site_dir" whose value is that of
+      #   the RTD-specific "${READTHEDOCS_OUTPUT}" environment variable.
+      # * The default version-agnostic "site_url" setting defined by that file
+      #   with a version-specific non-default "site_url" whose value is that of
+      #   the RTD-specific "${READTHEDOCS_CANONICAL_URL}" environment variable.
+      - >-
+        sed -i
+            -e "s~^site_dir = .*~site_dir = \"${READTHEDOCS_OUTPUT}/html\"~"
+            -e "s~^site_url = .*~site_url = \"${READTHEDOCS_CANONICAL_URL}\"~"
+            zensical.toml
+
+      # Prove that "sed" did what it said it did for once. *sigh*
+      - grep "^site_dir = \"${READTHEDOCS_OUTPUT}/html\"$" zensical.toml
+      - grep "^site_url = \"${READTHEDOCS_CANONICAL_URL}\"$" zensical.toml
+
+    # Build the documentation in strict mode, which stops on the first warning
+    # (e.g., the first broken link).
+    build:
+      html:
+        - zensical build --strict

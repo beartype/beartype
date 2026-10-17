@@ -225,12 +225,28 @@ dependencies = []
 # to automatically build documentation for this project from the third-party RTD
 # hosting service.
 doc-rtd = [
-    # ....................{ THEME                          }....................
+    # ....................{ GENERATOR                      }....................
     # It's now sensical
-    # To prep for Zensical
-    # Extend your tenticles,
-    # To welcome, welcome, welcome, welcome Zensical!
-    "zensical >=0.0.43",
+    #   to prep for Zensical.
+    # Extend your tenticles
+    #   to welcome, welcome,
+    # Welcome Zensical!
+    #
+    # Note that:
+    # * Zensical requires Python >= 3.11.
+    # * Zensical currently publishes *NO* wheels for PyPy.
+    # * This is also required by optional Zensical-specific integration tests.
+    "zensical >=0.0.43; python_version >= '3.11' and platform_python_implementation != 'PyPy'",
+
+    # ....................{ GENERATOR ~ extensions         }....................
+    # API reference generation stack -- which transitively requires a reasonably
+    # recent version of the third-party "mkdocstrings" extension as well.
+    "mkdocstrings-python >=2.0.3",
+
+    # "mkdocstrings-python"-specific third-party extension expanding the default
+    # "mkdocstrings-python" support for absolute cross-references with
+    # additional support for relative cross-references.
+    "mkdocstrings-python-xref >=2.1.1",
 ]
 
 # Tox-specific test-time dependencies required to test this package via
@@ -269,10 +285,6 @@ test-tox = [
 
     # Required by optional Sphinx-specific integration tests.
     "sphinx",
-
-    # Required by optional Zensical-specific integration tests. Zensical
-    # requires Python >= 3.11 and publishes no wheels for PyPy.
-    "zensical; python_version >= '3.11' and platform_python_implementation != 'PyPy'",
 
     # ....................{ DOOR                           }....................
     # DOOR-specific optional test-time dependencies required to exercise all
@@ -521,7 +533,10 @@ test-tox-coverage = [
 # the third-party "pytest" and "tox" commands at the command line.
 test = [
     # Tox-specific test-time dependencies.
-    "beartype[test-tox,test-tox-coverage]",
+    #
+    # Note that optional Zensical-specific integration tests understandably
+    # require that *ALL* documentation-time package dependencies be installed.
+    "beartype[test-tox,test-tox-coverage,doc-rtd]",
 
     # A relatively modern version of "tox" is required. It's quite old by now. I
     # feel depressed just reading comments like this...

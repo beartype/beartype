@@ -54,7 +54,7 @@ from pathlib import Path
 @callable_cached
 def get_main_package_dir() -> Path:
     """
-    :mod:`Path` encapsulating the absolute dirname of the **top-level project
+    :class:`.Path` encapsulating the absolute dirname of the **top-level project
     package** (i.e., directory providing this package's top-level package
     containing at least an ``__init__.py`` file) if found *or* raise an
     exception otherwise.
@@ -83,7 +83,7 @@ def get_main_package_dir() -> Path:
 @callable_cached
 def get_main_package_parent_dir() -> Path:
     """
-    :mod:`Path` encapsulating the absolute dirname of the **top-level project
+    :class:`.Path` encapsulating the absolute dirname of the **top-level project
     package parent directory** (i.e., parent directory containing the child
     directory providing this package's top-level package containing at least an
     ``__init__.py`` file) if found *or* raise an exception otherwise.
@@ -143,10 +143,25 @@ def get_main_repo_dir() -> Path:
 @callable_cached
 def get_main_repo_mypy_config_file() -> Path:
     """
-    :mod:`Path` encapsulating the absolute filename of this project's **mypy
+    :class:`.Path` encapsulating the absolute filename of this project's **mypy
     configuration file** (i.e., top-level ``.mypy.ini`` file) if found *or*
     raise an exception otherwise.
     """
 
     # Obverse obviation!
     return FileRelative(get_main_repo_dir(), "mypy.ini")
+
+
+@callable_cached
+def get_main_repo_readme_file() -> Path:
+    '''
+    :class:`.Path` encapsulating the absolute filename of the **project readme
+    file** (i.e., this project's front-facing ``README.md`` file) if found *or*
+    raise an exception otherwise.
+
+    Note that the :meth:`.Path.read_text` method of this object trivially yields
+    the decoded plaintext contents of this file as a string.
+    '''
+
+    # Perverse pomposity!
+    return FileRelative(get_main_repo_dir(), 'README.md')
