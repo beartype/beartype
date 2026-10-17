@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2014-2026 Beartype authors.
+# See "LICENSE" for further details.
+
+'''
+Minimal :pep:`526` import-hook regression fixture for recursive aliases.
+'''
+
+from typing import TypeAlias
+
+
+RecursiveAlias: TypeAlias = str | list['RecursiveAlias']
+
+
+def check_local_recursive_alias() -> None:
+    value: RecursiveAlias = ['a']
+
+
+check_local_recursive_alias()
