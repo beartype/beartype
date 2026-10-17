@@ -3,11 +3,11 @@
 # Copyright (c) 2014-2026 Beartype authors.
 # See "LICENSE" for further details.
 
-'''
+"""
 Test-wide **main codebase paths** (i.e., low-level callables creating and
 returning :class:`pathlib.Path` objects encapsulating test-agnostic paths
 applicable to the codebase being tested).
-'''
+"""
 
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -49,15 +49,16 @@ from beartype_test._util.path.pytpathlib import (
 )
 from pathlib import Path
 
+
 # ....................{ GETTERS ~ dir                      }....................
 @callable_cached
 def get_main_package_dir() -> Path:
-    '''
+    """
     :mod:`Path` encapsulating the absolute dirname of the **top-level project
     package** (i.e., directory providing this package's top-level package
     containing at least an ``__init__.py`` file) if found *or* raise an
     exception otherwise.
-    '''
+    """
 
     # Defer function-specific imports.
     import beartype
@@ -81,7 +82,7 @@ def get_main_package_dir() -> Path:
 
 @callable_cached
 def get_main_package_parent_dir() -> Path:
-    '''
+    """
     :mod:`Path` encapsulating the absolute dirname of the **top-level project
     package parent directory** (i.e., parent directory containing the child
     directory providing this package's top-level package containing at least an
@@ -94,20 +95,21 @@ def get_main_package_parent_dir() -> Path:
     * Under exotic testing environments (e.g., ``conda-forge``), this path
       differs substantially from that returned by the :func:`.get_main_repo_dir`
       getter.
-    '''
+    """
 
     # Return this path as is.
     return get_main_package_dir().parent
 
+
 # ....................{ GETTERS ~ dir : repo               }....................
 @callable_cached
 def get_main_repo_dir() -> Path:
-    '''
+    """
     :class:`.Path` encapsulating the absolute dirname of the **top-level project
     directory** (i.e., directory containing both a ``.git/`` subdirectory and a
     subdirectory providing this project's package) if found *or* raise an
     exception otherwise.
-    '''
+    """
     # print(f'current module paths: {__package__} [{__file__}]')
 
     # Defer function-specific imports.
@@ -121,7 +123,7 @@ def get_main_repo_dir() -> Path:
 
     # Path encapsulating the relative dirname of this project's directory
     # relative to the dirname of the package defining the current module.
-    MAIN_DIR = DirRelative(MODULE_PACKAGE_DIR, '../../..')
+    MAIN_DIR = DirRelative(MODULE_PACKAGE_DIR, "../../..")
 
     # If this project's directory either does not contain a "beartype_test"
     # subdirectory *OR* does but this path is not a directory, raise an
@@ -136,29 +138,15 @@ def get_main_repo_dir() -> Path:
     # Return this path.
     return MAIN_DIR
 
+
 # ....................{ GETTERS ~ file : repo              }....................
 @callable_cached
 def get_main_repo_mypy_config_file() -> Path:
-    '''
+    """
     :mod:`Path` encapsulating the absolute filename of this project's **mypy
     configuration file** (i.e., top-level ``.mypy.ini`` file) if found *or*
     raise an exception otherwise.
-    '''
+    """
 
     # Obverse obviation!
-    return FileRelative(get_main_repo_dir(), 'mypy.ini')
-
-
-@callable_cached
-def get_main_repo_readme_file() -> Path:
-    '''
-    :mod:`Path` encapsulating the absolute filename of the **project readme
-    file** (i.e., this project's front-facing ``README.rst`` file) if found *or*
-    raise an exception otherwise.
-
-    Note that the :meth:`.Path.read_text` method of this object trivially yields
-    the decoded plaintext contents of this file as a string.
-    '''
-
-    # Perverse pomposity!
-    return FileRelative(get_main_repo_dir(), 'README.rst')
+    return FileRelative(get_main_dir(), "mypy.ini")

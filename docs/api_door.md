@@ -1,3 +1,6 @@
+<!-- FIXME: Substantially improve the documentation for the object-oriented API
+defined by the "beartype.door" subpackage. -->
+
 # Beartype DOOR
 
 ```text
@@ -38,6 +41,8 @@ Type-check anything
 
 ### Procedural API
 
+<div id="beartype.door.die_if_unbearable"></div>
+
 #### die_if_unbearable
 
 `def beartype.door.die_if_unbearable( obj: object, hint: object, *, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -> None`
@@ -71,6 +76,8 @@ hint list[int] | None, as str 'My people ate them all!' not list or <class
 
 > [!TIP]
 > For those familiar with typeguard, this function implements the beartype equivalent of the low-level typeguard.check_type function. For everyone else, pretend you never heard us just namedrop typeguard.
+
+<div id="beartype.door.is_bearable"></div>
 
 #### is_bearable
 
@@ -155,7 +162,9 @@ False
 True
 ```
 
-`is_bearable` also performs `647`-compliant type narrowing with the standard `typing.TypeGuard` type hint, facilitating communication between beartype and static type-checkers (e.g., mypy, pyright). See `this FAQ entry for further details <faq:narrow>`.
+`is_bearable` also performs [PEP 647]-compliant type narrowing with the standard `typing.TypeGuard` type hint, facilitating communication between beartype and static type-checkers (e.g., mypy, pyright). See [this FAQ entry for further details](faq.md#with-type-narrowing).
+
+<div id="beartype.door.is_subhint"></div>
 
 #### is_subhint
 
@@ -413,6 +422,8 @@ Open the DOOR to a whole new world. <sup>Sing along, everybody! “A whole new w
 
 ### Object-oriented API
 
+<div id="beartype.door.TypeHint"></div>
+
 #### TypeHint
 
 - **`hint`** (`object`): Type hint to be introspected.
@@ -446,6 +457,8 @@ True  # <-- you caching monster. how could you? we trusted you!
 
 `TypeHint` wrappers expose these public **read-only properties**:
 
+<div id="beartype.door.TypeHint.args"></div>
+
 ##### args
 
 *Type:* `tuple`
@@ -478,6 +491,8 @@ This makes more sense than it seems. Throw us a frickin' bone here.
 
 This property is memoized (cached) for both space and time efficiency.
 
+<div id="beartype.door.TypeHint.hint"></div>
+
 ##### hint
 
 *Type:* `object`
@@ -491,6 +506,8 @@ list[int]
 ```
 
 Seriously. That's it. That's the property. This isn't *Principia Mathematica*. To you who are about to fall asleep on your keyboards and wake up to find your `git` repositories empty, beartype salutes you.
+
+<div id="beartype.door.TypeHint.is_ignorable"></div>
 
 ##### is_ignorable
 
@@ -528,6 +545,8 @@ This property is memoized (cached) for both space and time efficiency.
 
 `TypeHint` wrappers expose these public **methods**:
 
+<div id="beartype.door.TypeHint.die_if_unbearable"></div>
+
 ##### die_if_unbearable
 
 `def beartype.door.TypeHint.die_if_unbearable( obj: object, *, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -> None`
@@ -555,6 +574,8 @@ hopeless." violates type hint bytes | None, as str "You can't lose
 hope when it's hopeless." not bytes or <class "builtins.NoneType">.
 ```
 
+<div id="beartype.door.TypeHint.is_bearable"></div>
+
 ##### is_bearable
 
 `def beartype.door.TypeHint.**is_bearable( obj: object, *, conf: beartype.BeartypeConf = beartype.BeartypeConf(), ) -> bool`
@@ -579,6 +600,8 @@ False
 ... )
 False
 ```
+
+<div id="beartype.door.TypeHint.is_subhint"></div>
 
 ##### is_subhint
 
