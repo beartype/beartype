@@ -71,11 +71,8 @@ build:
       # * The default version-agnostic "site_url" setting defined by that file
       #   with a version-specific non-default "site_url" whose value is that of
       #   the RTD-specific "${READTHEDOCS_CANONICAL_URL}" environment variable.
-      - >-
-        sed -i
-            -e "s~^site_dir = .*~site_dir = \"${READTHEDOCS_OUTPUT}/html\"~"
-            -e "s~^site_url = .*~site_url = \"${READTHEDOCS_CANONICAL_URL}\"~"
-            zensical.toml
+      - sed -i -e "s~^site_dir = .*~site_dir = \"${READTHEDOCS_OUTPUT}/html\"~" zensical.toml
+      - sed -i -e "s~^site_url = .*~site_url = \"${READTHEDOCS_CANONICAL_URL}\"~" zensical.toml
 
       # Prove that "sed" did what it said it did for once. *sigh*
       - grep "^site_dir = \"${READTHEDOCS_OUTPUT}/html\"$" zensical.toml
