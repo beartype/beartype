@@ -172,6 +172,7 @@ if not TYPE_CHECKING:
         SupportsInt as SupportsInt,
         SupportsRound as SupportsRound,
         runtime_checkable as runtime_checkable,
+        _ProtocolFast as _ProtocolFast,
     )
 
     # ....................{ PEP ~ 585                      }....................

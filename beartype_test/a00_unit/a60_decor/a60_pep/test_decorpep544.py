@@ -256,7 +256,7 @@ def test_typingpep544_protocol_custom_direct() -> None:
         BeartypeCallHintReturnViolation,
     )
     from beartype.typing import (
-        Protocol,
+        _ProtocolFast as Protocol,
         Tuple,
     )
     from pytest import raises
@@ -353,16 +353,14 @@ def test_typingpep544_protocol_custom_direct_typevar() -> None:
     from beartype import beartype
     from beartype.typing import (
         Any,
-        Protocol,
+        _ProtocolFast as Protocol,
         TypeVar,
-        runtime_checkable,
     )
 
     # Arbitrary type variable.
     _T_co = TypeVar('_T_co', covariant=True)
 
     # Arbitrary direct protocol subscripted by this type variable.
-    @runtime_checkable
     class SupportsAbsToo(Protocol[_T_co]):
         __slots__: Any = ()
 
@@ -397,7 +395,7 @@ def test_typingpep544_protocol_custom_indirect() -> None:
         BeartypeCallHintReturnViolation,
     )
     from beartype.typing import (
-        Protocol,
+        _ProtocolFast as Protocol,
         Tuple,
     )
     from pytest import raises
@@ -486,7 +484,7 @@ def test_typingpep544_pep593_integration() -> None:
     from beartype.roar import BeartypeException
     from beartype.typing import (
         Annotated,
-        Protocol,
+        _ProtocolFast as Protocol,
     )
     from beartype.vale import Is
     from pytest import raises

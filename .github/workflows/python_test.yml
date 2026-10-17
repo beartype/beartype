@@ -82,6 +82,7 @@ jobs:
   tests:
     # ..................{ MATRIX                             }..................
     strategy:
+      fail-fast: false
       matrix:
         # List of all platform-specific Docker images to test against,
         # including:

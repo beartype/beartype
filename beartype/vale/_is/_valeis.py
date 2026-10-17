@@ -29,7 +29,7 @@ from beartype._util.text.utiltextrepr import (
     represent_func,
     represent_object,
 )
-from typing import Union
+from typing import Union, runtime_checkable
 
 # Intentionally import the PEP 544-compliant beartype-specific fast-caching
 # "beartype.typing.Protocol" superclass rather than the equally PEP
@@ -573,6 +573,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
         )
 
 # ....................{ PRIVATE ~ protocols                }....................
+@runtime_checkable
 class _SupportsBool(Protocol):
     '''
     Fast caching protocol matching any object whose class defines the
@@ -582,6 +583,7 @@ class _SupportsBool(Protocol):
     def __bool__(self) -> bool: ...
 
 
+@runtime_checkable
 class _SupportsLen(Protocol):
     '''
     Fast caching protocol matching any object whose class defines the
