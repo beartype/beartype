@@ -290,6 +290,9 @@ test-tox = [
     # DOOR-specific optional test-time dependencies required to exercise all
     # possible edge cases of the "beartype.door" subpackage.
 
+    # Required by optional Plum-specific integration tests.
+    "plum-dispatch",
+
     # Required by optional beartype.door.infer_hint()-specific unit tests.
     "pygments",
 
