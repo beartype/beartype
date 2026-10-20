@@ -68,30 +68,31 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
     #the superficial testing we perform below is certainly useful; we just don't
     #need to do anything further, really. Phew!
 
-    # PEP-compliant user-defined "collections.namedtuple" instance typed with
-    # PEP-compliant type hints.
-    NamedTupleType = NamedTuple(
-        'NamedTupleType', [('fumarole', str), ('enrolled', int)])
+    # "tuple" subclass dynamically constructed by the PEP 484-compliant
+    # "typing.NamedTuple" type factory, which augments the
+    # "collections.namedtuple" type factory with annotated type hints.
+    NamedTupleSubclass = NamedTuple(
+        'NamedTupleSubclass', [('fumarole', str), ('enrolled', int)])
 
     # ..................{ LISTS                              }..................
     # Add PEP 484-specific (albeit technically PEP-noncompliant from the
     # beartype perspective) test type hints to this list.
     hints_piths_nonpep_meta.extend((
         # ................{ NAMEDTUPLE                         }................
-        # "NamedTuple" instances transparently reduce to standard tuples and
+        # "NamedTuple" instances transparently reduce to "tuple" subclasses and
         # *MUST* thus be handled as non-"typing" type hints.
         HintNonpepMetadata(
-            hint=NamedTupleType,
+            hint=NamedTupleSubclass,
             piths_meta=(
                 # Named tuple containing correctly typed items.
                 PithSatisfiedMetadata(
-                    NamedTupleType(fumarole='Leviathan', enrolled=37)),
+                    NamedTupleSubclass(fumarole='Leviathan', enrolled=37)),
                 # String constant.
                 PithUnsatisfiedMetadata('Of ͼarthen concordance that'),
                 #FIXME: Uncomment after implementing "NamedTuple" support.
                 # # Named tuple containing incorrectly typed items.
                 # PithUnsatisfiedMetadata(
-                #     pith=NamedTupleType(fumarole='Leviathan', enrolled=37),
+                #     pith=NamedTupleSubclass(fumarole='Leviathan', enrolled=37),
                 #     # Match that the exception message raised for this object...
                 #     exception_str_match_regexes=(
                 #         # Declares the name of this tuple's problematic item.

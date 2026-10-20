@@ -10,6 +10,19 @@ type hint singleton) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: The current reduce_hint_pep613() reducer defined below is overly
+#permissive.
+#* If the active Python interpreter targets Python >= 3.12 and thus supports
+#  PEP 695, issue a non-fatal deprecation warning. PEP 695 officially deprecates
+#  PEP 613.
+#* If the passed hint transitively annotates a *CALLABLE*, raise an immediate
+#  fatal exception: e.g.,
+#      def muh_func() -> TypeAlias:  # <-- this is nonsense, yo
+#* If the passed hint is anything *OTHER* than the root hint of the current hint
+#  tree, also raise an immediate fatal exception: e.g.,
+#      muh_alias: list[TypeAlias] = list[str]  # <-- this also nonsense, yo
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep613DeprecationWarning
 from beartype._util.error.utilerrwarn import issue_warning
@@ -33,7 +46,7 @@ def reduce_hint_pep613(hint: object, exception_prefix: str, **kwargs) -> object:
     ----------
     hint : object
         Typed dictionary to be reduced.
-    exception_prefix : str, optional
+    exception_prefix : str
         Substring prefixing exception messages raised by this reducer.
 
     All remaining passed arguments are silently ignored.
@@ -57,9 +70,9 @@ def reduce_hint_pep613(hint: object, exception_prefix: str, **kwargs) -> object:
     #"typing_extensions.TypeAliasType" class available across all Python
     #versions. It's... pretty astonishing, actually! Instantiating the
     #"typing_extensions.TypeAliasType" class allows users to *MUCH* more
-    #conveniently define PEP 612-compliant type aliases in older Python
-    #versions. PEP 612 *DEFINITELY* should have at least mentioned this, as this
-    #is essential information that makes PEP 612 *MUCH* more amenable. The
+    #conveniently define PEP 695-compliant type aliases in older Python
+    #versions. PEP 695 *DEFINITELY* should have at least mentioned this, as this
+    #is essential information that makes PEP 695 *MUCH* more amenable. The
     #syntax is a bit wonky, but that's understandable:
     #    # This Python >= 3.12-specific logic...
     #    type ListOrSet[T] = list[T] | set[T]

@@ -50,7 +50,7 @@ from beartype._util.cls.utilclstest import is_type_subclass_proper
 #
 #          class DirectlyRecursiveNamedTuple(NamedTuple):
 #              uhoh: DirectlyRecursiveNamedTuple
-#    * Indirect recursion occurs  as PEP 563 follows:
+#    * Indirect recursion occurs under PEP 563 follows:
 #          from typing import NamedTuple
 #
 #          class IndirectlyRecursiveNamedTuple(NamedTuple):
@@ -59,11 +59,8 @@ from beartype._util.cls.utilclstest import is_type_subclass_proper
 #          class YetAnotherNamedTuple(NamedTuple):
 #              ohboy: IndirectlyRecursiveNamedTuple
 #
-#Guarding against both combinatorial explosion *AND* recursion is imperative. To
-#do so, we'll need to fundamentally refactor our existing breadth-first search
-#(BFS) over type hints into a new depth-first search (DFS) over type hints.
-#We've extensively documented this in the "beartype._check.code.__init__"
-#submodule. Simply know that this will be non-trivial, albeit fun and needed!
+#Guarding against both combinatorial explosion *AND* recursion is imperative.
+#Simply know that this will be non-trivial, albeit fun and needed!
 def is_hint_pep484_namedtuple_subclass(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`484`-compliant **named
