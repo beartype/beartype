@@ -597,6 +597,59 @@ class HintTreeCode(HintTreeABC):
         # be substantially larger than "hints_meta_index_last".
         self.index_last += 1
 
+        #FIXME: Actually, properly guarding against this sort of recursion
+        #should now be feasible -- thanks to recent improvements throughout the
+        #@beartype codebase. Still non-trivial, but what isn't. Right? The core
+        #idea here is that sort of recursion only arises due to self-referential
+        #forward references: e.g.,
+        #    from typing import TypeAlias
+        #    SelfReferentialHint: TypeAlias = list['SelfReferentialHint']
+        #
+        #The key to efficiently (possibly, even trivially) guarding against that
+        #sort of recursion is to:
+        #* Inside the BeartypeForwardRefMetaclass.__instancecheck__() method:
+        #  * Set the "BeartypeConf(hint_overrides=...)" configuration setting to
+        #    a frozen dictionary mapping strings of the form
+        #    f"'{cls.__hint_name_beartype__}'" to the ignorable "object"
+        #    superclass.
+        #
+        #Thus, inside BeartypeForwardRefMetaclass.__instancecheck__():
+        #    hint_overrides = FrozenDict({
+        #        f"'{cls.__hint_name_beartype__}'": object})
+        #    conf = BeartypeConf(
+        #        hint_overrides=hint_overrides,
+        #        is_random=False,
+        #    )
+        #    return is_bearable(
+        #        ...,
+        #        conf=conf,
+        #    )
+        #
+        #Of course, nothing is *QUITE* that simple. We need to synchronize that
+        #exact same "BeartypeConf" object between the
+        #BeartypeForwardRefMetaclass.__instancecheck__() and
+        #BeartypeForwardRefMetaclass.__instancecheck_str__() methods. To do so,
+        #the sanest approach would probably be to define a new cached property
+        #resembling:
+        #    # Note that this property is safely cacheable, as the actual
+        #    # referent hint or type is *NOT* being cached -- just a trivial
+        #    # mapping from the unqualified basename of that referent to
+        #    # "object", which *NEVER* changes, obviously.
+        #    @property
+        #    @property_cached
+        #    def __conf_beartype__(cls: BeartypeForwardRefABC) -> BeartypeConf:
+        #        hint_overrides = FrozenDict({
+        #            f"'{cls.__hint_name_beartype__}'": object})
+        #        conf = BeartypeConf(
+        #            hint_overrides=hint_overrides,
+        #            is_random=False,
+        #        )
+        #        return conf
+        #
+        #Honestly, it's trivial enough that we probably just want to go ahead
+        #and do this already. Seriously. Might as well, right? Not doing this
+        #will just serve as a source of confusion in the years to come. *sigh*
+
         # If the number of child hints currently visited by this breadth-first
         # search (BFS) exceeds this queue's fixed length, this BFS has (almost
         # certainly) induced infinite recursion after recursively visiting one
@@ -618,7 +671,9 @@ class HintTreeCode(HintTreeABC):
                 f'Recursion detected when generating type-checking code from '
                 f'root type hint {repr(self._hint_root)} to this child hint. '
                 f'Some type hint in this tree of type hints is (probably) an '
-                f'obsolete runtime-hostile implicitly recursive type alias. '
+                f'obsolete runtime-hostile implicitly recursive type alias '
+                f'(i.e., type hint transitively subscripted by a '
+                f'forward reference referring to that same type hint). '
                 f'Examples include:\n'
                 f'* Deprecated PEP 613-compliant "typing.TypeAlias" implicitly '
                 f'recursive type aliases: e.g.,\n'

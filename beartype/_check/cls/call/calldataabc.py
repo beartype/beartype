@@ -63,7 +63,7 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
 
         See also the parameter of the same name accepted by the
         :func:`beartype._decor.decorcore.beartype_object` function.
-    decoratee : Optional[Callable]
+    decoratee : Callable | type | None
         **Decoratee** (i.e., external callable or class currently being
         decorated by the :func:`beartype.beartype` decorator if any), defined as
         either:
@@ -71,7 +71,7 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
         * If an external callable or class is currently being decorated by the
           :func:`beartype.beartype` decorator, that callable or class.
         * Else, :data:`None`.
-    decoratee_annotations : Optional[dict[str, Hint]]
+    decoratee_annotations : dict[str, Hint] | None
         **Decoratee type hint dictionary**, defined as either:
 
         * If an external callable is currently being decorated by the

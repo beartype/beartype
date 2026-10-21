@@ -93,6 +93,37 @@ def reduce_hint(
       ``**kwargs``) as a trailing parameter, matching all mandatory parameters
       *not* explicitly required by those unmemoized reducers.
 
+    Design
+    ------
+    **Lower-level unmemoized reducers** (i.e., functions mapped to values of the
+    :data:`.HINT_SIGN_TO_REDUCE_HINT_UNCACHED` dictionary) transitively called
+    by this high-level reducer entry point may efficiently detect metadata
+    describing the current object annotated by this hint if any as follows:
+
+    * To detect whether a hint is a **root hint** (i.e., subscripts *no* parent
+      hint as a child hint of that parent hint):
+
+      #. Accept the ``hint_parent_sane`` parameter.
+      #. A hint is a root hint if this expression is :data:`True`:
+      
+         .. code-block:: python
+
+            hint_parent_sane is None
+
+    * To detect whether a hint is a root hint annotating either the return or an
+      arbitrary parameter of some callable:
+
+      #. Accept both the ``hint_parent_sane`` and ``pith_name`` parameters.
+      #. A hint a root hint annotating either the return or an arbitrary
+         parameter of some callable if this expression is :data:`True`:
+
+         .. code-block:: python
+
+            (
+                hint_parent_sane is None and
+                pith_name is not None
+            )
+
     Parameters
     ----------
     call_curr : BeartypeCallDataABC

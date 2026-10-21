@@ -29,9 +29,12 @@ def test_decor_pep613() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintPep613DeprecationWarning
-    from beartype.typing import TypeAlias
-    from pytest import warns
+    from beartype.roar import (
+        BeartypeDecorHintPep613Exception,
+        # BeartypeDecorHintPep613DeprecationWarning,
+    )
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from typing import TypeAlias
     from warnings import simplefilter
 
     # ....................{ MAIN                           }....................
@@ -45,17 +48,34 @@ def test_decor_pep613() -> None:
     simplefilter('always')
 
     # ....................{ CALLABLES                      }....................
-    with warns(BeartypeDecorHintPep613DeprecationWarning):
+    # Assert that the @beartype decorator raises the expected exception when
+    # decorating a callable directly annotated by "typing.TypeAlias".
+    with raises_uncached(BeartypeDecorHintPep613Exception):
         @beartype
         def and_shook_him() -> TypeAlias:
             '''
-            Arbitrary callable annotated by the deprecated :pep:`613`-compliant
-            :obj:`typing.TypeAlias` type hint singleton, which is shallowly
-            ignorable and thus satisfied by *all* possible objects.
+            Arbitrary callable directly annotated by the deprecated
+            :pep:`613`-compliant :obj:`typing.TypeAlias` type hint singleton,
+            which is valid *only* as a :pep:`526`-compliant annotated variable
+            assignment and thus invalid as a callable parameter or return
+            annotation.
             '''
 
             return 'And shook him from his rest, and led him forth'
 
-    # ....................{ ASSERTS                        }....................
-    # Assert that calling a PEP 613-annotated callable succeeds as expected.
-    assert and_shook_him() == 'And shook him from his rest, and led him forth'
+
+    # Assert that the @beartype decorator raises the expected exception when
+    # decorating a callable directly annotated by an arbitrary PEP-compliant
+    # type hint factory subscripted by "typing.TypeAlias".
+    with raises_uncached(BeartypeDecorHintPep613Exception):
+        @beartype
+        def of_our_own_valleys() -> list[TypeAlias]:
+            '''
+            Arbitrary callable indirectly annotated by the deprecated
+            :pep:`613`-compliant :obj:`typing.TypeAlias` type hint singleton,
+            which is valid *only* as a :pep:`526`-compliant annotated variable
+            assignment and thus invalid as a callable parameter or return
+            annotation.
+            '''
+
+            return ['Of our own valleys:', 'so I will begin',]
