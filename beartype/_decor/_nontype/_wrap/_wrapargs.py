@@ -82,6 +82,8 @@ from beartype._check.cls.hint.hintsane import (
 from beartype._data.check.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_INIT_ARGS_LEN,
+    CODE_ARG_LOCALIZE_EXPLICIT,
+    ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT,
     ARG_KIND_TO_CODE_LOCALIZE,
 )
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
@@ -102,7 +104,10 @@ from typing import Optional
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
-def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
+def code_check_args(
+    decor_func: BeartypeCallDecorFuncData,
+    is_signature_explicit: bool = False,
+) -> str:
     '''
     Generate a Python code snippet type-checking all annotated parameters of the
     decorated callable if any *or* the empty string otherwise (i.e., if these
@@ -112,6 +117,9 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
     ----------
     decor_func : BeartypeCallDecorFuncData
         Decorated callable to be type-checked.
+    is_signature_explicit : bool, optional
+        Whether parameters are already bound to local variables by a
+        callable-specific signature. Defaults to false.
 
     Returns
     -------
@@ -196,7 +204,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
         #   type-checked by existing logic, due to the non-triviality of
         #   deciding whether a keyword parameter even is "excess" or not.
         set()
-        if is_func_arg_variadic_keyword(
+        if not is_signature_explicit and is_func_arg_variadic_keyword(
             # See the call to the iter_func_args() generator function below for
             # further commentary on these parameters.
             func=decor_func.func_wrappee_wrappee, is_unwrap=False) else
@@ -251,7 +259,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
         (
             arg_kind,
             arg_name,
-            _,  # arg_default,
+            arg_default,
         ) = arg_meta
 
         # If...
@@ -368,7 +376,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
                 # nested *BEFORE* validating this parameter to be unignorable,
                 # beartype would fail to reduce to a noop for otherwise
                 # ignorable callables -- which would be rather bad, really.
-                if arg_kind in _ARG_KINDS_POSITIONAL:
+                if not is_signature_explicit and arg_kind in _ARG_KINDS_POSITIONAL:
                     is_args_positional = True
                 # Else, this parameter *CANNOT* be passed positionally.
 
@@ -377,8 +385,16 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
                 #        arg_kind, None)
                 # Python code template localizing this parameter if this kind of
                 # parameter is supported *OR* "None" otherwise.
-                ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE.get(  # type: ignore
-                    arg_kind, None)
+                ARG_LOCALIZE_TEMPLATE: Optional[str]
+                if is_signature_explicit:
+                    ARG_LOCALIZE_TEMPLATE = (
+                        ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT[arg_kind]
+                        if arg_kind in ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT else
+                        CODE_ARG_LOCALIZE_EXPLICIT
+                    )
+                else:
+                    ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE.get(
+                        arg_kind, None)
 
                 # If this kind of parameter is unsupported, raise an exception.
                 #
