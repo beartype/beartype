@@ -67,7 +67,6 @@ BeartypeForwardRefABC = type[
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
-#FIXME: Revise "Attributes" docstring, please. *sigh*
 class BeartypeForwardRefProxyCache(CacheABC):
     '''
     **Forward reference referent cache** (i.e., concrete subclass implementing a
@@ -341,19 +340,20 @@ class BeartypeForwardRefProxyCache(CacheABC):
                 )
             # Else, this referent is *NOT* this forward reference proxy.
 
-            # Cache this referent for subsequent lookup by this property *BEFORE*
-            # validating this referent to be a supported hint. If this property is
-            # validated to *NOT* be a supported hint, this referent will be
-            # immediately uncached below. Of course, this is insane. Ideally, this
-            # referent would be cached only *AFTER* validating this referent to be a
-            # supported hint. Unfortunately, doing so invites infinite recursion as
-            # follows (in order):
+            # Cache this referent for subsequent lookup by this property
+            # *BEFORE* validating this referent to be a supported hint. If this
+            # property is validated to *NOT* be a supported hint, this referent
+            # will be immediately uncached below. Of course, this is insane.
+            # Ideally, this referent would be cached only *AFTER* validating
+            # this referent to be a supported hint. Unfortunately, doing so
+            # invites infinite recursion as follows (in order):
             # * This __resolved_hint_beartype__() property getter calls...
             # * die_unless_hint(), which calls...
             # * die_unless_object_isinstanceable(), which calls...
             # * "isinstance(None, ref_proxy)", which calls...
             # * BeartypeForwardRefMetaclass.__subclasscheck__(), which calls...
-            # * "issubclass(obj, ref_proxy.__resolved_type_beartype__)", which calls...
+            # * "issubclass(obj, ref_proxy.__resolved_type_beartype__)", which
+            #   calls...
             # * This __resolved_hint_beartype__() property getter, which calls...
             # * die_unless_hint() yet again. Repeat as needed for pain.
             #
@@ -363,7 +363,80 @@ class BeartypeForwardRefProxyCache(CacheABC):
             # repeatedly (i.e., uselessly) calling the die_unless_hint() raiser.
             self._ref_proxy_to_resolved_hint_set(ref_proxy, referent_hint)
 
-            # If this referent is *NOT* a supported type hint...
+            #FIXME: Better than nothing, but still non-ideal. Ideally, the safer
+            #sanify_hint_child() function should be called instead. However,
+            #doing so requires passing both the mandatory "call_curr" *AND*
+            #"hint_parent_sane" parameters. Refactoring this entire forward
+            #reference resolution API to accept:
+            #* Mandatory "hint_parent_sane" parameters is time-consuming albeit
+            #  probably trivial (in a sense). The distinct advantage of
+            #  accepting "hint_parent_sane" parameters everywhere is that doing
+            #  so would then enable us to implement recursion guards *HERE* (or
+            #  somewhere near here, anyway) in the same exact way that we
+            #  already implement recursion guards for other recursive type hints
+            #  (e.g., PEP 695-compliant type aliases). No "hint_overrides"
+            #  nonsense needed, at that point. That's nice. Clearly, we should
+            #  do this! Moreover, doing so is probably needed to safely handle
+            #  (waitforit) other recursive type hints that this referent refers
+            #  to! So, we definitely doing this one. Specifically:
+            #  * Define a new
+            #    "BeartypeForwardRefABC.__hint_parent_sane_beartype__" class
+            #    variable.
+            #  * Initialize that class variable in the _proxy_hint_ref()
+            #    factory.
+            #  * Pass that class variable below as:
+            #        hint_parent_sane=ref_proxy.__hint_parent_sane_beartype__,
+            #  * Define a new
+            #    "BeartypeForwardRefABC.__hint_sane_beartype__" class variable.
+            #  * Initialize that class variable below as:
+            #        ref_proxy.__hint_sane_beartype__ = referent_hint_sanified
+            #  * Pass that class variable elsewhere (e.g., in "fwdrefabc") as
+            #    "hint_parent_sane". *HMM*. Actually, maybe this schemes falls
+            #    down here. We can't pass that class variable to is_bearable(),
+            #    as "BeartypeConf" fails to accept a "hint_parent_sane" setting.
+            #    Unsure we genuinely want to expose that to end users, either...
+            #    I guess we could just mark it as "internal beartype use only"?
+            #    Kinda kludgy, really. *shrug*
+            #* Mandatory "call_curr" parameters could get ugly fast. Real fast.
+            #  Or... maybe not? There really only exist two different use cases:
+            #  * "call_curr" is "BEARTYPE_CALL_EXTERNAL_META". In that case, no
+            #    worries whatsoever! That's safely storable inside a new
+            #    "BeartypeForwardRefABC.__call_curr_beartype__" class variable.
+            #  * "call_curr" is an instance of "BeartypeCallDecorFuncData". In
+            #    that case, we'll need to first minify that by calling the
+            #    BeartypeCallDecorFuncData.minify() method *BEFORE* we can
+            #    safely store that minified "call_curr" inside a new
+            #    "BeartypeForwardRefABC.__call_curr_beartype__" class variable.
+            #    *HOWEVER*:
+            #    * Note that this then probably incurs inefficiencies due to
+            #      repeated calls to BeartypeCallDecorFuncData.minify()
+            #      recreating the same exact object over and over again. The
+            #      solution, of course, is to generalize minify() to internally
+            #      cache the object it returns into a new private variable:
+            #          _call_curr_minified: BeartypeCallDecorFuncData
+            #      Trivial, more or less. Just gotta do it. *megasigh*
+
+            #FIXME: Doesn't work, interestingly. Induces severe test failures.
+            #Wonder why? No idea. No time. Let's just drop this one for the
+            #moment. Ideally, though, we really *DO* need to sanify possibly
+            #insane referent hints here. Investigate at a later time. *sigh*
+            # # Avoid circular import dependencies.
+            # from beartype._check.convert.convmain import sanify_hint_any
+            #
+            # # Sanified hint metadata encapsulating the sanification of this
+            # # possibly PEP-noncompliant referent to a PEP-compliant equivalent.
+            # referent_hint_sane = sanify_hint_any(
+            #     hint=referent_hint,
+            #     conf=ref_proxy.__conf_beartype__,
+            #     exception_prefix=ref_proxy.__exception_prefix_beartype__,
+            # )
+            #
+            # # Sanified PEP-compliant referent sanified from this possibly
+            # # insane PEP-noncompliant original referent.
+            # referent_hint_sanified = referent_hint_sane.hint
+            referent_hint_sanified = referent_hint
+
+            # If this sanified referent is *NOT* a supported type hint...
             #
             # Note that:
             # * This tester is memoized and thus requires parameters be passed
@@ -375,12 +448,12 @@ class BeartypeForwardRefProxyCache(CacheABC):
             #   proxy *CANNOT* be resolved to the referent that proxy refers to.
             #   While an unlikely edge case, unlikely edge cases are like
             #   million-to-one chances in a Pratchett novel: they're coming up.
-            if not is_hint(referent_hint):
+            if not is_hint(referent_hint_sanified):
                 # Uncache this referent. See above for commentary.
                 del self._ref_proxy_to_resolved_hint[ref_proxy]
 
-                # Raise a readable exception detailing why this referent is
-                # *NOT* a supported type hint.
+                # Raise a readable exception detailing why this original
+                # possibly insane referent is *NOT* a supported type hint.
                 die_unless_hint(
                     hint=referent_hint,  # pyright: ignore
                     exception_cls=BeartypeCallHintForwardRefException,
@@ -390,8 +463,8 @@ class BeartypeForwardRefProxyCache(CacheABC):
             # Else, this referent is a supported type hint.
 
             # ....................{ RETURN                 }....................
-            # Return this referent.
-            return referent_hint  # type: ignore[return-value]
+            # Return this sanified referent.
+            return referent_hint_sanified  # type: ignore[return-value]
 
 
     #FIXME: Unit test us up, please. *sigh*

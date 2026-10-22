@@ -14,6 +14,7 @@ on behalf of higher-level unit test submodules.
 # ....................{ IMPORTS                            }....................
 from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 
 # ....................{ CONSTANTS                          }....................
 SCOPE_NAME = __name__
@@ -65,6 +66,7 @@ ref_str_proxy_relative_circular = proxy_hint_pep484_ref_str_subbable(
     scope_name=SCOPE_NAME,
     # Unqualified basename of this global currently being declared.
     hint_name='ref_str_proxy_relative_circular',
+    conf=BEARTYPE_CONF_DEFAULT,
     exception_prefix='',
 )
 '''
@@ -81,6 +83,7 @@ hint_ref_str_proxy_absolute = proxy_hint_pep484_ref_str_subbable(
     # Intentionally ignored fully-qualified name of this test submodule.
     scope_name=SCOPE_NAME,
     hint_name=HINT_NAME,
+    conf=BEARTYPE_CONF_DEFAULT,
 )
 '''
 Forward reference proxy to an already subscripted type hint referenced by an
@@ -92,6 +95,7 @@ type_ref_str_proxy_absolute = proxy_hint_pep484_ref_str_subbable(
     # Intentionally ignored fully-qualified name of this test submodule.
     scope_name=SCOPE_NAME,
     hint_name=TYPE_NAME,
+    conf=BEARTYPE_CONF_DEFAULT,
 )
 '''
 Forward reference proxy to an unsubscripted type referenced by an absolute
@@ -102,6 +106,7 @@ Forward reference proxy to an unsubscripted type referenced by an absolute
 type_ref_str_proxy_relative = proxy_hint_pep484_ref_str_subbable(
     scope_name=TYPE_SUBMODULE_NAME,
     hint_name=TYPE_BASENAME,
+    conf=BEARTYPE_CONF_DEFAULT,
 )
 '''
 Forward reference proxy to an unsubscripted type referenced by a relative (i.e.,
@@ -113,6 +118,7 @@ type_ref_str_proxy_module_absolute = proxy_hint_pep484_ref_str_subbable(
     # Intentionally ignored fully-qualified name of this test submodule.
     scope_name=SCOPE_NAME,
     hint_name=TYPE_SUBMODULE_NAME,
+    conf=BEARTYPE_CONF_DEFAULT,
 )
 '''
 Forward reference proxy to a submodule of a subpackage defining an unsubscripted

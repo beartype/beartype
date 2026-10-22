@@ -30,6 +30,7 @@ def test_beartype_forward_scope() -> None:
     from beartype._check.forward.reference.fwdreftest import (
         is_beartype_ref_proxy)
     from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
+    from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
     from beartype_test.a00_unit.data.data_type import (
         Class,
         OtherClass,
@@ -56,6 +57,7 @@ def test_beartype_forward_scope() -> None:
         # submodule imported from above (as a fallback).
         scope_name='beartype_test.a00_unit.data.data_type',
         # Ignorable remaining mandatory parameters.
+        conf=BEARTYPE_CONF_DEFAULT,
         exception_prefix='',
     )
 
@@ -110,6 +112,7 @@ def test_beartype_forward_scope() -> None:
     with raises(BeartypeDecorHintForwardRefException):
         BeartypeForwardScope(
             scope_name="He breath'd fierce breath against the sleepy portals,",
+            conf=BEARTYPE_CONF_DEFAULT,
             exception_prefix='',
         )
 

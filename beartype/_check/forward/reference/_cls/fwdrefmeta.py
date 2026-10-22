@@ -33,13 +33,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #misuse cases, anyway. The number of codebases that will even use forward
 #references to refer to full-blown type hints (rather than simple types) is
 #already vanishingly small. Ergo, our shrug is both smug and convenient. *shrug*
+#FIXME: Actually, see relevant "FIXME:" commentary in "hinttreecode".
+#Implementing trivial recursion guards should now be feasible. *shrug*
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.forward.reference._cls.fwdrefcache import (
     BeartypeForwardRefABC,
     ref_proxy_cache,
 )
-from beartype._conf.confcommon import BEARTYPE_CONF_NONRANDOM
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.func.utilcachefunc import callable_cached
@@ -294,7 +295,8 @@ class BeartypeForwardRefMetaclass(type):
         return proxy_hint_pep484_ref_str_subbable(
             scope_name=cls.__scope_name_beartype__,
             hint_name=f'{cls.__hint_name_beartype__}.{hint_name}',
-            exception_prefix=cls.__exception_prefix_beartype__
+            conf=cls.__conf_beartype__,
+            exception_prefix=cls.__exception_prefix_beartype__,
         )
 
 
@@ -471,60 +473,7 @@ class BeartypeForwardRefMetaclass(type):
         return is_bearable(
             obj=obj,
             hint=resolved_hint,
-
-            #FIXME: *DEFINITELY INSUFFICIENT.* It's essential that we respect
-            #the user configuration by instead:
-            #* Defining a new "BeartypeForwardRefABC.__conf_beartype__" class
-            #  variable.
-            #* Adding a new *MANDATORY* "conf" parameter to *ALL* proxy_*()
-            #  functions defined by the "fwdrefproxy" submodule.
-            #* Pass that parameter in all calls to those functions.
-            #* Generalize _proxy_hint_ref() to assign "__conf_beartype__" like
-            #  so:
-            #      # New keyword dictionary permuted from this input.
-            #      conf_nonrandom_kwargs = conf.kwargs.copy()
-            #      conf_nonrandom_kwargs['is_debug'] = True
-
-            #      # New beartype configuration initialized by this dictionary.
-            #      conf_nonrandom = BeartypeConf(**conf_nonrandom_kwargs)
-            #
-            #      ref_proxy.__conf_beartype__ = conf_nonrandom
-            #* Pass "cls.__conf_beartype__" below. Phew!
-
-            # Force this object to be type-checked deterministically (e.g., by
-            # only type-checking the first items of pure-Python sequences). By
-            # default, beartype type-checks objects non-deterministically (e.g.,
-            # by type-checking randomly selected items of these sequences). This
-            # default behaviour reduces the statistical likelihood of false
-            # negatives (e.g., this is_bearable() call returning true when it
-            # should instead return false). That's good. Unfortunately, this
-            # default behaviour is non-deterministic and thus unstable across
-            # repeated calls to related type-checking functionality requiring
-            # stable type-checking decisions. That's bad.
-            #
-            # Does the latter use case actually arise here? It does. If this
-            # is_bearable() call indicates this object to violate this hint by
-            # returning false from this __instancecheck__() dunder method, the
-            # higher-level "beartype._check.error" error handler then
-            # subsequently handles this violation by calling the
-            # beartype-specific __instancecheck_str__() dunder method defined
-            # below to generate a human-readable exception message. Predictably,
-            # that __instancecheck_str__() dunder method does so by effectively
-            # (though not actually) calling the die_if_unbearable() raiser. You
-            # see the issue, we trust. Since both this is_bearable() call *AND*
-            # that die_if_unbearable() call behave non-deterministically by
-            # default, the consequence is a catastrophic desynchronization
-            # between the two for the common use case in which this object
-            # either is *OR* contains one or more pure-Python non-empty
-            # sequences (which is where beartype's non-deterministic
-            # type-checking behaviour arises). Forcing deterministic
-            # type-checking behaviour trivially avoids such desynchronization,
-            # albeit at a non-negligible cost of increasing the statistical
-            # likelihood of false negatives from this first is_bearable() call.
-            # That's not great, obviously, but that's still significantly better
-            # than catastrophic desynchronization. It's in the name. It's
-            # catastrophic. Can't get much worse than a catastrophe.
-            conf=BEARTYPE_CONF_NONRANDOM,
+            conf=cls.__conf_beartype__,
         )
 
 
@@ -625,9 +574,7 @@ class BeartypeForwardRefMetaclass(type):
             # sibling __instancecheck__() dunder method, which implicitly
             # leverages this exact same singleton for the same purpose.
             call_curr=BEARTYPE_CALL_EXTERNAL_META,
-            # See the is_bearable() call performed by the sibling
-            # __instancecheck__() dunder method for further details.
-            conf=BEARTYPE_CONF_NONRANDOM,
+            conf=cls.__conf_beartype__,
             hint=resolved_hint,
             obj=obj,
         )

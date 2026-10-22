@@ -21,7 +21,6 @@ from beartype._check.forward.scope.fwdscopemake import (
     make_scope_forward_decor_curr)
 from beartype._check.cls.call.calldatadecorabc import (
     BeartypeCallDecorDataABC)
-from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     LexicalScope,
@@ -35,19 +34,16 @@ from beartype._util.text.utiltextlabel import (
     label_callable,
     label_exception_traceback,
 )
-from beartype._util.utilobjget import (
-    get_object_basename_scoped,
-    get_object_name,
-)
+from beartype._util.utilobjget import get_object_basename_scoped
 
 # ....................{ RESOLVERS ~ metadata               }....................
 #FIXME: Unit test us up, please.
 def resolve_hint_pep484_ref_str_caller_external(
     # Mandatory parameters.
     hint: str,
+    conf: BeartypeConf,
 
     # Optional parameters.
-    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_cls: TypeException = (
         BeartypeDecorHintPep484ForwardRefStrException),
     exception_prefix: str = '',
@@ -69,13 +65,10 @@ def resolve_hint_pep484_ref_str_caller_external(
     ----------
     hint : str
         Stringified forward reference type hint to be resolved.
-    conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
-        **Beartype configuration** (i.e., dataclass encapsulating all options
-        configuring this resolution). For callers for whom passing this
-        configuration is non-trivial, note that this configuration currently
-        only governs superficial options (e.g., color in raised exception
-        messages) and is thus mostly ignorable. Defaults to the default
-        beartype configuration as a reasonable fallback.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the referent referred to by
+        this forward reference).
     exception_cls : Type[Exception], default: BeartypeDecorHintPep484ForwardRefStrException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep484ForwardRefStrException`.
@@ -107,6 +100,7 @@ def resolve_hint_pep484_ref_str_caller_external(
     # encapsulating a call to a public beartype callable by an external
     # callable originating from a third-party package or module.
     scope_forward = make_scope_forward_caller_external(
+        conf=conf,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
@@ -373,9 +367,6 @@ def resolve_hint_pep484_ref_str_decor_curr(
             # behaved like this -- and possibly still does. See also:
             #     https://github.com/beartype/beartype/issues/381
             if not func_module_name:
-                # Fully-qualified name of the currently decorated callable.
-                func_name = get_object_name(func)
-
                 # Human-readable label describing that callable.
                 func_label = label_callable(func)
 
@@ -399,6 +390,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
             # during some subsequent call to the currently decorated callable.
             hint_resolved = proxy_hint_pep484_ref_str_subbable(
                 scope_name=func_module_name,
+                conf=decor_curr.conf,
                 hint_name=hint,
                 exception_prefix=exception_prefix,
             )

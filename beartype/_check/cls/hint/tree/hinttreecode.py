@@ -664,7 +664,7 @@ class HintTreeCode(HintTreeABC):
         #   basically infeasible to support at runtime. *sigh*
         #
         # In this case, raise a human-readable exception.
-        if self.index_last >= FIXED_LIST_SIZE_MEDIUM:
+        if self.index_last >= FIXED_LIST_SIZE_MEDIUM:  # pragma: no cover
             raise BeartypeDecorHintRecursionException(
                 f'{self.exception_prefix}'
                 f'child type hint {repr(hint_child)} uncheckable. '

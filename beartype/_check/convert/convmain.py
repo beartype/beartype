@@ -238,8 +238,8 @@ def sanify_hint_root_statement(
     type hinting annotation like a user-defined class variable, callable
     parameter or return, or assignment statement). Such factories include:
 
-    * The private :func:`beartype._check.make.checkmakefunc.make_func_tester` factory,
-      internally called by:
+    * The private :func:`beartype._check.make.checkmakefunc.make_func_tester`
+      factory, internally called by:
 
       * The public :func:`beartype.door.die_if_unbearable` function.
       * The public :func:`beartype.door.is_bearable` function.
@@ -356,10 +356,12 @@ def sanify_hint_child(
         all settings configuring type-checking for the passed object). Defaults
         to :obj:`.BEARTYPE_CONF_DEFAULT`, the default beartype configuration.
     hint_sign_seed :  HintSignOrNoneOrSentinel, default: SENTINEL
-        **Type hint seed sign** (i.e., sign identifying this hint with respect
-        to the first reduction performed by this sanification) if this hint is
-        ambiguously identifiable by two or more signs *or* the sentinel
-        otherwise (i.e., if this hint is uniquely identifiable by one sign).
+        Either:
+
+        * If this hint is ambiguously identifiable by two or more signs, the
+          **type hint seed sign** (i.e., sign identifying this hint with respect
+          to the first reduction performed by this sanification).
+        * If this hint is uniquely identifiable by one sign, the sentinel.
 
         This sign is used to seed (i.e., initialize) the first reduction
         internally performed by this sanification, which otherwise defaults to
@@ -372,7 +374,8 @@ def sanify_hint_child(
           :pep:`589`-compliant :class:`typing.TypedDict` superclass), which are
           identifiable as both generics *and* typed dictionaries.
 
-        Defaults to the sentinel.
+        Defaults to the sentinel, implying this hint to be uniquely identifiable
+        by only one sign. This common case covers almost all hints.
     pith_name : Optional[str], default: None
         Either:
 

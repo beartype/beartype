@@ -39,6 +39,7 @@ from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
 from beartype._check.forward.reference._cls.fwdrefabc import (
     BeartypeForwardRefSubbableABC)
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.py.databuiltins import BUILTIN_NAME_TO_VALUE
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
@@ -107,6 +108,10 @@ class BeartypeForwardScope(LexicalScope):
 
     Attributes
     ----------
+    _conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the referents referred to by
+        all forward references implicitly proxied by this forward scope).
     _exception_prefix : str
         Human-readable substring prefixing raised exception messages.
     _func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref
@@ -139,6 +144,7 @@ class BeartypeForwardScope(LexicalScope):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
+        '_conf',
         '_exception_prefix',
         '_func_local_parent_codeobj_weakref',
         '_hint_names_destringified',
@@ -148,6 +154,7 @@ class BeartypeForwardScope(LexicalScope):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
+        _conf: BeartypeConf
         _exception_prefix: str
         _func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref
         _hint_names_destringified: SetStrs
@@ -159,12 +166,12 @@ class BeartypeForwardScope(LexicalScope):
 
         # Mandatory parameters.
         scope_name: Optional[str],
+        conf: BeartypeConf,
         exception_prefix: str,
 
         # Optional parameters.
         func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = (
             None),
-        is_beartype_test_beartype: bool = False,
         scope_dict: LexicalScope = BUILTIN_NAME_TO_VALUE,
     ) -> None:
         '''
@@ -193,6 +200,11 @@ class BeartypeForwardScope(LexicalScope):
               resolve a global class or callable against this scope).
             * ``"some_package.some_module.SomeClass"`` for a class scope (e.g.,
               to resolve a nested class or callable against this scope).
+        conf : BeartypeConf
+            **Beartype configuration** (i.e., self-caching dataclass
+            encapsulating all settings configuring type-checking for the
+            referents referred to by all forward references implicitly proxied
+            by this forward scope).
         exception_prefix : str
             Human-readable substring prefixing raised exception messages.
         func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref, default: None
@@ -214,6 +226,8 @@ class BeartypeForwardScope(LexicalScope):
         '''
         assert isinstance(scope_name, NoneTypeOr[str]), (
             f'{repr(scope_name)} neither string nor "None".')
+        assert isinstance(conf, BeartypeConf), (
+            f'{repr(conf)} not beartype configuration.')
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
         assert isinstance(
@@ -243,6 +257,7 @@ class BeartypeForwardScope(LexicalScope):
         # Python identifier.
 
         # Classify all passed parameters.
+        self._conf = conf
         self._exception_prefix = exception_prefix
         self._func_local_parent_codeobj_weakref = (
             func_local_parent_codeobj_weakref)
@@ -471,7 +486,7 @@ class BeartypeForwardScope(LexicalScope):
                 # Note that calls to the eval() or exec() builtin that originate
                 # from within the beartype codebase are difficult to distinguish
                 # from calls to the eval() or exec() builtin that originate from
-                # outside the beartype codebase. Technically, doing is is
+                # outside the beartype codebase. Technically, doing so is
                 # feasible (e.g., by introspecting the caller of the caller if
                 # this caller is a call to the eval() or exec() builtin).
                 # Pragmatically, doing so would only needlessly consume scarce
@@ -533,6 +548,7 @@ class BeartypeForwardScope(LexicalScope):
         forwardref_subtype = proxy_hint_pep484_ref_str_subbable(
             scope_name=self._scope_name,  # type: ignore[arg-type]
             hint_name=hint_name,
+            conf=self._conf,
             func_local_parent_codeobj_weakref=(
                 self._func_local_parent_codeobj_weakref),
         )

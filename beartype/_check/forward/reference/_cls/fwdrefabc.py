@@ -17,6 +17,7 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import HintPep484749RefObjectType
 from beartype._check.forward.reference._cls.fwdrefmeta import (
     BeartypeForwardRefMetaclass)
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
     LexicalScope,
@@ -78,6 +79,17 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     '''
     Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of the
     type hint referenced by this forward reference subclass.
+
+    This class variable is mandatory but defaults to :data:`None` to improve
+    debuggability in the event of developer error [read: us].
+    '''
+
+
+    __conf_beartype__: BeartypeConf = None  # type: ignore[assignment]
+    '''
+    **Beartype configuration** (i.e., self-caching dataclass encapsulating all
+    settings configuring type-checking for the referent referred to by this
+    forward reference subclass).
 
     This class variable is mandatory but defaults to :data:`None` to improve
     debuggability in the event of developer error [read: us].
@@ -412,9 +424,10 @@ class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
         return proxy_hint_pep484_ref_str_subbed(
             scope_name=cls.__scope_name_beartype__,  # type: ignore[arg-type]
             hint_name=cls.__hint_name_beartype__,
-            exception_prefix=cls.__exception_prefix_beartype__,
+            conf=cls.__conf_beartype__,
             func_local_parent_codeobj_weakref=(
                 cls.__func_local_parent_codeobj_weakref_beartype__),
+            exception_prefix=cls.__exception_prefix_beartype__,
             args=args,
             kwargs=kwargs,
         )

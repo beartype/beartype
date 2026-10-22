@@ -219,7 +219,8 @@ def reduce_hint_pep484749_ref(
             # corresponding "__exception_prefix_beartype__" class variable on
             # this proxy to a non-memoized string by calling the
             # set_beartype_ref_proxies_exception_prefix() setter.
-            hint_resolved = proxy_hint_pep749_ref_object(hint)
+            hint_resolved = proxy_hint_pep749_ref_object(
+                hint=hint, conf=conf)
         # Else, either the active Python interpreter targets Python <= 3.13 *OR*
         # the active Python interpreter targets Python >= 3.14 but
         # "hint.__owner__" is empty. In either case, this forward reference
@@ -245,7 +246,10 @@ def reduce_hint_pep484749_ref(
                 # Note that the decoration-time "exception_prefix" parameter is
                 # intentionally *NOT* passed to this proxy factory. See above!
                 hint_resolved = proxy_hint_pep484_ref_str_subbable(
-                    scope_name=hint_module_name, hint_name=hint_type_name)
+                    scope_name=hint_module_name,
+                    hint_name=hint_type_name,
+                    conf=conf,
+                )
             # Else, this reference was instantiated with *NO* module name. This
             # classname is relative to an unknown module and thus currently
             # ambiguous. This ambiguity can *ONLY* be resolved by dynamically

@@ -25,6 +25,7 @@ from beartype._check.cls.call.calldatadecorabc import (
 from beartype._check.cls.call.calldatadecorfuncmin import (
     BeartypeCallDecorFuncMinimalData)
 from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import (
     LexicalScope,
@@ -55,6 +56,9 @@ from collections.abc import Callable
 # ....................{ FACTORIES ~ caller                 }....................
 #FIXME: Unit test us up, please.
 def make_scope_forward_caller_external(
+    # Mandatory parameters.
+    conf: BeartypeConf,
+
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
@@ -76,6 +80,10 @@ def make_scope_forward_caller_external(
 
     Parameters
     ----------
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the referents referred to by
+        all forward references implicitly proxied by this forward scope).
     exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
@@ -119,6 +127,7 @@ def make_scope_forward_caller_external(
     # parameter to an isinstance()- or issubclass()based runtime type-check.
     caller_scope = BeartypeForwardScope(
         scope_name=caller_module_name,
+        conf=conf,
         exception_prefix=exception_prefix,
     )
 
@@ -270,6 +279,7 @@ def make_scope_forward_decor_curr(
     elif isinstance(decoratee, type):
         # print(f'Detected class decoratee {repr(decoratee)}!')
         return make_scope_forward_caller_external(
+            conf=decor_curr.conf,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )
@@ -527,6 +537,7 @@ def make_scope_forward_decor_curr(
     #     class MuhGeneric(Generic[T]): ...
     func_scope = decor_curr.decoratee_scope_forward = BeartypeForwardScope(
         scope_name=func_module_name,
+        conf=decor_curr.conf,
         func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
         exception_prefix=exception_prefix,
     )
