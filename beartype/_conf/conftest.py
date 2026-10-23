@@ -21,6 +21,7 @@ from beartype.roar import (
     BeartypeDoorHintViolation,
 )
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confenum import (
     BeartypeStrategy,
     BeartypeViolationVerbosity,
@@ -268,6 +269,21 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         )
     # Else, "warning_cls_on_decorator_exception" is either "None" *OR* a
     # warning category.
+    #
+    # If "_hint_parent_sane" is neither "None" *NOR* sanified type hint
+    # metadata, raise an exception.
+    elif not (
+        conf_kwargs['_hint_parent_sane'] is None or
+        isinstance(conf_kwargs['_hint_parent_sane'], HintSane)
+    ):
+        raise BeartypeConfParamException(
+            f'Beartype configuration parameter '
+            f'"_hint_parent_sane" value '
+            f'{repr(conf_kwargs["_hint_parent_sane"])} '
+            f'neither "None" nor sanified type hint metadata.'
+        )
+    # Else, "_hint_parent_sane" is either "None" *OR* sanified type hint
+    # metadata.
 
     # ..................{ AUTOMATICALLY                      }..................
     # Configuration options to be validated automatically.
@@ -282,7 +298,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
                 f'Beartype configuration parameter "{arg_name_bool}" '
                 f'value {repr(conf_kwargs[arg_name_bool])} not boolean.'
             )
-    
+
     # For the name of each keyword parameter whose value is expected to be an
     # exception subclass...
     for arg_name_exception_subclass in _ARG_NAMES_EXCEPTION_SUBCLASS:

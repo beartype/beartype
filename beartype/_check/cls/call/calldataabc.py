@@ -17,14 +17,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import abstractmethod
-from beartype.roar import BeartypeDecorHintForwardRefException
+# from beartype.roar import BeartypeDecorHintPep484ForwardRefStrException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatyping import (
     Decoratee,
     Pep649749HintableAnnotations,
-    TypeException,
+    # TypeException,
     TypeStack,
 )
 from beartype._data.typing.datatypingport import Hint
@@ -161,7 +161,8 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
         conf: BeartypeConf,
 
         # Optional parameters.
-        exception_cls: TypeException = BeartypeDecorHintForwardRefException,
+        #FIXME: Currently unneeded, but preserved for posterity. *shrug*
+        # exception_cls: TypeException = BeartypeDecorHintPep484ForwardRefStrException,
         exception_prefix: str = '',
     ) -> Hint:
         '''

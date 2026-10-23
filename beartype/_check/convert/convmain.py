@@ -292,7 +292,7 @@ def sanify_hint_root_statement(
     # hint if this hint is coercible *OR* this hint as is otherwise. Since the
     # passed hint is *NOT* necessarily PEP-compliant, perform this coercion
     # *BEFORE* validating this hint to be PEP-compliant.
-    hint = coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
+    hint = coerce_hint_root(hint)
 
     # Metadata encapsulating the sanification of this hint.
     hint_sane = reduce_hint(

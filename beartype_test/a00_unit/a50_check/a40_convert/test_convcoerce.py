@@ -65,16 +65,18 @@ def test_coerce_func_hint_root() -> None:
     # tested by... something else, presumably? *sigh*
 
 
-def test_coerce_hint_any() -> None:
+def test_coerce_hint_root_func_deduplicate() -> None:
     '''
     Test the private
-    :func:`beartype._check.convert._convcoerce.coerce_hint_any` coercer.
+    :func:`beartype._check.convert._convcoerce._coerce_hint_root_func_deduplicate`
+    coercer.
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype._cache.cacheclear import clear_caches
-    from beartype._check.convert._convcoerce import coerce_hint_any
+    from beartype._check.convert._convcoerce import (
+        _coerce_hint_root_func_deduplicate)
 
     # ..................{ PREAMBLE                           }..................
     # Clear all internal @beartype caches *BEFORE* testing this coercer. This
@@ -87,7 +89,7 @@ def test_coerce_hint_any() -> None:
 
     # ..................{ CORE                               }..................
     # Assert this coercer preserves an isinstanceable type as is.
-    assert coerce_hint_any(int) is int
+    assert _coerce_hint_root_func_deduplicate(int) is int
 
     # ..................{ PEP 585                            }..................
     # Arbitrary PEP 585-compliant type hint.
@@ -95,16 +97,16 @@ def test_coerce_hint_any() -> None:
 
     # Assert this coercer preserves the first passed instance of a PEP
     # 585-compliant type hint as is.
-    hint_pep585_coerced = coerce_hint_any(hint_pep585)
+    hint_pep585_coerced = _coerce_hint_root_func_deduplicate(hint_pep585)
     assert hint_pep585_coerced is hint_pep585
-    # assert coerce_hint_any(hint_pep585) is hint_pep585
+    # assert _coerce_hint_root_func_deduplicate(hint_pep585) is hint_pep585
 
     # Assert this coercer returns the first passed instance of a PEP
     # 585-compliant type hint when passed a copy of that instance. PEP
     # 585-compliant type hints are *NOT* self-caching: e.g.,
     #     >>> list[int] is list[int]
     #     False
-    assert coerce_hint_any(list[int]) is hint_pep585
+    assert _coerce_hint_root_func_deduplicate(list[int]) is hint_pep585
 
     # ..................{ PEP 604                            }..................
     # Arbitrary PEP 604-compliant union.
@@ -112,11 +114,11 @@ def test_coerce_hint_any() -> None:
 
     # Assert this coercer preserves the first passed instance of a PEP
     # 604-compliant union as is.
-    assert coerce_hint_any(hint_pep604) is hint_pep604
+    assert _coerce_hint_root_func_deduplicate(hint_pep604) is hint_pep604
 
     # Assert this coercer returns the first passed instance of a PEP
     # 604-compliant type hint when passed a copy of that instance. PEP
     # 604-compliant type hints are *NOT* self-caching: e.g.,
     #     >>> int | str is int | str
     #     False
-    assert coerce_hint_any(int | str | None) is hint_pep604
+    assert _coerce_hint_root_func_deduplicate(int | str | None) is hint_pep604

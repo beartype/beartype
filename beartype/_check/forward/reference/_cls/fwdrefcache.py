@@ -386,17 +386,15 @@ class BeartypeForwardRefProxyCache(CacheABC):
             #    factory.
             #  * Pass that class variable below as:
             #        hint_parent_sane=ref_proxy.__hint_parent_sane_beartype__,
-            #  * Define a new
-            #    "BeartypeForwardRefABC.__hint_sane_beartype__" class variable.
-            #  * Initialize that class variable below as:
-            #        ref_proxy.__hint_sane_beartype__ = referent_hint_sanified
-            #  * Pass that class variable elsewhere (e.g., in "fwdrefabc") as
-            #    "hint_parent_sane". *HMM*. Actually, maybe this schemes falls
-            #    down here. We can't pass that class variable to is_bearable(),
-            #    as "BeartypeConf" fails to accept a "hint_parent_sane" setting.
-            #    Unsure we genuinely want to expose that to end users, either...
-            #    I guess we could just mark it as "internal beartype use only"?
-            #    Kinda kludgy, really. *shrug*
+            #  * Here's the kinda wacky hacky part. We need to redefine
+            #    "ref_proxy.__conf_beartype__" to additionally account for
+            #    the "hint_sane" object produced below, possibly by just
+            #    brute-force redefining that configuration as follows. Although
+            #    this is admittedly ugly and non-ideal, it *SHOULD* work:
+            #         ref_proxy_conf_kwargs = ref_proxy.__conf_beartype__.kwargs.copy()
+            #         ref_proxy_conf_kwargs['_hint_parent_sane'] = referent_hint_sanified 
+            #  * Pass that class variable elsewhere. For example:
+            #    * In "fwdrefabc", pass "hint_parent_sane=...".
             #* Mandatory "call_curr" parameters could get ugly fast. Real fast.
             #  Or... maybe not? There really only exist two different use cases:
             #  * "call_curr" is "BEARTYPE_CALL_EXTERNAL_META". In that case, no

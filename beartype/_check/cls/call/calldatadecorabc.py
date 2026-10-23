@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintForwardRefException
+# from beartype.roar import BeartypeDecorHintPep484ForwardRefStrException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._conf.confmain import BeartypeConf
@@ -21,7 +21,7 @@ from beartype._data.typing.datatyping import (
     Decoratee,
     LexicalScope,
     Pep649749HintableAnnotations,
-    TypeException,
+    # TypeException,
     TypeStack,
 )
 from beartype._data.typing.datatypingport import Hint
@@ -134,7 +134,7 @@ class BeartypeCallDecorDataABC(BeartypeCallDataABC):
         conf: BeartypeConf,
 
         # Optional parameters.
-        exception_cls: TypeException = BeartypeDecorHintForwardRefException,
+        # exception_cls: TypeException = BeartypeDecorHintPep484ForwardRefStrException,
         exception_prefix: str = '',
     ) -> Hint:
         # print(f'Resolving PEP 484 forward reference {repr(hint)} under {self}...')
@@ -153,6 +153,6 @@ class BeartypeCallDecorDataABC(BeartypeCallDataABC):
         return resolve_hint_pep484_ref_str_decor_curr(
             decor_curr=self,
             hint=hint,
-            exception_cls=exception_cls,
+            # exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )

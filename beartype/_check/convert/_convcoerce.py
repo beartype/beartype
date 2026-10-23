@@ -121,35 +121,6 @@ def coerce_func_hint_root(
         f'{repr(decor_func)} not @beartype metadata.')
     # print(f'Coercing pith "{pith_name}" annotated by type hint {repr(hint)}...')
 
-    # ..................{ FORWARD REFERENCE                  }..................
-    #FIXME: Unconvinced this is universally useful. Lower-level reducers (e.g.,
-    #reduce_hint_pep484749_ref()) already efficiently reduce forward references to
-    #more useful objects across a variety of common use cases. We *REALLY* don't
-    #want to duplicate that logic across both those reducers *AND* the
-    #resolve_hint_pep484_ref_str_decor_curr() function called below.
-    #
-    #Ideally, this code path should *ONLY* be performed to resolve PEP
-    #563-compliant forward references. Even in that case, though, shouldn't we
-    #efficiently resolve *ALL* PEP 563-compliant forward references for the
-    #decorated callable all at once by calling beartype.peps.resolve_pep563()
-    #instead? In other words, this logic smells. The smell is wafting badly.
-    #FIXME: For generality, shouldn't this also apply to "typing.ForwardRef"
-    #instances? That's yet another reason to defer to the more general-purpose
-    #reduce_hint_pep484749_ref() reducer discussed above.
-
-    # If this hint is stringified (e.g., as a PEP 484- or 563-compliant forward
-    # reference), resolve this hint to the non-string hint to which this hint
-    # refers *BEFORE* performing any subsequent logic with this hint -- *ALL* of
-    # which assumes this hint to be a non-string hint.
-    if isinstance(hint, str):
-        # print(f'Coercing forward ref hint {repr(hint)} to...')
-        hint = resolve_hint_pep484_ref_str_decor_curr(
-            hint=hint, decor_curr=decor_func, exception_prefix=exception_prefix)  # pyright: ignore
-        # print(f'...non-forward ref hint {repr(hint)}!')
-    # Else, this hint is *NOT* stringified.
-    #
-    # In either case, this hint is guaranteed to now be a non-string hint.
-
     # ..................{ MYPY                               }..................
     # If...
     if (
@@ -206,13 +177,18 @@ def coerce_func_hint_root(
 
     # ..................{ COERCE                             }..................
     # Defer to the function-agnostic root hint coercer as a generic fallback.
-    hint = coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
+    hint = coerce_hint_root(hint)
 
+    # This hint deduplicated if both feasible and desirable. See this function's
+    # docstring for detailed discussion. It's trivial but non-trivial. *lol*
+    hint = _coerce_hint_root_func_deduplicate(hint)
+
+    # ..................{ RETURN                             }..................
     # Return this possibly coerced root hint.
     return hint
 
 
-def coerce_hint_root(hint: Hint, exception_prefix: str) -> Hint:
+def coerce_hint_root(hint: Hint) -> Hint:
     '''
     PEP-compliant type hint coerced (i.e., converted) from the passed **root
     type hint** (i.e., possibly PEP-noncompliant type hint that has *no* parent
@@ -238,17 +214,15 @@ def coerce_hint_root(hint: Hint, exception_prefix: str) -> Hint:
     This function *cannot* be meaningfully memoized, since the passed type hint
     is *not* guaranteed to be cached somewhere. Only functions passed cached
     type hints can be meaningfully memoized. Since this high-level function
-    internally defers to unmemoized low-level functions that are ``O(n)`` for
-    ``n`` the size of the inheritance hierarchy of this hint, this function
-    should be called sparingly. See the :mod:`beartype._decor.cache.cachehint`
-    submodule for further details.
+    internally defers to unmemoized low-level functions that are :math:`O(n)`
+    for :math:`n` the size of the inheritance hierarchy of this hint, this
+    function should be called sparingly. See the
+    :mod:`beartype._decor.cache.cachehint` submodule for further details.
 
     Parameters
     ----------
     hint : object
         Possibly PEP-noncompliant type hint to be possibly coerced.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -266,24 +240,20 @@ def coerce_hint_root(hint: Hint, exception_prefix: str) -> Hint:
     # By definition, PEP-compliant unions are a superset of PEP-noncompliant
     # tuple unions and thus accept all child hints accepted by the latter.
     if isinstance(hint, tuple):
-        return make_hint_pep484_union(hint)
+        hint = make_hint_pep484_union(hint)
     # Else, this hint is *NOT* a PEP-noncompliant tuple union.
 
     # ..................{ RETURN                             }..................
-    # Since none of the above conditions applied, this hint could *NOT* be
-    # specifically coerced as a root type hint. Nonetheless, this hint may
-    # still be generically coercible as a hint irrespective of its contextual
-    # position relative to other type hints.
-    #
-    # Return this hint, possibly coerced as a context-agnostic type hint.
-    return coerce_hint_any(hint)
+    # Return this possibly coerced hint.
+    return hint
 
-# ....................{ COERCERS ~ any                     }....................
-def coerce_hint_any(hint: Hint) -> Hint:
+# ....................{ PRIVATE ~ coercers                 }....................
+def _coerce_hint_root_func_deduplicate(hint: Hint) -> Hint:
     '''
-    PEP-compliant type hint coerced (i.e., converted) from the passed
-    PEP-compliant type hint if this hint is coercible *or* this hint as is
-    otherwise (i.e., if this hint is *not* coercible).
+    PEP-compliant type hint **deduplicated** (i.e., replaced by a prior copy of
+    the same type hint passed to a prior call to this function) from the passed
+    PEP-compliant type hint if this hint is deduplicatable *or* this hint as is
+    otherwise (i.e., if this hint is *not* deduplicatable).
 
     Specifically, if the passed hint is:
 
@@ -401,17 +371,15 @@ def coerce_hint_any(hint: Hint) -> Hint:
     '''
 
     # ..................{ CACHE                              }..................
-    # If this hint is *NOT* self-caching, this hint *MUST* thus be explicitly
-    # cached here. Failing to do so would disable subsequent memoization,
-    # reducing decoration- and call-time efficiency when decorating callables
-    # repeatedly annotated by copies of this hint.
-    #
-    # Specifically, deduplicate this hint by either:
+    # If this hint is *NOT* self-caching, deduplicate this hint by either:
     # * If this is the first copy of this hint passed to this function, cache
     #   this hint under its machine-readable implementation.
     # * Else, one or more prior copies of this hint have already been passed to
     #   this function. In this case, replace this subsequent copy by the first
     #   copy of this hint originally passed to a prior call of this function.
+    #
+    # Note that hint deduplication reduces space consumption across the active
+    # Python interpreter and is thus intrinsically valuable.
     if is_hint_cacheworthy(hint):
         # print(f'Self-caching type hint {repr(hint)}...')
 

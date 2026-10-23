@@ -35,9 +35,64 @@ callers.
 #* "violation_verbosity".
 #* "warning_cls_on_decorator_exception".
 
+#FIXME: When implementing deadline scheduling for O(n) type-checking:
+#* Add this new optional configuration option:
+#      check_time_max_multiplier: Union[int, None] = 1000,
+#* Add this documentation for this option to the docstring below:
+#      check_time_max_multiplier : Union[int, None] = 1000
+#          **Deadline multiplier** (i.e., positive integer instructing
+#          :mod:`beartype` to prematurely halt the current type-check when the
+#          total running time of the active Python interpreter exceeds this
+#          integer multiplied by the running time consumed by both the current
+#          type-check and all prior type-checks *and* the caller also passed a
+#          non-default ``strategy``) *or* :data:`None` if :mod:`beartype`
+#          should never prematurely halt runtime type-checks.
+#
+#          Increasing this integer increases the number of container items that
+#          :mod:`beartype` type-checks at a cost of decreasing application
+#          responsiveness. Likewise, decreasing this integer increases
+#          application responsiveness at a cost of decreasing the number of
+#          container items that :mod:`beartype` type-checks.
+#
+#          Ignored when ``strategy`` is :attr:`BeartypeStrategy.O1`, as that
+#          strategy is already effectively instantaneous; imposing deadlines
+#          and thus bureaucratic bookkeeping on that strategy would only
+#          reduce its efficiency for no good reason, which is a bad reason.
+#
+#          Defaults to 1000, in which case a maximum of 0.10% of the total
+#          runtime of the active Python process will be devoted to performing
+#          non-constant :mod:`beartype` type-checks over container items. This
+#          default has been carefully tuned to strike a reasonable balance
+#          between runtime type-check coverage and application responsiveness,
+#          typically enabling smaller containers to be fully type-checked
+#          without noticeably impacting codebase performance.
+#
+#          **Theory time.** Let:
+#
+#          * :math:`T` be the total time this interpreter has been running.
+#          * :math:``b` be the total time :mod:`beartype` has spent
+#            type-checking in this interpreter.
+#
+#          Clearly, :math:`b <= T`. Generally, :math:`b <<<<<<< T` (i.e.,
+#          type-checks consume much less time than the total time consumed by
+#          the process). However, it's all too easy to exhibit worst-case
+#          behaviour of :math:`b ~= T` (i.e., type-checks consume most of the
+#          total time). How? By passing the :func:`beartype.door.is_bearable`
+#          tester an absurdly large nested container subject to the non-default
+#          ``strategy`` of :attr:`BeartypeStrategy.On`.
+#
+#          This deadline multiplier mitigates that worst-case behaviour.
+#          Specifically, :mod:`beartype` will prematurely halt any iterative
+#          type-check across a container when this constraint is triggered:
+#
+#          .. code-block:: python
+#
+#             b * check_time_max_multiplier >= T
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarwarn import (
     _BeartypeConfReduceDecoratorExceptionToWarningDefault)
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confenum import (
     BeartypeStrategy,
     BeartypeViolationVerbosity,
@@ -230,6 +285,7 @@ class BeartypeConf(object):
         '_conf_kwargs',
         '_hash',
         '_hint_overrides',
+        '_hint_parent_sane',
         '_is_color',
         '_is_debug',
         '_is_pep484_tower',
@@ -260,6 +316,7 @@ class BeartypeConf(object):
         _conf_kwargs: DictStrToAny
         _hash: int
         _hint_overrides: FrozenDict
+        _hint_parent_sane: Optional[HintSane]
         _is_color: BoolTristate
         _is_debug: bool
         _is_pep484_tower: bool
@@ -293,9 +350,6 @@ class BeartypeConf(object):
 
         # Optional keyword-only parameters.
         *,
-
-        # Uncomment us when implementing O(n) type-checking, please.
-        # check_time_max_multiplier: Union[int, None] = 1000,
         claw_decor_place_func: BeartypeDecorPlace = (
             BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE),
         claw_decor_place_type: BeartypeDecorPlace = (
@@ -323,6 +377,33 @@ class BeartypeConf(object):
         claw_decoration_position_funcs: Optional[BeartypeDecorPlace] = None,
         claw_decoration_position_types: Optional[BeartypeDecorPlace] = None,
         is_check_pep557: Optional[bool] = None,
+
+        # Optional keyword-only *PRIVATE* parameters. These parameters are *NOT*
+        # intended to be passed by users, but *ONLY* by the "beartype" codebase
+        # to itself as a simple means of facilitating communication between
+        # strictly partitioned subsets of the "beartype" codebase.
+        #
+        # Note that these parameters are intentionally left undocumented in the
+        # docstring below to prevent confusion. Instead, we document them here
+        # as simple comments for maintainability and discoverability *ONLY* by
+        # beartype developers:
+        #
+        # Private Parameters
+        # ------------------
+        # _hint_parent_sane : Optional[HintSane]
+        #     **Not intended to be passed by users.** The
+        #     :mod:`beartype`-specific forward reference proxy metaclass
+        #     propagates this **sanified parent type hint metadata** (i.e.,
+        #     immutable and thus hashable object encapsulating *all* metadata
+        #     previously returned by :mod:`beartype._check.convert.convmain`
+        #     sanifiers after sanitizing the possibly PEP-noncompliant parent
+        #     hint of this forward reference into a fully PEP-compliant parent
+        #     hint) from the low-level
+        #     :func:`beartype._check.forward.reference._cls.fwdrefmeta.BeartypeForwardRefMetaclass.__instancecheck__`
+        #     dunder method to the high-level :func:`beartype.door.is_bearable`
+        #     tester by bundling this metadata inside the beartype configuration
+        #     passed from that dunder method to that tester.
+        _hint_parent_sane: Optional[HintSane] = None,
     ) -> 'BeartypeConf':
         '''
         Instantiate this configuration if needed (i.e., if *no* prior
@@ -344,55 +425,6 @@ class BeartypeConf(object):
 
         Parameters
         ----------
-        check_time_max_multiplier : Union[int, None] = 1000
-            **Deadline multiplier** (i.e., positive integer instructing
-            :mod:`beartype` to prematurely halt the current type-check when the
-            total running time of the active Python interpreter exceeds this
-            integer multiplied by the running time consumed by both the current
-            type-check and all prior type-checks *and* the caller also passed a
-            non-default ``strategy``) *or* :data:`None` if :mod:`beartype`
-            should never prematurely halt runtime type-checks.
-
-            Increasing this integer increases the number of container items that
-            :mod:`beartype` type-checks at a cost of decreasing application
-            responsiveness. Likewise, decreasing this integer increases
-            application responsiveness at a cost of decreasing the number of
-            container items that :mod:`beartype` type-checks.
-
-            Ignored when ``strategy`` is :attr:`BeartypeStrategy.O1`, as that
-            strategy is already effectively instantaneous; imposing deadlines
-            and thus bureaucratic bookkeeping on that strategy would only
-            reduce its efficiency for no good reason, which is a bad reason.
-
-            Defaults to 1000, in which case a maximum of 0.10% of the total
-            runtime of the active Python process will be devoted to performing
-            non-constant :mod:`beartype` type-checks over container items. This
-            default has been carefully tuned to strike a reasonable balance
-            between runtime type-check coverage and application responsiveness,
-            typically enabling smaller containers to be fully type-checked
-            without noticeably impacting codebase performance.
-
-            **Theory time.** Let:
-
-            * :math:`T` be the total time this interpreter has been running.
-            * :math:``b` be the total time :mod:`beartype` has spent
-              type-checking in this interpreter.
-
-            Clearly, :math:`b <= T`. Generally, :math:`b <<<<<<< T` (i.e.,
-            type-checks consume much less time than the total time consumed by
-            the process). However, it's all too easy to exhibit worst-case
-            behaviour of :math:`b ~= T` (i.e., type-checks consume most of the
-            total time). How? By passing the :func:`beartype.door.is_bearable`
-            tester an absurdly large nested container subject to the non-default
-            ``strategy`` of :attr:`BeartypeStrategy.On`.
-
-            This deadline multiplier mitigates that worst-case behaviour.
-            Specifically, :mod:`beartype` will prematurely halt any iterative
-            type-check across a container when this constraint is triggered:
-
-            .. code-block:: python
-
-               b * check_time_max_multiplier >= T
         claw_decor_place_func : BeartypeDecorPlace, optional
             **Import hook callable decorator place** (i.e., relative position in
             existing chains of one or more decorators decorating user-defined
@@ -878,6 +910,7 @@ class BeartypeConf(object):
                 violation_type,
                 violation_verbosity,
                 warning_cls_on_decorator_exception,
+                _hint_parent_sane,
             )
 
             # If this method has already instantiated a configuration with these
@@ -912,6 +945,7 @@ class BeartypeConf(object):
                 violation_verbosity=violation_verbosity,
                 warning_cls_on_decorator_exception=(
                     warning_cls_on_decorator_exception),
+                _hint_parent_sane=_hint_parent_sane,
             )
 
             # Default all parameters not explicitly passed by the user to sane
@@ -956,7 +990,7 @@ class BeartypeConf(object):
             #
             # Note that this is a feeble safety check against internal issues.
             # Although this condition should *ALWAYS* be true, asserting this
-            # condition costs us nothing and gains us much: namely, QA.
+            # condition costs us nothing and gains us much: QA, which is us.
             assert len(self._conf_args) == len(self._conf_kwargs)
 
             # Cache this configuration with all relevant dictionary singletons
@@ -990,6 +1024,7 @@ class BeartypeConf(object):
             self._violation_return_type = conf_kwargs['violation_return_type']  # pyright: ignore
             self._violation_type = conf_kwargs['violation_type']  # pyright: ignore
             self._violation_verbosity = conf_kwargs['violation_verbosity']  # pyright: ignore
+            self._hint_parent_sane = _hint_parent_sane
 
             # Classify all remaining instance variables.
             self._is_violation_door_warn = issubclass(
@@ -1482,6 +1517,13 @@ class BeartypeConf(object):
             # For the name and value of each keyword parameter with which this
             # configuration was instantiated...
             for kwarg_name, kwarg_value in self._conf_kwargs.items():
+                # If this keyword parameter is private and thus unsuitable for
+                # display to users, silently ignore this parameter.
+                if kwarg_name.startswith('_'):
+                    continue
+                # Else, this keyword parameter is public and thus suitable for
+                # display to users.
+
                 # If this value differs from that of the default value for this
                 # keyword parameter...
                 if kwarg_value != KWARGS_DEFAULT[kwarg_name]:

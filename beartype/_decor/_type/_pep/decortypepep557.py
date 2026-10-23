@@ -37,8 +37,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #        NON-TRIVIAL*. The exact details elude me at the moment, but we'll
 #        basically need to do something resembling:
 #        * Rename the existing make_func_checker() factory in the existing
-#          "beartype._check.make.checkmakefunc" submodule to make_func_checker_bearable()
-#          for disambiguity.
+#          "beartype._check.make.checkmakefunc" submodule to
+#          make_func_checker_bearable() for disambiguity.
 #        * Define a new make_func_checker_satisfies() factory in that submodule,
 #          initially just copy-pasted from make_func_checker_bearable().
 #        * Remove *ALL* reference to "exception_prefix" from
@@ -59,13 +59,18 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #  *INDEED*. Performance almost certainly degrades as the number of optional
 #  parameters increases, based on the implementation of our
-#  "beartype._check.make.checkmakefunc.make_func_checker() factory alone. Why? Because
-#  the tuple size of "CACHE_KEY" increases. Ergo, we should have *ALREADY* done
-#  this. So much sighing can be distantly heard.
+#  "beartype._check.make.checkmakefunc.make_func_checker() factory alone. Why?
+#  Because the tuple size of "CACHE_KEY" increases. Ergo, we should have
+#  *ALREADY* done this. So much sighing can be distantly heard.
 #
 #  *WAIT*. Does any of the above actually apply? Probably not. @beartype
 #  resolves "typing.Self" at decoration time. So... uh. This should already just
 #  work out-of-the-box. Test us up, yo! *lolface*
+#
+#  *MORE IMPORTANTLY*. Any new parameters we need to pass to die_if_unbearable()
+#  or is_bearable() should simply be passed by adding those parameters in a
+#  privatized manner to our existing "BeartypeConf" API. No need to define whole
+#  new tester and raiser functions. So easy. Jeez...
 #* Dataclass subclasses. Does each dataclass subclass in a hierarchy have its
 #  own unique "__annotations__" dunder dictionary *OR* does each such subclass
 #  composite the "__annotations__" of both itself and its superclasses? Probably
@@ -357,6 +362,9 @@ def beartype_pep557_dataclass(
         #sooner. "HintSane" objects *PROBABLY* aren't an issue when we're
         #dealing with root type hints, which we are. Probably. Just strip the
         #"hint" instance variable out and ignore all of their other metadata.
+        #FIXME: ...wat? Uh, no. Obviously, "HintSane" objects matter. They're
+        #how we guard against recursion, for example. They absolutely matter.
+        #They *MUST* be preserved.
         #FIXME: Calling reduce_hint() here almost certainly suffices. That said,
         #the larger issue now is that this beartype_pep557_dataclass() basically
         #accepts *NONE* of the parameters it needs to pass on to reduce_hint().
