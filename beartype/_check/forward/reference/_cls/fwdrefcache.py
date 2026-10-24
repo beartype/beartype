@@ -395,24 +395,8 @@ class BeartypeForwardRefProxyCache(CacheABC):
             #         ref_proxy_conf_kwargs['_hint_parent_sane'] = referent_hint_sanified 
             #  * Pass that class variable elsewhere. For example:
             #    * In "fwdrefabc", pass "hint_parent_sane=...".
-            #* Mandatory "call_curr" parameters could get ugly fast. Real fast.
-            #  Or... maybe not? There really only exist two different use cases:
-            #  * "call_curr" is "BEARTYPE_CALL_EXTERNAL_META". In that case, no
-            #    worries whatsoever! That's safely storable inside a new
-            #    "BeartypeForwardRefABC.__call_curr_beartype__" class variable.
-            #  * "call_curr" is an instance of "BeartypeCallDecorFuncData". In
-            #    that case, we'll need to first minify that by calling the
-            #    BeartypeCallDecorFuncData.minify() method *BEFORE* we can
-            #    safely store that minified "call_curr" inside a new
-            #    "BeartypeForwardRefABC.__call_curr_beartype__" class variable.
-            #    *HOWEVER*:
-            #    * Note that this then probably incurs inefficiencies due to
-            #      repeated calls to BeartypeCallDecorFuncData.minify()
-            #      recreating the same exact object over and over again. The
-            #      solution, of course, is to generalize minify() to internally
-            #      cache the object it returns into a new private variable:
-            #          _call_curr_minified: BeartypeCallDecorFuncData
-            #      Trivial, more or less. Just gotta do it. *megasigh*
+            #* Mandatory "call_curr" parameters are now trivially produced by
+            #  safely calling the new call_curr.minify() concrete method, yo.
 
             #FIXME: Doesn't work, interestingly. Induces severe test failures.
             #Wonder why? No idea. No time. Let's just drop this one for the

@@ -17,7 +17,9 @@ Note that:
   *mostly* indistinguishable from PEP-noncompliant types and thus intentionally
   tested in the
   :mod:`beartype_test.a00_unit.data.hint.nonpep.proposal._data_nonpep484`
-  submodule rather than here despite being standardized by :pep:`484`.
+  submodule rather than here despite being standardized by :pep:`484`. The sole
+  exception to this rule are :pep:`484`-compliant generics that also subclass
+  those factory functions, which are more appropriately tested here. We sigh.
 * The ``typing.Supports*`` family of abstract base classes (ABCs) are
   intentionally tested in the
   :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep544` submodule
@@ -107,7 +109,10 @@ def hints_pep484_meta() -> (
         HintSignTypeVar,
         HintSignValuesView,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_11
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_11,
+        IS_PYTHON_AT_MOST_3_11,
+    )
     from beartype_test.a00_unit.data.data_type import (
         Class,
         Subclass,
@@ -1317,7 +1322,7 @@ def hints_pep484_meta() -> (
         #   3.9, which implements these tests in an ambiguous (albeit efficient)
         #   manner effectively indistinguishable from PEP 585-compliant type
         #   hints.
-        # * Deprecation warnings are already emitted in a memoized fashio for
+        # * Deprecation warnings are already emitted in a memoized fashion for
         #   the unsubscripted variants tested above and thus *CANNOT* be
         #   re-tested here.
         HintPepMetadata(
@@ -3522,11 +3527,79 @@ def hints_pep484_meta() -> (
     # PEP-compliant type hints conditionally dependent on the major version of
     # Python targeted by the active Python interpreter.
 
-    # If the active Python interpreter targets at most Python <= 3.11...
+    # If the active Python interpreter targets Python >= 3.11...
+    if IS_PYTHON_AT_LEAST_3_11:
+        # ..................{ IMPORTS                        }..................
+        # Defer importation of PEP 484-compliant type hints available *ONLY*
+        # under Python >= 3.11.
+        from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
+            NamedTupleGeneric)
+
+        # ..................{ LISTS                          }..................
+        # Add Python >= 3.11-specific type hint metadata to this list.
+        hints_piths_pep_meta.extend((
+            # ..............{ GENERICS ~ namedtuple                  }..............
+            # Unsubscripted generic parametrized by one type variable subclassing
+            # the "typing.NamedTuple" type hint factory.
+            HintPepMetadata(
+                hint=NamedTupleGeneric,
+                pep_sign=HintSignPep484585GenericUnsubbed,
+                generic_type=NamedTupleGeneric,
+                is_type_typing=False,
+                piths_meta=(
+                    # Named tuple containing arbitrary items.
+                    PithSatisfiedMetadata(NamedTupleGeneric(
+                        now_while_i_cannot='Now while I cannot',
+                        hear_the_citys_din="hear the city's din",
+                    )),
+                    # String constant.
+                    PithUnsatisfiedMetadata(
+                        'Now while the early budders are just new,'),
+                    # Tuple of string constants.
+                    PithUnsatisfiedMetadata(
+                        ('And run in mazes of', 'the youngest hue',)),
+                ),
+            ),
+
+            # Subscripted generic parametrized by one type variable subclassing
+            # the "typing.NamedTuple" type hint factory.
+            HintPepMetadata(
+                hint=NamedTupleGeneric[str],
+                pep_sign=HintSignPep484585GenericSubbed,
+                generic_type=NamedTupleGeneric,
+                is_type_typing=True,
+                is_typing=False,
+                piths_meta=(
+                    # Named tuple containing correctly typed items.
+                    PithSatisfiedMetadata(NamedTupleGeneric(
+                        now_while_i_cannot='Now while the early budders',
+                        hear_the_citys_din='are just new',
+                    )),
+                    # String constant.
+                    PithUnsatisfiedMetadata(
+                        'About old forests; while the willow trails'),
+                    # Tuple of string constants.
+                    PithUnsatisfiedMetadata(
+                        ('Its delicate amber;', 'and the dairy pails',)),
+                    #FIXME: Uncomment after implementing "NamedTuple" support.
+                    # # Named tuple containing incorrectly typed items.
+                    # PithUnsatisfiedMetadata(
+                    #     pith=NamedTupleGeneric(...),
+                    #     # Match that the exception message raised for this object...
+                    #     exception_str_match_regexes=(
+                    #         # Declares the name of this tuple's problematic item.
+                    #         r'\s[Ll]ist item 0\s',
+                    #     ),
+                    # ),
+                ),
+            ),
+        ))
+
+    # If the active Python interpreter targets Python <= 3.11...
     if IS_PYTHON_AT_MOST_3_11:
         # ..................{ IMPORTS                        }..................
-        # Defer importation of standard PEP 484-specific type hint factories
-        # deprecated under Python >= 3.12.
+        # Defer importation of PEP 484-compliant type hint factories deprecated
+        # under Python >= 3.12.
         from collections.abc import ByteString as ByteStringABC
         from typing import ByteString
 

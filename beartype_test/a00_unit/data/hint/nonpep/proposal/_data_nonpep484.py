@@ -42,37 +42,19 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_13
     from beartype_test.a00_unit.data.data_type import Class
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
+        NamedTupleFunctionalSubclass)
     from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintNonpepMetadata)
     from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
-    from typing import (
-        NamedTuple,
-        Union,
-    )
+    from typing import Union
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-noncompliant type hint metadata to be returned.
     hints_piths_nonpep_meta = []
-
-    #FIXME: *WOOPS.* We should have read the standards a bit closer. Neither
-    #"typing.NamedTuple" nor "typing.TypedDict" are intended for direct use as
-    #type hints. To quote official "typing" documentation:
-    #    These are not used in annotations. They are building blocks for
-    #    declaring types.
-    #
-    #Of course, all types *ARE* valid type hints. "typing.NamedTuple" and
-    #"typing.TypedDict" subclasses are types and thus also valid type hints. So,
-    #the superficial testing we perform below is certainly useful; we just don't
-    #need to do anything further, really. Phew!
-
-    # "tuple" subclass dynamically constructed by the PEP 484-compliant
-    # "typing.NamedTuple" type factory, which augments the
-    # "collections.namedtuple" type factory with annotated type hints.
-    NamedTupleSubclass = NamedTuple(
-        'NamedTupleSubclass', [('fumarole', str), ('enrolled', int)])
 
     # ..................{ LISTS                              }..................
     # Add PEP 484-specific (albeit technically PEP-noncompliant from the
@@ -82,11 +64,11 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
         # "NamedTuple" instances transparently reduce to "tuple" subclasses and
         # *MUST* thus be handled as non-"typing" type hints.
         HintNonpepMetadata(
-            hint=NamedTupleSubclass,
+            hint=NamedTupleFunctionalSubclass,
             piths_meta=(
                 # Named tuple containing correctly typed items.
-                PithSatisfiedMetadata(
-                    NamedTupleSubclass(fumarole='Leviathan', enrolled=37)),
+                PithSatisfiedMetadata(NamedTupleFunctionalSubclass(
+                    fumarole='Leviathan', enrolled=37)),
                 # String constant.
                 PithUnsatisfiedMetadata('Of ͼarthen concordance that'),
                 #FIXME: Uncomment after implementing "NamedTuple" support.
@@ -104,9 +86,8 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
 
         # ................{ TYPEDDICT                          }................
         # "TypedDict" instances transparently reduce to dicts.
-        #FIXME: Implement us up, but note when doing so that:
-        #* We currently unconditionally reduce "TypeDict" to "Mapping".
-        #* "TypedDict" was first introduced with Python 3.8.
+        #FIXME: Implement us up, but note when doing so that we currently
+        #unconditionally reduce "TypeDict" to "Mapping".
 
         # ................{ TYPE ~ builtin                     }................
         # Integer.

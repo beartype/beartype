@@ -31,7 +31,6 @@ from beartype._data.typing.datatyping import (
     LexicalScope,
 )
 from beartype._data.kind.datakindiota import SENTINEL
-from beartype._metaverse import URL_ISSUES
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     FixedList,
@@ -584,7 +583,7 @@ class HintTreeCode(HintTreeABC):
         if hint_sign is SENTINEL:
             hint_sign = get_hint_pep_sign_or_none(hint_child)
         # Else, the caller passed a non-default sign identifying this hint.
-        # Preserve this sign as is.
+        # Preserve that sign as is.
 
         # ..................{ INDEX                          }..................
         # Increment the 0-based index of metadata describing the last visitable
@@ -649,6 +648,11 @@ class HintTreeCode(HintTreeABC):
         #Honestly, it's trivial enough that we probably just want to go ahead
         #and do this already. Seriously. Might as well, right? Not doing this
         #will just serve as a source of confusion in the years to come. *sigh*
+        #FIXME: Actually, the above no longer suffices. Clever idea, though.
+        #Why? Because PEP 749 implicitly resolves unquoted forward references to
+        #full-fledged "annotationlib.ForwardRef" objects, which obviously need
+        #guarding against as well. And going forward, those objects will be
+        #*MUCH* more common than old-school stringified forward references.
 
         # If the number of child hints currently visited by this breadth-first
         # search (BFS) exceeds this queue's fixed length, this BFS has (almost

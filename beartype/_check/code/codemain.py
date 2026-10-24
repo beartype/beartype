@@ -105,6 +105,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignCounter,
     HintSignPep484585GenericUnsubbed,
     HintSignLiteral,
+    HintSignNamedTuple,
     HintSignPep484585TupleFixed,
     HintSignType,
 )
@@ -113,6 +114,7 @@ from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_MAPPING,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_SUPPORTED_DEEP,
+    HINT_SIGNS_SUPPORTED_TYPE_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
 from beartype._util.cache.pool.utilcachepoolinstance import (
@@ -375,12 +377,27 @@ def make_check_expr(
 
         # Localize metadata for both efficiency and f-string purposes.
         hint_curr_sane = hint_tree.hint_curr.hint_sane
+        hint_curr_sign = hint_tree.hint_curr.hint_sign  # type: ignore[assignment]
         hint_curr = hint_curr_sane.hint
         # print(f'Visiting type hint {repr(hint_curr_sane)}...')
+        # print(f'Visiting PEP type hint {repr(hint_curr)} sign {repr(hint_curr_sign)}...')
 
         # ................{ PEP                                }................
-        # If this hint is PEP-compliant...
-        if is_hint_pep(hint_curr):
+        # If...
+        if (
+            # This sign does *NOT* identify this hint to be a trivially
+            # supported isinstanceable type (i.e., PEP-compliant hint
+            # semantically equivalent to an isinstanceable class such that
+            # type-checking code should trivially check that corresponding piths
+            # are instances of this class) *AND*...
+            hint_curr_sign not in HINT_SIGNS_SUPPORTED_TYPE_ISINSTANCEABLE and
+            # This hint is PEP-compliant...
+            is_hint_pep(hint_curr)
+        ):
+            # Then this hint is PEP-compliant such that type-checking code
+            # dynamically generated below should non-trivially check more than
+            # merely that corresponding piths are instances of this class.
+
             #FIXME: Refactor to call warn_if_hint_pep_unsupported() instead.
             #Actually...wait. This is probably still a valid test here. We'll
             #need to instead augment the is_hint_ignorable() function to
@@ -418,10 +435,6 @@ def make_check_expr(
                 f'{EXCEPTION_PREFIX}ignorable type hint '
                 f'{repr(hint_curr)} not ignored.'
             )
-
-            # Sign uniquely identifying this hint, localized for usability.
-            hint_curr_sign = hint_tree.hint_curr.hint_sign  # type: ignore[assignment]
-            # print(f'Visiting PEP type hint {repr(hint_curr)} sign {repr(hint_curr_sign)}...')
 
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # NOTE: Whenever adding support for (i.e., when generating code
@@ -542,8 +555,9 @@ def make_check_expr(
             # this hint *MUST* be deeply type-checkable. So, we do so now.
             #
             # ..............{ DEEP                               }..............
-            # Perform deep type-checking logic (i.e., logic that is guaranteed
-            # to recurse and thus *NOT* "bottom out" at this hint).
+            # Perform deep type-checking logic guaranteed to recurse and thus
+            # *NOT* "bottom out" at this hint. Ergo, this hint is necessarily
+            # subscripted by one or more child hints.
             else:
                 # Tuple of all child hints subscripting this hint if any *OR*
                 # the empty tuple otherwise (e.g., if this hint is its own
@@ -1402,8 +1416,9 @@ def make_check_expr(
                 # ............{ UNSUPPORTED                        }............
                 # Else, this hint is neither shallowly nor deeply supported and
                 # is thus unsupported. Since an exception should have already
-                # been raised above in this case, this conditional branch
-                # *NEVER* be triggered. Nonetheless, raise an exception.
+                # been raised above in this case, this condition should *NEVER*
+                # be triggered. Of course, it just triggered. Didn't it? Thus,
+                # we raise a human-readable exception. *sigh*
                 else:
                     raise BeartypeDecorHintPepUnsupportedException(
                         f'{EXCEPTION_PREFIX_HINT}'
@@ -1413,7 +1428,14 @@ def make_check_expr(
                     )
 
         # ................{ NON-PEP                            }................
-        # Else, this hint is *NOT* PEP-compliant.
+        # Else, either:
+        # * This hint is PEP-noncompliant *OR*...
+        # * This hint is PEP-compliant such that type-checking code should
+        #   trivially check that corresponding piths are instances of this
+        #   class.
+        #
+        # Thankfully, both cases reduce to the same trivial isinstance()-based
+        # class check dynamically generated below.
         #
         # ................{ NON-PEP ~ type                     }................
         # If this hint is a non-"typing" class...
@@ -1424,7 +1446,7 @@ def make_check_expr(
         #   PEP-noncompliant non-"typing" class rather than a PEP-compliant
         #   type hint originating from such a class. Since many hints are both
         #   PEP-compliant *AND* originate from such a class (e.g., the "List"
-        #   in "List[int]", PEP-compliant but originating from the
+        #   in "List[int]", which is PEP-compliant but originates from the
         #   PEP-noncompliant builtin class "list"), testing these hints first
         #   for PEP-compliance ensures we generate non-trivial code deeply
         #   type-checking these hints instead of trivial code only shallowly
@@ -1456,7 +1478,7 @@ def make_check_expr(
 
         # ................{ CLEANUP                            }................
         # If prior logic generated *NO* code snippet type-checking the current
-        # pith against the currently visited hint.
+        # pith against the currently visited hint...
         if hint_tree.func_curr_code is None:
             # Assert that a branch above defined the code snippet used below.
             assert hint_tree.hint_curr_expr is not None, (
@@ -1479,10 +1501,6 @@ def make_check_expr(
             old=hint_tree.hint_curr.hint_placeholder,
             new=hint_tree.func_curr_code,
         )
-
-        # # Nullify the previously visited hint in this list, avoiding spurious
-        # # memory leaks by encouraging garbage collection.
-        # hint_tree.[hints_meta_index_curr] = None
 
         # Deinitialize the type-checking metadata describing the previously
         # visited hint in this queue. Doing so avoids spurious memory leaks by
@@ -1534,7 +1552,7 @@ def make_check_expr(
         ),
     )
 
-    # If this expression is safely memoizable into this cache, do so.
+    # If this expression is safely memoizable into this cache, do so, yo! \o/
     if hint_tree.is_check_expr_cacheable:
         _HINT_CONF_TO_CHECK_EXPR[CACHE_KEY] = check_expr  # pyright: ignore
     # Else, this expression is *NOT* safely memoizable.

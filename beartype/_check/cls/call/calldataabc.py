@@ -151,7 +151,39 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
         self.decoratee = decoratee
         self.decoratee_annotations = decoratee_annotations
 
-    # ..................{ RESOLVERS                          }..................
+    # ..................{ MINIFIERS                          }..................
+    def minify(self) -> 'BeartypeCallDataABC':
+        '''
+        **Beartype callable decorator call minimal metadata** (i.e., dataclass
+        encapsulating the minimal metadata required to type-check the callable
+        currently being decorated by the :func:`beartype.beartype` decorator at
+        the post-decoration time that callable is subsequently called) minified
+        from this possibly maximal metadata.
+
+        Specifically:
+
+        * If this metadata is **beartype callable decorator call maximal
+          metadata** (i.e.,
+          :class:`beartype._check.cls.call.calldatadecorfunc.BeartypeCallDecorFuncData`
+          instance), this minifier creates and returns the minimal metadata from
+          this maximal metadata by calling the
+          :meth:`beartype._check.cls.call.calldatadecorfunc.BeartypeCallDecorFuncData.minify`
+          method.
+        * Else, this minifier transparently returns this metadata unmodified.
+          All other metadata is effectively already "minified."
+
+        Returns
+        -------
+        BeartypeCallDataABC
+            Minimal metadata minified from this possibly maximal metadata.
+        '''
+
+        # Return this metadata unmodified, which suffices in the common case for
+        # concrete subclasses of this abstract superclass whose implementations
+        # store only the minimal metadata required.
+        return self
+
+    # ..................{ ABSTRACT ~ resolvers               }..................
     @abstractmethod
     def resolve_hint_pep484_ref_str(
         self,

@@ -24,6 +24,7 @@ from beartype._util.cls.utilclstest import is_type_subclass_proper
 #FIXME: Actually type-check type hints identified by the "HintSignNamedTuple"
 #sign. Specifically, for each "typing.NamedTuple" subclass identified by that
 #sign, type-check that subclass as follows:
+#* Remove "HintSignNamedTuple" from "HINT_SIGNS_SUPPORTED_TYPE_ISINSTANCEABLE".
 #* If that subclass is decorated by @beartype, reduce to the standard trivial
 #  isinstance() check. Since @beartype already type-checks instances of that
 #  subclass on instantiation, *NO* further type-checking is required or desired.
@@ -43,14 +44,17 @@ from beartype._util.cls.utilclstest import is_type_subclass_proper
 #    refer to other "typing.NamedTuple" subclasses, combinatorial explosion
 #    violating O(1) constraints becomes a real possibility here.
 #  * *RECURSION.* Both direct and indirect recursion are feasible here. Both
-#    require PEP 563 and are thus unlikely. Nonetheless:
-#    * Direct recursion occurs under PEP 563 as follows:
-#          from __future__ import annotations
+#    require PEP 563 and are thus unlikely. *UH OH*. Actually, PEP 749 now makes
+#    these sorts of shenanigans much more likely:
+#    * Direct recursion occurs under either PEP 563 or PEP 749 (under Python >=
+#      3.14) as follows:
+#          from __future__ import annotations  # <-- not needed under new Python
 #          from typing import NamedTuple
 #
 #          class DirectlyRecursiveNamedTuple(NamedTuple):
 #              uhoh: DirectlyRecursiveNamedTuple
-#    * Indirect recursion occurs under PEP 563 follows:
+#    * Indirect recursion occurs under PEP 563 or PEP 749 (under Python >=
+#      3.14) follows:
 #          from typing import NamedTuple
 #
 #          class IndirectlyRecursiveNamedTuple(NamedTuple):
