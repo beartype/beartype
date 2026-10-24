@@ -18,9 +18,11 @@ from typing import (
     Any,
     AnyStr,
     Optional,
+    runtime_checkable,
 )
 
 # ....................{ PROTOCOLS ~ superclass             }....................
+@runtime_checkable
 class Pep544IOMethodsOnly(Protocol[AnyStr]):
     '''
     **Methods-only IO protocol** (i.e., useful :mod:`beartype`-specific
@@ -90,6 +92,7 @@ class Pep544IOMethodsOnly(Protocol[AnyStr]):
 #   on subclass declaration:
 #       TypeError: <class 'beartype._data.hint.pep.proposal.datapep544.IO'> is
 #       not a generic class
+@runtime_checkable
 class Pep544IO(Pep544IOMethodsOnly[AnyStr], Protocol):
     '''
     :pep:`544`-compliant **IO protocol** (i.e., useful protocol copied wholesale
@@ -153,6 +156,7 @@ class Pep544IO(Pep544IOMethodsOnly[AnyStr], Protocol):
     def closed(self) -> bool: ...
 
 # ....................{ PROTOCOLS ~ subclass : text        }....................
+@runtime_checkable
 class Pep544TextIO(Pep544IO[str], Protocol):
     '''
     :pep:`544`-compliant **text IO protocol** (i.e., :mod:`beartype-specific

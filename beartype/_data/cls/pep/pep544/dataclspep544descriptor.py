@@ -14,9 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Protocol  # <-- *OPTIMIZED PROTOCOL FOR VICTORY* \o/
-from typing import Optional
+from typing import Optional, runtime_checkable
 
 # ....................{ PROTOCOLS                          }....................
+@runtime_checkable
 class Pep544DescriptorNondata(Protocol):
     '''
     :pep:`544`-compliant **non-data descriptor protocol** (i.e.,
@@ -35,6 +36,7 @@ class Pep544DescriptorNondata(Protocol):
 # Note that PEP 544 explicitly requires *ALL* protocols (including protocols
 # subclassing protocols) to explicitly subclass the "Protocol" superclass, in
 # violation of both sanity and usability. (Thanks, guys.)
+@runtime_checkable
 class Pep544DescriptorData(Pep544DescriptorNondata, Protocol):
     '''
     :pep:`544`-compliant **data descriptor protocol** (i.e.,
