@@ -63,11 +63,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #    # ...into this.
 #    from beartype._util.hint.pep.proposal.pep695 import (
 #        iter_hint_pep695_unsubbed_forwardrefs as
-#        __iter_hint_pep695_forwardref_beartype__
+#        __iter_hint_pep695_unsubbed_forwardrefs_beartype__
 #    )
 #    type {alias_name} = {alias_value}
 #    for __hint_pep695_forwardref_beartype__ in (
-#        __iter_hint_pep695_forwardref_beartype__({alias_name})):
+#        __iter_hint_pep695_unsubbed_forwardrefs_beartype__({alias_name})):
 #        # If the current scope is module scope, prefer an efficient
 #        # non-exec()-based solution. Note that this optimization does *NOT*
 #        # generalize to other scopes, for obscure reasons delineated here:
@@ -145,6 +145,8 @@ from beartype._cave._cavefast import (
     Pep695ParameterizableTypes,
 )
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.cls.call.calldataexternal import (
+    BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.forward.reference._cls.fwdrefmeta import (
     BeartypeForwardRefMetaclass)
 from beartype._check.forward.reference.fwdrefproxy import (
@@ -939,10 +941,12 @@ def iter_hint_pep695_unsubbed_forwardrefs(
             # stringified forward reference *CANNOT* be subscripted by arbitrary
             # child type hints; a forward reference proxy can be.
             hint_ref = proxy_hint_pep484_ref_str_subbable(
-                scope_name=hint_module_name,
-                hint_name=hint_ref_name,
+                call_curr=BEARTYPE_CALL_EXTERNAL_META,
                 conf=conf,
                 exception_prefix=exception_prefix,
+                scope_name=hint_module_name,
+                hint_name=hint_ref_name,
+                hint_parent_sane=None,
             )
 
             # Yield this forward reference proxy to the caller.

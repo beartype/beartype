@@ -19,6 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from abc import abstractmethod
 # from beartype.roar import BeartypeDecorHintPep484ForwardRefStrException
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatyping import (
@@ -189,12 +190,11 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
         self,
 
         # Mandatory parameters.
-        hint: str,
         conf: BeartypeConf,
+        hint: str,
+        hint_parent_sane: Optional[HintSane],
 
         # Optional parameters.
-        #FIXME: Currently unneeded, but preserved for posterity. *shrug*
-        # exception_cls: TypeException = BeartypeDecorHintPep484ForwardRefStrException,
         exception_prefix: str = '',
     ) -> Hint:
         '''
@@ -211,12 +211,24 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
 
         Parameters
         ----------
-        hint : str
-            Stringified forward reference type hint to be resolved.
         conf : BeartypeConf
             **Beartype configuration** (i.e., self-caching dataclass
             encapsulating all flags, options, settings, and other metadata
             configuring this resolution).
+        hint : str
+            Stringified forward reference type hint to be resolved.
+        hint_parent_sane : Optional[HintSane]
+            Either:
+
+            * If this forward reference is a **root** (i.e., top-most parent
+              hint of a tree of child hints), :data:`None`.
+            * Else, this forward reference is a **child** of some parent hint.
+              In this case, the **sanified parent type hint metadata** (i.e.,
+              immutable and thus hashable object encapsulating *all* metadata
+              previously returned by :mod:`beartype._check.convert.convmain`
+              sanifiers after sanitizing the possibly PEP-noncompliant parent
+              hint of this forward reference into a fully PEP-compliant parent
+              hint).
         exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
             Type of exception to be raised in the event of a fatal error.
             Defaults to :exc:`.BeartypeDecorHintForwardRefException`.

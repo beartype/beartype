@@ -240,14 +240,14 @@ class BeartypeNodeTransformerPep695Mixin(object):
         # code permissible *ONLY* at module scope for optimally iteratively
         # defining one forward reference proxy for each unquoted relative
         # forward reference in this type alias. Notably, generate this:
-        #     for _ in __iter_hint_pep695_forwardref_beartype__({alias_name}):
+        #     for _ in __iter_hint_pep695_unsubbed_forwardrefs_beartype__({alias_name}):
         #         globals()[_.__hint_name_beartype__] = _
         #
         # Else, this type alias is *NOT* declared at module scope and is thus
         # declared at a lower scope (e.g., class, callable). In this case,
         # fallback to generating inefficient code globally permissible at all
         # possible scopes. Notably, generate this:
-        #     for _ in __iter_hint_pep695_forwardref_beartype__({alias_name}):
+        #     for _ in __iter_hint_pep695_unsubbed_forwardrefs_beartype__({alias_name}):
         #         exec(f'{_.__hint_name_beartype__} = _')
 
         # Child nodes both accessing and assigning this type alias as a global

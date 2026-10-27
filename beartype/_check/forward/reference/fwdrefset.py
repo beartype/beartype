@@ -24,10 +24,10 @@ def set_beartype_ref_proxies_exception_prefix(
     '''
     Overwrite the default value of the ``__exception_prefix_beartype__`` class
     variables bound to all passed :mod:`beartype`-specific **forward reference
-    proxies** (i.e., classes whose :class:`.BeartypeForwardRefMetaclass` metaclass
-    defers the resolution of forward reference type hints referencing type
-    hints that have yet to be defined in the lexical scope of external callers)
-    with the passed exception prefix.
+    proxies** (i.e., classes whose :class:`.BeartypeForwardRefMetaclass`
+    metaclass defers the resolution of forward reference type hints referencing
+    type hints that have yet to be defined in the lexical scope of external
+    callers) with the passed exception prefix.
 
     Parameters
     ----------

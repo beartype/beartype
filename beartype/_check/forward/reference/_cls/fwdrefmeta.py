@@ -293,10 +293,12 @@ class BeartypeForwardRefMetaclass(type):
         # Return a new fully-qualified forward reference proxy subclass
         # concatenated as described above.
         return proxy_hint_pep484_ref_str_subbable(
-            scope_name=cls.__scope_name_beartype__,
-            hint_name=f'{cls.__hint_name_beartype__}.{hint_name}',
+            call_curr=cls.__call_curr_beartype__,
             conf=cls.__conf_beartype__,
             exception_prefix=cls.__exception_prefix_beartype__,
+            scope_name=cls.__scope_name_beartype__,
+            hint_name=f'{cls.__hint_name_beartype__}.{hint_name}',
+            hint_parent_sane=cls.__hint_parent_sane_beartype__,
         )
 
 

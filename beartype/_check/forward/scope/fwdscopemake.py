@@ -20,6 +20,7 @@ from beartype._cave._cavefast import (
     CallableFrameType,
     WeakrefCallableType,
 )
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.call.calldatadecorabc import (
     BeartypeCallDecorDataABC)
 from beartype._check.cls.call.calldatadecorfuncmin import (
@@ -57,6 +58,7 @@ from collections.abc import Callable
 #FIXME: Unit test us up, please.
 def make_scope_forward_caller_external(
     # Mandatory parameters.
+    call_curr: BeartypeCallDataABC,
     conf: BeartypeConf,
 
     # Optional parameters.
@@ -75,11 +77,15 @@ def make_scope_forward_caller_external(
     module or package *except* those residing in the :mod:`beartype` package).
 
     This factory is internally memoized into the
-    :attr:`decor_currfunc_wrappee_wrappee_scope_forward` instance variable of the
-    passed metadata.
+    :attr:`decor_curr.func_wrappee_wrappee_scope_forward` instance variable of
+    the passed metadata.
 
     Parameters
     ----------
+    call_curr : BeartypeCallDataABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the referents referred to by
@@ -126,9 +132,10 @@ def make_scope_forward_caller_external(
     # attribute on the first attempt to pass that attribute as the second
     # parameter to an isinstance()- or issubclass()based runtime type-check.
     caller_scope = BeartypeForwardScope(
-        scope_name=caller_module_name,
+        call_curr=call_curr,
         conf=conf,
         exception_prefix=exception_prefix,
+        scope_name=caller_module_name,
     )
 
     # Composite this global and local scope into this forward scope (in that
@@ -279,6 +286,7 @@ def make_scope_forward_decor_curr(
     elif isinstance(decoratee, type):
         # print(f'Detected class decoratee {repr(decoratee)}!')
         return make_scope_forward_caller_external(
+            call_curr=decor_curr,
             conf=decor_curr.conf,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
@@ -536,10 +544,11 @@ def make_scope_forward_decor_curr(
     #
     #     class MuhGeneric(Generic[T]): ...
     func_scope = decor_curr.decoratee_scope_forward = BeartypeForwardScope(
-        scope_name=func_module_name,
+        call_curr=decor_curr,
         conf=decor_curr.conf,
-        func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
         exception_prefix=exception_prefix,
+        func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
+        scope_name=func_module_name,
     )
 
     # ..................{ SCOPES ~ composite                 }..................

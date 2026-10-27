@@ -379,37 +379,47 @@ class BeartypeForwardRefProxyCache(CacheABC):
             #  do this! Moreover, doing so is probably needed to safely handle
             #  (waitforit) other recursive type hints that this referent refers
             #  to! So, we definitely doing this one. Specifically:
-            #  * Define a new
-            #    "BeartypeForwardRefABC.__hint_parent_sane_beartype__" class
-            #    variable.
-            #  * Initialize that class variable in the _proxy_hint_ref()
-            #    factory.
-            #  * Pass that class variable below as:
-            #        hint_parent_sane=ref_proxy.__hint_parent_sane_beartype__,
             #  * Here's the kinda wacky hacky part. We need to redefine
             #    "ref_proxy.__conf_beartype__" to additionally account for
             #    the "hint_sane" object produced below, possibly by just
             #    brute-force redefining that configuration as follows. Although
             #    this is admittedly ugly and non-ideal, it *SHOULD* work:
             #         ref_proxy_conf_kwargs = ref_proxy.__conf_beartype__.kwargs.copy()
-            #         ref_proxy_conf_kwargs['_hint_parent_sane'] = referent_hint_sanified 
+            #         ref_proxy_conf_kwargs['_hint_parent_sane'] = referent_hint_sanified
             #  * Pass that class variable elsewhere. For example:
             #    * In "fwdrefabc", pass "hint_parent_sane=...".
-            #* Mandatory "call_curr" parameters are now trivially produced by
-            #  safely calling the new call_curr.minify() concrete method, yo.
+            #FIXME: Additionally, we need to refactor this sanify_hint_child()
+            #function (and *ONLY* that function, probably) to conditionally
+            #account for the newly defined "conf._hint_parent_sane" instance
+            #variable: e.g.,
+            #    # In sanify_hint_child()...
+            #    if (
+            #        hint_parent_sane is None and
+            #        conf._hint_parent_sane is not None
+            #    ):
+            #        #FIXME: Insufficient. For safety, we should also
+            #        #dynamically replace the passed "conf" with a new "conf"
+            #        #whose '_hint_parent_sane' slot is "None". Trivial, just
+            #        #annoying. Efficiency isn't a concern here, because this is
+            #        #an edge case that *ONLY* arises with forward references --
+            #        #which are slow as balls, anybody. A little more slowdown
+            #        #never hurt no one. *sigh*
+            #        hint_parent_sane = conf._hint_parent_sane
 
-            #FIXME: Doesn't work, interestingly. Induces severe test failures.
-            #Wonder why? No idea. No time. Let's just drop this one for the
-            #moment. Ideally, though, we really *DO* need to sanify possibly
-            #insane referent hints here. Investigate at a later time. *sigh*
+            # # FIXME: Doesn't work, interestingly. Induces severe test failures.
+            # # Wonder why? No idea. No time. Let's just drop this one for the
+            # # moment. Ideally, though, we really *DO* need to sanify possibly
+            # # insane referent hints here. Investigate at a later time. *sigh*
             # # Avoid circular import dependencies.
-            # from beartype._check.convert.convmain import sanify_hint_any
+            # from beartype._check.convert.convmain import sanify_hint_child
             #
             # # Sanified hint metadata encapsulating the sanification of this
             # # possibly PEP-noncompliant referent to a PEP-compliant equivalent.
-            # referent_hint_sane = sanify_hint_any(
-            #     hint=referent_hint,
+            # referent_hint_sane = sanify_hint_child(
+            #     call_curr=ref_proxy.__call_curr_beartype__,
             #     conf=ref_proxy.__conf_beartype__,
+            #     hint=referent_hint,
+            #     hint_parent_sane=ref_proxy.__hint_parent_sane_beartype__,
             #     exception_prefix=ref_proxy.__exception_prefix_beartype__,
             # )
             #

@@ -35,11 +35,17 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import WeakrefCallableType
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
 from beartype._check.forward.reference._cls.fwdrefabc import (
     BeartypeForwardRefSubbableABC)
 from beartype._conf.confmain import BeartypeConf
+from beartype._data.kind.datakindiota import (
+    SENTINEL,
+    Iota,
+)
 from beartype._data.py.databuiltins import BUILTIN_NAME_TO_VALUE
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
@@ -61,6 +67,7 @@ from beartype._util.text.utiltextidentifier import die_unless_identifier
 from typing import (
     TYPE_CHECKING,
     Optional,
+    Union,
 )
 
 # ....................{ SUPERCLASSES                       }....................
@@ -108,6 +115,10 @@ class BeartypeForwardScope(LexicalScope):
 
     Attributes
     ----------
+    _call_curr : BeartypeCallDataABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
     _conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the referents referred to by
@@ -133,6 +144,23 @@ class BeartypeForwardScope(LexicalScope):
         :meth:`minify method subsequently truncates this forward scope to this
         minimal subset of key-value pairs required to resolve the
         specific stringified type hints annotating the decorated callable.
+    _hint_parent_sane: Union[Iota, None, HintSane]
+        Either:
+
+        * If the :meth:`.init_resolve_pep484_hint_strs` method has yet to be
+          called, the sentinel placeholder.
+        * If the :meth:`.init_resolve_pep484_hint_strs` method has already been
+          called, either:
+
+            * If this forward reference is a **root** (i.e., top-most parent
+              hint of a tree of child hints), :data:`None`.
+            * Else, this forward reference is a **child** of some parent hint.
+              In this case, the **sanified parent type hint metadata** (i.e.,
+              immutable and thus hashable object encapsulating *all* metadata
+              previously returned by :mod:`beartype._check.convert.convmain`
+              sanifiers after sanitizing the possibly PEP-noncompliant parent
+              hint of this forward reference into a fully PEP-compliant parent
+              hint).
     _scope_name : Optional[str]
         Possibly undefined fully-qualified name of this forward scope. See the
         :meth:`__init__` method for details.
@@ -144,20 +172,24 @@ class BeartypeForwardScope(LexicalScope):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
+        '_call_curr',
         '_conf',
         '_exception_prefix',
         '_func_local_parent_codeobj_weakref',
         '_hint_names_destringified',
+        '_hint_parent_sane',
         '_scope_name',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
+        _call_curr: BeartypeCallDataABC
         _conf: BeartypeConf
         _exception_prefix: str
         _func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref
         _hint_names_destringified: SetStrs
+        _hint_parent_sane: Union[Iota, None, HintSane]
         _scope_name: Optional[str]
 
     # ..................{ INITIALIZERS                       }..................
@@ -165,9 +197,10 @@ class BeartypeForwardScope(LexicalScope):
         self,
 
         # Mandatory parameters.
-        scope_name: Optional[str],
+        call_curr: BeartypeCallDataABC,
         conf: BeartypeConf,
         exception_prefix: str,
+        scope_name: Optional[str],
 
         # Optional parameters.
         func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = (
@@ -192,6 +225,17 @@ class BeartypeForwardScope(LexicalScope):
 
         Attributes
         ----------
+        call_curr : BeartypeCallDataABC
+            **Beartype call metadata** (i.e., dataclass aggregating *all* common
+            metadata encapsulating the user-defined callable, type, or statement
+            currently being type-checked by the end user).
+        conf : BeartypeConf
+            **Beartype configuration** (i.e., self-caching dataclass
+            encapsulating all settings configuring type-checking for the
+            referents referred to by all forward references implicitly proxied
+            by this forward scope).
+        exception_prefix : str
+            Human-readable substring prefixing raised exception messages.
         scope_name : Optional[str]
             Possibly undefined fully-qualified name of this forward scope. For
             example:
@@ -200,13 +244,6 @@ class BeartypeForwardScope(LexicalScope):
               resolve a global class or callable against this scope).
             * ``"some_package.some_module.SomeClass"`` for a class scope (e.g.,
               to resolve a nested class or callable against this scope).
-        conf : BeartypeConf
-            **Beartype configuration** (i.e., self-caching dataclass
-            encapsulating all settings configuring type-checking for the
-            referents referred to by all forward references implicitly proxied
-            by this forward scope).
-        exception_prefix : str
-            Human-readable substring prefixing raised exception messages.
         func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref, default: None
             Proxy weakly referring to the code object underlying the lexical
             scope of the parent module, type, or callable whose body locally
@@ -224,12 +261,14 @@ class BeartypeForwardScope(LexicalScope):
         BeartypeDecorHintForwardRefException
             If this scope name is *not* a valid Python attribute name.
         '''
-        assert isinstance(scope_name, NoneTypeOr[str]), (
-            f'{repr(scope_name)} neither string nor "None".')
+        assert isinstance(call_curr, BeartypeCallDataABC), (
+            f'{repr(call_curr)} not beartype call metadata.')
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not beartype configuration.')
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
+        assert isinstance(scope_name, NoneTypeOr[str]), (
+            f'{repr(scope_name)} neither string nor "None".')
         assert isinstance(
             func_local_parent_codeobj_weakref,
             NoneTypeOr[WeakrefCallableType]
@@ -257,6 +296,7 @@ class BeartypeForwardScope(LexicalScope):
         # Python identifier.
 
         # Classify all passed parameters.
+        self._call_curr = call_curr
         self._conf = conf
         self._exception_prefix = exception_prefix
         self._func_local_parent_codeobj_weakref = (
@@ -265,6 +305,7 @@ class BeartypeForwardScope(LexicalScope):
 
         # Default all remaining parameters to sane initial values.
         self._hint_names_destringified = set()
+        self._hint_parent_sane = SENTINEL
 
     # ..................{ DUNDERS                            }..................
     def __getitem__(self, hint_name: str) -> Hint:
@@ -311,6 +352,79 @@ class BeartypeForwardScope(LexicalScope):
 
         # Return this non-string type hint
         return hint
+
+
+    # ..................{ OVERRIDES                          }..................
+    def clear(self) -> None:
+        '''
+        Reduce this forward scope to the empty dictionary.
+        '''
+
+        # Defer to our superclass.
+        super().clear()
+
+        # Clear all subclass-specific instance variables as well.
+        self._exception_prefix = ''
+        self._func_local_parent_codeobj_weakref = None
+        self._hint_names_destringified.clear()
+
+    # ..................{ RESOLVERS                          }..................
+    def init_resolve_pep484_hint_strs(
+        self, hint_parent_sane: Optional[HintSane]) -> None:
+        '''
+        Prepare this forward scope to resolve **unresolved type hints**
+        (i.e., *not* currently defined in this scope) into **forward reference
+        proxies** (i.e., concrete subclasses of the private
+        :class:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC`
+        abstract base class (ABC), which resolves those type hints on the first
+        call to the :func:`isinstance` builtin whose second arguments are those
+        subclasses) against the passed runtime type hint context.
+
+        The caller *must* explicitly call this method *before* implicitly
+        invoking the :meth:`__missing__` dunder method (e.g., by calling the
+        :func:`eval` builtin passed this scope), which internally accesses the
+        instance variables classified from the passed parameters and thus
+        assumes this method to have been called first.
+
+        Parameters
+        ----------
+        hint_parent_sane: Optional[HintSane]
+            Either:
+
+            * If this forward reference is a **root** (i.e., top-most parent
+              hint of a tree of child hints), :data:`None`.
+            * Else, this forward reference is a **child** of some parent hint.
+              In this case, the **sanified parent type hint metadata** (i.e.,
+              immutable and thus hashable object encapsulating *all* metadata
+              previously returned by :mod:`beartype._check.convert.convmain`
+              sanifiers after sanitizing the possibly PEP-noncompliant parent
+              hint of this forward reference into a fully PEP-compliant parent
+              hint).
+        '''
+
+        assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
+            f'{repr(hint_parent_sane)} neither '
+            f'sanified hint metadata nor "None".'
+        )
+
+        # Classify all passed parameters.
+        self._hint_parent_sane = hint_parent_sane
+
+
+    def deinit_resolve_pep484_hint_strs(self) -> None:
+        '''
+        Prevent this forward scope from resolving any further unresolved type
+        hints into forward reference proxies until the next call to the
+        :meth:`.init_resolve_pep484_hint_strs` method.
+
+        The caller *must* explicitly call this method *after* implicitly
+        invoking the :meth:`__missing__` dunder method (e.g., by calling the
+        :func:`eval` builtin passed this scope) for safety.
+        '''
+
+        # Nullify all parameters previously classified by the
+        # init_resolve_pep484_hint_strs() method.
+        self._hint_parent_sane = SENTINEL
 
 
     def __missing__(self, hint_name: str) -> (
@@ -431,6 +545,17 @@ class BeartypeForwardScope(LexicalScope):
         '''
         # print(f'Missing type hint: {repr(hint_name)}')
 
+        # ..................{ VALIDATE                       }..................
+        # If the init_resolve_pep484_hint_strs() method was *NOT* called before
+        # the caller implicitly invoked this dunder method, raise an exception.
+        if self._hint_parent_sane is SENTINEL:
+            raise BeartypeDecorHintForwardRefException(
+                'Forward scope uninitialized (i.e., '
+                'BeartypeForwardScope.init_resolve_pep484_hint_strs() method '
+                'not called.)'
+            )
+        # Else, that method was called.
+
         # If this type hint name is syntactically invalid, raise an exception.
         die_unless_identifier(
             text=hint_name,
@@ -453,6 +578,7 @@ class BeartypeForwardScope(LexicalScope):
         # print(f'is beartype 1? {is_frame_caller_beartype(ignore_frames=1)}')
         # print(f'is beartype 2? {is_frame_caller_beartype(ignore_frames=2)}')
 
+        # ..................{ LOCALS                         }..................
         # Stack frame of the caller directly calling this dunder method if this
         # method is called by a caller *OR* "None" otherwise (e.g., if this
         # method is called from an interactive REPL). Intentionally ignore the
@@ -534,6 +660,7 @@ class BeartypeForwardScope(LexicalScope):
         # Else, the caller resides inside the "beartype" package and is thus
         # assumed to be trustworthy. Don't let us down, @beartype! Not again!
 
+        # ..................{ PROXY                          }..................
         # Forward reference proxy to be returned.
         #
         # Note that the decoration-time "exception_prefix" parameter is
@@ -546,35 +673,24 @@ class BeartypeForwardScope(LexicalScope):
         # non-memoized string by calling the
         # set_beartype_ref_proxies_exception_prefix() setter.
         forwardref_subtype = proxy_hint_pep484_ref_str_subbable(
-            scope_name=self._scope_name,  # type: ignore[arg-type]
-            hint_name=hint_name,
+            call_curr=self._call_curr,
             conf=self._conf,
             func_local_parent_codeobj_weakref=(
                 self._func_local_parent_codeobj_weakref),
+            scope_name=self._scope_name,  # type: ignore[arg-type]
+            hint_name=hint_name,
+            hint_parent_sane=self._hint_parent_sane,  # type: ignore[arg-type]
         )
 
         # Cache this proxy, preventing the "dict" superclass from re-calling
         # this __missing__() dunder method on the next attempt to access this.
         self[hint_name] = forwardref_subtype
 
+        # ..................{ RETURN                         }..................
         # Return this proxy.
         return forwardref_subtype
 
-    # ..................{ OVERRIDES                          }..................
-    def clear(self) -> None:
-        '''
-        Reduce this forward scope to the empty dictionary.
-        '''
 
-        # Defer to our superclass.
-        super().clear()
-
-        # Clear all subclass-specific instance variables as well.
-        self._exception_prefix = ''
-        self._func_local_parent_codeobj_weakref = None
-        self._hint_names_destringified.clear()
-
-    # ..................{ RESOLVERS                          }..................
     def resolve_pep484_hint_str(self, hint_name: str) -> Hint:
         '''
         Type hint referred to by the passed :pep:`484`-compliant stringified

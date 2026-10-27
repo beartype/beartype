@@ -220,7 +220,11 @@ def reduce_hint_pep484749_ref(
             # this proxy to a non-memoized string by calling the
             # set_beartype_ref_proxies_exception_prefix() setter.
             hint_resolved = proxy_hint_pep749_ref_object(
-                hint=hint, conf=conf)
+                call_curr=call_curr,
+                conf=conf,
+                hint=hint,
+                hint_parent_sane=hint_parent_sane,
+            )
         # Else, either the active Python interpreter targets Python <= 3.13 *OR*
         # the active Python interpreter targets Python >= 3.14 but
         # "hint.__owner__" is empty. In either case, this forward reference
@@ -246,9 +250,11 @@ def reduce_hint_pep484749_ref(
                 # Note that the decoration-time "exception_prefix" parameter is
                 # intentionally *NOT* passed to this proxy factory. See above!
                 hint_resolved = proxy_hint_pep484_ref_str_subbable(
+                    call_curr=call_curr,
+                    conf=conf,
                     scope_name=hint_module_name,
                     hint_name=hint_type_name,
-                    conf=conf,
+                    hint_parent_sane=hint_parent_sane,
                 )
             # Else, this reference was instantiated with *NO* module name. This
             # classname is relative to an unknown module and thus currently
@@ -290,7 +296,11 @@ def reduce_hint_pep484749_ref(
         #   In this case, a runtime-usable forward reference proxy encapsulating
         #   this runtime-unusable stringified forward reference.
         hint_resolved = call_curr.resolve_hint_pep484_ref_str(
-            hint=hint, conf=conf, exception_prefix=exception_prefix)
+            conf=conf,
+            hint=hint,
+            hint_parent_sane=hint_parent_sane,
+            exception_prefix=exception_prefix,
+        )
     # Else, this runtime-unusable forward reference has already been reduced to
     # a runtime-usable forward reference proxy above. Preserve this proxy as is.
 
@@ -302,8 +312,8 @@ def reduce_hint_pep484749_ref(
         hint_parent_sane=hint_parent_sane,
         # Type-checking code dynamically generated for a forward reference is
         # contextually relative to the local and global scope of the currently
-        # type-checked callable, type, or statement and thus *CANNOT* be cached
-        # across all forward references.
+        # type-checked callable, type, or statement and thus *CANNOT* be safely
+        # cached across all forward references.
         is_check_expr_cacheable=False,
     )
     # print(f'Reducing forward ref hint {repr(hint)} to non-forward ref hint {repr(hint_resolved)}...')
