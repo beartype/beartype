@@ -671,7 +671,7 @@ class BeartypeForwardScope(LexicalScope):
         # Logic elsewhere is expected to subsequently set the corresponding
         # "__exception_prefix_beartype__" class variable on this proxy to a
         # non-memoized string by calling the
-        # set_beartype_ref_proxies_exception_prefix() setter.
+        # set_beartype_ref_proxies_classvars_uninitted() setter.
         forwardref_subtype = proxy_hint_pep484_ref_str_subbable(
             call_curr=self._call_curr,
             conf=self._conf,

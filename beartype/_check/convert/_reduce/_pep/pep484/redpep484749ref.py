@@ -218,7 +218,7 @@ def reduce_hint_pep484749_ref(
             # call-time. Logic elsewhere is expected to subsequently set the
             # corresponding "__exception_prefix_beartype__" class variable on
             # this proxy to a non-memoized string by calling the
-            # set_beartype_ref_proxies_exception_prefix() setter.
+            # set_beartype_ref_proxies_classvars_uninitted() setter.
             hint_resolved = proxy_hint_pep749_ref_object(
                 call_curr=call_curr,
                 conf=conf,

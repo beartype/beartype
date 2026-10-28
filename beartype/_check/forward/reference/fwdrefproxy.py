@@ -737,50 +737,20 @@ def _proxy_hint_ref(
         exception_prefix=exception_prefix,
     )
 
-    # Classify the passed beartype call metadata with this proxy in minified
-    # form.
-    #
-    # Note that this is *not* simply a negligible optimization reducing space
-    # consumption, although it certainly is that. Minification has the
-    # beneficial side effect of effectively shallowly copying this metadata in
-    # the common case that this metadata is an instance of the non-minified
-    # "BeartypeCallDecorFuncData" dataclass. For efficiency, that instance is
-    # reused across *EVERY* call to the @beartype decorator, preventing this
-    # proxy from referencing that instance across @beartype decorations. This
-    # proxy thus instead references the shallow copy of that instance produced
-    # by minifying that instance. Phew! It doesn't have to make sense. It's QA.
-    # ref_proxy.__call_curr_beartype__ = call_curr.minify()
-
-    #FIXME: Obviously not right -- but we just need tests to pass at the moment.
-    #Clearly, this really *SHOULD* be something resembling "call_curr.minify()".
-    #The issue with calling exactly "call_curr.minify()" here is that it's *FAR*
-    #too early to actually that method. It's only safe to minify *AFTER* having
-    #resolved all forward references.
-    #
-    #Oh. Right. Of course, we've seen this sort of thing before... haven't we?
-    #Yeah. We have. We hit similar issues with
-    #"ref_proxy.__exception_prefix_beartype__", which is why we defined
-    #set_beartype_ref_proxies_exception_prefix(). Clearly, we'll now need to
-    #generalize that. I've thoroughly inspected the code and found the following
-    #refactoring to be sane. Is it? Probably. But nobody knows:
-    #* Rename set_beartype_ref_proxies_exception_prefix() to
-    #  set_beartype_ref_proxies_vars_uninitted().
-    #* Refactor that setter to accept a new mandatory parameter:
-    #      call_curr: BeartypeCallDataABC,
-    #* In that setter:
-    #  * Minify the passed "call_curr" *BEFORE* iterating over the passed
-    #    forward references.
-    #  * Classify that "call_curr_minified" on each such forward reference.
-    #* Replace the madness below with:
-    #      ref_proxy.__call_curr_beartype__ = call_curr
-    #* If all that works, restore minification caching. *shrug*
-    from beartype._check.cls.call.calldataexternal import (
-        BEARTYPE_CALL_EXTERNAL_META)
-    ref_proxy.__call_curr_beartype__ = BEARTYPE_CALL_EXTERNAL_META
-
-    # Classify all remaining passed parameters with this proxy.
-    ref_proxy.__conf_beartype__ = ref_proxy_conf
+    # Temporarily classify these passed parameters with this proxy. Although
+    # better than nothing, these parameters are effectively default
+    # uninitialized values and thus unsuitable for being permanently classified
+    # with this proxy. Instead, high-level factory functions defined elsewhere
+    # (e.g., the BeartypeFuncCheckerFactoryCache._make_func_checker() method)
+    # subsequently call the set_beartype_ref_proxies_classvars_uninitted()
+    # setter to permanently overwrite these defaults with non-default
+    # initialized values *NOT* available at this early time in the dynamic
+    # type-checking code generation process.
+    ref_proxy.__call_curr_beartype__ = call_curr
     ref_proxy.__exception_prefix_beartype__ = exception_prefix
+
+    # Permanently classify all remaining passed parameters with this proxy.
+    ref_proxy.__conf_beartype__ = ref_proxy_conf
     ref_proxy.__func_local_parent_codeobj_weakref_beartype__ = (
         func_local_parent_codeobj_weakref)
     ref_proxy.__hint_name_beartype__ = hint_name

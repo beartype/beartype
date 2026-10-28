@@ -108,7 +108,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     Caveats
     -------
     **Callers are advised to call the**
-    :func:`beartype._check.forward.reference.fwdrefset.set_beartype_ref_proxies_exception_prefix`
+    :func:`beartype._check.forward.reference.fwdrefset.set_beartype_ref_proxies_classvars_uninitted`
     **setter to overwrite both this and other defaults for this substring across
     multiple forward reference proxies simultaneously with a more contextually
     specific substring.** This substring temporarily defaults to a globally

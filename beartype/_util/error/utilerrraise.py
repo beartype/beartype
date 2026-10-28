@@ -108,8 +108,13 @@ def reraise_exception_placeholder(
     assert isinstance(source_str, str), f'{repr(source_str)} not string.'
     assert isinstance(target_str, str), f'{repr(target_str)} not string.'
 
-    # If this is a conventional exception...
-    if is_exception_message_str(exception):
+    # If...
+    if (
+        # The passed source and target strings differ *AND*...
+        source_str is not target_str and
+        # The passed exception is conventional...
+        is_exception_message_str(exception)
+    ):
         # Munged exception message globally replacing all instances of this
         # source substring with this target substring.
         #
@@ -131,8 +136,9 @@ def reraise_exception_placeholder(
             # "exception.args[1:]" safely yields the empty tuple. Go, Python!
             exception.args = (exception_message,) + exception.args[1:]
         # Else, this message remains preserved as is.
-    # Else, this is an unconventional exception. In this case, preserve this
-    # exception as is.
+    # Else, either these source and target strings are the same *OR* this
+    # exception is unconventional. In either case, preserve this exception as
+    # is.
 
     # Re-raise this exception while preserving its original traceback.
     raise exception.with_traceback(exception.__traceback__)

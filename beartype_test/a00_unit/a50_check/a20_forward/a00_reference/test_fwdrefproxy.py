@@ -29,6 +29,7 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     from beartype.roar import (
         BeartypeCallHintForwardRefException,
         BeartypeDecorHintForwardRefException,
+        BeartypeDecorHintNonpepException,
     )
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -126,7 +127,7 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
 
     # Assert that this property of these forward reference proxies *ALL*
     # resolve to the expected type hints.
-    assert hint_ref_str_proxy_absolute.__resolved_hint_beartype__ is Pep585Hint
+    assert hint_ref_str_proxy_absolute.__resolved_hint_beartype__ == Pep585Hint
     assert type_ref_str_proxy_absolute.__resolved_hint_beartype__ is Class
     assert type_ref_str_proxy_relative.__resolved_hint_beartype__ is Class
     assert type_ref_str_proxy_module_absolute_class.__resolved_hint_beartype__ is (
@@ -205,7 +206,7 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
 
     # Assert that attempting to validate a forward reference proxy to a module
     # as either an instance or subclass of a type raises the expected exception.
-    with raises_uncached(BeartypeCallHintForwardRefException):
+    with raises_uncached(BeartypeDecorHintNonpepException):
         isinstance(obj_subclass, type_ref_str_proxy_module_absolute)
     with raises_uncached(BeartypeCallHintForwardRefException):
         issubclass(Subclass, type_ref_str_proxy_module_absolute)

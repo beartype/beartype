@@ -30,6 +30,7 @@ from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_isinstanceable,
     is_object_isinstanceable,
 )
+from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.func.utilfuncframe import (
     get_frame_locals,
     get_frame_name,
@@ -41,10 +42,10 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import 
     is_hint_pep484585_generic)
 from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
     resolve_hint_pep484749_ref_object)
-from beartype._util.hint.utilhinttest import (
-    die_unless_hint,
-    is_hint,
-)
+# from beartype._util.hint.utilhinttest import (
+#     die_unless_hint,
+#     is_hint,
+# )
 from beartype._util.module.utilmodimport import (
     import_module_attr,
     import_module_attr_or_sentinel,
@@ -282,6 +283,9 @@ class BeartypeForwardRefProxyCache(CacheABC):
         '''
         assert isinstance(ref_proxy, type), f'{repr(ref_proxy)} not type.'
 
+        # Avoid circular import dependencies.
+        from beartype._check.convert.convmain import sanify_hint_child
+
         # Thread-safely...
         with self._lock:
             # ....................{ CACHE                  }....................
@@ -363,36 +367,49 @@ class BeartypeForwardRefProxyCache(CacheABC):
             # repeatedly (i.e., uselessly) calling the die_unless_hint() raiser.
             self._ref_proxy_to_resolved_hint_set(ref_proxy, referent_hint)
 
-            #FIXME: Better than nothing, but still non-ideal. Ideally, the safer
-            #sanify_hint_child() function should be called instead. However,
-            #doing so requires passing both the mandatory "call_curr" *AND*
-            #"hint_parent_sane" parameters. Refactoring this entire forward
-            #reference resolution API to accept:
-            #* Mandatory "hint_parent_sane" parameters is time-consuming albeit
-            #  probably trivial (in a sense). The distinct advantage of
-            #  accepting "hint_parent_sane" parameters everywhere is that doing
-            #  so would then enable us to implement recursion guards *HERE* (or
-            #  somewhere near here, anyway) in the same exact way that we
-            #  already implement recursion guards for other recursive type hints
-            #  (e.g., PEP 695-compliant type aliases). No "hint_overrides"
-            #  nonsense needed, at that point. That's nice. Clearly, we should
-            #  do this! Moreover, doing so is probably needed to safely handle
-            #  (waitforit) other recursive type hints that this referent refers
-            #  to! So, we definitely doing this one. Specifically:
-            #  * Here's the kinda wacky hacky part. We need to redefine
-            #    "ref_proxy.__conf_beartype__" to additionally account for
-            #    the "hint_sane" object produced below, possibly by just
-            #    brute-force redefining that configuration as follows. Although
-            #    this is admittedly ugly and non-ideal, it *SHOULD* work:
-            #         ref_proxy_conf_kwargs = ref_proxy.__conf_beartype__.kwargs.copy()
-            #         ref_proxy_conf_kwargs['_hint_parent_sane'] = referent_hint_sanified
-            #  * Pass that class variable elsewhere. For example:
-            #    * In "fwdrefabc", pass "hint_parent_sane=...".
-            #FIXME: Additionally, we need to refactor this sanify_hint_child()
-            #function (and *ONLY* that function, probably) to conditionally
-            #account for the newly defined "conf._hint_parent_sane" instance
-            #variable: e.g.,
-            #    # In sanify_hint_child()...
+            # Attempt to...
+            try:
+                # Sanified hint metadata encapsulating the sanification of this
+                # possibly PEP-noncompliant referent to a PEP-compliant
+                # equivalent.
+                referent_hint_sane = sanify_hint_child(
+                    call_curr=ref_proxy.__call_curr_beartype__,
+                    conf=ref_proxy.__conf_beartype__,
+                    hint=referent_hint,
+                    hint_parent_sane=ref_proxy.__hint_parent_sane_beartype__,
+                )
+            # If doing so raises *ANY* exception, reraise this exception with a
+            # new message replacing the placeholder substring prefixing this
+            # exception message by a human-readable substring.
+            except Exception as exception:
+                reraise_exception_placeholder(
+                    exception=exception,
+                    target_str=_make_ref_proxy_exception_prefix(ref_proxy),
+                )
+
+            #FIXME: Here's the kinda wacky hacky part. We need to redefine the
+            #"ref_proxy.__conf_beartype__" subsequently passed in "fwdrefmeta"
+            #to the is_bearable() tester to additionally account for the
+            #"referent_hint_sane" object produced above, possibly by just
+            #brute-force redefining that configuration as follows. Although
+            #this is admittedly ugly and non-ideal, it *SHOULD* work:
+            #     ref_proxy_conf_kwargs = ref_proxy.__conf_beartype__.kwargs.copy()
+            #     ref_proxy_conf_kwargs['_hint_parent_sane'] = referent_hint_sane
+            #
+            #*HMM*. Maybe... we *DON'T* do that, actually. We *CANNOT* afford
+            #to pollute "ref_proxy.__conf_beartype__", which is used
+            #everywhere (e.g., to produce derivative forward reference
+            #proxies) with the specific configuration needed only by
+            #is_bearable(). Guess we need yet another friggin' new
+            #"__instancecheck_conf_beartype__" configuration or something just
+            #to describe this __instancecheck__() and
+            #__instancecheck_str__()-specific configuration? Super-madness,
+            #but... I guess we do what we gotta do, huh? *sigh*
+            #FIXME: Additionally, we need to refactor the
+            #sanify_hint_root_statement() function (and *ONLY* that function,
+            #probably) to conditionally account for the newly defined
+            #"conf._hint_parent_sane" instance variable: e.g.,
+            #    # In sanify_hint_root_statement()...
             #    if (
             #        hint_parent_sane is None and
             #        conf._hint_parent_sane is not None
@@ -405,54 +422,37 @@ class BeartypeForwardRefProxyCache(CacheABC):
             #        #which are slow as balls, anybody. A little more slowdown
             #        #never hurt no one. *sigh*
             #        hint_parent_sane = conf._hint_parent_sane
-
-            # # FIXME: Doesn't work, interestingly. Induces severe test failures.
-            # # Wonder why? No idea. No time. Let's just drop this one for the
-            # # moment. Ideally, though, we really *DO* need to sanify possibly
-            # # insane referent hints here. Investigate at a later time. *sigh*
-            # # Avoid circular import dependencies.
-            # from beartype._check.convert.convmain import sanify_hint_child
+            #FIXME: An alternate approach to all that would be to just define a
+            #new private is_object_satisfies_hint() tester in a new private
+            #"beartype._check.checktest" submodule accepting a public
+            #"hint_parent_sane" parameter but otherwise resemble the public
+            #is_bearable() tester.
             #
-            # # Sanified hint metadata encapsulating the sanification of this
-            # # possibly PEP-noncompliant referent to a PEP-compliant equivalent.
-            # referent_hint_sane = sanify_hint_child(
-            #     call_curr=ref_proxy.__call_curr_beartype__,
-            #     conf=ref_proxy.__conf_beartype__,
-            #     hint=referent_hint,
-            #     hint_parent_sane=ref_proxy.__hint_parent_sane_beartype__,
-            #     exception_prefix=ref_proxy.__exception_prefix_beartype__,
-            # )
-            #
-            # # Sanified PEP-compliant referent sanified from this possibly
-            # # insane PEP-noncompliant original referent.
-            # referent_hint_sanified = referent_hint_sane.hint
-            referent_hint_sanified = referent_hint
+            #Uh... *YEAH*. That's obviously sane. The above approach simply
+            #wasn't. Additionally, we'll also want to unwind that
+            #*SUPER-CRAY-CRAY* "BeartypeConf._hint_parent_sane" setting we just
+            #added. At least we didn't fall *TOO* far down that hole. Seriously.
+            #Almost slipped up on that one. *sigh*
 
-            # If this sanified referent is *NOT* a supported type hint...
-            #
-            # Note that:
-            # * This tester is memoized and thus requires parameters be passed
-            #   only positionally.
-            # * The optional "is_ref_proxy_valid: bool = False" parameter
-            #   accepted by this tester is intentionally left unpassed. Doing so
-            #   ensures that, if this referent is itself a forward reference
-            #   proxy, this referent is *NOT* treated as isinstanceable if that
-            #   proxy *CANNOT* be resolved to the referent that proxy refers to.
-            #   While an unlikely edge case, unlikely edge cases are like
-            #   million-to-one chances in a Pratchett novel: they're coming up.
-            if not is_hint(referent_hint_sanified):
-                # Uncache this referent. See above for commentary.
-                del self._ref_proxy_to_resolved_hint[ref_proxy]
+            #FIXME: We're basically *ENTIRELY* throwing away this extremely
+            #valuable "referent_hint_sane" metadata at the moment, which is
+            #clearly awful. We instead need to preserve that as follows:
+            #* Classify this metadata as a new "__hint_sane_beartype__" class
+            #  variable. *WHATEVAHS*. Just do it, yo.
+            #* Oh. Nice. We no longer need "__hint_beartype__" if we do that.
+            #  So, do that and then replace all references to
+            #  "__hint_beartype__" with references to
+            #  "__hint_sane_beartype__.hint" instead. Trivial. *shrug*
+            #* Likewise, it looks like we now want to refactor this method to
+            #  return "HintSane" rather than "Hint" objects. *shrug*
+            #* Pass that class variable elsewhere. For example:
+            #  * In both "fwdrefabc" and "fwdrefmeta", when creating derivative
+            #    forward reference proxies, pass:
+            #        hint_parent_sane=cls.__hint_sane_beartype__,
 
-                # Raise a readable exception detailing why this original
-                # possibly insane referent is *NOT* a supported type hint.
-                die_unless_hint(
-                    hint=referent_hint,  # pyright: ignore
-                    exception_cls=BeartypeCallHintForwardRefException,
-                    exception_prefix=_make_ref_proxy_exception_prefix(
-                        ref_proxy),
-                )
-            # Else, this referent is a supported type hint.
+            # Sanified PEP-compliant referent sanified from this possibly
+            # insane PEP-noncompliant original referent.
+            referent_hint_sanified = referent_hint_sane.hint
 
             # ....................{ RETURN                 }....................
             # Return this sanified referent.

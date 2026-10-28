@@ -116,9 +116,9 @@ def die_if_unbearable(
     #
     # Note that parameters are intentionally passed positionally for efficiency.
     func_raiser = _func_raiser_factory.cache_func_checker(
-         hint,
          conf,
          exception_prefix,
+         hint,
          make_code_raiser_hint_object_check,
     )
 
@@ -228,9 +228,9 @@ def is_bearable(
     #
     # Note that parameters are intentionally passed positionally for efficiency.
     func_tester = _func_tester_factory.cache_func_checker(
-         hint,
          conf,
          exception_prefix,
+         hint,
          make_code_tester_check,
     )
 

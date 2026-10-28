@@ -323,7 +323,10 @@ def sanify_hint_child(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     hint_sign_seed: HintSignOrNoneOrSentinel = SENTINEL,
     pith_name: Optional[str] = None,
-    exception_prefix: str = '',
+
+    #FIXME: *HMM*.
+    # exception_prefix: str = '',
+    exception_prefix: str = EXCEPTION_PLACEHOLDER,
 ) -> HintSane:
     '''
     Metadata encapsulating the sanification (i.e., sanitization) of the passed
@@ -394,9 +397,9 @@ def sanify_hint_child(
           factory).
 
         Defaults to :data:`None`.
-    exception_prefix : str, default: ''
+    exception_prefix : str, default: EXCEPTION_PLACEHOLDER
         Human-readable substring prefixing raised exception messages. Defaults
-        to the empty string.
+        to :data:`.EXCEPTION_PLACEHOLDER`.
 
     Returns
     -------
