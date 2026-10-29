@@ -107,14 +107,6 @@ Forward reference proxy to a submodule of a subpackage defining an unsubscripted
 type, referenced with an absolute (i.e., fully-qualified) name.
 '''
 
-
-# Initialized by the _init() function defined below.
-type_ref_str_proxy_module_absolute_class: _BeartypeForwardRefSubbableABC = None  # type: ignore[assignment]
-'''
-Forward reference proxy to an unsubscripted type of that submodule, accessed by
-``"."``-delimited attribute syntax from an existing forward reference proxy.
-'''
-
 # ....................{ PRIVATE ~ initializers             }....................
 def _init() -> None:
     '''
@@ -177,8 +169,6 @@ def _init() -> None:
         hint_name=TYPE_SUBMODULE_NAME,
         **kwargs_common
     )
-    type_ref_str_proxy_module_absolute_class = (
-        type_ref_str_proxy_module_absolute.Class)
 
 
 # Initialize this submodule.

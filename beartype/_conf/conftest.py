@@ -269,21 +269,6 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         )
     # Else, "warning_cls_on_decorator_exception" is either "None" *OR* a
     # warning category.
-    #
-    # If "_hint_parent_sane" is neither "None" *NOR* sanified type hint
-    # metadata, raise an exception.
-    elif not (
-        conf_kwargs['_hint_parent_sane'] is None or
-        isinstance(conf_kwargs['_hint_parent_sane'], HintSane)
-    ):
-        raise BeartypeConfParamException(
-            f'Beartype configuration parameter '
-            f'"_hint_parent_sane" value '
-            f'{repr(conf_kwargs["_hint_parent_sane"])} '
-            f'neither "None" nor sanified type hint metadata.'
-        )
-    # Else, "_hint_parent_sane" is either "None" *OR* sanified type hint
-    # metadata.
 
     # ..................{ AUTOMATICALLY                      }..................
     # Configuration options to be validated automatically.

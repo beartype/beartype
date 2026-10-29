@@ -17,15 +17,16 @@ from beartype.roar import (
     BeartypeCallHintPep484ForwardRefStrException,
 )
 from beartype._cache.cls.cacheclsabc import CacheABC
+from beartype._check.cls.hint.hintsane import (
+    HintSane,
+    HintSaneOrSentinel,
+)
 from beartype._data.kind.datakindiota import (
     SENTINEL,
     Iota,
 )
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.typing.datatypingport import (
-    Hint,
-    HintOrSentinel,
-)
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_isinstanceable,
     is_object_isinstanceable,
@@ -92,26 +93,27 @@ class BeartypeForwardRefProxyCache(CacheABC):
 
     Attributes
     ----------
-    _ref_proxy_to_resolved_hint : WeakKeyDictionary[BeartypeForwardRefABC, Hint]
-        **Forward reference type hint referent cache** (i.e., dictionary mapping
-        from weak references to forward reference proxies to the target referent
-        type hints those proxies refer to).
-    _ref_proxy_to_resolved_hint_get : Callable[[BeartypeForwardRefABC, Iota], Union[Hint, Iota]]
-        :meth:`self._ref_proxy_to_resolved_hint.get` method, classified as a
+    _ref_proxy_to_resolved_hint_sane : WeakKeyDictionary[BeartypeForwardRefABC, HintSane]
+        **Forward reference sanified type hint referent cache** (i.e.,
+        dictionary mapping from weak references to forward reference proxies to
+        the target **sanified referent metadata** (i.e., :class:`.HintSane`
+        object) those proxies refer to).
+    _ref_proxy_to_resolved_hint_sane_get : Callable[[BeartypeForwardRefABC, Iota], Union[Hint, Iota]]
+        :meth:`._ref_proxy_to_resolved_hint_sane.get` method, classified as a
         negligible microoptimization.
-    _ref_proxy_to_resolved_hint_set : Callable[[BeartypeForwardRefABC, Hint], None]
-        :meth:`self._ref_proxy_to_resolved_hint.set` method, classified as a
+    _ref_proxy_to_resolved_hint_sane_set : Callable[[BeartypeForwardRefABC, Hint], None]
+        :meth:`._ref_proxy_to_resolved_hint_sane.set` method, classified as a
         negligible microoptimization.
     _ref_proxy_to_resolved_type : WeakKeyDictionary[BeartypeForwardRefABC, Optional[type]]
-        **Forward reference type hint referent cache** (i.e., dictionary mapping
-        from weak references to forward reference proxies to either the target
+        **Forward reference type referent cache** (i.e., dictionary mapping from
+        weak references to forward reference proxies to either the target
         referent types those proxies refer to if any *or* :data:`None`
         otherwise).
     _ref_proxy_to_resolved_type_get : Callable[[BeartypeForwardRefABC], Optional[type]]
-        :meth:`self._ref_proxy_to_resolved_type.get` method, classified as a
+        :meth:`._ref_proxy_to_resolved_type.get` method, classified as a
         negligible microoptimization.
     _ref_proxy_to_resolved_type_set : Callable[[BeartypeForwardRefABC, type], None]
-        :meth:`self._ref_proxy_to_resolved_type.set` method, classified as a
+        :meth:`._ref_proxy_to_resolved_type.set` method, classified as a
         negligible microoptimization.
     '''
 
@@ -121,9 +123,9 @@ class BeartypeForwardRefProxyCache(CacheABC):
     # @beartype decorations. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        '_ref_proxy_to_resolved_hint',
-        '_ref_proxy_to_resolved_hint_get',
-        '_ref_proxy_to_resolved_hint_set',
+        '_ref_proxy_to_resolved_hint_sane',
+        '_ref_proxy_to_resolved_hint_sane_get',
+        '_ref_proxy_to_resolved_hint_sane_set',
         '_ref_proxy_to_resolved_type',
         '_ref_proxy_to_resolved_type_get',
         '_ref_proxy_to_resolved_type_set',
@@ -132,12 +134,12 @@ class BeartypeForwardRefProxyCache(CacheABC):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        _ref_proxy_to_resolved_hint: (
-            WeakKeyDictionary[BeartypeForwardRefABC, Hint])
-        _ref_proxy_to_resolved_hint_get: (
-            Callable[[BeartypeForwardRefABC, Iota], HintOrSentinel])
-        _ref_proxy_to_resolved_hint_set: (
-            Callable[[BeartypeForwardRefABC, Hint], None])
+        _ref_proxy_to_resolved_hint_sane: (
+            WeakKeyDictionary[BeartypeForwardRefABC, HintSane])
+        _ref_proxy_to_resolved_hint_sane_get: (
+            Callable[[BeartypeForwardRefABC, Iota], HintSaneOrSentinel])
+        _ref_proxy_to_resolved_hint_sane_set: (
+            Callable[[BeartypeForwardRefABC, HintSane], None])
         _ref_proxy_to_resolved_type: (
             WeakKeyDictionary[BeartypeForwardRefABC, Optional[type]])
         _ref_proxy_to_resolved_type_get: (
@@ -171,14 +173,14 @@ class BeartypeForwardRefProxyCache(CacheABC):
         super().__init__(*args, **kwargs)
 
         # Initialize all instance variables.
-        self._ref_proxy_to_resolved_hint = WeakKeyDictionary()
+        self._ref_proxy_to_resolved_hint_sane = WeakKeyDictionary()
         self._ref_proxy_to_resolved_type = WeakKeyDictionary()
-        self._ref_proxy_to_resolved_hint_get = (
-            self._ref_proxy_to_resolved_hint.get)
+        self._ref_proxy_to_resolved_hint_sane_get = (
+            self._ref_proxy_to_resolved_hint_sane.get)
+        self._ref_proxy_to_resolved_hint_sane_set = (
+            self._ref_proxy_to_resolved_hint_sane.__setitem__)
         self._ref_proxy_to_resolved_type_get = (
             self._ref_proxy_to_resolved_type.get)
-        self._ref_proxy_to_resolved_hint_set = (
-            self._ref_proxy_to_resolved_hint.__setitem__)
         self._ref_proxy_to_resolved_type_set = (
             self._ref_proxy_to_resolved_type.__setitem__)
 
@@ -188,13 +190,13 @@ class BeartypeForwardRefProxyCache(CacheABC):
 
         # Thread-safely clear *BOTH* of the weak dictionaries defined above.
         with self._lock:
-            self._ref_proxy_to_resolved_hint.clear()
+            self._ref_proxy_to_resolved_hint_sane.clear()
             self._ref_proxy_to_resolved_type.clear()
 
     # ..................{ GETTERS                            }..................
     #FIXME: Unit test us up, please. *sigh*
-    def get_ref_proxy_referent_hint_if_resolved_or_sentinel(
-        self, ref_proxy: BeartypeForwardRefABC) -> HintOrSentinel:
+    def get_ref_proxy_referent_hint_sane_if_resolved_or_sentinel(
+        self, ref_proxy: BeartypeForwardRefABC) -> HintSaneOrSentinel:
         '''
         Return either:
 
@@ -204,7 +206,11 @@ class BeartypeForwardRefProxyCache(CacheABC):
           passed **forward reference proxy** (i.e.,
           :class:`.BeartypeForwardRefABC` object) refers to, the sentinel
           placeholder.
-        * Else, the referent previously cached against this proxy.
+        * Else, the **sanified referent metadata** (i.e., immutable and thus
+          hashable object encapsulating *all* metadata previously returned by
+          :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
+          this possibly PEP-noncompliant type hint into a fully PEP-compliant
+          type hint) previously cached against this proxy.
 
         This getter is thread-safe.
 
@@ -215,11 +221,11 @@ class BeartypeForwardRefProxyCache(CacheABC):
 
         Returns
         -------
-        Union[Hint, Iota]
+        Union[HintSane, Iota]
             Either:
 
-            * If this proxy has already been resolved, the referent this proxy
-              refers to.
+            * If this proxy has already been resolved, the sanified referent
+              metadata this proxy refers to.
             * Else, the sentinel placeholder.
         '''
         assert isinstance(ref_proxy, type), f'{repr(ref_proxy)} not type.'
@@ -233,13 +239,14 @@ class BeartypeForwardRefProxyCache(CacheABC):
             # * Else, that target referent.
             #
             # Note that this proxy *SHOULD* be hashable. See also commentary in
-            # the cache_ref_proxy_referent_hint() method for further details.
-            return self._ref_proxy_to_resolved_hint_get(ref_proxy, SENTINEL)
+            # the cache_ref_proxy_referent_hint_sane() method for further details.
+            return self._ref_proxy_to_resolved_hint_sane_get(
+                ref_proxy, SENTINEL)
 
     # ..................{ CACHERS                            }..................
     #FIXME: Unit test us up, please. *sigh*
-    def cache_ref_proxy_referent_hint(
-        self, ref_proxy: BeartypeForwardRefABC) -> Hint:
+    def cache_ref_proxy_referent_hint_sane(
+        self, ref_proxy: BeartypeForwardRefABC) -> HintSane:
         '''
         Either:
 
@@ -252,10 +259,15 @@ class BeartypeForwardRefProxyCache(CacheABC):
           * If this reference refers to a **supported type hint** (i.e., object
             supported by :mod:`beartype` as a valid type hint annotating
             callable parameters and returns), cache this referent against this
-            proxy and return this referent.
+            proxy and return the **sanified referent metadata** (i.e.,
+            immutable and thus hashable object encapsulating *all* metadata
+            previously returned by :mod:`beartype._check.convert.convmain`
+            sanifiers after sanitizing this possibly PEP-noncompliant type hint
+            into a fully PEP-compliant type hint).
           * Else, raise an exception (i.e., if this referent is unsupported).
 
-        * Else, return the referent previously cached against this proxy.
+        * Else, return the sanified referent metadata previously cached against
+          this proxy.
 
         This method is thread-safe.
 
@@ -266,20 +278,18 @@ class BeartypeForwardRefProxyCache(CacheABC):
 
         Returns
         -------
-        Hint
-            Target referent type hint resolved from this proxy.
+        HintSane
+            Target sanified referent metadata resolved from this proxy.
 
         Raises
         ------
         BeartypeCallHintForwardRefException
-            If either:
+            If this forward referent is unimportable.
+        BeartypeDecorHintNonpepException
+            If this forward referent is importable but either:
 
-            * This forward referent is unimportable.
-            * This forward referent is importable but either:
-
-              * Not a supported type hint.
-              * A supported type hint that is this forward reference proxy,
-                implying this proxy circularly proxies itself.
+            * Invalid as a type hint.
+            * Valid as a type hint but unsupported by :mod:`beartype`.
         '''
         assert isinstance(ref_proxy, type), f'{repr(ref_proxy)} not type.'
 
@@ -289,10 +299,11 @@ class BeartypeForwardRefProxyCache(CacheABC):
         # Thread-safely...
         with self._lock:
             # ....................{ CACHE                  }....................
-            # Previously cached target referent type hint this forward reference
-            # proxy refers to if a prior call of this method already resolved
-            # this referent *OR* the sentinel placeholder otherwise (i.e., if
-            # this is the first call of this method passed this proxy).
+            # Cached sanified referent metadata previously sanified from the
+            # referent type hint referred to by this forward reference proxy if
+            # a prior call of this method already resolved this referent *OR*
+            # the sentinel placeholder otherwise (i.e., if this is the first
+            # call of this method passed this proxy).
             #
             # Note that this proxy *SHOULD* be hashable even if one or more
             # class variables defined by this proxy are unhashable (e.g., a
@@ -302,13 +313,13 @@ class BeartypeForwardRefProxyCache(CacheABC):
             # proxy type hierarchy intentionally avoids redefining either the
             # __eq__() or __hash__() dunder methods. *ALL* such types thus
             # retain hashability inherited from the root "type" superclass.
-            referent_hint = self._ref_proxy_to_resolved_hint_get(
+            referent_hint_sane = self._ref_proxy_to_resolved_hint_sane_get(
                 ref_proxy, SENTINEL)
 
             # If this referent has already been resolved from this proxy, return
             # this referent as is.
-            if referent_hint is not SENTINEL:
-                return referent_hint  # pyright: ignore
+            if referent_hint_sane is not SENTINEL:
+                return referent_hint_sane  # type: ignore[return-value]
             # Else, this referent has yet to be resolved.
 
             # ....................{ RESOLVE                }....................
@@ -351,21 +362,20 @@ class BeartypeForwardRefProxyCache(CacheABC):
             # Ideally, this referent would be cached only *AFTER* validating
             # this referent to be a supported hint. Unfortunately, doing so
             # invites infinite recursion as follows (in order):
-            # * This __resolved_hint_beartype__() property getter calls...
+            # * This cache_ref_proxy_referent_hint_sane() method calls...
             # * die_unless_hint(), which calls...
             # * die_unless_object_isinstanceable(), which calls...
             # * "isinstance(None, ref_proxy)", which calls...
             # * BeartypeForwardRefMetaclass.__subclasscheck__(), which calls...
-            # * "issubclass(obj, ref_proxy.__resolved_type_beartype__)", which
+            # * This cache_ref_proxy_referent_hint_sane() method again, which
             #   calls...
-            # * This __resolved_hint_beartype__() property getter, which calls...
             # * die_unless_hint() yet again. Repeat as needed for pain.
             #
             # Caching this referent first circumvents this recursion by ensuring
             # that all subsequent access of this property after the first access
             # of this property casually returns this referent rather than
             # repeatedly (i.e., uselessly) calling the die_unless_hint() raiser.
-            self._ref_proxy_to_resolved_hint_set(ref_proxy, referent_hint)
+            # self._ref_proxy_to_resolved_hint_sane_set(ref_proxy, referent_hint)
 
             # Attempt to...
             try:
@@ -378,85 +388,44 @@ class BeartypeForwardRefProxyCache(CacheABC):
                     hint=referent_hint,
                     hint_parent_sane=ref_proxy.__hint_parent_sane_beartype__,
                 )
-            # If doing so raises *ANY* exception, reraise this exception with a
-            # new message replacing the placeholder substring prefixing this
-            # exception message by a human-readable substring.
+            #FIXME: Test this edge case. When doing so, assert that this...
+            # If doing so raises *ANY* exception...
             except Exception as exception:
+                # Uncache this sanified referent. See above for commentary.
+                # del self._ref_proxy_to_resolved_hint_sane_sane[ref_proxy]
+
+                # Reraise this exception with a new message replacing the
+                # placeholder substring prefixing this exception message by a
+                # human-readable substring
                 reraise_exception_placeholder(
                     exception=exception,
                     target_str=_make_ref_proxy_exception_prefix(ref_proxy),
                 )
 
-            #FIXME: Here's the kinda wacky hacky part. We need to redefine the
-            #"ref_proxy.__conf_beartype__" subsequently passed in "fwdrefmeta"
-            #to the is_bearable() tester to additionally account for the
-            #"referent_hint_sane" object produced above, possibly by just
-            #brute-force redefining that configuration as follows. Although
-            #this is admittedly ugly and non-ideal, it *SHOULD* work:
-            #     ref_proxy_conf_kwargs = ref_proxy.__conf_beartype__.kwargs.copy()
-            #     ref_proxy_conf_kwargs['_hint_parent_sane'] = referent_hint_sane
-            #
-            #*HMM*. Maybe... we *DON'T* do that, actually. We *CANNOT* afford
-            #to pollute "ref_proxy.__conf_beartype__", which is used
-            #everywhere (e.g., to produce derivative forward reference
-            #proxies) with the specific configuration needed only by
-            #is_bearable(). Guess we need yet another friggin' new
-            #"__instancecheck_conf_beartype__" configuration or something just
-            #to describe this __instancecheck__() and
-            #__instancecheck_str__()-specific configuration? Super-madness,
-            #but... I guess we do what we gotta do, huh? *sigh*
-            #FIXME: Additionally, we need to refactor the
-            #sanify_hint_root_statement() function (and *ONLY* that function,
-            #probably) to conditionally account for the newly defined
-            #"conf._hint_parent_sane" instance variable: e.g.,
-            #    # In sanify_hint_root_statement()...
-            #    if (
-            #        hint_parent_sane is None and
-            #        conf._hint_parent_sane is not None
-            #    ):
-            #        #FIXME: Insufficient. For safety, we should also
-            #        #dynamically replace the passed "conf" with a new "conf"
-            #        #whose '_hint_parent_sane' slot is "None". Trivial, just
-            #        #annoying. Efficiency isn't a concern here, because this is
-            #        #an edge case that *ONLY* arises with forward references --
-            #        #which are slow as balls, anybody. A little more slowdown
-            #        #never hurt no one. *sigh*
-            #        hint_parent_sane = conf._hint_parent_sane
-            #FIXME: An alternate approach to all that would be to just define a
-            #new private is_object_satisfies_hint() tester in a new private
-            #"beartype._check.checktest" submodule accepting a public
-            #"hint_parent_sane" parameter but otherwise resemble the public
-            #is_bearable() tester.
-            #
-            #Uh... *YEAH*. That's obviously sane. The above approach simply
-            #wasn't. Additionally, we'll also want to unwind that
-            #*SUPER-CRAY-CRAY* "BeartypeConf._hint_parent_sane" setting we just
-            #added. At least we didn't fall *TOO* far down that hole. Seriously.
-            #Almost slipped up on that one. *sigh*
-
             #FIXME: We're basically *ENTIRELY* throwing away this extremely
             #valuable "referent_hint_sane" metadata at the moment, which is
             #clearly awful. We instead need to preserve that as follows:
-            #* Classify this metadata as a new "__hint_sane_beartype__" class
-            #  variable. *WHATEVAHS*. Just do it, yo.
-            #* Oh. Nice. We no longer need "__hint_beartype__" if we do that.
-            #  So, do that and then replace all references to
-            #  "__hint_beartype__" with references to
-            #  "__hint_sane_beartype__.hint" instead. Trivial. *shrug*
-            #* Likewise, it looks like we now want to refactor this method to
-            #  return "HintSane" rather than "Hint" objects. *shrug*
-            #* Pass that class variable elsewhere. For example:
-            #  * In both "fwdrefabc" and "fwdrefmeta", when creating derivative
-            #    forward reference proxies, pass:
-            #        hint_parent_sane=cls.__hint_sane_beartype__,
-
-            # Sanified PEP-compliant referent sanified from this possibly
-            # insane PEP-noncompliant original referent.
-            referent_hint_sanified = referent_hint_sane.hint
+            #* Define a new private is_object_satisfies_hint_sane() tester in a
+            #  new private "beartype._check.checktest" submodule accepting a
+            #  public "hint_sane" parameter but otherwise resemble the public
+            #  is_bearable() tester. Call it like so in "fwdrefmeta", please:
+            #    return is_object_satisfies_hint_sane(
+            #        obj=obj,
+            #        hint_sane=cls.__hint_sane_beartype__,
+            #        conf=cls.__conf_beartype__,
+            #    )
+            #* Likewise, refactor get_hint_object_violation_message() to accept
+            #  "hint_sane" rather than merely "hint" parameters. *sigh*
 
             # ....................{ RETURN                 }....................
-            # Return this sanified referent.
-            return referent_hint_sanified  # type: ignore[return-value]
+            # Cache this sanified referent metadata for subsequent lookup by
+            # this method *AFTER* validating this referent to be a valid type
+            # hint supported by beartype above.
+            self._ref_proxy_to_resolved_hint_sane_set(
+                ref_proxy, referent_hint_sane)
+
+            # Return this sanified referent metadata.
+            return referent_hint_sane  # type: ignore[return-value]
 
 
     #FIXME: Unit test us up, please. *sigh*
@@ -498,24 +467,26 @@ class BeartypeForwardRefProxyCache(CacheABC):
             If either:
 
             * This forward referent is unimportable.
-            * This forward referent is importable but either:
+            * This forward referent is an importable type this is *not*
+              isinstanceable.
+        BeartypeDecorHintNonpepException
+            If this forward referent is importable but either:
 
-              * Not an isinstanceable type.
-              * An isinstanceable type that is this forward reference proxy,
-                implying this proxy circularly proxies itself.
+            * Invalid as a type hint.
+            * Valid as a type hint but unsupported by :mod:`beartype`.
         '''
         assert isinstance(ref_proxy, type), f'{repr(ref_proxy)} not type.'
 
         # Thread-safely...
         with self._lock:
             # ....................{ CACHE                  }....................
-            # Previously cached target referent type hint this forward reference
-            # proxy refers to if a prior call of this method already resolved
-            # this referent *OR* "None" otherwise (i.e., if this is the first
-            # call of this method passed this proxy).
+            # Cached referent type this forward reference proxy refers to if a
+            # prior call of this method already resolved this referent type *OR*
+            # "None" otherwise (i.e., if this is the first call of this method
+            # passed this proxy).
             #
             # Note that this proxy *SHOULD* be hashable. See also commentary in
-            # the cache_ref_proxy_referent_hint() method for further details.
+            # the cache_ref_proxy_referent_hint_sane() method for further details.
             referent_type = self._ref_proxy_to_resolved_type_get(ref_proxy)
 
             # If this referent type has already been resolved from this proxy,
@@ -525,10 +496,17 @@ class BeartypeForwardRefProxyCache(CacheABC):
             # Else, this referent type has yet to be resolved.
 
             # ....................{ RESOLVE                }....................
-            # Cached referent referred to by this forward reference proxy if
-            # this referent is a hint supported by @beartype *OR* raise an
-            # exception (i.e., if @beartype fails to support this hint).
-            referent_type = self.cache_ref_proxy_referent_hint(ref_proxy)
+            # Cached sanified referent metadata previously sanified from the
+            # referent type hint referred to by this forward reference proxy if
+            # this referent is a hint supported by beartype *OR* raise an
+            # exception (i.e., if this hint in unsupported by beartype).
+            referent_hint_sane = self.cache_ref_proxy_referent_hint_sane(
+                ref_proxy)
+
+            # Referent type referred to by this forward reference proxy to be
+            # returned below if this proxy refers to a type (else an exception
+            # is raised below instead).
+            referent_type = referent_hint_sane.hint
 
             # ....................{ VALIDATE               }....................
             # If this referent is a subscripted generic (e.g.,
@@ -577,8 +555,8 @@ class BeartypeForwardRefProxyCache(CacheABC):
             # preferable type above.
             #
             # Note that, unlike a similar call to the comparable
-            # _ref_proxy_to_resolved_hint_set() method in the lower-level
-            # cache_ref_proxy_referent_hint() method far above, this call
+            # _ref_proxy_to_resolved_hint_sane_set() method in the lower-level
+            # cache_ref_proxy_referent_hint_sane() method far above, this call
             # suffers *NO* chicken-and-egg infinite recursion issues and is thus
             # intentionally called at the ideal time: right before returning.
             self._ref_proxy_to_resolved_type_set(ref_proxy, referent_type)  # pyright: ignore

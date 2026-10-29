@@ -136,10 +136,10 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     * If this forward reference is a **root** (i.e., top-most parent hint of a
       tree of child hints), :data:`None`.
     * Else, this forward reference is a **child** of some parent hint. In this
-      case, the **sanified parent type hint metadata** (i.e., immutable and
-      thus hashable object encapsulating *all* metadata previously returned
-      by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
-      the possibly PEP-noncompliant parent hint of this forward reference into a
+      case, **sanified parent type hint metadata** (i.e., immutable and thus
+      hashable object encapsulating *all* metadata previously returned by
+      :mod:`beartype._check.convert.convmain` sanifiers after sanitizing the
+      possibly PEP-noncompliant parent hint of this forward reference into a
       fully PEP-compliant parent hint).
     '''
 

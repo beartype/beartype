@@ -285,7 +285,6 @@ class BeartypeConf(object):
         '_conf_kwargs',
         '_hash',
         '_hint_overrides',
-        '_hint_parent_sane',
         '_is_color',
         '_is_debug',
         '_is_pep484_tower',
@@ -316,7 +315,6 @@ class BeartypeConf(object):
         _conf_kwargs: DictStrToAny
         _hash: int
         _hint_overrides: FrozenDict
-        _hint_parent_sane: Optional[HintSane]
         _is_color: BoolTristate
         _is_debug: bool
         _is_pep484_tower: bool
@@ -377,33 +375,6 @@ class BeartypeConf(object):
         claw_decoration_position_funcs: Optional[BeartypeDecorPlace] = None,
         claw_decoration_position_types: Optional[BeartypeDecorPlace] = None,
         is_check_pep557: Optional[bool] = None,
-
-        # Optional keyword-only *PRIVATE* parameters. These parameters are *NOT*
-        # intended to be passed by users, but *ONLY* by the "beartype" codebase
-        # to itself as a simple means of facilitating communication between
-        # strictly partitioned subsets of the "beartype" codebase.
-        #
-        # Note that these parameters are intentionally left undocumented in the
-        # docstring below to prevent confusion. Instead, we document them here
-        # as simple comments for maintainability and discoverability *ONLY* by
-        # beartype developers:
-        #
-        # Private Parameters
-        # ------------------
-        # _hint_parent_sane : Optional[HintSane]
-        #     **Not intended to be passed by users.** The
-        #     :mod:`beartype`-specific forward reference proxy metaclass
-        #     propagates this **sanified parent type hint metadata** (i.e.,
-        #     immutable and thus hashable object encapsulating *all* metadata
-        #     previously returned by :mod:`beartype._check.convert.convmain`
-        #     sanifiers after sanitizing the possibly PEP-noncompliant parent
-        #     hint of this forward reference into a fully PEP-compliant parent
-        #     hint) from the low-level
-        #     :func:`beartype._check.forward.reference._cls.fwdrefmeta.BeartypeForwardRefMetaclass.__instancecheck__`
-        #     dunder method to the high-level :func:`beartype.door.is_bearable`
-        #     tester by bundling this metadata inside the beartype configuration
-        #     passed from that dunder method to that tester.
-        _hint_parent_sane: Optional[HintSane] = None,
     ) -> 'BeartypeConf':
         '''
         Instantiate this configuration if needed (i.e., if *no* prior
@@ -910,7 +881,6 @@ class BeartypeConf(object):
                 violation_type,
                 violation_verbosity,
                 warning_cls_on_decorator_exception,
-                _hint_parent_sane,
             )
 
             # If this method has already instantiated a configuration with these
@@ -945,7 +915,6 @@ class BeartypeConf(object):
                 violation_verbosity=violation_verbosity,
                 warning_cls_on_decorator_exception=(
                     warning_cls_on_decorator_exception),
-                _hint_parent_sane=_hint_parent_sane,
             )
 
             # Default all parameters not explicitly passed by the user to sane
@@ -1024,7 +993,6 @@ class BeartypeConf(object):
             self._violation_return_type = conf_kwargs['violation_return_type']  # pyright: ignore
             self._violation_type = conf_kwargs['violation_type']  # pyright: ignore
             self._violation_verbosity = conf_kwargs['violation_verbosity']  # pyright: ignore
-            self._hint_parent_sane = _hint_parent_sane
 
             # Classify all remaining instance variables.
             self._is_violation_door_warn = issubclass(

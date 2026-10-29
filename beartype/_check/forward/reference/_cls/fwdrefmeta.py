@@ -37,6 +37,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #Implementing trivial recursion guards should now be feasible. *shrug*
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeDecorHintForwardRefException
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.forward.reference._cls.fwdrefcache import (
     BeartypeForwardRefABC,
     ref_proxy_cache,
@@ -44,9 +46,7 @@ from beartype._check.forward.reference._cls.fwdrefcache import (
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.func.utilcachefunc import callable_cached
-from beartype._util.cls.pep.clspep3119 import is_object_isinstanceable
 from beartype._util.error.utilerrwarn import issue_deprecation
-from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.text.utiltextidentifier import is_dunder
 from beartype._util.utilobjget import get_object_name
 
@@ -75,12 +75,6 @@ class BeartypeForwardRefMetaclass(type):
     '''
 
     # ....................{ DUNDERS                        }....................
-    #FIXME: This is great, but still insufficient. Additionally:
-    #* If the caller resides in a "beartype."-prefixed submodule, do what we
-    #  currently do.
-    #* Else, immediately resolve the referent by accessing
-    #  "__resolved_type_beartype__" and then (as above) proxy the __getattr__()
-    #  of this referent by calling getattr() against this referent.
     def __getattr__(  # type: ignore[misc]
         cls: BeartypeForwardRefABC, hint_name: str) -> BeartypeForwardRefABC:
         '''
@@ -234,20 +228,21 @@ class BeartypeForwardRefMetaclass(type):
             Fully-qualified forward reference subclass concatenated as above.
         '''
 
-        # Previously cached target referent type hint this forward reference
-        # proxy refers to if a prior call of this method already resolved this
-        # referent *OR* the sentinel placeholder otherwise (i.e., if this is the
-        # first call of this method passed this proxy).
-        referent_hint = (
-            ref_proxy_cache.get_ref_proxy_referent_hint_if_resolved_or_sentinel(
-                cls))
+        # Cached sanified referent metadata previously sanified from the
+        # referent type hint referred to by this forward reference proxy if this
+        # proxy already resolved this referent (e.g., due to being passed as the
+        # second parameter to the isinstance() or issubclass() builtins) *OR*
+        # the sentinel placeholder otherwise (i.e., if this is the first such
+        # call passed this proxy).
+        referent_hint_sane = ref_proxy_cache.get_ref_proxy_referent_hint_sane_if_resolved_or_sentinel(
+            cls)
+        # print(f'[__getattr__] referent_hint_sane: {referent_hint_sane}')
 
         # If this forward reference proxy has already been resolved to its
-        # referent (e.g., by a prior isinstance() or issubclass() type-check),
-        # forward this dunder method call directly to that referent.
-        if referent_hint is not SENTINEL:
-            # print(f'Forward reference proxy "{cls.__hint_name_beartype__}" resolved to {referent_hint}!')
-            return getattr(referent_hint, hint_name)
+        # referent, forward this dunder method call directly to that referent.
+        if referent_hint_sane is not SENTINEL:
+            # print(f'Forward reference proxy "{cls.__hint_name_beartype__}" resolved to {referent_hint_sane}!')
+            return getattr(referent_hint_sane.hint, hint_name)  # type: ignore[union-attr]
         # Else, this forward reference proxy has yet to be resolved.
         #
         # If a non-existent dunder attribute was requested, assume this
@@ -257,26 +252,14 @@ class BeartypeForwardRefMetaclass(type):
         # this attribute ala the hasattr() builtin. See also the "Design"
         # subsection of this dunder method's docstring for further commentary.
         elif is_dunder(hint_name):
+            # if hint_name == '__resolved_hint_beartype__':
+            #     return cls.__resolved_hint_beartype__
+
             # Raise the standard "AttributeError" exception expected by EAFP.
-            #
-            # Note that we intentionally avoid suffixing the exception message
-            # by a "." character here. Python treats "AttributeError" exceptions
-            # as special. Notably, Python appears to actually:
-            # 1. Parse apart the messages of these exceptions for the
-            #    double-quoted attribute name embedded in these messages.
-            # 2. Suffix these messages by a "." character followed by a sentence
-            #    suggesting an existing attribute with a similar name to that of
-            #    the attribute name previously parsed from these messages.
-            #
-            # For example, given an erroneous lookup of a non-existent dunder
-            # attribute "__nomnom_beartype__", Python expands the exception
-            # message raised below into:
-            #     AttributeError: Forward reference proxy "MuhRef" dunder
-            #     attribute "__nomnom_beartype__" not found. Did you mean:
-            #     '__hint_name_beartype__'?
             raise AttributeError(
-                f'Forward reference proxy "{cls.__name__}" '
-                f'dunder attribute "{hint_name}" not found'
+                f'PEP 484 or 749 forward reference '
+                f'"{cls.__module__}.{cls.__name__}" '
+                f'proxied dunder attribute "{hint_name}" not found.'
             )
         # Else, the caller resides inside the "beartype" package and is
         # requesting a non-existent non-dunder attribute. In this case, safely
@@ -411,70 +394,35 @@ class BeartypeForwardRefMetaclass(type):
             :data:`True` only if this object satisfies this referent.
         '''
 
-        # ....................{ RESOLVE                    }....................
-        # @beartype-supported type hint referred to by the PEP-compliant forward
-        # reference encapsulated by this proxy.
-        #
-        # Note that merely accessing this property suffices to raise a
-        # human-readable exception if the type hint referred to by this
-        # reference is *NOT* supported by @beartype. Ergo, this hint is now
-        # guaranteed to be supported and thus safely passable to the
-        # is_bearable() dunder method defined below. Maybe. WHO EVEN KNOWS!?!
-        resolved_hint = ref_proxy_cache.cache_ref_proxy_referent_hint(cls)
+        # ....................{ IMPORTS                    }....................
+        # Avoid circular import dependencies.
+        from beartype.door._func.doorfunc import is_bearable
 
-        # ....................{ ISINSTANCEABLE             }....................
-        # If
-        if (
-            # This hint is isinstanceable (i.e., safely passable directly as the
-            # second parameter to the isinstance() builtin) *AND*...
-            is_object_isinstanceable(resolved_hint) and
-            # This hint is *NOT* PEP-compliant (e.g., due to being a PEP 484- or
-            # 585-compliant generic in either subscripted or unsubscripted
-            # form, which conveys more semantics than merely conveyed by a
-            # simple PEP-noncompliant isinstanceable type)...
-            not is_hint_pep(resolved_hint)
-        ):
-        # Then this hint is a PEP-noncompliant isinstanceable object. In this
-        # case, reduce to an efficient call to the isinstance() builtin.
+        # ....................{ RESOLVE                    }....................
+        # Hint metadata sanified from the hint referred to by the forward
+        # reference encapsulated by this proxy, implying both this forward
+        # reference *AND* the referent it refers to be be supported by beartype.
         #
-        # Note that:
-        # * This is the common case. Technically, PEP 484 (and thus @beartype as
-        #   well) permits forward references to refer to arbitrary type hints.
-        #   Pragmatically, 99% of *ALL* real-world forward references of
-        #   interest to production workflows refer to isinstanceable types.
-        # * This is only an optimization, albeit an extremely critical one.
-        #   @beartype-generated type-checking wrapper code effectively reduces
-        #   to direct invocations of the isinstance() builtin and thus
-        #   transitive indirect invocations of this dunder method implicitly
-        #   called by that builtin under PEP 3119 semantics. This dunder method
-        #   is thus on the hot path for @beartype. If optimization is warranted
-        #   anywhere in the @beartype codebase, it is here.
-            # print(f'Isinstanceable resolved hint detected: {repr(resolved_hint)}')
-            return isinstance(obj, resolved_hint)
-        # Else, this hint is either:
-        # * Not isinstanceable, in which case this hint is *NOT* safely passable
-        #   to the isinstance() builtin.
-        # * A PEP-compliant isinstanceable object, in which case this hint is
-        #   safely passable to the isinstance() builtin but only by ignoring the
-        #   unignorable semantics conveyed by this object's conformance with one
-        #   or more PEP standards.
-        #
-        # In either case, avoid passing this hint to that builtin.
+        # Note that merely accessing this property suffices to raise a readable
+        # exception if the type hint referred to by this reference is *NOT*
+        # supported by beartype. Ergo, this hint is now guaranteed to be
+        # supported and thus safely passable to the is_bearable() dunder method
+        # defined below. Maybe. WHO EVEN KNOWS!?!
+        referent_hint_sane = (
+            ref_proxy_cache.cache_ref_proxy_referent_hint_sane(cls))
 
         # ....................{ NON-ISINSTANCEABLE         }....................
         # By validation internally performed by the
-        # cache_ref_proxy_referent_hint() method called above, this hint is
+        # cache_ref_proxy_referent_hint_sane() method called above, this hint is
         # supported by @beartype and thus safely passable to the slower (but
         # still micro-optimized to the hilt) @beartype-specific pair of
         # is_bearable() and die_if_unbearable() functions.
 
-        # Avoid circular import dependencies.
-        from beartype.door._func.doorfunc import is_bearable
-
         # Return true only if the passed object satisfies this hint.
         return is_bearable(
             obj=obj,
-            hint=resolved_hint,
+            #FIXME: *SUPER NON-IDEAL*. Stop throwing away this metadata, yo!
+            hint=referent_hint_sane.hint,
             conf=cls.__conf_beartype__,
         )
 
@@ -527,8 +475,9 @@ class BeartypeForwardRefMetaclass(type):
             get_hint_object_violation_message)
 
         # ....................{ RESOLVE                    }....................
-        # @beartype-supported type hint referred to by the PEP-compliant forward
-        # reference encapsulated by this proxy.
+        # Hint metadata sanified from the hint referred to by the forward
+        # reference encapsulated by this proxy, implying both this forward
+        # reference *AND* the referent it refers to be be supported by beartype.
         #
         # Note that this beartype-specific __instancecheck_str__() dunder method
         # should *ONLY* be called when the __instancecheck__() dunder method
@@ -539,7 +488,8 @@ class BeartypeForwardRefMetaclass(type):
         # by accessing this property (*WITHOUT* that property internally raising
         # an exception). In short, this access should trivially reduce to an
         # efficient O(1)-style cached property lookup.
-        resolved_hint = ref_proxy_cache.cache_ref_proxy_referent_hint(cls)
+        referent_hint_sane = (
+            ref_proxy_cache.cache_ref_proxy_referent_hint_sane(cls))
 
         # ....................{ MESSAGE                    }....................
         # Type-checking violation message describing the failure of this object
@@ -577,7 +527,8 @@ class BeartypeForwardRefMetaclass(type):
             # leverages this exact same singleton for the same purpose.
             call_curr=BEARTYPE_CALL_EXTERNAL_META,
             conf=cls.__conf_beartype__,
-            hint=resolved_hint,
+            #FIXME: *SUPER NON-IDEAL*. Stop throwing away this metadata, yo!
+            hint=referent_hint_sane.hint,
             obj=obj,
         )
 
@@ -614,11 +565,11 @@ class BeartypeForwardRefMetaclass(type):
         # PEP 3119-compliant isinstanceable type referred to by the
         # PEP-compliant forward reference encapsulated by this proxy.
         #
-        # Note that merely accessing this property suffices to raise a
-        # human-readable exception if the type hint referred to by this
-        # reference is *NOT* an isinstanceable type. Ergo, this type is now
-        # guaranteed to be isinstanceable and thus safely passable to the
-        # issubclass() dunder method defined below. Hopefully. WHO EVEN KNOWS!?!
+        # Note that merely accessing this property suffices to raise a readable
+        # exception if the hint referred to by this reference is *NOT* an
+        # isinstanceable type. Ergo, this type is now guaranteed to be
+        # isinstanceable and thus safely passable to the issubclass() dunder
+        # method defined below. Hopefully. WHO EVEN KNOWS!?!
         resolved_type = ref_proxy_cache.cache_ref_proxy_referent_type(cls)
 
         # Return true only if the passed object is a subclass of this type.
@@ -662,20 +613,23 @@ class BeartypeForwardRefMetaclass(type):
 
         Caveats
         -------
-        Downstream callers consuming callable type hints modified by a
-        previously applied :mod:`beartype.beartype` decorator may occasionally
-        encounter **forward reference proxies** (i.e., instances of this
-        metaclass). Forward reference proxies are *not* intended to be usable as
-        perfect substitutes for the underlying classes they proxy. Instead,
-        downstream callers are recommended to manually resolve these proxies to
-        the underlying classes they proxy by accessing this property. Consider
-        this trivial one-liner that does so for a type hint ``type_hint``:
+        **The main** :mod:`beartype` **package should never access this
+        property,** which exists entirely for the benefit of unit tests and
+        downstream callers consuming callable type hints modified by a
+        previously applied :mod:`beartype.beartype` decorator. Such callers may
+        occasionally encounter **forward reference proxies** (i.e., instances of
+        this metaclass). Forward reference proxies are *not* intended to be
+        usable as perfect substitutes for the underlying classes they proxy.
+        Instead, downstream callers are recommended to manually resolve these
+        proxies to the underlying classes they proxy by accessing this property.
+        Consider this trivial one-liner that does so for a type hint
+        ``type_hint``:
 
         .. code-block:: python
 
-           # If this type hint is actually a @beartype-specific forward
-           # reference proxy that only refers to the desired type hint,
-           # dereference that proxy to obtain that type hint.
+           # If this type hint is actually a beartype-specific forward reference
+           # proxy that only refers to the desired type hint, dereference that
+           # proxy to obtain that type hint.
            type_hint = getattr(
                type_hint, '__resolved_hint_beartype__', type_hint)
 
@@ -691,9 +645,17 @@ class BeartypeForwardRefMetaclass(type):
               * A supported type hint that is this forward reference proxy,
                 implying this proxy circularly proxies itself.
         '''
+        # print(f'[__resolved_hint_beartype__] Resolving "{cls.__hint_name_beartype__}"...')
 
-        # Trivially defer to this lower-level method of this global cache.
-        return ref_proxy_cache.cache_ref_proxy_referent_hint(cls)
+        # Hint metadata sanified from the hint referred to by the forward
+        # reference encapsulated by this proxy.
+        referent_hint_sane = (
+            ref_proxy_cache.cache_ref_proxy_referent_hint_sane(cls))
+        assert isinstance(referent_hint_sane, HintSane)
+        # print(f'[__resolved_hint_beartype__] Resolved to "{referent_hint_sane}"!')
+
+        # Return the hint referred to by this forward reference.
+        return referent_hint_sane.hint
 
 
     @property
