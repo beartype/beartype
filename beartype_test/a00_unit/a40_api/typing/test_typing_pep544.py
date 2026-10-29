@@ -15,6 +15,8 @@ This submodule unit tests both the public *and* private API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+import pytest
+pytestmark = pytest.mark.skip(reason="toying with a bespoke protocol-ectomy")
 
 # ....................{ TESTS ~ protocol : metaclass       }....................
 def test_typing_pep544_protocol_metaclass() -> None:

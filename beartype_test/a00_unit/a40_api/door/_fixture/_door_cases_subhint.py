@@ -15,6 +15,7 @@ tests validating the :func:`beartype.door.is_subhint` function and equivalent
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype.typing import runtime_checkable
 from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
@@ -140,6 +141,7 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         thing_two: int
 
 
+    @runtime_checkable
     class MuhThingP(Protocol):
         '''
         Arbitrary caching @beartype protocol.
