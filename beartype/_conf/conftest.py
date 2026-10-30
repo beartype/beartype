@@ -13,6 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 import beartype
+from keyword import iskeyword
+from typing import FrozenSet
 from beartype.roar import (
     BeartypeConfException,
     BeartypeConfParamException,
@@ -39,6 +41,37 @@ from beartype._util.text.utiltextidentifier import is_identifier
 from collections.abc import (
     Collection as CollectionABC,
 )
+
+# ....................{ SANIFIERS                          }....................
+def sanify_conf_ignore_arg_names(ignore_arg_names: object) -> FrozenSet[str]:
+    '''
+    Validate and freeze the collection of declared parameter names to ignore.
+
+    This validation precedes configuration caching, so mutable collections and
+    invalid unhashable items never reach the configuration cache. Mappings are
+    accepted as collections of their keys.
+    '''
+    if (
+        not isinstance(ignore_arg_names, CollectionABC) or
+        isinstance(ignore_arg_names, (str, bytes))
+    ):
+        raise BeartypeConfParamException(
+            f'Beartype configuration parameter "ignore_arg_names" value '
+            f'{ignore_arg_names!r} not collection of parameter names.')
+
+    arg_names = tuple(ignore_arg_names)
+    for arg_name in arg_names:
+        if (
+            not isinstance(arg_name, str) or
+            not arg_name.isidentifier() or
+            iskeyword(arg_name)
+        ):
+            raise BeartypeConfParamException(
+                f'Beartype configuration parameter "ignore_arg_names" item '
+                f'{arg_name!r} not unqualified non-keyword Python identifier.')
+
+    return frozenset(arg_names)
+
 
 # ....................{ DEFAULTERS                         }....................
 def default_conf_kwargs(conf_kwargs: DictStrToAny) -> None:

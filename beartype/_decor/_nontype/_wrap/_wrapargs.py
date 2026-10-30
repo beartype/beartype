@@ -317,6 +317,11 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
             # Else, this parameter's name is *NOT* reserved for use by the
             # @beartype decorator.
 
+            # Ignore the declaration before sanifying its annotation, while
+            # retaining its name above for variadic keyword localization.
+            if arg_name in decor_func.conf.ignore_arg_names:
+                continue
+
             # With a context manager "catching" *ALL* non-fatal warnings issued
             # during this logic for subsequent "playback" below...
             with catch_warnings(record=True) as warnings_issued:
