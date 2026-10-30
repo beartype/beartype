@@ -17,7 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.check.code.datacodename import (
     ARG_NAME_ARGS_NAME_KEYWORDABLE,
     ARG_NAME_FUNC,
-    ARG_NAME_DEFAULT_SENTINEL,
     ARG_NAME_GET_VIOLATION,
     VAR_NAME_ARGS_LEN,
     VAR_NAME_PITH_ROOT,
@@ -147,9 +146,8 @@ CODE_ARG_LOCALIZE_EXPLICIT = f'''
     # Localize this fixed parameter, already bound by Python.
     {VAR_NAME_PITH_ROOT} = {{arg_name}}
 
-    # Omitted defaults remain unchecked. Explicitly supplied values are checked.
-    if ({VAR_NAME_PITH_ROOT} is not {ARG_NAME_DEFAULT_SENTINEL} and
-        {VAR_NAME_PITH_ROOT} is not {ARG_NAME_GET_VIOLATION}):'''
+    # Check every bound value, including omitted defaults.
+    if True:'''
 '''
 Code snippet localizing a fixed parameter from an explicit signature.
 '''
@@ -167,7 +165,7 @@ binding from fixed parameters, regardless of their user-defined names.
 '''
 
 
-ARG_KIND_TO_CODE_LOCALIZE = {
+ARG_KIND_TO_CODE_LOCALIZE_IMPLICIT = {
     # Snippet localizing any positional-only parameter (e.g.,
     # "{posonlyarg}, /") by lookup in the wrapper's "*args" dictionary.
     ArgKind.POSITIONAL_ONLY: f'''

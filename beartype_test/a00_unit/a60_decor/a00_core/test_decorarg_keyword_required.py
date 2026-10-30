@@ -139,7 +139,7 @@ def test_decor_required_keyword_required_object_parameter_remains_ignorable() ->
     assert render(value=123) == '123'
 
 
-def test_decor_keyword_default_is_explicit_without_checking_omitted_default() -> None:
+def test_decor_keyword_default_is_checked_when_omitted() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
     from inspect import CO_VARKEYWORDS
@@ -149,7 +149,8 @@ def test_decor_keyword_default_is_explicit_without_checking_omitted_default() ->
     def render(*, value: int = 'default') -> str:
         return str(value)
 
-    assert render() == 'default'
+    with pytest.raises(BeartypeCallHintParamViolation):
+        render()
     assert render(value=3) == '3'
     assert render.__code__.co_flags & CO_VARKEYWORDS == 0
     with pytest.raises(BeartypeCallHintParamViolation):
@@ -321,17 +322,17 @@ async def test_decor_required_keyword_async_generator_is_explicit() -> None:
         await consume('wrong')
 
 
-def test_decor_required_keyword_reserved_unannotated_fallback() -> None:
-    '''Unannotated reserved names retain their existing generic behavior.'''
+def test_decor_required_keyword_reserved_unannotated_name() -> None:
+    '''Reserved names are rejected even when the parameter is unannotated.'''
     from beartype import beartype
-    from inspect import CO_VARKEYWORDS
+    from beartype.roar import BeartypeDecorParamNameException
+    from pytest import raises
 
-    @beartype
     def render(*, value: int, __beartype_private) -> str:
         return str(value) + __beartype_private
 
-    assert render(value=3, __beartype_private='x') == '3x'
-    assert render.__code__.co_flags & CO_VARKEYWORDS == CO_VARKEYWORDS
+    with raises(BeartypeDecorParamNameException):
+        beartype(render)
 
 
 def test_decor_explicit_all_parameter_kinds() -> None:
@@ -375,37 +376,50 @@ def test_decor_explicit_all_parameter_kinds() -> None:
 
 
 def test_decor_explicit_optional_default_identity() -> None:
-    '''Omission is distinct from explicitly passing the original default.'''
+    '''Native defaults preserve identity and are checked even when omitted.'''
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
+    from inspect import signature
     from pytest import raises
 
-    positional_default = object()
-    flexible_default = object()
-    keyword_default = object()
-    mutable_default = []
+    positional_default = [1]
+    flexible_default = [2]
+    keyword_default = [3]
 
-    @beartype
-    def accepts(positional: int = positional_default, /,
-                flexible: int = flexible_default, *,
-                keyword: int = keyword_default, mutable=mutable_default):
-        return positional, flexible, keyword, mutable
+    def original(positional: list[int] = positional_default, /,
+                 flexible: list[int] = flexible_default, *,
+                 keyword: list[int] = keyword_default):
+        return positional, flexible, keyword
 
+    accepts = beartype(original)
+    native = signature(accepts, follow_wrapped=False).parameters
+    assert native['positional'].default is positional_default
+    assert native['flexible'].default is flexible_default
+    assert native['keyword'].default is keyword_default
     omitted = accepts()
     assert omitted[0] is positional_default
     assert omitted[1] is flexible_default
     assert omitted[2] is keyword_default
-    assert omitted[3] is mutable_default
-    omitted[3].append('same object')
-    assert accepts()[3] == ['same object']
-    assert accepts(1, 2, keyword=3) == (1, 2, 3, mutable_default)
-    for invoke in (
-        lambda: accepts(positional_default),
-        lambda: accepts(flexible=flexible_default),
-        lambda: accepts(keyword=keyword_default),
-    ):
+    for default in (positional_default, flexible_default, keyword_default):
+        default[:] = ['wrong']
         with raises(BeartypeCallHintParamViolation):
-            invoke()
+            accepts()
+        with raises(BeartypeCallHintParamViolation):
+            accepts(positional_default, flexible_default, keyword=keyword_default)
+        default[:] = [1]
+
+
+def test_decor_explicit_default_violation_warning() -> None:
+    '''Invalid omitted defaults also respect warning configuration.'''
+    from beartype import beartype, BeartypeConf
+    from pytest import warns
+
+    @beartype(conf=BeartypeConf(violation_param_type=UserWarning))
+    def accepts(value: int = 'wrong'):
+        return value
+
+    with warns(UserWarning):
+        assert accepts() == 'wrong'
 
 
 def test_decor_explicit_unrepresentable_default() -> None:
@@ -487,7 +501,7 @@ async def test_decor_explicit_async_optional_and_returns() -> None:
     from pytest import raises
     from typing import NoReturn
 
-    default = object()
+    default = 3
 
     @beartype
     async def accepts(value: int = default, /, *values: int,
@@ -498,7 +512,7 @@ async def test_decor_explicit_async_optional_and_returns() -> None:
     assert await accepts() == (default, (), 'x', {})
     assert await accepts(1, 2, label='y', z=3) == (1, (2,), 'y', {'z': 3})
     with raises(BeartypeCallHintParamViolation):
-        await accepts(default)
+        await accepts('wrong')
     with raises(BeartypeCallHintParamViolation):
         await accepts(1, 'bad')
 
@@ -510,10 +524,9 @@ async def test_decor_explicit_async_optional_and_returns() -> None:
     async def noreturn(value: int) -> NoReturn:
         return value
 
-    # Missing arguments depend on live defaults and are checked on await.
+    # All native binding errors precede coroutine creation.
     with raises(TypeError):
-        await checked()
-    # Other native binding errors still precede coroutine creation.
+        checked()
     with raises(TypeError):
         checked(1, 2)
     with raises(BeartypeCallHintReturnViolation):
@@ -598,7 +611,7 @@ async def test_decor_explicit_async_generator_protocol() -> None:
     assert closed == [True, True, True, True]
 
 
-def test_decor_explicit_live_default_values() -> None:
+def test_decor_fallback_live_default_values() -> None:
     '''Replacing default values on the original callable remains observable.'''
     from beartype import beartype
 
@@ -606,7 +619,7 @@ def test_decor_explicit_live_default_values() -> None:
                  third: int = 'third'):
         return first, second, third
 
-    checked = beartype(original)
+    checked = beartype(_wrap_isomorphically(original))
     assert checked() == ('first', 'second', 'third')
     original.__defaults__ = ('new first', 'new second')
     original.__kwdefaults__['third'] = 'new third'
@@ -614,7 +627,7 @@ def test_decor_explicit_live_default_values() -> None:
     assert checked(1, third=3) == (1, 'new second', 3)
 
 
-def test_decor_explicit_live_default_structure() -> None:
+def test_decor_fallback_live_default_structure() -> None:
     '''Adding and removing positional and keyword defaults changes binding.'''
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
@@ -626,7 +639,7 @@ def test_decor_explicit_live_default_structure() -> None:
         seen.append((first, second, third))
         return first, second, third
 
-    checked = beartype(original)
+    checked = beartype(_wrap_isomorphically(original))
     original.__defaults__ = ('first', 'second')
     original.__kwdefaults__ = {'third': 'third'}
     assert checked() == original() == ('first', 'second', 'third')
@@ -637,11 +650,13 @@ def test_decor_explicit_live_default_structure() -> None:
     original.__defaults__ = (2,)
     assert checked(1) == original(1) == (1, 2, 'third')
     seen.clear()
-    # Missing arguments precede type violations and never execute the body.
-    with raises(TypeError) as native:
-        original(second='wrong')
-    with raises(TypeError) as wrapped:
+    # The generic fallback checks supplied parameters before forwarding.
+    with raises(BeartypeCallHintParamViolation):
         checked(second='wrong')
+    with raises(TypeError) as native:
+        original(second=2)
+    with raises(TypeError) as wrapped:
+        checked(second=2)
     assert str(wrapped.value) == str(native.value)
     assert seen == []
 
@@ -687,7 +702,7 @@ def test_decor_explicit_missing_argument_messages() -> None:
         assert str(wrapped.value) == str(native.value)
 
 
-def test_decor_explicit_bound_method_live_default_structure() -> None:
+def test_decor_fallback_bound_method_live_default_structure() -> None:
     '''Live default indexes account for the implicitly supplied instance.'''
     from beartype import beartype
     from pytest import raises
@@ -698,7 +713,7 @@ def test_decor_explicit_bound_method_live_default_structure() -> None:
 
     instance = Methods()
     original = instance.accepts
-    checked = beartype(original)
+    checked = beartype(_wrap_isomorphically(original))
     original.__func__.__defaults__ = (3,)
     original.__func__.__kwdefaults__ = {'label': 'x'}
     assert checked() == original() == (3, 'x')
@@ -712,7 +727,7 @@ def test_decor_explicit_bound_method_live_default_structure() -> None:
     assert checked(4, label='y') == (4, 'y')
 
 
-async def test_decor_explicit_lazy_live_default_structure() -> None:
+async def test_decor_fallback_lazy_live_default_structure() -> None:
     '''Coroutines and both generator kinds retain live-default behavior.'''
     from beartype import beartype
     from collections.abc import AsyncIterator, Iterator
@@ -727,9 +742,9 @@ async def test_decor_explicit_lazy_live_default_structure() -> None:
     async def async_generator(value: int) -> AsyncIterator[int]:
         yield value
 
-    checked_coroutine = beartype(coroutine)
-    checked_generator = beartype(generator)
-    checked_async_generator = beartype(async_generator)
+    checked_coroutine = beartype(_wrap_isomorphically(coroutine))
+    checked_generator = beartype(_wrap_isomorphically(generator))
+    checked_async_generator = beartype(_wrap_isomorphically(async_generator))
     for func in (coroutine, generator, async_generator):
         func.__defaults__ = (3,)
     assert await checked_coroutine() == 3
@@ -743,3 +758,94 @@ async def test_decor_explicit_lazy_live_default_structure() -> None:
         next(checked_generator())
     with raises(TypeError):
         await checked_async_generator().__anext__()
+
+
+def _wrap_isomorphically(func):
+    '''Build a transparent decorator that retains the generic calling convention.'''
+    from functools import wraps
+    from inspect import isasyncgenfunction, iscoroutinefunction, isgeneratorfunction
+
+    if iscoroutinefunction(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            return await func(*args, **kwargs)
+    elif isgeneratorfunction(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return (yield from func(*args, **kwargs))
+    elif isasyncgenfunction(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            async for value in func(*args, **kwargs):
+                yield value
+    else:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+
+    return wrapper
+
+
+
+def test_decor_dataclass_default_factory_fallback() -> None:
+    '''Dataclass factory placeholders are consumed by the generated constructor.'''
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from dataclasses import dataclass, field
+    from inspect import CO_VARKEYWORDS
+    from pytest import raises
+
+    @beartype
+    @dataclass
+    class Example:
+        values: list[int] = field(default_factory=list)
+        labels: list[str] = field(default_factory=list, kw_only=True)
+
+    first = Example()
+    second = Example()
+    assert first.values == first.labels == []
+    assert first.values is not second.values
+    assert first.labels is not second.labels
+    assert Example([1], labels=['x']).values == [1]
+    assert Example.__init__.__code__.co_flags & CO_VARKEYWORDS
+    with raises(BeartypeCallHintParamViolation):
+        Example(['wrong'])
+    with raises(BeartypeCallHintParamViolation):
+        Example(labels=[1])
+
+    # Direct decoration has no containing class stack to identify dataclasses.
+    @dataclass
+    class Direct:
+        values: list[int] = field(default_factory=list)
+
+    Direct.__init__ = beartype(Direct.__init__)
+    assert Direct().values == []
+    with raises(BeartypeCallHintParamViolation):
+        Direct(['wrong'])
+
+
+
+def test_decor_explicit_omitted_default_forward_reference(monkeypatch) -> None:
+    '''Forward-referenced defaults are checked at call time, after resolution.'''
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
+    from sys import modules
+
+    class Target:
+        pass
+
+    default = Target()
+
+    def original(value=default):
+        return value
+
+    original.__annotations__ = {'value': f'{__name__}._DefaultTarget'}
+    checked = beartype(original)
+    monkeypatch.setattr(modules[__name__], '_DefaultTarget', Target, raising=False)
+    assert checked() is default
+    with raises(BeartypeCallHintParamViolation):
+        checked('wrong')
+    checked.__defaults__ = ('wrong',)
+    with raises(BeartypeCallHintParamViolation):
+        checked()

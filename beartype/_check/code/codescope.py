@@ -33,9 +33,7 @@ from beartype._util.cls.pep.clspep3119 import (
     die_unless_type_isinstanceable,
     die_unless_object_isinstanceable,
 )
-from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.func.utilfuncscope import add_func_scope_attr
-from beartype._util.utilobjget import get_object_type_basename
 from collections.abc import Set
 from typing import Optional
 
@@ -229,17 +227,10 @@ def add_func_scope_type(
     )
     # Else, this object is an isinstanceable class.
 
-    # Return either...
-    return (
-        # If this type is a builtin (i.e., globally accessible C-based type
-        # requiring *no* explicit importation), the unqualified basename of
-        # this type as is, as this type requires no parametrization;
-        get_object_type_basename(cls)
-        if is_type_builtin(cls) else
-        # Else, the name of a new parameter passing this class.
-        add_func_scope_attr(
-            func_scope=func_scope, attr=cls, exception_prefix=exception_prefix)
-    )
+    # Local aliases are faster than builtin lookups and cannot be shadowed by
+    # user-defined parameters in callable-specific wrappers.
+    return add_func_scope_attr(
+        func_scope=func_scope, attr=cls, exception_prefix=exception_prefix)
 
 
 def add_func_scope_types(

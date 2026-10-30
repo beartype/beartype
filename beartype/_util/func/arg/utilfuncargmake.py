@@ -38,7 +38,6 @@ def make_func_signature(
     # Optional parameters.
     func_name: Optional[str] = None,
     is_annotated: bool = True,
-    arg_default_override: object = ArgMandatory,
 ) -> str:
     '''
     Generate a callable-specific wrapper signature augmented by hidden scope
@@ -66,14 +65,6 @@ def make_func_signature(
         Whether to reproduce annotations. Defaults to true. Callers already
         copying annotation metadata with ``functools.update_wrapper`` may
         disable this to avoid redundant annotation evaluation.
-
-    arg_default_override : object, optional
-        Replacement default for all fixed parameters, including required
-        parameters, or ``ArgMandatory`` to preserve the original defaults.
-        Wrapper generators may use an omission sentinel to support changes to
-        the original callable's defaults after decoration. The wrapper body
-        must validate missing arguments and restore live defaults before
-        forwarding the call.
 
     Returns
     -------
@@ -139,14 +130,8 @@ def make_func_signature(
         if arg_hint is not SENTINEL:
             hint_name = add_func_scope_attr(arg_hint, func_scope)
             declaration += f': {hint_name}'
-        if arg_default is not ArgMandatory or (
-            arg_default_override is not ArgMandatory and
-            arg_kind not in (
-                ArgKind.VARIADIC_POSITIONAL, ArgKind.VARIADIC_KEYWORD)
-        ):
-            default_name = add_func_scope_attr(
-                arg_default if arg_default_override is ArgMandatory else
-                arg_default_override, func_scope)
+        if arg_default is not ArgMandatory:
+            default_name = add_func_scope_attr(arg_default, func_scope)
             declaration += f'={default_name}'
 
         declaration = f'    {declaration},\n'

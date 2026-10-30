@@ -56,12 +56,11 @@ def test_add_func_scope_type() -> None:
         assert cls_scope_name != get_object_type_basename(cls)
         assert func_scope[cls_scope_name] is cls
 
-    # Assert this function does *NOT* add builtin types but instead simply
-    # returns the unqualified basenames of those types.
+    # Assert builtin types receive local aliases just like non-builtin types.
     cls = list
     cls_scope_name = add_func_scope_type(cls=cls, func_scope=func_scope)
-    assert cls_scope_name == get_object_type_basename(cls)
-    assert cls_scope_name not in func_scope
+    assert cls_scope_name != get_object_type_basename(cls)
+    assert func_scope[cls_scope_name] is cls
 
     # ....................{ FAIL                           }....................
     # Arbitrary scope to be added to below.
@@ -138,13 +137,12 @@ def test_add_func_scope_types() -> None:
         types=types, func_scope=func_scope)
     assert set(types) == set(func_scope[types_scope_name])
 
-    # Assert this function does *NOT* add tuples of one non-builtin types but
-    # instead simply returns the unqualified basenames of those types.
+    # Assert a tuple containing one builtin type aliases that type directly.
     types = (int,)
     types_scope_name = add_func_scope_types(
         types=types, func_scope=func_scope)
-    assert types_scope_name == get_object_type_basename(types[0])
-    assert types_scope_name not in func_scope
+    assert types_scope_name != get_object_type_basename(types[0])
+    assert func_scope[types_scope_name] is types[0]
 
     # Assert this function adds tuples of one non-builtin type as merely that
     # type rather than that tuple.
