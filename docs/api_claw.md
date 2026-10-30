@@ -358,6 +358,18 @@ Equally unsurprisingly, `beartype.BeartypeConf` has been equipped with import ho
 
 <!-- FIXME: Document these options in "api_decor" as well, please. *sigh* -->
 
+- `BeartypeConf(claw_is_trace_imports: bool = False)`. Enable this option to trace the fully qualified name of each selected package or module to standard error before its source or cached bytecode is loaded. Each diagnostic is flushed immediately, so it also identifies a selected module whose import fails. For example:
+
+  ```python
+  from beartype import BeartypeConf
+  from beartype.claw import beartype_package
+
+  beartype_package('your_package', conf=BeartypeConf(claw_is_trace_imports=True))
+  import your_package.child
+  ```
+
+  This prints lines such as `[beartype.claw] Type-checking module your_package.child.` to the current `sys.stderr`, leaving standard output untouched. If `sys.stderr` is unavailable (for example, `None` in a windowed Python process), diagnostics are omitted rather than redirected to standard output. Tracing is disabled by default and does not change type-checking or exception handling. Unselected and explicitly excluded modules are not traced. Importing an already loaded module from `sys.modules` does not call the loader again and therefore does not produce another line. This option traces the existing Python source loader, not built-in or extension-module imports. It cannot report imports that happened before the hook was registered.
+
 - `BeartypeConf(claw_is_pep526: bool = True)`. By default, `beartype.claw` type-checks annotated variable assignments like `muh_int: int = 'Pretty sure this isn't an integer.'`. Although this is *usually* what everyone wants, this may not be what someone suspicious wearing aviator goggles, a red velvet cape, and too-tight black leather wants. Nobody knows what those people want. If you are such a person, consider disabling this option to reduce type safety and destroy your code like Neo-Tokyo vs. Mecha-Baby-Godzilla: <sup>...who will win!?!?</sup>
 
 ```python
