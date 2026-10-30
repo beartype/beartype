@@ -142,7 +142,30 @@ https://eli.thegreenplace.net/2018/slow-and-fast-methods-for-generating-random-i
 '''
 
 # ....................{ CODE ~ arg                         }....................
-ARG_KIND_TO_CODE_LOCALIZE = {
+CODE_ARG_LOCALIZE_EXPLICIT = f'''
+    # Localize this fixed parameter, already bound by Python.
+    {VAR_NAME_PITH_ROOT} = {{arg_name}}
+
+    # Check every bound value, including omitted defaults.
+    if True:'''
+'''
+Code snippet localizing a fixed parameter from an explicit signature.
+'''
+
+
+ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT = {
+    ArgKind.VARIADIC_POSITIONAL: f'''
+    for {VAR_NAME_PITH_ROOT} in {{arg_name}}:''',
+    ArgKind.VARIADIC_KEYWORD: f'''
+    for {VAR_NAME_PITH_ROOT} in {{arg_name}}.values():''',
+}
+'''
+Code snippets checking the variadic parameters already separated by Python
+binding from fixed parameters, regardless of their user-defined names.
+'''
+
+
+ARG_KIND_TO_CODE_LOCALIZE_IMPLICIT = {
     # Snippet localizing any positional-only parameter (e.g.,
     # "{posonlyarg}, /") by lookup in the wrapper's "*args" dictionary.
     ArgKind.POSITIONAL_ONLY: f'''
@@ -216,7 +239,7 @@ next parameter to be type-checked.
 CODE_CALL_CHECKED = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {VAR_NAME_PITH_ROOT} = {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)
+    {VAR_NAME_PITH_ROOT} = {{func_call_prefix}}{ARG_NAME_FUNC}({{func_call_args}})
 
     # Noop required to artificially increase indentation level. Note that
     # CPython implicitly optimizes this conditional away. Isn't that nice?
@@ -265,7 +288,7 @@ non-generator callable decorated by :func:`beartype.beartype`).
 CODE_NORMAL_RETURN_UNCHECKED_SYNC = f'''
     # Call this function with all passed parameters and return the value
     # returned from this call as is (without being type-checked).
-    return {ARG_NAME_FUNC}(*args, **kwargs)'''
+    return {ARG_NAME_FUNC}({{func_call_args}})'''
 '''
 Code snippet calling the **normal synchronous callable** (non-generator callable
 decorated by :func:`beartype.beartype` defined with the ``def`` rather than
@@ -277,7 +300,7 @@ decorated by :func:`beartype.beartype` defined with the ``def`` rather than
 CODE_NORMAL_RETURN_UNCHECKED_ASYNC = f'''
     # Call this function with all passed parameters and return the value
     # returned from this call as is (without being type-checked).
-    return await {ARG_NAME_FUNC}(*args, **kwargs)'''
+    return await {ARG_NAME_FUNC}({{func_call_args}})'''
 '''
 Code snippet calling the **normal asynchronous callable** (non-generator
 callable decorated by :func:`beartype.beartype` defined with the ``async def``
