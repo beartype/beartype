@@ -264,6 +264,7 @@ def resolve_pep563(
         hint = resolve_hint_pep484_ref_str_decor_curr(
             decor_curr=decor_func,
             hint=hint,
+            hint_parent_sane=None,
             exception_cls=BeartypePep563Exception,
         )
 

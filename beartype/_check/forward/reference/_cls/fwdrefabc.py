@@ -15,8 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import HintPep484749RefObjectType
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.forward.reference._cls.fwdrefmeta import (
     BeartypeForwardRefMetaclass)
+from beartype._check.cls.hint.hintsane import HintSane
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
     LexicalScope,
@@ -74,10 +77,22 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     '''
 
     # ....................{ CLASS VARS ~ mandatory         }....................
-    __hint_name_beartype__: str = None  # type: ignore[assignment]
+    __call_curr_beartype__: BeartypeCallDataABC = None  # type: ignore[assignment]
     '''
-    Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of the
-    type hint referenced by this forward reference subclass.
+    **Beartype call metadata** (i.e., dataclass aggregating *all* common
+    metadata encapsulating the user-defined callable, type, or statement
+    currently being type-checked by the end user).
+
+    This class variable is mandatory but defaults to :data:`None` to improve
+    debuggability in the event of developer error [read: us].
+    '''
+
+
+    __conf_beartype__: BeartypeConf = None  # type: ignore[assignment]
+    '''
+    **Beartype configuration** (i.e., self-caching dataclass encapsulating all
+    settings configuring type-checking for the referent referred to by this
+    forward reference subclass).
 
     This class variable is mandatory but defaults to :data:`None` to improve
     debuggability in the event of developer error [read: us].
@@ -93,7 +108,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     Caveats
     -------
     **Callers are advised to call the**
-    :func:`beartype._check.forward.reference.fwdrefset.set_beartype_ref_proxies_exception_prefix`
+    :func:`beartype._check.forward.reference.fwdrefset.set_beartype_ref_proxies_classvars_uninitted`
     **setter to overwrite both this and other defaults for this substring across
     multiple forward reference proxies simultaneously with a more contextually
     specific substring.** This substring temporarily defaults to a globally
@@ -103,7 +118,43 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     However, both of these defaults are inappropriate for leaking to end users.
     '''
 
+
+    __hint_name_beartype__: str = None  # type: ignore[assignment]
+    '''
+    Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of the
+    type hint referenced by this forward reference subclass.
+
+    This class variable is mandatory but defaults to :data:`None` to improve
+    debuggability in the event of developer error [read: us].
+    '''
+
+
+    __hint_parent_sane_beartype__: Optional[HintSane] = None
+    '''
+    Either:
+
+    * If this forward reference is a **root** (i.e., top-most parent hint of a
+      tree of child hints), :data:`None`.
+    * Else, this forward reference is a **child** of some parent hint. In this
+      case, **sanified parent type hint metadata** (i.e., immutable and thus
+      hashable object encapsulating *all* metadata previously returned by
+      :mod:`beartype._check.convert.convmain` sanifiers after sanitizing the
+      possibly PEP-noncompliant parent hint of this forward reference into a
+      fully PEP-compliant parent hint).
+    '''
+
     # ....................{ CLASS VARS ~ optional          }....................
+    __hint_pep749_ref_beartype__: Optional[HintPep484749RefObjectType] = None
+    '''
+    :pep:`749`-compliant **forward reference type hint** (i.e.,
+    higher-level pure-Python object-oriented :class:`annotationlib.ForwardRef`
+    object defining a dynamically resolvable reference referring to the
+    lower-level type hint encapsulated by this forward reference subclass) if
+    this subclass originates from such an object *or* :data:`None` otherwise
+    (i.e., if this subclass does *not* originate from such an object).
+    '''
+
+
     __scope_name_beartype__: Optional[str] = None
     '''
     Fully-qualified name of the lexical scope to which the type hint referenced
@@ -121,17 +172,6 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     * :pep:`749`-compliant object-oriented forward reference type hint, this
       name is either a non-empty string *or* :data:`None` (depending on that
       hint).
-    '''
-
-
-    __hint_pep749_ref_beartype__: Optional[HintPep484749RefObjectType] = None
-    '''
-    :pep:`749`-compliant **forward reference type hint** (i.e.,
-    higher-level pure-Python object-oriented :class:`annotationlib.ForwardRef`
-    object defining a dynamically resolvable reference referring to the
-    lower-level type hint encapsulated by this forward reference subclass) if
-    this subclass originates from such an object *or* :data:`None` otherwise
-    (i.e., if this subclass does *not* originate from such an object).
     '''
 
 
@@ -410,11 +450,14 @@ class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
         # Create and return a new subscripted forward reference proxy extending
         # this subscriptable forward reference proxy with the passed parameters.
         return proxy_hint_pep484_ref_str_subbed(
-            scope_name=cls.__scope_name_beartype__,  # type: ignore[arg-type]
-            hint_name=cls.__hint_name_beartype__,
+            call_curr=cls.__call_curr_beartype__,
+            conf=cls.__conf_beartype__,
             exception_prefix=cls.__exception_prefix_beartype__,
             func_local_parent_codeobj_weakref=(
                 cls.__func_local_parent_codeobj_weakref_beartype__),
+            scope_name=cls.__scope_name_beartype__,  # type: ignore[arg-type]
+            hint_name=cls.__hint_name_beartype__,
+            hint_parent_sane=cls.__hint_parent_sane_beartype__,
             args=args,
             kwargs=kwargs,
         )

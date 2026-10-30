@@ -379,8 +379,16 @@ class _TextIOMeta(type):
                 # attributes (e.g., properties) required by this protocol
                 # *AND*...
                 #
-                # Note that this test is somewhat faster and thus intentionally
-                # performed first. It is what we say it is, @beartype! Ugh.
+                # Note that:
+                # * This test is somewhat faster and thus intentionally
+                #   performed first. It is what we say it is, @beartype! Ugh.
+                # * Text-based file handles satisfy our PEP 544-compliant
+                #   "Pep544IO" protocol but *NOT* our PEP 544-compliant
+                #   "Pep544TextIO" protocol. The only utility the latter
+                #   "Pep544TextIO" protocol has is in *NEGATIVE* type-checking
+                #   (i.e., checking that an object violates rather than
+                #   satisfies that protocol). We can no longer recall why,
+                #   frankly. It probably doesn't matter. Trust us, bro. *sigh*
                 isinstance(obj, Pep544IO) and  # type: ignore[misc]
                 # The POSIX-compliant mode string with which this object was
                 # initially opened does *NOT* contain the character "b" (which

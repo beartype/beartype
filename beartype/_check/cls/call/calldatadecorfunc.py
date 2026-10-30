@@ -206,6 +206,17 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
     func_wrapper_locals : LexicalScope
         **Local scope** (i.e., dictionary mapping from the name to value of
         each attribute referenced in the signature) of this wrapper function.
+    _minify_cached : Optional[BeartypeCallDecorFuncMinimalData]
+        Either:
+
+        * If the :meth:`.minify` method has already been called at least once,
+          the **beartype callable decorator call minimal metadata** (i.e.,
+          dataclass encapsulating the minimal metadata required to type-check
+          the callable currently being decorated by the
+          :func:`beartype.beartype` decorator at the post-decoration time that
+          callable is subsequently called) minified from this beartype decorator
+          call maximal metadata by that call.
+        * Else, :data:`None`.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -226,6 +237,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         'func_wrapper_code_signature_prefix',
         'func_wrapper_name',
         'func_wrapper_locals',
+        '_minify_cached',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
@@ -243,6 +255,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         func_wrapper_code_signature_prefix: str
         func_wrapper_name: str
         func_wrapper_locals: LexicalScope
+        _minify_cached: Optional[BeartypeCallDecorFuncMinimalData]
 
         # Re-annotate these class variables defined by a superclass with tighter
         # bounds more suitable to this subclass.
@@ -293,14 +306,9 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         that callable.
         '''
 
-        # Defer the resolution of the global and local scope for the currently
-        # decorated callable until needed to resolve stringified type hints.
-        self.decoratee_scope_forward = None  # pyright: ignore
-
-        # Nullify this dictionary of hidden parameters passed to the
+        # Default this dictionary of hidden parameters passed to the
         # type-checking wrapper function generated for this decorator call.
         self.func_wrapper_locals: LexicalScope = {}
-        self._is_decoratee_annotations_dirty = False
 
         # Default the same code snippets set by the reinit() method to those
         # returning values from normal (i.e., non-generator) synchronous
@@ -313,7 +321,15 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         self.func_wrapper_code_call_prefix = ''
         self.func_wrapper_code_signature_prefix = ''
 
+        # Default all remaining booleans to false.
+        self._is_decoratee_annotations_dirty = False
+
         # Nullify all remaining instance variables for safety.
+        #
+        # Note that nullifying the "decoratee_scope_forward" instance variable
+        # intentionally defers the resolution of the global and local scope for
+        # the currently decorated callable until needed to resolve stringified
+        # type hints.
         self.cls_stack = (  # type: ignore[assignment]
         self.conf) = (  # pyright: ignore
         self.decoratee) = (  # pyright: ignore
@@ -324,7 +340,9 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         self.func_wrappee_wrappee) = (  # pyright: ignore
         self.func_wrappee_wrappee_codeobj) = (  # pyright: ignore
         self.func_wrapper) = (  # pyright: ignore
-        self.func_wrapper_name) = None  # type: ignore[assignment]
+        self.func_wrapper_name) = (  # pyright: ignore
+        self._minify_cached) = None  # type: ignore[assignment]
+        # self.func_wrapper_name) = None  # type: ignore[assignment]
 
 
     def reinit(
@@ -834,11 +852,20 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         the post-decoration time that callable is subsequently called) minified
         from this beartype decorator call maximal metadata.
 
+        This minifier is internally memoized for efficiency.
+
         Returns
         -------
         BeartypeCallDecorDataABC
             Minimal metadata minified from this maximal metadata.
         '''
+
+        # If this metadata has already been minified by a prior call to this
+        # minifier, return that minified metadata as is.
+        if self._minify_cached is not None:
+            return self._minify_cached
+        # Else, this metadata has yet to be minified, implying this to be the
+        # first call to this minifier.
 
         # Minimal lexical scope (i.e., dictionary mapping from the name to value
         # of each locally and globally accessible attribute in the local and
@@ -848,27 +875,35 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         # currently decorated callable), defined as either...
         decoratee_scope_forward_minimal = (
             # If *NO* forward scope was created and cached by a prior call to
-            # the resolve_hint_pep484_ref_str() method created, implicitly
-            # preserve this attribute as the "None" singleton;
+            # the resolve_hint_pep484_ref_str() method, implicitly preserve this
+            # attribute as the "None" singleton;
             None
             if self.decoratee_scope_forward is None else
             # Else, a forward scope was created and cached by such a call,
-            # implying the currently decorated callable is annotated by one or
-            # more stringified forward reference type hints. In this case,
+            # implying the currently decorated callable to be annotated by one
+            # or more stringified forward reference type hints. In this case,
             # minify this forward scope for efficiency and safety. See also the
             # BeartypeForwardScope.minify() docstring for further discussion.
             self.decoratee_scope_forward.minify()
         )
+        # print(f'\nin BeartypeCallDecorFuncData.minify() for: {repr(self)}')
+        # print(f'decoratee_scope_forward_minimal: {repr(decoratee_scope_forward_minimal)}')
+        # if not(decoratee_scope_forward_minimal):
+        #     raise ValueError('Ugh!')
 
-        # Create and return a new instance of this minimal dataclass minified
-        # from the passed maximal dataclass.
-        return BeartypeCallDecorFuncMinimalData(
+        # Minimal metadata minified from this maximal metadata.
+        self._minify_cached = BeartypeCallDecorFuncMinimalData(
+        # minify_uncached = BeartypeCallDecorFuncMinimalData(
             conf=self.conf,
             cls_stack=self.cls_stack,
             decoratee=self.func_wrappee,
             decoratee_annotations=self.decoratee_annotations,
             decoratee_scope_forward=decoratee_scope_forward_minimal,
         )
+
+        # Return this minimal metadata.
+        return self._minify_cached
+        # return minify_uncached
 
     # ..................{ LABELLERS                          }..................
     def label_func_wrapper(self) -> str:

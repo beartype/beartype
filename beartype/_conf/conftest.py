@@ -21,6 +21,7 @@ from beartype.roar import (
     BeartypeDoorHintViolation,
 )
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confenum import (
     BeartypeStrategy,
     BeartypeViolationVerbosity,
@@ -282,7 +283,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
                 f'Beartype configuration parameter "{arg_name_bool}" '
                 f'value {repr(conf_kwargs[arg_name_bool])} not boolean.'
             )
-    
+
     # For the name of each keyword parameter whose value is expected to be an
     # exception subclass...
     for arg_name_exception_subclass in _ARG_NAMES_EXCEPTION_SUBCLASS:

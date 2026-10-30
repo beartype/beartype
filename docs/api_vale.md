@@ -34,10 +34,10 @@ def polygon_area(polygon: Numpy2DFloatArray) -> float:
         polygon_rolled[:,0]*polygon[:,1]))
 ```
 
-Validators enforce arbitrary runtime constraints on the internal structure and contents of parameters and returns with user-defined lambda functions and nestable declarative expressions leveraging familiar `typing` syntax – all seamlessly composable with `standard type hints <eli5:typing>` via an [expressive domain-specific language (DSL)](#validator-syntax).
+Validators enforce arbitrary runtime constraints on the internal structure and contents of parameters and returns with user-defined lambda functions and nestable declarative expressions leveraging familiar `typing` syntax – all seamlessly composable with [standard type hints](eli5.md#standard-hints) via an [expressive domain-specific language (DSL)](#validator-syntax).
 
-Validate custom project constraints *now* without waiting for the open-source community to officially standardize, implement, and publish those constraints. Filling in the Titanic-sized gaps between `Python's patchwork quilt of PEPs
-<pep:pep>`, validators accelerate your QA workflow with your greatest asset.
+Validate custom project constraints *now* without waiting for the open-source community to officially standardize, implement, and publish those constraints. Filling in the Titanic-sized gaps between [Python's patchwork quilt of
+PEPs](pep.md), validators accelerate your QA workflow with your greatest asset.
 
 > Yup. It's your brain.
 
@@ -72,6 +72,8 @@ Everywhere else, fallback to *functional* validators for generality.
 
 ## Validator API
 
+<div id="beartype.vale.Is"></div>
+
 ### Is
 
 *Subscription API:* `beartype.vale.Is[collections.abc.Callable[[object], bool]]`
@@ -91,6 +93,8 @@ LengthyString = Annotated[str, Is[lambda text: 4 <= len(text) <= 40]]
 ```
 
 Functional validators are caller-defined and may thus validate the internal integrity, consistency, and structure of arbitrary objects ranging from simple builtin scalars like integers and strings to complex data structures defined by third-party packages like NumPy arrays and Pandas DataFrames.
+
+<div id="beartype.vale.IsAttr"></div>
 
 ### IsAttr
 
@@ -128,6 +132,8 @@ The second argument subscripting this class *must* be a beartype validator. This
 - `beartype.vale.Is`, in which case this parent `IsAttr` class validates the desired object attribute to satisfy the caller-defined function subscripting that child `Is` class.
 - `beartype.vale.IsAttr`, in which case this parent `IsAttr` class validates the desired object attribute to contain a nested object attribute satisfying the child `IsAttr` class. See above example.
 - `beartype.vale.IsEqual`, in which case this `IsAttr` class validates the desired object attribute to be equal to the object subscripting that `IsEqual` class. See above example.
+
+<div id="beartype.vale.IsEqual"></div>
 
 ### IsEqual
 
@@ -173,6 +179,8 @@ The similarities end there, of course:
 - The `None` singleton.
 
 Wherever you can (which is mostly nowhere), prefer `typing.Literal`. Sure, `typing.Literal` is mostly useless, but it's standardized across type checkers in a mostly useless way. Everywhere else, default to `IsEqual`.
+
+<div id="beartype.vale.IsInstance"></div>
 
 ### IsInstance
 
@@ -221,6 +229,8 @@ IntNonbool = Annotated[int, ~IsInstance[bool]]   # <--- bruh
 ```
 
 Wherever you can, prefer isinstanceable type hints. Sure, they're inflexible, but they're inflexibly standardized across type checkers. Everywhere else, default to `IsInstance`.
+
+<div id="beartype.vale.IsSubclass"></div>
 
 ### IsSubclass
 
@@ -332,7 +342,7 @@ Beartype validators support a rich domain-specific language (DSL) leveraging fam
   ]
   ```
 
-[Standard Python precedence rules](_operator%20precedence) may apply.
+[Standard Python precedence rules][operator precedence] may apply.
 
 DSL: *it's not just a telecom acronym anymore.*
 

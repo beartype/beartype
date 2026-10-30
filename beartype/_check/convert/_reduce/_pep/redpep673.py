@@ -86,19 +86,19 @@ def reduce_hint_pep673(
 
     # If either no type stack *OR* an empty type stack was passed, *NO* class is
     # currently being decorated by @beartype. It follows that either:
-    # * @beartype is currently decorating a function or method directly.
+    # * @beartype is currently decorating a function or method directly *OR*...
     # * A statement-level runtime type-checker (e.g.,
     #   beartype.door.is_bearable()) is currently being called.
     #
     # However, the "typing.Self" type hint *CANNOT* be reliably resolved outside
     # of a class context. Although @beartype could attempt to heuristically
-    # differentiate functions from methods via the first passed argument, Python
-    # itself does *NOT* require that argument of a method to be named "self";
-    # such a heuristic would catastrophically fail in common edge cases. Our
-    # only recourse is to raise an exception encouraging the user to refactor
-    # their code to decorate classes rather than methods.
+    # differentiate functions from methods via the first parameter, Python does
+    # *NOT* mandate that the first parameter accepted by bound methods be named
+    # "self"; such a heuristic would catastrophically fail in common edge cases.
+    # Our only recourse is to raise an exception encouraging the user to
+    # refactor their code to decorate classes rather than methods.
     if not cls_stack:
-        # We didn't make crazy. We only document it.
+        # We didn't make crazy. We only document crazy.
         raise BeartypeDecorHintPep673Exception(
             f'{exception_prefix}PEP 673 type hint "{repr(hint)}" '
             f'invalid outside @beartype-decorated class. '

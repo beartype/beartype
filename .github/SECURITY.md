@@ -1,6 +1,6 @@
 <!--
 ------------------( LICENSE                                  )------------------
-Copyright (c) 2014-2025 Beartype authors.
+Copyright (c) 2014-2026 Beartype authors.
 See "LICENSE" for further details.
 
 ------------------( SYNOPSIS                                 )------------------

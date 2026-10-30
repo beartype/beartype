@@ -14,7 +14,7 @@ hints known to interact problematically with :pep:`563`.
 # ....................{ IMPORTS                            }....................
 from __future__ import annotations
 from beartype import beartype
-from beartype.typing import NamedTuple
+from typing import NamedTuple
 
 # ....................{ SUBCLASSES                         }....................
 @beartype

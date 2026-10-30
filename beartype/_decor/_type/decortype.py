@@ -31,6 +31,7 @@ from beartype._util.cache.utilcacheobjattr import (
     set_type_attr_cached,
 )
 from beartype._util.module.utilmodget import get_object_module_name_or_none
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
 from collections import defaultdict
 
 # ....................{ DECORATORS ~ type                  }....................
@@ -84,6 +85,41 @@ def beartype_type(
     # # Else, this decorator has yet to decorate this class.
 
     # ....................{ LOCALS                         }....................
+    # Dictionary mapping from the unqualified name to value of each direct
+    # (i.e., *NOT* indirectly inherited) attribute of this class, defined as...
+    cls_attr_name_to_value = (
+        # If the active Python interpreter targets Python >= 3.14, the direct
+        # items view efficiently providing this dictionary;
+        cls.__dict__.items()
+        if IS_PYTHON_AT_LEAST_3_14 else
+        # If the active Python interpreter targets Python <= 3.13, an indirect
+        # copy of the items view inefficiently providing this dictionary.
+        #
+        # For unknown reasons that (probably, hopefully) are largely irrelevant
+        # (especially as Python <= 3.13 is obsolete and will thus be quietly
+        # going away in several years), failing to copy this items view under
+        # Python <= 3.13 induces spurious non-human-readable exceptions for the
+        # edge case of PEP 557-compliant @dataclass-decorated dataclasses
+        # defining one or more methods annotated by PEP 484-compliant
+        # self-references (i.e., stringified forward references referring to the
+        # dataclass currently being dataclass).
+        #
+        # For example, this @beartype-decorated dataclass defined as above:
+        #     @beartype
+        #     @dataclass
+        #     class MuhDataclass:
+        #         def muh_method(self) -> 'MuhDataclass':
+        #             return self
+        #
+        # ...raises this non-human-readable exception:
+        #     RuntimeError: dictionary changed size during iteration
+        #
+        # Why? No idea. Almost certainly something pertaining to forward
+        # reference resolution. Thankfully, though, it doesn't particularly
+        # matter. This is all going away in a few years anyway. *mega-shrug*
+        cls.__dict__.copy().items()
+    )
+
     # Replace the passed class stack with a new class stack appending this
     # decorated class to the top of this stack, reflecting the fact that this
     # decorated class is now the most deeply lexically nested class for the
@@ -112,7 +148,7 @@ def beartype_type(
 
     # For the unqualified name and value of each direct (i.e., *NOT* indirectly
     # inherited) attribute of this class...
-    for attr_name, attr_value in cls.__dict__.items():  # pyright: ignore
+    for attr_name, attr_value in cls_attr_name_to_value:  # pyright: ignore
         # print(f'Introspecting "{cls.__name__}.{attr_name}": {repr(attr_value)}')
 
         # If this attribute is...

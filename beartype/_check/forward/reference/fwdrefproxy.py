@@ -20,6 +20,8 @@ from beartype._cave._cavefast import (
     WeakrefCallableType,
 )
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.forward.reference._cls.fwdrefabc import (
     BeartypeForwardRefSubbableABC,
     BeartypeForwardRefSubbableABC_BASES,
@@ -32,6 +34,7 @@ from beartype._check.forward.reference.fwdreftyping import (
     BeartypeForwardRef,
     BeartypeForwardRefFake,
 )
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
     LexicalScope,
@@ -47,8 +50,11 @@ from typing import Optional
 # ....................{ PROXIERS ~ pep : 484 : non-fake    }....................
 def proxy_hint_pep484_ref_str_subbable(
     # Mandatory parameters.
-    hint_name: str,
+    call_curr: BeartypeCallDataABC,
+    conf: BeartypeConf,
     scope_name: str,
+    hint_name: str,
+    hint_parent_sane: Optional[HintSane],
 
     # Optional parameters.
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = None,
@@ -70,9 +76,14 @@ def proxy_hint_pep484_ref_str_subbable(
 
     Parameters
     ----------
-    hint_name : str
-        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
-        this unresolved type hint to be proxied.
+    call_curr : BeartypeCallDataABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the referent referred to by
+        this forward reference).
     scope_name : str
         Possibly ignored fully-qualified name of the lexical scope in which this
         unresolved type hint was originally declared. For example:
@@ -81,6 +92,20 @@ def proxy_hint_pep484_ref_str_subbable(
           resolve a global class or callable against this scope).
         * ``"some_package.some_module.SomeClass"`` for a class scope (e.g.,
           to resolve a nested class or callable against this scope).
+    hint_name : str
+        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
+        this unresolved type hint to be proxied.
+    hint_parent_sane: Optional[HintSane]
+        Either:
+
+        * If this forward reference is a **root** (i.e., top-most parent hint of
+          a tree of child hints), :data:`None`.
+        * Else, this forward reference is a **child** of some parent hint. In
+          this case, the **sanified parent type hint metadata** (i.e., immutable
+          and thus hashable object encapsulating *all* metadata previously
+          returned by :mod:`beartype._check.convert.convmain` sanifiers after
+          sanitizing the possibly PEP-noncompliant parent hint of this forward
+          reference into a fully PEP-compliant parent hint).
     func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref, default: None
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
@@ -109,24 +134,30 @@ def proxy_hint_pep484_ref_str_subbable(
     # Create and return a new subscriptable forward reference proxy proxying the
     # passed referent target module and hint names.
     return _proxy_hint_ref(  # type: ignore[return-value]
-        type_bases=BeartypeForwardRefSubbableABC_BASES,
-        scope_name=scope_name,
-        hint_name=hint_name,
+        call_curr=call_curr,
+        conf=conf,
         exception_prefix=exception_prefix,
         func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
+        scope_name=scope_name,
+        hint_name=hint_name,
+        hint_parent_sane=hint_parent_sane,
+        type_bases=BeartypeForwardRefSubbableABC_BASES,
     )
 
 
 def proxy_hint_pep484_ref_str_subbed(
+    # Note that this (and *ONLY* this) factory intentionally accepts *ONLY*
+    # mandatory parameters. Optional parameters accepted by sibling factories
+    # (e.g., "exception_prefix") are mandatory here, due to deriving from the
+    # class variables guaranteed to be defined by the parent proxy (e.g.,
+    # "__exception_prefix_beartype__").
+    call_curr: BeartypeCallDataABC,
+    conf: BeartypeConf,
+    exception_prefix: str,
+    func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref,
     scope_name: str,
     hint_name: str,
-
-    # Note that this (and *ONLY* this) factory intentionally accepts a mandatory
-    # "exception_prefix" parameter, whose value derives from the parent proxy's
-    # "__exception_prefix_beartype__" class variable -- which is guaranteed to
-    # both exist and be a non-empty string.
-    func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref,
-    exception_prefix: str,
+    hint_parent_sane: Optional[HintSane],
     args: tuple,
     kwargs: LexicalScope,
 ) -> type[BeartypeForwardRefSubbedABC]:
@@ -146,13 +177,16 @@ def proxy_hint_pep484_ref_str_subbed(
 
     Parameters
     ----------
-    scope_name : str
-        Possibly ignored fully-qualified name of the lexical scope in which this
-        unresolved type hint was originally declared. See also
-        :func:`.proxy_hint_pep484_ref_str_subbable` docstring for further details.
-    hint_name : str
-        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
-        this unresolved type hint to be proxied.
+    call_curr : BeartypeCallDataABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the referent referred to by
+        this forward reference).
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
     func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
@@ -161,11 +195,27 @@ def proxy_hint_pep484_ref_str_subbed(
         callable *or* :data:`None` otherwise. See also the
         :attr:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
+    scope_name : str
+        Possibly ignored fully-qualified name of the lexical scope in which this
+        unresolved type hint was originally declared. See also
+        :func:`.proxy_hint_pep484_ref_str_subbable` docstring for further details.
+    hint_name : str
+        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
+        this unresolved type hint to be proxied.
+    hint_parent_sane: Optional[HintSane]
+        Either:
+
+        * If this forward reference is a **root** (i.e., top-most parent hint of
+          a tree of child hints), :data:`None`.
+        * Else, this forward reference is a **child** of some parent hint. In
+          this case, the **sanified parent type hint metadata** (i.e., immutable
+          and thus hashable object encapsulating *all* metadata previously
+          returned by :mod:`beartype._check.convert.convmain` sanifiers after
+          sanitizing the possibly PEP-noncompliant parent hint of this forward
+          reference into a fully PEP-compliant parent hint).
     args : tuple
         Tuple of all positional arguments subscripting this forward reference.
-    kwargs: LexicalScope,
+    kwargs : LexicalScope
         Dictionary of all keyword arguments subscripting this forward reference.
 
     Returns
@@ -184,11 +234,14 @@ def proxy_hint_pep484_ref_str_subbed(
 
     # Subscripted forward reference proxy to be returned.
     ref_proxy: type[BeartypeForwardRefSubbedABC] = _proxy_hint_ref(  # type: ignore[assignment]
-        type_bases=BeartypeForwardRefSubbedABC_BASES,
+        call_curr=call_curr,
+        conf=conf,
+        exception_prefix=exception_prefix,
+        func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
         scope_name=scope_name,
         hint_name=hint_name,
-        func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
-        exception_prefix=exception_prefix,
+        hint_parent_sane=hint_parent_sane,
+        type_bases=BeartypeForwardRefSubbedABC_BASES,
     )
 
     # Classify passed parameters with this proxy.
@@ -218,12 +271,12 @@ def proxy_hint_pep484_ref_str_fake(
 
     Motivation
     ----------
-    Each type dynamically generated by this type factory is principally intended
-    to proxy a :pep:`484`-compliant stringified forward reference type hint
-    annotating a :func:`beartype.beartype`-decorated **nested callable** (i.e.,
-    closure or nested function defined inside the body of another callable)
-    presumably referring to such a nested type. Since that nested type is only
-    locally defined and thus inaccessible to general-purpose call stack
+    Each type dynamically created and returned by this type factory is
+    intended to proxy a :pep:`484`-compliant stringified forward reference type
+    hint annotating a :func:`beartype.beartype`-decorated **nested callable**
+    (i.e., closure or nested function defined inside the body of another
+    callable) presumably referring to such a nested type. Since that nested type
+    is only locally defined and thus inaccessible to general-purpose call stack
     introspection, the naive approach to resolving forward references against
     that nested type would be to simply emit false positives by raising fatal
     exceptions, which is what :mod:`beartype` previously did. However
@@ -361,7 +414,10 @@ def proxy_hint_pep484_ref_str_fake(
 # ....................{ PROXIERS ~ pep : 749               }....................
 def proxy_hint_pep749_ref_object(
     # Mandatory parameters.
+    call_curr: BeartypeCallDataABC,
+    conf: BeartypeConf,
     hint: HintPep484749RefObjectType,
+    hint_parent_sane: Optional[HintSane],
 
     # Optional parameters.
     exception_prefix: Optional[str] = None,
@@ -384,8 +440,27 @@ def proxy_hint_pep749_ref_object(
 
     Parameters
     ----------
+    call_curr : BeartypeCallDataABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the referent referred to by
+        this forward reference).
     hint : HintPep484749RefObjectType
         Object-oriented forward reference type hint to be proxied.
+    hint_parent_sane: Optional[HintSane]
+        Either:
+
+        * If this forward reference is a **root** (i.e., top-most parent hint of
+          a tree of child hints), :data:`None`.
+        * Else, this forward reference is a **child** of some parent hint. In
+          this case, the **sanified parent type hint metadata** (i.e., immutable
+          and thus hashable object encapsulating *all* metadata previously
+          returned by :mod:`beartype._check.convert.convmain` sanifiers after
+          sanitizing the possibly PEP-noncompliant parent hint of this forward
+          reference into a fully PEP-compliant parent hint).
     exception_prefix : Optional[str], default: None
         Human-readable substring prefixing raised exception messages if any *or*
         :data:`None` otherwise, in which case the returned proxy preserves its
@@ -406,12 +481,16 @@ def proxy_hint_pep749_ref_object(
     # Forward reference proxy proxying this PEP 749-compliant object-oriented
     # forward reference type hint (i.e., "annotationlib.ForwardRef" object).
     ref_proxy: type[BeartypeForwardRefSubbedABC] = _proxy_hint_ref(  # type: ignore[assignment]
+        call_curr=call_curr,
+        conf=conf,
+        scope_name=hint_module_name,
+        hint_name=hint_type_name,
+        hint_parent_sane=hint_parent_sane,
+        exception_prefix=exception_prefix,
+
         #FIXME: The "BeartypeForwardRefSubbedABC" superclass *DEFINITELY* isn't
         #quite right here, but (possibly) suffices for now. We'll take it! \o/
         type_bases=BeartypeForwardRefSubbedABC_BASES,
-        scope_name=hint_module_name,
-        hint_name=hint_type_name,
-        exception_prefix=exception_prefix,
     )
 
     # Classify passed parameters with this proxy.
@@ -423,9 +502,12 @@ def proxy_hint_pep749_ref_object(
 # ....................{ PRIVATE ~ factories                }....................
 def _proxy_hint_ref(
     # Mandatory parameters.
-    type_bases: TupleTypes,
+    call_curr: BeartypeCallDataABC,
+    conf: BeartypeConf,
     scope_name: Optional[str],
     hint_name: str,
+    hint_parent_sane: Optional[HintSane],
+    type_bases: TupleTypes,
 
     # Optional parameters.
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = None,
@@ -497,11 +579,14 @@ def _proxy_hint_ref(
 
     Parameters
     ----------
-    type_bases : Tuple[type, ...]
-        Tuple of all base classes to be inherited by this forward reference
-        subclass. For simplicity, this *must* be a 1-tuple ``(type_base,)``
-        where ``type_base`` is a :class:`.BeartypeForwardRefSubbableABC`
-        subclass.
+    call_curr : BeartypeCallDataABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the referent referred to by
+        this forward reference).
     scope_name : Optional[str]
         Possibly ignored fully-qualified name of the lexical scope in which this
         unresolved type hint was originally declared. See also the
@@ -509,6 +594,22 @@ def _proxy_hint_ref(
     hint_name : str
         Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of
         this unresolved type hint to be proxied.
+    hint_parent_sane: Optional[HintSane]
+        Either:
+
+        * If this forward reference is a **root** (i.e., top-most parent hint of
+          a tree of child hints), :data:`None`.
+        * Else, this forward reference is a **child** of some parent hint. In
+          this case, the **sanified parent type hint metadata** (i.e., immutable
+          and thus hashable object encapsulating *all* metadata previously
+          returned by :mod:`beartype._check.convert.convmain` sanifiers after
+          sanitizing the possibly PEP-noncompliant parent hint of this forward
+          reference into a fully PEP-compliant parent hint).
+    type_bases : Tuple[type, ...]
+        Tuple of all base classes to be inherited by this forward reference
+        subclass. For simplicity, this *must* be a 1-tuple ``(type_base,)``
+        where ``type_base`` is a :class:`.BeartypeForwardRefSubbableABC`
+        subclass.
     func_local_parent_codeobj_weakref : FuncLocalParentCodeObjectWeakref, default: None
         Proxy weakly referring to the code object underlying the lexical scope
         of the parent module, type, or callable whose body locally defines the
@@ -535,11 +636,10 @@ def _proxy_hint_ref(
     '''
 
     # ....................{ VALIDATE                       }....................
-    assert isinstance(type_bases, tuple), f'{repr(type_bases)} not tuple.'
-    assert len(type_bases) == 1, (
-        f'{repr(type_bases)} not 1-tuple of one superclass.')
-    assert isinstance(scope_name, str), f'{repr(scope_name)} not string.'
-    assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
+    assert isinstance(call_curr, BeartypeCallDataABC), (
+        f'{repr(call_curr)} not beartype call metadata.')
+    assert isinstance(conf, BeartypeConf), (
+        f'{repr(conf)} not beartype configuration.')
     assert isinstance(exception_prefix, NoneTypeOr[str]), (
         f'{repr(exception_prefix)} neither string nor "None".')
     assert isinstance(
@@ -547,6 +647,13 @@ def _proxy_hint_ref(
         f'{repr(func_local_parent_codeobj_weakref)} neither weak reference '
         f'nor "None".'
     )
+    assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
+    assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
+        f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
+    assert isinstance(scope_name, str), f'{repr(scope_name)} not string.'
+    assert isinstance(type_bases, tuple), f'{repr(type_bases)} not tuple.'
+    assert len(type_bases) == 1, (
+        f'{repr(type_bases)} not 1-tuple of one superclass.')
 
     # If passed *NO* exception prefix, default this prefix to something sane.
     # Sadly, real-world tests suggest the only sane default to be the empty
@@ -575,6 +682,51 @@ def _proxy_hint_ref(
         type_module_name = scope_name
     # Else, this module name is non-empty.
 
+    # ....................{ CONF                           }....................
+    # Safely modifiable keyword dictionary mapping from the names to values of
+    # all configuration options in this input configuration.
+    ref_proxy_conf_kwargs = conf.kwargs.copy()
+
+    # Force this referent referred to by this forward reference to be
+    # type-checked deterministically (e.g., by only type-checking the first
+    # items of pure-Python sequences). By default, beartype type-checks objects
+    # non-deterministically (e.g., by type-checking randomly selected items of
+    # these sequences). This default behaviour reduces the statistical
+    # likelihood of false negatives (e.g., this is_bearable() call returning
+    # true when it should instead return false). That's good. Unfortunately,
+    # this default behaviour is non-deterministic and thus unstable across
+    # repeated calls to related type-checking functionality requiring stable
+    # type-checking decisions. That's bad.
+    #
+    # Does the latter use case actually arise here? It does. Consider the
+    # BeartypeForwardRefMetaclass.__instancecheck__() dunder method, which
+    # calls the is_bearable() type-checker configured by this configuration.
+    # If that type-checker indicates the user-defined object passed to that
+    # dunder method to violate the referent hint referred to by this forward
+    # reference by returning false from that dunder method, then the
+    # higher-level "beartype._check.error" subpackage subsequently handles that
+    # violation by calling the beartype-specific
+    # BeartypeForwardRefMetaclass.__instancecheck_str__() dunder method to
+    # generate a human-readable exception message.
+    #
+    # Predictably, that __instancecheck_str__() dunder method does so by
+    # effectively (though not actually) calling the die_if_unbearable() raiser.
+    # You see the issue, we trust. Since both that is_bearable() call *AND* that
+    # die_if_unbearable() call behave non-deterministically by default, the
+    # consequence is a catastrophic desynchronization between the two for the
+    # common use case in which that object either is *OR* contains one or more
+    # pure-Python non-empty sequences (which is where beartype's
+    # non-deterministic type-checking behaviour arises). Forcing deterministic
+    # type-checking behaviour trivially avoids that desynchronization, albeit at
+    # a non-negligible cost of increasing the statistical likelihood of false
+    # negatives from that first is_bearable() call. That's not great, obviously.
+    # That's still *MUCH* better than catastrophic desynchronization, obviously.
+    # It's in the name. It's catastrophic. Doesn't get worse than a catastrophe.
+    ref_proxy_conf_kwargs['is_random'] = False
+
+    # New proxy-specific beartype configuration initialized by this dictionary.
+    ref_proxy_conf = BeartypeConf(**ref_proxy_conf_kwargs)
+
     # ....................{ PROXY                          }....................
     # Forward reference proxy to be returned.
     ref_proxy: BeartypeForwardRef = make_type(
@@ -585,12 +737,25 @@ def _proxy_hint_ref(
         exception_prefix=exception_prefix,
     )
 
-    # Classify all remaining passed parameters with this proxy.
-    ref_proxy.__scope_name_beartype__ = scope_name
-    ref_proxy.__hint_name_beartype__ = hint_name
+    # Temporarily classify these passed parameters with this proxy. Although
+    # better than nothing, these parameters are effectively default
+    # uninitialized values and thus unsuitable for being permanently classified
+    # with this proxy. Instead, high-level factory functions defined elsewhere
+    # (e.g., the BeartypeFuncCheckerFactoryCache._make_func_checker() method)
+    # subsequently call the set_beartype_ref_proxies_classvars_uninitted()
+    # setter to permanently overwrite these defaults with non-default
+    # initialized values *NOT* available at this early time in the dynamic
+    # type-checking code generation process.
+    ref_proxy.__call_curr_beartype__ = call_curr
     ref_proxy.__exception_prefix_beartype__ = exception_prefix
+
+    # Permanently classify all remaining passed parameters with this proxy.
+    ref_proxy.__conf_beartype__ = ref_proxy_conf
     ref_proxy.__func_local_parent_codeobj_weakref_beartype__ = (
         func_local_parent_codeobj_weakref)
+    ref_proxy.__hint_name_beartype__ = hint_name
+    ref_proxy.__hint_parent_sane_beartype__ = hint_parent_sane
+    ref_proxy.__scope_name_beartype__ = scope_name
 
     # Return this proxy.
     return ref_proxy

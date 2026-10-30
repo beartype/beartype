@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`-compliant **forward reference reducers** (i.e.,
-low-level callables converting :pep:`484`-compliant forward references to
-lower-level type hints more readily consumable by :mod:`beartype`).
+Project-wide :pep:`484`- and :pep:`749`-compliant **forward reference reducers**
+(i.e., low-level callables converting :pep:`484`- or :pep:`749`-compliant
+forward references to lower-level type hints more readily consumable by
+:mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -18,8 +19,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #continue doing that and many reasons to stop doing that. Thus:
 #* Continue identifying "typing.ForwardRef" objects as "HintSignForwardRef".
 #* Define a new "HintSignPep484ForwardRefStr" sign.
-#* Continue strings as "HintSignPep484ForwardRefStr" instead.
-#* Split the existing reduce_hint_pep484_ref() reducer into two disparate
+#* Identify strings as "HintSignPep484ForwardRefStr" instead.
+#* Split the existing reduce_hint_pep484749_ref() reducer into two disparate
 #  reducers with two distinct code paths:
 #  * reduce_hint_pep484_ref_annotationlib().
 #  * reduce_hint_pep484_ref_str().
@@ -103,7 +104,7 @@ from typing import Optional
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
-def reduce_hint_pep484_ref(
+def reduce_hint_pep484749_ref(
     call_curr: BeartypeCallDataABC,
     conf: BeartypeConf,
     hint: HintPep484749Ref,
@@ -166,7 +167,8 @@ def reduce_hint_pep484_ref(
 
     # ....................{ REDUCERS ~ object              }....................
     # If this hint is a PEP 484- and 749-compliant object-oriented forward
-    # reference (rather than a stringified forward reference)...
+    # reference (rather than merely a PEP 484-compliant stringified forward
+    # reference)...
     if isinstance(hint, HintPep484749RefObjectType):
         # print(f'Reducing PEP 749 "ForwardRef" hint {repr(hint)}...')
 
@@ -216,8 +218,13 @@ def reduce_hint_pep484_ref(
             # call-time. Logic elsewhere is expected to subsequently set the
             # corresponding "__exception_prefix_beartype__" class variable on
             # this proxy to a non-memoized string by calling the
-            # set_beartype_ref_proxies_exception_prefix() setter.
-            hint_resolved = proxy_hint_pep749_ref_object(hint)
+            # set_beartype_ref_proxies_classvars_uninitted() setter.
+            hint_resolved = proxy_hint_pep749_ref_object(
+                call_curr=call_curr,
+                conf=conf,
+                hint=hint,
+                hint_parent_sane=hint_parent_sane,
+            )
         # Else, either the active Python interpreter targets Python <= 3.13 *OR*
         # the active Python interpreter targets Python >= 3.14 but
         # "hint.__owner__" is empty. In either case, this forward reference
@@ -243,7 +250,12 @@ def reduce_hint_pep484_ref(
                 # Note that the decoration-time "exception_prefix" parameter is
                 # intentionally *NOT* passed to this proxy factory. See above!
                 hint_resolved = proxy_hint_pep484_ref_str_subbable(
-                    scope_name=hint_module_name, hint_name=hint_type_name)
+                    call_curr=call_curr,
+                    conf=conf,
+                    scope_name=hint_module_name,
+                    hint_name=hint_type_name,
+                    hint_parent_sane=hint_parent_sane,
+                )
             # Else, this reference was instantiated with *NO* module name. This
             # classname is relative to an unknown module and thus currently
             # ambiguous. This ambiguity can *ONLY* be resolved by dynamically
@@ -284,7 +296,11 @@ def reduce_hint_pep484_ref(
         #   In this case, a runtime-usable forward reference proxy encapsulating
         #   this runtime-unusable stringified forward reference.
         hint_resolved = call_curr.resolve_hint_pep484_ref_str(
-            hint=hint, conf=conf, exception_prefix=exception_prefix)
+            conf=conf,
+            hint=hint,
+            hint_parent_sane=hint_parent_sane,
+            exception_prefix=exception_prefix,
+        )
     # Else, this runtime-unusable forward reference has already been reduced to
     # a runtime-usable forward reference proxy above. Preserve this proxy as is.
 
@@ -296,8 +312,8 @@ def reduce_hint_pep484_ref(
         hint_parent_sane=hint_parent_sane,
         # Type-checking code dynamically generated for a forward reference is
         # contextually relative to the local and global scope of the currently
-        # type-checked callable, type, or statement and thus *CANNOT* be cached
-        # across all forward references.
+        # type-checked callable, type, or statement and thus *CANNOT* be safely
+        # cached across all forward references.
         is_check_expr_cacheable=False,
     )
     # print(f'Reducing forward ref hint {repr(hint)} to non-forward ref hint {repr(hint_resolved)}...')

@@ -15,14 +15,19 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorabc import (
     CollectionTypeHints,
+    FrozenSetTypeHints,
+    TupleTypeHints,
     TypeHint,
 )
-from beartype._data.typing.datatypingport import Hint
+# from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.func.utilcacheproperty import (
     get_property_var_name,
     property_cached,
 )
-from typing import Union
+from typing import (
+    Any,
+    Union,
+)
 
 # ....................{ SUBCLASSES                         }....................
 class UnionTypeHint(TypeHint):
@@ -42,7 +47,10 @@ class UnionTypeHint(TypeHint):
         # Instance variables implicitly defined by each decoration of a property
         # method by the @property_cached decorator below, whose names are
         # dynamically precomputed by this getter. It doesn't have to make sense.
+        # get_property_var_name('_args_wrapped_frozenset'),
+        # get_property_var_name('_branches'),
         get_property_var_name('_branches_unique'),
+        get_property_var_name('_branches_unique_frozenset_or_hint_child'),
     )
 
     # ..................{ PRIVATE ~ properties               }..................
@@ -53,48 +61,62 @@ class UnionTypeHint(TypeHint):
         # wrappers encapsulating all low-level child hints subscripting
         # (indexing) the low-level parent hint encapsulated by this high-level
         # parent type hint wrapper. Look. Just go with it. We do. Every day.
-        return self._args_wrapped_frozenset
+        #
+        # Note that union-specific logic defined throughout this submodule
+        # should typically instead access the higher-level union-specific
+        # "_branches_unique" property defined below.
+        # return self._args_wrapped_frozenset
+        return self._args_wrapped_tuple
 
 
     @property  # type: ignore
     @property_cached
-    def _branches_unique(self) -> Union[TypeHint, CollectionTypeHints]:
+    def _branches_unique(self) -> TupleTypeHints:
         '''
-        Hashable and thus immutable collection of all **subhint-unique
-        branches** (i.e., high-level type hint wrappers encapsulating all
-        low-level **subhint-unique child hints** (i.e., child hints that are
-        *not* subhints of any other child hint) subscripting this union) of this
-        type hint wrapper.
+        Tuple of all **subhint-unique branches** (i.e., high-level type hint
+        wrappers encapsulating all low-level **subhint-unique child hints**
+        (i.e., child hints that are *not* subhints of any other child hint)
+        subscripting this union) of this type hint wrapper.
 
-        This property returns a non-collection in the common edge case in which
-        this union contains only one subhint-unique branch, as doing so both
-        simplifies and optimizes downstream methods accessing this property.
-        Critically, this implies that:
-
-        * If this union is subscripted by the :pep:`484`-compliant
-          :obj:`typing.Any` singleton, this property trivially returns
-          :obj:`typing.Any` regardless of what other child hints subscript this
-          union.
+        If this union is unsubscripted (e.g., is the :pep:`484`-compliant
+        unsubscripted :obj:`typing.Union` type hint factory), this union is
+        implicitly subscripted by :obj:`typing.Any` under :pep:`484`
+        conventions. This property pretends this union was explicitly
+        subscripted by :obj:`typing.Any` by trivially returning
+        `frozenset((TypeHint(typing.Any),))`. Don't ask. We don't.
 
         Returns
         -------
-        Union[TypeHint, Collection[TypeHint]]
-            Either:
-
-            * If this union is subscripted by only a single subhint-unique child
-              hint, that child hint. Doing so ensures that unions subscripted by
-              two or more child hints only one of which is subhint-unique (e.g.,
-              ``bool | int``) preserves equality-hash consistency with that
-              subhint-unique child hint itself (e.g., ``int``) by ensuring that
-              that union and child hint both compare equal to *and* shares the
-              same hash with one another.
-            * If this union is subscripted by two or more subhint-unique child
-              hints, the frozenset of those child hints.
+        tuple[TypeHint, ...]
+            Tuple of all subhint-unique branches of this type hint wrapper.
         '''
 
         # ..................{ IMPORTS                        }..................
         # Avoid circular import dependencies.
         from beartype.door._cls.pep.pep484.doorpep484any import AnyTypeHint
+
+        # ..................{ PREAMBLE                       }..................
+        # Frozen set of the zero or more high-level child "TypeHint" wrappers
+        # wrapping the possibly non-unique low-level child hints subscripting
+        # this union.
+        branches_nonunique = self._branches
+
+        # If this union is unsubscripted (e.g., is the unsubscripted
+        # PEP 484-compliant "typing.Union" type hint factory), this union is
+        # implicitly subscripted by the PEP 484-compliant "typing.Any" child
+        # type hint singleton under PEP 484 conventions. In this case, pretend
+        # this union was explicitly subscripted by that child hint *BEFORE*
+        # introspecting child hints below.
+        #
+        # Note that this property is memoized and thus computed once for the
+        # unsubscripted PEP 484-compliant "typing.Union" type hint factory for
+        # the lifetime of the active Python interpreter. Ergo, there is *NO*
+        # benefit to explicitly caching this frozen set (e.g., as a global).
+        if not branches_nonunique:
+            # print(f'Reducing {self} to "TypeHint(Any)"...')
+            branches_nonunique = frozenset((TypeHint(Any),))
+        # Else, this union is subscripted by one or more child hints.
+        # print(f'args_wrapped_frozenset: {args_wrapped_frozenset}')
 
         # ..................{ LOCALS                         }..................
         # List of all subhint-unique child hints subscripting this union, where
@@ -124,7 +146,7 @@ class UnionTypeHint(TypeHint):
         # Efficiently indexable tuple of all trivially unique child hints (i.e.,
         # child hints that are *NOT* trivial duplicates of one another)
         # subscripting this union.
-        branches = tuple(self._args_wrapped_frozenset)
+        branches = tuple(branches_nonunique)
 
         # Total number of trivially unique child hints subscripting this union.
         branches_len = len(branches)
@@ -228,6 +250,50 @@ class UnionTypeHint(TypeHint):
         )
 
         # ..................{ RETURN                         }..................
+        # Return a tuple coerced from this list.
+        return tuple(branches_unique)
+
+
+    @property  # type: ignore
+    @property_cached
+    def _branches_unique_frozenset_or_hint_child(self) -> (
+        Union[TypeHint, FrozenSetTypeHints]):
+        '''
+        Frozen set of all **subhint-unique branches** (i.e., high-level type
+        hint wrappers encapsulating all low-level **subhint-unique child hints**
+        (i.e., child hints that are *not* subhints of any other child hint)
+        subscripting this union) of this type hint wrapper.
+
+        This property returns a non-collection in the common edge case in which
+        this union contains only one subhint-unique branch, as doing so both
+        simplifies and optimizes downstream methods accessing this property.
+        Critically, this implies that:
+
+        * If this union is subscripted by the :pep:`484`-compliant
+          :obj:`typing.Any` singleton, this property trivially returns
+          :obj:`typing.Any` regardless of what other child hints subscript this
+          union.
+        * If this union is unsubscripted, this union is implicitly subscripted
+          by :obj:`typing.Any` under :pep:`484` conventions. This property
+          pretends this union was explicitly subscripted by :obj:`typing.Any` by
+          trivially returning :obj:`typing.Any`.
+
+        Returns
+        -------
+        Union[TypeHint, frozenset[TypeHint, ...]]
+            Either:
+
+            * If this union is subscripted by only a single subhint-unique child
+              hint, that child hint. Doing so ensures that unions subscripted by
+              two or more child hints only one of which is subhint-unique (e.g.,
+              ``bool | int``) preserves equality-hash consistency with that
+              subhint-unique child hint itself (e.g., ``int``) by ensuring that
+              that union and child hint both compare equal to *and* share the
+              same hash with one another.
+            * If this union is subscripted by two or more subhint-unique child
+              hints, the frozen set of those child hints.
+        '''
+
         # Low-level hashable object encapsulated by this high-level wrapper to
         # be hashed below as the hash for this wrapper, defined as either...
         wrapper_hashable = (
@@ -236,8 +302,8 @@ class UnionTypeHint(TypeHint):
             # or more child hints (only one of which is subhint-unique) and that
             # subhint-unique child hint itself (e.g., "bool | int" and "int"),
             # which compare equal, also share the same hash.
-            branches_unique[0]
-            if len(branches_unique) == 1 else
+            self._branches_unique[0]
+            if len(self._branches_unique) == 1 else
             # Else, this union is subscripted by two or more subhint-unique
             # child hints. In this case, the hashable frozenset coerced from
             # this unhashable list.
@@ -246,7 +312,7 @@ class UnionTypeHint(TypeHint):
             # Whereas the latter erroneously treats the order of child hints
             # subscripting a union to be significant, the former correctly
             # ignores that order. Union membership is order-invariant. Sets, yo!
-            frozenset(branches_unique)
+            frozenset(self._branches_unique)
         )
 
         # Return this hashable.
@@ -254,6 +320,19 @@ class UnionTypeHint(TypeHint):
 
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_equal(self, other: TypeHint) -> bool:
+
+        #FIXME: Unnecessarily complicated, probably. Probably, *ALL* of the
+        #logic below can just be trivially reduced to:
+        #    return (
+        #        self._branches_unique == other._branches_unique
+        #        if isinstance(other, UnionTypeHint) else
+        #        super()._is_equal(other)
+        #    )
+        # return (
+        #     self._branches_unique == other._branches_unique
+        #     if isinstance(other, UnionTypeHint) else
+        #     super()._is_equal(other)
+        # )
 
         # Avoid circular import dependencies.
         from beartype.door._cls.pep.pep484.doorpep484any import AnyTypeHint
@@ -292,16 +371,20 @@ class UnionTypeHint(TypeHint):
         # which is also unsurprisingly what the _get_hash() method defined below
         # underlying the sibling __hash__() dunder method does.
         elif isinstance(other, UnionTypeHint):
-            return self._branches_unique == other._branches_unique
+            return (
+                self._branches_unique_frozenset_or_hint_child ==
+                other._branches_unique_frozenset_or_hint_child
+            )
         # Else, that other hint is neither "Any" *NOR* a union.
         #
         # If this union is subscripted by "Any", intentionally avoid performing
         # the boolean syllogism below. Instead, reduce to returning the equality
         # of "Any" with that other hint (i.e., false unless that other hint is
         # also "Any"). See our superclass method commentary for further details.
-        elif isinstance(self._branches_unique, AnyTypeHint):
+        elif isinstance(
+            self._branches_unique_frozenset_or_hint_child, AnyTypeHint):
             # print('Here!')
-            return self._branches_unique == other
+            return self._branches_unique_frozenset_or_hint_child == other
         # Else, this union is *NOT* subscripted by "Any". In this case, perform
         # the boolean syllogism performed by our superclass method.
         else:
@@ -317,15 +400,20 @@ class UnionTypeHint(TypeHint):
 
         # If that other passed hint is itself a union...
         if isinstance(other, UnionTypeHint):
-            # For each child hint subscripting this union...
+            # print(f'[parent] Comparing {self} <= {other}...')
+
+            # For each subhint-unique child hint subscripting this union...
             #
             # Note that this iteration exhibits O(n**2) time complexity. While
             # non-ideal, this is also unavoidable. Thankfully, since most
             # real-world unions are subscripted by only a small number of child
             # hints, this is also mostly ignorable in practice.
-            for this_branch in self._branches:
-                # For each other child hint subscripting that other union...
-                for that_branch in other._branches:
+            for this_branch in self._branches_unique:
+                # For each other subhint-unique child hint subscripting that
+                # other union...
+                for that_branch in other._branches_unique:
+                    # print(f'[child] Comparing {this_branch} <= {that_branch}...')
+
                     # If this child hint is a subhint of that other child
                     # hint, this child hint is a subhint of that other union as
                     # a whole. In this case, halt iterating the other child
@@ -380,4 +468,4 @@ class UnionTypeHint(TypeHint):
 
         # Hash this union by the hashable collection of all subhint-unique
         # branches (i.e., child hints) subscripting this union.
-        return hash(self._branches_unique)
+        return hash(self._branches_unique_frozenset_or_hint_child)

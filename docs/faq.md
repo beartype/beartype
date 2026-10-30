@@ -588,7 +588,7 @@ The `ClassFactory.make_class()` method both accepts a parameter `other` whose ty
 
 You have three choices here. One of these choices is good and worthy of smiling cat emoji. The other two are bad; mock them in `git` commit messages until somebody refactors them into the first choice:
 
-1.  **\[Recommended\]** The `673`-compliant `typing.Self` type hint (introduced by Python 3.11) efficiently and reliably solves this. Annotate the type of the current class as `~typing.Self` – fully supported by `beartype`:
+1.  **\[Recommended\]** The [PEP 673]-compliant `typing.Self` type hint (introduced by Python 3.11) efficiently and reliably solves this. Annotate the type of the current class as `~typing.Self` – fully supported by `beartype`:
 
     ```python
     # Import important stuff. Boilerplate: it's the stuff we make.
@@ -613,7 +613,7 @@ You have three choices here. One of these choices is good and worthy of smiling 
 
     `~typing.Self` can only be type-checked by **classes** decorated by the `beartype.beartype` decorator. Corollary: `~typing.Self` *cannot* be type-checked by **methods** decorated by `beartype.beartype` – because the class to be type-checked has yet to be declared at that early time. The pain that you feel is real.
 
-2.  A `484`-compliant **forward reference** (i.e., type hint that is a string that is the unqualified name of the current class) also solves this. The only costs are inexcusable inefficiency and unreliability. This is what everyone should no longer do. This is...
+2.  A [PEP 484]-compliant **forward reference** (i.e., type hint that is a string that is the unqualified name of the current class) also solves this. The only costs are inexcusable inefficiency and unreliability. This is what everyone should no longer do. This is...
 
     ```python
     # The bad old days when @beartype had to bathe in the gutter.
@@ -630,7 +630,7 @@ You have three choices here. One of these choices is good and worthy of smiling 
            return BadClassFactory(self._args + other._args)
     ```
 
-3.  A `563`-compliant **postponed type hint** (i.e., type hint unparsed by `from __future__ import annotations` back into a string that is the unqualified name of the current class) also resolves this. The only costs are codebase-shattering inefficiency, non-deterministic fragility so profound that even [Hypothesis] is squinting, and the ultimate death of your business model. Only do this over the rotting corpse of `beartype`. This is...
+3.  A [PEP 563]-compliant **postponed type hint** (i.e., type hint unparsed by `from __future__ import annotations` back into a string that is the unqualified name of the current class) also resolves this. The only costs are codebase-shattering inefficiency, non-deterministic fragility so profound that even [Hypothesis] is squinting, and the ultimate death of your business model. Only do this over the rotting corpse of `beartype`. This is...
 
     ```python
     # Breaking the Python interpreter: feels bad, because it is bad.
@@ -656,6 +656,11 @@ In theory, `beartype` nominally supports all three. In practice, `beartype` only
 - Suboptimal type-checking code for both forward references and postponed type hints, deferring the lookup of the referenced class to call time. Although `beartype` caches that class after doing so, all of that incurs space and time costs you'd rather not pay at any space or time.
 
 `typing.Self`: it saved our issue tracker from certain doom. Now, it will save your codebase from our issues.
+
+<!-- FIXME: Mildly funny, but inappropriate here. Save for another rainy day.
+The future begins either today or tomorrow – depending on your Lorentzian frame
+of reference. It's a story as familiar as the Mario twins on a toadstool bender
+through the rubbish-filled back alleys of the Mushroom Kingdom. -->
 
 ### ...under VSCode?
 
@@ -685,16 +690,16 @@ Beartype: we enable hard choices, so that you can make them for us.
 
 ### ...under \[insert-IDE-name-here\]?
 
-Beartype fully complies with [mypy], [pyright], `561`, and other community standards that govern how Python is statically type-checked. Modern Integrated Development Environments (IDEs) support these standards - hopefully including your GigaChad IDE of choice.
+Beartype fully complies with [mypy], [pyright], [PEP 561], and other community standards that govern how Python is statically type-checked. Modern Integrated Development Environments (IDEs) support these standards - hopefully including your GigaChad IDE of choice.
 
 ### ...with type narrowing?
 
-Beartype fully supports `647`-compliant [type narrowing] with the standard `typing.TypeGuard` type hint, facilitating communication between beartype and static type-checkers (e.g., [mypy], [pyright]). In fact, beartype supports general-purpose type narrowing of *all* PEP-compliant type hints that are also valid **types** (i.e., actual classes, which *not* all type hints are). In fact, beartype is the first maximal type narrower. In fact, you're very tired of every sentence starting with "In fact."
+Beartype fully supports [PEP 647]-compliant [type narrowing] with the standard `typing.TypeGuard` type hint, facilitating communication between beartype and static type-checkers (e.g., [mypy], [pyright]). In fact, beartype supports general-purpose type narrowing of *all* PEP-compliant type hints that are also valid **types** (i.e., actual classes, which *not* all type hints are). In fact, beartype is the first maximal type narrower. In fact, you're very tired of every sentence starting with "In fact."
 
 The procedural `beartype.door.is_bearable` function narrows the type of the passed object (which can be *anything*) to the passed type hint (which can be *any* type). Both guarantee runtime performance on the order of less than 1µs (i.e., less than one millionth of a second), preserving runtime performance and money bags.
 
 !!! note
-    Sadly, the object-oriented `beartype.door.TypeHint.is_bearable` method does *not* support [type narrowing]. Only `beartype.door.is_bearable` supports [type narrowing]. Why? Deficiencies in `647` beyond the control of `beartype`. It's not our fault. Would [@leycec] lie publicly in online documentation just to make his questionable coding style superficially look better!?! Surely! `</shifty_goggle_eyes>`
+    Sadly, the object-oriented `beartype.door.TypeHint.is_bearable` method does *not* support [type narrowing]. Only `beartype.door.is_bearable` supports [type narrowing]. Why? Deficiencies in [PEP 647] beyond the control of `beartype`. It's not our fault. Would [@leycec] lie publicly in online documentation just to make his questionable coding style superficially look better!?! Surely! `</shifty_goggle_eyes>`
 
 Calling `beartype.door.is_bearable` in your code enables beartype to symbiotically eliminate false positives from static type-checkers checking that code, reducing static type-checker chum that went rotten decades ago:
 
@@ -789,7 +794,7 @@ You have come to the right FAQ entry. This the common use case for temporarily *
           return 'This string is not "None". Sadly, nobody cares anymore.'
   ```
 
-- The `484`-compliant `typing.no_type_check` decorator: e.g.,
+- The [PEP 484]-compliant `typing.no_type_check` decorator: e.g.,
 
   ```python
   # Import more requisite machinery. It is requisite.

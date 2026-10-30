@@ -1,3 +1,19 @@
+<!-- FIXME: Split this overly large and increasingly unreadable document into
+the following two documents:
+* "api_decor.md", containing *EVERYTHING* in this document up to but not
+  including the "Beartype Configuration API" subsection.
+* "api_conf.md", containing *EVERYTHING* in this document at and after the
+  "Beartype Configuration API" subsection.
+
+This was infeasible under Sphinx, which does *NOT* permit "py:module::"
+directives to be distributed across multiple documents. Zensical has no such
+directive, so this split should now be feasible. Note that cross-references to
+"api_decor.md#beartype-configuration-api" in "_links.md" will need updating. -->
+
+<!-- FIXME: Revise all hard-coded references to this decorator (e.g.,
+"`@beartype`", "`@beartype.beartype`") into actual "beartype.beartype"
+interlinks, please. -->
+
 # Beartype Decoration
 
 ```text
@@ -8,7 +24,29 @@ wrap anything with runtime type-checking
 
 The beating heart of beartype is the eponymous `beartype` decorator. This is its story.
 
+<div id="beartype.beartype"></div>
+
 ## Beartype Decorator API
+
+`@beartype.beartype( cls: type | None = None, func: `[`collections.abc.Callable`][collections.abc.Callable]` | None = None, conf: `[`BeartypeConf`][beartype.BeartypeConf]` = BeartypeConf() ) -> object`
+
+- **`cls`** (`type | None`): Pure-Python class to be decorated.
+- **`func`** ([`collections.abc.Callable`][collections.abc.Callable]` | None`): Pure-Python function or method to be decorated.
+- **`conf`** ([`beartype.BeartypeConf`][beartype.BeartypeConf]): Beartype configuration. Defaults to the default configuration performing $O(1)$ type-checking.
+- *Returns*: Passed class or callable wrapped with runtime type-checking.
+
+Augment the passed object with performant runtime type-checking. Unlike most decorators, `@beartype` has three orthogonal modes of operation:
+
+- [Class mode](#class-mode) – in which you decorate a class with `@beartype`, which then iteratively decorates all methods declared by that class with `@beartype`. This is the recommended mode for **object-oriented logic.**
+- [Callable mode](#callable-mode) – in which you decorate a function or method with `@beartype`, which then dynamically generates a new function or method wrapping the original function or method with performant runtime type-checking. This is the recommended mode for **procedural logic.**
+- [Configuration mode](#configuration-mode) – in which you create your own app-specific `@beartype` decorator **configured** for your exact use case.
+
+When chaining multiple decorators, order of decoration is significant but conditionally depends on the mode of operation. Specifically, in:
+
+- [Class mode](#class-mode), `@beartype` should usually be listed *first*.
+- [Callable mode](#callable-mode), `@beartype` should usually be listed *last*.
+
+It's not our fault. Surely documentation would never deceive you.
 
 ### Callable Mode
 
@@ -187,7 +225,7 @@ class IAmABearOfNoBrainAtAll(object):
 
 Pragmatically, this is *not* just syntactic sugar. You *must* decorate classes (rather than merely methods) with `beartype` to type-check the following:
 
-- **Class-centric type hints** (i.e., type hints like the `673`-compliant [typing.Self] attribute that describe the decorated class itself). To type-check these kinds of type hints, `beartype` needs access to the class. `beartype` lacks access to the class when decorating methods directly. Instead, you *must* decorate classes by `beartype` for classes declaring one or more methods annotated by one or more class-centric type hints.
+- **Class-centric type hints** (i.e., type hints like the [PEP 673]-compliant [typing.Self] attribute that describe the decorated class itself). To type-check these kinds of type hints, `beartype` needs access to the class. `beartype` lacks access to the class when decorating methods directly. Instead, you *must* decorate classes by `beartype` for classes declaring one or more methods annotated by one or more class-centric type hints.
 - **Dataclasses.** The standard `dataclasses.dataclass` decorator dynamically generates and adds new dunder methods (e.g., `__init__()`, `__eq__()`, `__hash__()`) to the decorated class. These methods do *not* physically exist and thus *cannot* be decorated directly with `beartype`. Instead, you *must* decorate dataclasses first by `@beartype` and then by `@dataclasses.dataclass`. Order is significant, of course. `</sigh>`
 
 When decorating classes, `@beartype` should *usually* be listed as the **first** (i.e., topmost) decorator. This ensures that `beartype` is called last on the decorated class *after* other decorators have a chance to dynamically monkey-patch that class (e.g., by adding new methods to that class). `beartype` will then type-check the monkey-patched functionality as well.
@@ -232,6 +270,8 @@ def muh_colorless_permissive_func(int_or_float: float) -> float:
 ```
 
 Configuration: *because you know best*.
+
+<div id="beartype.BeartypeConf"></div>
 
 #### Beartype Configuration API
 
@@ -312,6 +352,8 @@ This is their story.
 
 General-purpose configuration parameters are *always* safely passable:
 
+<div id="beartype.BeartypeConf.is_debug"></div>
+
 ##### is_debug
 
 *Type:* `bool` = `False`
@@ -363,6 +405,8 @@ Defaults to `False`. Eye-gouging sample output or it didn't happen, so:
 (line 0025)     return __beartype_pith_0
 ```
 
+<div id="beartype.BeartypeConf.is_pep484_tower"></div>
+
 ##### is_pep484_tower
 
 *Type:* `bool` = `False`
@@ -397,6 +441,8 @@ crunch_numbers([3.1, 4.1, 5.9])
 
 !!! note "Added in 0.12.0"
 
+<div id="beartype.BeartypeConf.strategy"></div>
+
 ##### strategy
 
 *Type:* `BeartypeStrategy` = `.BeartypeStrategy.O1`
@@ -413,6 +459,8 @@ Defaults to `.BeartypeStrategy.O1`, the constant-time $O(1)$ strategy – maximi
 ##### App-only Keyword Parameters
 
 **App-only configuration parameters** are passed *only* by first-party packages executed as apps, binaries, scripts, servers, or other executable processes (rather than imported as libraries, frameworks, or other importable APIs into the current process):
+
+<div id="beartype.BeartypeConf.is_color"></div>
 
 ##### is_color
 
@@ -451,6 +499,8 @@ def muh_colorless_func() -> str:
 
 !!! note "Added in 0.12.0"
 
+<div id="beartype.BeartypeStrategy"></div>
+
 ### BeartypeStrategy
 
 *Superclasses:* `enum.Enum`
@@ -478,6 +528,8 @@ Strategies enforce their corresponding runtime complexities (e.g., $O(n)$) acros
 
 This enumeration defines these members:
 
+<div id="beartype.BeartypeStrategy.On"></div>
+
 ##### On
 
 *Type:* `beartype.cave.EnumMemberType`
@@ -488,6 +540,8 @@ This enumeration defines these members:
     **This strategy is currently unimplemented.** Still, interested users are advised to opt-in to this strategy now; your code will then type-check as desired on the first beartype release supporting this strategy.
 
     Beartype: *We're here for you, fam.*
+
+<div id="beartype.BeartypeStrategy.Ologn"></div>
 
 ##### Ologn
 
@@ -500,11 +554,15 @@ This enumeration defines these members:
 
     Beartype: *We're here for you, fam.*
 
+<div id="beartype.BeartypeStrategy.O1"></div>
+
 ##### O1
 
 *Type:* `beartype.cave.EnumMemberType`
 
 **Constant-time strategy:** the default $O(1)$ strategy, type-checking a single randomly selected item of each container. As the default, this strategy need *not* be explicitly enabled.
+
+<div id="beartype.BeartypeStrategy.O0"></div>
 
 ##### O0
 
@@ -545,9 +603,9 @@ class TypeCheckedClass(object):
         return 'This string is not "None". Thankfully, no one cares.'
 ```
 
-- **Eliding overhead.** Beartype `already exhibits near-real-time
+- **Eliding overhead.** Beartype [already exhibits near-real-time
  overhead of less than 1µs (one microsecond, one millionth of a second)
- per call of type-checked callables <faq:realtime>`. When even that
+ per call of type-checked callables](faq.md#what-does-near-real-time-even-mean-are-you-just-making-stuff-up). When even that
 negligible overhead isn't negligible enough, brave callers considering an occupational change may globally disable *all* type-checking performed by beartype. Prepare your resume beforehand. Also, do so *only* under production builds intended for release; development builds intended for testing should preserve type-checking.
 
 Either:

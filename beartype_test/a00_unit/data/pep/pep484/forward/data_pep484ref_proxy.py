@@ -11,10 +11,6 @@ This submodule predefines forward reference proxies that test known edge cases
 on behalf of higher-level unit test submodules.
 '''
 
-# ....................{ IMPORTS                            }....................
-from beartype._check.forward.reference.fwdrefproxy import (
-    proxy_hint_pep484_ref_str_subbable)
-
 # ....................{ CONSTANTS                          }....................
 SCOPE_NAME = __name__
 '''
@@ -60,13 +56,16 @@ Fully-qualified name of that type.
 '''
 
 # ....................{ PROXIES ~ invalid                  }....................
-ref_str_proxy_relative_circular = proxy_hint_pep484_ref_str_subbable(
-    # Fully-qualified name of the current test module.
-    scope_name=SCOPE_NAME,
-    # Unqualified basename of this global currently being declared.
-    hint_name='ref_str_proxy_relative_circular',
-    exception_prefix='',
-)
+_BeartypeForwardRefSubbableABC = type[
+    'beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefSubbableABC']
+'''
+:pep:`585`-compliant type hint matching all forward reference proxies defined
+below.
+'''
+
+
+# Initialized by the _init() function defined below.
+ref_str_proxy_relative_circular: _BeartypeForwardRefSubbableABC = None  # type: ignore[assignment]
 '''
 **Circular forward reference proxy** (i.e., invalid proxy circularly and thus
 recursively referring to the same forward reference proxy).
@@ -77,52 +76,100 @@ own data submodule.
 '''
 
 # ....................{ PROXIES ~ hint                     }....................
-hint_ref_str_proxy_absolute = proxy_hint_pep484_ref_str_subbable(
-    # Intentionally ignored fully-qualified name of this test submodule.
-    scope_name=SCOPE_NAME,
-    hint_name=HINT_NAME,
-)
+# Initialized by the _init() function defined below.
+hint_ref_str_proxy_absolute: _BeartypeForwardRefSubbableABC = None  # type: ignore[assignment]
 '''
 Forward reference proxy to an already subscripted type hint referenced by an
 absolute (i.e., fully-qualified) name.
 '''
 
 # ....................{ PROXIES ~ type                     }....................
-type_ref_str_proxy_absolute = proxy_hint_pep484_ref_str_subbable(
-    # Intentionally ignored fully-qualified name of this test submodule.
-    scope_name=SCOPE_NAME,
-    hint_name=TYPE_NAME,
-)
+# Initialized by the _init() function defined below.
+type_ref_str_proxy_absolute: _BeartypeForwardRefSubbableABC = None  # type: ignore[assignment]
 '''
 Forward reference proxy to an unsubscripted type referenced by an absolute
 (i.e., fully-qualified) name.
 '''
 
 
-type_ref_str_proxy_relative = proxy_hint_pep484_ref_str_subbable(
-    scope_name=TYPE_SUBMODULE_NAME,
-    hint_name=TYPE_BASENAME,
-)
+# Initialized by the _init() function defined below.
+type_ref_str_proxy_relative: _BeartypeForwardRefSubbableABC = None  # type: ignore[assignment]
 '''
 Forward reference proxy to an unsubscripted type referenced by a relative (i.e.,
 unqualified) name.
 '''
 
 
-type_ref_str_proxy_module_absolute = proxy_hint_pep484_ref_str_subbable(
-    # Intentionally ignored fully-qualified name of this test submodule.
-    scope_name=SCOPE_NAME,
-    hint_name=TYPE_SUBMODULE_NAME,
-)
+# Initialized by the _init() function defined below.
+type_ref_str_proxy_module_absolute: _BeartypeForwardRefSubbableABC = None  # type: ignore[assignment]
 '''
 Forward reference proxy to a submodule of a subpackage defining an unsubscripted
 type, referenced with an absolute (i.e., fully-qualified) name.
 '''
 
+# ....................{ PRIVATE ~ initializers             }....................
+def _init() -> None:
+    '''
+    Initialize this submodule.
+    '''
 
-type_ref_str_proxy_module_absolute_class = (
-    type_ref_str_proxy_module_absolute.Class)
-'''
-Forward reference proxy to an unsubscripted type of that submodule, accessed by
-``"."``-delimited attribute syntax from an existing forward reference proxy.
-'''
+    # Defer function-specific imports.
+    from beartype._check.cls.call.calldataexternal import (
+        BEARTYPE_CALL_EXTERNAL_META)
+    from beartype._check.forward.reference.fwdrefproxy import (
+        proxy_hint_pep484_ref_str_subbable)
+    from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+
+    # Enable these globals to be initialized below.
+    global \
+        ref_str_proxy_relative_circular, \
+        hint_ref_str_proxy_absolute, \
+        type_ref_str_proxy_absolute, \
+        type_ref_str_proxy_relative, \
+        type_ref_str_proxy_module_absolute, \
+        type_ref_str_proxy_module_absolute_class
+
+    # Dictionary mapping from the name to value of all keyword parameters shared
+    # in common by calls to proxy_hint_pep484_ref_str_subbable() below.
+    kwargs_common = dict(
+        call_curr=BEARTYPE_CALL_EXTERNAL_META,
+        conf=BEARTYPE_CONF_DEFAULT,
+        exception_prefix='',
+        hint_parent_sane=None,
+    )
+
+    # Initialize these globals.
+    ref_str_proxy_relative_circular = proxy_hint_pep484_ref_str_subbable(
+        # Fully-qualified name of the current test module.
+        scope_name=SCOPE_NAME,
+        # Unqualified basename of this global currently being declared.
+        hint_name='ref_str_proxy_relative_circular',
+        **kwargs_common
+    )
+    hint_ref_str_proxy_absolute = proxy_hint_pep484_ref_str_subbable(
+        # Intentionally ignored fully-qualified name of this test submodule.
+        scope_name=SCOPE_NAME,
+        hint_name=HINT_NAME,
+        **kwargs_common
+    )
+    type_ref_str_proxy_absolute = proxy_hint_pep484_ref_str_subbable(
+        # Intentionally ignored fully-qualified name of this test submodule.
+        scope_name=SCOPE_NAME,
+        hint_name=TYPE_NAME,
+        **kwargs_common
+    )
+    type_ref_str_proxy_relative = proxy_hint_pep484_ref_str_subbable(
+        scope_name=TYPE_SUBMODULE_NAME,
+        hint_name=TYPE_BASENAME,
+        **kwargs_common
+    )
+    type_ref_str_proxy_module_absolute = proxy_hint_pep484_ref_str_subbable(
+        # Intentionally ignored fully-qualified name of this test submodule.
+        scope_name=SCOPE_NAME,
+        hint_name=TYPE_SUBMODULE_NAME,
+        **kwargs_common
+    )
+
+
+# Initialize this submodule.
+_init()

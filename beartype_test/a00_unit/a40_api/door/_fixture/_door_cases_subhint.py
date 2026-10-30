@@ -378,14 +378,6 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
             False,
         ),
 
-        # ..................{ PEP 484 ~ optional             }..................
-        # "typing.Optional"-centric tests.
-
-        # PEP 484-compliant optionals.
-        (int, Optional[int], True),
-        (Optional[int], int, False),
-        (list, Optional[Sequence], True),
-
         # ..................{ PEP (484|585) ~ bare           }..................
         # PEP 484-compliant unsubscripted type hints, which are necessarily
         # subhints of themselves.
@@ -485,8 +477,27 @@ def door_cases_subhint() -> 'tuple[tuple[object, object, bool]]':
         (Type[MuhThing], Type[MuhSubThing], False),
         (MuhThing, Type[MuhThing], False),
 
-        # ..................{ PEP (484|604) ~ union          }..................
+        # ..................{ PEP (484|604) ~ optional|union }..................
         # PEP 484- and 604-compliant union type hints.
+
+        # PEP 484-compliant unsubscripted "typing.Optional" and "typing.Union"
+        # type hint factories semantically reduce to "Any" and are thus subhints
+        # of one another.
+        (Optional, Union, True),
+        (Union, Optional, True),
+
+        # PEP 484-compliant subscripted unions are necessarily subhints of the
+        # unsubscripted "typing.Union" type hint factory.
+        (Optional[int], Optional, True),
+
+        # PEP 484-compliant subscripted unions are necessarily subhints of the
+        # unsubscripted "typing.Union" type hint factory.
+        (Union[int, str], Union, True),
+
+        # PEP 484-compliant optionals.
+        (int, Optional[int], True),
+        (Optional[int], int, False),
+        (list, Optional[Sequence], True),
 
         # PEP 484-compliant unions.
         (int, Union[int, str], True),

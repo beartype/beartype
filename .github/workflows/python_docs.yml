@@ -183,15 +183,21 @@ jobs:
       # top-level "pyproject.toml" file for this project -- preserving Don't
       # Repeat Yourself (DRY) that would otherwise require us to manually list
       # these dependencies here. In short, this is the least bad approach.
+      #
+      # Note that this is the same "doc-rtd" extra that Read the Docs (RTD)
+      # installs. Both builds need the same packages.
       - name: "Installing package dependencies..."
         run: |
           set -xe
-          uv pip install --quiet --system -e .[doc-ghp]
+          uv pip install --quiet --system -e '.[doc-rtd]'
 
       # ..................{ DOCUMENTATION                    }..................
       # Generate the Zensical-driven static site for this repository in the
-      # local Jekyll-specific "_site/" subdirectory (for compatibility with
-      # Jekyll, which most GitHub Pages infrastructure still assumes). See also:
+      # local "site/" subdirectory, the default output directory of Zensical.
+      #
+      # Note that this build keeps the "site_url" setting in "zensical.toml",
+      # which is the URL of the RTD documentation. The canonical URL of each
+      # page thus points to RTD, the main copy of this documentation. See also:
       #     # Further options for this Zensical subcommand.
       #     zensical build --help
       - name: "Building static site..."
@@ -207,7 +213,7 @@ jobs:
       - name: "Preparing static site for deployment..."
         uses: actions/upload-pages-artifact@v5
         with:
-          path: '_site'
+          path: 'site'
 
   # ...................{ DEPLOY                             }...................
   # Job deploying the previously generated Zensical-driven static site to

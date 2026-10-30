@@ -24,11 +24,12 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     factory.
     '''
 
-    # ....................{ LOCALS                         }....................
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import (
         BeartypeCallHintForwardRefException,
         BeartypeDecorHintForwardRefException,
+        BeartypeDecorHintNonpepException,
     )
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -45,7 +46,6 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
         hint_ref_str_proxy_absolute,
         type_ref_str_proxy_absolute,
         type_ref_str_proxy_module_absolute,
-        type_ref_str_proxy_module_absolute_class,
         type_ref_str_proxy_relative,
         ref_str_proxy_relative_circular,
     )
@@ -75,30 +75,23 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     assert type_ref_str_proxy_relative.__name__ == TYPE_BASENAME
     assert type_ref_str_proxy_module_absolute.__name__ == (
         TYPE_SUBMODULE_BASENAME)
-    assert type_ref_str_proxy_module_absolute_class.__name__ == TYPE_BASENAME
 
     # Assert that these proxies have the expected module names.
     assert type_ref_str_proxy_absolute.__module__ == TYPE_SUBMODULE_NAME
     assert type_ref_str_proxy_relative.__module__ == TYPE_SUBMODULE_NAME
     assert type_ref_str_proxy_module_absolute.__module__ == TYPE_SUBPACKAGE_NAME
-    assert type_ref_str_proxy_module_absolute_class.__module__ == (
-        f'{TYPE_SUBPACKAGE_NAME}.{TYPE_SUBMODULE_BASENAME}')
 
     # Assert that these proxies have the expected hint names.
     assert type_ref_str_proxy_absolute.__hint_name_beartype__ == TYPE_NAME
     assert type_ref_str_proxy_relative.__hint_name_beartype__ == TYPE_BASENAME
     assert type_ref_str_proxy_module_absolute.__hint_name_beartype__ == (
         TYPE_SUBMODULE_NAME)
-    assert type_ref_str_proxy_module_absolute_class.__hint_name_beartype__ == (
-        TYPE_NAME)
 
     # Assert that these proxies have the expected scope names.
     assert type_ref_str_proxy_absolute.__scope_name_beartype__ == SCOPE_NAME
     assert type_ref_str_proxy_relative.__scope_name_beartype__ == (
         TYPE_SUBMODULE_NAME)
     assert type_ref_str_proxy_module_absolute.__scope_name_beartype__ == (
-        SCOPE_NAME)
-    assert type_ref_str_proxy_module_absolute_class.__scope_name_beartype__ == (
         SCOPE_NAME)
 
     # ....................{ PASS ~ repr                    }....................
@@ -126,18 +119,14 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
 
     # Assert that this property of these forward reference proxies *ALL*
     # resolve to the expected type hints.
-    assert hint_ref_str_proxy_absolute.__resolved_hint_beartype__ is Pep585Hint
+    assert hint_ref_str_proxy_absolute.__resolved_hint_beartype__ == Pep585Hint
     assert type_ref_str_proxy_absolute.__resolved_hint_beartype__ is Class
     assert type_ref_str_proxy_relative.__resolved_hint_beartype__ is Class
-    assert type_ref_str_proxy_module_absolute_class.__resolved_hint_beartype__ is (
-        Class)
 
     # Assert that this property of these forward reference proxies *ALL*
     # resolve to the expected types.
     assert type_ref_str_proxy_absolute.__resolved_type_beartype__ is Class
     assert type_ref_str_proxy_relative.__resolved_type_beartype__ is Class
-    assert type_ref_str_proxy_module_absolute_class.__resolved_type_beartype__ is (
-        Class)
 
     # Assert that this property of these forward reference proxies *ALL*
     # resolve to the same expected types while also issuing non-fatal warnings.
@@ -157,12 +146,10 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     # these proxies.
     assert isinstance(obj_subclass, type_ref_str_proxy_absolute)
     assert isinstance(obj_subclass, type_ref_str_proxy_relative)
-    assert isinstance(obj_subclass, type_ref_str_proxy_module_absolute_class)
 
     # Assert that that subclass is also a subclass of these proxies.
     assert issubclass(Subclass, type_ref_str_proxy_absolute)
     assert issubclass(Subclass, type_ref_str_proxy_relative)
-    assert issubclass(Subclass, type_ref_str_proxy_module_absolute_class)
 
     # ....................{ PASS ~ attr : late             }....................
     # Validate high-level class attributes dynamically accessed on the target
@@ -189,26 +176,12 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     with raises_uncached(AttributeError):
         type_ref_str_proxy_absolute.__the_beating_of_her_heart_was_heard_to_fill__
 
-    # Assert that attempting to test an undefined *NON-DUNDER* attribute of a
-    # forward reference proxy raises the expected exception *AFTER* that same
-    # forward reference proxy has already resolved its referent by a prior call
-    # to the isinstance() or issubclass() builtins against this proxy.
-    with raises_uncached(AttributeError):
-        type_ref_str_proxy_module_absolute_class.and_buried_from_all_godlike_exercise
-
     # ....................{ FAIL ~ check                   }....................
     # Assert that attempting to call the issubclass() builtin against a proxy
     # encapsulating a forward reference referring to a PEP-compliant type hint
     # that is *NOT* an isinstanceable type raises the expected exception.
     with raises_uncached(BeartypeCallHintForwardRefException):
         issubclass(obj_hint, hint_ref_str_proxy_absolute)
-
-    # Assert that attempting to validate a forward reference proxy to a module
-    # as either an instance or subclass of a type raises the expected exception.
-    with raises_uncached(BeartypeCallHintForwardRefException):
-        isinstance(obj_subclass, type_ref_str_proxy_module_absolute)
-    with raises_uncached(BeartypeCallHintForwardRefException):
-        issubclass(Subclass, type_ref_str_proxy_module_absolute)
 
     # Assert that attempting to test an arbitrary object as an instance of a
     # circular forward reference proxy raises the expected exception.
@@ -219,3 +192,119 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     # circular forward reference proxy raises the expected exception.
     with raises_uncached(BeartypeCallHintForwardRefException):
         issubclass(Subclass, ref_str_proxy_relative_circular)
+
+    # Assert that attempting to validate a forward reference proxy referring to
+    # a PEP-noncompliant module object (rather than a PEP-compliant type hint)
+    # as either an instance or subclass of a type raises the expected exception.
+    with raises_uncached(BeartypeDecorHintNonpepException):
+        isinstance(obj_subclass, type_ref_str_proxy_module_absolute)
+    with raises_uncached(BeartypeDecorHintNonpepException):
+        issubclass(Subclass, type_ref_str_proxy_module_absolute)
+
+
+def test_proxy_hint_pep484_ref_str_subbable_getattr() -> None:
+    '''
+    Test the
+    :func:`beartype._check.forward.reference.fwdrefproxy.proxy_hint_pep484_ref_str_subbable`
+    factory with respect to the fragile
+    :meth:`beartype._check.forward.reference._cls.fwdrefmeta.BeartypeForwardRefMetaclass.__getattr__`
+    dunder method.
+
+    Note that this unit test is fragile and thus intentionally isolated from the
+    less fragile :func:`.test_proxy_hint_pep484_ref_str_subbable` unit test
+    defined above. By "fragile," we mean that this test is susceptible to subtle
+    bugs in the :mod:`beartype._check.forward.reference.fwdrefproxy._cls`
+    subpackage. Naturally, no such bugs exist. If such bugs *did* exist,
+    however, those bugs could intersect poorly with that dunder method. If this
+    occurs (e.g., if that dunder method raises unexpected :exc:`AttributeError`
+    exceptions), the solution is as follows:
+
+    #. Temporarily comment out that dunder method.
+    #. Retry the :func:`.test_proxy_hint_pep484_ref_str_subbable` unit test,
+       which should then expose the underlying issue.
+    #. Resolve that issue.
+    #. Permanently uncomment out that dunder method.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype_test.a00_unit.data.data_type import (
+        Class,
+        Subclass,
+    )
+    from beartype_test.a00_unit.data.pep.pep484.forward.data_pep484ref_proxy import (
+        SCOPE_NAME,
+        TYPE_BASENAME,
+        TYPE_NAME,
+        TYPE_SUBMODULE_BASENAME,
+        TYPE_SUBPACKAGE_NAME,
+        type_ref_str_proxy_module_absolute,
+    )
+    from beartype_test._util.error.pyterrraise import raises_uncached
+
+    # ....................{ LOCALS                         }....................
+    # Arbitrary instance of a subclass of that class.
+    obj_subclass = Subclass()
+
+    # Forward reference proxy to an unsubscripted type of that submodule,
+    # accessed by "."-delimited attribute syntax from an existing forward
+    # reference proxy.
+    type_ref_str_proxy_module_absolute_class = (
+        type_ref_str_proxy_module_absolute.Class)
+
+    # ....................{ PASS                           }....................
+    # Assertions are intentionally ordered in increasing level from lower- to
+    # higher-level, ensuring that lower-level failures are caught before
+    # higher-level failures.
+
+    # ....................{ PASS ~ attr : early            }....................
+    # Validate lowest-level class variables bound to these proxies by the call
+    # to the low-level make_type() factory function performed by the
+    # higher-level _proxy_hint_ref() proxy function.
+
+    # Assert that these proxies have the expected class names.
+    assert type_ref_str_proxy_module_absolute_class.__name__ == TYPE_BASENAME
+
+    # Assert that these proxies have the expected module names.
+    assert type_ref_str_proxy_module_absolute_class.__module__ == (
+        f'{TYPE_SUBPACKAGE_NAME}.{TYPE_SUBMODULE_BASENAME}')
+
+    # Assert that these proxies have the expected hint names.
+    assert type_ref_str_proxy_module_absolute_class.__hint_name_beartype__ == (
+        TYPE_NAME)
+
+    # Assert that these proxies have the expected scope names.
+    assert type_ref_str_proxy_module_absolute_class.__scope_name_beartype__ == (
+        SCOPE_NAME)
+
+    # ....................{ PASS ~ property                }....................
+    # Validate higher-level dynamic properties defined on these proxies.
+
+    # Assert that this property of these forward reference proxies *ALL*
+    # resolve to the expected type hints.
+    assert type_ref_str_proxy_module_absolute_class.__resolved_hint_beartype__ is (
+        Class)
+
+    # Assert that this property of these forward reference proxies *ALL*
+    # resolve to the expected types.
+    assert type_ref_str_proxy_module_absolute_class.__resolved_type_beartype__ is (
+        Class)
+
+    # ....................{ PASS ~ check                   }....................
+    # Validate the highest-level __instancecheck__() and __subclasscheck__()
+    # dunder methods defined on the metaclass of these proxies.
+
+    # Assert that an instance of a subclass of that class is also an instance of
+    # these proxies.
+    assert isinstance(obj_subclass, type_ref_str_proxy_module_absolute_class)
+
+    # Assert that that subclass is also a subclass of these proxies.
+    assert issubclass(Subclass, type_ref_str_proxy_module_absolute_class)
+
+    # ....................{ FAIL ~ attr                    }....................
+    # Assert that attempting to test an undefined *NON-DUNDER* attribute of a
+    # forward reference proxy raises the expected exception *AFTER* that same
+    # forward reference proxy has already resolved its referent by a prior call
+    # to the isinstance() or issubclass() builtins against this proxy.
+    with raises_uncached(AttributeError):
+        type_ref_str_proxy_module_absolute_class.and_buried_from_all_godlike_exercise

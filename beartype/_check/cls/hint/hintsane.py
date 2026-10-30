@@ -18,7 +18,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.cls.dataclsslot import BeartypeSlottedMetaclass
-from beartype._data.kind.datakindiota import SENTINEL
+from beartype._data.kind.datakindiota import (
+    SENTINEL,
+    Iota,
+)
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatypingport import (
     Hint,
@@ -594,8 +597,15 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
 # ....................{ HINTS                              }....................
 HintOrSane = Union[Hint, HintSane]
 '''
-PEP-compliant type hint matching either a type hint *or* **sanified type hint
-metadata** (i.e., :class:`.HintSane` object).
+:pep:`484`-compliant type hint matching either a type hint *or* **sanified type
+hint metadata** (i.e., :class:`.HintSane` object).
+'''
+
+
+HintSaneOrSentinel = Union[HintSane, Iota]
+'''
+:pep:`484`-compliant type hint matching either **sanified type hint metadata**
+(i.e., :class:`.HintSane` object) *or* the sentinel placeholder.
 '''
 
 # ....................{ HINTS ~ container                  }....................

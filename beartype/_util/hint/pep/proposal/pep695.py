@@ -63,11 +63,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #    # ...into this.
 #    from beartype._util.hint.pep.proposal.pep695 import (
 #        iter_hint_pep695_unsubbed_forwardrefs as
-#        __iter_hint_pep695_forwardref_beartype__
+#        __iter_hint_pep695_unsubbed_forwardrefs_beartype__
 #    )
 #    type {alias_name} = {alias_value}
 #    for __hint_pep695_forwardref_beartype__ in (
-#        __iter_hint_pep695_forwardref_beartype__({alias_name})):
+#        __iter_hint_pep695_unsubbed_forwardrefs_beartype__({alias_name})):
 #        # If the current scope is module scope, prefer an efficient
 #        # non-exec()-based solution. Note that this optimization does *NOT*
 #        # generalize to other scopes, for obscure reasons delineated here:
@@ -145,10 +145,14 @@ from beartype._cave._cavefast import (
     Pep695ParameterizableTypes,
 )
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.cls.call.calldataexternal import (
+    BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.forward.reference._cls.fwdrefmeta import (
     BeartypeForwardRefMetaclass)
 from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_subbable)
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep695Parameterizable,
@@ -732,11 +736,26 @@ def resolve_func_scope_pep695(
     release_instance(scope_pep695)
 
 # ....................{ ITERATORS                          }....................
+#FIXME: *REMOVE THIS HORRIBLE HACK* once we drop support for Python <= 3.13.
+#Under Python >= 3.14, this horrible hack is already implicitly supported via
+#PEP 749-compliant unquoted forward references. Indeed, as an incremental step
+#towards that notable goal...
+#FIXME: Stop calling this horrible hack under Python >= 3.14. Note that doing so
+#could prove slightly non-trivial. Why? Because beartype might or might not
+#currently resolve PEP 749-compliant unquoted forward references in PEP
+#695-compliant type aliases. Unsure, honestly. "beartype.claw" should obviously
+#no longer be required to do that. Under Python >= 3.14, type aliases come
+#"backed in" with forward reference resolution machinery via __evaluate__().
 def iter_hint_pep695_unsubbed_forwardrefs(
     # Mandatory parameters.
     hint: HintPep695TypeAliasTypes,
 
     # Optional parameters.
+
+    #FIXME: Actually pass this. Doing so will prove non-trivial, however. Why?
+    #Because this iterator is called from user-space code instrumented by
+    #"beartype.claw". Totally insane. *sigh*
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_prefix: str = '',
 ) -> Iterable[BeartypeForwardRefMetaclass]:
     '''
@@ -762,6 +781,10 @@ def iter_hint_pep695_unsubbed_forwardrefs(
     ----------
     hint : HintPep695TypeAliasTypes
         Unsubscripted type alias to be iterated over.
+    conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for all referents referred to by
+        these forward references). Defaults to the default ``BeartypeConf()``.
     exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
@@ -817,9 +840,10 @@ def iter_hint_pep695_unsubbed_forwardrefs(
             # certainly can't. Nonetheless, let's dot our i's and cross our t's.
             if not hint_module_name:
                 raise BeartypeDecorHintPep695Exception(
-                    f'{exception_prefix}PEP 695 type alias "{hint_name}" '
-                    f'module undefined (i.e., "__module__" attribute '
-                    f'either "None" or the empty string).'
+                    f'{exception_prefix}'
+                    f'PEP 695 type alias "{hint_name}" module undefined '
+                    f'(i.e., "__module__" attribute either "None" or '
+                    f'the empty string).'
                 ) from exception
             # Else, this alias defines a module name.
 
@@ -863,7 +887,8 @@ def iter_hint_pep695_unsubbed_forwardrefs(
             # human-readable exception advising the caller with recommendations.
             if hint_ref_name == hint_ref_name_prev:
                 raise BeartypeDecorHintPep695Exception(
-                    f'{exception_prefix}PEP 695 local type alias "{hint_name}" '
+                    f'{exception_prefix}'
+                    f'PEP 695 local type alias "{hint_name}" '
                     f'unquoted relative forward reference "{hint_ref_name}" '
                     f"unsupported, due to severe deficiencies in CPython's "
                     f'runtime implementation of PEP 695 local type aliases '
@@ -875,7 +900,8 @@ def iter_hint_pep695_unsubbed_forwardrefs(
                     f'      def muh_func(...) -> ...:\n'
                     f'          type {hint_name} = ...\n'
                     f'\n'
-                    f'      # Prefer a global type alias defined at module scope.\n'
+                    f'      # Prefer a global type alias defined at module '
+                    f'scope.\n'
                     f'      type {hint_name} = ...\n'
                     f'* Quoting this forward reference in this type alias:\n'
                     f'      # Instead of an unquoted forward reference '
@@ -894,7 +920,8 @@ def iter_hint_pep695_unsubbed_forwardrefs(
             # Note that this should *NEVER* happen. Of course, this will happen.
             elif hasattr(hint_module, hint_ref_name):
                 raise BeartypeDecorHintPep695Exception(  # pragma: no cover
-                    f'{exception_prefix}PEP 695 type alias "{hint_name}" '
+                    f'{exception_prefix}'
+                    f'PEP 695 type alias "{hint_name}" '
                     f'unquoted relative forward reference "{hint_ref_name}" '
                     f'already defined in module "{hint_module_name}", '
                     f'despite purportedly being undefined. '
@@ -914,9 +941,12 @@ def iter_hint_pep695_unsubbed_forwardrefs(
             # stringified forward reference *CANNOT* be subscripted by arbitrary
             # child type hints; a forward reference proxy can be.
             hint_ref = proxy_hint_pep484_ref_str_subbable(
+                call_curr=BEARTYPE_CALL_EXTERNAL_META,
+                conf=conf,
+                exception_prefix=exception_prefix,
                 scope_name=hint_module_name,
                 hint_name=hint_ref_name,
-                exception_prefix=exception_prefix,
+                hint_parent_sane=None,
             )
 
             # Yield this forward reference proxy to the caller.

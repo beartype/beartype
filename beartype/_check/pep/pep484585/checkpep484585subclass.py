@@ -131,7 +131,7 @@ def get_hint_pep484585_subclass_hint_child_sanified(
         # proxies from consideration as supported hints is usually desirable,
         # this lower-level getter called by higher-level reducers that are
         # themselves passed such proxies produced by the even higher-level
-        # reduce_hint_pep484_ref() reducer. Such proxies are thus valid for this
+        # reduce_hint_pep484749_ref() reducer. Such proxies are thus valid for this
         # specific use case.
         True,  # <-- "is_ref_proxy_valid=True", effectively *sigh*
     ):

@@ -81,7 +81,7 @@ def test_make_beartype_file_finder_path_hook_index() -> None:
 # ....................{ PRIVATE ~                          }....................
 def _assert_make_beartype_file_finder_path_hook_index() -> None:
     '''
-    Assert that the 
+    Assert that the
     :func:`beartype.claw._importlib._clawimpfilefinder.make_beartype_file_finder_path_hook_index`
     factory behaves as expected under the current Python environment, including
     any temporary monkey-patches applied to that environment by the parent
@@ -94,7 +94,7 @@ def _assert_make_beartype_file_finder_path_hook_index() -> None:
         make_beartype_file_finder_path_hook_index)
     from beartype.claw._importlib._clawimpfileloader import (
         BeartypeSourceFileLoader)
-    from beartype_test._util.path.pytpathmain import get_main_dir
+    from beartype_test._util.path.pytpathmain import get_main_package_parent_dir
     from importlib.machinery import (
         FileFinder,
         ModuleSpec,
@@ -116,8 +116,8 @@ def _assert_make_beartype_file_finder_path_hook_index() -> None:
 
     # Absolute dirname of an arbitrary directory guaranteed to both exist *AND*
     # contain ".py"-suffixed Python source modules: namely, the top-level
-    # directory defining the "beartype" package.
-    package_dirname = str(get_main_dir())
+    # directory defining our test suite.
+    package_dirname = str(get_main_package_parent_dir())
 
     # ....................{ FILE FINDER                    }....................
     # Beartype-specific file finder created by this passing this path hook the

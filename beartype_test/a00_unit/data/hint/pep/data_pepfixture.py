@@ -53,7 +53,7 @@ def hints_piths_pep_meta() -> (
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep586.hints_pep586_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep589.hints_pep589_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep593.hints_pep593_meta',
-        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep604.hints_pep604_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep484604.hints_pep484604_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep646.hints_pep646_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep649.hints_pep649_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep675.hints_pep675_meta',
@@ -162,7 +162,7 @@ def hints_pep_ignorable_deep() -> frozenset:
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep484.hints_pep484_ignorable_deep',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep544.hints_pep544_ignorable_deep',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep593.hints_pep593_ignorable_deep',
-        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep604.hints_pep604_ignorable_deep',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep484604.hints_pep604_ignorable_deep',
     ))
 
     # Yield a frozen set coerced from this list.

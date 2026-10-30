@@ -23,7 +23,7 @@ from beartype._check.error.errmain import (
     get_hint_object_violation,
 )
 from beartype._check.forward.reference.fwdrefset import (
-    set_beartype_ref_proxies_exception_prefix)
+    set_beartype_ref_proxies_classvars_uninitted)
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.call.calldatadecorfunc import (
     BeartypeCallDecorFuncData,
@@ -106,10 +106,10 @@ factory to be an **arbitrary object** (e.g., passed to the
 #FIXME: Unit test us up, please.
 def make_code_raiser_hint_object_check(
     call_curr: BeartypeCallDataABC,
-    hint_insane: Hint,
-    hint_sane: HintSane,
     conf: BeartypeConf,
     exception_prefix: str,
+    hint_insane: Hint,
+    hint_sane: HintSane,
 ) -> CodeGenerated:
     '''
     Pure-Python code snippet of a type-checking raiser function type-checking an
@@ -137,15 +137,15 @@ def make_code_raiser_hint_object_check(
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the lexical scope of the external call to the
         public :func:`beartype.door.die_if_unbearable` raiser function).
-    hint_insane : Hint
-        Possibly **insane** (i.e., pre-sanified) type hint to be type-checked.
-    hint_sane : HintSane
-        Metadata encapsulating the sanification of this type hint.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
+    hint_insane : Hint
+        Possibly **insane** (i.e., pre-sanified) type hint to be type-checked.
+    hint_sane : HintSane
+        Metadata encapsulating the sanification of this type hint.
 
     Returns
     -------
@@ -219,10 +219,10 @@ def make_code_raiser_hint_object_check(
 #FIXME: Unit test us up, please.
 def make_code_tester_check(
     call_curr: BeartypeCallDataABC,
-    hint_insane: Hint,
-    hint_sane: HintSane,
     conf: BeartypeConf,
     exception_prefix : str,
+    hint_insane: Hint,
+    hint_sane: HintSane,
 ) -> CodeGenerated:
     '''
     Pure-Python code snippet of a type-checking tester function type-checking an
@@ -249,15 +249,15 @@ def make_code_tester_check(
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the lexical scope of the external call to the
         public :func:`beartype.door.is_bearable` tester function).
-    hint_insane : Hint
-        Possibly **insane** (i.e., pre-sanified) type hint to be type-checked.
-    hint_sane : HintSane
-        Metadata encapsulating the sanification of this type hint.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
+    hint_insane : Hint
+        Possibly **insane** (i.e., pre-sanified) type hint to be type-checked.
+    hint_sane : HintSane
+        Metadata encapsulating the sanification of this type hint.
 
     Returns
     -------
@@ -413,17 +413,12 @@ def make_code_raiser_func_pith_check(
     # *NOT* resolvable at decoration time, these references have all been
     # proxied by beartype-specific forward reference proxies. In this case...
     if func_scope_frozen.beartype_ref_proxies:
-        # Overwrite the default value of the "__exception_prefix_beartype__"
-        # class variables bound to these proxies with a specific exception
-        # prefix contextually describing the currently decorated callable,
-        # dramatically improving the readability of exceptions raised at
-        # type-checking wrapper call time if one of these proxies fails to
-        # resolve the reference it proxies.
-        #
-        # Note that constructing this prefix is computationally expensive and
-        # thus deferred until absolutely confirmed to be needed [read: *NOW*].
-        set_beartype_ref_proxies_exception_prefix(
+        # Overwrite the default values of all uninitialized class variables
+        # bound to these proxies with non-default initialized values passed
+        # by the caller.
+        set_beartype_ref_proxies_classvars_uninitted(
             ref_proxies=func_scope_frozen.beartype_ref_proxies,
+            call_curr=decor_func,
             exception_prefix=prefix_decor_func_callable_pith(
                 decor_func=decor_func, pith_name=pith_name),
         )

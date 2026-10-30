@@ -268,7 +268,7 @@ def reduce_hint_nonpep(
             # proxy (i.e., "BeartypeForwardRefABC" subtype). Although
             # prohibiting such proxies from consideration as supported hints is
             # typically desirable, this lower-level reducer is passed such
-            # proxies produced by the higher-level reduce_hint_pep484_ref()
+            # proxies produced by the higher-level reduce_hint_pep484749_ref()
             # reducer. Ergo, such proxies are valid for this specific use case.
             is_ref_proxy_valid=True,
             exception_prefix=EXCEPTION_PLACEHOLDER,

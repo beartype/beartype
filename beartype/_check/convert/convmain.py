@@ -238,8 +238,8 @@ def sanify_hint_root_statement(
     type hinting annotation like a user-defined class variable, callable
     parameter or return, or assignment statement). Such factories include:
 
-    * The private :func:`beartype._check.make.checkmakefunc.make_func_tester` factory,
-      internally called by:
+    * The private :func:`beartype._check.make.checkmakefunc.make_func_tester`
+      factory, internally called by:
 
       * The public :func:`beartype.door.die_if_unbearable` function.
       * The public :func:`beartype.door.is_bearable` function.
@@ -292,7 +292,7 @@ def sanify_hint_root_statement(
     # hint if this hint is coercible *OR* this hint as is otherwise. Since the
     # passed hint is *NOT* necessarily PEP-compliant, perform this coercion
     # *BEFORE* validating this hint to be PEP-compliant.
-    hint = coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
+    hint = coerce_hint_root(hint)
 
     # Metadata encapsulating the sanification of this hint.
     hint_sane = reduce_hint(
@@ -323,7 +323,10 @@ def sanify_hint_child(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     hint_sign_seed: HintSignOrNoneOrSentinel = SENTINEL,
     pith_name: Optional[str] = None,
-    exception_prefix: str = '',
+
+    #FIXME: *HMM*.
+    # exception_prefix: str = '',
+    exception_prefix: str = EXCEPTION_PLACEHOLDER,
 ) -> HintSane:
     '''
     Metadata encapsulating the sanification (i.e., sanitization) of the passed
@@ -356,10 +359,12 @@ def sanify_hint_child(
         all settings configuring type-checking for the passed object). Defaults
         to :obj:`.BEARTYPE_CONF_DEFAULT`, the default beartype configuration.
     hint_sign_seed :  HintSignOrNoneOrSentinel, default: SENTINEL
-        **Type hint seed sign** (i.e., sign identifying this hint with respect
-        to the first reduction performed by this sanification) if this hint is
-        ambiguously identifiable by two or more signs *or* the sentinel
-        otherwise (i.e., if this hint is uniquely identifiable by one sign).
+        Either:
+
+        * If this hint is ambiguously identifiable by two or more signs, the
+          **type hint seed sign** (i.e., sign identifying this hint with respect
+          to the first reduction performed by this sanification).
+        * If this hint is uniquely identifiable by one sign, the sentinel.
 
         This sign is used to seed (i.e., initialize) the first reduction
         internally performed by this sanification, which otherwise defaults to
@@ -372,7 +377,8 @@ def sanify_hint_child(
           :pep:`589`-compliant :class:`typing.TypedDict` superclass), which are
           identifiable as both generics *and* typed dictionaries.
 
-        Defaults to the sentinel.
+        Defaults to the sentinel, implying this hint to be uniquely identifiable
+        by only one sign. This common case covers almost all hints.
     pith_name : Optional[str], default: None
         Either:
 
@@ -391,9 +397,9 @@ def sanify_hint_child(
           factory).
 
         Defaults to :data:`None`.
-    exception_prefix : str, default: ''
+    exception_prefix : str, default: EXCEPTION_PLACEHOLDER
         Human-readable substring prefixing raised exception messages. Defaults
-        to the empty string.
+        to :data:`.EXCEPTION_PLACEHOLDER`.
 
     Returns
     -------

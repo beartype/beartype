@@ -35,9 +35,64 @@ callers.
 #* "violation_verbosity".
 #* "warning_cls_on_decorator_exception".
 
+#FIXME: When implementing deadline scheduling for O(n) type-checking:
+#* Add this new optional configuration option:
+#      check_time_max_multiplier: Union[int, None] = 1000,
+#* Add this documentation for this option to the docstring below:
+#      check_time_max_multiplier : Union[int, None] = 1000
+#          **Deadline multiplier** (i.e., positive integer instructing
+#          :mod:`beartype` to prematurely halt the current type-check when the
+#          total running time of the active Python interpreter exceeds this
+#          integer multiplied by the running time consumed by both the current
+#          type-check and all prior type-checks *and* the caller also passed a
+#          non-default ``strategy``) *or* :data:`None` if :mod:`beartype`
+#          should never prematurely halt runtime type-checks.
+#
+#          Increasing this integer increases the number of container items that
+#          :mod:`beartype` type-checks at a cost of decreasing application
+#          responsiveness. Likewise, decreasing this integer increases
+#          application responsiveness at a cost of decreasing the number of
+#          container items that :mod:`beartype` type-checks.
+#
+#          Ignored when ``strategy`` is :attr:`BeartypeStrategy.O1`, as that
+#          strategy is already effectively instantaneous; imposing deadlines
+#          and thus bureaucratic bookkeeping on that strategy would only
+#          reduce its efficiency for no good reason, which is a bad reason.
+#
+#          Defaults to 1000, in which case a maximum of 0.10% of the total
+#          runtime of the active Python process will be devoted to performing
+#          non-constant :mod:`beartype` type-checks over container items. This
+#          default has been carefully tuned to strike a reasonable balance
+#          between runtime type-check coverage and application responsiveness,
+#          typically enabling smaller containers to be fully type-checked
+#          without noticeably impacting codebase performance.
+#
+#          **Theory time.** Let:
+#
+#          * :math:`T` be the total time this interpreter has been running.
+#          * :math:``b` be the total time :mod:`beartype` has spent
+#            type-checking in this interpreter.
+#
+#          Clearly, :math:`b <= T`. Generally, :math:`b <<<<<<< T` (i.e.,
+#          type-checks consume much less time than the total time consumed by
+#          the process). However, it's all too easy to exhibit worst-case
+#          behaviour of :math:`b ~= T` (i.e., type-checks consume most of the
+#          total time). How? By passing the :func:`beartype.door.is_bearable`
+#          tester an absurdly large nested container subject to the non-default
+#          ``strategy`` of :attr:`BeartypeStrategy.On`.
+#
+#          This deadline multiplier mitigates that worst-case behaviour.
+#          Specifically, :mod:`beartype` will prematurely halt any iterative
+#          type-check across a container when this constraint is triggered:
+#
+#          .. code-block:: python
+#
+#             b * check_time_max_multiplier >= T
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarwarn import (
     _BeartypeConfReduceDecoratorExceptionToWarningDefault)
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confenum import (
     BeartypeStrategy,
     BeartypeViolationVerbosity,
@@ -293,9 +348,6 @@ class BeartypeConf(object):
 
         # Optional keyword-only parameters.
         *,
-
-        # Uncomment us when implementing O(n) type-checking, please.
-        # check_time_max_multiplier: Union[int, None] = 1000,
         claw_decor_place_func: BeartypeDecorPlace = (
             BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE),
         claw_decor_place_type: BeartypeDecorPlace = (
@@ -344,55 +396,6 @@ class BeartypeConf(object):
 
         Parameters
         ----------
-        check_time_max_multiplier : Union[int, None] = 1000
-            **Deadline multiplier** (i.e., positive integer instructing
-            :mod:`beartype` to prematurely halt the current type-check when the
-            total running time of the active Python interpreter exceeds this
-            integer multiplied by the running time consumed by both the current
-            type-check and all prior type-checks *and* the caller also passed a
-            non-default ``strategy``) *or* :data:`None` if :mod:`beartype`
-            should never prematurely halt runtime type-checks.
-
-            Increasing this integer increases the number of container items that
-            :mod:`beartype` type-checks at a cost of decreasing application
-            responsiveness. Likewise, decreasing this integer increases
-            application responsiveness at a cost of decreasing the number of
-            container items that :mod:`beartype` type-checks.
-
-            Ignored when ``strategy`` is :attr:`BeartypeStrategy.O1`, as that
-            strategy is already effectively instantaneous; imposing deadlines
-            and thus bureaucratic bookkeeping on that strategy would only
-            reduce its efficiency for no good reason, which is a bad reason.
-
-            Defaults to 1000, in which case a maximum of 0.10% of the total
-            runtime of the active Python process will be devoted to performing
-            non-constant :mod:`beartype` type-checks over container items. This
-            default has been carefully tuned to strike a reasonable balance
-            between runtime type-check coverage and application responsiveness,
-            typically enabling smaller containers to be fully type-checked
-            without noticeably impacting codebase performance.
-
-            **Theory time.** Let:
-
-            * :math:`T` be the total time this interpreter has been running.
-            * :math:``b` be the total time :mod:`beartype` has spent
-              type-checking in this interpreter.
-
-            Clearly, :math:`b <= T`. Generally, :math:`b <<<<<<< T` (i.e.,
-            type-checks consume much less time than the total time consumed by
-            the process). However, it's all too easy to exhibit worst-case
-            behaviour of :math:`b ~= T` (i.e., type-checks consume most of the
-            total time). How? By passing the :func:`beartype.door.is_bearable`
-            tester an absurdly large nested container subject to the non-default
-            ``strategy`` of :attr:`BeartypeStrategy.On`.
-
-            This deadline multiplier mitigates that worst-case behaviour.
-            Specifically, :mod:`beartype` will prematurely halt any iterative
-            type-check across a container when this constraint is triggered:
-
-            .. code-block:: python
-
-               b * check_time_max_multiplier >= T
         claw_decor_place_func : BeartypeDecorPlace, optional
             **Import hook callable decorator place** (i.e., relative position in
             existing chains of one or more decorators decorating user-defined
@@ -956,7 +959,7 @@ class BeartypeConf(object):
             #
             # Note that this is a feeble safety check against internal issues.
             # Although this condition should *ALWAYS* be true, asserting this
-            # condition costs us nothing and gains us much: namely, QA.
+            # condition costs us nothing and gains us much: QA, which is us.
             assert len(self._conf_args) == len(self._conf_kwargs)
 
             # Cache this configuration with all relevant dictionary singletons
@@ -1482,6 +1485,13 @@ class BeartypeConf(object):
             # For the name and value of each keyword parameter with which this
             # configuration was instantiated...
             for kwarg_name, kwarg_value in self._conf_kwargs.items():
+                # If this keyword parameter is private and thus unsuitable for
+                # display to users, silently ignore this parameter.
+                if kwarg_name.startswith('_'):
+                    continue
+                # Else, this keyword parameter is public and thus suitable for
+                # display to users.
+
                 # If this value differs from that of the default value for this
                 # keyword parameter...
                 if kwarg_value != KWARGS_DEFAULT[kwarg_name]:

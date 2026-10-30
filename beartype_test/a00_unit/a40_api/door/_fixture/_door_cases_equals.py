@@ -49,7 +49,10 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
     # Defer fixture-specific imports.
     from beartype._cave._cavefast import NoneType
     from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
-        Pep484GenericT)
+        Pep484GenericSInt,
+        Pep484GenericT,
+        Pep484GenericTSubclass,
+    )
     from collections.abc import (
         Awaitable as Pep585Awaitable,
         Callable as Pep585Callable,
@@ -63,8 +66,10 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         Annotated,
         Any,
         Literal,
+        Optional,
         Union,
         List as Pep484List,
+        Sequence as Pep484Sequence,
         Tuple as Pep484Tuple,
     )
 
@@ -89,6 +94,8 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         # AnyTypeHint._is_equal() implementation for further commentary.
         (Any, str, False),
         (Any, list[str], False),
+        (Any, Optional, False),
+        (Any, Union, False),
 
         # ..................{ PEP 484 ~ none                 }..................
         # PEP 484-compliant "None" singleton is equal to itself, of course.
@@ -111,10 +118,13 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         (tuple[int, Any], tuple[int, Any], True),
         (tuple[int, Any], tuple[int, str], False),
 
-        # PEP 484- and 585-compliant hints that differ only in their factory are
-        # equal.
-        (list[str], Pep484List[str], True),
-        (tuple[str, ...], Pep484Tuple[str, ...], True),
+        # PEP 484- and 585-compliant hints produced by semantically equivalent
+        # type hint factories (e.g., "typing.List" and "list") and subscripted
+        # by the same child hints are equal.
+        (Pep484List[str], list[str], True),
+        (Pep484Tuple[str, ...], tuple[str, ...], True),
+        (Pep484Tuple[int, str], tuple[int, str], True),
+        (Pep484Sequence[int], Pep585Sequence[int], True),
 
         # PEP 585-compliant deeply nested hints are equal to themselves. *sigh*
         (
@@ -133,7 +143,38 @@ def door_cases_equals() -> 'tuple[tuple[object, object, bool]]':
         # subscripted by the PEP 484-compliant "Any" singleton.
         (Pep484GenericT, Pep484GenericT[Any], True),
 
-        # ..................{ PEP (484|604) ~ union          }..................
+        # PEP 484-compliant generics first parametrized by one PEP 484-compliant
+        # type variable and then subscripted by an arbitrary child hint are
+        # equal to those same generics subscripted by that same child hint.
+        (Pep484GenericT[int], Pep484GenericT[int], True),
+        (Pep484GenericT[int], Pep484GenericT[str], False),
+
+        # PEP 484-compliant generics first parametrized by one PEP 484-compliant
+        # type variable and then subscripted by an arbitrary child hint are
+        # unequal to other generics subscripted by that same child hint, even if
+        # those each pair of those generics are related by a type hierarchy.
+        (Pep484List[Pep484GenericT[int]], list[Pep484GenericT[int]], True),
+        (Pep484GenericT[int], Pep484GenericSInt[int], False),
+        (Pep484GenericT[int], Pep484GenericTSubclass[int], False),
+        (Pep484GenericT[Any], Pep484GenericTSubclass[Any], False),
+        (list[Pep484GenericT[int]], list[Pep484GenericTSubclass[int]], False),
+
+        # ..................{ PEP (484|604) ~ optional|union }..................
+        # PEP 484-compliant unsubscripted "typing.Optional" and "typing.Union"
+        # type hint factories are equal both to themselves and to each other.
+        #
+        # Although surprising, "TypeHint(Optional) == TypeHint(Union)" is
+        # semantically true. Under PEP 484 conventions, unsubscripted type hint
+        # factories are implicitly subscripted by the PEP 484-compliant
+        # "typing.Any" singleton. However, both "Optional[Any]" and "Union[Any]"
+        # semantically reduce to "Any". Ergo, the unsubscripted "Optional" and
+        # "Union" type hint factories implicitly expand to "Optional[Any]" and
+        # "Union[Any]", both of which then implicitly reduce to "Any", which is
+        # clearly equal to itself. Look. Just go with it. We did. *sigh*
+        (Optional, Optional, True),
+        (Union, Union, True),
+        (Optional, Union, True),
+
         # PEP 484-compliant union type hints.
         (Union[int, str], Union[str, list], False),
         (Union[Number, int], Union[Number, float], True),

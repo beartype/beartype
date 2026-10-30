@@ -441,6 +441,101 @@ def test_pep484_ref_decor_relative_type_nested() -> None:
     with raises_uncached(BeartypeCallHintParamViolation):
         accept_list_vast_and_muscular([LikeALitheSerpent(),])
 
+# ....................{ TESTS ~ module                     }....................
+def test_pep484_ref_decor_module_unnamed() -> None:
+    '''
+    Test :func:`beartype.beartype`-decorated callables defined in **unnamed
+    namespaces** (i.e., module-like objects whose ``__name__`` dunder attributes
+    are either undefined or defined to be :data:`None`) that are annotated by
+    :pep:`484`-compliant stringified relative forward reference type hints
+    referring to various hints of general interest, including:
+
+    * The :pep:`484`-compliant :data:`None` singleton.
+    * Builtin types (e.g., :class:`str`).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import (
+        BeartypeCallHintParamViolation,
+        BeartypeCallHintReturnViolation,
+    )
+    from beartype._util.func.utilfuncmake import make_func
+    from beartype._util.module.utilmodget import get_object_module_name_or_none
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from textwrap import dedent
+    from typing import Union
+
+    # ....................{ CALLABLES                      }....................
+    # Arbitrary callable annotated by PEP 484-compliant stringified relative
+    # forward references referring to the "None" singleton, intentionally
+    # defined inside a module-like namespace defining *NO* "__name__" dunder
+    # attribute. Although alternate means of doing so exist (e.g., explicitly
+    # defining a test submodule and then deleting that test submodule's
+    # "__name__" dunder attribute) the simplest means of doing so is as is done
+    # here: dynamically evaluate this callable against empty global and local
+    # scopes via the make_func() callable factory function.
+    unto_our_souls = make_func(
+        func_name='unto_our_souls',
+        func_code=dedent('''
+            def unto_our_souls(
+                # Parameter exercising that @beartype correctly resolves nested
+                # stringified relative forward references to "None" from unnamed
+                # namespaces.
+                and_bound_to_us: Union[str, "None"],
+
+                # Parameter exercising that @beartype correctly resolves
+                # non-nested stringified relative forward references to globally
+                # scoped attributes, whose values are builtin types. In short,
+                # super non-trivial. Ugh!
+                so_fast: "whether_there_be_shine",
+            ) -> "None":
+                return and_bound_to_us
+            '''
+        ),
+        # Global scope defining all globally scoped attributes required by the
+        # unto_our_souls() callable defined above.
+        func_globals={
+            'Union': Union,
+            'whether_there_be_shine': str,
+        },
+    )
+
+    # ....................{ LOCALS                         }....................
+    # Valid and invalid values for the "so_fast" parameter accepted by the
+    # unto_our_souls() callable defined above.
+    SO_FAST_VALID = "That, whether there be shine, or gloom o'ercast;"
+    SO_FAST_INVALID = b'They always must be with us, or we die.'
+
+    # ....................{ PASS                           }....................
+    # Assert that that callable resides in *NO* module.
+    assert get_object_module_name_or_none(unto_our_souls) is None
+
+    # That callable type-checked by @beartype. Technically, decorating that
+    # callable in the code snippet above would also be trivial. Pragmatically,
+    # doing so substantially reduces the readability of exception tracebacks.
+    # For debugging purposes, this deferred approach is strongly preferable.
+    unto_our_souls_checked = beartype(unto_our_souls)
+
+    # Assert that that callable when passed the "None" singleton returns that
+    # singleton *WITHOUT* raising erroneous type-checking violations.
+    assert unto_our_souls_checked(
+        and_bound_to_us=None, so_fast=SO_FAST_VALID) is None
+
+    # ....................{ FAIL                           }....................
+    # Assert that that callable when passed objects other than the "None"
+    # singleton raises the expected type-checking violations.
+    with raises_uncached(BeartypeCallHintParamViolation):
+        unto_our_souls_checked(
+            and_bound_to_us=0xFEEDFACE, so_fast=SO_FAST_VALID)
+    with raises_uncached(BeartypeCallHintParamViolation):
+        unto_our_souls_checked(
+            and_bound_to_us=None, so_fast=SO_FAST_INVALID)
+    with raises_uncached(BeartypeCallHintReturnViolation):
+        unto_our_souls_checked(
+            'Unto our souls, and bound to us so fast,', so_fast=SO_FAST_VALID)
+
 # ....................{ TESTS ~ pep : 695                  }....................
 @skip_if_python_version_less_than('3.12.0')
 def test_pep484_ref_decor_pep695() -> None:

@@ -71,14 +71,14 @@ from beartype.door._func.doorfunc import (
 # reference proxy for each unqualified relative forward reference in the passed
 # PEP 695-compliant type alias).
 from beartype._util.hint.pep.proposal.pep695 import (
-    iter_hint_pep695_unsubbed_forwardrefs as __iter_hint_pep695_forwardref_beartype__)
+    iter_hint_pep695_unsubbed_forwardrefs as __iter_hint_pep695_unsubbed_forwardrefs_beartype__)
 
 # ....................{ GLOBALS                            }....................
 __all__ = [
     '__beartype__',
     '__claw_state_beartype__',
     '__die_if_unbearable_beartype__',
-    '__iter_hint_pep695_forwardref_beartype__',
+    '__iter_hint_pep695_unsubbed_forwardrefs_beartype__',
 ]
 '''
 Special list global of the unqualified names of all public submodule attributes

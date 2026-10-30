@@ -34,59 +34,47 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
         EllipsisType,
         FunctionType,
         FunctionOrMethodCType,
+        HintPep604Type,
         MethodBoundInstanceOrClassType,
         ModuleType,
         NoneType,
         NotImplementedType,
     )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_13
     from beartype_test.a00_unit.data.data_type import Class
+    from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
+        NamedTupleFunctionalSubclass)
     from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintNonpepMetadata)
     from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
-    from typing import NamedTuple
+    from typing import Union
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-noncompliant type hint metadata to be returned.
     hints_piths_nonpep_meta = []
-
-    #FIXME: *WOOPS.* We should have read the standards a bit closer. Neither
-    #"typing.NamedTuple" or "typing.TypedDict" are intended for direct use as
-    #type hints. To quote official "typing" documentation:
-    #    These are not used in annotations. They are building blocks for
-    #    declaring types.
-    #
-    #Of course, all types *ARE* valid type hints. "typing.NamedTuple" and
-    #"typing.TypedDict" subclasses are types and thus also valid type hints. So,
-    #the superficial testing we perform below is certainly useful; we just don't
-    #need to do anything further, really. Phew!
-
-    # PEP-compliant user-defined "collections.namedtuple" instance typed with
-    # PEP-compliant type hints.
-    NamedTupleType = NamedTuple(
-        'NamedTupleType', [('fumarole', str), ('enrolled', int)])
 
     # ..................{ LISTS                              }..................
     # Add PEP 484-specific (albeit technically PEP-noncompliant from the
     # beartype perspective) test type hints to this list.
     hints_piths_nonpep_meta.extend((
         # ................{ NAMEDTUPLE                         }................
-        # "NamedTuple" instances transparently reduce to standard tuples and
+        # "NamedTuple" instances transparently reduce to "tuple" subclasses and
         # *MUST* thus be handled as non-"typing" type hints.
         HintNonpepMetadata(
-            hint=NamedTupleType,
+            hint=NamedTupleFunctionalSubclass,
             piths_meta=(
                 # Named tuple containing correctly typed items.
-                PithSatisfiedMetadata(
-                    NamedTupleType(fumarole='Leviathan', enrolled=37)),
+                PithSatisfiedMetadata(NamedTupleFunctionalSubclass(
+                    fumarole='Leviathan', enrolled=37)),
                 # String constant.
                 PithUnsatisfiedMetadata('Of ͼarthen concordance that'),
                 #FIXME: Uncomment after implementing "NamedTuple" support.
                 # # Named tuple containing incorrectly typed items.
                 # PithUnsatisfiedMetadata(
-                #     pith=NamedTupleType(fumarole='Leviathan', enrolled=37),
+                #     pith=NamedTupleSubclass(fumarole='Leviathan', enrolled=37),
                 #     # Match that the exception message raised for this object...
                 #     exception_str_match_regexes=(
                 #         # Declares the name of this tuple's problematic item.
@@ -98,9 +86,8 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
 
         # ................{ TYPEDDICT                          }................
         # "TypedDict" instances transparently reduce to dicts.
-        #FIXME: Implement us up, but note when doing so that:
-        #* We currently unconditionally reduce "TypeDict" to "Mapping".
-        #* "TypedDict" was first introduced with Python 3.8.
+        #FIXME: Implement us up, but note when doing so that we currently
+        #unconditionally reduce "TypeDict" to "Mapping".
 
         # ................{ TYPE ~ builtin                     }................
         # Integer.
@@ -414,6 +401,28 @@ def hints_nonpep484_meta() -> 'list[HintNonpepMetadata]':
             ),
         ),
     ))
+
+    # ..................{ VERSIONS                           }..................
+    # If the active Python interpreter targets Python <= 3.13, the seemingly PEP
+    # 604-compliant unsubscripted "types.UnionType" type is technically only the
+    # PEP-noncompliant isinstanceable type of all PEP 604-compliant new unions.
+    # Test this, yo!
+    if IS_PYTHON_AT_MOST_3_13:
+        hints_piths_nonpep_meta.extend((
+            HintNonpepMetadata(
+                hint=HintPep604Type,
+                piths_meta=(
+                    # PEP 604-compliant new union.
+                    PithSatisfiedMetadata(int | str),
+                    # PEP 484-compliant old union.
+                    PithUnsatisfiedMetadata(Union[int, str]),
+                    # String constant.
+                    PithUnsatisfiedMetadata(
+                        'Is growing fresh before me as the green'),
+                ),
+            ),
+        ))
+    # Else, the active Python interpreter targets Python <= 3.13.
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-noncompliant type hint metadata.

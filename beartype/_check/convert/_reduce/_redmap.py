@@ -24,8 +24,8 @@ from beartype._check.convert._reduce._pep.pep484.redpep484core import (
     reduce_hint_pep484_never,
     reduce_hint_pep484_none,
 )
-from beartype._check.convert._reduce._pep.pep484.redpep484ref import (
-    reduce_hint_pep484_ref)
+from beartype._check.convert._reduce._pep.pep484.redpep484749ref import (
+    reduce_hint_pep484749_ref)
 from beartype._check.convert._reduce._pep.pep484.redpep484604union import (
     reduce_hint_pep484604_union)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
@@ -49,6 +49,7 @@ from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
 from beartype._check.convert._reduce._pep.redpep591 import reduce_hint_pep591
 from beartype._check.convert._reduce._pep.redpep593 import (
     reduce_hint_pep593_annotated)
+from beartype._check.convert._reduce._pep.redpep613 import reduce_hint_pep613
 from beartype._check.convert._reduce._pep.redpep647742 import (
     reduce_hint_pep647742)
 from beartype._check.convert._reduce._pep.redpep673 import reduce_hint_pep673
@@ -134,11 +135,12 @@ from beartype._data.hint.sign.datahintsigns import (
 )
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     get_hint_pep484_newtype_alias)
+
+#FIXME: Shift this submodule into this subpackage, please. *sigh*
 from beartype._util.hint.pep.proposal.pep612 import (
     reduce_hint_pep612_args,
     reduce_hint_pep612_kwargs,
 )
-from beartype._util.hint.pep.proposal.pep613 import reduce_hint_pep613
 from collections.abc import Callable
 from typing import Optional
 
@@ -470,7 +472,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # references refer to only if those objects are efficiently accessible at
     # this early decoration time *WITHOUT* requiring unsafe dynamic importation
     # of third-party packages or modules.
-    HintSignForwardRef: reduce_hint_pep484_ref,
+    HintSignForwardRef: reduce_hint_pep484749_ref,
 
     # Reduce PEP 484-compliant type variables that have subsequently been
     # semantically (but *NOT* syntactically) "replaced" by concrete hints to

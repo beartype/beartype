@@ -55,6 +55,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignMutableMapping,
     HintSignMutableSequence,
     HintSignMutableSet,
+    HintSignNamedTuple,
     HintSignNever,
     HintSignNewType,
     HintSignNumpyArray,
@@ -647,7 +648,33 @@ hints produced by the unary prefix unpack operator ``*``, unpacking larger
 sequences of child hints into parent tuple hints).
 '''
 
-# ....................{ SETS ~ supported                   }....................
+# ....................{ SETS ~ supported : type            }....................
+HINT_SIGNS_SUPPORTED_TYPE_ISINSTANCEABLE: FrozenSetHintSign = frozenset((
+    # ..................{ PEP 484                            }..................
+    #FIXME: Ideally, "NamedTuple" subclasses should *NOT* simply be treated as
+    #normal isinstanceable types. That's fine for the proper subset of
+    #@beartype-decorated "NamedTuple" subclasses (which @beartype already
+    #type-checks at both instantiation and assignment time, thus guaranteeing
+    #valid types) but *NOT* fine for the general case of non-@beartype-decorated
+    #"NamedTuple" subclasses. Instead:
+    #* This sign should be removed from this set.
+    #* The "codemain" submodule should dynamically generate actual type-checking
+    #  code for "NamedTuple" subclasses as follows:
+    #  * If a "NamedTuple" subclass is @beartype-decorated, trivially generate a
+    #    single efficient isinstance() check against that subclass.
+    #  * Else, non-trivially generate a heap of code. See existing "FIXME:"
+    #    commentary in our "pep484namedtuple" submodule for horrid details.
+    HintSignNamedTuple,
+))
+'''
+Frozen set of all **trivially supported isinstanceable type signs** (i.e.,
+arbitrary objects uniquely identifying PEP-compliant type hints semantically
+equivalent to isinstanceable classes for which the :func:`beartype.beartype`
+decorator generates type-checking code trivially checking that the corresponding
+piths are instances of those classes).
+'''
+
+# ....................{ SETS ~ supported : shallow         }....................
 _HINT_SIGNS_SUPPORTED_SHALLOW: FrozenSetHintSign = frozenset((
     # ..................{ PEP 484                            }..................
     HintSignTypeVar,
@@ -691,12 +718,12 @@ _HINT_SIGNS_SUPPORTED_SHALLOW: FrozenSetHintSign = frozenset((
 ))
 '''
 Frozen set of all **shallowly supported non-originative signs** (i.e., arbitrary
-objects uniquely identifying PEP-compliant type hints *not* originating from an
-isinstanceable type for which the :func:`beartype.beartype` decorator generates
+objects uniquely identifying PEP-compliant type hints *not* originating from
+isinstanceable types for which the :func:`beartype.beartype` decorator generates
 shallow type-checking code).
 '''
 
-
+# ....................{ SETS ~ supported : deep            }....................
 _HINT_SIGNS_SUPPORTED_DEEP_NONCONTAINER: FrozenSetHintSign = frozenset((
     # ..................{ PEP 484                            }..................
     # Note that the "NoReturn" type hint is invalid in almost all possible
@@ -771,14 +798,16 @@ code deeply type-checking the current pith against the PEP-compliant type hint
 annotated by a subscription of that attribute.
 '''
 
-
+# ....................{ SETS ~ supported : all             }....................
 HINT_SIGNS_SUPPORTED: FrozenSetHintSign = frozenset((
-    # Set of all deeply supported signs.
-    HINT_SIGNS_SUPPORTED_DEEP |
+    # Set of all trivially supported signs checkable as isinstanceable types.
+    HINT_SIGNS_SUPPORTED_TYPE_ISINSTANCEABLE |
+    # Set of all shallowly supported signs originating from a class.
+    HINT_SIGNS_ORIGIN_ISINSTANCEABLE |
     # Set of all shallowly supported signs *NOT* originating from a class.
     _HINT_SIGNS_SUPPORTED_SHALLOW |
-    # Set of all shallowly supported signs originating from a class.
-    HINT_SIGNS_ORIGIN_ISINSTANCEABLE
+    # Set of all deeply supported signs.
+    HINT_SIGNS_SUPPORTED_DEEP
 ))
 '''
 Frozen set of all **supported signs** (i.e., arbitrary objects uniquely

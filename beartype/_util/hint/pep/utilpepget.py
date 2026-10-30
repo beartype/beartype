@@ -604,8 +604,8 @@ def get_hint_pep_typeargs_packed(
     TuplePep484612646TypeArgsPacked
         Either:
 
-        * If this hint defines a ``__parameters__`` dunder attribute, the
-          value of that attribute.
+        * If this hint defines a ``__parameters__`` dunder attribute, the value
+          of that attribute.
         * Else, the empty tuple.
 
     Raises
@@ -631,9 +631,9 @@ def get_hint_pep_typeargs_packed(
        >>> get_hint_pep_typeargs_packed(typing.List[int])
        ()
        >>> get_hint_pep_typeargs_packed(typing.List[T])
-       (T)
+       (T,)
        >>> get_hint_pep_typeargs_packed(UserList)
-       (T)
+       (T,)
        >>> get_hint_pep_typeargs_packed(typing.List[T, int, S, str, T])
        (T, S)
     '''
@@ -881,15 +881,6 @@ def get_hint_pep_origin_or_none(hint: Hint) -> HintOrNone:
 
 # ....................{ GETTERS ~ origin                   }....................
 #FIXME: Unit test us up, please.
-#FIXME: Refactor as follows:
-#* Rename to get_hint_pep_origin_hint() for disambiguity.
-#* Rename get_hint_pep_origin_type_or_none() to
-#  get_hint_pep_origin_hint_or_none() for disambiguity.
-#* Revise return annotation to:
-#      ) -> Hint:
-#* Revise return annotation for get_hint_pep_origin_hint_or_none to:
-#      ) -> Optional[Hint]:
-#* Revise docstrings accordingly.
 def get_hint_pep_origin_type(
     # Mandatory parameters.
     hint: Hint,

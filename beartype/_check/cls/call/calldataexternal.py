@@ -12,11 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.typing.datatyping import TypeException
 from beartype._data.typing.datatypingport import Hint
+from typing import Optional
 
 # ....................{ SUBCLASSES                         }....................
 class BeartypeCallExternalData(BeartypeCallDataABC):
@@ -65,11 +65,11 @@ class BeartypeCallExternalData(BeartypeCallDataABC):
         self,
 
         # Mandatory parameters.
-        hint: str,
         conf: BeartypeConf,
+        hint: str,
+        hint_parent_sane: Optional[HintSane],
 
         # Optional parameters.
-        exception_cls: TypeException = BeartypeDecorHintForwardRefException,
         exception_prefix: str = '',
     ) -> Hint:
 
@@ -79,9 +79,10 @@ class BeartypeCallExternalData(BeartypeCallDataABC):
 
         # Defer to this low-level resolver.
         return resolve_hint_pep484_ref_str_caller_external(
-            hint=hint,
+            call_curr=self,
             conf=conf,
-            exception_cls=exception_cls,
+            hint=hint,
+            hint_parent_sane=hint_parent_sane,
             exception_prefix=exception_prefix,
         )
 

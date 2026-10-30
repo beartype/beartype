@@ -78,12 +78,12 @@ def test_pep561_pyright_self() -> None:
 
     # Defer test-specific imports.
     from beartype.meta import PACKAGE_NAME
-    from beartype_test._util.path.pytpathmain import get_main_dir
+    from beartype_test._util.path.pytpathmain import get_main_repo_dir
 
     # Statically type-check this package residing in the root directory of this
     # project against the "pyright" command residing in the current "${PATH}".
     _pyright_package(
-        project_dirname=str(get_main_dir()), package_name=PACKAGE_NAME)
+        project_dirname=str(get_main_repo_dir()), package_name=PACKAGE_NAME)
 
 
 # Skip this test unless the "pyright" command is in the current "${PATH}".

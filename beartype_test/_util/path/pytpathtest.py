@@ -33,10 +33,10 @@ def get_test_package_dir() -> Path:
     '''
 
     # Avoid circular import dependencies.
-    from beartype_test._util.path.pytpathmain import get_main_dir
+    from beartype_test._util.path.pytpathmain import get_main_repo_dir
 
     # Objectionable action!
-    return DirRelative(get_main_dir(), f'{PACKAGE_NAME}_test')
+    return DirRelative(get_main_repo_dir(), f'{PACKAGE_NAME}_test')
 
 # ....................{ GETTERS ~ dir : func               }....................
 @callable_cached

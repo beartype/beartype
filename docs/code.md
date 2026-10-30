@@ -439,93 +439,99 @@ Beartype has [two problem spots (listed below in order of decreasing importance 
 Let's take this from the top.
 
 1.  Create a [GitHub user account][GitHub account signup].
-
-2.  Login to [GitHub with that account][GitHub account signin].
-
-3.  **Click the "Fork" button** in the upper right-hand corner of [the "beartype/beartype" repository page][beartype].
-
-4.  **Click the "Code" button** in the upper right-hand corner of your fork page that appears.
-
-5.  **Copy the URL** that appears.
-
-6.  **Open a terminal.**
-
-7.  **Change to the desired parent directory** of your local fork.
-
-8.  **Clone your fork,** replacing `{URL}` with the previously copied URL.
+1.  Login to [GitHub with that account][GitHub account signin].
+1.  **Click the "Fork" button** in the upper right-hand corner of [the "beartype/beartype" repository page][beartype].
+1.  **Click the "Code" button** in the upper right-hand corner of your fork page that appears.
+1.  **Copy the URL** that appears.
+1.  **Open a terminal.**
+1.  **Change to the desired parent directory** of your local fork.
+1.  **Clone your fork,** replacing `{URL}` with the previously copied URL.
 
     ```bash
     git clone {URL}
     ```
 
-9.  **Add a new remote** referring to this upstream repository.
+1.  **Add a new remote** referring to this upstream repository.
 
     ```bash
     git remote add upstream https://github.com/beartype/beartype.git
     ```
 
-10. **Uninstall all previously installed versions** of beartype. For example, if you previously installed beartype with `pip`, manually uninstall beartype with `pip`.
+1. **Uninstall all previously installed versions** of beartype. For example, if you previously installed beartype with `pip`, manually uninstall beartype with `pip`.
 
-    ```bash
-    pip uninstall beartype
-    ```
+   ```bash
+   pip uninstall beartype
+   ```
 
-11. Install beartype with `pip` in **editable mode.** This synchronizes changes made to your fork against the beartype package imported in Python. Note the `[dev]` extra installs developer-specific mandatory dependencies required at test or documentation time.
+1. Install beartype with `pip` in **editable mode.** This synchronizes changes made to your fork against the beartype package imported in Python. Note the `[dev]` extra installs developer-specific mandatory dependencies required at test or documentation time.
 
-    ```bash
-    pip3 install -e .[dev]
-    ```
+   ```bash
+   pip3 install -e .[dev]
+   ```
 
-12. **Create a new branch** to isolate changes to, replacing `{branch_name}` with the desired name.
+1. **Create a new branch** to isolate changes to, replacing `{branch_name}` with the desired name.
 
-    ```bash
-    git checkout -b {branch_name}
-    ```
+   ```bash
+   git checkout -b {branch_name}
+   ```
 
-13. **Make changes to this branch** in your favourite [Integrated Development Environment (IDE)][IDE]. Of course, this means [Vim].
+1. **Make changes to this branch** in your favourite [Integrated Development Environment (IDE)][IDE]. Of course, this means [Vim].
+1. **Test these changes.** Note this command assumes you have installed *all* [major versions of both CPython and PyPy supported by the next stable release of beartype you are hacking on](pep.md). If this is *not* the case, install these versions with [pyenv]. This is vital, as type hinting support varies significantly between major versions of different Python interpreters.
 
-14. **Test these changes.** Note this command assumes you have installed *all* [major versions of both CPython and PyPy supported by the next stable release of beartype you are hacking on](pep.md). If this is *not* the case, install these versions with [pyenv]. This is vital, as type hinting support varies significantly between major versions of different Python interpreters.
+   ```bash
+   ./tox
+   ```
 
-    ```bash
-    ./tox
-    ```
+   The resulting output should ideally be suffixed by a synopsis resembling:
 
-    The resulting output should ideally be suffixed by a synopsis resembling:
+       ________________________________ summary _______________________________
+       py36: commands succeeded
+       py37: commands succeeded
+       py38: commands succeeded
+       py39: commands succeeded
+       pypy36: commands succeeded
+       pypy37: commands succeeded
+       congratulations :)
 
-        ________________________________ summary _______________________________
-        py36: commands succeeded
-        py37: commands succeeded
-        py38: commands succeeded
-        py39: commands succeeded
-        pypy36: commands succeeded
-        pypy37: commands succeeded
-        congratulations :)
+1. (*Optional*) **Preview documentation changes.** If you changed anything under `docs/`, preview the site before you commit. The `[dev]` extra installed above includes [Zensical], our documentation generator.
 
-15. **Stage these changes.**
+   ```bash
+   zensical serve --open
+   ```
 
-    ```bash
-    git add -A
-    ```
+   This builds the site, opens <http://localhost:8000/en/latest/> in your browser, and rebuilds when you save a file. Press `Ctrl-C` to stop the server.
 
-16. **Commit these changes.**
+   Before you commit, build the site once in strict mode. Strict mode stops on the first warning (e.g., a broken link). The site builds into the `site/` subdirectory, which `git` ignores.
 
-    ```bash
-    git commit
-    ```
+   ```bash
+   zensical build --strict
+   ```
 
-17. **Push these changes** to your remote fork.
+1. **Stage these changes.**
 
-    ```bash
-    git push
-    ```
+   ```bash
+   git add -A
+   ```
 
-18. **Click the "Create pull request" button** in the upper right-hand corner of your fork page.
+1. **Commit these changes.**
 
-19. Afterward, **routinely pull upstream changes** to avoid desynchronization with [the "beartype/beartype" repository][beartype].
+   ```bash
+   git commit
+   ```
 
-    ```bash
-    git checkout main && git pull upstream main
-    ```
+1. **Push these changes** to your remote fork.
+
+   ```bash
+   git push
+   ```
+
+1. **Click the "Create pull request" button** in the upper right-hand corner of your fork page.
+
+1. Afterward, **routinely pull upstream changes** to avoid desynchronization with [the "beartype/beartype" repository][beartype].
+
+   ```bash
+   git checkout main && git pull upstream main
+   ```
 
 ## Moar Depth
 

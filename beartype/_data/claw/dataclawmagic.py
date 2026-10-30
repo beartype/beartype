@@ -231,7 +231,7 @@ passed each such path hook.
 
 # ....................{ STRINGS ~ names : pep : 695        }....................
 BEARTYPE_HINT_PEP695_FORWARDREF_ITER_FUNC_NAME = (
-    '__iter_hint_pep695_forwardref_beartype__')
+    '__iter_hint_pep695_unsubbed_forwardrefs_beartype__')
 '''
 Unqualified basename of the :pep:`695`-compliant **type alias unqualified
 relative forward reference iterator** (i.e., generator iteratively creating and

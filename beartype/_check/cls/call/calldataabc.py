@@ -17,14 +17,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import abstractmethod
-from beartype.roar import BeartypeDecorHintForwardRefException
+# from beartype.roar import BeartypeDecorHintPep484ForwardRefStrException
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatyping import (
     Decoratee,
     Pep649749HintableAnnotations,
-    TypeException,
+    # TypeException,
     TypeStack,
 )
 from beartype._data.typing.datatypingport import Hint
@@ -63,7 +64,7 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
 
         See also the parameter of the same name accepted by the
         :func:`beartype._decor.decorcore.beartype_object` function.
-    decoratee : Optional[Callable]
+    decoratee : Callable | type | None
         **Decoratee** (i.e., external callable or class currently being
         decorated by the :func:`beartype.beartype` decorator if any), defined as
         either:
@@ -71,7 +72,7 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
         * If an external callable or class is currently being decorated by the
           :func:`beartype.beartype` decorator, that callable or class.
         * Else, :data:`None`.
-    decoratee_annotations : Optional[dict[str, Hint]]
+    decoratee_annotations : dict[str, Hint] | None
         **Decoratee type hint dictionary**, defined as either:
 
         * If an external callable is currently being decorated by the
@@ -151,17 +152,49 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
         self.decoratee = decoratee
         self.decoratee_annotations = decoratee_annotations
 
-    # ..................{ RESOLVERS                          }..................
+    # ..................{ MINIFIERS                          }..................
+    def minify(self) -> 'BeartypeCallDataABC':
+        '''
+        **Beartype callable decorator call minimal metadata** (i.e., dataclass
+        encapsulating the minimal metadata required to type-check the callable
+        currently being decorated by the :func:`beartype.beartype` decorator at
+        the post-decoration time that callable is subsequently called) minified
+        from this possibly maximal metadata.
+
+        Specifically:
+
+        * If this metadata is **beartype callable decorator call maximal
+          metadata** (i.e.,
+          :class:`beartype._check.cls.call.calldatadecorfunc.BeartypeCallDecorFuncData`
+          instance), this minifier creates and returns the minimal metadata from
+          this maximal metadata by calling the
+          :meth:`beartype._check.cls.call.calldatadecorfunc.BeartypeCallDecorFuncData.minify`
+          method.
+        * Else, this minifier transparently returns this metadata unmodified.
+          All other metadata is effectively already "minified."
+
+        Returns
+        -------
+        BeartypeCallDataABC
+            Minimal metadata minified from this possibly maximal metadata.
+        '''
+
+        # Return this metadata unmodified, which suffices in the common case for
+        # concrete subclasses of this abstract superclass whose implementations
+        # store only the minimal metadata required.
+        return self
+
+    # ..................{ ABSTRACT ~ resolvers               }..................
     @abstractmethod
     def resolve_hint_pep484_ref_str(
         self,
 
         # Mandatory parameters.
-        hint: str,
         conf: BeartypeConf,
+        hint: str,
+        hint_parent_sane: Optional[HintSane],
 
         # Optional parameters.
-        exception_cls: TypeException = BeartypeDecorHintForwardRefException,
         exception_prefix: str = '',
     ) -> Hint:
         '''
@@ -178,12 +211,24 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
 
         Parameters
         ----------
-        hint : str
-            Stringified forward reference type hint to be resolved.
         conf : BeartypeConf
             **Beartype configuration** (i.e., self-caching dataclass
             encapsulating all flags, options, settings, and other metadata
             configuring this resolution).
+        hint : str
+            Stringified forward reference type hint to be resolved.
+        hint_parent_sane : Optional[HintSane]
+            Either:
+
+            * If this forward reference is a **root** (i.e., top-most parent
+              hint of a tree of child hints), :data:`None`.
+            * Else, this forward reference is a **child** of some parent hint.
+              In this case, the **sanified parent type hint metadata** (i.e.,
+              immutable and thus hashable object encapsulating *all* metadata
+              previously returned by :mod:`beartype._check.convert.convmain`
+              sanifiers after sanitizing the possibly PEP-noncompliant parent
+              hint of this forward reference into a fully PEP-compliant parent
+              hint).
         exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
             Type of exception to be raised in the event of a fatal error.
             Defaults to :exc:`.BeartypeDecorHintForwardRefException`.

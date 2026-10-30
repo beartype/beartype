@@ -15,13 +15,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484ForwardRefStrException
-from beartype._check.forward.reference.fwdrefproxy import (
-    proxy_hint_pep484_ref_str_subbable)
-from beartype._check.forward.scope.fwdscopemake import (
-    make_scope_forward_decor_curr)
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.call.calldatadecorabc import (
     BeartypeCallDecorDataABC)
-from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._check.cls.hint.hintsane import HintSane
+from beartype._check.forward.reference.fwdrefproxy import (
+    proxy_hint_pep484_ref_str_subbable)
+from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
+from beartype._check.forward.scope.fwdscopemake import (
+    make_scope_forward_decor_curr)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     LexicalScope,
@@ -35,19 +37,19 @@ from beartype._util.text.utiltextlabel import (
     label_callable,
     label_exception_traceback,
 )
-from beartype._util.utilobjget import (
-    get_object_basename_scoped,
-    get_object_name,
-)
+from beartype._util.utilobjget import get_object_basename_scoped
+from typing import Optional
 
 # ....................{ RESOLVERS ~ metadata               }....................
 #FIXME: Unit test us up, please.
 def resolve_hint_pep484_ref_str_caller_external(
     # Mandatory parameters.
+    call_curr: BeartypeCallDataABC,
+    conf: BeartypeConf,
     hint: str,
+    hint_parent_sane: Optional[HintSane],
 
     # Optional parameters.
-    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_cls: TypeException = (
         BeartypeDecorHintPep484ForwardRefStrException),
     exception_prefix: str = '',
@@ -67,15 +69,27 @@ def resolve_hint_pep484_ref_str_caller_external(
 
     Parameters
     ----------
+    call_curr : BeartypeCallDataABC
+        **Beartype call metadata** (i.e., dataclass aggregating *all* common
+        metadata encapsulating the user-defined callable, type, or statement
+        currently being type-checked by the end user).
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the referent referred to by
+        this forward reference).
     hint : str
         Stringified forward reference type hint to be resolved.
-    conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
-        **Beartype configuration** (i.e., dataclass encapsulating all options
-        configuring this resolution). For callers for whom passing this
-        configuration is non-trivial, note that this configuration currently
-        only governs superficial options (e.g., color in raised exception
-        messages) and is thus mostly ignorable. Defaults to the default
-        beartype configuration as a reasonable fallback.
+    hint_parent_sane : Optional[HintSane]
+        Either:
+
+        * If this forward reference is a **root** (i.e., top-most parent hint of
+          a tree of child hints), :data:`None`.
+        * Else, this forward reference is a **child** of some parent hint. In
+          this case, the **sanified parent type hint metadata** (i.e., immutable
+          and thus hashable object encapsulating *all* metadata previously
+          returned by :mod:`beartype._check.convert.convmain` sanifiers after
+          sanitizing the possibly PEP-noncompliant parent hint of this forward
+          reference into a fully PEP-compliant parent hint).
     exception_cls : Type[Exception], default: BeartypeDecorHintPep484ForwardRefStrException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep484ForwardRefStrException`.
@@ -107,14 +121,17 @@ def resolve_hint_pep484_ref_str_caller_external(
     # encapsulating a call to a public beartype callable by an external
     # callable originating from a third-party package or module.
     scope_forward = make_scope_forward_caller_external(
+        call_curr=call_curr,
+        conf=conf,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
 
     # Defer to this low-level resolver.
     return _resolve_hint_pep484_ref_str(
-        hint=hint,
         conf=conf,
+        hint=hint,
+        hint_parent_sane=hint_parent_sane,
         scope_forward=scope_forward,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
@@ -126,6 +143,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
     # Mandatory parameters.
     decor_curr: BeartypeCallDecorDataABC,
     hint: str,
+    hint_parent_sane: Optional[HintSane],
 
     # Optional parameters.
     exception_cls: TypeException = (
@@ -152,6 +170,17 @@ def resolve_hint_pep484_ref_str_decor_curr(
         decorated callable at the time that callable is subsequently called).
     hint : str
         Stringified forward reference type hint to be resolved.
+    hint_parent_sane: Optional[HintSane]
+        Either:
+
+        * If this forward reference is a **root** (i.e., top-most parent hint of
+          a tree of child hints), :data:`None`.
+        * Else, this forward reference is a **child** of some parent hint. In
+          this case, the **sanified parent type hint metadata** (i.e., immutable
+          and thus hashable object encapsulating *all* metadata previously
+          returned by :mod:`beartype._check.convert.convmain` sanifiers after
+          sanitizing the possibly PEP-noncompliant parent hint of this forward
+          reference into a fully PEP-compliant parent hint).
     exception_cls : Type[Exception], default: BeartypeDecorHintPep484ForwardRefStrException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep484ForwardRefStrException`.
@@ -181,6 +210,19 @@ def resolve_hint_pep484_ref_str_decor_curr(
         f'{repr(exception_cls)} not exception type.')
     # print(f'Resolving decorator-time PEP 484 forward reference {repr(hint)} under {repr(decor_curr)}...')
 
+    #FIXME: Non-ideal. *ALL* builtin objects that are valid as type hints (so,
+    #"None" and all builtin types, basically) should be handled similarly.
+    #Special-casing "None" like this may be trivial, but it's also insufficient.
+    #
+    #Perhaps more importantly, however, this fails to account for *SHADOWING*.
+    #Although inadvisable, Python permits both globals and locals to shadow
+    #builtins. Ergo, this doesn't work for even "None" in the general case.
+
+    # # Unlike a named forward reference, the None keyword requires no namespace.
+    # # Resolve it even for dynamically defined callables without a module.
+    # if hint == 'None':
+    #     return None
+
     # ..................{ LOCALS                             }..................
     # Decorated callable and metadata associated with that callable, localized
     # to improve both readability and negligible efficiency when accessed below.
@@ -194,41 +236,6 @@ def resolve_hint_pep484_ref_str_decor_curr(
     # * Else, defer to the is_func_nested() tester.
     func_is_nested = bool(cls_stack) or is_func_nested(func)
 
-    # Fully-qualified name of the module declaring the decorated callable if
-    # that callable defines the "__module__" dunder attribute *OR* "None"
-    # otherwise (i.e., if that callable fails to define that attribute).
-    func_module_name = get_object_module_name_or_none(func)
-
-    # If the decorated callable fails to define the "__module__" dunder
-    # attribute, there exists *NO* known module against which to resolve this
-    # stringified type hint. Since this implies that this hint *CANNOT* be
-    # reliably resolved, raise an exception.
-    #
-    # Note that this is an uncommon edge case that nonetheless occurs frequently
-    # enough to warrant explicit handling by raising a more human-readable
-    # exception than would otherwise be raised (e.g., if the lower-level
-    # get_object_module_name() getter were called instead above). Notably, the
-    # third-party "markdown-exec" package behaved like this -- and possibly
-    # still does. See also:
-    #     https://github.com/beartype/beartype/issues/381
-    if not func_module_name:
-        # Fully-qualified name of the currently decorated callable.
-        func_name = get_object_name(func)
-
-        # Human-readable label describing that callable.
-        func_label = label_callable(func)
-
-        # Raise this exception.
-        raise exception_cls(
-            f'{exception_prefix}'
-            f'PEP 484 forward reference type hint "{hint}" unresolvable, as '
-            f'callable "{func_name}.__module__" dunder attribute undefined '
-            f'(e.g., as {func_label} defined dynamically in-memory). '
-            f'So much bad stuff is happening here all at once that '
-            f'@beartype can no longer cope with the explosion in badness.'
-        )
-    # Else, the decorated callable defines that attribute.
-
     # ..................{ AMBIGUITY                          }..................
     # If...
     if (
@@ -238,7 +245,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
         # decorator) *AND*...
         cls_stack is None and
         # That callable is nested (i.e., declared in the body of another
-        # pure-Python callable or type)...
+        # pure-Python callable or class)...
         func_is_nested
     ):
         # print(f'Detected nested hint {repr(hint)} in directly decorated callable...')
@@ -264,7 +271,7 @@ def resolve_hint_pep484_ref_str_decor_curr(
         func_basenames_scoped = frozenset(
             get_object_basename_scoped(func).rsplit(sep='.'))
 
-        # If this hint is the unqualified basename of a parent callable or type
+        # If this hint is the unqualified basename of a parent callable or class
         # of the decorated callable, this hint is a relative forward reference
         # to a parent callable or type of the decorated callable that is
         # currently being defined but has yet to be defined in full. If PEP 563
@@ -376,13 +383,53 @@ def resolve_hint_pep484_ref_str_decor_curr(
         if hint in func_basenames_scoped:
             # print(f'Proxying nested hint {repr(hint)}...')
 
+            # Fully-qualified name of the module declaring the decorated
+            # callable if that callable defines the "__module__" dunder
+            # attribute *OR* "None" otherwise (i.e., if that callable fails to
+            # define that attribute).
+            func_module_name = get_object_module_name_or_none(func)
+
+            # If the decorated callable fails to define the "__module__" dunder
+            # attribute, there exists *NO* known module against which to resolve
+            # this stringified type hint. Since this implies that this hint
+            # *CANNOT* be reliably resolved, raise an exception.
+            #
+            # Note that this is an uncommon edge case that nonetheless occurs
+            # frequently enough to warrant explicit handling by raising a more
+            # human-readable exception than would otherwise be raised (e.g., if
+            # the lower-level get_object_module_name() getter were called
+            # instead above). Notably, the third-party "markdown-exec" package
+            # behaved like this -- and possibly still does. See also:
+            #     https://github.com/beartype/beartype/issues/381
+            if not func_module_name:
+                # Human-readable label describing that callable.
+                func_label = label_callable(func)
+
+                # Raise this exception.
+                raise exception_cls(
+                    f'{exception_prefix}'
+                    f'PEP 484 stringified forward reference type hint "{hint}" '
+                    f'referring to parent callable or class unresolvable, as '
+                    f'this hint annotates '
+                    f'@beartype-decorated nested callable {func_label} with '
+                    f'undefined "__module__" dunder attribute '
+                    f'(e.g., as {func_label} defined dynamically in-memory). '
+                    f'So much bad stuff is happening here all at once that '
+                    f'@beartype can no longer cope with the explosion in '
+                    f'badness.'
+                )
+            # Else, the decorated callable defines that attribute.
+
             # Beartype-specific forward reference proxy deferring the detection
             # of this type until required by a runtime type-check performed
             # during some subsequent call to the currently decorated callable.
             hint_resolved = proxy_hint_pep484_ref_str_subbable(
+                call_curr=decor_curr,
+                conf=decor_curr.conf,
+                exception_prefix=exception_prefix,
                 scope_name=func_module_name,
                 hint_name=hint,
-                exception_prefix=exception_prefix,
+                hint_parent_sane=hint_parent_sane,
             )
 
             # Resolve this stringified forward reference to this proxy.
@@ -440,8 +487,9 @@ def resolve_hint_pep484_ref_str_decor_curr(
     # Non-string type hint resolved from this stringified type hint against both
     # the global and local scopes of the decorated callable.
     hint_resolved = _resolve_hint_pep484_ref_str(
-        hint=hint,
         conf=decor_curr.conf,
+        hint=hint,
+        hint_parent_sane=hint_parent_sane,
         scope_forward=decoratee_scope_forward,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
@@ -454,8 +502,9 @@ def resolve_hint_pep484_ref_str_decor_curr(
 #FIXME: Unit test us up, please.
 def _resolve_hint_pep484_ref_str(
     # Mandatory parameters.
-    hint: str,
     conf: BeartypeConf,
+    hint: str,
+    hint_parent_sane: Optional[HintSane],
     scope_forward: LexicalScope,
 
     # Optional parameters.
@@ -477,8 +526,6 @@ def _resolve_hint_pep484_ref_str(
 
     Parameters
     ----------
-    hint : str
-        Stringified forward reference type hint to be resolved.
     conf : BeartypeConf
         **Beartype configuration** (i.e., dataclass encapsulating all options
         configuring this resolution). For callers for whom passing this
@@ -486,6 +533,19 @@ def _resolve_hint_pep484_ref_str(
         only governs superficial options (e.g., color in raised exception
         messages) and is thus mostly ignorable. The default configuration
         suffices as a reasonable fallback.
+    hint : str
+        Stringified forward reference type hint to be resolved.
+    hint_parent_sane : Optional[HintSane], default: None
+        Either:
+
+        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
+          of child hints), :data:`None`.
+        * Else, the passed hint is a **child** of some parent hint. In this
+          case, the **sanified parent type hint metadata** (i.e., immutable and
+          thus hashable object encapsulating *all* metadata previously returned
+          by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
+          the possibly PEP-noncompliant parent hint of this child hint into a
+          fully PEP-compliant parent hint).
     scope_forward : LexicalScope
         **Forward scope** (i.e., dictionary mapping from the names to values of
         all attributes accessible to the lexical scope of the passed decorated
@@ -516,6 +576,15 @@ def _resolve_hint_pep484_ref_str(
         f'{repr(conf)} not beartype configuration.')
     assert isinstance(scope_forward, dict), (
         f'{repr(scope_forward)} not dictionary.')
+
+    # If this forward scope is a high-level "BeartypeForwardScope" instance
+    # capable of proxying forward references (rather than merely a low-level
+    # "dict" object), prepare this forward scope to resolve unresolved hints
+    # into forward reference proxies against the passed runtime hint context.
+    if isinstance(scope_forward, BeartypeForwardScope):
+        scope_forward.init_resolve_pep484_hint_strs(
+            hint_parent_sane=hint_parent_sane)
+    # Else, this forward scope is merely a low-level "dict" object.
 
     # Attempt to resolve this stringified type hint into a non-string type hint
     # against both the global and local scopes of the decorated callable.
@@ -557,6 +626,15 @@ def _resolve_hint_pep484_ref_str(
         # Raise a human-readable exception wrapping the typically
         # non-human-readable exception raised above.
         raise exception_cls(exception_message) from exception
+
+    # If this forward scope is a high-level "BeartypeForwardScope" instance
+    # capable of proxying forward references (rather than merely a low-level
+    # "dict" object), prevent this forward scope from resolving any further
+    # unresolved type hints into forward reference proxies until the next call
+    # to the scope_forward.init_resolve_pep484_hint_strs() method called above.
+    if isinstance(scope_forward, BeartypeForwardScope):
+        scope_forward.deinit_resolve_pep484_hint_strs()
+    # Else, this forward scope is merely a low-level "dict" object.
 
     # Return this resolved hint.
     return hint_resolved

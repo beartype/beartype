@@ -130,7 +130,7 @@ def test_pep563_class_self_reference_override() -> None:
 # ....................{ TESTS ~ scope                      }....................
 def test_pep563_module() -> None:
     '''
-    Test module-scoped :pep:`563` support implemented in the
+    Test module-scoped :pep:`563` support implemented by the
     :func:`beartype.beartype` decorator.
     '''
 
@@ -166,18 +166,16 @@ def test_pep563_module() -> None:
     # ....................{ ASSERTS                        }....................
     # Assert that all annotations of a callable *NOT* decorated by @beartype
     # are postponed under PEP 563 as expected.
-    assert all(
-        isinstance(param_hint, str)
-        for arg_name, param_hint in get_minecraft_end_txt_annotations.items()
-    )
+    for arg_name, arg_hint in get_minecraft_end_txt_annotations.items():
+        assert isinstance(arg_hint, str)
 
-    # Assert that *NO* annotations of a @beartype-decorated callable are
-    # postponed, as @beartype implicitly resolves all annotations.
-    assert all(
-        not isinstance(param_hint, str)
-        for arg_name, param_hint in (
-            get_minecraft_end_txt_stanza_annotations.items())
-    )
+    # Assert that all annotations of even a @beartype-decorated callable are
+    # postponed. Previously, @beartype implicitly resolved all annotations.
+    # Currently, @beartype no longer does that -- mostly because that doing has
+    # become increasingly non-trivial, fragile, and possibly even dangerous.
+    for arg_name, arg_hint in (
+        get_minecraft_end_txt_stanza_annotations.items()):
+        assert isinstance(arg_hint, str)
 
     # Assert that a @beartype-decorated callable works under PEP 563.
     assert get_minecraft_end_txt_stanza(

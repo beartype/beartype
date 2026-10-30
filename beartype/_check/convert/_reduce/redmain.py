@@ -93,6 +93,37 @@ def reduce_hint(
       ``**kwargs``) as a trailing parameter, matching all mandatory parameters
       *not* explicitly required by those unmemoized reducers.
 
+    Design
+    ------
+    **Lower-level unmemoized reducers** (i.e., functions mapped to values of the
+    :data:`.HINT_SIGN_TO_REDUCE_HINT_UNCACHED` dictionary) transitively called
+    by this high-level reducer entry point may efficiently detect metadata
+    describing the current object annotated by this hint if any as follows:
+
+    * To detect whether a hint is a **root hint** (i.e., subscripts *no* parent
+      hint as a child hint of that parent hint):
+
+      #. Accept the ``hint_parent_sane`` parameter.
+      #. A hint is a root hint if this expression is :data:`True`:
+
+         .. code-block:: python
+
+            hint_parent_sane is None
+
+    * To detect whether a hint is a root hint annotating either the return or an
+      arbitrary parameter of some callable:
+
+      #. Accept both the ``hint_parent_sane`` and ``pith_name`` parameters.
+      #. A hint a root hint annotating either the return or an arbitrary
+         parameter of some callable if this expression is :data:`True`:
+
+         .. code-block:: python
+
+            (
+                hint_parent_sane is None and
+                pith_name is not None
+            )
+
     Parameters
     ----------
     call_curr : BeartypeCallDataABC
@@ -540,6 +571,9 @@ def reduce_hint_child(**kwargs) -> HintSane:
 
     #FIXME: [SPEED] *STUPIDLY SLOW*. There has *GOT* to be a saner (and, more
     #importantly, more efficient) means of accomplishing the same ends.
+    #FIXME: Uhh... wait. Obviously, the saner and more efficient means of doing
+    #this *IS JUST TO DELETE THESE KEYS MANUALLY.* Wow. That was dumb. *lolbro*
+
     # Remove all unsafe keyword parameters (i.e., parameters that are
     # inapplicable to child hints and thus *NOT* safely passable to the
     # subsequently called reduce_hint() function) from this dictionary.
@@ -549,6 +583,11 @@ def reduce_hint_child(**kwargs) -> HintSane:
     return reduce_hint(**kwargs)
 
 
+#FIXME: *SUPER-DANGEROUS*. Shift this test-specific function outside the main
+#codebase and into the "beartype_test._util" subpackage somewhere. Seriously.
+#Bad juju here, yo.
+#FIXME: Bad function name too, honestly. Once moved elsewhere, rename this
+#function to the unambiguous reduce_hint_call_external(). *sigh*
 def reduce_hint_any(
     # Mandatory parameters.
     hint: Hint,
