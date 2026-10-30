@@ -102,6 +102,7 @@ from beartype._conf.conftest import (
     die_if_conf_kwargs_invalid,
     issue_warning_deprecated_option,
     sanify_conf_kwargs,
+    sanify_conf_ignore_arg_names,
 )
 from beartype._conf.decorplace.confplaceenum import BeartypeDecorPlace
 from beartype._conf._confget import get_is_color
@@ -120,6 +121,7 @@ from beartype._util.utilobjget import get_object_type_basename
 from threading import Lock
 from typing import (
     TYPE_CHECKING,
+    FrozenSet,
     Optional,
 )
 
@@ -169,6 +171,8 @@ class BeartypeConf(object):
         source to target type hints), enabling callers to lie to both their
         users and all other packages other than :mod:`beartype`. See also the
         :meth:`__new__` method docstring.
+    _ignore_arg_names : frozenset[str]
+        Names of declared parameters exempt from runtime type-checking.
     _is_color : Optional[bool]
         Tri-state boolean governing how and whether beartype colours
         **type-checking violations** (i.e.,
@@ -285,6 +289,7 @@ class BeartypeConf(object):
         '_conf_kwargs',
         '_hash',
         '_hint_overrides',
+        '_ignore_arg_names',
         '_is_color',
         '_is_debug',
         '_is_pep484_tower',
@@ -315,6 +320,7 @@ class BeartypeConf(object):
         _conf_kwargs: DictStrToAny
         _hash: int
         _hint_overrides: FrozenDict
+        _ignore_arg_names: FrozenSet[str]
         _is_color: BoolTristate
         _is_debug: bool
         _is_pep484_tower: bool
@@ -355,6 +361,7 @@ class BeartypeConf(object):
         claw_is_pep526: bool = True,
         claw_skip_package_names: CollectionStrs = (),
         hint_overrides: FrozenDict = FROZENDICT_EMPTY,
+        ignore_arg_names: CollectionStrs = (),
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,  # pyright: ignore
         is_debug: bool = False,
         is_pep484_tower: bool = False,
@@ -562,6 +569,22 @@ class BeartypeConf(object):
                @beartype
                def lies(all_lies: list[int | float]) -> int | float:
                    return all_lies[0]
+        ignore_arg_names : Collection[str], optional
+            Collection of declared parameter names exempt from runtime
+            type-checking. Names must be unqualified Python identifiers other
+            than keywords. Strings and bytes are not accepted as collections;
+            mappings are accepted as collections of their keys. This collection
+            is copied into a :class:`frozenset`, so order, duplicates, and later
+            mutations of the supplied collection have no effect.
+
+            Unknown names are ignored, allowing this configuration to be shared
+            across callables and import hooks. A variadic parameter name exempts
+            its entire ``*args`` or ``**kwargs`` group, not an individual keyword
+            passed to that group. Other parameters and return values retain
+            their normal checks. An ignored annotation is not sanified and the
+            original annotations are not modified. Reserved ``__bear`` parameter
+            names remain prohibited when annotated. Defaults to the empty
+            collection, preserving all parameter checks.
         is_color : BoolTristateUnpassable
             Tri-state boolean governing how and whether beartype colours
             **type-checking violations** (i.e.,
@@ -783,6 +806,8 @@ class BeartypeConf(object):
         BeartypeConfParamException
             If either:
 
+            * ``ignore_arg_names`` is not a collection of unqualified
+              non-keyword Python identifiers.
             * ``is_color`` is *not* a tri-state boolean.
             * ``is_debug`` is *not* a boolean.
             * ``is_pep484_tower`` is *not* a boolean.
@@ -807,6 +832,9 @@ class BeartypeConf(object):
             * ``claw_decoration_position_types``.
             * ``is_check_pep557``.
         '''
+
+        # Normalize mutable collections before hashing or consulting the cache.
+        ignore_arg_names = sanify_conf_ignore_arg_names(ignore_arg_names)
 
         # In a non-reentrant thread lock isolated to this constructor...
         #
@@ -869,6 +897,7 @@ class BeartypeConf(object):
                 claw_is_pep526,
                 claw_skip_package_names,
                 hint_overrides,
+                ignore_arg_names,
                 is_color,
                 is_debug,
                 is_pep484_tower,
@@ -902,6 +931,7 @@ class BeartypeConf(object):
                 claw_is_pep526=claw_is_pep526,
                 claw_skip_package_names=claw_skip_package_names,
                 hint_overrides=hint_overrides,
+                ignore_arg_names=ignore_arg_names,
                 is_color=is_color,
                 is_debug=is_debug,
                 is_pep484_tower=is_pep484_tower,
@@ -982,6 +1012,7 @@ class BeartypeConf(object):
             self._claw_skip_package_names = conf_kwargs[
                 'claw_skip_package_names']  # pyright: ignore
             self._hint_overrides = conf_kwargs['hint_overrides']  # pyright: ignore
+            self._ignore_arg_names = conf_kwargs['ignore_arg_names']  # pyright: ignore
             self._is_color = conf_kwargs['is_color']  # pyright: ignore
             self._is_debug = conf_kwargs['is_debug']  # pyright: ignore
             self._is_pep484_tower = conf_kwargs['is_pep484_tower']  # pyright: ignore
@@ -1150,6 +1181,17 @@ class BeartypeConf(object):
         '''
 
         return self._warning_cls_on_decorator_exception
+
+    @property
+    def ignore_arg_names(self) -> FrozenSet[str]:
+        '''
+        Frozen set of declared parameter names exempt from runtime checking.
+
+        Unknown names have no effect. Variadic names exempt their entire
+        ``*args`` or ``**kwargs`` group; return values remain checked.
+        '''
+
+        return self._ignore_arg_names
 
     # ..................{ PROPERTIES ~ options : bool        }..................
     @property
