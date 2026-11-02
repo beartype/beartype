@@ -356,6 +356,7 @@ def sanify_conf_kwargs(conf_kwargs: DictStrToAny) -> None:
 # ....................{ PRIVATE ~ globals                  }....................
 _ARG_NAMES_BOOL = (
     'is_debug',
+    'is_func_args_preserve',
     'is_pep484_tower',
     'is_pep557_fields',
     'is_random',

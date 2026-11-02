@@ -555,10 +555,12 @@ def test_decor_explicit_generator_protocol() -> None:
         finally:
             closed.append(True)
 
-    for hint in (None, Generator[int, object, int]):
-        original.__annotations__ = {'value': int, 'label': str}
-        if hint is not None:
-            original.__annotations__['return'] = hint
+    for annotations in (
+        {'value': int, 'label': str},
+        {'value': int, 'label': str, 'return': Generator[int, object, int]},
+        {'return': Generator[int, object, int]},
+    ):
+        original.__annotations__ = annotations
         checked = beartype(original)
         assert isgeneratorfunction(checked) is True
         gen = checked(4, label='y')
@@ -571,7 +573,7 @@ def test_decor_explicit_generator_protocol() -> None:
         assert next(gen) == 3
         assert gen.throw(ValueError()) == ('x', 'caught')
         gen.close()
-    assert closed == [True, True, True, True]
+    assert closed == [True] * 6
 
 
 async def test_decor_explicit_async_generator_protocol() -> None:
@@ -593,10 +595,12 @@ async def test_decor_explicit_async_generator_protocol() -> None:
         finally:
             closed.append(True)
 
-    for hint in (None, AsyncGenerator[int, object]):
-        original.__annotations__ = {'value': int, 'label': str}
-        if hint is not None:
-            original.__annotations__['return'] = hint
+    for annotations in (
+        {'value': int, 'label': str},
+        {'value': int, 'label': str, 'return': AsyncGenerator[int, object]},
+        {'return': AsyncGenerator[int, object]},
+    ):
+        original.__annotations__ = annotations
         checked = beartype(original)
         assert isasyncgenfunction(checked) is True
         gen = checked(4, label='y')
@@ -608,7 +612,7 @@ async def test_decor_explicit_async_generator_protocol() -> None:
         assert await gen.__anext__() == 3
         assert await gen.athrow(ValueError()) == ('x', 'caught')
         await gen.aclose()
-    assert closed == [True, True, True, True]
+    assert closed == [True] * 6
 
 
 def test_decor_fallback_live_default_values() -> None:
@@ -849,3 +853,70 @@ def test_decor_explicit_omitted_default_forward_reference(monkeypatch) -> None:
     checked.__defaults__ = ('wrong',)
     with raises(BeartypeCallHintParamViolation):
         checked()
+
+
+def test_decor_conf_disable_signature_preservation() -> None:
+    '''Opting out retains unchecked, live defaults and checks explicit values.'''
+    from beartype import beartype, BeartypeConf
+    from beartype.roar import (
+        BeartypeCallHintParamViolation, BeartypeCallHintReturnViolation)
+    from inspect import CO_VARARGS, CO_VARKEYWORDS
+    from pytest import raises
+
+    def original(value: int = 'default', /, *, label: str = 1) -> tuple:
+        return value, label
+
+    preserved = beartype(original)
+    generic = beartype(original, conf=BeartypeConf(is_func_args_preserve=False))
+    assert generic.__code__.co_flags & CO_VARARGS
+    assert generic.__code__.co_flags & CO_VARKEYWORDS
+    with raises(BeartypeCallHintParamViolation):
+        preserved()
+    assert generic() == ('default', 1)
+    assert generic(2, label='x') == (2, 'x')
+    with raises(BeartypeCallHintParamViolation):
+        generic('wrong')
+    with raises(BeartypeCallHintParamViolation):
+        generic(2, label=1)
+
+    original.__defaults__ = (3,)
+    original.__kwdefaults__['label'] = 'new'
+    assert generic() == (3, 'new')
+    with raises(BeartypeCallHintParamViolation):
+        preserved()
+
+    @beartype(conf=BeartypeConf(is_func_args_preserve=False))
+    def bad_return(value: int) -> str:
+        return value
+
+    with raises(BeartypeCallHintReturnViolation):
+        bad_return(1)
+
+
+def test_decor_return_only_forwarding() -> None:
+    '''Return-only checks forward all unannotated arguments and decorator extras.'''
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintReturnViolation
+    from functools import wraps
+    from pytest import raises
+
+    @beartype
+    def accepts(first, /, second=2, *rest, label='x', **extra) -> tuple:
+        return first, second, rest, label, extra
+
+    assert accepts(1) == (1, 2, (), 'x', {})
+    assert accepts(1, 3, 4, label='y', other=5) == (1, 3, (4,), 'y', {'other': 5})
+    with raises(TypeError):
+        accepts()
+
+    def original(value) -> str:
+        return value
+
+    @wraps(original)
+    def wrapper(*args, prefix='', **kwargs):
+        return prefix + original(*args, **kwargs)
+
+    checked = beartype(wrapper)
+    assert checked('value', prefix='extra ') == 'extra value'
+    with raises(BeartypeCallHintReturnViolation):
+        beartype(original)(1)

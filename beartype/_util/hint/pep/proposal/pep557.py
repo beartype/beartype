@@ -11,12 +11,35 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep557Exception
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.hint.sign.datahintsigns import (
     HintSignPep557DataclassInitVar)
+from dataclasses import dataclass, field
 
 # ....................{ GETTERS                            }....................
+@callable_cached
+def get_func_pep557_init_arg_default_factory() -> object:
+    '''
+    :pep:`557`-compliant **dataclass constructor default factory** (i.e., the
+    singleton sentinel substituted for the default values of fields initialized
+    with :func:`dataclasses.field` and its ``default_factory`` parameter).
+
+    Inspecting a generated constructor obtains this sentinel without accessing
+    private attributes of :mod:`dataclasses`. Memoization creates the temporary
+    dataclass only once.
+    '''
+
+    @dataclass
+    class DefaultFactoryDataclass(object):
+        values: list = field(default_factory=list)
+
+    defaults = DefaultFactoryDataclass.__init__.__defaults__
+    assert defaults is not None, 'Dataclass constructor defaults missing.'
+    return defaults[0]
+
+
 def get_hint_pep557_initvar_arg(
     # Mandatory parameters.
     hint: Hint,

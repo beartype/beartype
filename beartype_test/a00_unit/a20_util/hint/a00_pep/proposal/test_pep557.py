@@ -39,3 +39,20 @@ def test_get_hint_pep557_initvar_arg() -> None:
     with raises(BeartypeDecorHintPep557Exception):
         get_hint_pep557_initvar_arg(
             'Large codes of fraud and woe; not understood')
+
+
+def test_get_func_pep557_init_arg_default_factory() -> None:
+    '''The cached sentinel matches positional and keyword-only factory defaults.'''
+    from beartype._util.hint.pep.proposal.pep557 import (
+        get_func_pep557_init_arg_default_factory)
+    from dataclasses import dataclass, field
+
+    @dataclass
+    class Example:
+        values: list[int] = field(default_factory=list)
+        labels: list[str] = field(default_factory=list, kw_only=True)
+
+    sentinel = get_func_pep557_init_arg_default_factory()
+    assert get_func_pep557_init_arg_default_factory() is sentinel
+    assert Example.__init__.__defaults__[0] is sentinel
+    assert Example.__init__.__kwdefaults__['labels'] is sentinel

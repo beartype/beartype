@@ -29,6 +29,24 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 
+# ....................{ TESTERS ~ default                  }....................
+def is_func_arg_default_typecheckable(arg_default: object) -> bool:
+    '''
+    :data:`True` only if this default can be type-checked before entering the
+    callable body.
+
+    Dataclass constructors replace default-factory placeholders with factory
+    results inside their bodies. Such placeholders are not actual field values
+    and cannot be checked against field annotations by a wrapper.
+    '''
+
+    # Defer this PEP-specific dependency until a default needs checking.
+    from beartype._util.hint.pep.proposal.pep557 import (
+        get_func_pep557_init_arg_default_factory)
+
+    return arg_default is not get_func_pep557_init_arg_default_factory()
+
+
 # ....................{ RAISERS                            }....................
 def die_unless_func_args_len_flexible_equal(
     # Mandatory parameters.

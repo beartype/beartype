@@ -96,11 +96,14 @@ from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
     iter_func_args,
 )
-from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
+from beartype._util.func.arg.utilfuncargtest import (
+    is_func_arg_default_typecheckable,
+    is_func_arg_variadic_keyword,
+)
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._data.kind.datakindiota import SENTINEL
+from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from collections.abc import MutableSet
-from dataclasses import _HAS_DEFAULT_FACTORY  # type: ignore[attr-defined]
 from typing import Optional
 from warnings import catch_warnings
 
@@ -123,9 +126,10 @@ def code_check_args(
         Tuple containing the parameter-checking code (empty if no parameters
         require checking), whether to preserve the callable's explicit
         signature, and the arguments forwarding this call to the wrappee.
-        Explicit signatures bind parameters and defaults natively. Isomorphic
-        decorators, parameters shadowing builtins used by generated code, and
-        dataclass constructors with default factories retain the generic
+        Explicit signatures bind parameters and defaults natively when
+        ``conf.is_func_args_preserve`` is enabled. Return-only annotations,
+        isomorphic decorators, parameters shadowing builtins used by generated
+        code, and dataclass constructors with default factories retain the generic
         ``*args, **kwargs`` calling convention.
 
     Raises
@@ -142,6 +146,15 @@ def code_check_args(
     assert isinstance(decor_func, BeartypeCallDecorFuncData), (
         f'{repr(decor_func)} not beartype decorator call metadata.')
 
+    # No parameter checks or signature introspection are needed when only the
+    # return is annotated. Generic forwarding still passes all unannotated
+    # arguments, including arguments consumed by isomorphic decorators.
+    if (
+        len(decor_func.decoratee_annotations) == 1 and
+        ARG_NAME_RETURN in decor_func.decoratee_annotations
+    ):
+        return _CODE_CHECK_ARGS_NONE
+
     # ..................{ LOCALS ~ func                      }..................
     # Only preserve the signature when it belongs to the callable whose
     # annotations are checked. Isomorphic wrappers may consume extra arguments.
@@ -151,13 +164,13 @@ def code_check_args(
         is_unwrap=False,
     ))
     is_signature_explicit = (
+        decor_func.conf.is_func_args_preserve and
         decor_func.func_wrappee is decor_func.func_wrappee_wrappee and
         decor_func.func_wrapper_name.isidentifier() and
         # Type aliases alone do not protect helper calls such as isinstance()
         # and len(), warning formatting, or generator protocol builtins.
-        # Dataclass constructors turn this placeholder into a factory result
-        # inside their bodies; the placeholder itself is not a field value.
-        all(name not in BUILTINS_DICT and default is not _HAS_DEFAULT_FACTORY
+        all(name not in BUILTINS_DICT and
+            is_func_arg_default_typecheckable(default)
             for _, name, default in args_meta)
     )
     func_call_parts = []
@@ -262,18 +275,19 @@ def code_check_args(
                 f'reserved by @beartype.')
 
         if is_signature_explicit:
-            if arg_kind in _ARG_KINDS_POSITIONAL:
-                func_call_parts.append(arg_name)
-            elif arg_kind is ArgKind.VARIADIC_POSITIONAL:
-                func_call_parts.append(f'*{arg_name}')
-            elif arg_kind is ArgKind.KEYWORD_ONLY:
-                func_call_parts.append(f'{arg_name}={arg_name}')
-            elif arg_kind is ArgKind.VARIADIC_KEYWORD:
-                func_call_parts.append(f'**{arg_name}')
-            else:
-                raise BeartypeDecorHintPepException(
-                    f'{EXCEPTION_PLACEHOLDER}kind {repr(arg_kind)} '
-                    f'currently unsupported by @beartype.')
+            match arg_kind:
+                case ArgKind.POSITIONAL_ONLY | ArgKind.POSITIONAL_OR_KEYWORD:
+                    func_call_parts.append(arg_name)
+                case ArgKind.VARIADIC_POSITIONAL:
+                    func_call_parts.append(f'*{arg_name}')
+                case ArgKind.KEYWORD_ONLY:
+                    func_call_parts.append(f'{arg_name}={arg_name}')
+                case ArgKind.VARIADIC_KEYWORD:
+                    func_call_parts.append(f'**{arg_name}')
+                case _:
+                    raise BeartypeDecorHintPepException(
+                        f'{EXCEPTION_PLACEHOLDER}kind {repr(arg_kind)} '
+                        f'currently unsupported by @beartype.')
 
         # If...
         if (
@@ -501,6 +515,13 @@ _ARG_KINDS_KEYWORD = frozenset((
 Frozen set of all **keyword parameter kinds** (i.e., :attr:`ArgKind` enumeration
 members signifying that a callable parameter either may *or* must be passed by
 keyword).
+'''
+
+
+_CODE_CHECK_ARGS_NONE = ('', False, '*args, **kwargs')
+'''
+Parameter-checking result for callables annotated only on their return. The
+implicit signature forwards unannotated arguments without inspecting them.
 '''
 
 
