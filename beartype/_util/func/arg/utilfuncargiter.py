@@ -238,8 +238,8 @@ def iter_func_args(
         :data:`None`, in which case this iterator internally defers to the
         comparatively slower :func:`.get_func_codeobject` function.
     is_omit_boundmethod_arg_first : bool, optional
-        :data:`True` only if this generator implicitly omits the first mandatory
-        flexible parameter accepted by that callable if that callable is a
+        :data:`True` only if this generator implicitly omits the first fixed
+        positional parameter accepted by that callable if that callable is a
         C-based bound method descriptor encapsulating either an instance method
         bound to an instance of a class *or* a class method bound to a class.
         Defaults to :data:`True`, instructing this generator to transparently
@@ -333,6 +333,20 @@ def iter_func_args(
     # caller. We should probably assert that, but doing so requires an
     # expensive call to hasattr(). What you gonna do?
 
+    # A bound method implicitly supplies its first fixed positional parameter,
+    # whether mandatory, optional, positional-only, or flexible.
+    if is_omit_boundmethod_arg_first and is_func_boundmethod(func):
+        for arg_index, arg_meta in enumerate(iter_func_args(
+            func=func, func_codeobj=func_codeobj,
+            is_omit_boundmethod_arg_first=False, is_unwrap=False,
+            exception_cls=exception_cls, exception_prefix=exception_prefix,
+        )):
+            if arg_index == 0 and arg_meta[0] in (
+                ArgKind.POSITIONAL_ONLY, ArgKind.POSITIONAL_OR_KEYWORD):
+                continue
+            yield arg_meta
+        return
+
     # Number of various kinds of parameters accepted by that callable.
     (
         # Number of both optional and mandatory non-keyword-only parameters
@@ -347,7 +361,9 @@ def iter_func_args(
         is_arg_var_pos,
         is_arg_var_kw,
     ) = get_func_args_lens(
-        func=func,
+        # When supplied, the code object is authoritative. functools.wraps()
+        # can copy a cached parameter count from a different callable.
+        func=func_codeobj if func_codeobj is not None else func,
         is_unwrap=False,  # <-- "func" was already unwrapped above. I sigh.
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
@@ -530,55 +546,6 @@ def iter_func_args(
         # parameter in the "args_name" tuple.
         args_index_kind_last_after = (
             args_index_kind_first + args_len_flex_mandatory)
-
-        # If...
-        if (
-            # Omitting the first mandatory flexible parameter accepted by that
-            # callable if that callable is a C-based bound method descriptor
-            # encapsulating either an instance method bound to an instance of a
-            # class or a class method bound to a class *AND*...
-            is_omit_boundmethod_arg_first and
-            # That callable is such a C-based bound method descriptor...
-            is_func_boundmethod(func)
-        ):
-            # print(f'Ignoring bound method {repr(func)} first argument...')
-            # Increment the 0-based index of the first mandatory flexible
-            # parameter accepted by this method in the "args_name" tuple to
-            # account for the first mandatory flexible "self" parameter
-            # implicitly passed by this bound method descriptor to this method,
-            # effectively ignoring this "self" parameter.
-            #
-            # Note that:
-            # * We intentionally increment this index *AFTER* computing the
-            #   derivative "args_index_kind_last_after" index above with the
-            #   original value of this index.
-            # * Handling this common edge case enables:
-            #   * This generator to transparently support bound method
-            #     descriptors, which then enables...
-            #   * The private @beartype._decor._nontype.decornontype.beartype_pseudofunc
-            #     decorator to type-check the bound __call__() method descriptor
-            #     encapsulating the unbound __call__() dunder method defined on
-            #     the class of pseudo-callable objects, which then enables...
-            #   * The public @beartype.beartype decorator to type-check
-            #     pseudo-callable objects.
-            #
-            #   How? In this case, the aforementioned @beartype_pseudofunc
-            #   decorator wraps this bound method descriptor with a dynamically
-            #   generated wrapper function that does *NOT* accept a "self"
-            #   parameter, since a bound method does *NOT* accept a "self"
-            #   parameter. However, the code object of a bound method descriptor
-            #   is simply an alias of the code object of the corresponding
-            #   unbound method. Since the latter accepts a "self" parameter, so
-            #   too does the former. Thus, an internal discrepancy (arguably,
-            #   contradiction) arises between:
-            #
-            #   * The code object of a bound method descriptor, which declares
-            #     that callable object to accept a "self" parameter.
-            #   * The real-world calling semantics of a bound method descriptor,
-            #     which by definition accepts *NO* "self" parameter.
-            args_index_kind_first += 1
-        # Else, that callable is *NOT* such a descriptor (and is thus almost
-        # certainly a vanilla pure-Python callable).
 
         # For each mandatory flexible parameter accepted by that callable, yield
         # a tuple describing this parameter.

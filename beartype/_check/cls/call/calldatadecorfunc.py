@@ -185,6 +185,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         callable in the body of the wrapper function wrapping that callable with
         type-checking.
     func_wrapper_code_return_unchecked : str
+        Format string accepting ``func_call_args`` to forward bound parameters.
         Code snippet returning the value returned by calling the decorated
         callable in the body of the wrapper function *without* wrapping that
         callable with type-checking. This snippet is an optimization for the

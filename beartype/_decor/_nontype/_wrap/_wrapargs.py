@@ -82,10 +82,12 @@ from beartype._check.cls.hint.hintsane import (
 from beartype._data.check.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_INIT_ARGS_LEN,
-    ARG_KIND_TO_CODE_LOCALIZE,
+    CODE_ARG_LOCALIZE_EXPLICIT,
+    ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT,
+    ARG_KIND_TO_CODE_LOCALIZE_IMPLICIT,
 )
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+from beartype._data.py.databuiltins import BUILTINS_DICT
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
@@ -94,19 +96,24 @@ from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
     iter_func_args,
 )
-from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
+from beartype._util.func.arg.utilfuncargtest import (
+    is_func_arg_default_typecheckable,
+    is_func_arg_variadic_keyword,
+)
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._data.kind.datakindiota import SENTINEL
+from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from collections.abc import MutableSet
 from typing import Optional
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
-def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
+def code_check_args(
+    decor_func: BeartypeCallDecorFuncData,
+) -> tuple[str, bool, str]:
     '''
-    Generate a Python code snippet type-checking all annotated parameters of the
-    decorated callable if any *or* the empty string otherwise (i.e., if these
-    parameters are unannotated).
+    Generate parameter-checking code and forwarding expressions, and decide
+    whether to preserve the decorated callable's native signature.
 
     Parameters
     ----------
@@ -115,8 +122,15 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
 
     Returns
     -------
-    str
-        Code type-checking all annotated parameters of the decorated callable.
+    tuple[str, bool, str]
+        Tuple containing the parameter-checking code (empty if no parameters
+        require checking), whether to preserve the callable's explicit
+        signature, and the arguments forwarding this call to the wrappee.
+        Explicit signatures bind parameters and defaults natively when
+        ``conf.is_func_args_preserve`` is enabled. Return-only annotations,
+        isomorphic decorators, parameters shadowing builtins used by generated
+        code, and dataclass constructors with default factories retain the generic
+        ``*args, **kwargs`` calling convention.
 
     Raises
     ------
@@ -132,21 +146,34 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
     assert isinstance(decor_func, BeartypeCallDecorFuncData), (
         f'{repr(decor_func)} not beartype decorator call metadata.')
 
-    # ..................{ LOCALS ~ func                      }..................
-    # If *NO* callable parameters are annotated, silently reduce to a noop.
-    #
-    # Note that this is purely an optimization short-circuit mildly improving
-    # efficiency for the common case of callables accepting either no
-    # parameters *OR* one or more parameters, all of which are unannotated.
+    # No parameter checks or signature introspection are needed when only the
+    # return is annotated. Generic forwarding still passes all unannotated
+    # arguments, including arguments consumed by isomorphic decorators.
     if (
-        # That callable is annotated by exactly one type hint *AND*...
         len(decor_func.decoratee_annotations) == 1 and
-        # That type hint annotates that callable's return rather than a
-        # parameter accepted by that callable...
         ARG_NAME_RETURN in decor_func.decoratee_annotations
     ):
-        return ''
-    # Else, one or more callable parameters are annotated.
+        return _CODE_CHECK_ARGS_NONE
+
+    # ..................{ LOCALS ~ func                      }..................
+    # Only preserve the signature when it belongs to the callable whose
+    # annotations are checked. Isomorphic wrappers may consume extra arguments.
+    args_meta = tuple(iter_func_args(
+        func=decor_func.func_wrappee_wrappee,
+        func_codeobj=decor_func.func_wrappee_wrappee_codeobj,
+        is_unwrap=False,
+    ))
+    is_signature_explicit = (
+        decor_func.conf.is_func_args_preserve and
+        decor_func.func_wrappee is decor_func.func_wrappee_wrappee and
+        decor_func.func_wrapper_name.isidentifier() and
+        # Type aliases alone do not protect helper calls such as isinstance()
+        # and len(), warning formatting, or generator protocol builtins.
+        all(name not in BUILTINS_DICT and
+            is_func_arg_default_typecheckable(default)
+            for _, name, default in args_meta)
+    )
+    func_call_parts = []
 
     # Python code snippet to be returned, defaulting to the empty string
     # implying this callable's parameters to all either be unannotated *OR*
@@ -196,7 +223,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
         #   type-checked by existing logic, due to the non-triviality of
         #   deciding whether a keyword parameter even is "excess" or not.
         set()
-        if is_func_arg_variadic_keyword(
+        if not is_signature_explicit and is_func_arg_variadic_keyword(
             # See the call to the iter_func_args() generator function below for
             # further commentary on these parameters.
             func=decor_func.func_wrappee_wrappee, is_unwrap=False) else
@@ -229,20 +256,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
 
     # For the 0-based index of each parameter accepted by that callable and the
     # "ArgMeta" 3-tuple describing this parameter (in declaration order)...
-    for arg_index, arg_meta in enumerate(iter_func_args(
-        # Possibly lowest-level wrappee underlying the possibly higher-level
-        # wrapper currently being decorated by the @beartype decorator. The
-        # latter typically fails to convey the same callable metadata conveyed
-        # by the former -- including the names and kinds of parameters accepted
-        # by the possibly unwrapped callable. This renders the latter mostly
-        # useless for our purposes.
-        func=decor_func.func_wrappee_wrappee,
-        func_codeobj=decor_func.func_wrappee_wrappee_codeobj,
-        # Avoid inefficiently attempting to re-unwrap this wrappee. The
-        # previously called BeartypeCallDecorFuncData.reinit() method has already
-        # guaranteed this wrappee to be isomorphically unwrapped.
-        is_unwrap=False,
-    )):
+    for arg_index, arg_meta in enumerate(args_meta):
         # Localize metadata for both efficiency and f-string purposes.
         #
         # Note that list unpacking is substantially more efficient than
@@ -251,8 +265,29 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
         (
             arg_kind,
             arg_name,
-            _,  # arg_default,
+            arg_default,
         ) = arg_meta
+
+        # Validate every name before skipping unannotated or ignorable hints.
+        if arg_name.startswith('__bear'):
+            raise BeartypeDecorParamNameException(
+                f'{prefix_decor_func_callable_arg_name(decor_func, arg_name)}'
+                f'reserved by @beartype.')
+
+        if is_signature_explicit:
+            match arg_kind:
+                case ArgKind.POSITIONAL_ONLY | ArgKind.POSITIONAL_OR_KEYWORD:
+                    func_call_parts.append(arg_name)
+                case ArgKind.VARIADIC_POSITIONAL:
+                    func_call_parts.append(f'*{arg_name}')
+                case ArgKind.KEYWORD_ONLY:
+                    func_call_parts.append(f'{arg_name}={arg_name}')
+                case ArgKind.VARIADIC_KEYWORD:
+                    func_call_parts.append(f'**{arg_name}')
+                case _:
+                    raise BeartypeDecorHintPepException(
+                        f'{EXCEPTION_PLACEHOLDER}kind {repr(arg_kind)} '
+                        f'currently unsupported by @beartype.')
 
         # If...
         if (
@@ -309,14 +344,6 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
             # print(f'Generating code type-checking {decor_func.func_wrapper_name}() parameter "{arg_name}"...')
             # print(f'...unreduced hint {repr(hint_insane)}!')
 
-            # If this parameter's name is reserved for use by the @beartype
-            # decorator, raise an exception.
-            if arg_name.startswith('__bear'):
-                raise BeartypeDecorParamNameException(
-                    f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.')
-            # Else, this parameter's name is *NOT* reserved for use by the
-            # @beartype decorator.
-
             # With a context manager "catching" *ALL* non-fatal warnings issued
             # during this logic for subsequent "playback" below...
             with catch_warnings(record=True) as warnings_issued:
@@ -368,7 +395,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
                 # nested *BEFORE* validating this parameter to be unignorable,
                 # beartype would fail to reduce to a noop for otherwise
                 # ignorable callables -- which would be rather bad, really.
-                if arg_kind in _ARG_KINDS_POSITIONAL:
+                if not is_signature_explicit and arg_kind in _ARG_KINDS_POSITIONAL:
                     is_args_positional = True
                 # Else, this parameter *CANNOT* be passed positionally.
 
@@ -377,8 +404,16 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
                 #        arg_kind, None)
                 # Python code template localizing this parameter if this kind of
                 # parameter is supported *OR* "None" otherwise.
-                ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE.get(  # type: ignore
-                    arg_kind, None)
+                ARG_LOCALIZE_TEMPLATE: Optional[str]
+                if is_signature_explicit:
+                    ARG_LOCALIZE_TEMPLATE = (
+                        ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT[arg_kind]
+                        if arg_kind in ARG_KIND_TO_CODE_LOCALIZE_EXPLICIT else
+                        CODE_ARG_LOCALIZE_EXPLICIT
+                    )
+                else:
+                    ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE_IMPLICIT.get(
+                        arg_kind, None)
 
                 # If this kind of parameter is unsupported, raise an exception.
                 #
@@ -465,7 +500,9 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
     # Else, that callable accepts *NO* annotated positional parameters.
 
     # Return this code.
-    return func_wrapper_code
+    func_call_args = (
+        ', '.join(func_call_parts) if is_signature_explicit else '*args, **kwargs')
+    return func_wrapper_code, is_signature_explicit, func_call_args
 
 # ....................{ PRIVATE ~ constants                }....................
 #FIXME: Shift these constants into a more appropriate "beartype._data"
@@ -478,6 +515,13 @@ _ARG_KINDS_KEYWORD = frozenset((
 Frozen set of all **keyword parameter kinds** (i.e., :attr:`ArgKind` enumeration
 members signifying that a callable parameter either may *or* must be passed by
 keyword).
+'''
+
+
+_CODE_CHECK_ARGS_NONE = ('', False, '*args, **kwargs')
+'''
+Parameter-checking result for callables annotated only on their return. The
+implicit signature forwards unannotated arguments without inspecting them.
 '''
 
 

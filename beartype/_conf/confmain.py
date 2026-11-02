@@ -186,6 +186,9 @@ class BeartypeConf(object):
     _is_debug : bool
         :data:`True` only if debugging :mod:`beartype`. See also the
         :meth:`__new__` method docstring.
+    _is_func_args_preserve : bool
+        :data:`True` only if preserving supported callable signatures. See also
+        the :meth:`__new__` method docstring.
     _is_pep484_tower : bool
         :data:`True` only if enabling support for the :pep:`484`-compliant
         implicit numeric tower. See also the :meth:`__new__` method docstring.
@@ -287,6 +290,7 @@ class BeartypeConf(object):
         '_hint_overrides',
         '_is_color',
         '_is_debug',
+        '_is_func_args_preserve',
         '_is_pep484_tower',
         '_is_pep557_fields',
         '_is_random',
@@ -317,6 +321,7 @@ class BeartypeConf(object):
         _hint_overrides: FrozenDict
         _is_color: BoolTristate
         _is_debug: bool
+        _is_func_args_preserve: bool
         _is_pep484_tower: bool
         _is_pep557_fields: bool
         _is_random: bool
@@ -357,6 +362,7 @@ class BeartypeConf(object):
         hint_overrides: FrozenDict = FROZENDICT_EMPTY,
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,  # pyright: ignore
         is_debug: bool = False,
+        is_func_args_preserve: bool = True,
         is_pep484_tower: bool = False,
         is_pep557_fields: bool = False,
         is_random: bool = True,
@@ -616,6 +622,22 @@ class BeartypeConf(object):
               enabling this boolean.
 
             Defaults to :data:`False`.
+        is_func_args_preserve : bool, optional
+            :data:`True` only if preserving supported callable signatures on
+            generated type-checking wrappers. Explicit signatures bind arguments
+            natively and type-check omitted defaults as well as passed values.
+            Default objects are captured at decoration time; replacing the
+            original callable's defaults later does not replace wrapper defaults.
+
+            If :data:`False`, wrappers use the generic ``*args, **kwargs`` calling
+            convention, leaving omitted defaults unchecked and reading the
+            original callable's current defaults when called. Passed arguments
+            and annotated returns remain type-checked.
+
+            Callables with no annotated parameters, isomorphic decorator
+            wrappers, builtin-shadowing parameter names, and dataclass
+            constructors with default factories retain generic signatures
+            regardless of this option. Defaults to :data:`True`.
         is_pep484_tower : bool, optional
             :data:`True` only if enabling support for the :pep:`484`-compliant
             **implicit numeric tower** (i.e., lossy conversion of integers to
@@ -785,6 +807,7 @@ class BeartypeConf(object):
 
             * ``is_color`` is *not* a tri-state boolean.
             * ``is_debug`` is *not* a boolean.
+            * ``is_func_args_preserve`` is *not* a boolean.
             * ``is_pep484_tower`` is *not* a boolean.
             * ``is_pep557_fields`` is *not* a boolean.
             * ``strategy`` is *not* a :class:`BeartypeStrategy` enumeration
@@ -871,6 +894,7 @@ class BeartypeConf(object):
                 hint_overrides,
                 is_color,
                 is_debug,
+                is_func_args_preserve,
                 is_pep484_tower,
                 is_pep557_fields,
                 is_random,
@@ -904,6 +928,7 @@ class BeartypeConf(object):
                 hint_overrides=hint_overrides,
                 is_color=is_color,
                 is_debug=is_debug,
+                is_func_args_preserve=is_func_args_preserve,
                 is_pep484_tower=is_pep484_tower,
                 is_pep557_fields=is_pep557_fields,
                 is_random=is_random,
@@ -984,6 +1009,7 @@ class BeartypeConf(object):
             self._hint_overrides = conf_kwargs['hint_overrides']  # pyright: ignore
             self._is_color = conf_kwargs['is_color']  # pyright: ignore
             self._is_debug = conf_kwargs['is_debug']  # pyright: ignore
+            self._is_func_args_preserve = conf_kwargs['is_func_args_preserve']  # pyright: ignore
             self._is_pep484_tower = conf_kwargs['is_pep484_tower']  # pyright: ignore
             self._is_pep557_fields = conf_kwargs['is_pep557_fields']  # pyright: ignore
             self._is_random = conf_kwargs['is_random']  # pyright: ignore
@@ -1190,6 +1216,21 @@ class BeartypeConf(object):
         '''
 
         return self._is_debug
+
+
+    @property
+    def is_func_args_preserve(self) -> bool:
+        '''
+        :data:`True` only if preserving supported callable signatures on
+        generated type-checking wrappers, including their default values.
+
+        See Also
+        --------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._is_func_args_preserve
 
 
     @property

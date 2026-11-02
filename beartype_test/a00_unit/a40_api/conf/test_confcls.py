@@ -68,6 +68,7 @@ def test_conf_dataclass() -> None:
         'hint_overrides',
         'is_color',
         'is_debug',
+        'is_func_args_preserve',
         'is_pep484_tower',
         'is_pep557_fields',
         'is_random',
@@ -97,6 +98,7 @@ def test_conf_dataclass() -> None:
         hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
         is_color=True,
         is_debug=True,
+        is_func_args_preserve=False,
         is_pep484_tower=True,
         is_pep557_fields=True,
         is_random=False,
@@ -140,6 +142,7 @@ def test_conf_dataclass() -> None:
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             is_color=True,
             is_debug=True,
+            is_func_args_preserve=False,
             is_pep484_tower=True,
             is_pep557_fields=True,
             is_random=False,
@@ -163,6 +166,7 @@ def test_conf_dataclass() -> None:
             is_pep557_fields=True,
             is_pep484_tower=True,
             is_debug=True,
+            is_func_args_preserve=False,
             is_color=True,
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             claw_is_pep526=False,
@@ -183,6 +187,9 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT.hint_overrides is FROZENDICT_EMPTY
     assert BEAR_CONF_DEFAULT.is_color is None
     assert BEAR_CONF_DEFAULT.is_debug is False
+    assert BEAR_CONF_DEFAULT.is_func_args_preserve is True
+    assert BeartypeConf(is_func_args_preserve=True) is BEAR_CONF_DEFAULT
+    assert BeartypeConf(is_func_args_preserve=False) is not BEAR_CONF_DEFAULT
     assert BEAR_CONF_DEFAULT.is_pep484_tower is False
     assert BEAR_CONF_DEFAULT.is_pep557_fields is False
     assert BEAR_CONF_DEFAULT.is_random is True
@@ -211,6 +218,7 @@ def test_conf_dataclass() -> None:
         BEAR_HINT_OVERRIDES_NONEMPTY | _hint_overrides_pep484_tower())
     assert BEAR_CONF_NONDEFAULT.is_color is True
     assert BEAR_CONF_NONDEFAULT.is_debug is True
+    assert BEAR_CONF_NONDEFAULT.is_func_args_preserve is False
     assert BEAR_CONF_NONDEFAULT.is_pep484_tower is True
     assert BEAR_CONF_NONDEFAULT.is_pep557_fields is True
     assert BEAR_CONF_NONDEFAULT.is_random is False
@@ -333,6 +341,10 @@ def test_conf_dataclass() -> None:
         BeartypeConf(is_debug=(
             'Interpret, or make felt, or deeply feel.'))
     with raises(BeartypeConfParamException):
+        BeartypeConf(is_func_args_preserve=None)
+    with raises(BeartypeConfParamException):
+        BeartypeConf(is_func_args_preserve='invalid')
+    with raises(BeartypeConfParamException):
         BeartypeConf(is_pep484_tower=(
             'In the calm darkness of the moonless nights,'))
     with raises(BeartypeConfParamException):
@@ -405,6 +417,8 @@ def test_conf_dataclass() -> None:
         BEAR_CONF_DEFAULT.is_color = True
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.is_debug = True
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.is_func_args_preserve = False
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.is_pep484_tower = True
     with raises(AttributeError):

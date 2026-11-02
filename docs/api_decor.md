@@ -275,7 +275,7 @@ Configuration: *because you know best*.
 
 #### Beartype Configuration API
 
-`BeartypeConf(*, is_color: bool | None = None, is_debug: bool = False, is_pep484_tower: bool = False, strategy: BeartypeStrategy = BeartypeStrategy.O1, )`
+`BeartypeConf(*, is_color: bool | None = None, is_debug: bool = False, is_func_args_preserve: bool = True, is_pep484_tower: bool = False, strategy: BeartypeStrategy = BeartypeStrategy.O1, )`
 
 **Beartype configuration** (i.e., self-caching dataclass instance encapsulating all flags, options, settings, and other metadata configuring each type-checking operation performed by beartype – including each decoration of a callable or class by the `beartype` decorator).
 
@@ -404,6 +404,27 @@ Defaults to `False`. Eye-gouging sample output or it didn't happen, so:
 (line 0024)
 (line 0025)     return __beartype_pith_0
 ```
+
+<div id="beartype.BeartypeConf.is_func_args_preserve"></div>
+
+##### is_func_args_preserve
+
+*Type:* `bool` = `True`
+
+Preserve supported callable signatures on generated wrappers. Python binds
+arguments natively, and beartype checks omitted defaults as well as passed values.
+Default objects are captured when the callable is decorated. Mutating a shared
+default remains visible; replacing the original callable's defaults does not
+replace the wrapper's defaults.
+
+Set `BeartypeConf(is_func_args_preserve=False)` to use generic `*args, **kwargs`
+wrappers. Omitted defaults remain unchecked, and changes to the original callable's
+defaults remain visible. Explicitly passed arguments and annotated returns still
+receive type checks.
+
+Callables with no annotated parameters, isomorphic decorator wrappers, parameters
+shadowing builtins, and dataclass constructors with default factories continue to
+use generic wrappers regardless of this option.
 
 <div id="beartype.BeartypeConf.is_pep484_tower"></div>
 
