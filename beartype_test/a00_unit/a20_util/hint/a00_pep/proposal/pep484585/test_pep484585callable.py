@@ -96,14 +96,14 @@ def test_get_hint_pep484585_callable_params_and_return(hints_piths_pep_meta) -> 
     str_plus_P = Concatenate[str, P]
 
     # ..................{ CASES                              }..................
-    # List of 3-tuples "(callable_hint, callable_hint_params,
+    # Tuple of 3-tuples "(callable_hint, callable_hint_params,
     # callable_hint_return)", where:
     # * "callable_hint" is a PEP-compliant callable type hint to be tested.
     # * "callable_hint_params" is the parameters type hint subscripting that
     #   callable type hint.
     # * "callable_hint_return" is the return type hint subscripting that
     #   callable type hint.
-    CALLABLE_HINT_PARAMS_RETURN_CASES = [
+    CALLABLE_HINT_PARAMS_RETURN_CASES = (
         # ..................{ PEP ~ 484                      }..................
         # PEP 484-compliant callable type hints.
         (Pep484Callable[[], Any], (), Any),
@@ -131,7 +131,7 @@ def test_get_hint_pep484585_callable_params_and_return(hints_piths_pep_meta) -> 
         # Extend this list with PEP 612-compliant callable type hints.
         (Pep585Callable[P, Any], P, Any),
         (Pep585Callable[str_plus_P, int], str_plus_P, int),
-    ]
+    )
 
     # ..................{ PEP                                }..................
     # For each callable type hint defined above...

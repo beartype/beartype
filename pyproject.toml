@@ -348,8 +348,34 @@ test-tox = [
     # improve the likelihood of success on both local and remote workflows,
     # these dependencies are intentionally confined to Linux.
 
-    #FIXME: Re-enable Python >= 3.15 support *AFTER* PyTorch supports Python
-    #3.14.
+    #FIXME: Enable Python <= 3.15 support *AFTER* PyTorch supports Python 3.15.
+    #FIXME: *WOAH*. This is currently installing the *HUMONGOUS* (and
+    #super-fragile) CUDA-specific PyTorch rather than the smaller and more
+    #resilient CPU-specific PyTorch. Sadly, Python has yet to standardize
+    #so-called "index URLs" at the generic "pyproject.toml" level. Instead:
+    #* Force "pip" to install against the same index URL as supplied above. Note
+    #  that this can *ONLY* be done by defining yet another top-level
+    #  "pip.conf" configuration file whose contents read:
+    #      [[global]]
+    #      extra-index-url=https://download.pytorch.org/whl/cpu
+    #  Of course, pip silently ignores that file 
+    #  This is the easiest approach and thus what we currently do. Note that
+    #  "pip" fails to support similar syntax in "pyproject.toml". Still, it's
+    #  hacky, weird, and non-orthogonal. *shrug*
+    #* *REFACTOR EVERYTHING TO USE "uv".* Most crucially, this includes our
+    #  "tox.ini" configuration as well as ".github/workflows/". Once we've fully
+    #  switched to "uv" everywhere, we then need to add the following
+    #  "uv"-specific configuration below to this "pyproject.toml" file:
+    #     [tool.uv.sources]
+    #     torch = [
+    #       { index = "pytorch-cpu" },
+    #     ]
+    #
+    #     [[tool.uv.index]]
+    #     name = "pytorch-cpu"
+    #     url = "https://download.pytorch.org/whl/cpu"
+    #     explicit = true
+
     # Required by optional PyTorch-specific integration tests if the current
     # platform is a Linux distribution.
     "torch; sys_platform == 'linux' and python_version < '3.15.0'",

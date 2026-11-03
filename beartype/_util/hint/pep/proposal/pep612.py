@@ -34,8 +34,8 @@ from beartype._data.hint.sign.datahintsigns import (
 from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.func.arg.utilfuncargget import (
-    get_func_arg_meta_variadic_keyword_or_none,
-    get_func_arg_meta_variadic_positional_or_none,
+    get_func_arg_data_variadic_keyword_or_none,
+    get_func_arg_data_variadic_positional_or_none,
 )
 from beartype._util.func.arg.utilfuncargiter import (
     ARG_META_INDEX_NAME,
@@ -226,7 +226,7 @@ def reduce_hint_pep612_args(hint: object, **kwargs,) -> object:
         pith_name_syntax=_VAR_POS_PITH_NAME_SYNTAX,
         other_hint=get_hint_pep612_paramspec(hint).kwargs,  # type: ignore[attr-defined,arg-type]
         other_hint_sign=HintSignParamSpecKwargs,
-        other_pith_name_getter=get_func_arg_meta_variadic_keyword_or_none,
+        other_pith_name_getter=get_func_arg_data_variadic_keyword_or_none,
         other_pith_name_label=_VAR_KW_PITH_NAME_LABEL,
         **kwargs
     )
@@ -259,7 +259,7 @@ def reduce_hint_pep612_kwargs(hint: object, **kwargs) -> object:
         pith_name_syntax=_VAR_KW_PITH_NAME_SYNTAX,
         other_hint=get_hint_pep612_paramspec(hint).args,  # type: ignore[attr-defined,arg-type]
         other_hint_sign=HintSignParamSpecArgs,
-        other_pith_name_getter=get_func_arg_meta_variadic_positional_or_none,
+        other_pith_name_getter=get_func_arg_data_variadic_positional_or_none,
         other_pith_name_label=_VAR_POS_PITH_NAME_LABEL,
         **kwargs
     )
@@ -420,10 +420,10 @@ def _reduce_hint_pep612_args_or_kwargs(
         Either:
 
         * If this hint annotates a variadic positional parameter, the
-          :func:`beartype._util.func.arg.utilfuncargget.get_func_arg_meta_variadic_keyword_or_none`
+          :func:`beartype._util.func.arg.utilfuncargget.get_func_arg_data_variadic_keyword_or_none`
           getter.
         * If this hint annotates a variadic keyword parameter, the
-          :func:`beartype._util.func.arg.utilfuncargget.get_func_arg_meta_variadic_positional_or_none`
+          :func:`beartype._util.func.arg.utilfuncargget.get_func_arg_data_variadic_positional_or_none`
           getter.
     other_pith_name_label : str
         Either:

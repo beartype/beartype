@@ -411,7 +411,7 @@ def is_func_arg_name_variadic_positional(
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncargget import (
-        get_func_arg_meta_variadic_positional_or_none)
+        get_func_arg_data_variadic_positional_or_none)
 
     # If the passed callable accepts *NO* parameter with the passed name,
     # immediately return false.
@@ -423,7 +423,7 @@ def is_func_arg_name_variadic_positional(
     # Metadata describing the variadic positional parameter accepted by that
     # callable if that callable accepts a variadic positional parameter *OR*
     # "None" otherwise (i.e., if that callable accepts *NO* such parameter).
-    arg_meta = get_func_arg_meta_variadic_positional_or_none(*args, **kwargs)
+    arg_meta = get_func_arg_data_variadic_positional_or_none(*args, **kwargs)
 
     # Return true only if...
     return (
@@ -470,7 +470,7 @@ def is_func_arg_name_variadic_keyword(
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncargget import (
-        get_func_arg_meta_variadic_keyword_or_none)
+        get_func_arg_data_variadic_keyword_or_none)
 
     # If the passed callable accepts *NO* parameter with the passed name,
     # immediately return false.
@@ -482,7 +482,7 @@ def is_func_arg_name_variadic_keyword(
     # Metadata describing the variadic keyword parameter accepted by that
     # callable if that callable accepts a variadic keyword parameter *OR* "None"
     # otherwise (i.e., if that callable accepts *NO* such parameter).
-    arg_meta = get_func_arg_meta_variadic_keyword_or_none(*args, **kwargs)
+    arg_meta = get_func_arg_data_variadic_keyword_or_none(*args, **kwargs)
 
     # Return true only if...
     return (

@@ -27,7 +27,6 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._data.typing.datatypingport import TypeIs
-from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.func.utilfunccodeobj import get_func_codeobject_or_none
 from collections.abc import Callable
 from inspect import (
@@ -994,7 +993,6 @@ def is_func_closure(func: Any) -> TypeIs[Callable]:
     return getattr(func, '__closure__', None) is not None
 
 
-@callable_cached
 def is_func_local(func: Callable) -> bool:
     '''
     :data:`True` only if the passed callable is **local** (i.e., a pure-Python
@@ -1025,7 +1023,22 @@ def is_func_local(func: Callable) -> bool:
                  def muh_nested_method(self): pass  # <-- nested method
              return MuhType.muh_nested_method
 
-    This tester is memoized for efficiency.
+    This tester is intentionally *not* memoized (e.g., via the
+    ``@callable_cached`` decorator), as doing so would exhaust all available
+    space in the worst case of a :func:`beartype.beartype`-decorated closure
+    repeatedly defined in a loop: e.g.,
+
+    .. code-block:: python
+
+       from beartype import beartype
+
+       def muh_outer_func():
+           for _ in range(10000):
+               # This decoration transitively passes this repeatedly redefined
+               # closure to this function. OH NOES.
+               @beartype
+               def muh_closure() -> None: ...
+        muh_outer_func()
 
     Parameters
     ----------
@@ -1057,7 +1070,6 @@ def is_func_local(func: Callable) -> bool:
     )
 
 
-@callable_cached
 def is_func_nested(func: Callable) -> bool:
     '''
     :data:`True` only if the passed callable is **nested** (i.e., a pure-Python
@@ -1078,7 +1090,9 @@ def is_func_nested(func: Callable) -> bool:
              def muh_nested_func(): pass  # <-- nested non-closure function
              return muh_nested_func
 
-    This tester is memoized for efficiency.
+    This tester is intentionally *not* memoized (e.g., via the
+    ``@callable_cached`` decorator). See also the :func:`is_func_local` tester
+    for further details.
 
     Parameters
     ----------

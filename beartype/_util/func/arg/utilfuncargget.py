@@ -20,22 +20,81 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._util.func.arg.utilfuncargiter import (
     ARG_META_INDEX_KIND,
+    ARG_META_INDEX_NAME,
+    ARG_META_INDEX_DEFAULT,
     ArgKind,
-    ArgMeta,
+    ArgKindDefault,
+    ArgKindNameDefault,
     iter_func_args,
 )
 from beartype._util.func.arg.utilfuncarglen import get_func_args_len
 from beartype._util.func.utilfunccodeobj import get_func_codeobject
 from typing import Optional
 
-# ....................{ GETTERS ~ meta                     }....................
+# ....................{ GETTERS ~ metadata                 }....................
+def get_func_arg_name_to_kind_default(*args, **kwargs) -> (
+    dict[str, ArgKindDefault]):
+    '''
+    Dictionary mapping from the name of each parameter accepted by the passed
+    callable to the 2-tuple ``(arg_kind, arg_default_or_mandatory)``, where:
+
+    * ``arg_kind`` is that parameter's **kind** (i.e.,
+      :class:`beartype._util.func.arg.utilfuncargiter.ArgKind` enumeration
+      member conveying the syntactic class of that parameter, constraining how
+      the callable declaring that parameter requires that parameter to be
+      passed).
+    * ``arg_default_or_mandatory`` is either:
+
+      * If that parameter is mandatory, the magic constant
+        :data:`beartype._util.func.arg.utilfuncargiter.ArgMandatory`.
+      * Else, that parameter is optional and thus defaults to a default value
+        when unpassed. In this case, this is that default value.
+
+    Caveats
+    -------
+    **This getter exhibits linear-time complexity** :math:`O(n)` **for**
+    :math:`O(n)` **the total number of parameters accepted by that callable,**
+    due to unavoidably performing a linear search over these parameters to
+    iteratively construct the dictionary returned by this getter. This getter
+    should thus be called sparingly.
+
+    Parameters
+    ----------
+    All parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
+
+    Returns
+    -------
+    dict[str, ArgKindDefault]
+        Dictionary mapping from the name of each parameter accepted by the
+        passed callable to the 2-tuple ``(arg_kind, arg_default_or_mandatory)``.
+    '''
+
+    # Dictionary to be returned.
+    func_arg_name_to_kind_default: dict[str, ArgKindDefault] = {}
+
+    # For metadata describing each parameter accepted by that callable...
+    for arg_data in iter_func_args(*args, **kwargs):
+        # Name of this parameter.
+        arg_name: str = arg_data[ARG_META_INDEX_NAME]  # type: ignore[assignment]
+
+        # Map this name to the 2-tuple of all remaining metadata.
+        func_arg_name_to_kind_default[arg_name] = (  # type: ignore[assignment]
+            arg_data[ARG_META_INDEX_KIND],
+            arg_data[ARG_META_INDEX_DEFAULT],
+        )
+
+    # Return this dictionary.
+    return func_arg_name_to_kind_default
+
+# ....................{ GETTERS ~ metadata : variadic      }....................
 #FIXME: [SPEED] Consider refactoring this O(n) iteration into an O(1) lookup.
 #Although extremely non-trivial, doing so *SHOULD* be feasible based on the
 #current internal implementation of the iter_func_args() generator
 #comprehension. Basically, we'll need to:
 #* Augment get_func_args_lens() to additionally cache and return *ALL* of
 #  the remaining "sub-lengths" internally computed by iter_func_args().
-#  *ALL*. And there are quite a few, indeed.
+#  *ALL*. And there are quite a few of those, indeed.
 #* Call get_func_args_lens() here.
 #* Get the name of the variadic positional parameter by simply indexing:
 #      func_args_len = get_func_args_len(*args, **kwargs)
@@ -44,8 +103,8 @@ from typing import Optional
 #  parameter in the "co_varnames" list, computed by adding all requisite
 #  "sub-lengths" together. We shrug.
 #FIXME: Unit test us up, please.
-def get_func_arg_meta_variadic_positional_or_none(
-    *args, **kwargs) -> Optional[ArgMeta]:
+def get_func_arg_data_variadic_positional_or_none(*args, **kwargs) -> (
+    Optional[ArgKindNameDefault]):
     '''
     Callable parameter metadata describing the variadic positional parameter
     accepted by the passed pure-Python callable if that callable accepts a
@@ -62,12 +121,12 @@ def get_func_arg_meta_variadic_positional_or_none(
 
     Parameters
     ----------
-    All remaining parameters are passed as is to the lower-level
+    All parameters are passed as is to the lower-level
     :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
 
     Returns
     -------
-    Optional[ArgMeta]
+    Optional[ArgKindNameDefault]
         Either:
 
         * If that callable accepts a variadic positional parameter, callable
@@ -91,10 +150,10 @@ def get_func_arg_meta_variadic_positional_or_none(
     # Else, that callable accepts a variadic positional parameter.
 
     # For metadata describing each parameter accepted by that callable...
-    for arg_meta in iter_func_args(*args, **kwargs):
+    for arg_data in iter_func_args(*args, **kwargs):
         # If this is a variadic positional parameter, return this metadata.
-        if arg_meta[ARG_META_INDEX_KIND] is ArgKind.VARIADIC_POSITIONAL:
-            return arg_meta
+        if arg_data[ARG_META_INDEX_KIND] is ArgKind.VARIADIC_POSITIONAL:
+            return arg_data
         # Else, this is *NOT* a variadic positional parameter. In this case,
         # silently continue to the next parameter.
     # Else, that callable accepts *NO* variadic positional parameter. But, by
@@ -111,8 +170,8 @@ def get_func_arg_meta_variadic_positional_or_none(
 
 
 #FIXME: Unit test us up, please.
-def get_func_arg_meta_variadic_keyword_or_none(
-    *args, **kwargs) -> Optional[ArgMeta]:
+def get_func_arg_data_variadic_keyword_or_none(*args, **kwargs) -> (
+    Optional[ArgKindNameDefault]):
     '''
     Callable parameter metadata describing the variadic keyword parameter
     accepted by the passed pure-Python callable if that callable accepts a
@@ -123,18 +182,18 @@ def get_func_arg_meta_variadic_keyword_or_none(
     -------
     **This getter exhibits worst-case linear-time complexity** :math:`O(n)`
     **for** :math:`O(n)` **the total number of parameters accepted by that
-    callable** due to unavoidably performing a linear search for a variadic
-    keyword parameter with this name is this callable's parameter list. This
+    callable,** due to necessarily performing a linear search for a variadic
+    keyword parameter with this name in this callable's parameter list. This
     getter should thus be called sparingly.
 
     Parameters
     ----------
-    All remaining parameters are passed as is to the lower-level
+    All parameters are passed as is to the lower-level
     :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
 
     Returns
     -------
-    Optional[ArgMeta]
+    Optional[ArgKindNameDefault]
         Either:
 
         * If that callable accepts a variadic keyword parameter, callable
@@ -158,10 +217,10 @@ def get_func_arg_meta_variadic_keyword_or_none(
     # Else, that callable accepts a variadic keyword parameter.
 
     # For metadata describing each parameter accepted by that callable...
-    for arg_meta in iter_func_args(*args, **kwargs):
+    for arg_data in iter_func_args(*args, **kwargs):
         # If this is a variadic keyword parameter, return this metadata.
-        if arg_meta[ARG_META_INDEX_KIND] is ArgKind.VARIADIC_KEYWORD:
-            return arg_meta
+        if arg_data[ARG_META_INDEX_KIND] is ArgKind.VARIADIC_KEYWORD:
+            return arg_data
         # Else, this is *NOT* a variadic keyword parameter. In this case,
         # silently continue to the next parameter.
     # Else, that callable accepts *NO* variadic keyword parameter. But, by
@@ -241,8 +300,8 @@ def get_func_arg_names(
     names in the same order as the original callable signature declared those
     parameters. While feasible, doing so would require manual iteration over
     parameters exhibiting :math:`O(n)` time complexity. Instead, this getter
-    performs a trivial slicing the ``co_varnames`` instance variable of the code
-    object of that callable exhibiting :math:`O(1)` time complexity. Although
+    trivially slices the ``co_varnames`` instance variable of the code object of
+    that callable, exhibiting only :math:`O(1)` time complexity. Although
     extremely fast, doing so has the minor disadvantage of returning parameter
     names in an occasionally unexpected order. The sole exception to this rule
     is the first parameter name returned by this getter, which is guaranteed to
@@ -252,11 +311,12 @@ def get_func_arg_names(
     ----------
     func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
-    is_omit_boundmethod_arg_first : bool, optional
+    is_omit_boundmethod_arg_first : bool, default: True
         :data:`True` only if this getter implicitly omits the first mandatory
         flexible parameter accepted by that callable if that callable is a
         C-based bound method descriptor encapsulating either an instance method
         bound to an instance of a class *or* a class method bound to a class.
+
         Defaults to :data:`True`, instructing this getter to transparently yield
         the *actual* high-level parameters accepted by this bound method
         descriptor (rather than the low-level parameters accepted by the unbound
@@ -295,11 +355,11 @@ def get_func_arg_names(
           callable object to accept a ``self`` parameter.
         * The real-world calling semantics of a bound method descriptor, which
           by definition accepts *no* ``self`` parameter.
-    is_unwrap: bool, optional
+    is_unwrap: bool, default: True
         :data:`True` only if this getter implicitly calls the
         :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
-        Defaults to :data:`True` for safety. See :func:`.get_func_codeobject` for
-        further commentary.
+        Defaults to :data:`True` for safety. See :func:`.get_func_codeobject`
+        for further commentary.
     exception_cls : type, default: _BeartypeUtilCallableException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.

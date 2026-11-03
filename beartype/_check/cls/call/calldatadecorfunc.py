@@ -46,9 +46,9 @@ from beartype._util.func.utilfunccodeobj import (
     get_func_codeobject_or_none,
 )
 from beartype._util.func.utilfunctest import (
+    is_func_async_generator,
     is_func_coro,
     is_func_sync_generator,
-    is_func_async_generator,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (

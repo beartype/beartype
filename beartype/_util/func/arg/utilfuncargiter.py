@@ -13,16 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Iterable,
-    Optional,
-    Tuple,
-)
-from beartype._data.typing.datatyping import TypeException
 from beartype._data.kind.datakindiota import Iota
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from beartype._data.typing.datatyping import TypeException
 from beartype._util.func.arg.utilfuncarglen import get_func_args_lens
-from collections.abc import Callable
+from collections.abc import (
+    Callable,
+    Iterable,
+)
 from enum import (
     Enum,
     auto as next_enum_member_value,
@@ -30,6 +28,7 @@ from enum import (
 )
 from itertools import count
 from types import CodeType
+from typing import Optional
 
 # ....................{ ENUMERATIONS                       }....................
 @die_unless_enum_member_values_unique
@@ -82,18 +81,39 @@ ArgMandatory = Iota()
 '''
 Arbitrary sentinel singleton assigned by the :func:`.iter_func_args` generator
 to the tuple item with index :data:`.ARG_META_INDEX_DEFAULT` of all
-:class:`.ArgMeta` instances, describing **mandatory parameters** (i.e.,
-parameters that *must* be explicitly passed to their callables).
+:class:`.ArgKindNameDefault` instances, describing **mandatory parameters**
+(i.e., parameters that *must* be explicitly passed to their callables).
 '''
 
 # ....................{ HINTS                              }....................
-ArgMeta = Tuple[ArgKind, str, object]
+ArgKindDefault = tuple[ArgKind, object]
 '''
-PEP-compliant type hint matching each **callable parameter metadata**
-iteratively yielded by the :func:`.iter_func_args` generator for each parameter
-accepted by the pure-Python callable passed to that generator, defined as the
-4-tuple ``(arg_kind, arg_name, arg_default_or_mandatory, arg_hint_or_unhinted)``
-where:
+PEP-compliant type hint matching each **callable parameter non-name metadata**
+(i.e., 2-tuples offering the kind and default value (but *not* name) of each
+parameter accepted by a callable).
+
+Each such metadata is defined as the 2-tuple ``(arg_kind,
+arg_default_or_mandatory)``, where:
+
+* ``arg_kind`` is this parameter's **kind** (i.e., :class:`.ArgKind` enumeration
+  member conveying the syntactic class of this parameter, constraining how the
+  callable declaring this parameter requires this parameter to be passed).
+* ``arg_default_or_mandatory`` is either:
+
+  * If this parameter is mandatory, the magic constant :data:`.ArgMandatory`.
+  * Else, this parameter is optional and thus defaults to a default value when
+    unpassed. In this case, this is that default value.
+'''
+
+
+ArgKindNameDefault = tuple[ArgKind, str, object]
+'''
+PEP-compliant type hint matching each **callable parameter metadata** (i.e.,
+3-tuples iteratively yielded by the :func:`.iter_func_args` generator for each
+parameter accepted by the pure-Python callable passed to that generator).
+
+Each such metadata is defined as the 3-tuple ``(arg_kind, arg_name,
+arg_default_or_mandatory)``, where:
 
 * ``arg_kind`` is this parameter's **kind** (i.e., :class:`.ArgKind` enumeration
   member conveying the syntactic class of this parameter, constraining how the
@@ -116,9 +136,8 @@ hints, then that generator *cannot* reliably decide which type hint annotates
 this parameter without refactoring both that generator and all other callables
 transitively calling that generator to also accept and forward on a new
 ``type_hint_wrapper`` parameter providing the callable to be unwrapped with
-respect to type hints. Although feasible, doing so would only invite even
-further API confusion with little to no tangible benefit. Edge cases in which
-this arises include:
+respect to type hints. While feasible, doing so would only invite more API
+confusion with *no* tangible benefits. Edge cases in which this arises include:
 
 * When ``type_hint_wrapper`` is a **pseudo-callable** (i.e., otherwise
   uncallable object whose type renders that object callable by defining the
@@ -187,7 +206,7 @@ def iter_func_args(
 # Note this generator is intentionally annotated as returning a high-level
 # "Iterable[...]" rather than a low-level "Generator[..., ..., ...]", as the
 # syntax governing the latter is overly verbose and largely unhelpful.
-) -> Iterable[ArgMeta]:
+) -> Iterable[ArgKindNameDefault]:
     '''
     Generator yielding one **parameter metadata tuple** (i.e., tuple whose items
     describe a single parameter) for each parameter accepted by the passed
@@ -224,7 +243,13 @@ def iter_func_args(
 
     Caveats
     -------
-    **This highly optimized generator function should always be called in lieu
+    **The higher-level**
+    :func:`beartype._util.func.arg.utilfuncargget.get_func_arg_name_to_kind_default`
+    **getter offers a more convenient API than this lower-level generator
+    factory.** That getter should thus be typically preferred to this generator
+    factory, unless efficiency is a pressing concern.
+
+    **This highly optimized generator factory should always be called in lieu
     of the highly unoptimized** :func:`inspect.signature` **function,** which
     implements a similar introspection as this generator with significantly
     worse space and time consumption. Seriously. *Never* call that anywhere.
@@ -306,7 +331,7 @@ def iter_func_args(
 
     Yields
     ------
-    ArgMeta
+    ArgKindNameDefault
         Parameter metadata tuple describing the currently yielded parameter.
 
     Raises
