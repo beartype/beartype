@@ -13,6 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._check.cls.call.calldatadecorfuncmin import (
+    BeartypeCallDecorFuncMinimalData)
 from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,
@@ -134,6 +136,11 @@ def reduce_hint_nonpep(
     # subsequent call of that method. In this case...
     #
     # See the "BLACKLIST_METHOD_NAMES_HINT_SELF" docstring for further details.
+        # Assert that a callable is currently being decorated by the @beartype
+        # decorator. This should certainly be the case at this point, but
+        # "Safety First" is @beartype's middle two bear family names.
+        assert isinstance(call_curr, BeartypeCallDecorFuncMinimalData)
+
         # Currently decorated type (i.e., most deeply lexically nested type
         # currently being decorated by @beartype).
         decor_type = call_curr.cls_stack[-1]
@@ -195,6 +202,7 @@ def reduce_hint_nonpep(
         # unqualified basename of that method is not one well-known to ignite
         # infinite recursion in type-checking. In any case, this hint *CANNOT*
         # ignite such recursion and is thus preserved.
+
     # Else, either no types are currently being decorated by @beartype *OR* one
     # or more types are currently being decorated by @beartype but no method of
     # the most deeply nested such type is also currently being decorated. In any

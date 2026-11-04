@@ -340,10 +340,11 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         self.func_wrappee_wrappee_codeobj) = (  # pyright: ignore
         self.func_wrapper) = (  # pyright: ignore
         self.func_wrapper_name) = (  # pyright: ignore
+        self._func_wrappee_wrappee_arg_name_to_kind_default) = (  # pyright: ignore
         self._minify_cached) = None  # type: ignore[assignment]
         # self.func_wrapper_name) = None  # type: ignore[assignment]
 
-
+    # ..................{ INITIALIZERS ~ reinit              }..................
     def reinit(
         self,
 
@@ -425,51 +426,13 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         # Else, the caller passed a callable to be unwrapped. Preserve it up!
         # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)}...')
 
-        # If the callable to be type-checked is uncallable, raise an exception.
-        if not callable(func_wrappee):
-            raise BeartypeDecorWrappeeException(
-                f'{repr(func_wrappee)} uncallable.')
-        # Else, that callable is callable.
-        #
-        # If the callable to be unwrapped is uncallable, raise an exception.
-        elif not callable(func_wrapper):
-            raise BeartypeDecorWrappeeException(
-                f'{repr(func_wrapper)} uncallable.')
-        # Else, that callable is callable.
-        #
-        # If this configuration is *NOT* a configuration, raise an exception.
-        elif not isinstance(conf, BeartypeConf):
-            raise BeartypeDecorWrappeeException(
-                f'BeartypeCallDecorFuncData.reinit() method '
-                f'"conf" parameter '
-                f'{repr(conf)} not beartype configuration.'
-            )
-        # Else, this configuration is a configuration.
-        #
-        # If this class stack is neither a tuple *NOR* "None", raise an
-        # exception.
-        elif not isinstance(cls_stack, NoneTypeOr[tuple]):
-            raise BeartypeDecorWrappeeException(
-                f'BeartypeCallDecorFuncData.reinit() method '
-                f'"cls_stack" parameter '
-                f'{repr(cls_stack)} neither tuple nor "None".'
-            )
-        # Else, this class stack is either a tuple *OR* "None".
-
-        # If the caller passed a non-empty class stack...
-        if cls_stack:
-            # For each item of this class stack...
-            for cls_stack_item in cls_stack:
-                # If this item is *NOT* a type, raise an exception.
-                if not isinstance(cls_stack_item, type):
-                    raise BeartypeDecorWrappeeException(
-                        f'BeartypeCallDecorFuncData.reinit() method '
-                        f'"cls_stack" parameter item '
-                        f'{repr(cls_stack_item)} not type.'
-                    )
-                # Else, this item is a type.
-        # Else, the caller either passed no class stack *OR* an empty class
-        # stack. In either case, ignore this parameter.
+        # Raise an exception if any passed reinit() parameter is invalid.
+        self._reinit_check_args(
+            func_wrappee=func_wrappee,
+            conf=conf,
+            cls_stack=cls_stack,
+            func_wrapper=func_wrapper,
+        )
 
         # ..................{ VARS                           }..................
         # Deinitialize this metadata *BEFORE* overwriting these defaults below.
@@ -512,7 +475,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')
         # print(f'{dir(self.func_wrappee_wrappee)}')
 
-        # Possibly unwrapped callable code object.
+        # Code object underlying this possibly unwrapped callable.
         self.func_wrappee_wrappee_codeobj = get_func_codeobject(
             func=self.func_wrappee_wrappee,
             exception_cls=BeartypeDecorWrappeeException,
@@ -754,6 +717,69 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         # Else, this wrappee is *NOT* pure-Python. In this case, preserve these
         # code snippets as the empty string.
 
+
+    def _reinit_check_args(
+        self,
+        func_wrappee: Callable,
+        conf: BeartypeConf,
+        cls_stack: TypeStack,
+        func_wrapper: Optional[Callable],
+    ) -> None:
+        '''
+        Raise an exception if any passed :meth:`reinit` parameter is invalid.
+        '''
+
+        # If the callable to be type-checked is uncallable, raise an exception.
+        if not callable(func_wrappee):
+            raise BeartypeDecorWrappeeException(
+                f'BeartypeCallDecorFuncData.reinit() method '
+                f'"func_wrappee" parameter '
+                f'{repr(func_wrappee)} uncallable.'
+            )
+        # Else, that callable is callable.
+        #
+        # If the callable to be unwrapped is uncallable, raise an exception.
+        elif not callable(func_wrapper):
+            raise BeartypeDecorWrappeeException(
+                f'BeartypeCallDecorFuncData.reinit() method '
+                f'"func_wrapper" parameter '
+                f'{repr(func_wrapper)} uncallable.'
+            )
+        # Else, that callable is callable.
+        #
+        # If this configuration is *NOT* a configuration, raise an exception.
+        elif not isinstance(conf, BeartypeConf):
+            raise BeartypeDecorWrappeeException(
+                f'BeartypeCallDecorFuncData.reinit() method '
+                f'"conf" parameter '
+                f'{repr(conf)} not beartype configuration.'
+            )
+        # Else, this configuration is a configuration.
+        #
+        # If this class stack is neither a tuple *NOR* "None", raise an
+        # exception.
+        elif not isinstance(cls_stack, NoneTypeOr[tuple]):
+            raise BeartypeDecorWrappeeException(
+                f'BeartypeCallDecorFuncData.reinit() method '
+                f'"cls_stack" parameter '
+                f'{repr(cls_stack)} neither tuple nor "None".'
+            )
+        # Else, this class stack is either a tuple *OR* "None".
+
+        # If the caller passed a non-empty class stack...
+        if cls_stack:
+            # For each item of this class stack...
+            for cls_stack_item in cls_stack:
+                # If this item is *NOT* a type, raise an exception.
+                if not isinstance(cls_stack_item, type):
+                    raise BeartypeDecorWrappeeException(
+                        f'BeartypeCallDecorFuncData.reinit() method '
+                        f'"cls_stack" parameter item '
+                        f'{repr(cls_stack_item)} not type.'
+                    )
+                # Else, this item is a type.
+        # Else, the caller either passed no class stack *OR* an empty class
+        # stack. In either case, ignore this parameter.
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
         '''
@@ -892,17 +918,15 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
 
         # Minimal metadata minified from this maximal metadata.
         self._minify_cached = BeartypeCallDecorFuncMinimalData(
-        # minify_uncached = BeartypeCallDecorFuncMinimalData(
             conf=self.conf,
             cls_stack=self.cls_stack,
-            decoratee=self.func_wrappee,
+            decoratee=self.decoratee,
             decoratee_annotations=self.decoratee_annotations,
             decoratee_scope_forward=decoratee_scope_forward_minimal,
         )
 
         # Return this minimal metadata.
         return self._minify_cached
-        # return minify_uncached
 
     # ..................{ LABELLERS                          }..................
     def label_func_wrapper(self) -> str:

@@ -31,9 +31,16 @@ from beartype._util.func.arg.utilfuncarglen import get_func_args_len
 from beartype._util.func.utilfunccodeobj import get_func_codeobject
 from typing import Optional
 
+# ....................{ HINTS                              }....................
+FuncArgNameToKindDefault = dict[str, ArgKindDefault]
+'''
+:pep:`585`-compliant type hint matching the dictionary created and returned by
+the :func:`.get_func_arg_name_to_kind_default` getter.
+'''
+
 # ....................{ GETTERS ~ metadata                 }....................
 def get_func_arg_name_to_kind_default(*args, **kwargs) -> (
-    dict[str, ArgKindDefault]):
+    FuncArgNameToKindDefault):
     '''
     Dictionary mapping from the name of each parameter accepted by the passed
     callable to the 2-tuple ``(arg_kind, arg_default_or_mandatory)``, where:
@@ -49,6 +56,9 @@ def get_func_arg_name_to_kind_default(*args, **kwargs) -> (
         :data:`beartype._util.func.arg.utilfuncargiter.ArgMandatory`.
       * Else, that parameter is optional and thus defaults to a default value
         when unpassed. In this case, this is that default value.
+
+    Naturally, this dictionary preserves the order of these parameters as they
+    were originally defined in the signature of that callable.
 
     Caveats
     -------

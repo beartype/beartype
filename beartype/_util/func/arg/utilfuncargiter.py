@@ -148,7 +148,7 @@ confusion with *no* tangible benefits. Edge cases in which this arises include:
 
 The caller is thus responsible for mapping parameters to type hints. Thankfully,
 the existing
-:attr:`beartype._check.meta.checkdecor.BeartypeCallDecorFuncData.func_annotations`
+:attr:`beartype._check.cls.call.calldataabc.BeartypeCallDataABC.decoratee_annotations`
 dictionary makes this trivial for most use cases.
 '''
 
@@ -261,12 +261,13 @@ def iter_func_args(
     func_codeobj: CodeType, optional
         Code object underlying that callable unwrapped. Defaults to
         :data:`None`, in which case this iterator internally defers to the
-        comparatively slower :func:`.get_func_codeobject` function.
-    is_omit_boundmethod_arg_first : bool, optional
+        comparatively slower :func:`.get_func_codeobject` getter.
+    is_omit_boundmethod_arg_first : bool, default: True
         :data:`True` only if this generator implicitly omits the first mandatory
         flexible parameter accepted by that callable if that callable is a
         C-based bound method descriptor encapsulating either an instance method
         bound to an instance of a class *or* a class method bound to a class.
+
         Defaults to :data:`True`, instructing this generator to transparently
         yield the *actual* high-level parameters accepted by this bound method
         descriptor (rather than the low-level parameters accepted by the unbound
@@ -280,7 +281,8 @@ def iter_func_args(
 
         * This generator to transparently support bound method descriptors,
           which then enables...
-        * The private :func:`beartype._decor._nontype.decornontype.beartype_pseudofunc`
+        * The private
+          :func:`beartype._decor._nontype.decornontype.beartype_pseudofunc`
           decorator to type-check the bound ``__call__()`` method descriptor
           encapsulating the unbound ``__call__()`` dunder method defined on the
           class of pseudo-callable objects, which then enables...
@@ -310,9 +312,9 @@ def iter_func_args(
         :func:`unwrap_func_all_isomorphic` function to unwrap this possibly
         higher-level wrapper into its possibly lowest-level wrappee *before*
         returning the code object of that wrappee. Note that doing so incurs
-        worst-case time complexity ``O(n)`` for ``n`` the number of lower-level
-        wrappees wrapped by this wrapper. Defaults to :data:`True` for
-        robustness. Why? Because this generator *must* always introspect
+        worst-case time complexity :math:`O(n)` for :math:`n` the number of
+        lower-level wrappees wrapped by this wrapper. Defaults to :data:`True`
+        for robustness. Why? Because this generator *must* always introspect
         lowest-level wrappees rather than higher-level wrappers. The latter
         typically do *not* wrap the default values of the former, since this is
         the default behaviour of the :func:`functools.update_wrapper` function
@@ -322,10 +324,10 @@ def iter_func_args(
         optional as mandatory parameters and fail to yield their default values.
         Only set this boolean to :data:`False` if you pretend to know what
         you're doing.
-    exception_cls : type, optional
+    exception_cls : type, default: _BeartypeUtilCallableException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable label prefixing the message of any exception raised in
         the event of a fatal error. Defaults to the empty string.
 

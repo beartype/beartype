@@ -214,46 +214,26 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
     hint_sane: HintSane = None  # type: ignore[assignment]
 
     # ..................{ GENERATE                           }..................
-    #FIXME: Locally remove the "arg_index" local variable (and thus avoid
-    #calling the enumerate() builtin here) *AFTER* refactoring @beartype to
-    #generate callable-specific wrapper signatures.
-
     # Kind and name of this parameter.
     arg_kind: ArgKind = None  # type: ignore[assignment]
     arg_name: str     = None  # type: ignore[assignment]
 
-    #FIXME: Uncomment as needed, please. *sigh*
-    # # Default value of this parameter if this parameter is optional *OR* the
-    # # "ArgMandatory" singleton otherwise (i.e., if this parameter is mandatory).
-    # arg_default: object = None
+    # Default value of this parameter if this parameter is optional *OR* the
+    # "ArgMandatory" singleton otherwise (i.e., if this parameter is mandatory).
+    arg_default: object = None
 
     # For the 0-based index of each parameter accepted by that callable and the
     # "ArgKindNameDefault" 3-tuple describing this parameter (in declaration order)...
-    for arg_index, arg_meta in enumerate(iter_func_args(
-        # Possibly lowest-level wrappee underlying the possibly higher-level
-        # wrapper currently being decorated by the @beartype decorator. The
-        # latter typically fails to convey the same callable metadata conveyed
-        # by the former -- including the names and kinds of parameters accepted
-        # by the possibly unwrapped callable. This renders the latter mostly
-        # useless for our purposes.
-        func=decor_func.func_wrappee_wrappee,
-        func_codeobj=decor_func.func_wrappee_wrappee_codeobj,
-        # Avoid inefficiently attempting to re-unwrap this wrappee. The
-        # previously called BeartypeCallDecorFuncData.reinit() method has already
-        # guaranteed this wrappee to be isomorphically unwrapped.
-        is_unwrap=False,
-    )):
-        # Localize metadata for both efficiency and f-string purposes.
-        #
-        # Note that list unpacking is substantially more efficient than
-        # manually indexing list items. The former requires only a single Python
-        # statement, whereas the latter requires "n" Python statements. *shrug*
-        (
-            arg_kind,
-            arg_name,
-            _,  # arg_default,
-        ) = arg_meta
-
+    #
+    # Note that:
+    # * While bizarre, this syntax is the accepted Pythonic idiom for iterating
+    #   over dictionary key-value pairs while both indexing and unpacking those
+    #   key-value pairs.
+    # * The enumerate() builtin has been profiled to be marginally faster than
+    #   manually incrementing the "arg_index" local variable in the body of this
+    #   "for" loop. Yeah. We actually checked that. *hangs head*
+    for arg_index, (arg_name, (arg_kind, arg_default)) in enumerate(
+        decor_func.func_wrappee_wrappee_arg_name_to_kind_default.items()):
         # If...
         if (
             # The set of the names of all keywordable parameters is needed to
@@ -274,30 +254,6 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
         # distinguish between that type hint and unannotated parameters.
         hint_insane = decor_func.decoratee_annotations_get(  # type: ignore[assignment]
             arg_name, SENTINEL)
-
-        #FIXME: Probably inject code detecting and handling our Poor Man's
-        #Type-checking Solution to #636 here. Basically:
-        #* Perform the following lookup into that dictionary above *BEFORE*
-        #  this "for" loop:
-        #      #FIXME: [SPEED] Define a new
-        #      #"BLACKLIST_FUNC_NAME_TO_ARG_INDEX_get" global for speed.
-        #      arg_index_blacklisted = BLACKLIST_FUNC_NAME_TO_ARG_INDEX.get(
-        #          decor_func.func_wrapper_name)
-        #* Generalize this "if" conditional here to resemble:
-        #      # If either...
-        #      if (
-        #          # This parameter is unannotated *OR*....
-        #          hint_insane is SENTINEL or
-        #          #FIXME: Comment us up, please. *sigh*
-        #          arg_index == arg_index_blacklisted
-        #      ):
-        #      # Then continue to the next parameter.
-        #          continue
-        #      # Else, either this parameter is annotated *OR*....
-        #
-        #Pretty sure that's all that's needed. Maybe? Pretend this makes sense.
-        #FIXME: Actually, ignore the above. A bit overkill, frankly. It's far
-        #easier to just leverage the existing reducer API. Let's go, yo! \o/
 
         # If this parameter is unannotated, continue to the next parameter.
         if hint_insane is SENTINEL:

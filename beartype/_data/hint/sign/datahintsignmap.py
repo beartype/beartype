@@ -137,10 +137,9 @@ def _init_hint_sign_trie(hint_sign_trie: HintSignTrie) -> HintSignTrie:
 #    },
 #
 # Why? Because doing so would then erroneously render the otherwise
-# PEP-noncompliant "object" type PEP-compliant, which would then cause
-# raisers like die_if_pep() and die_unless_pep() to exhibit anomalous
-# behaviour with respect to that type. In short, the clever solution is the
-# wrong solution. *sigh*
+# PEP-noncompliant "object" type PEP-compliant, which would then cause raisers
+# like die_if_pep() and die_unless_pep() to exhibit anomalous behaviour with
+# respect to that type. The clever solution is the wrong solution here. *sigh*
 HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN = _init_hint_sign_trie({})
 '''
 **Type hint trie** (i.e., dictionary-of-dictionaries tree data structure mapping
@@ -152,8 +151,8 @@ identifying signs).
 '''
 
 
-# The majority of this dictionary is initialized with automated inspection
-# iterating over the "_TYPING_ATTR_TYPE_BASENAME_TO_SIGN" dictionary local
+# The majority of this dictionary is initialized via automated introspection
+# iterating over the "_TYPING_ATTR_TYPE_BASENAME_TO_SIGN" dictionary locally
 # defined by the _init() function below. The *ONLY* key-value pairs explicitly
 # defined here are those *NOT* amenable to such inspection.
 HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN = _init_hint_sign_trie({

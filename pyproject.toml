@@ -748,7 +748,9 @@ ignore-words-list = """
     gud,\
     ist,\
     mis,\
+    noes,
     noice,\
+    ohnoes,
     ons,\
     ore,\
     panting,\
