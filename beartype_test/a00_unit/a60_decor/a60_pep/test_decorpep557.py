@@ -428,3 +428,109 @@ def test_decor_pep557_pep484_ref_self() -> None:
     # callable as expected.
     assert isinstance(
         the_story_of_endymion.tis_with_full_happiness(), WillTrace)
+
+
+
+def test_descriptor_annotations_in_dataclass() -> None:
+    '''Ordinary annotations keep their descriptor type (issue #754).'''
+    from beartype import beartype
+    from beartype.roar import (
+        BeartypeCallHintParamViolation,
+        BeartypeCallHintReturnViolation,
+    )
+    from dataclasses import dataclass
+    from pytest import raises
+
+    class Descriptor:
+        def __get__(self, instance, owner=None) -> str:
+            return 'value'
+
+        def __set__(self, instance, value: str) -> None:
+            pass
+
+    @beartype
+    @dataclass
+    class Example:
+        def echo(self, value: Descriptor) -> Descriptor:
+            return value
+
+        def take_list(self, values: list[Descriptor]) -> None:
+            pass
+
+        def bad_return(self) -> Descriptor:
+            return 'value'
+
+    descriptor = Descriptor()
+    instance = Example()
+    assert instance.echo(descriptor) is descriptor
+    instance.take_list([descriptor])
+
+    with raises(BeartypeCallHintParamViolation):
+        instance.echo('value')
+    with raises(BeartypeCallHintParamViolation):
+        instance.take_list(['value'])
+    with raises(BeartypeCallHintReturnViolation):
+        instance.bad_return()
+
+
+def test_descriptor_bound_to_dataclass_field() -> None:
+    '''Apply the getter annotation to the generated initializer only.'''
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype.vale import Is
+    from dataclasses import dataclass
+    from pytest import raises
+    from typing import Annotated, Optional
+
+    class Descriptor:
+        def __get__(self, instance, owner=None) -> Optional[str]:
+            return 'default' if instance is None else instance._value
+
+        def __set__(self, instance, value: Optional[str]) -> None:
+            instance._value = value
+
+    @dataclass
+    class Parent:
+        value: Optional[Descriptor] = Descriptor()
+
+    @beartype
+    @dataclass
+    class Child(Parent):
+        pass
+
+    @beartype
+    @dataclass
+    class Unbound:
+        value: Descriptor
+
+    @beartype
+    @dataclass
+    class Validated:
+        value: Annotated[Descriptor, Is[lambda v: v != 'forbidden']] = Descriptor()
+
+    @beartype
+    @dataclass(init=False)
+    class Custom:
+        value: Descriptor = Descriptor()
+
+        def __init__(self, value: Descriptor) -> None:
+            self.received = value
+
+    assert Child('explicit').value == 'explicit'
+    assert Child().value == 'default'
+    assert Child(None).value is None
+    with raises(BeartypeCallHintParamViolation, match='str'):
+        Child(Descriptor())
+
+    assert Validated('explicit').value == 'explicit'
+    with raises(BeartypeCallHintParamViolation):
+        Validated('forbidden')
+
+    descriptor = Descriptor()
+    assert Custom(descriptor).received is descriptor
+    with raises(BeartypeCallHintParamViolation):
+        Custom('value')
+
+    assert Unbound(descriptor).value is descriptor
+    with raises(BeartypeCallHintParamViolation):
+        Unbound('value')

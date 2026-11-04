@@ -18,6 +18,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintRecursionException
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.convert._reduce._pep.redpep557 import (
+    reduce_hint_pep557_descriptor_field)
 from beartype._check.convert._reduce._redmap import (
     HINT_SIGN_TO_REDUCE_HINT_CACHED_get,
     HINT_SIGN_TO_REDUCE_HINT_UNCACHED_get,
@@ -277,6 +279,14 @@ def reduce_hint(
     # Original unreduced hint passed to this reducer, preserved so as to be
     # embedded in human-readable exception messages.
     hint_insane = hint
+
+    # Descriptor-backed fields depend on the parameter and class, so handle
+    # them at the root before any context-independent hint reduction.
+    if pith_name is not None and hint_parent_sane is None and call_curr.cls_stack:
+        hint = reduce_hint_pep557_descriptor_field(
+            call_curr, hint, pith_name, exception_prefix)
+        if hint is not hint_insane:
+            hint_sign_seed = SENTINEL
 
     # Currently reduced instance of this hint.
     hint_curr: Hint = hint

@@ -20,8 +20,6 @@ from beartype._check.cls.hint.hintsane import (
     HintOrSane,
     HintSane,
 )
-from beartype._check.convert._reduce._pep.redpep557 import (
-    reduce_hint_pep557_descriptor_data_if_able)
 from beartype._check.forward.reference.fwdrefproxy import (
     proxy_hint_pep484_ref_str_fake)
 from beartype._cave._cavefast import (
@@ -207,29 +205,6 @@ def reduce_hint_nonpep(
     # or more types are currently being decorated by @beartype but no method of
     # the most deeply nested such type is also currently being decorated. In any
     # case, this hint *CANNOT* ignite such recursion and is thus preserved.
-
-    # ....................{ PHASE ~ pep : 557              }....................
-    # In this next reduction phase, we conditionally attempt a PEP 557-specific
-    # reduction from a PEP-noncompliant runtime-hostile data descriptor-typed
-    # dataclass field to the equivalent PEP-compliant runtime-friendly return
-    # hint annotating that data descriptor's __get__() dunder method.
-
-    # Either:
-    # * If a PEP 557-compliant dataclass is currently being decorated *AND* this
-    #   hint is a PEP 252-compliant runtime-hostile data descriptor presumably
-    #   annotating a PEP-noncompliant descriptor-typed field of that dataclass,
-    #   reduce this field to the equivalent PEP-compliant runtime-friendly
-    #   return hint annotating this data descriptor's __get__() dunder method.
-    #   We don't make rules. Our rictus grin just smiles in horror at rules.
-    # * Else, either a PEP 557-compliant dataclass is not currently being
-    #   decorated *OR* this hint is not a PEP 252-compliant runtime-hostile data
-    #   descriptor. In either case, preserve this hint as is.
-    hint = reduce_hint_pep557_descriptor_data_if_able(  # pyright: ignore
-        call_curr=call_curr,
-        hint=hint,
-        hint_parent_sane=hint_parent_sane,
-        **kwargs
-    )
 
     # ....................{ PHASE ~ singleton              }....................
     # In this last reduction phase, we attempt a general-purpose reduction

@@ -14,19 +14,22 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
-from beartype._check.cls.hint.hintsane import (
-    HINT_SANE_IGNORABLE,
-    HintOrSane,
-)
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.kind.datakindiota import SENTINEL
+from beartype._data.func.datafunccodeobj import CODE_OBJECT_FILENAME_EVAL
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cls.pep.clspep252 import is_type_pep252_descriptor_data
 from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
 from beartype._util.hint.pep.proposal.pep557 import get_hint_pep557_initvar_arg
 from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
     get_hintable_pep649749_annotations)
+
+from beartype._util.func.utilfunccodeobj import get_func_codeobject_or_none
+from beartype._util.func.utilfuncwrap import unwrap_func_all
+from dataclasses import fields
+from inspect import getattr_static
+from types import UnionType
+from typing import Annotated, Any, Union, get_args, get_origin
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep557_initvar(hint: Hint) -> Hint:
@@ -57,167 +60,75 @@ def reduce_hint_pep557_initvar(hint: Hint) -> Hint:
         hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
 
 
-#FIXME: Unit test us up, please. *sigh*
-def reduce_hint_pep557_descriptor_data_if_able(
+def reduce_hint_pep557_descriptor_field(
     call_curr: BeartypeCallDataABC,
     hint: Hint,
+    pith_name: str,
     exception_prefix: str,
-    **kwargs
-) -> (
-    HintOrSane):
+) -> Hint:
+    '''Reduce a bound descriptor's annotation on a generated initializer.
+
+    Apply the existing getter-return convention only where the generated
+    initializer assigns the parameter to a descriptor-backed dataclass field.
+    Ordinary annotations on methods, custom initializers and unbound fields
+    still describe the descriptor object itself.
     '''
-    Reduce the passed :pep:`252`-compliant runtime-hostile data descriptor
-    (presumably annotating a PEP-noncompliant descriptor-typed field of some
-    otherwise :pep:`557`-compliant dataclass) to the equivalent
-    :pep:`557`-compliant runtime-friendly return hint annotating this data
-    descriptor's ``__get__()`` dunder method if both a :pep:`557`-compliant
-    dataclass is currently being decorated and the passed hint is such a
-    descriptor *or* preserve this hint as is otherwise.
-
-    Note that descriptor-typed fields have yet to be standardized by any
-    peer-reviewed PEP and are thus technically PEP-noncompliant, despite being
-    officially documented in Python documentation.
-
-    Motivation
-    ----------
-    Technically, data descriptor-typed dataclass fields have yet to be formally
-    standardized by any PEP (including :pep:`557`) and are thus
-    PEP-noncompliant. Pragmatically, however, official Python documentation
-    informally describe these fields and thus require :mod:`beartype` to at
-    least feign a half-hearted public show of support.
-
-    For example, consider the following trivial data descriptor and dataclass:
-
-    .. code-block:: python
-
-       from dataclasses import dataclass
-
-       class MuhDataDescriptor(object):
-           def __get__(self, obj, objtype: type | None = None) -> str:
-               return obj.muh_string_field
-
-           def __set__(self, obj, value: str) -> None:
-               obj.muh_string_field = value
-
-       @dataclass
-       class MuhDataclass(object):
-           muh_string_field_alias: MuhDataDescriptor = MuhDataDescriptor()
-           muh_string_field: str = 'So string. So strong. So it goes!?'
-
-    Since the ``MuhDataclass.muh_string_field_alias`` field defined above is
-    bound to a data descriptor at class declaration time, the value of that
-    field when accessed as an instance variable of instances of that dataclass
-    is a string. Clearly, the type hint annotating that field violates its
-    runtime value and is thus runtime-hostile.
-
-    To circumvent this pseudo-standard runtime hostility, this reducer
-    internally reduces the runtime-hostile dataclass defined above to this
-    equivalent runtime-friendly dataclass actually supported by @beartype:
-
-    .. code-block:: python
-
-       @dataclass
-       class MuhDataclass(object): # v------- see what @beartype did there?
-           muh_string_field_alias: str = MuhDataDescriptor()
-           muh_string_field: str = 'So string. So strong. So it goes!?'
-
-    Parameters
-    ----------
-    call_curr : BeartypeCallDataABC
-        **Beartype call metadata** (i.e., dataclass aggregating *all* common
-        metadata encapsulating the user-defined callable, type, or statement
-        currently being type-checked by the end user).
-    hint : Hint
-        Data descriptor type to be reduced.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
-
-    All remaining passed keyword-only parameters are silently ignored.
-
-    Returns
-    -------
-    HintOrSane
-        Either:
-
-        * If this data descriptor's ``__get__()`` dunder method is annotated by
-          *no* return hint, :data:`.HINT_SANE_IGNORABLE`.
-        * Else, that return hint.
-
-    See Also
-    --------
-    https://docs.python.org/3.13/library/dataclasses.html#descriptor-typed-fields
-        Official Python documentation on descriptor-type dataclass fields.
-    '''
-
-    # ....................{ NOOP                           }....................
-    # If it is *NOT* the case that...
-    if not (
-        # This hint transitively annotates a class currently being decorated by
-        # @beartype *AND*...
-        call_curr.cls_stack is not None and
-        # This hint is a type and thus possibly a data descriptor type *AND*...
-        isinstance(hint, type) and
-        # The currently decorated class is a PEP 557-compliant dataclass
-        # *AND*...
-        #
-        # Note that this test is mildly inefficient and thus performed *AFTER*
-        # trivial tests known to be extremely efficient above.
-        is_type_pep557_dataclass(call_curr.cls_stack[-1]) and
-        # This hint is a data descriptor type...
-        #
-        # Note that this test is even more inefficient (due to requiring
-        # protocol matching) and thus performed *AFTER* all other tests.
-        is_type_pep252_descriptor_data(hint)
-    ):
-    # Then either a PEP 557-compliant dataclass is not currently being decorated
-    # *OR* this hint is not a PEP 252-compliant runtime-hostile data descriptor.
-    # In either case, preserve this hint as is.
+    if pith_name == ARG_NAME_RETURN or not call_curr.cls_stack:
         return hint
-    # Else, a PEP 557-compliant dataclass is currently being decorated *AND*
-    # this hint is a PEP 252-compliant runtime-hostile data descriptor
-    # presumably annotating a PEP-noncompliant descriptor-typed field of that
-    # dataclass.
 
-    # ....................{ LOCALS                         }....................
-    # Unbound __get__() dunder method defined by this data descriptor type.
-    descriptor_get = hint.__get__  # pyright: ignore
+    cls = call_curr.cls_stack[-1]
+    func = call_curr.decoratee
+    if getattr(func, '__name__', None) != '__init__':
+        return hint
 
-    # Dictionary mapping from the name of each parameter or return of this
-    # unbound __get__() dunder method to the type hint annotating that parameter
-    # or return if that dunder method is annotated by one or more such hints
-    # *OR* "None" otherwise (i.e., if that dunder method is unannotated).
-    descriptor_get_annotations = get_hintable_pep649749_annotations(
-        hintable=descriptor_get, exception_prefix=exception_prefix)
+    # Dataclasses exposes no public marker for its generated initializer.
+    # Check both the function identity in the class namespace and the code
+    # produced by dataclasses' exec-based function factory.
+    func = unwrap_func_all(func)
+    if unwrap_func_all(getattr_static(cls, '__init__')) is not func:
+        return hint
+    code = get_func_codeobject_or_none(func)
+    if (
+        code is None or
+        code.co_name != '__init__' or
+        code.co_filename != CODE_OBJECT_FILENAME_EVAL or
+        not is_type_pep557_dataclass(cls)
+    ):
+        return hint
 
-    # ....................{ RETURN                         }....................
-    # If that method is annotated by one or more type hints...
-    if descriptor_get_annotations:
-        # Return hint annotating that method if any *OR* the sentinel
-        # placeholder (i.e., if that method's return is unannotated).
-        descriptor_get_return_hint = descriptor_get_annotations.get(
-            ARG_NAME_RETURN, SENTINEL)
+    # Static lookup avoids calling the descriptor's getter and respects a
+    # subclass overriding an inherited field with an ordinary default.
+    descriptor_type = type(getattr_static(cls, pith_name, None))
+    if not is_type_pep252_descriptor_data(descriptor_type):
+        return hint
+    if not any(field.init and field.name == pith_name for field in fields(cls)):
+        return hint
 
-        # If that method's return is annotated, reduce this guaranteeably
-        # runtime-hostile data descriptor type to the (hopefully)
-        # runtime-friendly hint annotating that method's return.
-        if descriptor_get_return_hint is not SENTINEL:
-            # print(f'Reducing descriptor-typed field {repr(hint)} to {repr(descriptor_get_return_hint)}!')
-            return descriptor_get_return_hint
-        # Else, that method's return is unannotated.
-    # Else, that method is unannotated.
+    return _replace_descriptor_hint(hint, descriptor_type, exception_prefix)
 
-    # Instruct the caller to silently ignore this unannotated data descriptor
-    # type. While non-ideal, ignoring this edge case is preferable to emitting
-    # false positives by raising exceptions -- which is what would happen if we
-    # failed to explicitly ignore this edge case here. Avoiding false positives
-    # is why @beartype and similar runtime type-checkers exist, after all.
-    # Static type-checkers mostly just emit false positives.
-    #
-    # Descriptor-typed fields are invalid as runtime type hints. Why? Because
-    # the values of the dataclass fields they annotate are *NOT* themselves
-    # instances of those descriptors but rather arbitrary objects returned by
-    # the __get__() methods bound to those descriptors. In the absence of any
-    # return type hints annotating those methods, silently ignoring unannotated
-    # descriptor-typed fields is @beartype's only sane recourse.
-    # print(f'Ignoring unannotated descriptor-typed field {repr(hint)}!')
-    return HINT_SANE_IGNORABLE
+
+def _replace_descriptor_hint(
+    hint: Hint, descriptor_type: type, exception_prefix: str) -> Hint:
+    '''Replace matching descriptor alternatives without visiting container items.'''
+    if isinstance(hint, type) and hint in descriptor_type.__mro__:
+        if is_type_pep252_descriptor_data(hint):
+            annotations = get_hintable_pep649749_annotations(
+                hintable=hint.__get__, exception_prefix=exception_prefix)
+            return annotations.get(ARG_NAME_RETURN, Any) if annotations else Any
+        return hint
+
+    origin = get_origin(hint)
+    if origin is Annotated:
+        inner, *metadata = get_args(hint)
+        reduced = _replace_descriptor_hint(inner, descriptor_type, exception_prefix)
+        return hint if reduced is inner else Annotated[(reduced, *metadata)]
+    if origin is Union or origin is UnionType:
+        children = get_args(hint)
+        reduced_children = tuple(
+            _replace_descriptor_hint(child, descriptor_type, exception_prefix)
+            for child in children
+        )
+        if any(new is not old for new, old in zip(reduced_children, children)):
+            return Union[reduced_children]
+
+    return hint
