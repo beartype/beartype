@@ -176,6 +176,49 @@ def test_jax_jit() -> None:
 
 # Note that JAX is only safely importable from subprocesses. See above! *sigh*
 @pytest.mark.run_in_subprocess
+def test_jaxtyping_union_violation() -> None:
+    '''Test union diagnostics retain jaxtyping shape and dtype explanations.'''
+
+    # Defer optional imports until this test runs in its isolated subprocess.
+    from beartype._util.module.utilmodtest import is_package
+
+    if not (
+        is_package('jaxtyping', is_ignore_import_exception=True) and
+        is_package('numpy', is_ignore_import_exception=True)
+    ):
+        return
+
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from jaxtyping import Bool, TypeCheckError, UInt8, jaxtyped
+    from numpy import ndarray, zeros
+
+    @jaxtyped(typechecker=beartype)
+    def check(value: Bool[ndarray, '{n}'] | UInt8[ndarray, '1'], n: int):
+        return value
+
+    # Both alternatives remain usable without changing the checking path.
+    for value in (zeros(3, dtype=bool), zeros(1, dtype='uint8')):
+        assert check(value, 3) is value
+
+    with pytest.raises(TypeCheckError) as exception_info:
+        check(zeros(4, dtype=bool), 3)
+
+    # Jaxtyping wraps the checker exception. Its cause must retain the detailed
+    # explanations while the symbolic dimension's binding is still available.
+    exception = exception_info.value
+    while exception is not None and not isinstance(
+        exception, BeartypeCallHintParamViolation):
+        exception = exception.__cause__
+
+    assert isinstance(exception, BeartypeCallHintParamViolation)
+    message = str(exception)
+    assert 'dimension size 4 does not equal the existing value of {n}=3' in message
+    assert 'dtype bool, not uint8' in message
+
+
+# Note that JAX is only safely importable from subprocesses. See above! *sigh*
+@pytest.mark.run_in_subprocess
 @skip_unless_package('torch')
 def test_jaxtyping_jaxtyped() -> None:
     '''

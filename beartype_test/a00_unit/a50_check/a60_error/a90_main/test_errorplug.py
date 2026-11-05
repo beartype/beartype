@@ -17,9 +17,11 @@ dunder method).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+import pytest
 
 # ....................{ TESTS                              }....................
-def test_get_func_pith_violation_instancecheck_str() -> None:
+@pytest.mark.parametrize('is_union', (False, True))
+def test_get_func_pith_violation_instancecheck_str(is_union: bool) -> None:
     '''
     Test the
     :func:`beartype._check.error.errmain.get_func_pith_violation`
@@ -35,7 +37,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     from beartype._check.cls.call.calldatadecorfuncmin import (
         minify_decor_func_kwargs)
     from beartype_test._util.error.pyterrraise import raises_uncached
-    from typing import Any
+    from typing import Any, Union
 
     # ..................{ METACLASSES                        }..................
     class TheMysteryAndMeta(type):
@@ -102,6 +104,13 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
 
         return the_sounds_that
 
+    # Exercise the same plugin validation for direct and union annotations.
+    if is_union:
+        of_yesternight.__annotations__ = {
+            name: Union[hint, int]
+            for name, hint in of_yesternight.__annotations__.items()
+        }
+
     # Keyword arguments to be unconditionally passed to *ALL* calls of the
     # get_func_pith_violation() getter below.
     kwargs = dict(
@@ -162,3 +171,155 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
             pith_value='Gaze on the empty scene as vacantly',
             **kwargs
         )
+
+
+@pytest.fixture(scope='module')
+def union_instancecheck_str_types() -> tuple:
+    '''
+    Classes whose metaclasses define ``__instancecheck_str__()``, and the list
+    recording calls to that method. Share these classes across tests to preserve
+    their identity under hint caching.
+    '''
+
+    # Record diagnostic calls independently of ordinary instance checks.
+    hints_diagnosed = []
+
+    class ShapeMeta(type):
+        '''Metaclass providing an explanation without naming its class.'''
+
+        def __instancecheck_str__(cls, obj: object) -> str:
+            hints_diagnosed.append(cls)
+            return 'dimension size 4 does not equal expected size 3'
+
+    class DtypeMeta(type):
+        '''Metaclass providing a distinct explanation for another branch.'''
+
+        def __instancecheck_str__(cls, obj: object) -> str:
+            hints_diagnosed.append(cls)
+            return 'dtype bool does not equal expected dtype uint8'
+
+    class Shape(metaclass=ShapeMeta):
+        pass
+
+    class Dtype(metaclass=DtypeMeta):
+        pass
+
+    return Shape, Dtype, hints_diagnosed
+
+
+@pytest.mark.parametrize('is_pep604', (False, True))
+@pytest.mark.parametrize('is_nested', (False, True))
+@pytest.mark.parametrize('is_mixed', (False, True))
+def test_instancecheck_str_union(
+    union_instancecheck_str_types: tuple,
+    is_pep604: bool,
+    is_nested: bool,
+    is_mixed: bool,
+) -> None:
+    '''
+    Test union violations include ``__instancecheck_str__()`` return strings and
+    successful checks avoid calls to that method, including nested unions.
+    '''
+
+    # Defer test-specific imports.
+    from beartype import beartype, BeartypeConf
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from typing import Union
+
+    Shape, Dtype, hints_diagnosed = union_instancecheck_str_types
+    hints_diagnosed.clear()
+    hint_union = Shape | Dtype if is_pep604 else Union[Shape, Dtype]
+    if is_mixed:
+        hint_union = hint_union | int if is_pep604 else Union[hint_union, int]
+
+    def check(value):
+        return value
+
+    check.__annotations__ = {
+        'value': list[hint_union] if is_nested else hint_union}
+    check = beartype(check, conf=BeartypeConf(is_color=False))
+
+    # Every alternative fails. Both explanations must identify their branch,
+    # while ordinary types retain their compact failure description.
+    with raises_uncached(BeartypeCallHintParamViolation) as exception_info:
+        check(['bad'] if is_nested else 'bad')
+
+    message = str(exception_info.value)
+    assert 'Shape">: dimension size 4 does not equal expected size 3' in message
+    assert 'Dtype">: dtype bool does not equal expected dtype uint8' in message
+    if is_mixed:
+        assert 'Not int.' in message
+    assert set(hints_diagnosed) == {Shape, Dtype}
+    assert len(hints_diagnosed) == 2
+    if is_nested:
+        assert 'list index 0 item' in message
+
+    # Satisfying any child hint requires no calls to __instancecheck_str__().
+    hints_diagnosed.clear()
+    values = (Shape(), Dtype(), 1) if is_mixed else (Shape(), Dtype())
+    for value in values:
+        pith = [value] if is_nested else value
+        assert check(pith) is pith
+    assert not hints_diagnosed
+
+
+def test_instancecheck_str_union_order(
+    union_instancecheck_str_types: tuple,
+) -> None:
+    '''Test custom explanations retain child order and existing cause grouping.'''
+
+    # Defer test-specific imports.
+    from beartype import BeartypeConf
+    from beartype.door import die_if_unbearable
+    from beartype.roar import BeartypeDoorHintViolation
+    from beartype._cache.cacheclear import clear_caches
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from typing import Union
+
+    Shape, Dtype, hints_diagnosed = union_instancecheck_str_types
+    for hint_first, hint_last in ((Shape, Dtype), (Dtype, Shape)):
+        # Equivalent unions share cache keys. Test each ordering independently.
+        clear_caches()
+        hints_diagnosed.clear()
+        hint = Union[hint_first, int, list[str], hint_last]
+
+        with raises_uncached(BeartypeDoorHintViolation) as exception_info:
+            die_if_unbearable([1], hint, conf=BeartypeConf(is_color=False))
+
+        message = str(exception_info.value)
+        assert hints_diagnosed == [hint_first, hint_last]
+        # Preserve the existing shallow summary and deep cause positions.
+        # Only the newly appended custom explanations follow child hint order.
+        assert (
+            message.index('Not int.') <
+            message.index('List index 0 item') <
+            message.index(f'{hint_first.__name__}">:') <
+            message.index(f'{hint_last.__name__}">:')
+        )
+
+
+def test_instancecheck_str_union_origin() -> None:
+    '''
+    Test union origin checks include the origin class's
+    ``__instancecheck_str__()`` return string.
+    '''
+
+    # Defer test-specific imports.
+    from beartype import BeartypeConf
+    from beartype.door import die_if_unbearable
+    from beartype.roar import BeartypeDoorHintViolation
+    from beartype_test._util.error.pyterrraise import raises_uncached
+
+    class SequenceMeta(type):
+        def __instancecheck_str__(cls, obj: object) -> str:
+            return 'requires a custom sequence'
+
+    class Sequence(list, metaclass=SequenceMeta):
+        pass
+
+    with raises_uncached(BeartypeDoorHintViolation) as exception_info:
+        die_if_unbearable(
+            'bad', Sequence[int] | int, conf=BeartypeConf(is_color=False))
+
+    assert 'requires a custom sequence' in str(exception_info.value)

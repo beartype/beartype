@@ -21,6 +21,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.text.utiltextjoin import join_types_commaed_or
+from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextmunge import (
     suffix_str_unless_suffixed,
     uppercase_str_char_first,
@@ -167,6 +168,45 @@ def find_cause_pep484604_union(cause: HintTreeError) -> HintTreeError:
             # Add this class to the subset of all types this pith violates.
             hint_types_violated.add(hint_child)
             # print(f'[union] Appended PEP-noncompliant child hint {hint_child}!')
+
+    # ....................{ PLUGINS                        }....................
+    # Call __instancecheck_str__() only after all union children have failed.
+    # Traverse child hints to preserve the order of these calls, using the set
+    # above only to identify failed classes and deduplicate shared origin types.
+    for hint_child_sane in cause.hint_childs_sane:
+        if hint_child_sane is HINT_SANE_IGNORABLE:
+            continue
+
+        hint_type = hint_child_sane.hint
+        if is_hint_pep(hint_type):
+            hint_type = get_hint_pep_origin_type_isinstanceable_or_none(hint_type)
+        if (
+            hint_type not in hint_types_violated or
+            not getattr(hint_type, '__instancecheck_str__', None)
+        ):
+            continue
+
+        # Avoid circular import dependencies.
+        from beartype._check.error._nonpep.errnonpeptype import (
+            find_cause_instance_type)
+
+        # Reuse the class cause finder, including its plugin API validation.
+        cause_child = find_cause_instance_type(
+            cause.permute_cause_hint_child_insane(
+                hint_type, cause_indent=CAUSE_INDENT_CHILD))
+        if cause_child.cause_str_or_none is None:
+            return cause
+
+        cause_str = cause_child.cause_str_or_none
+        if cause_str.startswith(pith_repr):
+            cause_str = cause_str[PITH_REPR_INDEX:]
+
+        # Strings returned by __instancecheck_str__() need not name their class.
+        # Label each cause to distinguish child hints without repeating the pith.
+        cause_strs.append(
+            f'{label_type(cls=hint_type, is_color=cause.conf.is_color)}: '
+            f'{cause_str}')
+        hint_types_violated.remove(hint_type)
 
     # ....................{ CAUSE                          }....................
     # If this pith fails to shallowly satisfy one or more of the types of this

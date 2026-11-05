@@ -168,7 +168,10 @@ def test_pep484_ref_decor_data() -> None:
     with raises_uncached(BeartypeCallHintParamViolation) as violation_info:
         to_watch_his_woods('Then living on the earth, with labouring thought')
     violation_message = str(violation_info.value)
-    assert 'forwardreffake' not in violation_message
+    # Union children invoke the __instancecheck_str__() method
+    # preserving its detailed referent explanation.
+    assert 'forwardreffake' in violation_message
+    assert 'not instance of' in violation_message
 
     # Delete this "WhoseWoodsTheseAreIThinkIKnow" type.
     del WhoseWoodsTheseAreIThinkIKnow
@@ -219,12 +222,13 @@ def test_pep484_ref_decor_data() -> None:
     # Assert this message contains the critical substring "forwardreffake".
     assert 'forwardreffake' in violation_message
 
-    #FIXME: *NO IDEA*. Probably a similar issue as above.
-    # See above.
+    # Union diagnostics also retain the explanation of the forward reference
+    # fake proxy returned by __instancecheck_str__().
     with raises_uncached(BeartypeCallHintParamViolation) as violation_info:
         to_watch_his_woods('And the bright Titan, phrenzied with new woes,')
     violation_message = str(violation_info.value)
-    assert 'forwardreffake' not in violation_message
+    assert 'forwardreffake' in violation_message
+    assert 'not instance of' in violation_message
 
 # ....................{ TESTS ~ absolute : non-nested      }....................
 def test_pep484_ref_decor_absolute_type_nonnested() -> None:
