@@ -22,7 +22,7 @@ from beartype._data.typing.datatyping import (
     TypeStack,
 )
 from beartype._decor._type._pep.decortypepep557 import (
-    beartype_pep557_dataclass)
+    beartype_pep557_dataclass_fields)
 from beartype._cache.cacheclear import clear_caches
 from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
 from beartype._util.cls.utilclsset import set_type_attr
@@ -254,7 +254,7 @@ def beartype_type(
     ):
         # Monkey-patch type-checking of *ALL* PEP 557-compliant dataclass fields
         # into this dataclass.
-        beartype_pep557_dataclass(datacls=cls, conf=conf)
+        beartype_pep557_dataclass_fields(datacls=cls, conf=conf)
     # Else, either this beartype configuration disables type-checking of PEP
     # 557-compliant dataclasses *OR* this type is *NOT* a PEP 557-compliant
     # dataclass. In either case, PEP 557 does *NOT* apply to this type.

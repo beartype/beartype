@@ -136,15 +136,15 @@ class DataDescriptor(NondataDescriptor):
         '''
 
         # One-liner or it didn't happen.
-        setattr(obj, self._attr_name, value)
+        object.__setattr__(obj, self._attr_name, value)
 
 # ....................{ CLASSES ~ descriptor : str         }....................
 class DataDescriptorStrSelfSwapCase(object):
     '''
     **String case-swapping data descriptor** (i.e., pure-Python type defining
-    both the :meth:`.__get__` *and* :meth:`.__set__` dunder method implicitly
+    both the :meth:`.__get__` *and* :meth:`.__set__` dunder methods implicitly
     called by Python when instances of this type are assigned to class variables
-    and then subsequently accessed or modified respectively via those class
+    and then subsequently accessed or modified respectively with those class
     variables on instances of those classes such that that :meth:`.__get__`
     dunder method returns a string and that :meth:`.__set__` dunder method
     accepts a string whose case is swapped by that method).
@@ -293,7 +293,8 @@ class DataDescriptorStrSelfSwapCase(object):
         '''
 
         # SO MUCH FOR TODAY.
-        setattr(obj, self._attr_name, text.swapcase())
+        # setattr(obj, self._attr_name, text.swapcase())
+        object.__setattr__(obj, self._attr_name, text.swapcase())
 
 # ....................{ CLASSES ~ store                    }....................
 class DataAndNondataDescriptorStore(object):

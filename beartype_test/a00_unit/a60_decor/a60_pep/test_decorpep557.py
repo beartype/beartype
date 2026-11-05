@@ -34,8 +34,10 @@ def test_decor_pep557() -> None:
         BeartypeCallHintParamViolation,
     )
     from beartype_test._util.error.pyterrraise import raises_uncached
-    # from beartype_test.a00_unit.data.pep.data_pep252 import (
-    #     DataDescriptorStrSelfSwapCase)
+    from beartype_test.a00_unit.data.pep.data_pep252 import (
+        DataDescriptor,
+        DataDescriptorStrSelfSwapCase,
+    )
     from dataclasses import (
         FrozenInstanceError,
         InitVar,
@@ -47,7 +49,7 @@ def test_decor_pep557() -> None:
         Optional,
     )
 
-    # ..................{ LOCALS                             }..................
+    # ..................{ CONSTANTS                          }..................
     # Beartype configuration type-checking *ALL* PEP 557-compliant dataclass
     # fields on mutation (i.e., assignment).
     BEARTYPE_CONF_PEP557 = BeartypeConf(is_pep557_fields=True)
@@ -55,6 +57,7 @@ def test_decor_pep557() -> None:
     # Tuple of all beartype configurations to be tested below.
     BEARTYPE_CONFS = (BeartypeConf(), BEARTYPE_CONF_PEP557,)
 
+    # ..................{ LOCALS                             }..................
     # Modifiable list of "**kwargs" dictionaries to be passed as the keyword
     # parameters configuring each decoration of the dataclass below by the
     # @dataclass decorator.
@@ -68,6 +71,10 @@ def test_decor_pep557() -> None:
         # The slotted @dataclass decorator.
         dict(slots=True),
     ]
+
+    # Arbitrary data descriptor trivially getting and setting an arbitrary
+    # instance variable with the initialized name.
+    about_old_forests = DataDescriptor(attr_name='while_the_willow_trails')
 
     # ..................{ DATACLASSES                        }..................
     # For each beartype configuration to be tested...
@@ -131,8 +138,8 @@ def test_decor_pep557() -> None:
 
                 # ..................{ OPTIONAL ~ non-pep     }..................
                 #FIXME: Uncomment once this actually works. This is currently
-                #failing because we obviously forgot to actually sanify type hints.
-                #Which... is insane, honestly. Srsly! *sigh*
+                #failing because we obviously forgot to actually sanify type
+                #hints. Which... is insane, honestly. Srsly! *sigh*
 
                 # to_me_his_arms: DataDescriptorStrSelfSwapCase = (
                 #     DataDescriptorStrSelfSwapCase(text_default=(
@@ -171,6 +178,9 @@ def test_decor_pep557() -> None:
                 '''
 
                 # ..................{ INITIALIZERS           }..................
+                #FIXME: *UH*. Explicit decoration absolutely should *NOT* be
+                #required here. What is going on? In all likelihood, this is
+                #masking underlying issues and should be removed quickly. *sigh*
                 @beartype
                 def __post_init__(self, but_for_such_faith: str) -> None:
                     '''
@@ -182,7 +192,7 @@ def test_decor_pep557() -> None:
 
                     This dunder method is intentionally type-checked by the
                     :func:`beartype.beartype` decorator to improve test
-                    coverage.
+                    coverage. Don't ask. We didn't.
                     '''
 
                     # If the caller failed to pass this optional field to the
@@ -211,6 +221,24 @@ def test_decor_pep557() -> None:
                     # Else, the caller passed this optional field to the
                     # __init__() constructor. In this case, preserve this field.
 
+                # ..................{ METHODS                }..................
+                def and_run_in_mazes(
+                    self, of_the_youngest_hue: DataDescriptor) -> (
+                    DataDescriptor):
+                    '''
+                    Arbitrary non-dunder method accepting an arbitrary data
+                    descriptor instance annotated as such, intentionally
+                    exercising an edge case guarding against regressions.
+
+                    See Also
+                    --------
+                    https://github.com/beartype/beartype/issues/754
+                        Issue exercised by this method.
+                    '''
+
+                    # That's the one one-liker like it!
+                    return of_the_youngest_hue
+
             # ..................{ LOCALS                     }..................
             # Arbitrary instance of this dataclass exercising all edge cases.
             great_mountain = SoSolemnSoSerene(
@@ -233,7 +261,7 @@ def test_decor_pep557() -> None:
 
             # ..................{ ASSERTS ~ forward : define }..................
             # Defer the importation of this type until *AFTER* accessing the
-            # "SoSolemnSoSerene.sweet_shaped_lightnings" optional field,
+            # "SoSolemnSoSerene.sweet_shaped_lightnings" optional field
             # annotated by a PEP 484-compliant stringified absolute forward
             # reference type hint referring to this type.
             from beartype_test.a00_unit.data.data_type import Class
@@ -366,6 +394,18 @@ def test_decor_pep557() -> None:
                     'My strong identity, my real self,')
                 assert great_mountain.with_nature_reconciled == (
                     'My strong identity, my real self,')
+
+            # ..................{ ASSERTS ~ method           }..................
+            # Assert that these dataclass methods when passed valid parameters
+            # return the expected values.
+            assert great_mountain.and_run_in_mazes(about_old_forests) is (
+                about_old_forests)
+
+            # Assert that these dataclass methods when passed invalid parameters
+            # raise the expected type-checking violations.
+            with raises_uncached(BeartypeCallHintParamViolation):
+                great_mountain.and_run_in_mazes(
+                    b'About old forests; while the willow trails')
 
 
 def test_decor_pep557_pep484_ref_self() -> None:

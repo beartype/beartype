@@ -145,8 +145,8 @@ def reduce_hint_nonpep(
         # currently being decorated by @beartype).
         decor_type = call_curr.cls_stack[-1]
 
-        # Unqualified basename of that method.
-        decor_type_method_name = call_curr.decoratee.__name__
+        # Unqualified basename of the currently decorated method.
+        method_name = call_curr.decoratee.__name__
         # print(f'Testing type {repr(decor_type)} dunder method {repr(call_curr.decoratee)}...')
         # print(f'...hint {repr(hint)}...')
 
@@ -156,7 +156,7 @@ def reduce_hint_nonpep(
             hint is decor_type and
             # The unqualified basename of that method is one well-known to
             # ignite infinite recursion in type-checking...
-            decor_type_method_name in BLACKLIST_METHOD_NAMES_HINT_SELF
+            method_name in BLACKLIST_METHOD_NAMES_HINT_SELF
         ):
         # Then blindly generating code type-checking this hint *COULD*
         # accidentally ignite infinite recursion while executing that
@@ -202,7 +202,6 @@ def reduce_hint_nonpep(
         # unqualified basename of that method is not one well-known to ignite
         # infinite recursion in type-checking. In any case, this hint *CANNOT*
         # ignite such recursion and is thus preserved.
-
     # Else, either no types are currently being decorated by @beartype *OR* one
     # or more types are currently being decorated by @beartype but no method of
     # the most deeply nested such type is also currently being decorated. In any
@@ -213,6 +212,28 @@ def reduce_hint_nonpep(
     # reduction from a PEP-noncompliant runtime-hostile data descriptor-typed
     # dataclass field to the equivalent PEP-compliant runtime-friendly return
     # hint annotating that data descriptor's __get__() dunder method.
+
+    #FIXME: *SUPER-AWKWARD*. Reducing PEP-compliant hints in this
+    #PEP-noncompliant reducer makes *NO* sense, bro. Instead:
+    #* Define this pair of new sign singletons:
+    #  * "HintSignPep252DescriptorData".
+    #  * "HintSignPep252DescriptorNondata".
+    #* Improve get_hint_pep_sign_or_none() to detect both data and non-data
+    #  descriptors as having the expected sign. Note that the *ONLY* means of
+    #  doing so is to explicitly call the existing pair of
+    #  is_type_pep252_descriptor_data() and
+    #  is_type_pep252_descriptor_nondata() testers (for hopefully obvious
+    #  reasons).
+    #* Ensure that code generation continues behaving as expected. We might need
+    #  to define a trivial code generator that just reduces to a single
+    #  isinstance() check. This is where refactoring our code generator from its
+    #  current inefficient "if" style to a "dict" lookup would be useful. *sigh*
+    #* *THIS IS CRITICAL*. Define a new test suite-specific "_data_pep252"
+    #  submodule testing both data and non-data descriptors as general-purpose
+    #  type hints. Pretty sure we're currently *NOT* doing that. Guard against
+    #  regressions, yo.
+    #* Map "HintSignPep252DescriptorData" to the reducer defined below.
+    #* Remove the call below.
 
     # Either:
     # * If a PEP 557-compliant dataclass is currently being decorated *AND* this

@@ -94,7 +94,10 @@ def test_is_pep557_dataclass_frozen() -> None:
     from pytest import raises
 
     # ....................{ PASS                           }....................
-    # Assert that this tester returns false when passed a default dataclass.
+    # Assert that this tester returns false when passed a non-dataclass.
+    assert is_pep557_dataclass_frozen(str) is False
+
+    # Assert that this tester returns false when passed a non-frozen dataclass.
     assert is_pep557_dataclass_frozen(DataclassDefault) is False
 
     # Assert that this tester returns true when passed a frozen dataclass.
@@ -102,9 +105,9 @@ def test_is_pep557_dataclass_frozen() -> None:
 
     # ....................{ FAIL                           }....................
     # Assert that this tester raises the expected exception when passed a
-    # non-dataclass.
+    # non-type.
     with raises(BeartypeDecorHintPep557Exception):
-        is_pep557_dataclass_frozen(str)
+        is_pep557_dataclass_frozen('About old forests; while the willow trails')
 
 # ....................{ TESTS ~ getter                     }....................
 def test_get_pep557_dataclass_kwargs() -> None:

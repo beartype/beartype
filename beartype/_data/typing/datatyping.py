@@ -246,35 +246,41 @@ decorator in both configuration and decoration modes.
 
 CallableRaiser = Callable[[object], None]
 '''
-PEP-compliant type hint matching a **raiser callable** (i.e., arbitrary callable
-accepting a single arbitrary object and either raising an exception or emitting
-a warning rather than returning any value).
+:pep:`585`-compliant type hint matching a **raiser callable** (i.e., arbitrary
+callable accepting a single arbitrary object and either raising an exception or
+emitting a warning rather than returning any value).
 '''
 
 
 CallableRaiserOrTester = Callable[[object], bool | None]
 '''
-PEP-compliant type hint matching a **raiser or tester callable** (i.e.,
+:pep:`585`-compliant type hint matching a **raiser or tester callable** (i.e.,
 arbitrary callable accepting a single arbitrary object and either returning no
 value or returning either :data:`True` if that object satisfies an arbitrary
 constraint *or* :data:`False` otherwise).
 '''
 
 
+CallableSetattr = Callable[[object, str, object], None]
+'''
+:pep:`585`-compliant type hint matching the signature of the standard
+:func:`setattr` builtin.
+'''
+
+
 CallableStrFormat = Callable[..., str]
 '''
-PEP-compliant type hint matching the signature of the standard
+:pep:`585`-compliant type hint matching the signature of the standard
 :meth:`str.format` method.
 '''
 
 
 CallableTester = Callable[[object], bool]
 '''
-PEP-compliant type hint matching a **tester callable** (i.e., arbitrary callable
-accepting a single arbitrary object and returning either :data:`True` if that
-object satisfies an arbitrary constraint *or* :data:`False` otherwise).
+:pep:`585`-compliant type hint matching a **tester callable** (i.e., arbitrary
+callable accepting a single arbitrary object and returning either :data:`True`
+if that object satisfies an arbitrary constraint *or* :data:`False` otherwise).
 '''
-
 
 # ....................{ CALLABLE ~ args                    }....................
 CallableMethodGetitemArg = int | slice

@@ -21,7 +21,7 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
-from beartype._data.func.datafunc import FUNC_NAME_LAMBDA
+from beartype._data.func.datafuncname import FUNC_NAME_LAMBDA
 from beartype._data.typing.datatyping import (
     Codeobjable,
     TypeException,

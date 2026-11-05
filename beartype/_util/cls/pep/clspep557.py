@@ -119,21 +119,21 @@ def is_type_pep557_dataclass(
 
     # Return true only if this type is a dataclass.
     #
-    # Note that the is_dataclass() tester was intentionally implemented
-    # ambiguously to return true for both actual dataclasses *AND*
-    # instances of dataclasses. Since the prior validation omits the
-    # latter, this call unambiguously returns true *ONLY* if this object is
-    # an actual dataclass. (Dodged a misfired bullet there, folks.)
+    # Note that the is_dataclass() tester was intentionally implemented to
+    # ambiguously return true for both actual dataclasses *AND* instances of
+    # dataclasses. Since the prior validation omits the latter, this call
+    # unambiguously returns true *ONLY* if this object is an actual dataclass.
+    # (Dodged a misfired bullet there, folks.)
     return is_dataclass(cls)
 
 
 @callable_cached
 def is_pep557_dataclass_frozen(datacls: type) -> bool:
     '''
-    :data:`True` only if the passed **dataclass** (i.e.,
-    :pep:`557`-compliant :func:`dataclasses.dataclass`-decorated class) is
-    **frozen** (i.e., immutable due to being passed the ``frozen=True`` keyword
-    parameter at decoration time).
+    :data:`True` only if the passed class is **frozen dataclass** (i.e.,
+    :pep:`557`-compliant :func:`dataclasses.dataclass`-decorated class whose
+    instances are immutable due to that decorator being passed the
+    ``frozen=True`` keyword parameter at dataclass decoration time).
 
     This tester is memoized for efficiency for similar reasons that the
     :func:`is_pep557_dataclass` tester is memoized.
@@ -154,11 +154,16 @@ def is_pep557_dataclass_frozen(datacls: type) -> bool:
         If this dataclass is *not* actually a dataclass.
     '''
 
+    # If this type is *NOT* a PEP 557-compliant dataclass, return false.
+    if not is_type_pep557_dataclass(datacls):
+        return False
+    # Else, this type is a PEP 557-compliant dataclass.
+
     # Object encapsulating all keyword parameters configuring this dataclass.
-    dataclass_kwargs = get_pep557_dataclass_kwargs(datacls)
+    datacls_kwargs = get_pep557_dataclass_kwargs(datacls)
 
     # Return true only if this dataclass was configured to be frozen.
-    return dataclass_kwargs.frozen  # type: ignore[attr-defined]
+    return datacls_kwargs.frozen  # type: ignore[attr-defined]
 
 # ....................{ GETTERS                            }....................
 def get_pep557_dataclass_kwargs(
@@ -228,7 +233,7 @@ def get_pep557_dataclass_kwargs(
     # Else, this dataclass is actually a dataclass.
 
     # Dictionary of all keyword arguments originally passed to @dataclass.
-    dataclass_kwargs = getattr(datacls, _PARAMS)
+    datacls_kwargs = getattr(datacls, _PARAMS)
 
     # Return this dictionary.
-    return dataclass_kwargs
+    return datacls_kwargs

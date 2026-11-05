@@ -19,6 +19,7 @@ from beartype._check.cls.hint.hintsane import (
     HintOrSane,
 )
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.func.datafuncname import METHOD_NAME_INIT
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
@@ -63,8 +64,7 @@ def reduce_hint_pep557_descriptor_data_if_able(
     hint: Hint,
     exception_prefix: str,
     **kwargs
-) -> (
-    HintOrSane):
+) -> HintOrSane:
     '''
     Reduce the passed :pep:`252`-compliant runtime-hostile data descriptor
     (presumably annotating a PEP-noncompliant descriptor-typed field of some
@@ -155,6 +155,11 @@ def reduce_hint_pep557_descriptor_data_if_able(
         # This hint transitively annotates a class currently being decorated by
         # @beartype *AND*...
         call_curr.cls_stack is not None and
+        # This hint directly annotates a method of that class *AND*...
+        call_curr.decoratee is not None and
+        # This hint directly annotates the initializer (i.e., __init__() dunder
+        # method) for that class *AND*...
+        call_curr.decoratee.__name__ == METHOD_NAME_INIT and
         # This hint is a type and thus possibly a data descriptor type *AND*...
         isinstance(hint, type) and
         # The currently decorated class is a PEP 557-compliant dataclass
@@ -174,9 +179,11 @@ def reduce_hint_pep557_descriptor_data_if_able(
     # In either case, preserve this hint as is.
         return hint
     # Else, a PEP 557-compliant dataclass is currently being decorated *AND*
-    # this hint is a PEP 252-compliant runtime-hostile data descriptor
-    # presumably annotating a PEP-noncompliant descriptor-typed field of that
-    # dataclass.
+    # this hint is a PEP 252-compliant runtime-hostile data descriptor directly
+    # annotating the initializer (i.e., __init__() dunder method) for that
+    # dataclass, presumably due to annotating a PEP-noncompliant
+    # descriptor-typed field of that dataclass (which the @dataclass decorator
+    # then propagated onto that initializer's annotations).
 
     # ....................{ LOCALS                         }....................
     # Unbound __get__() dunder method defined by this data descriptor type.

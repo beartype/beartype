@@ -134,7 +134,7 @@ from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobjget import get_object_type_name
 
 # ....................{ DECORATORS                         }....................
-def beartype_pep557_dataclass(
+def beartype_pep557_dataclass_fields(
     # Mandatory parameters.
     #
     # Note that dataclasses do *NOT* have a more specific superclass than merely
@@ -321,7 +321,7 @@ def beartype_pep557_dataclass(
         #    context. Most probably require the latter. Any that don't should
         #    simply reference "BeartypeDecorMetaABC" for generality.
         #  * Remove all references to "BeartypeCallDecorFuncData".
-        #FIXME: If sanifying this hint so reduced this hint to
+        #FIXME: If sanifying this hint reduced this hint to
         #"HINT_SANE_IGNORABLE", remove this hint from this dictionary entirely.
         #Doing so speeds up closure logic below, which is critical. Obviously,
         #we'll also need to:
@@ -366,7 +366,7 @@ def beartype_pep557_dataclass(
         #how we guard against recursion, for example. They absolutely matter.
         #They *MUST* be preserved.
         #FIXME: Calling reduce_hint() here almost certainly suffices. That said,
-        #the larger issue now is that this beartype_pep557_dataclass() basically
+        #the larger issue now is that this beartype_pep557_dataclass_fields() basically
         #accepts *NONE* of the parameters it needs to pass on to reduce_hint().
         #Should be a trivial refactoring. Sadly, we're outta time tonight. Ugh!
         #FIXME: *OH, HO*. Indeed, the core issue *NOW* is that we have no
@@ -440,14 +440,14 @@ def beartype_pep557_dataclass(
         #* Instantiate a new "decor_func" local variable like so below:
         #      decor_func = BeartypeCallDecorTypeData(
         #          cls=datacls,
-        #          #FIXME: This beartype_pep557_dataclass() decorator will need
+        #          #FIXME: This beartype_pep557_dataclass_fields() decorator will need
         #          #to be generalized to accept this new mandatory parameter!
         #          cls_stack=cls_stack,
         #          conf=conf,
         #      )
-        #* Pass that to the sanify_hint_any() call below like so. Note that we've
-        #  inspected the reduce_hint() API and are confident that this is all
-        #  that's needed:
+        #* Pass that to the sanify_hint_any() call below like so. Note that
+        #  we've inspected the reduce_hint() API and are confident that this is
+        #  all that's needed:
         #      from beartype._util.error.utilerrraise import reraise_exception_placeholder
         #
         #      # Attempt to...
@@ -649,34 +649,10 @@ def beartype_pep557_dataclass(
             datacls_setattr(self, attr_name, attr_value)
 
     # ..................{ DECORATORS                         }..................
-    # setattr()-like callable to be called to set this attribute on this
-    # dataclass, defined as either...
-    setattr_func = (
-        # If this dataclass is frozen, the standard setattr() builtin does *NOT*
-        # suffice. Why? Because frozen dataclasses guarantee immutability by
-        # overriding the __setattr__() dunder method (implicitly called by the
-        # setattr() builtin) to unconditionally raise an exception. While
-        # understandable, this behaviour prevents the set_type_attr() function
-        # called below from monkey-patching type-checking into this dataclass;
-        # attempting to do so would ironically invoke that same __setattr__()
-        # dunder method, which would then raises an exception. This behaviour
-        # can be circumvented by passing the type.__setattr__() dunder method as
-        # this parameter, which then applies the desired monkey-patch *WITHOUT*
-        # raising an exception. In short, stupid kludges is always the answer.
-        type.__setattr__
-        if is_pep557_dataclass_frozen(datacls) else
-        # Else, this dataclass is *NOT* frozen. In this case, the standard
-        # setattr() builtin, which internally defers to the __setattr__() dunder
-        # method guaranteed to be defined by all dataclasses (due to the
-        # existence of the type.__setattr__() dunder method).
-        setattr
-    )
-
     # Safely replace this undecorated __setattr__() implementation with this
     # decorated __setattr__() implementation.
     set_type_attr(
         cls=datacls,
         attr_name='__setattr__',
         attr_value=check_pep557_dataclass_field,
-        setattr_func=setattr_func,  # pyright: ignore
     )
