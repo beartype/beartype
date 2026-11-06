@@ -20,6 +20,7 @@ This submodule defines :pep:`252`-compliant:
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.utilobjset import set_object_attr
 from typing import Optional
 
 # ....................{ CLASSES ~ descriptor               }....................
@@ -136,7 +137,7 @@ class DataDescriptor(NondataDescriptor):
         '''
 
         # One-liner or it didn't happen.
-        object.__setattr__(obj, self._attr_name, value)
+        set_object_attr(obj, self._attr_name, value)
 
 # ....................{ CLASSES ~ descriptor : str         }....................
 class DataDescriptorStrSelfSwapCase(object):
@@ -181,10 +182,17 @@ class DataDescriptorStrSelfSwapCase(object):
         # Classify all passed parameters.
         self._text_default = text_default
 
-        # If passed a default string with which to initialize this descriptor,
-        # preserve this default string in case-swapped form for subsequent use.
+        # If the caller explicitly passed a default string with which to
+        # initialize this descriptor, preserve this default string in
+        # case-swapped form for subsequent use.
         if self._text_default is not None:
             self._text_default = self._text_default.swapcase()
+        # Else, the caller passed *NO* such default.
+
+        # Nullify the "_attr_name" instance variable set by the __set_name__()
+        # dunder method in a safe manner preserving that variable if already set
+        # by a prior call of that method. Python: "It do be complicated."
+        self._attr_name = getattr(self, '_attr_name', None)
 
 
     def __set_name__(self, cls: type, attr_name: str) -> None:
@@ -292,9 +300,13 @@ class DataDescriptorStrSelfSwapCase(object):
             Value to modify this attribute to after case-swapping.
         '''
 
-        # SO MUCH FOR TODAY.
-        # setattr(obj, self._attr_name, text.swapcase())
-        object.__setattr__(obj, self._attr_name, text.swapcase())
+        # Safely set this object attribute to the passed string case-swapped.
+        set_object_attr(obj, self._attr_name, text.swapcase())
+
+        # Nullify any default string with which this descriptor was initialized,
+        # preventing the next call to the __get__() dunder method from
+        # erroneously returning this default string if previously defined.
+        self._text_default = None
 
 # ....................{ CLASSES ~ store                    }....................
 class DataAndNondataDescriptorStore(object):

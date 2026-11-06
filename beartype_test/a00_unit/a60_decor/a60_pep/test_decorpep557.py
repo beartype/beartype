@@ -298,7 +298,6 @@ def test_decor_pep557() -> None:
                         "He follow'd, and she turn'd to lead the way")
             # Else, this dataclass is *NOT* frozen. In this case...
             else:
-
                 # If this beartype configuration enables type-checking of PEP
                 # 557-compliant dataclass fields on mutation...
                 if beartype_conf.is_pep557_fields:
@@ -406,6 +405,223 @@ def test_decor_pep557() -> None:
             with raises_uncached(BeartypeCallHintParamViolation):
                 great_mountain.and_run_in_mazes(
                     b'About old forests; while the willow trails')
+
+
+#FIXME: Merge with the more general-purpose test_decor_pep557() unit test
+#defined above once we generalize the @beartype decorator to fully support
+#descriptor-typed dataclass fields under "BeartypeConf(is_pep557_fields=True)".
+def test_decor_pep557_pep252() -> None:
+    '''
+    Test :pep:`557` support implemented in the :func:`beartype.beartype`
+    decorator with respect to :pep:`252`-compliant **descriptor-typed dataclass
+    fields** (i.e., dataclass fields typed as descriptors).
+
+    Note that this special-case unit test is intentionally segregated from the
+    more general-purpose :func:`.test_decor_pep557` unit test defined above.
+    Why? Because that test exercises all possible permutations of the public
+    :attr:`beartype.conf.BeartypeConf.is_pep557_fields` boolean configuration
+    setting under all possible dataclass use cases. Unfortunately, supporting
+    descriptor-typed dataclass fields while that setting is enabled is highly
+    non-trivial -- and thus currently unsupported. It's not our fault. (It's
+    totally our fault.)
+
+    See Also
+    --------
+    https://github.com/beartype/beartype/issues/754
+        Issue exercised by this unit test.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from beartype_test.a00_unit.data.pep.data_pep252 import (
+        DataDescriptor,
+        DataDescriptorStrSelfSwapCase,
+    )
+    from dataclasses import (
+        FrozenInstanceError,
+        dataclass,
+    )
+    from typing import Optional
+
+    # ..................{ LOCALS                             }..................
+    # Modifiable list of "**kwargs" dictionaries to be passed as the keyword
+    # parameters configuring each decoration of the dataclass below by the
+    # @dataclass decorator.
+    dataclasses_kwargs = [
+        # The default parameter-less @dataclass decorator.
+        {},
+
+        # The frozen @dataclass decorator.
+        dict(frozen=True),
+
+        # The slotted @dataclass decorator.
+        dict(slots=True),
+    ]
+
+    # Multiple arbitrary data descriptors trivially getting and setting an
+    # arbitrary instance variable with the initialized name. In actuality, this
+    # test *NEVER* accesses these variables through these descriptors. Ergo,
+    # these variable names are mythically imaginary.
+    and_the_dairy_pails = DataDescriptor(attr_name='and_the_dairy_pails')
+    increase_of_milk = DataDescriptor(attr_name='increase_of_milk')
+
+    # ..................{ DATACLASSES                        }..................
+    # For each dictionary of keyword parameters configuring this
+    # dataclass...
+    for dataclass_kwargs in dataclasses_kwargs:
+        @beartype
+        @dataclass(**dataclass_kwargs)
+        class AboutOldForests(object):
+            '''
+            Arbitrary dataclass type-checked by the
+            :func:`beartype.beartype` decorator.
+            '''
+
+            # ..................{ MANDATORY ~ pep : 252      }..................
+            while_the_willow_trails: DataDescriptor
+            '''
+            Mandatory field annotated by a :pep:`252`-compliant data descriptor
+            but *not* assigned an instance of the same descriptor as a default
+            value, thus treated as a PEP-noncompliant isinstanceable type rather
+            than a :pep:`557`-compliant descriptor-typed field.
+
+            Note that:
+
+            * This mandatory parameter *must* be declared before all optional
+              parameters due to inscrutable issues in the :func:`.dataclass`
+              decorator. Notably, :func:`.dataclass` refuses to correctly
+              reorder parameters. *sigh*
+            * Official Python documentation on descriptor-typed fields
+              confusingly (but explicitly) excludes fields annotated by
+              descriptors *not* assigned instances of those fields as default
+              values from consideration as descriptor-typed:
+
+                  Note that if a field is annotated with a descriptor type, but
+                  is not assigned a descriptor object as its default value, the
+                  field will act like a normal field.
+            '''
+
+            # ..................{ OPTIONAL ~ pep : 484       }..................
+            that_man_may_be: Optional[str] = None
+            '''
+            Optional field annotated by an arbitrary PEP-noncompliant type,
+            passed by the :func:`.dataclass` decorator to the implicit
+            :meth:`__init__` method synthesized for this dataclass.
+            '''
+
+            # ..................{ OPTIONAL ~ non-pep         }..................
+            to_me_his_arms: DataDescriptorStrSelfSwapCase = (
+                DataDescriptorStrSelfSwapCase(text_default=(
+                    'To me his arms were spread, to me his voice')))
+            '''
+            Optional :pep:`557`-compliant descriptor-typed field annotated by a
+            :pep:`252`-compliant data descriptor and assigned an instance of the
+            same descriptor as a default value, itself initialized with a
+            suitable default value for this field passed by the
+            :func:`.dataclass` decorator to the implicit :meth:`__init__` method
+            synthesized for this dataclass.
+
+            Note that descriptor-typed fields have yet to be standardized by any
+            peer-reviewed PEP and are thus technically PEP-noncompliant, despite
+            being officially documented in Python documentation.
+
+            See Also
+            --------
+            https://docs.python.org/3/library/dataclasses.html#descriptor-typed-fields
+                Official Python documentation on descriptor-typed fields.
+            '''
+
+            # ..................{ METHODS                    }..................
+            def and_run_in_mazes(
+                self, of_the_youngest_hue: DataDescriptor) -> DataDescriptor:
+                '''
+                Arbitrary non-dunder method accepting an arbitrary data
+                descriptor instance annotated as such, intentionally exercising
+                an edge case guarding against regressions.
+
+                See Also
+                --------
+                https://github.com/beartype/beartype/issues/754
+                    Issue exercised by this method.
+                '''
+
+                # That's the one one-liker like it!
+                return of_the_youngest_hue
+
+        # ..................{ LOCALS                         }..................
+        # Arbitrary instance of this dataclass exercising all edge cases.
+        its_delicate_amber = AboutOldForests(
+            while_the_willow_trails=and_the_dairy_pails)
+
+        # True only if this dataclass is frozen, defaulting to false.
+        IS_DATACLASS_FROZEN = dataclass_kwargs.get('frozen', False)
+
+        # True only if this dataclass is slotted, defaulting to false.
+        IS_DATACLASS_SLOTTED = dataclass_kwargs.get('slots', False)
+
+        # ..................{ ASSERTS ~ fields : modify      }..................
+        # If this dataclass is frozen...
+        if IS_DATACLASS_FROZEN:
+            # Assert that this dataclass prohibits callers from modifying
+            # *ANY* attributes (including both instance and class variables)
+            # by raising the expected exception on attempting to do so.
+            with raises_uncached(FrozenInstanceError):
+                its_delicate_amber.while_the_willow_trails = increase_of_milk
+            with raises_uncached(FrozenInstanceError):
+                its_delicate_amber.that_man_may_be = (
+                    'With backward footing through the shade a space:')
+            with raises_uncached(FrozenInstanceError):
+                its_delicate_amber.to_me_his_arms = (
+                    'Its delicate amber; and the dairy pails')
+        # Else, this dataclass is *NOT* frozen. In this case...
+        else:
+            # Assert that this dataclass allows callers to set these fields
+            # to new values satisfying the hints annotating these fields.
+            its_delicate_amber.while_the_willow_trails = increase_of_milk
+            assert its_delicate_amber.while_the_willow_trails is (
+                increase_of_milk)
+
+            its_delicate_amber.that_man_may_be = (
+                'Through aged boughs, that yielded like the mist')
+            assert its_delicate_amber.that_man_may_be == (
+                'Through aged boughs, that yielded like the mist')
+
+            # If this dataclass is *NOT* slotted...
+            if not IS_DATACLASS_SLOTTED:
+                # Assert that this dataclass allows callers to set these
+                # descriptor-typed fields to new values satisfying the hints
+                # annotating the __get__() dunder methods defined by those
+                # descriptors.
+                #
+                # Note that slotted dataclasses appear to silently reduce
+                # descriptor-typed fields in non-dynamic static fields,
+                # presumably due to the private attributes underlying those
+                # descriptors *NOT* being slotted and thus *NOT* being defined
+                # on slotted dataclasses. Honestly? No idea, bro. It is *NOT*
+                # worth digging deep. Dataclasses are hard enough as it is. This
+                # is only a test of dataclass functionality. It doesn't have
+                # to be perfect. It merely has to mostly behave as expected.
+                its_delicate_amber.to_me_his_arms = (
+                    'Bring home increase of milk. And, as the year')
+                assert its_delicate_amber.to_me_his_arms == (
+                    'bRING HOME INCREASE OF MILK. aND, AS THE YEAR')
+            # Else, this dataclass is slotted.
+        # Else, this dataclass is *NOT* frozen.
+
+        # ..................{ ASSERTS ~ method               }..................
+        # Assert that these dataclass methods when passed valid parameters
+        # return the expected values.
+        assert its_delicate_amber.and_run_in_mazes(and_the_dairy_pails) is (
+            and_the_dairy_pails)
+
+        # Assert that these dataclass methods when passed invalid parameters
+        # raise the expected type-checking violations.
+        with raises_uncached(BeartypeCallHintParamViolation):
+            its_delicate_amber.and_run_in_mazes(
+                b'About old forests; while the willow trails')
 
 
 def test_decor_pep557_pep484_ref_self() -> None:

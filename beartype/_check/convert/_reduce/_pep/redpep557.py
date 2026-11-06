@@ -173,6 +173,46 @@ def reduce_hint_pep557_descriptor_data_if_able(
         # Note that this test is even more inefficient (due to requiring
         # protocol matching) and thus performed *AFTER* all other tests.
         is_type_pep252_descriptor_data(hint)
+        #FIXME: *STILL INSUFFICIENT*. lolbro. Jeeeeeez. What a cray-cray thing
+        #descriptor-typed dataclass fields ended up being, huh? So, it turns out
+        #that descriptor-typed dataclass fields *MUST* be assigned default
+        #values at dataclass declaration time:
+        #    Note that if a field is annotated with a descriptor type, but is
+        #    not assigned a descriptor object as its default value, the field
+        #    will act like a normal field.
+        #Ergo, we *ALSO* need to do something resembling:
+        #    if isinstance(call_curr, BeartypeCallDecorFuncMinimalData):
+        #        #FIXME: *HMMMM*. Wait. Pretty sure dataclasses expose a
+        #        #dataclass-specific interface for getting field defaults. Don't
+        #        #they? Let's see here. Instead of doing this...
+        #        #    call_curr.func_wrappee_wrappee_arg_name_to_kind_default.get(
+        #        #        pith_name)
+        #        #
+        #        #Oh, right! Looks we want to define yet another new PEP
+        #        #557-compliant utility function resembling:
+        #        from dataclasses import (
+        #            MISSING,
+        #            fields,
+        #        )
+        #
+        #        @callable_cached
+        #        def is_type_pep557_field_optional(cls: type, field_name: str) -> bool:
+        #
+        #            #FIXME: Super-inefficient dumb O(n) algorithm, obviously.
+        #            #If we find ourselves doing this sort of thing more
+        #            #frequently, define a new memoized getter returning a
+        #            #dictionary mapping from field names to tuples describing
+        #            #those fields.
+        #            datacls_fields = fields(cls)
+        #            for field in datacls_fields:
+        #                if field.name == field_name:  # <-- no idea about this!
+        #                    return field.default is not MISSING
+        #
+        #            return False
+        #
+        #        Note that the above tester is strongly inspired by this
+        #        StackOverflow post:
+        #            https://stackoverflow.com/a/63582320/2809027
     ):
     # Then either a PEP 557-compliant dataclass is not currently being decorated
     # *OR* this hint is not a PEP 252-compliant runtime-hostile data descriptor.

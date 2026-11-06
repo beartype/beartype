@@ -16,17 +16,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Unit test us up.
 def set_type_attr(cls: type, attr_name: str, attr_value: object) -> None:
     '''
-    Dynamically set the **class variable** (i.e., attribute of the passed class)
-    with the passed name to the passed value.
-
-    Parameters
-    ----------
-    cls : type
-        Class to set this attribute on.
-    attr_name : str
-        Name of the class attribute to be set.
-    attr_value : object
-        Value to set this class attribute to.
+    Dynamically set the **class variable** (i.e., attribute bound to the passed
+    class) with the passed name to the passed value.
 
     Caveats
     -------
@@ -47,11 +38,24 @@ def set_type_attr(cls: type, attr_name: str, attr_value: object) -> None:
     constraints on class attributes -- including that class attribute keys are
     *not* only strings but also valid Python identifiers:
 
-    See also this `relevant StackOverflow answer by Python luminary Raymond
-    Hettinger <answer_>`__.
+    Parameters
+    ----------
+    cls : type
+        Class to set this attribute on.
+    attr_name : str
+        Name of the class variable to be set.
+    attr_value : object
+        Value to set this class variable to.
 
-    .. _answer:
-       https://stackoverflow.com/a/32720603/2809027
+    See Also
+    --------
+
+    See Also
+    --------
+    :func:`beartype._util.utilobjset.set_object_attr`
+        Similar function dynamically setting instance variables instead.
+    https://stackoverflow.com/a/32720603/2809027
+        Relevant StackOverflow answer by Python luminary Raymond Hettinger.
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
 
@@ -75,9 +79,9 @@ def set_type_attr(cls: type, attr_name: str, attr_value: object) -> None:
     # replacing their default __setattr__() with a @beartype-specific
     # alternative performing type-checking; attempting to do so ironically
     # invokes that same __setattr__(), which then raises an exception. This
-    # behaviour can be circumvented by passing the type.__setattr__() dunder
-    # method as this parameter, which then applies the desired monkey-patch
-    # *WITHOUT* raising an exception. In short, stupid kludges is the answer.
+    # behaviour can be circumvented by calling the type.__setattr__() dunder
+    # method instead, which then applies the desired monkey-patch *WITHOUT*
+    # raising an exception. In short, stupid kludges is the answer.
     #
     # Specifically, this callable is defined as either...
     setattr_func = (
@@ -91,7 +95,7 @@ def set_type_attr(cls: type, attr_name: str, attr_value: object) -> None:
     )
 
     # ....................{ SETATTR                        }....................
-    # Attempt to set the class attribute with this name to this value.
+    # Attempt to set the class variable with this name to this value.
     try:
         setattr_func(cls, attr_name, attr_value)
     # If doing so raises a builtin "TypeError"...
