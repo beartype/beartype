@@ -195,6 +195,25 @@ def reduce_hint_pep557_descriptor_data_if_able(
         #            fields,
         #        )
         #
+        #        #FIXME: Definitely need to unit test this one up. Kinda
+        #        #cray-cray, honestly. *shrug*
+        #        #FIXME: Honestly, should probably just refactor this into
+        #        #get_type_pep557_field_name_to_data() for generality, defined
+        #        #as:
+        #        #@callable_cached
+        #        #def get_type_pep557_field_name_to_data(cls: type, field_name: str) -> (
+        #        #    dict[str, field]):
+        #        #    ...
+        #        #
+        #        #Given that, we can then define yet another PEP 557 utility
+        #        #resembling:
+        #        #
+        #        #def is_pep557_field_optional(field: field) -> bool:
+        #        #    return (
+        #        #        field.default is MISSING or
+        #        #        field.default_factory is MISSING
+        #        #    )
+        #
         #        @callable_cached
         #        def is_type_pep557_field_optional(cls: type, field_name: str) -> bool:
         #
@@ -205,8 +224,11 @@ def reduce_hint_pep557_descriptor_data_if_able(
         #            #those fields.
         #            datacls_fields = fields(cls)
         #            for field in datacls_fields:
-        #                if field.name == field_name:  # <-- no idea about this!
-        #                    return field.default is not MISSING
+        #                if field.name == field_name:
+        #                    return (
+        #                        field.default is MISSING or
+        #                        field.default_factory is MISSING
+        #                    )
         #
         #            return False
         #

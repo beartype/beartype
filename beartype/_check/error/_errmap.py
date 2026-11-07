@@ -57,12 +57,12 @@ def _init() -> None:
         find_cause_nonpep,
         find_cause_type_instance_origin,
     )
-    from beartype._check.error._pep.errpep484604 import (
-        find_cause_pep484604_union)
     from beartype._check.error._pep.errpep586 import find_cause_pep586_literal
     from beartype._check.error._pep.errpep593 import find_cause_pep593_annotated
     from beartype._check.error._pep.pep484.errpep484noreturn import (
         find_cause_pep484_noreturn)
+    from beartype._check.error._pep.pep484.errpep484604union import (
+        find_cause_pep484604_union)
     from beartype._check.error._pep.pep484585.errpep484585container import (
         find_cause_pep484585_container_args_1,
         find_cause_pep484585_tuple_fixed,

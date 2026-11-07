@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype PEP-noncompliant class type hint violation describers** (i.e.,
+Beartype **PEP-noncompliant class type hint violation describers** (i.e.,
 functions returning human-readable strings explaining violations of type hints
 that are PEP-noncompliant isinstanceable classes rather than PEP-compliant type
 hints).
@@ -15,7 +15,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypePlugInstancecheckStrException
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.typing import Optional
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._data.typing.datatyping import TupleTypes
 from beartype._util.cls.pep.clspep3119 import die_unless_type_isinstanceable
@@ -28,6 +27,7 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.text.utiltextjoin import join_types_commaed_or
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_pith
+from typing import Optional
 
 # ....................{ GETTERS ~ instance : type          }....................
 def find_cause_nonpep(cause: HintTreeError) -> HintTreeError:
@@ -103,11 +103,9 @@ def find_cause_instance_type(cause: HintTreeError) -> HintTreeError:
     '''
     assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
 
+    # ....................{ LOCALS                         }....................
     # Isinstanceable class against which this pith was type-checked.
     hint: type = cause.hint_curr_sanified  # type: ignore[assignment]
-
-    # Pith type-checked against this isinstanceable class.
-    pith = cause.pith
 
     # If this hint is *NOT* an isinstanceable class, raise an exception.
     die_unless_type_isinstanceable(
@@ -117,12 +115,16 @@ def find_cause_instance_type(cause: HintTreeError) -> HintTreeError:
     )
     # Else, this hint is an isinstanceable class.
 
+    # Pith type-checked against this isinstanceable class.
+    pith = cause.pith
+
     # Output cause justification. If this pith either:
     # * Violates this hint, this is a human-readable substring describing this
     #   violation.
     # * Satisfies this hint, "None".
     cause_str_or_none: Optional[str] = None
 
+    # ....................{ VIOLATE                        }....................
     # If this pith is *NOT* an instance of this class...
     if not isinstance(pith, hint):
         # Metaclass-specific __instancecheck_str__() dunder method if the
@@ -139,11 +141,11 @@ def find_cause_instance_type(cause: HintTreeError) -> HintTreeError:
         get_hint_violation_str = getattr(hint, '__instancecheck_str__', None)
 
         # If the metaclass of this class defines this dunder method...
-        if get_hint_violation_str:
+        if get_hint_violation_str is not None:
             # Human-readable substring prefixing *ALL* exceptions raised below.
             exception_prefix = (
                 f'{cause.exception_prefix}{repr(hint)} '
-                f'beartype-specific dunder method __instancecheck_str__() '
+                f'beartype-specific __instancecheck_str__() dunder method '
             )
 
             # If this method is *NOT* a pure-Python callable accepting exactly
@@ -183,6 +185,7 @@ def find_cause_instance_type(cause: HintTreeError) -> HintTreeError:
             )
     # Else, this pith is an instance of this class.
 
+    # ....................{ RETURN                         }....................
     # Output cause to be returned, permuted from this input cause with this
     # output cause justification.
     cause_return = cause.permute_cause(cause_str_or_none=cause_str_or_none)
@@ -212,8 +215,9 @@ def find_cause_type_instance_origin(cause: HintTreeError) -> HintTreeError:
     '''
     assert isinstance(cause, HintTreeError), f'{repr(cause)} not cause.'
 
-    # Isinstanceable origin type originating this hint if any *OR* "None".
-    hint_type = get_hint_pep_origin_type_isinstanceable_or_none(cause.hint_curr_sanified)
+    # Isinstanceable class originating this hint if any *OR* "None".
+    hint_type = get_hint_pep_origin_type_isinstanceable_or_none(
+        cause.hint_curr_sanified)
 
     # If this hint does *NOT* originate from such a type, raise an exception.
     if hint_type is None:

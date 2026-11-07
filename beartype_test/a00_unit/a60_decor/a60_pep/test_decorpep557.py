@@ -481,6 +481,11 @@ def test_decor_pep557_pep252() -> None:
             '''
 
             # ..................{ MANDATORY ~ pep : 252      }..................
+            #FIXME: "DataDescriptor" is *NOT* useful here. It's too generic.
+            #Why? Because its __get__() dunder method is uselessly annotated as
+            #returning "object", which then obscures actual issues below.
+            #Instead, we need a new "StrDataDescriptor" whose __get__() is
+            #annotated as returning only "str". *sigh*
             while_the_willow_trails: DataDescriptor
             '''
             Mandatory field annotated by a :pep:`252`-compliant data descriptor

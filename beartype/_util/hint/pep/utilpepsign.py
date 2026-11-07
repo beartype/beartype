@@ -259,13 +259,13 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
 
     Motivation
     ----------
-    Both :pep:`484` and the :mod:`typing` module implementing :pep:`484` are
-    functionally deficient with respect to their public APIs. Neither provide
-    external callers any means of deciding the categories of arbitrary
-    PEP-compliant type hints. For example, there exists no general-purpose
-    means of identifying a parametrized subtype (e.g., ``typing.List[int]``) as
-    a parametrization of its unparameterized base type (e.g.,
-    :obj:`typing.List`). Thus this function, which "fills in the gaps" by
+    Both :pep:`484` and the standard :mod:`typing` module implementing
+    :pep:`484` are functionally deficient with respect to their public APIs.
+    Neither provide external callers any means of deciding the categories of
+    arbitrary PEP-compliant type hints. For example, there exists *no*
+    general-purpose means of identifying a parametrized subtype (e.g.,
+    ``typing.List[int]``) as a parametrization of its unparameterized base type
+    (e.g., :obj:`typing.List`). Thus this function, which "fills in the gaps" by
     implementing this oversight.
 
     Parameters
@@ -655,6 +655,10 @@ def get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     #without this logic here. The solution is to define a new
     #disambiguate_hint_nonpep_pep589() disambiguating ordinary PEP-noncompliant
     #isinstanceable types from PEP 589-compliant typed dictionaries. Fun! \o/
+    #FIXME: Hmm... actually, there are *TONS* of different type hints
+    #ambiguously mapped to "None" (e.g., named tuples, data descriptors, typed
+    #dictionaries obviously). It's probably best that we explicitly handle them
+    #all here for now. *shrug*
 
     # If this hint is a PEP 589-compliant typed dictionary, return that sign.
     elif is_hint_pep589(hint):

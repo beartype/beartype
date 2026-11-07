@@ -44,11 +44,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #following comment at #235 for that better:
 #    https://github.com/beartype/beartype/issues/235#issuecomment-1707127231
 #FIXME: *LOL*. Guess we're not doing any of that for the moment, huh? We just
-#went ahead and started merging "HintTreeError" with "HintTreeCode". Well, that's
-#fine. As long as we start streamlining this class with *SOMETHING* else, it
-#doesn't particularly matter what that *SOMETHING* else even is. There's a good
-#deal more of commonality to be refactored out, of course. Still, this is an
-#excellent start, anyway. Great job for finally doing something, us! \o/
+#went ahead and started merging "HintTreeError" with "HintTreeCode". Well,
+#that's fine. As long as we start streamlining this class with *SOMETHING* else,
+#it doesn't particularly matter what that *SOMETHING* else even is. There's a
+#good deal more of commonality to be refactored out, of course. Still, this is
+#an excellent start, anyway. Great job for finally doing something, us! \o/
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
@@ -305,16 +305,13 @@ class HintTreeError(HintTreeABC):
         '''
         Either:
 
-        * If this hint is PEP-compliant, the possibly empty tuple of all child
-          hints subscripting (indexing) this hint such that each item is either:
-
-          * If sanifying this child hint generated supplementary metadata, that
-            metadata (i.e., a :class:`.HintSane` object).
-          * Else, this child hint as is.
-
+        * If this hint is PEP-compliant, the possibly empty tuple of **sanified
+          child hint metadata** (i.e., :class:`.HintSane` objects) describing
+          the sanification of all child hints subscripting (indexing) this hint.
         * Else, the empty tuple.
         '''
 
+        # ..................{ NOOP                           }..................
         # If this instance variable is *NOT* the sentinel placeholder, this
         # tuple has already been computed by a prior access of this property.
         # In this case, reduce to a noop by returning this pre-computed tuple.
@@ -340,6 +337,7 @@ class HintTreeError(HintTreeABC):
         # Else, this is an unignorable PEP-compliant hint. Since this hint
         # *COULD* be subscripted by meaningful child hints, continue.
 
+        # ..................{ LOCALS                         }..................
         # Tuple of the zero or more arguments subscripting this hint.
         hint_childs_insane = get_hint_pep_childs(self.hint_curr_sanified)
 
@@ -347,6 +345,7 @@ class HintTreeError(HintTreeABC):
         # sanifying these child hints, initialized to the empty list.
         hint_childs_sane_list = []
 
+        # ..................{ SANIFY                         }..................
         # For each possibly ignorable insane child hints subscripting this
         # parent hint...
         for hint_child_insane in hint_childs_insane:
@@ -378,6 +377,7 @@ class HintTreeError(HintTreeABC):
             # Append this possibly ignorable sane child hint to this lists.
             hint_childs_sane_list.append(hint_child_sane)
 
+        # ..................{ RETURN                         }..................
         # Cache a tuple of the zero or more possibly ignorable sane child hints,
         # coerced from this list.
         self._hint_childs_sane = tuple(hint_childs_sane_list)
@@ -448,20 +448,24 @@ class HintTreeError(HintTreeABC):
         # Getter function returning the desired string.
         cause_finder: Callable[[HintTreeError], HintTreeError] = None  # type: ignore[assignment]
 
+        # Sign uniquely identifying this hint, localized purely for readibility.
+        hint_sign = self.hint_curr.hint_sign
+
         # ..................{ SHALLOW                        }..................
         # If this hint...
         if (
-            # Originates from an origin type and may thus be shallowly
-            # type-checked against that type *AND is either...
-            self.hint_curr.hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
+            # Originates from an isinstanceable type (and may thus be shallowly
+            # type-checked against that type) *AND* is either...
+            hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
                 # Unsubscripted *OR*...
                 not get_hint_pep_childs(self.hint_curr_sanified) or
-                # Currently unsupported with deep type-checking...
+                # Subscripted and currently unsupported by deep type-checking...
                 self.hint_curr.hint_sign not in HINT_SIGNS_SUPPORTED_DEEP
             )
-        # Then this hint is both unsubscripted and originating from a standard
-        # type origin. In this case, this hint was type-checked shallowly.
         ):
+        # Then this hint only shallowly type-checked as this isinstanceable type
+        # by the dynamically generated type-checking wrapper parent callable. In
+        # this case...
             # Avoid circular import dependencies.
             from beartype._check.error._nonpep.errnonpeptype import (
                 find_cause_type_instance_origin)
@@ -471,8 +475,9 @@ class HintTreeError(HintTreeABC):
             cause_finder = find_cause_type_instance_origin
         # ..................{ DEEP                           }..................
         # Else, this hint is either subscripted *OR* unsubscripted but not
-        # originating from a standard type origin. In either case, this hint was
-        # type-checked deeply.
+        # originating from an isinstanceable type. In either case, this hint was
+        # deeply type-checked by the dynamically generated type-checking wrapper
+        # parent callable.
         else:
             # Avoid circular import dependencies.
             from beartype._check.error._errmap import (
@@ -481,7 +486,7 @@ class HintTreeError(HintTreeABC):
             # Getter function returning the desired string for this attribute if
             # any *OR* "None" otherwise.
             cause_finder = HINT_SIGN_TO_GET_CAUSE_FUNC.get(  # type: ignore[assignment]
-                self.hint_curr.hint_sign, None)  # type: ignore[arg-type]
+                hint_sign, None)  # type: ignore[arg-type]
 
             # If no such function has been implemented to handle this attribute
             # yet, raise an exception.

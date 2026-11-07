@@ -83,7 +83,7 @@ class HintDataError(HintDataABC):
 
               * **Generic typed dictionaries** identifiable as both the
                 :data:`.HintSignPep484585GenericUnsubbed` sign *and* the
-                :data:`HintSignTypedDict` sign for :pep:`589`-compliant typed
+                :data:`.HintSignTypedDict` sign for :pep:`589`-compliant typed
                 dictionaries: e.g.,
 
                 .. code-block:: python
@@ -94,7 +94,7 @@ class HintDataError(HintDataABC):
 
               * **Generic named tuples** identifiable as both the
                 :data:`.HintSignPep484585GenericUnsubbed` sign *and* the
-                :data:`HintSignNamedTuple` sign for :pep:`484`-compliant named
+                :data:`.HintSignNamedTuple` sign for :pep:`484`-compliant named
                 tuples: e.g.,
 
                 .. code-block:: python
