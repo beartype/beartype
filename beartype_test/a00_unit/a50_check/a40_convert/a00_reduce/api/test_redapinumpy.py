@@ -16,6 +16,7 @@ third-party NumPy-specific type hints.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS ~ reducers                   }....................
 def test_reduce_hint_api_numpy() -> None:
@@ -64,3 +65,28 @@ def test_reduce_hint_api_numpy() -> None:
     with raises(BeartypeDecorHintNonpepNumpyException):
         reduce_hint_any(
             NDArray['From_my_wings_are_shaken_the_dews_that_waken'])
+
+
+@skip_unless_package('numpy')
+def test_reduce_hint_api_numpy_dtypes() -> None:
+    '''
+    Test :func:`beartype.door.is_bearable` against NumPy arrays subscripted by
+    (unsubscripted) :class:`numpy.dtype` subtypes.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import is_bearable
+    from numpy import (
+        dtype,
+        dtypes,
+        ndarray,
+        zeros,
+    )
+
+    hint = ndarray[tuple[int], dtypes.Float64DType]
+    assert is_bearable(zeros(2, dtype='f8'), hint) is True
+    assert is_bearable(zeros(2, dtype='f4'), hint) is False
+    assert is_bearable([0.0], hint) is False
+
+    # The top "numpy.dtype" type matches any dtype.
+    assert is_bearable(zeros(2, dtype='f4'), ndarray[tuple[int], dtype]) is True
