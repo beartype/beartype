@@ -45,12 +45,17 @@ This private submodule is *not* intended for importation by downstream callers.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintNonpepNumpyException
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._data.hint.sign.datahintsigns import HintSignUnion
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.api.external.utilnumpy import (
     get_numpy_dtype_type_abcs,
     make_numpy_dtype,
 )
+from beartype._util.hint.pep.proposal.pep484.pep484604union import (
+    make_hint_pep484604_union,
+)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.utilobjtest import is_object_hashable
 from typing import Annotated
@@ -125,7 +130,10 @@ def reduce_hint_numpy_ndarray(
         IsEqual,
         IsSubclass,
     )
-    from numpy import ndarray  # pyright: ignore
+    from numpy import (  # pyright: ignore
+        dtype,
+        ndarray,
+    )
     from numpy.typing import NDArray  # type: ignore[attr-defined]
 
     #FIXME: Consider submitting an upstream issue about this. We don't
@@ -187,6 +195,16 @@ def reduce_hint_numpy_ndarray(
     hint_child_shape, hint_child_dtype = hint_childs
 
     # ..................{ LOCALS ~ childs : dtype            }..................
+    # If this dtype child hint is a union of dtypes (e.g.,
+    # "dtype[int8] | dtype[uint8]"), reduce it to the equivalent union of typed
+    # arrays.
+    if get_hint_pep_sign_or_none(hint_child_dtype) is HintSignUnion:
+        return make_hint_pep484604_union(tuple(
+            ndarray[hint_child_shape, hint_child_dtype_child]  # type: ignore[valid-type]
+            for hint_child_dtype_child in get_hint_pep_childs(hint_child_dtype)
+        ))
+    # Else, this dtype child hint is *NOT* a union.
+
     # Child child hints subscripting this dtype child hint if any *OR* the empty
     # tuple otherwise.
     hint_child_dtype_childs = get_hint_pep_childs(hint_child_dtype)
@@ -269,6 +287,16 @@ def reduce_hint_numpy_ndarray(
     # case, this object is assumed to already be a valid dtype-like.
     #
     # In either case, this object *SHOULD* now be a valid dtype-like.
+
+    # If this dtype-like is a union of scalar types (e.g. the "int8 | uint8" in
+    # "dtype[int8 | uint8]"), reduce this hint to the equivalent union of typed
+    # arrays.
+    if get_hint_pep_sign_or_none(hint_dtypelike) is HintSignUnion:
+        return make_hint_pep484604_union(tuple(
+            ndarray[hint_child_shape, dtype[hint_dtypelike_child]]  # type: ignore[valid-type]
+            for hint_dtypelike_child in get_hint_pep_childs(hint_dtypelike)
+        ))
+    # Else, this dtype-like is *NOT* a union (of scalar types).
 
     # ..................{ REDUCTION                          }..................
     # Equivalent nested beartype validator reduced from this hint.
