@@ -33,7 +33,8 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: 
     Final value of the ``is_color`` tri-state boolean parameter accepted by the
     :meth:`beartype.BeartypeConf.__init__` constructor, derived from the passed
     parameter originally passed to that constructor as well as the external
-    ``${BEARTYPE_IS_COLOR}`` shell environment variable.
+    ``${BEARTYPE_IS_COLOR}``, ``${NO_COLOR}``, and ``${FORCE_COLOR}`` shell
+    environment variables, in decreasing order of precedence.
 
     This getter derives the value of the ``is_color`` parameter as follows:
 
@@ -47,6 +48,9 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: 
         corresponding native Python object (e.g., from
         ``BEARTYPE_IS_COLOR="True"`` to :data:`True`).
 
+    * Else, a non-empty ``${NO_COLOR}`` disables colours; otherwise, a non-empty
+      ``${FORCE_COLOR}`` enables colours. Their string values are irrelevant.
+      Conflicting explicit parameters emit the same warning described above.
     * Else, this getter returns the value of the ``is_color`` parameter as is.
 
     Parameters
@@ -74,6 +78,20 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: 
     # if the caller set this environment variable *OR* "None" otherwise.
     is_color_shell_var_value = get_shell_var_value_or_none(
         SHELL_VAR_CONF_IS_COLOR_NAME)
+    is_color_shell_var_name = SHELL_VAR_CONF_IS_COLOR_NAME
+
+    # Only consult the standard variables when the beartype-specific override
+    # is absent. In particular, neither its "None" value nor invalid values
+    # should fall through to a lower-precedence variable.
+    if is_color_shell_var_value is None:
+        if get_shell_var_value_or_none('NO_COLOR'):
+            is_color_shell_var_name = 'NO_COLOR'
+            is_color_shell_var_value = 'False'
+        elif get_shell_var_value_or_none('FORCE_COLOR'):
+            is_color_shell_var_name = 'FORCE_COLOR'
+            is_color_shell_var_value = 'True'
+        # Else, both standard variables are absent or empty. Preserve the
+        # caller's parameter (or the existing automatic default) below.
 
     # If the caller set this environment variable...
     if is_color_shell_var_value is not None:
@@ -121,7 +139,7 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: 
                     f'Beartype configuration parameter "is_color" '
                     f'value {repr(is_color)} ignored in favour of '
                     f'environment variable '
-                    f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
+                    f'"${{{is_color_shell_var_name}}}" '
                     f'value {repr(is_color_override)}.'
                 ),
             )

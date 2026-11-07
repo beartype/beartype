@@ -17,10 +17,15 @@ package defined by the private :mod:`beartype._conf.confmain` submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_conf_dataclass() -> None:
+def test_conf_dataclass(monkeypatch: 'pytest.MonkeyPatch') -> None:
     '''
     Test the public :func:`beartype.BeartypeConf` class.
     '''
+
+    # This test exercises unconfigured defaults, independently of the invoking
+    # shell. Environment-driven colour overrides have dedicated tests below.
+    for name in ('BEARTYPE_IS_COLOR', 'NO_COLOR', 'FORCE_COLOR'):
+        monkeypatch.delenv(name, raising=False)
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
