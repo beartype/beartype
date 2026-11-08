@@ -55,6 +55,8 @@ from beartype._check.code._pep.pep484585.codepep484585generic import (
     make_hint_pep484585_generic_unsubbed_check_expr)
 from beartype._check.code._pep.pep484585.codepep484585subclass import (
     make_hint_pep484585_subclass_check_expr)
+from beartype._check.code._pep.pep646.codepep646tuple import (
+    make_hint_pep646_tuple_check_expr)
 from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
@@ -107,6 +109,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignLiteral,
     HintSignNamedTuple,
     HintSignPep484585TupleFixed,
+    HintSignPep646TupleFixedVariadic,
     HintSignType,
 )
 from beartype._data.hint.sign.datahintsignset import (
@@ -793,6 +796,15 @@ def make_check_expr(
                         pith_curr_assign_expr=hint_tree.pith_curr_assign_expr,
                     )
                 # Else, this hint is *NOT* a fixed-length tuple.
+                #
+                # ........{ SEQUENCES ~ tuple : fixed-variadic   }............
+                # If this hint is a PEP 646-compliant fixed-variadic tuple
+                # (e.g., "tuple[int, *tuple[str, ...], float]"), generate a
+                # Python code snippet type-checking the current pith against
+                # this tuple.
+                elif hint_curr_sign is HintSignPep646TupleFixedVariadic:
+                    make_hint_pep646_tuple_check_expr(hint_tree)
+                # Else, this hint is *NOT* a fixed-variadic tuple.
                 #
                 # ..........{ MAPPINGS                             }............
                 # If this hint is a standard mapping (e.g., "dict[str, int]")...

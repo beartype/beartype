@@ -186,6 +186,13 @@ Type alias aliasing a PEP 593-compliant metahint subscripted by the same
 type variable as that parametrizing this alias.
 '''
 
+# ..................{ PEP 646                                }..................
+type AliasPep646TupleFixedVariadicT[T] = tuple[T, *tuple[T, ...]]
+'''
+Type alias aliasing a :pep:`646`-compliant fixed-variadic tuple type hint
+subscripted by the same type variable as that parametrizing this alias.
+'''
+
 
 # ..................{ RECURSIVE                              }..................
 type AliasRecursiveIdentityT[T] = AliasRecursiveIdentityT[T]

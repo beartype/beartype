@@ -386,12 +386,10 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     HintSignFinal: reduce_hint_pep591,
 
     # ..................{ PEP 646                            }..................
-    #FIXME: Remove *AFTER* deeply type-checking PEP 646-compliant tuple hints.
-
     # If this hint is a PEP 646-compliant tuple hint (i.e., tuple hint
     # subscripted by one or more PEP 646-compliant unpacked child hints), reduce
     # this hint to the semantically equivalent PEP 585-compliant fixed- or
-    # variable-length tuple hint if feasible.
+    # variable-length tuple hint if feasible *OR* preserve this hint otherwise.
     HintSignPep646TupleFixedVariadic: reduce_hint_pep646_tuple,
 
     # ..................{ PEP 675                            }..................

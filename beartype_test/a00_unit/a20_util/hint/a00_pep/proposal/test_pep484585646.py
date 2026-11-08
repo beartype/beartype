@@ -165,3 +165,40 @@ def test_get_hint_pep484585646_tuple_args_unpacked_if_needed() -> None:
     # child hints returns the tuple of those child hints.
     assert get_hint_pep484585646_tuple_args_unpacked_if_needed(
         list[bool, complex]) == (bool, complex)
+
+
+def test_get_hint_pep646_tuple_fixed_variadic_args() -> None:
+    '''
+    Test the private
+    :mod:`beartype._util.hint.pep.proposal.pep646.pep484585646tuple.get_hint_pep646_tuple_fixed_variadic_args`
+    getter.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
+
+    # If the active Python interpreter targets Python < 3.11 and thus fails to
+    # support PEP 646, silently reduce to a noop.
+    if not IS_PYTHON_AT_LEAST_3_11:
+        return
+    # Else, this interpreter supports PEP 646.
+
+    # Defer version-specific imports.
+    from beartype._util.hint.pep.proposal.pep646.pep484585646tuple import (
+        get_hint_pep646_tuple_fixed_variadic_args)
+    from beartype_test.a00_unit.data.pep.data_pep646 import (
+        Ts_unpacked_subbed,
+        tuple_variadic_strs_unpacked_prefix,
+        tuple_variadic_strs_unpacked_subbed,
+    )
+
+    # Assert that this getter returns the expected 3-tuple when passed tuple
+    # hints subscripted by an unpacked child variable-length tuple hint in both
+    # prefixed and subscripted flavours *AND* an unpacked type variable tuple.
+    assert get_hint_pep646_tuple_fixed_variadic_args(
+        tuple[int, float, tuple_variadic_strs_unpacked_prefix, bytes]) == (
+        (int, float), str, (bytes,))
+    assert get_hint_pep646_tuple_fixed_variadic_args(
+        tuple[tuple_variadic_strs_unpacked_subbed, bytes]) == ((), str, (bytes,))
+    assert get_hint_pep646_tuple_fixed_variadic_args(
+        tuple[int, Ts_unpacked_subbed]) == ((int,), object, ())

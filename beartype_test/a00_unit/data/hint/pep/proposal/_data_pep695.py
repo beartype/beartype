@@ -61,6 +61,7 @@ def hints_pep695_meta() -> 'list[HintPepMetadata]':
         AliasPep585TupleFixedST,
         AliasPep585TypeT,
         AliasPep593,
+        AliasPep646TupleFixedVariadicT,
         AliasRecursiveIdentityT,
         Pep585IterableTContainerT,
         Pep585IterableTupleSTContainerTupleST,
@@ -765,6 +766,32 @@ def hints_pep695_meta() -> 'list[HintPepMetadata]':
                 # String constant.
                 PithUnsatisfiedMetadata(
                     'That unbelief has not a space to breathe.'),
+            ),
+        ),
+
+        # ................{ PEP 646                            }................
+        # Subscripted type alias aliasing a PEP 646-compliant fixed-variadic
+        # tuple type hint.
+        HintPepMetadata(
+            hint=AliasPep646TupleFixedVariadicT[int],
+            pep_sign=HintSignPep695TypeAliasSubscripted,
+            is_pep585_builtin_subbed=True,
+            piths_meta=(
+                # Tuples of items whose types satisfy this child hint.
+                PithSatisfiedMetadata((1,)),
+                PithSatisfiedMetadata((1, 2, 3)),
+                # Tuples whose prefix and variadic items violate this child
+                # hint, respectively.
+                PithUnsatisfiedMetadata(
+                    pith=('Of lightning,',),
+                    exception_str_match_regexes=(
+                        r'\btuple index 0 item str\b',),
+                ),
+                PithUnsatisfiedMetadata(
+                    pith=(1, 'and of rain,'),
+                    exception_str_match_regexes=(
+                        r'\btuple index 1 item str\b',),
+                ),
             ),
         ),
 

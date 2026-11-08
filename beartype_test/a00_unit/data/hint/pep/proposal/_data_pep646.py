@@ -33,6 +33,7 @@ def hints_pep646_meta() -> (
 
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
+    from beartype import BeartypeConf
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep484585GenericSubbed,
         HintSignPep646TupleFixedVariadic,
@@ -151,10 +152,13 @@ def hints_pep646_meta() -> (
                     91, 0.11382,
                     'Held struggle with his throat', 'but came not forth;',
                 )),
-                #FIXME: Also test tuples *NOT* satisfying this hint *AFTER*
-                #deeply type-checking PEP 646-compliant tuple hints.
                 # String constant.
                 PithUnsatisfiedMetadata('For as in the theatres of crowded men'),
+                # Tuple shorter than the minimum length.
+                PithUnsatisfiedMetadata(
+                    pith=(91,),
+                    exception_str_match_regexes=(r'\blength 1 < 2\b',),
+                ),
             ),
         ),
         HintPepMetadata(
@@ -168,10 +172,14 @@ def hints_pep646_meta() -> (
                     91, 0.11382,
                     'Held struggle with his throat', 'but came not forth;',
                 )),
-                #FIXME: Also test tuples *NOT* satisfying this hint *AFTER*
-                #deeply type-checking PEP 646-compliant tuple hints.
                 # String constant.
                 PithUnsatisfiedMetadata('For as in the theatres of crowded men'),
+                # Tuple whose variadic items *ALL* violate this hint.
+                PithUnsatisfiedMetadata(
+                    pith=(91, 0.11382, b'Hubbub increases', b'more they call'),
+                    exception_str_match_regexes=(
+                        r'\btuple index [23] item bytes\b',),
+                ),
             ),
         ),
 
@@ -225,6 +233,86 @@ def hints_pep646_meta() -> (
                 # String constant.
                 PithUnsatisfiedMetadata(
                     'And bid old Saturn take his throne again."—'),
+            ),
+        ),
+
+        # PEP 585-compliant tuple hint subscripted by (in order):
+        # * One prefix PEP-noncompliant child hint.
+        # * A PEP 646-compliant unpacked child variable-length tuple hint.
+        # * One suffix PEP-noncompliant child hint.
+        HintPepMetadata(
+            hint=tuple[int, tuple_variadic_strs_unpacked_subbed, bytes],
+            conf=BeartypeConf(is_random=False),
+            pep_sign=HintSignPep646TupleFixedVariadic,
+            is_pep585_builtin_subbed=True,
+            isinstanceable_type=tuple,
+            piths_meta=(
+                # Tuples deeply satisfying this hint. Since randomization is
+                # disabled, only the *FIRST* variadic item is type-checked.
+                PithSatisfiedMetadata((54, b'Thus ended Saturn;')),
+                PithSatisfiedMetadata(
+                    (54, 'and the God', 0xBAD, b'of the Sea,')),
+                # Tuple whose *FIRST* variadic item violates this hint.
+                PithUnsatisfiedMetadata(
+                    pith=(54, 0xBAD, 'and the God', b'of the Sea,'),
+                    exception_str_match_regexes=(
+                        r'\btuple index 1 item int\b',),
+                ),
+                # Tuple whose prefix item violates this hint.
+                PithUnsatisfiedMetadata(
+                    pith=('Sophist and sage,', b'from no Athenian grove,'),
+                    exception_str_match_regexes=(
+                        r'\btuple index 0 item str\b',),
+                ),
+                # Tuple whose suffix item violates this hint, reported by its
+                # non-negative index.
+                PithUnsatisfiedMetadata(
+                    pith=(54, 'But cogitation', 'in his watery shades,'),
+                    exception_str_match_regexes=(
+                        r'\btuple index 2 item str\b',),
+                ),
+            ),
+        ),
+
+        # PEP 585-compliant "at least 1-dimensional" shape-like tuple hint
+        # subscripted by one prefix PEP-noncompliant child hint followed by an
+        # ignorable PEP 646-compliant unpacked child variable-length tuple hint.
+        HintPepMetadata(
+            hint=tuple[int, make_hint_pep646_tuple_unpacked_prefix((object, ...))],
+            pep_sign=HintSignPep646TupleFixedVariadic,
+            is_pep585_builtin_subbed=True,
+            isinstanceable_type=tuple,
+            piths_meta=(
+                # Tuples deeply satisfying this hint.
+                PithSatisfiedMetadata((1,)),
+                PithSatisfiedMetadata((1, 'Arose, with locks not oozy,', None)),
+                # Tuple shorter than the minimum length.
+                PithUnsatisfiedMetadata(
+                    pith=(),
+                    exception_str_match_regexes=(r'\blength 0 < 1\b',),
+                ),
+            ),
+        ),
+
+        # PEP 585-compliant tuple hint subscripted by a prefix and suffix
+        # PEP-noncompliant child hint surrounding a PEP 646-compliant unpacked
+        # type variable tuple, which is currently unconstrained.
+        HintPepMetadata(
+            hint=tuple[int, Ts_unpacked_prefix, float],
+            pep_sign=HintSignPep646TupleFixedVariadic,
+            is_pep585_builtin_subbed=True,
+            isinstanceable_type=tuple,
+            typeargs_packed_unsubbed=(Ts,),
+            piths_meta=(
+                # Tuples deeply satisfying this hint.
+                PithSatisfiedMetadata((1, 2.0)),
+                PithSatisfiedMetadata((1, b'and began', 'with sounds', 2.0)),
+                # Tuple whose suffix item violates this hint.
+                PithUnsatisfiedMetadata(
+                    pith=(1, 'O ye,', 'whom wrath consumes!'),
+                    exception_str_match_regexes=(
+                        r'\btuple index 2 item str\b',),
+                ),
             ),
         ),
 
