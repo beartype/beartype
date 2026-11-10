@@ -28,8 +28,8 @@ from beartype._check.cls.hint.hintsane import HintSane
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.pep.proposal.pep593 import (
+    get_hint_pep593_metadata,
     get_hint_pep593_metahint,
-    is_hint_pep593_beartype,
 )
 from typing import Optional
 
@@ -73,40 +73,48 @@ def reduce_hint_pep593_annotated(
     Hint
         Lower-level type hint currently supported by :mod:`beartype`.
     '''
-    # print(f'Reducing non-beartype PEP 593 type hint {repr(hint)}...')
+    # Defer heavyweight imports.
+    from beartype.vale._core._valecore import BeartypeValidator
 
-    # Return either...
-    return (
-        # If any of the following conditions apply, then preserve this metahint
-        # as is for subsequent handling elsewhere;
-        hint
-        if (
-            # This metahint is beartype-specific *AND*...
-            is_hint_pep593_beartype(hint) and
-            # Either...
-            (
-                # This hint has no parent and is thus a root hint *OR*...
-                hint_parent_sane is None or
-                # This hint has a parent and is thus a child hint *AND* this
-                # child hint does *NOT* transitively subscript a PEP 484- or
-                # 585-compliant parent subclass hint...
-                not hint_parent_sane.is_hint_parent_pep484585_subclass
-            )
-        ) else
-        # Else, either:
-        # * This metahint is beartype-agnostic and thus irrelevant to us *OR*...
-        # * This metahint is a child hint transitively subscripting a PEP 484-
-        #   or 585-compliant parent subclass hint (e.g., hint subtree resembling
-        #   "type[Annotated[cls, ...]]"). A PEP 593-compliant metahint is *NOT*
-        #   an object suitable for directly passing as the second argument to
-        #   the issubclass() builtin and *MUST* thus be reduced to the first
-        #   child hint subscripting this metahint. That child hint *SHOULD* be
-        #   an object suitable for directly passing as the second argument to
-        #   the issubclass() builtin.
-        #
-        # In either case, ignore *ALL* annotations (i.e., *ALL* child hints
-        # subscripting this PEP 593-compliant parent metahint, except the first)
-        # by reducing this metahint to the first child hint it annotates.
-        get_hint_pep593_metahint(
-            hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
-    )
+    # Child hint annotated by this metahint.
+    hint_child = get_hint_pep593_metahint(
+        hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
+
+    # If this metahint is a child hint transitively subscripting a PEP 484- or
+    # 585-compliant parent subclass hint (e.g., "type[Annotated[cls, ...]]"), a
+    # metahint is *NOT* suitable for passing to issubclass(). Reduce it to the
+    # child hint it annotates, ignoring *ALL* annotations.
+    if (
+        hint_parent_sane is not None and
+        hint_parent_sane.is_hint_parent_pep484585_subclass
+    ):
+        return hint_child
+
+    # Tuple of all arbitrary objects annotating this metahint.
+    metadata = get_hint_pep593_metadata(hint)
+
+    # List of only the beartype validators annotating this metahint, silently
+    # ignoring all other beartype-agnostic metadata (e.g., from third-party
+    # packages like "annotated_types" and Pydantic) intermingled with them.
+    validators = []
+    for datum in metadata:
+        # Guard against metaclasses overriding __instancecheck__() to raise.
+        try:
+            if isinstance(datum, BeartypeValidator):
+                validators.append(datum)
+        except Exception:
+            pass
+
+    # If this metahint is annotated by *NO* beartype validators, ignore all
+    # annotations by reducing this metahint to the child hint it annotates.
+    if not validators:
+        return hint_child
+
+    # If this metahint is annotated by only beartype validators, preserve it.
+    if len(validators) == len(metadata):
+        return hint
+
+    # Else, this metahint is annotated by both validators and agnostic
+    # metadata. Reduce it to a metahint annotated by only those validators,
+    # preserving the metahint class (e.g., "typing" vs. "typing_extensions").
+    return type(hint)(hint_child, tuple(validators))  # pyright: ignore

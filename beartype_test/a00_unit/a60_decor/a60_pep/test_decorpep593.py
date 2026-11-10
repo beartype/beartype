@@ -17,38 +17,48 @@ This submodule unit tests :pep:`593` support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_decor_pep593() -> None:
+def test_decor_pep593_mixed() -> None:
     '''
-    Test :pep:`593` support implemented in the :func:`beartype.beartype`
-    decorator.
-
-    Notably, this test exercises unsuccessful usage of the public
-    :mod:`beartype.vale.Is` class when used to type hint callables decorated by
-    the :func:`beartype.beartype` decorator.
+    Test that the :func:`beartype.beartype` decorator and
+    :func:`beartype.door.is_bearable` function silently ignore beartype-agnostic
+    metadata intermingled with beartype validators subscripting :pep:`593`-
+    compliant metahints.
     '''
 
-    # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintPep593Exception
+    from beartype.door import is_bearable
+    from beartype.roar import BeartypeCallHintParamViolation
     from beartype.vale import Is
     from beartype._util.api.standard.utiltyping import get_typing_attrs
     from pytest import raises
 
-    # ..................{ FAIL                               }..................
+    # Arbitrary beartype-agnostic metadata, resembling "annotated_types.MaxLen".
+    class MaxLen(object):
+        def __init__(self, max_length: int) -> None:
+            self.max_length = max_length
+
+    IsShort = Is[lambda obj: len(obj) <= 1]
+
     # For the "Annotated" type hint factory exported by each typing module...
     for Annotated in get_typing_attrs('Annotated'):
-        # Assert that @beartype raises the expected exception when decorating a
-        # callable annotated by a type metahint whose first argument is a
-        # beartype-specific data validator and whose second argument is a
-        # beartype-agnostic object.
-        with raises(BeartypeDecorHintPep593Exception):
-            @beartype
-            def volleyed_and_thundered(
-                flashed_all_their_sabres_bare: Annotated[
-                    str,
-                    Is[lambda text: bool('Flashed as they turned in air')],
-                    'Sabring the gunners there,',
-                ]
-            ) -> str:
-                return flashed_all_their_sabres_bare + 'Charging an army, while'
+        # Validators preceding, following, and surrounded by agnostic metadata.
+        for hint in (
+            Annotated[list[int], IsShort, MaxLen(1)],
+            Annotated[list[int], MaxLen(1), IsShort],
+            Annotated[list[int], 'a', IsShort, MaxLen(1), 'b'],
+            Annotated[Annotated[list[int], MaxLen(1)], IsShort],
+        ):
+            assert is_bearable([1], hint) is True
+            assert is_bearable([1, 2], hint) is False
+            assert is_bearable(['a'], hint) is False
+
+        @beartype
+        def volleyed_and_thundered(
+            flashed: Annotated[str, Is[lambda text: len(text) > 2], 'x'],
+        ) -> str:
+            return flashed
+
+        assert volleyed_and_thundered('abc') == 'abc'
+        with raises(BeartypeCallHintParamViolation):
+            volleyed_and_thundered('a')
