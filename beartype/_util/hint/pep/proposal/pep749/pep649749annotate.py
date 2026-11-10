@@ -434,6 +434,8 @@ if IS_PYTHON_AT_LEAST_3_14:
     # Defer version-specific imports.
     from annotationlib import get_annotations  # type: ignore[import-not-found]
     from beartype._util.error.utilerrget import get_name_error_attr_name
+    from beartype._util.hint.pep.proposal.pep810 import (
+        reduce_dictable_pep810_lazy_globals_to_pep484_refs)
     from beartype._util.cache.utilcacheobjattr import (
         ObjectAttrTypes,
         object_attr_cache_lock,
@@ -466,6 +468,17 @@ if IS_PYTHON_AT_LEAST_3_14:
             # Note that the optional "exception_cls" parameter is intentionally
             # *NOT* passed to ensure that a granular exception type is raised.
             try:
+                # If this hintable's global scope contains one or more PEP
+                # 810-compliant lazily imported attributes, evaluating this
+                # hintable's annotations in the "VALUE" format would implicitly
+                # reify (and thus destroy the laziness of) those attributes.
+                # Avoid doing so by pretending this hintable is annotated by
+                # unquoted forward references, deferring to the
+                # lazy-import-aware "FORWARDREF" handling below.
+                if reduce_dictable_pep810_lazy_globals_to_pep484_refs(
+                    hintable) is not None:
+                    raise NameError('PEP 810 lazy imports')
+
                 return (
                     get_hintable_pep649749_annotations_format_value_or_none(
                         hintable=hintable, exception_prefix=exception_prefix))
@@ -1112,6 +1125,49 @@ if IS_PYTHON_AT_LEAST_3_14:
     '''
 
     # ....................{ PRIVATE ~ getters              }....................
+    def _get_hintable_pep810_annotations_or_none(
+        hintable: Pep649749Hintable,
+        hint_format: HintPep749RefFormat,
+    ) -> Optional[Pep649749HintableAnnotations]:
+        '''
+        **Formatted annotations** annotating the passed hintable if this
+        hintable's global scope contains one or more :pep:`810`-compliant lazily
+        imported attributes *without* reifying those attributes *or*
+        :data:`None` otherwise (i.e., if this scope contains *no* such
+        attributes or this hintable defines *no* introspectable
+        ``__annotate__()`` dunder method).
+        '''
+
+        # Defer heavyweight imports.
+        from annotationlib import call_annotate_function  # type: ignore[import-not-found]
+        from types import FunctionType
+
+        # Global scope of this hintable stripped of lazily imported attributes
+        # if this scope contains any *OR* "None" otherwise.
+        hintable_globals = reduce_dictable_pep810_lazy_globals_to_pep484_refs(
+            hintable)
+        if hintable_globals is None:
+            return None
+
+        # This hintable's __annotate__() dunder method if any *OR* "None".
+        annotate = getattr(hintable, '__annotate__', None)
+        if not isinstance(annotate, FunctionType):
+            return None
+
+        # Clone of this method whose global scope excludes lazy imports.
+        annotate_clone = FunctionType(
+            annotate.__code__,
+            hintable_globals,
+            annotate.__name__,
+            annotate.__defaults__,
+            annotate.__closure__,
+        )
+        annotate_clone.__kwdefaults__ = annotate.__kwdefaults__
+
+        # Return the annotations returned by this clone.
+        return call_annotate_function(
+            annotate_clone, hint_format, owner=hintable)
+
     def _get_hintable_pep649749_annotations_or_none_uncached(
         hintable: Pep649749Hintable,
         hint_format: HintPep749RefFormat,
@@ -1248,8 +1304,25 @@ if IS_PYTHON_AT_LEAST_3_14:
                 #   "__annotations__" dunder dictionary when the passed format
                 #   is "FORWARDREF". This inefficiency is baked into
                 #   get_annotations() and thus *CANNOT* be avoided.
-                hintable_annotations = get_annotations(
-                    hintable, format=hint_format)
+                #
+                # If this hintable's global scope contains one or more PEP
+                # 810-compliant lazily imported attributes, the
+                # get_annotations() getter *CANNOT* be called. Why? Because
+                # that getter ignores the "globals" parameter for this format
+                # and first accesses the "__annotations__" dunder dictionary,
+                # which reifies (and thus destroys the laziness of) those
+                # attributes. Instead, directly call a clone of this hintable's
+                # __annotate__() dunder method whose global scope excludes those
+                # attributes. This forces call_annotate_function() to replace
+                # each such attribute referenced by a type hint with an unquoted
+                # forward reference proxy.
+                hintable_annotations = _get_hintable_pep810_annotations_or_none(
+                    hintable, hint_format)
+
+                # If doing so failed, fallback to the standard getter.
+                if hintable_annotations is None:
+                    hintable_annotations = get_annotations(
+                        hintable, format=hint_format)
                 # print(f'Found hintable {hintable} annotations {hintable_annotations} in {hint_format}...')
             # Else, this hintable does *NOT* define __annotate__().
 
