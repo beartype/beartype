@@ -14,7 +14,7 @@ PEP-noncompliant type hints include:
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_nonpep_api_threading_meta() -> (
+def hints_nonpep_threading_meta() -> (
     'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintNonpepMetadata]'):
     '''
     List of PEP-noncompliant :mod:`threading` **type hint metadata** (i.e.,

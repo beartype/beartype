@@ -148,27 +148,30 @@ def test_pep484_ref_decor_data() -> None:
     # Violation message raised by that call.
     violation_message = str(violation_info.value)
 
-    #FIXME: Actually, this violation message *DOES* contain the substring
-    #"forwardreffake". Well, that's mostly fine, as that's the critical edge
-    #case that most requires testing. It'd be ideal if we could find a way to
-    #test both, but... this is fine for now, I guess. This almost certainly has
-    #something to do with the body of this unit test being a local rather than
-    #global lexical scope. When we perform the same exact operations in a new
-    #global lexical scope, this violation message does *NOT* contain the
-    #substring "forwardreffake" (as expected). Presumably, we could resolve this
-    #discrepancy by performing these assertions from the global scope of some
-    #test-specific data submodule (probably the same "data_pep484ref_decor"
-    #test-specific data submodule imported from above). For now, though, this
-    #has already gone on long enough. It's fine as is. *WHATEVAHS*. *shrug*
-    #Assert this message does *NOT* contains the substring "forwardreffake".
-    #(See below for detailed discussion.)
+    #FIXME: Non-ideal. Ideally, this message should *NOT* contain the substring
+    #"forwardreffake". Instead, beartype should dynamically introspect up the
+    #call stack from within the body of the to_stop_without() wrapper function
+    #for this current stack frame encapsulating the body of this unit test,
+    #which would then find the "WhoseWoodsTheseAreIThinkIKnow" type localized
+    #above. Beartype actually *DID* behave that way for a brief period of time.
+    #Apparently, we accidentally broke that behaviour at some point... Woopsie!
+    #
+    #Unfortunately, this (almost certainly) means that literally *EVERYTHING*
+    #pertaining to the
+    #"BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__"
+    #dunder attribute is currently broken. There are certainly worse things that
+    #can happen, but... still. We spent quite a bit of time on that. It would be
+    #wonderful to resuscitate this functionality at some point. *sigh*
+
+    # Assert this message contains the substring "forwardreffake". (See below
+    # for detailed discussion.)
     assert 'forwardreffake' in violation_message
 
     # See above.
     with raises_uncached(BeartypeCallHintParamViolation) as violation_info:
         to_watch_his_woods('Then living on the earth, with labouring thought')
     violation_message = str(violation_info.value)
-    assert 'forwardreffake' not in violation_message
+    assert 'forwardreffake' in violation_message
 
     # Delete this "WhoseWoodsTheseAreIThinkIKnow" type.
     del WhoseWoodsTheseAreIThinkIKnow
@@ -219,12 +222,11 @@ def test_pep484_ref_decor_data() -> None:
     # Assert this message contains the critical substring "forwardreffake".
     assert 'forwardreffake' in violation_message
 
-    #FIXME: *NO IDEA*. Probably a similar issue as above.
     # See above.
     with raises_uncached(BeartypeCallHintParamViolation) as violation_info:
         to_watch_his_woods('And the bright Titan, phrenzied with new woes,')
     violation_message = str(violation_info.value)
-    assert 'forwardreffake' not in violation_message
+    assert 'forwardreffake' in violation_message
 
 # ....................{ TESTS ~ absolute : non-nested      }....................
 def test_pep484_ref_decor_absolute_type_nonnested() -> None:

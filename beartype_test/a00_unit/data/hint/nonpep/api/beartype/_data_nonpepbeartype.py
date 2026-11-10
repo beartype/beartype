@@ -16,7 +16,8 @@ These hints include:
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
+def hints_nonpep_beartype_meta() -> (
+    'list[beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintNonpepMetadata]'):
     '''
     List of :mod:`beartype`-specific **type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.cls.pith.data_clshintpith.HintNonpepMetadata`
@@ -37,6 +38,37 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
         PithUnsatisfiedMetadata,
     )
 
+    # ..................{ CLASSES                            }..................
+    class _TheMysteryAndMetaclass(type):
+        '''
+        Arbitrary metaclass correctly defining the :mod:`beartype`-specific
+        ``__instancecheck_str__()`` dunder method.
+        '''
+
+        def __instancecheck_str__(cls: 'TheMysteryAnd', obj: object) -> str:
+            '''
+            Correct implementation accepting the expected number of parameters
+            and returning the passed object trivially coerced into a string.
+            '''
+
+            # Return the passed object coerced into a string.
+            return (
+                f'object {repr(obj)} not instance of '
+                f'"{cls.__module__}.{cls.__name__}"; '
+                f'Gaze on the empty scene as vacantly'
+            )
+
+
+    #FIXME: Test below, please! *sigh*
+    #FIXME: Additionally test unions, please. *sigh*
+    class TheMysteryAnd(object, metaclass=_TheMysteryAndMetaclass):
+        '''
+        Arbitrary class whose metaclass correctly defines the
+        :mod:`beartype`-specific ``__instancecheck_str__()`` dunder method.
+        '''
+
+        pass
+
     # ..................{ LOCALS                             }..................
     # List of all PEP-noncompliant type hint metadata to be returned.
     hints_piths_nonpep_meta = []
@@ -44,9 +76,38 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
     # ..................{ LISTS                              }..................
     # Add beartype-specific PEP-noncompliant test type hints to this list.
     hints_piths_nonpep_meta.extend((
+        # ................{ TYPE ~ __instancecheck_str__()     }................
+        # Beartype-specific types whose metaclasses define the PEP-noncompliant
+        # __instancecheck_str__() dunder method currently supported *ONLY* by
+        # beartype.
+        HintNonpepMetadata(
+            hint=TheMysteryAnd,
+            piths_meta=(
+                # Class instance.
+                PithSatisfiedMetadata(TheMysteryAnd()),
+                # String constant.
+                PithUnsatisfiedMetadata(
+                    pith="As ocean's moon looks on the moon in heaven.",
+                    # Match that the exception message raised for this pith
+                    # contains the sentence fragment returned by the
+                    # TheMysteryAnd.__instancecheck_str__() dunder method.
+                    exception_str_match_regexes=(
+                        r'\bGaze on the empty scene as vacantly\b',
+                    ),
+                    # Match that the exception message raised for this pith
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+            ),
+        ),
+
         # ................{ TUPLE UNION                        }................
-        # Beartype-specific tuple unions (i.e., tuples containing one or more
-        # isinstanceable classes).
+        # Beartype-specific PEP-noncompliant tuple unions (i.e., tuples
+        # containing one or more isinstanceable types) currently supported
+        # *ONLY* by beartype.
 
         # Tuple union of one isinstanceable class.
         HintNonpepMetadata(
