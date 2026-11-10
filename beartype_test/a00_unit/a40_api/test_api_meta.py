@@ -23,6 +23,24 @@ def test_api_meta() -> None:
 
     # Defer test-specific imports.
     from beartype import meta
+    from importlib.metadata import (
+        PackageNotFoundError,
+        metadata,
+    )
+    from pytest import skip
+
+    # If this package is not installed (e.g., because tests are being run
+    # directly from a source checkout), no distribution metadata exists for the
+    # beartype.meta submodule to introspect. In this case, that submodule
+    # intentionally falls back to "None" for metadata-derived attributes (e.g.,
+    # "PYTHON_VERSION_MIN"), which this test cannot meaningfully validate.
+    try:
+        metadata(meta.PACKAGE_NAME)
+    except PackageNotFoundError:
+        skip(
+            f'Package "{meta.PACKAGE_NAME}" not installed '
+            f'(e.g., via "pip install -e .").'
+        )
 
     # Assert this submodule's public attributes to be of the expected types.
     assert isinstance(meta.NAME, str)
