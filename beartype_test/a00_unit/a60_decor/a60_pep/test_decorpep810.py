@@ -38,6 +38,10 @@ def func_nested(arg: list[Target] | None, other: Later) -> int:
     return len(arg or ())
 
 @beartype
+def func_str(arg: 'Target') -> 'Target':
+    return arg
+
+@beartype
 class Klass(object):
     def method(self, arg: Target) -> Target:
         return arg
@@ -108,11 +112,14 @@ def test_decor_pep810(tmp_path, monkeypatch) -> None:
     Target = import_module(_TARGET_MODULE_NAME).Target
     obj = Target()
     assert host.func(obj) is obj
+    assert host.func_str(obj) is obj
     assert host.Klass().method(obj) is obj
     assert host.func_nested([obj], host.Later()) == 1
     assert host.func_nested(None, host.Later()) == 0
     with raises(BeartypeCallHintParamViolation):
         host.func(1)
+    with raises(BeartypeCallHintParamViolation):
+        host.func_str(1)
     with raises(BeartypeCallHintParamViolation):
         host.Klass().method('a')
     with raises(BeartypeCallHintParamViolation):
@@ -136,6 +143,7 @@ def test_pep810_getters(tmp_path, monkeypatch) -> None:
     from beartype._util.hint.pep.proposal.pep810 import (
         Pep810LiveGlobals,
         get_dictable_globals_or_none,
+        get_scope_nonlazy_or_none,
         reduce_dictable_pep810_lazy_globals_to_pep484_refs,
     )
     from pytest import raises
@@ -177,6 +185,15 @@ def test_pep810_getters(tmp_path, monkeypatch) -> None:
          plain.__dict__)
     assert get_hintable_pep649749_annotations_or_none(plain.func)['arg'] != int
 
+    # Global scopes with lazy imports have a lazy-free counterpart; those
+    # without have none.
+    nonlazy = get_scope_nonlazy_or_none(host_globals)
+    assert nonlazy is not None
+    assert 'Target' not in nonlazy
+    assert 'func' in nonlazy
+    assert get_scope_nonlazy_or_none({'a': 1}) is None
+    assert _TARGET_MODULE_NAME not in modules
+
     # Live global scopes defer to the real scope, reifying lazy imports only
     # when looked up.
     live = reduce_dictable_pep810_lazy_globals_to_pep484_refs(host.func)
@@ -198,3 +215,4 @@ def test_pep810_getters(tmp_path, monkeypatch) -> None:
     # Lazy imports are unsupported if the type of lazy imports is undefined.
     monkeypatch.setattr(pep810, 'LazyImportType', None)
     assert reduce_dictable_pep810_lazy_globals_to_pep484_refs(host.func) is None
+    assert get_scope_nonlazy_or_none(host_globals) is None

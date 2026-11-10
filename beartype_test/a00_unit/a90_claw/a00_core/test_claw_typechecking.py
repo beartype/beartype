@@ -118,6 +118,16 @@ def test_claw_type_checking_lazy() -> None:
     assert 'lazy from fractions import Fraction' in source_new
     assert 'if TYPE_CHECKING' not in source_new
 
+    # Assert a block containing only imports and an "else" branch preserves
+    # that branch (under an otherwise empty block).
+    source_new = _transform(
+        'from typing import TYPE_CHECKING\n'
+        'if TYPE_CHECKING:\n    from fractions import Fraction\n'
+        'else:\n    Fraction = None\n')
+    assert 'lazy from fractions import Fraction' in source_new
+    assert 'if TYPE_CHECKING:\n    pass\nelse:\n    Fraction = None' in (
+        source_new)
+
     # Assert star imports (which cannot be lazy) are preserved with a warning.
     from beartype.roar import BeartypeClawTypeCheckingWarning
     from pytest import warns
