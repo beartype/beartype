@@ -62,3 +62,15 @@ def test_decor_pep593_mixed() -> None:
         assert volleyed_and_thundered('abc') == 'abc'
         with raises(BeartypeCallHintParamViolation):
             volleyed_and_thundered('a')
+
+        # Metahint annotated by only beartype-agnostic metadata, which is
+        # ignored in its entirety.
+        assert is_bearable([1], Annotated[list[int], MaxLen(1), 'a']) is True
+        assert is_bearable(['a'], Annotated[list[int], MaxLen(1)]) is False
+
+        # Metahint annotated by validators and agnostic metadata that
+        # subscripts a subclass hint, which is reduced to its child hint.
+        assert is_bearable(
+            int, type[Annotated[int, IsShort, MaxLen(1)]]) is True
+        assert is_bearable(
+            str, type[Annotated[int, IsShort, MaxLen(1)]]) is False

@@ -96,14 +96,8 @@ def reduce_hint_pep593_annotated(
     # List of only the beartype validators annotating this metahint, silently
     # ignoring all other beartype-agnostic metadata (e.g., from third-party
     # packages like "annotated_types" and Pydantic) intermingled with them.
-    validators = []
-    for datum in metadata:
-        # Guard against metaclasses overriding __instancecheck__() to raise.
-        try:
-            if isinstance(datum, BeartypeValidator):
-                validators.append(datum)
-        except Exception:
-            pass
+    validators = [
+        datum for datum in metadata if isinstance(datum, BeartypeValidator)]
 
     # If this metahint is annotated by *NO* beartype validators, ignore all
     # annotations by reducing this metahint to the child hint it annotates.
