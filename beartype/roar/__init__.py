@@ -143,6 +143,7 @@ from beartype.roar._roarwarn import (
     BeartypeWarning as BeartypeWarning,
     BeartypeClawWarning as BeartypeClawWarning,
     BeartypeClawDecorWarning as BeartypeClawDecorWarning,
+    BeartypeClawTypeCheckingWarning as BeartypeClawTypeCheckingWarning,
     BeartypeClawImportlibWarning as BeartypeClawImportlibWarning,
     BeartypeClawImportlibFileFinderPathHookInactiveWarning as
         BeartypeClawImportlibFileFinderPathHookInactiveWarning,

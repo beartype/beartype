@@ -20,6 +20,8 @@ from beartype.claw._ast._scope.clawastscope import BeartypeNodeScope
 from beartype.claw._ast._scope.clawastscopes import BeartypeNodeScopes
 from beartype.claw._ast._kind.clawastassign import (
     BeartypeNodeTransformerAssignMixin)
+from beartype.claw._ast._kind.clawastif import (
+    BeartypeNodeTransformerIfMixin)
 from beartype.claw._ast._kind.clawastimport import (
     BeartypeNodeTransformerImportMixin)
 from beartype.claw._ast._kind.clawastmodule import (
@@ -50,6 +52,7 @@ class BeartypeNodeTransformer(
     # PEP-agnostic mixins defining supplementary AST node functionality in a
     # PEP-agnostic manner.
     BeartypeNodeTransformerAssignMixin,
+    BeartypeNodeTransformerIfMixin,
     BeartypeNodeTransformerImportMixin,
     BeartypeNodeTransformerModuleMixin,
     BeartypeNodeTransformerUtilityMixin,

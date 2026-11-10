@@ -147,10 +147,6 @@ def reduce_dictable_pep810_lazy_globals_to_pep484_refs(
         * Else, :data:`None`.
     '''
 
-    # If lazy imports are unsupported by this interpreter, return "None".
-    if LazyImportType is None:
-        return None
-
     # Global scope of this object if any *OR* "None" otherwise.
     dictable_globals = get_dictable_globals_or_none(dictable)
 
@@ -158,6 +154,41 @@ def reduce_dictable_pep810_lazy_globals_to_pep484_refs(
     if dictable_globals is None:
         return None
     # Else, this object has a global scope.
+
+    # Copy of this scope excluding lazily imported attributes if any *OR*
+    # "None" otherwise.
+    nonlazy_globals = get_scope_nonlazy_or_none(dictable_globals)
+    if nonlazy_globals is None:
+        return None
+
+    # Return a live scope deferring to this scope.
+    return Pep810LiveGlobals(dictable_globals, nonlazy_globals)
+
+
+def get_scope_nonlazy_or_none(scope: LexicalScope) -> Optional[LexicalScope]:
+    '''
+    Shallow copy of the passed global scope excluding all :pep:`810`-compliant
+    **lazily imported attributes** (i.e., instances of the
+    :class:`types.LazyImportType` type) if this scope contains one or more such
+    attributes *or* :data:`None` otherwise (including if the active Python
+    interpreter targets Python < 3.15 and thus supports no lazy imports).
+
+    Parameters
+    ----------
+    scope : LexicalScope
+        Global scope to be inspected.
+
+    Returns
+    -------
+    Optional[LexicalScope]
+        Either a new dictionary excluding lazy imports or :data:`None`.
+    '''
+
+    # If lazy imports are unsupported by this interpreter, return "None".
+    if LazyImportType is None:
+        return None
+
+    dictable_globals = scope
 
     # Note that iterating over a dictionary's values does *NOT* reify lazily
     # imported attributes. Only subsequent name lookups do.
@@ -170,9 +201,9 @@ def reduce_dictable_pep810_lazy_globals_to_pep484_refs(
         return None
     # Else, this scope contains one or more lazily imported attributes.
 
-    # Return a live scope excluding these attributes from its own items.
-    return Pep810LiveGlobals(dictable_globals, {
+    # Return a copy of this scope excluding these attributes.
+    return {
         global_name: global_value
         for global_name, global_value in dictable_globals.items()
         if not isinstance(global_value, LazyImportType)
-    })
+    }
