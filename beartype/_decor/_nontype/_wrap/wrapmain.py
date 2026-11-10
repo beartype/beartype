@@ -23,11 +23,15 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.cls.call.calldatadecorfunc import BeartypeCallDecorFuncData
 from beartype._check.make.checkmakesig import make_func_signature
-from beartype._data.check.code.func.datacodefuncwrap import CODE_WRAPPER_SIGNATURE
+from beartype._data.check.code.func.datacodefuncwrap import (
+    CODE_INLINE_RETURN_SIGNATURE,
+    CODE_WRAPPER_SIGNATURE,
+)
 from beartype._data.check.code.datacodename import (
     ARG_NAME_CALL_META,
     ARG_NAME_FUNC,
 )
+from beartype._data.typing.datatyping import LexicalScope
 from beartype._decor._nontype._wrap._wrapargs import (
     code_check_args as _code_check_args)
 from beartype._decor._nontype._wrap._wrapreturn import (
@@ -191,3 +195,114 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is the most ideal. KISS, bro.
     return f'{code_signature}{code_check_params}{code_check_return}'
+
+# ....................{ GENERATORS ~ inline                }....................
+def generate_code_check_args(
+    decor_func: BeartypeCallDecorFuncData) -> tuple[str, LexicalScope]:
+    '''
+    Generate a Python code snippet dynamically defining the **inline parameter
+    checker** (i.e., function type-checking all parameters passed to the
+    decorated callable by a :mod:`beartype.claw`-instrumented call from the body
+    of that callable) for the passed decorated callable.
+
+    This checker accepts the same ``*args, **kwargs`` as a wrapper function and
+    thus reuses the same code generation. Unlike a wrapper function, however,
+    this checker neither calls the decorated callable nor checks its return.
+
+    Parameters
+    ----------
+    decor_func : BeartypeCallDecorFuncData
+        Beartype decorator call metadata.
+
+    Returns
+    -------
+    tuple[str, LexicalScope]
+        2-tuple ``(code, scope)``, where:
+
+        * ``code`` is either the empty string if no parameters of this callable
+          require type-checking *or* a code snippet defining this checker.
+        * ``scope`` is the dictionary mapping from the name to value of each
+          hidden parameter of this checker (empty if ``code`` is empty).
+    '''
+
+    # Start a fresh scope, as the scope is shared with the return checker.
+    decor_func.func_wrapper_locals = {}
+
+    # Code snippet type-checking all parameters if any.
+    code_check_params = _code_check_args(decor_func)
+
+    # If *NO* parameter requires type-checking, there is no checker.
+    if not code_check_params:
+        return '', {}
+
+    # Scope of this checker, expanded with the same hidden parameters required
+    # by all wrapper functions.
+    #
+    # Note that the minimal metadata is a placeholder here and *MUST* be
+    # replaced by the caller with "decor_func.minify()" only *AFTER* both
+    # checkers have been generated. Minifying is memoized and snapshots the
+    # forward scope, which the return checker may yet create.
+    func_scope = decor_func.func_wrapper_locals
+    func_scope[ARG_NAME_CALL_META] = None
+    func_scope[ARG_NAME_FUNC] = decor_func.func_wrappee
+
+    # Return this checker, which is always synchronous.
+    return (
+        make_func_signature(
+            func_name=decor_func.func_wrapper_name,
+            func_scope=func_scope,
+            code_signature_format=CODE_WRAPPER_SIGNATURE,
+            conf=decor_func.conf,
+        ) + code_check_params,
+        func_scope,
+    )
+
+
+def generate_code_check_return(
+    decor_func: BeartypeCallDecorFuncData) -> tuple[str, LexicalScope]:
+    '''
+    Generate a Python code snippet dynamically defining the **inline return
+    checker** (i.e., function type-checking the value passed to that function
+    by a :mod:`beartype.claw`-instrumented ``return`` statement in the body of
+    the decorated callable and returning that value as is) for the passed
+    decorated callable.
+
+    Parameters
+    ----------
+    decor_func : BeartypeCallDecorFuncData
+        Beartype decorator call metadata.
+
+    Returns
+    -------
+    tuple[str, LexicalScope]
+        2-tuple ``(code, scope)`` as documented by
+        :func:`.generate_code_check_args`, but for the return.
+    '''
+
+    # Start a fresh scope, as the scope is shared with the parameter checker.
+    decor_func.func_wrapper_locals = {}
+
+    # Code snippet type-checking the return if any.
+    code_check_return = _code_check_return(decor_func, is_inline=True)
+
+    # If the return requires *NO* type-checking, there is no checker.
+    if not code_check_return:
+        return '', {}
+
+    # Scope of this checker, expanded with the same hidden parameters required
+    # by all wrapper functions.
+    # (See the placeholder note in generate_code_check_args().)
+    func_scope = decor_func.func_wrapper_locals
+    func_scope[ARG_NAME_CALL_META] = None
+    func_scope[ARG_NAME_FUNC] = decor_func.func_wrappee
+
+    # Return this checker, which is always synchronous.
+    return (
+        make_func_signature(
+            func_name=decor_func.func_wrapper_name,
+            func_scope=func_scope,
+            code_signature_format=CODE_INLINE_RETURN_SIGNATURE,
+            conf=decor_func.conf,
+        ) + code_check_return + decor_func.func_wrapper_code_return_checked,
+        func_scope,
+    )

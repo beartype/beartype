@@ -143,6 +143,11 @@ class BeartypeConf(object):
         existing chains of one or more decorators decorating user-defined
         classes to which :mod:`beartype.claw` import hooks will automatically
         inject the :func:`beartype.beartype` decorator).
+    _claw_is_inline : bool
+        :data:`True` only if type-checking typed callables by **inlining**
+        checks into those callables (rather than wrapping those callables)
+        when importing modules under import hooks published by the
+        :mod:`beartype.claw` subpackage.
     _claw_is_pep526 : bool
         :data:`True` only if type-checking **annotated variable assignments**
         (i.e., :pep:`526`-compliant assignments to local, global, class, and
@@ -279,6 +284,7 @@ class BeartypeConf(object):
     __slots__ = (
         '_claw_decor_place_func',
         '_claw_decor_place_type',
+        '_claw_is_inline',
         '_claw_is_pep526',
         '_claw_skip_package_names',
         '_conf_args',
@@ -309,6 +315,7 @@ class BeartypeConf(object):
     if TYPE_CHECKING:
         _claw_decor_place_func: BeartypeDecorPlace
         _claw_decor_place_type: BeartypeDecorPlace
+        _claw_is_inline: bool
         _claw_is_pep526: bool
         _claw_skip_package_names: CollectionStrs
         _conf_args: tuple
@@ -352,6 +359,7 @@ class BeartypeConf(object):
             BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE),
         claw_decor_place_type: BeartypeDecorPlace = (
             BeartypeDecorPlace.LAST),
+        claw_is_inline: bool = False,
         claw_is_pep526: bool = True,
         claw_skip_package_names: CollectionStrs = (),
         hint_overrides: FrozenDict = FROZENDICT_EMPTY,
@@ -470,6 +478,19 @@ class BeartypeConf(object):
                @beartype  # <-- @beartype decorates first rather than last! \\o/
                class ClassyData(object):
                    integral_datum: int
+        claw_is_inline : bool, optional
+            :data:`True` only if type-checking typed callables defined by
+            modules imported under :mod:`beartype.claw` import hooks by
+            **inlining** type-checks into those callables rather than
+            wrapping those callables in a :func:`beartype.beartype` wrapper.
+            Wrappers are retained on the call stack for the duration of the
+            wrapped call, halving the recursion depth available to recursive
+            callables. Inlined checks are transient, preserving that depth.
+            Only module- and class-scoped non-generator callables that are
+            undecorated (or decorated only by ``staticmethod``,
+            ``classmethod``, or ``property``) are inlined; all other
+            callables silently retain the wrapper. Defaults to
+            :data:`False`. See issue #734.
         claw_is_pep526 : bool, optional
             :data:`True` only if implicitly type-checking **annotated variable
             assignments** (i.e., :pep:`526`-compliant assignments to local,
@@ -866,6 +887,7 @@ class BeartypeConf(object):
             conf_args = (
                 claw_decor_place_func,
                 claw_decor_place_type,
+                claw_is_inline,
                 claw_is_pep526,
                 claw_skip_package_names,
                 hint_overrides,
@@ -899,6 +921,7 @@ class BeartypeConf(object):
             conf_kwargs = dict(
                 claw_decor_place_func=claw_decor_place_func,
                 claw_decor_place_type=claw_decor_place_type,
+                claw_is_inline=claw_is_inline,
                 claw_is_pep526=claw_is_pep526,
                 claw_skip_package_names=claw_skip_package_names,
                 hint_overrides=hint_overrides,
@@ -978,6 +1001,7 @@ class BeartypeConf(object):
                 'claw_decor_place_func']
             self._claw_decor_place_type = conf_kwargs[  # pyright: ignore
                 'claw_decor_place_type']
+            self._claw_is_inline = conf_kwargs['claw_is_inline']  # pyright: ignore
             self._claw_is_pep526 = conf_kwargs['claw_is_pep526']  # pyright: ignore
             self._claw_skip_package_names = conf_kwargs[
                 'claw_skip_package_names']  # pyright: ignore
@@ -1276,6 +1300,23 @@ class BeartypeConf(object):
         '''
 
         return self._claw_decor_place_type
+
+
+    @property
+    def claw_is_inline(self) -> bool:
+        '''
+        :data:`True` only if type-checking typed callables by **inlining**
+        checks into those callables (rather than wrapping those callables)
+        when importing modules under import hooks published by the
+        :mod:`beartype.claw` subpackage.
+
+        See Also
+        --------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._claw_is_inline
 
 
     @property

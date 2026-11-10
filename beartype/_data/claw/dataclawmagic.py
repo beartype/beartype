@@ -57,6 +57,16 @@ otherwise commonly present in the version specifier for this version of
 the name of this package and thus suitable as a machine-readable delimiter).
 '''
 
+OPTIMIZATION_MARKER_BEARTYPE_INLINE = f'{OPTIMIZATION_MARKER_BEARTYPE}inline'
+'''
+**Beartype inline optimization marker** (i.e., variant of the
+:data:`.OPTIMIZATION_MARKER_BEARTYPE` suffixing bytecode files compiled under
+beartype import hooks configured with ``claw_is_inline=True``).
+
+Inline-instrumented bytecode differs from wrapper-based bytecode and thus *must*
+never share a cache file with the latter.
+'''
+
 # ....................{ STRINGS ~ names                    }....................
 BEARTYPE_DECORATOR_FUNC_NAME = '__beartype__'
 '''
@@ -71,6 +81,32 @@ BEARTYPE_RAISER_FUNC_NAME = '__die_if_unbearable_beartype__'
 Unqualified basename of the beartype exception-raiser as imported into the
 current user-defined module being imported and thus transformed by the
 :class:`beartype.claw._ast.clawastmain.BeartypeNodeTransformer` subclass.
+'''
+
+
+BEARTYPE_INLINE_INIT_FUNC_NAME = '__beartype_inline_init__'
+'''
+Unqualified basename of the **inline initializer** (i.e., innermost decorator
+binding no-op checkers to the placeholders of a callable instrumented for inline
+type-checking) as imported into the current user-defined module being imported
+and thus transformed by the
+:class:`beartype.claw._ast.clawastmain.BeartypeNodeTransformer` subclass.
+'''
+
+
+BEARTYPE_INLINE_ARGS_PLACEHOLDER = '__beartype_inline_check_args__'
+'''
+Placeholder string constant standing in for the **inline parameter checker**
+called at the head of the body of a callable instrumented for inline
+type-checking, replaced at decoration time by the real checker.
+'''
+
+
+BEARTYPE_INLINE_RETURN_PLACEHOLDER = '__beartype_inline_check_return__'
+'''
+Placeholder string constant standing in for the **inline return checker** called
+on each value returned by a callable instrumented for inline type-checking,
+replaced at decoration time by the real checker.
 '''
 
 # ....................{ STRINGS ~ names : claw             }....................

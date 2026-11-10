@@ -11,9 +11,64 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from ast import (
+    AST,
+    AsyncFunctionDef,
+    ClassDef,
+    FunctionDef,
+    Lambda,
+    Yield,
+    YieldFrom,
+    iter_child_nodes,
+)
 from beartype._data.typing.datatyping import NodeCallable
 
 # ....................{ TESTERS                            }....................
+def is_node_callable_generator(node: NodeCallable) -> bool:
+    '''
+    :data:`True` only if the passed **callable node** (i.e., node signifying the
+    definition of a pure-Python function or method) is a **generator** (i.e.,
+    contains one or more ``yield`` or ``yield from`` expressions in its own
+    scope, regardless of whether that callable is synchronous or asynchronous).
+
+    This tester intentionally does *not* descend into nested callables, lambdas,
+    or classes, whose ``yield`` expressions belong to their own scopes.
+
+    Parameters
+    ----------
+    node : NodeCallable
+        Callable node to be tested.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this callable node is a generator.
+    '''
+
+    # Stack of all nodes to be visited, initialized to the body of this callable.
+    nodes_unvisited: list[AST] = list(node.body)
+
+    # While one or more nodes remain unvisited...
+    while nodes_unvisited:
+        # Node to be visited.
+        node_curr = nodes_unvisited.pop()
+
+        # If this node is a "yield" expression, this callable is a generator.
+        if isinstance(node_curr, (Yield, YieldFrom)):
+            return True
+        # Else, this node is *NOT* a "yield" expression.
+        #
+        # If this node does *NOT* declare a nested scope, visit its children.
+        elif not isinstance(
+            node_curr, (AsyncFunctionDef, ClassDef, FunctionDef, Lambda)):
+            nodes_unvisited.extend(iter_child_nodes(node_curr))
+        # Else, this node declares a nested scope whose "yield" expressions do
+        # *NOT* make this callable a generator. Ignore this node.
+
+    # Return false, as *NO* "yield" expression was found.
+    return False
+
+
 def is_node_callable_typed(node: NodeCallable) -> bool:
     '''
     :data:`True` only if the passed **callable node** (i.e., node signifying the

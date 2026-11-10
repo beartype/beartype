@@ -21,6 +21,7 @@ from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
 from beartype.claw._clawtest import is_beartype_claw_initted_partial
 from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined]
     cache_from_source_beartype,
+    cache_from_source_beartype_inline,
     cache_from_source_original,
 )
 from beartype.roar import BeartypeClawImportAstException
@@ -528,7 +529,13 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         #
         # Note that @agronholm (Alex Grönholm) claims that "the import lock
         # should make this monkey patch safe." We're trusting you here, man!
-        _bootstrap_external.cache_from_source = cache_from_source_beartype
+        #
+        # Note that inline-instrumented modules are cached separately.
+        _bootstrap_external.cache_from_source = (
+            cache_from_source_beartype_inline
+            if conf.claw_is_inline else
+            cache_from_source_beartype
+        )
 
         # Attempt to defer to the superclass method.
         try:

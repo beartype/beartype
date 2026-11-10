@@ -58,3 +58,16 @@ the :attr:`typing.NoReturn` singleton and raising an exception if this call
 successfully returned a value rather than raising an exception or halting the
 active Python interpreter.
 '''
+
+
+PEP484_CODE_CHECK_NORETURN_INLINE = '''
+    # Since this function annotated by "typing.NoReturn" successfully returned a
+    # value (which is passed to this inline return checker) rather than raising
+    # an exception or halting the active Python interpreter, unconditionally
+    # raise an exception.
+    if True'''
+'''
+:pep:`484`-compliant code snippet raising an exception unconditionally from an
+inline return checker, which is only ever called when the decorated callable
+annotated by the :attr:`typing.NoReturn` singleton returns.
+'''

@@ -52,6 +52,32 @@ internally interpolates these format variables into this string as follows:
 '''
 
 
+CODE_INLINE_RETURN_SIGNATURE = f'''def {{func_name}}(
+    {VAR_NAME_PITH_ROOT},
+{{code_signature_scope_args}}):'''
+'''
+Code snippet declaring the signature of a **synchronous inline return checker**
+(i.e., function called by a :mod:`beartype.claw`-instrumented callable on each
+returned value, type-checking that value and returning it as is).
+
+This signature has the same format variables as :data:`.CODE_WRAPPER_SIGNATURE`
+(except for ``code_signature_prefix``, which is intentionally unsupported: inline
+return checkers are *always* synchronous, even when checking the awaited result
+of an asynchronous coroutine).
+'''
+
+
+CODE_INLINE_RETURN_CHECK_PREFIX = '''
+    # Noop required to artificially increase indentation level. Note that
+    # CPython implicitly optimizes this conditional away.
+    if True:'''
+'''
+Code snippet prefixing the type-checking of a value returned from an inline
+return checker, replacing :data:`.CODE_CALL_CHECKED` (as the checked value is
+the passed parameter rather than the result of calling the decorated callable).
+'''
+
+
 CODE_WRAPPER_SIGNATURE_SCOPE_ARG = (
     # Indentation prefixing all wrapper parameters.
     f'{CODE_INDENT_1}'

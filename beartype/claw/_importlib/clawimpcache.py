@@ -217,14 +217,41 @@ def cache_from_source_beartype(*args, **kwargs) -> str:
     # Avoid circular import dependencies.
     from beartype._data.claw.dataclawmagic import OPTIMIZATION_MARKER_BEARTYPE
 
+    # Defer to the original cache_from_source() function.
+    return _cache_from_source_marked(
+        OPTIMIZATION_MARKER_BEARTYPE, *args, **kwargs)
+
+
+def cache_from_source_beartype_inline(*args, **kwargs) -> str:
+    '''
+    Variant of the :func:`.cache_from_source_beartype` function applying an
+    **inline** beartype-specific optimization marker, uniquifying bytecode files
+    of modules transformed under ``claw_is_inline=True`` from those of modules
+    transformed without that option.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._data.claw.dataclawmagic import (
+        OPTIMIZATION_MARKER_BEARTYPE_INLINE)
+
+    # Defer to the original cache_from_source() function.
+    return _cache_from_source_marked(
+        OPTIMIZATION_MARKER_BEARTYPE_INLINE, *args, **kwargs)
+
+
+def _cache_from_source_marked(marker: str, *args, **kwargs) -> str:
+    '''
+    Original :func:`importlib.util.cache_from_source` function called with the
+    passed optimization marker appended to any passed ``optimization`` parameter.
+    '''
+
     # Original optimization parameter passed to this function call if any *OR*
     # the empty string otherwise.
     optimization_marker_nonbeartype = kwargs.get('optimization', '')
 
     # New optimization parameter applied by this monkey-patch of that function,
     # uniquifying that parameter with a beartype-specific suffix.
-    kwargs['optimization'] = (
-        f'{optimization_marker_nonbeartype}{OPTIMIZATION_MARKER_BEARTYPE}')
+    kwargs['optimization'] = f'{optimization_marker_nonbeartype}{marker}'
 
     # Defer to the implementation of the original cache_from_source() function.
     return cache_from_source_original(*args, **kwargs)
