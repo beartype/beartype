@@ -14,8 +14,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilTextIdentifierException
 from beartype._data.typing.datatyping import TypeException
+from beartype._util.cache.func.utilcachefunc import callable_cached
+from re import compile as re_compile
 
 # ....................{ RAISERS                            }....................
+#FIXME: Rename to die_unless_pep3131_attribute_name() for disambiguity.
 def die_unless_identifier(
     # Mandatory parameters.
     text: str,
@@ -87,6 +90,8 @@ def is_dunder(text: str) -> bool:
     return text.startswith('__') and text.endswith('__')
 
 
+#FIXME: Rename to is_pep3131_attribute_name() for disambiguity.
+@callable_cached
 def is_identifier(text: str) -> bool:
     '''
     :data:`True` only if the passed string is a valid **Python attribute name**
@@ -97,12 +102,14 @@ def is_identifier(text: str) -> bool:
     This tester is suitable for detecting whether this string is the
     fully-qualified name of an arbitrary Python object.
 
+    This tester is memoized for efficiency.
+
     Caveats
     -------
-    **This tester is mildly slow,** due to unavoidably splitting this string on
-    ``.`` delimiters and iteratively passing each of the split substrings to
-    the :meth:`str.isidentifier` builtin. Due to the following caveat, this
-    inefficiency is unavoidable.
+    **The first call of this tester is mildly slow,** due to unavoidably
+    splitting this string on ``.`` delimiters and iteratively passing each of
+    the split substrings to the :meth:`str.isidentifier` builtin. Due to the
+    following caveat, this inefficiency is unavoidable.
 
     **This tester is not optimizable with regular expressions** -- at least,
     not trivially. Technically, this tester *can* be optimized by leveraging
@@ -168,3 +175,50 @@ def is_identifier(text: str) -> bool:
     # Return true, since *ALL* "."-delimited substrings split from this string
     # are valid unqualified Python identifiers.
     return True
+
+# ....................{ CONVERTERS                         }....................
+#FIXME: Unit test us up, please. *sigh*
+def convert_str_to_pep3131_identifier(text: str) -> str:
+    '''
+    The passed possibly non-identifier converted into a valid **Python
+    identifier** (i.e., :pep:`3131`-compliant string syntactically valid as the
+    name of any Python attribute, callable, class, module, or variable).
+
+    Specifically, this converter replaces *all* :pep:`3131`-compliant substrings
+    in this non-identifier with :pep:`3131`-compliant underscores.
+
+    Caveats
+    -------
+    **This converter is slow,** due to performing regular expression-driven
+    global search and replacement on this string.
+
+    Parameters
+    ----------
+    text : str
+        String to be converted.
+
+    Returns
+    -------
+    str
+        Valid Python identifier converted from this possibly non-identifier.
+    '''
+    assert isinstance(text, str), f'{repr(text)} not string.'
+
+    # Return either...
+    return (
+        # If this string is already a Python identifier, this string as is;
+        text
+        if text.isidentifier() else
+        # Else, this string is *NOT* already a Python identifier. In this case,
+        # globally replace *ALL* PEP 3131-noncompliant substrings in this string
+        # with PEP 3131-compliant underscores.
+        _PEP3131_NONIDENTIFIER_CHARS_REGEX.sub('_', text)
+    )
+
+# ....................{ PRIVATE ~ constants                }....................
+_PEP3131_NONIDENTIFIER_CHARS_REGEX = re_compile(r'[^0-9a-zA-Z_]+')
+'''
+Compiled regular expression matching one or more contiguous characters that
+violate :pep:`3131` compliance and thus are syntactically invalid in the names
+of Python attributes, callables, classes, modules, and variables.
+'''

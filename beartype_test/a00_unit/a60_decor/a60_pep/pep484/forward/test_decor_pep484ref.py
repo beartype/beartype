@@ -19,7 +19,7 @@ typically have yet to be defined).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
-# ....................{ TESTS                              }....................
+# ....................{ TESTS ~ data                       }....................
 def test_pep484_ref_decor_data() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator with
@@ -40,7 +40,6 @@ def test_pep484_ref_decor_data() -> None:
         TheDarkestEveningOfTheYear,
         WithSluggishSurge,
         a_little_shallop,
-        between_the_woods_and_frozen_lake,
         but_i_have_promises,
         its_fields_of_snow,
         of_easy_wind,
@@ -67,16 +66,6 @@ def test_pep484_ref_decor_data() -> None:
     ]
     rugged_and_dark = WithSluggishSurge()
 
-    # 3-tuple of closures and classes nested in this callable.
-    (to_stop_without, to_watch_his_woods, WhoseWoodsTheseAreIThinkIKnow) = (
-        between_the_woods_and_frozen_lake())
-
-    # Objects passed below to exercise closure-relative forward references.
-    my_little_horse = WhoseWoodsTheseAreIThinkIKnow(
-        'My little horse must think it queer')
-    a_farmhouse_near = WhoseWoodsTheseAreIThinkIKnow(
-        'To stop without a farmhouse near')
-
     # ..................{ PASS                               }..................
     # Assert these forward-referencing callables return the expected values.
     assert a_little_shallop(with_burning_smoke) is with_burning_smoke
@@ -100,15 +89,6 @@ def test_pep484_ref_decor_data() -> None:
     assert next(iter(crept_gradual)) is rugged_and_dark
     assert tuple(reversed(crept_gradual)) == (rugged_and_dark,)
 
-    # ..................{ PASS ~ closure                     }..................
-    # Assert these forward-referencing closures return the expected values.
-    assert to_stop_without(my_little_horse) == my_little_horse
-    assert to_watch_his_woods(a_farmhouse_near) == a_farmhouse_near
-    assert to_watch_his_woods(True) is True
-    assert to_watch_his_woods(
-        len('Up to the zenith,—hieroglyphics old')) == (
-        len('Up to the zenith,—hieroglyphics old'))
-
     # ..................{ FAIL                               }..................
     # Assert that calling a method violating its return annotated as a 2-tuple
     # of type variables whose bounds are expressed as PEP-compliant relative
@@ -121,7 +101,51 @@ def test_pep484_ref_decor_data() -> None:
     with raises_uncached(BeartypeCallHintParamViolation):
         AllHisBulkAnAgony(('Crept gradual, from the feet unto the crown,',))
 
-    # ..................{ FAIL ~ closure                     }..................
+# ....................{ TESTS ~ data : relative : closure  }....................
+def test_pep484_ref_decor_data_relative_type_closure() -> None:
+    '''
+    Test successful usage of the :func:`beartype.beartype` decorator with
+    respect to :pep:`484`-compliant stringified forward reference type hints
+    referring to isinstanceable types accessible *only* to an isolated **closure
+    scope** (i.e., local scope of a closure internally created and returned by a
+    closure factory callable).
+
+    Like the more general-purpose :func:`.test_pep484_ref_decor_data` unit test,
+    this test imports an external data module declaring these references
+    *before* the user-defined types referred to by these references. Unlike that
+    more general-purpose unit test, this test exercises *extremely* fragile
+    functionality that frequently breaks and thus warrants isolation to a more
+    debugging-friendly test specific to this purpose.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype_test.a00_unit.data.pep.pep484.forward.data_pep484ref_decor import (
+        between_the_woods_and_frozen_lake)
+    from beartype_test._util.error.pyterrraise import raises_uncached
+
+    # ..................{ LOCALS                             }..................
+    # 3-tuple of closures and classes nested in this callable.
+    (to_stop_without, to_watch_his_woods, WhoseWoodsTheseAreIThinkIKnow) = (
+        between_the_woods_and_frozen_lake())
+
+    # Objects passed below to exercise closure-relative forward references.
+    my_little_horse = WhoseWoodsTheseAreIThinkIKnow(
+        'My little horse must think it queer')
+    a_farmhouse_near = WhoseWoodsTheseAreIThinkIKnow(
+        'To stop without a farmhouse near')
+
+    # ..................{ PASS                               }..................
+    # Assert these forward-referencing closures return the expected values.
+    assert to_stop_without(my_little_horse) == my_little_horse
+    assert to_watch_his_woods(a_farmhouse_near) == a_farmhouse_near
+    assert to_watch_his_woods(True) is True
+    assert to_watch_his_woods(
+        len('Up to the zenith,—hieroglyphics old')) == (
+        len('Up to the zenith,—hieroglyphics old'))
+
+    # ..................{ FAIL                               }..................
     # Assert that calling a closure whose parameter is annotated as a
     # closure-relative forward reference to the "WhoseWoodsTheseAreIThinkIKnow"
     # type subsequently defined local to that closure when passed a parameter
@@ -147,21 +171,6 @@ def test_pep484_ref_decor_data() -> None:
 
     # Violation message raised by that call.
     violation_message = str(violation_info.value)
-
-    #FIXME: Non-ideal. Ideally, this message should *NOT* contain the substring
-    #"forwardreffake". Instead, beartype should dynamically introspect up the
-    #call stack from within the body of the to_stop_without() wrapper function
-    #for this current stack frame encapsulating the body of this unit test,
-    #which would then find the "WhoseWoodsTheseAreIThinkIKnow" type localized
-    #above. Beartype actually *DID* behave that way for a brief period of time.
-    #Apparently, we accidentally broke that behaviour at some point... Woopsie!
-    #
-    #Unfortunately, this (almost certainly) means that literally *EVERYTHING*
-    #pertaining to the
-    #"BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__"
-    #dunder attribute is currently broken. There are certainly worse things that
-    #can happen, but... still. We spent quite a bit of time on that. It would be
-    #wonderful to resuscitate this functionality at some point. *sigh*
 
     # Assert this message contains the substring "forwardreffake". (See below
     # for detailed discussion.)

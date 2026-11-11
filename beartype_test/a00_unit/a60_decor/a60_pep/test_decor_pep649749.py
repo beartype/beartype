@@ -16,15 +16,15 @@ implemented in the :func:`beartype.beartype` decorator with the standard
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
+from beartype_test._util.mark.pytskip import skip_if_python_version_less_than, skip
 
 # ....................{ TESTS                              }....................
 @skip_if_python_version_less_than('3.14.0')
-def test_decor_pep649749() -> None:
+def test_decor_pep649749_annotate() -> None:
     '''
-    Test :pep:`649` and :pep:`749` support implemented in the
-    :func:`beartype.beartype` decorator if the active Python interpreter targets
-    Python >= 3.14 *or* skip otherwise.
+    Test support for :pep:`649`- and :pep:`749`-compliant ``__annotate__()``
+    dunder methods implemented in the :func:`beartype.beartype` decorator if the
+    active Python interpreter targets Python >= 3.14 *or* skip otherwise.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -90,3 +90,59 @@ def test_decor_pep649749() -> None:
 
         # Assert that this dictionary is as expected.
         assert annotations_returned == annotations_expected
+
+# ....................{ TESTS ~ pep : (484|604)            }....................
+# @skip('Currently brokey. *sigh*')
+@skip_if_python_version_less_than('3.14.0')
+def test_decor_pep649749_ref_pep484604_union() -> None:
+    '''
+    Test support for :pep:`649`- and :pep:`749`-compliant unquoted forward
+    references transitively subscripting :pep:`484`- and :pep:`604`-compliant
+    unions implemented in the :func:`beartype.beartype` decorator if the active
+    Python interpreter targets Python >= 3.14 *or* skip otherwise.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype_test._util.error.pyterrraise import raises_uncached
+
+    # ....................{ CALLABLES                      }....................
+    @beartype
+    def grows_lush(
+        in_juicy_stalks: IWillSmoothlySteer | str) -> IWillSmoothlySteer | str:
+        '''
+        Arbitrary :func:`.beartype`-decorated function annotated by a
+        :pep:`749`-compliant unquoted forward reference subscripting a
+        :pep:`604`-compliant union.
+        '''
+
+        return in_juicy_stalks
+
+    # ....................{ CLASSES                        }....................
+    class IWillSmoothlySteer(object):
+        '''
+        Arbitrary type referenced by the :pep:`749`-compliant unquoted forward
+        reference annotating the function defined above.
+        '''
+
+        pass
+
+    # Instance of this type.
+    my_little_boat = IWillSmoothlySteer()
+
+    # Arbitrary string.
+    for_many_quiet_hours = "Grows lush in juicy stalks, I'll smoothly steer"
+
+    # ....................{ PASS                           }....................
+    # Assert that this callable when passed a valid object satisfying the hints
+    # annotating this callable returns that same object.
+    assert grows_lush(my_little_boat) is my_little_boat
+    assert grows_lush(for_many_quiet_hours) is for_many_quiet_hours
+
+    # ....................{ FAIL                           }....................
+    # Assert that this callable when passed an invalid object violating the
+    # hints annotating this callable raises the expected exception.
+    with raises_uncached(BeartypeCallHintParamViolation):
+        grows_lush(b'My little boat, for many quiet hours,')

@@ -44,7 +44,11 @@ from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.cls.utilclsmake import make_type
 from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
     get_hint_pep484749_ref_names)
-from beartype._util.text.utiltextidentifier import die_unless_identifier
+from beartype._util.text.utiltextidentifier import (
+    die_unless_identifier,
+    is_identifier,
+    convert_str_to_pep3131_identifier,
+)
 from typing import Optional
 
 # ....................{ PROXIERS ~ pep : 484 : non-fake    }....................
@@ -58,7 +62,7 @@ def proxy_hint_pep484_ref_str_subbable(
 
     # Optional parameters.
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = None,
-    exception_prefix: Optional[str] = None,
+    exception_prefix: str = '',
 ) -> type[BeartypeForwardRefSubbableABC]:
     '''
     Create and return a new **subscripted forward reference proxy** (i.e.,
@@ -114,10 +118,9 @@ def proxy_hint_pep484_ref_str_subbable(
         callable *or* :data:`None` otherwise. See also the
         :attr:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details.
-    exception_prefix : Optional[str], default: None
-        Human-readable substring prefixing raised exception messages if any *or*
-        :data:`None` otherwise, in which case the returned proxy preserves its
-        default non-empty exception prefix.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -131,16 +134,25 @@ def proxy_hint_pep484_ref_str_subbable(
         ``"."``-delimited Python identifiers.
     '''
 
+    # If this attribute name is *NOT* a syntactically valid Python identifier,
+    # raise an exception.
+    die_unless_identifier(
+        text=hint_name,
+        exception_cls=BeartypeDecorHintForwardRefException,
+        exception_prefix=exception_prefix,
+    )
+    # Else, this attribute name is a syntactically valid Python identifier.
+
     # Create and return a new subscriptable forward reference proxy proxying the
     # passed referent target module and hint names.
-    return _proxy_hint_ref(  # type: ignore[return-value]
+    return _proxy_hint_str_ref(  # type: ignore[return-value]
         call_curr=call_curr,
         conf=conf,
         exception_prefix=exception_prefix,
         func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
-        scope_name=scope_name,
-        hint_name=hint_name,
+        hint_str=hint_name,
         hint_parent_sane=hint_parent_sane,
+        scope_name=scope_name,
         type_bases=BeartypeForwardRefSubbableABC_BASES,
     )
 
@@ -232,15 +244,24 @@ def proxy_hint_pep484_ref_str_subbed(
     assert isinstance(args, tuple), f'{repr(args)} not tuple.'
     assert isinstance(kwargs, dict), f'{repr(kwargs)} not dictionary.'
 
+    # If this attribute name is *NOT* a syntactically valid Python identifier,
+    # raise an exception.
+    die_unless_identifier(
+        text=hint_name,
+        exception_cls=BeartypeDecorHintForwardRefException,
+        exception_prefix=exception_prefix,
+    )
+    # Else, this attribute name is a syntactically valid Python identifier.
+
     # Subscripted forward reference proxy to be returned.
-    ref_proxy: type[BeartypeForwardRefSubbedABC] = _proxy_hint_ref(  # type: ignore[assignment]
+    ref_proxy: type[BeartypeForwardRefSubbedABC] = _proxy_hint_str_ref(  # type: ignore[assignment]
         call_curr=call_curr,
         conf=conf,
         exception_prefix=exception_prefix,
         func_local_parent_codeobj_weakref=func_local_parent_codeobj_weakref,
-        scope_name=scope_name,
-        hint_name=hint_name,
+        hint_str=hint_name,
         hint_parent_sane=hint_parent_sane,
+        scope_name=scope_name,
         type_bases=BeartypeForwardRefSubbedABC_BASES,
     )
 
@@ -420,7 +441,7 @@ def proxy_hint_pep749_ref_object(
     hint_parent_sane: Optional[HintSane],
 
     # Optional parameters.
-    exception_prefix: Optional[str] = None,
+    exception_prefix: str = '',
 ) -> type[BeartypeForwardRefSubbedABC]:
     '''
     Create and return a new **forward reference proxy** (i.e.,
@@ -461,10 +482,9 @@ def proxy_hint_pep749_ref_object(
           returned by :mod:`beartype._check.convert.convmain` sanifiers after
           sanitizing the possibly PEP-noncompliant parent hint of this forward
           reference into a fully PEP-compliant parent hint).
-    exception_prefix : Optional[str], default: None
-        Human-readable substring prefixing raised exception messages if any *or*
-        :data:`None` otherwise, in which case the returned proxy preserves its
-        default non-empty exception prefix.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -476,17 +496,17 @@ def proxy_hint_pep749_ref_object(
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference.
-    hint_module_name, hint_type_name = get_hint_pep484749_ref_names(hint)
+    hint_module_name, hint_str = get_hint_pep484749_ref_names(hint)
 
     # Forward reference proxy proxying this PEP 749-compliant object-oriented
     # forward reference type hint (i.e., "annotationlib.ForwardRef" object).
-    ref_proxy: type[BeartypeForwardRefSubbedABC] = _proxy_hint_ref(  # type: ignore[assignment]
+    ref_proxy: type[BeartypeForwardRefSubbedABC] = _proxy_hint_str_ref(  # type: ignore[assignment]
         call_curr=call_curr,
         conf=conf,
-        scope_name=hint_module_name,
-        hint_name=hint_type_name,
-        hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,
+        hint_str=hint_str,
+        hint_parent_sane=hint_parent_sane,
+        scope_name=hint_module_name,
 
         #FIXME: The "BeartypeForwardRefSubbedABC" superclass *DEFINITELY* isn't
         #quite right here, but (possibly) suffices for now. We'll take it! \o/
@@ -500,18 +520,18 @@ def proxy_hint_pep749_ref_object(
     return ref_proxy
 
 # ....................{ PRIVATE ~ factories                }....................
-def _proxy_hint_ref(
+def _proxy_hint_str_ref(
     # Mandatory parameters.
     call_curr: BeartypeCallDataABC,
     conf: BeartypeConf,
+    exception_prefix: str,
     scope_name: Optional[str],
-    hint_name: str,
+    hint_str: str,
     hint_parent_sane: Optional[HintSane],
     type_bases: TupleTypes,
 
     # Optional parameters.
     func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = None,
-    exception_prefix: Optional[str] = None,
 ) -> BeartypeForwardRef:
     '''
     Create and return a new **forward reference subclass** (i.e., concrete
@@ -591,9 +611,20 @@ def _proxy_hint_ref(
         Possibly ignored fully-qualified name of the lexical scope in which this
         unresolved type hint was originally declared. See also the
         :func:`.proxy_hint_pep484_ref_str_subbable` docstring for further details.
-    hint_name : str
-        Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of
-        this unresolved type hint to be proxied.
+    hint_str : str
+        Stringified type hint expression to be proxied. If this expression
+        originates from:
+
+        * A :pep:`484`-compliant quoted forward reference, this expression is
+          either the absolute (i.e., fully-qualified) or relative (i.e.,
+          unqualified) name of this unresolved type hint to be proxied.
+        * A :pep:`749`-compliant unquoted forward reference, this expression is
+          an arbitrary Python expression to be proxied. Like
+          :pep:`484`-compliant quoted forward references, this expression may be
+          constrained to the absolute or relative name of an unresolved hint.
+          Unlike :pep:`484`-compliant quoted forward references, this expression
+          could be an arbitrary Python expression that is *not* trivially
+          reducible to a simple string.
     hint_parent_sane: Optional[HintSane]
         Either:
 
@@ -618,10 +649,8 @@ def _proxy_hint_ref(
         callable *or* :data:`None` otherwise. See also the
         :attr:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
         class variable docstring for further details. Defaults to :data:`None`.
-    exception_prefix : Optional[str], default: None
-        Human-readable substring prefixing raised exception messages if any *or*
-        :data:`None` otherwise, in which case the returned proxy preserves its
-        default non-empty exception prefix.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -634,20 +663,19 @@ def _proxy_hint_ref(
         If either ``hint_name`` or ``scope_name`` are *not* syntactically valid
         ``"."``-delimited Python identifiers.
     '''
-
-    # ....................{ VALIDATE                       }....................
     assert isinstance(call_curr, BeartypeCallDataABC), (
         f'{repr(call_curr)} not beartype call metadata.')
     assert isinstance(conf, BeartypeConf), (
         f'{repr(conf)} not beartype configuration.')
-    assert isinstance(exception_prefix, NoneTypeOr[str]), (
-        f'{repr(exception_prefix)} neither string nor "None".')
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
     assert isinstance(
         func_local_parent_codeobj_weakref, NoneTypeOr[WeakrefCallableType]), (
         f'{repr(func_local_parent_codeobj_weakref)} neither weak reference '
         f'nor "None".'
     )
-    assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
+    assert isinstance(hint_str, str), f'{repr(hint_str)} not string.'
+    assert hint_str, '"hint_str" empty.'
     assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
         f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
     assert isinstance(scope_name, str), f'{repr(scope_name)} not string.'
@@ -655,32 +683,37 @@ def _proxy_hint_ref(
     assert len(type_bases) == 1, (
         f'{repr(type_bases)} not 1-tuple of one superclass.')
 
-    # If passed *NO* exception prefix, default this prefix to something sane.
-    # Sadly, real-world tests suggest the only sane default to be the empty
-    # string. Non-empty substrings promote unreadable exception messages.
-    if not exception_prefix:
-        exception_prefix = ''
-        # exception_prefix = 'Forward reference '  # <-- *UNSAFE*
-    # Else, an exception prefix was passed.
-
-    # If this attribute name is *NOT* a syntactically valid Python identifier,
-    # raise an exception.
-    die_unless_identifier(
-        text=hint_name,
-        exception_cls=BeartypeDecorHintForwardRefException,
-        exception_prefix=exception_prefix,
-    )
-    # Else, this attribute name is a syntactically valid Python identifier.
-
     # ....................{ LOCALS                         }....................
-    # Possibly empty fully-qualified module name and unqualified basename of the
-    # unresolved hint referred to by this forward reference.
-    type_module_name, _, type_name = hint_name.rpartition('.')
+    # Fully-qualified name of the third-party module supposedly defining the
+    # forward reference proxy subclass dynamically created and returned below.
+    type_module_name = scope_name
 
-    # If this module name is empty, fallback to the passed module name if any.
-    if not type_module_name:
-        type_module_name = scope_name
-    # Else, this module name is non-empty.
+    # Unqualified basename of that forward reference proxy subclass, initialized
+    # by conditional logic below.
+    type_basename: str = None  # type: ignore[assignment]
+
+    # If this stringified hint expression is a syntactically valid Python
+    # identifier...
+    if is_identifier(hint_str):
+        # Possibly empty fully-qualified module name and unqualified basename of
+        # the unresolved hint referred to by this identifier.
+        type_module_name_or_empty, _, type_basename = hint_str.rpartition('.')
+
+        # If this module name is non-empty, prefer this typically more
+        # applicable module name to the passed scope name.
+        if type_module_name_or_empty:
+            type_module_name = type_module_name_or_empty
+        # Else, this module name is empty. In this case, preserve the default
+        # established above.
+    # Else, this stringified hint expression is *NOT* a syntactically valid
+    # Python identifier. In this case...
+    else:
+        # Unqualified basename of the forward reference proxy subclass
+        # dynamically created and returned below, synthesized by globally
+        # replacing *ALL* PEP 3131-compliant substrings in this expression with
+        # PEP 3131-compliant underscores (e.g., from "MuhUndefinedType | str"
+        # to "MuhUndefinedType_str").
+        type_basename = convert_str_to_pep3131_identifier(hint_str)
 
     # ....................{ CONF                           }....................
     # Safely modifiable keyword dictionary mapping from the names to values of
@@ -730,7 +763,7 @@ def _proxy_hint_ref(
     # ....................{ PROXY                          }....................
     # Forward reference proxy to be returned.
     ref_proxy: BeartypeForwardRef = make_type(
-        type_name=type_name,
+        type_name=type_basename,
         type_module_name=type_module_name,
         type_bases=type_bases,
         exception_cls=BeartypeDecorHintForwardRefException,
@@ -753,7 +786,7 @@ def _proxy_hint_ref(
     ref_proxy.__conf_beartype__ = ref_proxy_conf
     ref_proxy.__func_local_parent_codeobj_weakref_beartype__ = (
         func_local_parent_codeobj_weakref)
-    ref_proxy.__hint_name_beartype__ = hint_name
+    ref_proxy.__hint_str_beartype__ = hint_str
     ref_proxy.__hint_parent_sane_beartype__ = hint_parent_sane
     ref_proxy.__scope_name_beartype__ = scope_name
 

@@ -627,7 +627,7 @@ def _make_ref_proxy_exception_prefix(ref_proxy: BeartypeForwardRefABC) -> str:
     if ref_proxy.__scope_name_beartype__:
         exception_prefix += f'{ref_proxy.__scope_name_beartype__}.'
     exception_prefix += (
-        f'{ref_proxy.__hint_name_beartype__}" '
+        f'{ref_proxy.__hint_str_beartype__}" '
         f'unresolvable to its target referent, as '
     )
 
@@ -677,7 +677,7 @@ def _resolve_hint_pep484_ref_str(
         as Python.
     '''
     assert isinstance(ref_proxy, type), f'{repr(ref_proxy)} not type.'
-    # print(f'Importing ref "{ref_proxy.__hint_name_beartype__}" from module "{ref_proxy.__scope_name_beartype__}"...')
+    # print(f'Importing ref "{ref_proxy.__hint_str_beartype__}" from module "{ref_proxy.__scope_name_beartype__}"...')
 
     # ....................{ PHASE                          }....................
     # This stringified forward reference is resolved with an iterative series of
@@ -690,7 +690,7 @@ def _resolve_hint_pep484_ref_str(
     # referent to resolve from this stringified forward reference, localized
     # both for readability and as a negligible microoptimization. Fight us, fam.
     referent_module_name: str = ref_proxy.__scope_name_beartype__  # pyright: ignore
-    referent_basename: str = ref_proxy.__hint_name_beartype__  # pyright: ignore
+    referent_basename: str = ref_proxy.__hint_str_beartype__  # pyright: ignore
 
     # ....................{ PHASE ~ global                 }....................
     # Target referent dynamically imported from this module if this module is
@@ -715,7 +715,7 @@ def _resolve_hint_pep484_ref_str(
     if referent_hint is not SENTINEL:
         return referent_hint
     # Else, this module is unimportable *OR* fails to define this referent.
-
+    #
     # If this proxy does *NOT* proxy a PEP 484-compliant stringified forward
     # reference type hint annotating a locally decorated callable, this forward
     # reference type hint annotated a globally decorated callable. Ergo, the
@@ -724,7 +724,7 @@ def _resolve_hint_pep484_ref_str(
     #
     # See the "__func_local_parent_codeobj_weakref_beartype__" docstring for
     # further details.
-    if ref_proxy.__func_local_parent_codeobj_weakref_beartype__ is None:
+    elif ref_proxy.__func_local_parent_codeobj_weakref_beartype__ is None:
         # Raise a human-readable exception describing this failure by instead
         # deferring to the mandatory variant of the import function above.
         import_module_attr(
@@ -796,6 +796,8 @@ def _resolve_hint_pep484_ref_str(
 
     # If that parent type or callable is still alive...
     if func_local_parent_codeobj is not None:
+        # print(f'Finding PEP 484 relative forward ref "{ref_proxy.__hint_str_beartype__}" parent frame...')
+
         # First frame on the call stack whose code object is this code object if
         # the call stack contains such a frame *OR* "None" otherwise.
         func_local_parent_frame = find_frame_codeobject_or_none(
@@ -848,7 +850,7 @@ def _resolve_hint_pep484_ref_str(
             )
         # Else, the call stack contains *NO* frame whose code object is this
         # code object.
-    # Else, that parent type or callable is dead.
+    # Else, that parent type or callable is dead. OHNOES.
 
     # ....................{ PHASE ~ fake                   }....................
     # Avoid circular import dependencies.

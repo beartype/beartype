@@ -609,12 +609,12 @@ class HintTreeCode(HintTreeABC):
         #* Inside the BeartypeForwardRefMetaclass.__instancecheck__() method:
         #  * Set the "BeartypeConf(hint_overrides=...)" configuration setting to
         #    a frozen dictionary mapping strings of the form
-        #    f"'{cls.__hint_name_beartype__}'" to the ignorable "object"
+        #    f"'{cls.__hint_str_beartype__}'" to the ignorable "object"
         #    superclass.
         #
         #Thus, inside BeartypeForwardRefMetaclass.__instancecheck__():
         #    hint_overrides = FrozenDict({
-        #        f"'{cls.__hint_name_beartype__}'": object})
+        #        f"'{cls.__hint_str_beartype__}'": object})
         #    conf = BeartypeConf(
         #        hint_overrides=hint_overrides,
         #        is_random=False,
@@ -638,7 +638,7 @@ class HintTreeCode(HintTreeABC):
         #    @property_cached
         #    def __conf_beartype__(cls: BeartypeForwardRefABC) -> BeartypeConf:
         #        hint_overrides = FrozenDict({
-        #            f"'{cls.__hint_name_beartype__}'": object})
+        #            f"'{cls.__hint_str_beartype__}'": object})
         #        conf = BeartypeConf(
         #            hint_overrides=hint_overrides,
         #            is_random=False,

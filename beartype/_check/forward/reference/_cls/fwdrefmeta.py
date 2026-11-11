@@ -75,13 +75,13 @@ class BeartypeForwardRefMetaclass(type):
     '''
 
     # ....................{ DUNDERS                        }....................
-    def __getattr__(  # type: ignore[misc]
-        cls: BeartypeForwardRefABC, hint_name: str) -> BeartypeForwardRefABC:
+    def __getattr__(cls: BeartypeForwardRefABC, hint_child_name: str) -> (  # type: ignore[misc]
+        BeartypeForwardRefABC):
         '''
         **Fully-qualified forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
         metaclass and whose
-        :attr:`.BeartypeForwardRefABC.__hint_name_beartype__` class variable is
+        :attr:`.BeartypeForwardRefABC.__hint_str_beartype__` class variable is
         the fully-qualified name of an external class).
 
         This dunder method creates and returns a new forward reference subclass
@@ -218,7 +218,7 @@ class BeartypeForwardRefMetaclass(type):
         ----------
         cls : Type[BeartypeForwardRefABC]
             Forward reference subclass to concatenate this basename against.
-        hint_name : str
+        hint_child_name : str
             Unqualified basename to be concatenated against this forward
             reference subclass.
 
@@ -241,8 +241,8 @@ class BeartypeForwardRefMetaclass(type):
         # If this forward reference proxy has already been resolved to its
         # referent, forward this dunder method call directly to that referent.
         if referent_hint_sane is not SENTINEL:
-            # print(f'Forward reference proxy "{cls.__hint_name_beartype__}" resolved to {referent_hint_sane}!')
-            return getattr(referent_hint_sane.hint, hint_name)  # type: ignore[union-attr]
+            # print(f'Forward reference proxy "{cls.__hint_str_beartype__}" resolved to {referent_hint_sane}!')
+            return getattr(referent_hint_sane.hint, hint_child_name)  # type: ignore[union-attr]
         # Else, this forward reference proxy has yet to be resolved.
         #
         # If a non-existent dunder attribute was requested, assume this
@@ -251,7 +251,7 @@ class BeartypeForwardRefMetaclass(type):
         # Forgiveness (EAFP)-driven to detect whether this forward scope defines
         # this attribute ala the hasattr() builtin. See also the "Design"
         # subsection of this dunder method's docstring for further commentary.
-        elif is_dunder(hint_name):
+        elif is_dunder(hint_child_name):
             # if hint_name == '__resolved_hint_beartype__':
             #     return cls.__resolved_hint_beartype__
 
@@ -259,7 +259,7 @@ class BeartypeForwardRefMetaclass(type):
             raise AttributeError(
                 f'PEP 484 or 749 forward reference '
                 f'"{cls.__module__}.{cls.__name__}" '
-                f'proxied dunder attribute "{hint_name}" not found.'
+                f'proxied dunder attribute "{hint_child_name}" not found.'
             )
         # Else, the caller resides inside the "beartype" package and is
         # requesting a non-existent non-dunder attribute. In this case, safely
@@ -280,7 +280,18 @@ class BeartypeForwardRefMetaclass(type):
             conf=cls.__conf_beartype__,
             exception_prefix=cls.__exception_prefix_beartype__,
             scope_name=cls.__scope_name_beartype__,
-            hint_name=f'{cls.__hint_name_beartype__}.{hint_name}',
+
+            #FIXME: *INSUFFICIENT*. "cls.__hint_str_beartype__" is no longer
+            #necessarily an identifier. Generalize as follows:
+            #    hint_parent_str = (
+            #        cls.__hint_str_beartype__
+            #        if is_identifier(cls.__hint_str_beartype__) else
+            #        f'({cls.__hint_str_beartype__})'
+            #    )
+            #
+            #    ...
+            #        hint_name=f'{hint_parent_str}.{hint_child_name}',
+            hint_name=f'{cls.__hint_str_beartype__}.{hint_child_name}',
             hint_parent_sane=cls.__hint_parent_sane_beartype__,
         )
 
@@ -321,7 +332,7 @@ class BeartypeForwardRefMetaclass(type):
         else:
             # Append *ONLY* the representations of the relevant strings.
             cls_repr += (
-                  f'name={repr(cls.__hint_name_beartype__)}'
+                  f'name={repr(cls.__hint_str_beartype__)}'
                 f', scope_name={repr(cls.__scope_name_beartype__)}'
             )
 
@@ -645,7 +656,7 @@ class BeartypeForwardRefMetaclass(type):
               * A supported type hint that is this forward reference proxy,
                 implying this proxy circularly proxies itself.
         '''
-        # print(f'[__resolved_hint_beartype__] Resolving "{cls.__hint_name_beartype__}"...')
+        # print(f'[__resolved_hint_beartype__] Resolving "{cls.__hint_str_beartype__}"...')
 
         # Hint metadata sanified from the hint referred to by the forward
         # reference encapsulated by this proxy.

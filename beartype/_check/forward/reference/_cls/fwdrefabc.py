@@ -119,7 +119,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     '''
 
 
-    __hint_name_beartype__: str = None  # type: ignore[assignment]
+    __hint_str_beartype__: str = None  # type: ignore[assignment]
     '''
     Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of the
     type hint referenced by this forward reference subclass.
@@ -159,8 +159,8 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     '''
     Fully-qualified name of the lexical scope to which the type hint referenced
     by this forward reference subclass is relative if that type hint is relative
-    (i.e., if :attr:`__hint_name_beartype__` is relative) *or* ignored otherwise
-    (i.e., if :attr:`__hint_name_beartype__` is absolute).
+    (i.e., if :attr:`__hint_str_beartype__` is relative) *or* ignored otherwise
+    (i.e., if :attr:`__hint_str_beartype__` is absolute).
 
     Caveats
     -------
@@ -456,7 +456,7 @@ class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
             func_local_parent_codeobj_weakref=(
                 cls.__func_local_parent_codeobj_weakref_beartype__),
             scope_name=cls.__scope_name_beartype__,  # type: ignore[arg-type]
-            hint_name=cls.__hint_name_beartype__,
+            hint_name=cls.__hint_str_beartype__,
             hint_parent_sane=cls.__hint_parent_sane_beartype__,
             args=args,
             kwargs=kwargs,
