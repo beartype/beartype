@@ -371,6 +371,18 @@ beartype_packages(
 )
 ```
 
+The `claw_is_inline` option (default `False`) trades stack frames for speed and recursion depth. By default, `@beartype` replaces each decorated callable with a wrapper function that type-checks and then calls the original, so every call consumes **two** stack frames rather than one. Deeply recursive code under an import hook thus reaches Python's recursion limit at *half* the depth. When `claw_is_inline=True`, `beartype.claw` instead rewrites each eligible callable to type-check its own parameters and return from inside its own body. No wrapper is created, no extra frame is retained, and the callable you defined *is* the callable you get (so it has no `__wrapped__` attribute):
+
+```python
+# In your "{your_package}.__init__" submodule, type-check recursive code
+# without doubling its stack depth.
+from beartype import BeartypeConf
+from beartype.claw import beartype_this_package
+beartype_this_package(conf=BeartypeConf(claw_is_inline=True))
+```
+
+Inline type-checking applies only to typed functions and methods (including those decorated by `@staticmethod`, `@classmethod`, `@property`, and its `.setter`, `.getter`, and `.deleter`). Everything else silently falls back to the usual wrapper, which type-checks identically: generators, functions nested in other functions, and callables decorated by any other decorator.
+
 - `BeartypeConf(warning_cls_on_decorator_exception: Optional[Type[Warning]] = None)`. By default, `beartype.claw` emits non-fatal warnings rather than fatal exceptions raised by the `beartype.beartype` decorator at decoration time. This is *usually* what everyone wants, because `beartype.beartype` currently fails to support all possible edge cases and is thus likely to raise at least one exception while decorating your entire package. To improve the resilience of `beartype.claw` against those edge cases, `beartype.beartype` emits one warning for each decoration exception and then simply continues to the next decoratable callable or class. This is occasionally unhelpful. What if you really *do* want `beartype.claw` to raise a fatal exception on the first such edge case in your codebase – perhaps because you want to either see the full exception traceback *or* punish your coworkers who are violating typing standards by trying to use an imported module as a type hint? <sup>...this actually happened</sup> In this case, consider:
 
   - Passing `None` as the value of this parameter. Doing so forces `beartype.claw` to act strictly, inflexibly, and angrily. Expect spittle-flecked mouth frothing and claws all over the place:

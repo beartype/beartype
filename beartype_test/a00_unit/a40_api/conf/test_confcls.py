@@ -63,6 +63,7 @@ def test_conf_dataclass() -> None:
         'BeartypeConf',
         'claw_decor_place_func',
         'claw_decor_place_type',
+        'claw_is_inline',
         'claw_is_pep526',
         'claw_skip_package_names',
         'hint_overrides',
@@ -92,6 +93,7 @@ def test_conf_dataclass() -> None:
     BEAR_CONF_NONDEFAULT_KWARGS = dict(
         claw_decor_place_func=BeartypeDecorPlace.LAST,
         claw_decor_place_type=BeartypeDecorPlace.FIRST,
+        claw_is_inline=True,
         claw_is_pep526=False,
         claw_skip_package_names=('Made_contrast_with', 'the_universe',),
         hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
@@ -135,6 +137,7 @@ def test_conf_dataclass() -> None:
         BeartypeConf(
             claw_decor_place_func=BeartypeDecorPlace.LAST,
             claw_decor_place_type=BeartypeDecorPlace.FIRST,
+            claw_is_inline=True,
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
@@ -165,6 +168,7 @@ def test_conf_dataclass() -> None:
             is_debug=True,
             is_color=True,
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
+            claw_is_inline=True,
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
             claw_decor_place_type=BeartypeDecorPlace.FIRST,
@@ -178,6 +182,7 @@ def test_conf_dataclass() -> None:
         BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE)
     assert BEAR_CONF_DEFAULT.claw_decor_place_type is (
         BeartypeDecorPlace.LAST)
+    assert BEAR_CONF_DEFAULT.claw_is_inline is False
     assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
     assert BEAR_CONF_DEFAULT.claw_skip_package_names == ()
     assert BEAR_CONF_DEFAULT.hint_overrides is FROZENDICT_EMPTY
@@ -204,6 +209,7 @@ def test_conf_dataclass() -> None:
         BeartypeDecorPlace.LAST)
     assert BEAR_CONF_NONDEFAULT.claw_decor_place_type is (
         BeartypeDecorPlace.FIRST)
+    assert BEAR_CONF_NONDEFAULT.claw_is_inline is True
     assert BEAR_CONF_NONDEFAULT.claw_is_pep526 is False
     assert BEAR_CONF_NONDEFAULT.claw_skip_package_names == (
         'Made_contrast_with', 'the_universe',)
@@ -307,6 +313,9 @@ def test_conf_dataclass() -> None:
         BeartypeConf(claw_decor_place_type=(
             "That canopied his path o'er the waste deep;"))
     with raises(BeartypeConfParamException):
+        BeartypeConf(claw_is_inline=(
+            'The fountains mingle with the river'))
+    with raises(BeartypeConfParamException):
         BeartypeConf(claw_is_pep526=(
             'The fountains mingle with the river'))
     with raises(BeartypeConfParamException):
@@ -395,6 +404,8 @@ def test_conf_dataclass() -> None:
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_decor_place_type = (
             BeartypeDecorPlace.FIRST)
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.claw_is_inline = True
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_is_pep526 = True
     with raises(AttributeError):

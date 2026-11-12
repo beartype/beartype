@@ -22,6 +22,8 @@ from beartype.claw._ast._kind.clawastassign import (
     BeartypeNodeTransformerAssignMixin)
 from beartype.claw._ast._kind.clawastimport import (
     BeartypeNodeTransformerImportMixin)
+from beartype.claw._ast._kind.clawastinline import (
+    BeartypeNodeTransformerInlineMixin)
 from beartype.claw._ast._kind.clawastmodule import (
     BeartypeNodeTransformerModuleMixin)
 from beartype.claw._ast._pep.clawastpep695 import (
@@ -51,6 +53,7 @@ class BeartypeNodeTransformer(
     # PEP-agnostic manner.
     BeartypeNodeTransformerAssignMixin,
     BeartypeNodeTransformerImportMixin,
+    BeartypeNodeTransformerInlineMixin,
     BeartypeNodeTransformerModuleMixin,
     BeartypeNodeTransformerUtilityMixin,
 
@@ -351,6 +354,11 @@ class BeartypeNodeTransformer(
         Optional[NodeCallable]
             This same callable node.
         '''
+
+        # Instrument this callable for frameless type-checking if enabled and
+        # safe. This *MUST* occur before decorating this callable below, as the
+        # former inspects the original decorators of this callable.
+        self._instrument_node_inline(node)
 
         # If...
         if (

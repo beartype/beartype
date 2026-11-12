@@ -23,8 +23,14 @@ from beartype._check.cls.call.calldatadecorfunc import (
     prefix_decor_func_callable_return,
 )
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._data.check.code.func.datacodefuncwrap import CODE_CALL_CHECKED_format
-from beartype._data.check.code.pep.datacodepep484 import PEP484_CODE_CHECK_NORETURN
+from beartype._data.check.code.func.datacodefuncwrap import (
+    CODE_CALL_CHECKED_format,
+    CODE_INLINE_RETURN_CHECK_PREFIX,
+)
+from beartype._data.check.code.pep.datacodepep484 import (
+    PEP484_CODE_CHECK_NORETURN,
+    PEP484_CODE_CHECK_NORETURN_INLINE,
+)
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.kind.datakindiota import SENTINEL
@@ -37,7 +43,8 @@ from typing import NoReturn
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
-def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
+def code_check_return(
+    decor_func: BeartypeCallDecorFuncData, is_inline: bool = False) -> str:
     '''
     Generate a Python code snippet type-checking the annotated return declared
     by the decorated callable if any *or* the empty string otherwise (i.e., if
@@ -47,6 +54,11 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
     ----------
     decor_func : BeartypeCallDecorFuncData
         Decorated callable to be type-checked.
+    is_inline : bool, default: False
+        :data:`True` only if generating the body of an **inline return
+        checker** (i.e., function type-checking the value passed to that
+        function) rather than of a wrapper function (which itself calls the
+        decorated callable). Defaults to :data:`False`.
 
     Returns
     -------
@@ -137,8 +149,12 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
             if hint_sane.hint is NoReturn:
                 # Pre-generated code snippet validating this callable to *NEVER*
                 # successfully return by unconditionally generating a violation.
-                code_noreturn_check = PEP484_CODE_CHECK_NORETURN.format(
-                    func_call_prefix=decor_func.func_wrapper_code_call_prefix)
+                code_noreturn_check = (
+                    PEP484_CODE_CHECK_NORETURN_INLINE
+                    if is_inline else
+                    PEP484_CODE_CHECK_NORETURN.format(
+                        func_call_prefix=decor_func.func_wrapper_code_call_prefix)
+                )
 
                 # Code snippet handling the previously generated violation by
                 # either raising that violation as a fatal exception *OR*
@@ -169,8 +185,12 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
 
                 # Code snippets prefixing and suffixing the type-checking of
                 # this return.
-                code_return_check_prefix = CODE_CALL_CHECKED_format(
-                    func_call_prefix=decor_func.func_wrapper_code_call_prefix)
+                code_return_check_prefix = (
+                    CODE_INLINE_RETURN_CHECK_PREFIX
+                    if is_inline else
+                    CODE_CALL_CHECKED_format(
+                        func_call_prefix=decor_func.func_wrapper_code_call_prefix)
+                )
                 code_return_check_suffix = (
                     decor_func.func_wrapper_code_return_checked)
 

@@ -46,6 +46,13 @@ from beartype._decor.decorcache import beartype as __beartype__
 # centralizing *all* global state maintained by beartype import hooks).
 from beartype.claw._clawstate import claw_state as __claw_state_beartype__
 
+# ....................{ IMPORTS ~ inline                   }....................
+# Import our inline initializer (i.e., innermost decorator applied by
+# "beartype.claw._ast._kind.clawastinline.BeartypeNodeTransformerInlineMixin" to
+# each callable instrumented for frameless type-checking).
+from beartype._decor._nontype._inline.inlineinit import (
+    beartype_inline_init as __beartype_inline_init__)
+
 # ....................{ IMPORTS ~ pep : 526                }....................
 # Imports required by PEP 526-compliant nodes injected into the current AST by
 # "beartype.claw._ast._pep.clawastpep526.BeartypeNodeTransformerPep526Mixin".
@@ -76,6 +83,7 @@ from beartype._util.hint.pep.proposal.pep695 import (
 # ....................{ GLOBALS                            }....................
 __all__ = [
     '__beartype__',
+    '__beartype_inline_init__',
     '__claw_state_beartype__',
     '__die_if_unbearable_beartype__',
     '__iter_hint_pep695_unsubbed_forwardrefs_beartype__',
