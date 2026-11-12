@@ -125,6 +125,7 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
     # Python code snippet type-checking the callable return if this return is
     # annotated with an unignorable type hint *OR* the empty string otherwise.
     code_check_return = _code_check_return(decor_func)
+    # print(f'forward scope: {repr(decor_func.decoratee_scope_forward)}')
 
     # If the callable return requires *NO* type-checking...
     #
@@ -157,6 +158,8 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
     # by enabling this metadata to be passed as a single unified parameter
     # (rather than individually as multiple distinct parameters).
     func_scope[ARG_NAME_CALL_META] = decor_func.minify()
+    # print(f'forward scope (max): {repr(decor_func.decoratee_scope_forward)}')
+    # print(f'forward scope (min): {repr(func_scope[ARG_NAME_CALL_META].decoratee_scope_forward)}')
 
     # Expose the callable currently being decorated to this wrapper function.
     # Technically, doing so is merely an optimization; this callable is also

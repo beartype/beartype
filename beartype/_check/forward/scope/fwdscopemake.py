@@ -226,7 +226,7 @@ def make_scope_forward_decor_curr(
     # Else, this forward scope has yet to be decided.
     #
     # If this decorator call metadata is minimal (i.e.,
-    # "BeartypeCallDecorFuncMinimalData" object) rather maximal (i.e.,
+    # "BeartypeCallDecorFuncMinimalData" object) rather than maximal (i.e.,
     # "BeartypeCallDecorFuncData" object), this forward scope should have
     # already been decided by (in order):
     # * Repeated calls to the

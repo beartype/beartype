@@ -275,9 +275,14 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         boolean return *or* raising a fatal exception or emitting a non-fatal
         warning if that result is :data:`False`).
 
-        This low-level private factory method is non-thread-safe and intended to
-        be called *only* by the higher-level public :meth:`.cache_func_checker`
-        factory method.
+        This factory is directly called by the :meth:`.cache_func_checker`
+        factory, itself directly called by the :func:`beartype.door.is_bearable`
+        and :func:`beartype.door.die_if_unbearable` functions to dynamically
+        generate code type-checking arbitrary objects against the type hints
+        passed to those functions.
+
+        This factory is non-thread-safe and thus intended to be called *only* by
+        the thread-safe :meth:`.cache_func_checker` factory.
 
         Parameters
         ----------
@@ -355,6 +360,19 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         #      exception_prefix=EXCEPTION_PLACEHOLDER,
         #* Refactor the caller to stop replacing either exceptions or warnings.
         #  Seriously. Some madness goin' on here, y'all.
+        #FIXME: Of course, all of the above naturally raises the question: where
+        #*SHOULD* this dememoization be performed? At the high-level (e.g.,
+        #here) or at the low-level (e.g., in reduce_hint())? Clearly, it
+        #shouldn't be performed at *BOTH* levels. Gut instinct says that, for
+        #both efficiency and sanity, dememoization should *ONLY* be performed at
+        #this high-level (e.g., here). Ergo, dememoization logic should be
+        #removed from reduce_hint().
+        #
+        #Which then also begs the question: why were we performing dememoization
+        #in reduce_hint() to begin with when we were already doing it at this
+        #higher-level? No idea, honestly. Left hand wasn't talking to the right
+        #hand, I suppose. Accept, in this case, both hands are me. Uh, oh.
+        #Pretty sure this is an Evil Dead QA scenario right here.
 
         # Metadata encapsulating the sanification of this possibly insane hint
         # if this hint is supported by @beartype *OR* raise an exception

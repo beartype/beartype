@@ -121,8 +121,19 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
 
     __hint_str_beartype__: str = None  # type: ignore[assignment]
     '''
-    Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of the
-    type hint referenced by this forward reference subclass.
+    Stringified type hint expression by this forward reference subclass. If this
+    expression originates from:
+
+    * A :pep:`484`-compliant quoted forward reference, this expression is either
+      the absolute (i.e., fully-qualified) or relative (i.e., unqualified) name
+      of this unresolved type hint to be proxied.
+    * A :pep:`749`-compliant unquoted forward reference, this expression is an
+      arbitrary Python expression to be proxied. Like :pep:`484`-compliant
+      quoted forward references, this expression may be constrained to the
+      absolute or relative name of an unresolved hint. Unlike
+      :pep:`484`-compliant quoted forward references, this expression could be
+      an arbitrary Python expression that is *not* trivially reducible to a
+      simple string.
 
     This class variable is mandatory but defaults to :data:`None` to improve
     debuggability in the event of developer error [read: us].

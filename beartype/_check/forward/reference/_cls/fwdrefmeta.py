@@ -37,7 +37,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #Implementing trivial recursion guards should now be feasible. *shrug*
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintForwardRefException
+# from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.forward.reference._cls.fwdrefcache import (
     BeartypeForwardRefABC,

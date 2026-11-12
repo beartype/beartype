@@ -418,7 +418,7 @@ def proxy_hint_pep484_ref_str_fake(
 
     # Forward reference fake proxy to be returned.
     fake_proxy = make_type(
-        type_name=hint_name,
+        type_basename=hint_name,
         #FIXME: Not *QUITE* right, but whatevahs. Close enough. Why? Because
         #this scope name could contain odd placeholders like ".<locals>."
         #preventing the resulting "type_module_name" from serving as a valid
@@ -763,7 +763,7 @@ def _proxy_hint_str_ref(
     # ....................{ PROXY                          }....................
     # Forward reference proxy to be returned.
     ref_proxy: BeartypeForwardRef = make_type(
-        type_name=type_basename,
+        type_basename=type_basename,
         type_module_name=type_module_name,
         type_bases=type_bases,
         exception_cls=BeartypeDecorHintForwardRefException,

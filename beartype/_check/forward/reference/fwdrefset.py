@@ -80,14 +80,14 @@ def set_beartype_ref_proxies_classvars_uninitted(
     # Replace the passed non-minified beartype call metadata with the equivalent
     # minified beartype call metadata.
     #
-    # Note that this is *not* simply a negligible optimization reducing space
+    # Note that this is *NOT* simply a negligible optimization reducing space
     # consumption, although it certainly is that. Minification has the
     # beneficial side effect of effectively shallowly copying this metadata in
     # the common case that this metadata is an instance of the non-minified
     # "BeartypeCallDecorFuncData" dataclass. For efficiency, that instance is
     # reused across *EVERY* call to the @beartype decorator, preventing these
     # proxies from referencing that instance across @beartype decorations. These
-    # proxies thus instead references the shallow copy of that instance produced
+    # proxies must instead reference the shallow copy of that instance produced
     # by minifying that instance. Phew! It doesn't have to make sense. It's QA.
     call_curr = call_curr.minify()
 

@@ -107,18 +107,30 @@ def test_decor_pep649749_ref_pep484604_union() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
     from beartype_test._util.error.pyterrraise import raises_uncached
+    from typing import Union
 
     # ....................{ CALLABLES                      }....................
     @beartype
     def grows_lush(
-        in_juicy_stalks: IWillSmoothlySteer | str) -> IWillSmoothlySteer | str:
+        in_juicy_stalks: IWillSmoothlySteer | str,
+        for_many_quiet_hours: Union['IWillSmoothlySteer', bytes],
+    ) -> tuple[IWillSmoothlySteer | str, Union['IWillSmoothlySteer', bytes]]:
         '''
-        Arbitrary :func:`.beartype`-decorated function annotated by a
-        :pep:`749`-compliant unquoted forward reference subscripting a
-        :pep:`604`-compliant union.
+        Arbitrary :func:`.beartype`-decorated function intentionally annotated
+        by both:
+
+        * A :pep:`749`-compliant unquoted forward reference subscripting a
+          :pep:`604`-compliant new-style union. Note that this exercises the
+          edge case in which an unquoted forward reference is *not* the root
+          type hint but instead subscripts a parent type hint.
+        * A :pep:`484`-compliant quoted forward reference subscripting a
+          :pep:`484`-compliant old-style union. Note that this exercises an
+          additional edge case in which a callable is annotated by both quoted
+          and unquoted forward references. Yes, this actually blew up on us.
+          Because... of course it did. Right? I sigh.
         '''
 
-        return in_juicy_stalks
+        return in_juicy_stalks, for_many_quiet_hours
 
     # ....................{ CLASSES                        }....................
     class IWillSmoothlySteer(object):
@@ -132,17 +144,32 @@ def test_decor_pep649749_ref_pep484604_union() -> None:
     # Instance of this type.
     my_little_boat = IWillSmoothlySteer()
 
-    # Arbitrary string.
-    for_many_quiet_hours = "Grows lush in juicy stalks, I'll smoothly steer"
+    # Arbitrary string and bytestring.
+    WITH_STREAMS_THAT_DEEPEN = "Grows lush in juicy stalks, I'll smoothly steer"
+    FRESHLY_INTO_BOWERS = b'With streams that deepen freshly into bowers.'
 
     # ....................{ PASS                           }....................
     # Assert that this callable when passed a valid object satisfying the hints
     # annotating this callable returns that same object.
-    assert grows_lush(my_little_boat) is my_little_boat
-    assert grows_lush(for_many_quiet_hours) is for_many_quiet_hours
+    assert grows_lush(
+        in_juicy_stalks=my_little_boat,
+        for_many_quiet_hours=FRESHLY_INTO_BOWERS,
+    ) == (my_little_boat, FRESHLY_INTO_BOWERS)
+    assert grows_lush(
+        in_juicy_stalks=WITH_STREAMS_THAT_DEEPEN,
+        for_many_quiet_hours=my_little_boat,
+    ) == (WITH_STREAMS_THAT_DEEPEN, my_little_boat)
 
     # ....................{ FAIL                           }....................
     # Assert that this callable when passed an invalid object violating the
     # hints annotating this callable raises the expected exception.
     with raises_uncached(BeartypeCallHintParamViolation):
-        grows_lush(b'My little boat, for many quiet hours,')
+        grows_lush(
+            in_juicy_stalks=my_little_boat,
+            for_many_quiet_hours=WITH_STREAMS_THAT_DEEPEN,
+        )
+    with raises_uncached(BeartypeCallHintParamViolation):
+        grows_lush(
+            in_juicy_stalks=FRESHLY_INTO_BOWERS,
+            for_many_quiet_hours=my_little_boat,
+        )

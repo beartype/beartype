@@ -334,6 +334,8 @@ def get_hint_object_violation(
           false positive by erroneously misdetecting this pith as satisfying
           this type check when in fact this pith fails to do so.
     '''
+    # print(f'call curr (type): {type(call_curr)}')
+    # print(f'forward scope: {repr(call_curr.decoratee_scope_forward)}')
 
     # ....................{ CAUSE                          }....................
     # While temporarily ignoring *ALL* beartype-specific warnings...

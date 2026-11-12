@@ -236,7 +236,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         'func_wrapper_code_signature_prefix',
         'func_wrapper_name',
         'func_wrapper_locals',
-        '_minify_cached',
+        # '_minify_cached',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
@@ -254,7 +254,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         func_wrapper_code_signature_prefix: str
         func_wrapper_name: str
         func_wrapper_locals: LexicalScope
-        _minify_cached: Optional[BeartypeCallDecorFuncMinimalData]
+        # _minify_cached: Optional[BeartypeCallDecorFuncMinimalData]
 
         # Re-annotate these class variables defined by a superclass with tighter
         # bounds more suitable to this subclass.
@@ -340,9 +340,9 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         self.func_wrappee_wrappee_codeobj) = (  # pyright: ignore
         self.func_wrapper) = (  # pyright: ignore
         self.func_wrapper_name) = (  # pyright: ignore
-        self._func_wrappee_wrappee_arg_name_to_kind_default) = (  # pyright: ignore
-        self._minify_cached) = None  # type: ignore[assignment]
-        # self.func_wrapper_name) = None  # type: ignore[assignment]
+        self._func_wrappee_wrappee_arg_name_to_kind_default) = None  # type: ignore[assignment]
+        # self._func_wrappee_wrappee_arg_name_to_kind_default) = (  # pyright: ignore
+        # self._minify_cached) = None  # type: ignore[assignment]
 
     # ..................{ INITIALIZERS ~ reinit              }..................
     def reinit(
@@ -885,12 +885,25 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
             Minimal metadata minified from this maximal metadata.
         '''
 
-        # If this metadata has already been minified by a prior call to this
-        # minifier, return that minified metadata as is.
-        if self._minify_cached is not None:
-            return self._minify_cached
-        # Else, this metadata has yet to be minified, implying this to be the
-        # first call to this minifier.
+        #FIXME: *FUNDAMENTALLY DOES NOT WORK*. Breaks literally everything for
+        #unknown reasons. Super non-trivial to reason about. So... we currently
+        #recompute this on every call. *shrug*
+        #FIXME: Uncomment once we get this working. The fact this doesn't work
+        #at the moment is a huge red flag suggesting that this dataclass is
+        #being erroneously minified too early (e.g., before all forward
+        #references have been resolved yet). *sigh*
+        #FIXME: Actually, let's *DEFINITELY* debug what's going on here and why
+        #we can't safely memoize this. But let's also *DEFINITELY* not perform
+        #this memoize for the moment. It keeps breaking in subtle, hard-to-debug
+        #ways and is likely to break the entire Python ecosystem. *SERIOUSLY*.
+        # raise ValueError('ugh')
+
+        # # If this metadata has already been minified by a prior call to this
+        # # minifier, return that minified metadata as is.
+        # if self._minify_cached is not None:
+        #     return self._minify_cached
+        # # Else, this metadata has yet to be minified, implying this to be the
+        # # first call to this minifier.
 
         # Minimal lexical scope (i.e., dictionary mapping from the name to value
         # of each locally and globally accessible attribute in the local and
@@ -917,7 +930,8 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         #     raise ValueError('Ugh!')
 
         # Minimal metadata minified from this maximal metadata.
-        self._minify_cached = BeartypeCallDecorFuncMinimalData(
+        # self._minify_cached = BeartypeCallDecorFuncMinimalData(
+        minify_uncached = BeartypeCallDecorFuncMinimalData(
             conf=self.conf,
             cls_stack=self.cls_stack,
             decoratee=self.decoratee,
@@ -926,7 +940,8 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         )
 
         # Return this minimal metadata.
-        return self._minify_cached
+        return minify_uncached
+        # return self._minify_cached
 
     # ..................{ LABELLERS                          }..................
     def label_func_wrapper(self) -> str:

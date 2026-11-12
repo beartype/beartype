@@ -38,22 +38,25 @@ def test_make_type() -> None:
     # ....................{ PASS                           }....................
     # Assert this factory creates and returns the expected class when the passed
     # name is a valid unqualified Python identifier.
-    AndSilence = make_type(type_name='AndSilence')
+    AndSilence = make_type(type_basename='AndSilence')
     assert isinstance(AndSilence, type)
     assert AndSilence.__name__ == 'AndSilence'
 
     # Assert this factory creates and returns the expected class when passed a
     # tuple of one or more base classes.
     BySolemnVision = make_type(
-        type_name='BySolemnVision', type_bases=(TooEnamouredOfThatVoice,))
+        type_basename='BySolemnVision', type_bases=(TooEnamouredOfThatVoice,))
     assert is_type_subclass(BySolemnVision, TooEnamouredOfThatVoice)
 
     # Assert this factory creates and returns the expected class when passed a
     # dictionary of one or more class attributes.
-    BrightSilverDream = make_type(type_name='BrightSilverDream', type_scope={
-        'every_sight': 'His infancy was nurtured.',
-        'and_sound': lambda self: self.every_sight,
-    })
+    BrightSilverDream = make_type(
+        type_basename='BrightSilverDream',
+        type_scope={
+            'every_sight': 'His infancy was nurtured.',
+            'and_sound': lambda self: self.every_sight,
+        },
+    )
     assert (
         BrightSilverDream.every_sight ==
         BrightSilverDream().and_sound() == 'His infancy was nurtured.'
@@ -62,13 +65,17 @@ def test_make_type() -> None:
     # Assert this factory creates and returns the expected class when the passed
     # module name is a valid Python identifier.
     SentToHisHeart = make_type(
-        type_name='SentToHisHeart', type_module_name='its_choicest.impulses')
+        type_basename='SentToHisHeart',
+        type_module_name='its_choicest.impulses',
+    )
     assert SentToHisHeart.__module__ == 'its_choicest.impulses'
 
     # Assert this factory creates and returns the expected class when passed a
     # docstring.
     TheFountains = make_type(
-        type_name='TheFountains', type_doc='of divine philosophy')
+        type_basename='TheFountains',
+        type_doc='of divine philosophy',
+    )
     assert TheFountains.__doc__ == 'of divine philosophy'
 
     # ....................{ FAIL                           }....................
@@ -91,12 +98,12 @@ def test_make_type() -> None:
     # Assert this factory raises the expected exception when the passed module
     # name is the empty string.
     with raises(_BeartypeUtilTypeException):
-        make_type(type_name='And_Silence', type_module_name='')
+        make_type(type_basename='And_Silence', type_module_name='')
 
     # Assert this factory raises the expected exception when the passed module
     # name is *NOT* a valid Python identifier.
     with raises(_BeartypeUtilTypeException):
         make_type(
-            type_name='And_Silence',
+            type_basename='And_Silence',
             type_module_name='Locks its mute music in her rugged cell.',
         )

@@ -210,19 +210,6 @@ def resolve_hint_pep484_ref_str_decor_curr(
         f'{repr(exception_cls)} not exception type.')
     # print(f'Resolving decorator-time PEP 484 forward reference {repr(hint)} under {repr(decor_curr)}...')
 
-    #FIXME: Non-ideal. *ALL* builtin objects that are valid as type hints (so,
-    #"None" and all builtin types, basically) should be handled similarly.
-    #Special-casing "None" like this may be trivial, but it's also insufficient.
-    #
-    #Perhaps more importantly, however, this fails to account for *SHADOWING*.
-    #Although inadvisable, Python permits both globals and locals to shadow
-    #builtins. Ergo, this doesn't work for even "None" in the general case.
-
-    # # Unlike a named forward reference, the None keyword requires no namespace.
-    # # Resolve it even for dynamically defined callables without a module.
-    # if hint == 'None':
-    #     return None
-
     # ..................{ LOCALS                             }..................
     # Decorated callable and metadata associated with that callable, localized
     # to improve both readability and negligible efficiency when accessed below.

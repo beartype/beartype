@@ -19,13 +19,64 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from beartype._data.typing.datatyping import T
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from typing import Optional
+
+# ....................{ COPIERS                            }....................
+#FIXME: Unit test us up.
+def copy_type(cls: type[T], type_basename: str) -> type[T]:
+    '''
+    Shallow copy of the passed type, mutated to define the passed unqualified
+    basename with a new class dictionary but otherwise identical to this type.
+
+    Caveats
+    -------
+    **This factory only produces shallow copies.** The returned type will deeply
+    share the values of all class variables defined on the passed type. Callers
+    are thus responsible for deeply copying class variables if desired.
+
+    Parameters
+    ----------
+    cls : type[T]
+        Input type to be copied.
+    type_basename : str
+        Unqualified basename of the output type to be returned.
+
+    Returns
+    -------
+    type[T]
+        Output type copied from this input type.
+
+    See Also
+    --------
+    https://stackoverflow.com/a/61823543/2809027
+        StackOverflow answer inspiring this function.
+    '''
+    assert isinstance(cls, type), f'{repr(cls)} not type.'
+    assert isinstance(type_basename, str), f'{repr(type_basename)} not string.'
+
+    # Shallow copy of this type's class scope.
+    cls_copy_scope = dict(cls.__dict__)
+
+    # Shallow copy of the passed type.
+    cls_copy = make_type(
+        type_basename=type_basename,
+        type_bases=cls.__bases__,
+        type_scope=cls_copy_scope,
+    )
+
+    #FIXME: Perform additional logic for slotted classes here. Note that doing
+    #is *SUPER* non-trivial. See also:
+    #    https://stackoverflow.com/a/61823543/2809027
+
+    # Return this shallow copy.
+    return cls_copy
 
 # ....................{ MAKERS                             }....................
 def make_type(
     # Mandatory arguments.
-    type_name: str,
+    type_basename: str,
 
     # Optional arguments.
     type_module_name: Optional[str] = None,
@@ -41,16 +92,16 @@ def make_type(
 
     Parameters
     ----------
-    type_name : str
+    type_basename : str
         Name of the class to be created.
     type_module_name : Optional[str]
         Fully-qualified name of the module declaring this class. Defaults to
         :data:`None`, in which case this class remains undeclared by any module.
-    type_bases : Tuple[type, ...]
+    type_bases : tuple[type, ...]
         Tuple of all base classes to be inherited by this class. Defaults to
         the empty tuple, equivalent to the 1-tuple ``(object,)`` inheriting this
         class from only the root base class :class:`object` of all classes.
-    type_scope : Optional[Dict[str, Any]]
+    type_scope : Optional[Dict[str, Any]], default: FrozenDict({})
         Dictionary mapping from the name to value of each **class-scoped
         attribute** (i.e., method, variable) to be defined by this class.
         Defaults to the empty dictionary, equivalent to declaring a class with
@@ -80,7 +131,7 @@ def make_type(
         * The passed classname is non-empty but *not* a valid unqualified Python
           identifier.
     '''
-    assert isinstance(type_name, str), f'{repr(type_name)} not string.'
+    assert isinstance(type_basename, str), f'{repr(type_basename)} not string.'
     assert isinstance(type_module_name, NoneTypeOr[str]), (
         f'{repr(type_module_name)} neither string nor "None".')
     assert isinstance(type_bases, tuple), f'{repr(type_bases)} not tuple.'
@@ -95,13 +146,13 @@ def make_type(
     # * The empty string.
     # * An invalid Python identifier.
     # * A valid fully-qualified Python identifier.
-    if not type_name.isidentifier():
+    if not type_basename.isidentifier():
         raise exception_cls(
-            f'{exception_prefix}class name {repr(type_name)} invalid.')
+            f'{exception_prefix}class name {repr(type_basename)} invalid.')
     # Else, this classname is a valid unqualified Python identifier.
 
     # Thank you, bizarre 3-parameter variant of the type.__init__() constructor.
-    cls = type(type_name, type_bases, type_scope)
+    cls = type(type_basename, type_bases, type_scope)
 
     # If this class has a module name...
     if type_module_name is not None:

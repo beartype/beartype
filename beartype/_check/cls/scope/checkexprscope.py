@@ -37,9 +37,9 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
     ----------
     beartype_ref_proxies : tuple[BeartypeForwardRefMetaclass, ...]
         Tuple of all :mod:`beartype`-specific **forward reference proxies**
-        (i.e., classes whose metaclass defers the resolution of forward
-        reference type hints referencing type hints that have yet to be defined
-        in the lexical scopes of external callers).
+        (i.e., classes whose metaclass defers the resolution of PEP-compliant
+        forward references referencing undefined type hints that have yet to be
+        defined in the lexical scopes of external callers).
     is_check_expr_cacheable : bool
         :data:`True` only if callers may safely cache (memoize) this scope.
         Unsurprisingly, this boolean is an alias of the comparable
