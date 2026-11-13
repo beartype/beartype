@@ -195,7 +195,7 @@ def make_code_raiser_func_pith_check(
     #which is now vestigial. *sigh*
     # from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
     #
-    #     def unfreeze_dememoized(
+    #     def unfreeze_final(
     #         self,
     #         call_curr: BeartypeCallDataABC,
     #         exception_prefix: Union[str, Callable[[BeartypeCallDataABC, str], str]],
@@ -206,15 +206,13 @@ def make_code_raiser_func_pith_check(
     #         # Mutable dictionary coerced from this immutable scope.
     #         func_scope_dict = dict(func_scope_frozen)
     #
-    #         #FIXME: Rename "beartype_ref_proxies" to "_beartype_ref_proxies".
-    #         #Ideally, *NO* external callers should access that anymore. *shrug*
     #         # If the decorated callable is annotated by one or more forward
     #         # references *NOT* resolvable at decoration time, these references have
     #         # all been proxied by beartype-specific forward reference proxies. In
     #         # this case, overwrite the default values of all uninitialized class
     #         # variables bound to these proxies with non-default initialized values
     #         # passed by the caller. Specifically...
-    #         if self.beartype_ref_proxies:
+    #         if self._beartype_ref_proxies:
     #             # Avoid circular import dependencies.
     #             from beartype._check.forward.reference.fwdreftest import (
     #                 # die_unless_beartype_ref_proxy,
@@ -236,22 +234,9 @@ def make_code_raiser_func_pith_check(
     #             # minifying that instance. It doesn't have to make sense. It's QA.
     #             call_curr = call_curr.minify()
     #
-    #             #FIXME: Comment us up. Super-awkward. *WHATEVAHS*. *sigh*
-    #             if callable(exception_prefix):
-    #                 exception_prefix = exception_prefix(
-    #                     decor_func=decor_func, pith_name=pith_name)
-    #
-    #             #FIXME: Excise us up, please. *sigh*
-    #             # set_beartype_ref_proxies_classvars_uninitted(
-    #             #     ref_proxies=self.beartype_ref_proxies,
-    #             #     call_curr=decor_func,
-    #             #     exception_prefix=prefix_decor_func_callable_pith(
-    #             #         decor_func=decor_func, pith_name=pith_name),
-    #             # )
-    #
     #             #FIXME: [SPEED] Optimize into a "while" loop. *lol*
     #             #FIXME: Inefficient, because this basically recomputes
-    #             #"beartype_ref_proxies", which is sadly unusable in its current form
+    #             #"_beartype_ref_proxies", which is sadly unusable in its current form
     #             #as a trivial tuple. To make that precomputed variable useful again,
     #             #we'll need to refactor that into a dictionary. *sigh*
     #             #FIXME: Revise commentary. *sigh*
@@ -310,22 +295,84 @@ def make_code_raiser_func_pith_check(
     #
     #         func_scope = BeartypeCheckExprScopeUnfrozen(
     #             func_scope_dict,
-    #             #FIXME: Pass "beartype_ref_proxies" and so on correctly here!
+    #             #FIXME: Pass "_beartype_ref_proxies" and so on correctly here!
     #             ...
     #         )
     #
     #         # Return this mutable scope.
     #         return func_scope
+    #FIXME: *OH*. I get it. Everything above still applies. Well, probably. None
+    #of what we wrote above is the core issue, though. The core issue is that
+    #this "if func_scope_frozen._beartype_ref_proxies:" logic should only be
+    #performed exactly *ONCE* for each decorated callable probably in "wrapmain"
+    #immediately *AFTER* generating code type-checking each parameter and
+    #return. Currently, this logic is instead being performed *FOR EACH
+    #PARAMETER AND RETURN* -- which is both slow and totally wrong. Yikes. We
+    #really botched that one, huh? In light of this, let's:
+    #* Define a new BeartypeCheckExprScope.dememoize() method resembling:
+    #      #FIXME: Not quite right, of course. We need to accept a few
+    #      #parameters. See above for similar code. *sigh*
+    #      def dememoize(self) -> None:
+    #         #FIXME: Privatize "_beartype_ref_proxies", please. *sigh*
+    #         # If the decorated callable is annotated by one or more forward references
+    #         # *NOT* resolvable at decoration time, these references have all been
+    #         # proxied by beartype-specific forward reference proxies. In this case...
+    #         if self._beartype_ref_proxies:
+    #             #FIXME: Inline this setter's body here and then remove
+    #             #set_beartype_ref_proxies_classvars_uninitted(), please. *sigh*
+    #             #FIXME: Also note that the minify() currently performed by
+    #             #set_beartype_ref_proxies_classvars_uninitted() is an
+    #             #inefficient code smell suggestive of badness. We got the
+    #             #minify() design pattern a bit wrong. Basically, minify()
+    #             #should *ONLY* be called exactly once for each dataclass
+    #             #instance. If it's called more than once, that's a problem.
+    #             #Ergo, we need to:
+    #             #* Stop calling minify() here.
+    #             #* Figure out where minify() is currently being called for
+    #             #  decorated callables.
+    #             #* Pass that minified result to this dememoize() call.
+    #             #* Assert that the passed dataclass instance is pre-minified.
+    #             #  Basically, any dataclass *EXCEPT*
+    #             #  "BeartypeCallDecorFuncData" is fine. I guess we could:
+    #             #  * Define a new "BeartypeCallABC" read-only property
+    #             #    is_minified() defaulting to returning "True" for
+    #             #    everything except "BeartypeCallDecorFuncData".
+    #             #  * Raise an exception in "if not call_curr.is_minified():"
+    #             #    at the top of this dememoize() call. *shrug*
+    #
+    #             # Overwrite the default values of all uninitialized class variables
+    #             # bound to these proxies with non-default initialized values passed
+    #             # by the caller.
+    #             set_beartype_ref_proxies_classvars_uninitted(
+    #                 ref_proxies=self._beartype_ref_proxies,
+    #                 call_curr=decor_func,
+    #
+    #                 #FIXME: No need for this. Sure, it's nice, I guess. But
+    #                 #it's non-trivial to compute after parsing parameters. So,
+    #                 #just use the stock "exception_prefix" for the currently
+    #                 #decorated callable. *shrug*
+    #                 exception_prefix=prefix_decor_func_callable_pith(
+    #                     decor_func=decor_func, pith_name=pith_name),
+    #             )
+    #         # Else, the decorated callable is annotated by *NO* such references.
+    #* In _make_func_checker(), replace the "if
+    #  func_scope_frozen._beartype_ref_proxies:" conditional with a call to
+    #  BeartypeCheckExprScope.dememoize() instead.
+    #* Remove the "if func_scope_frozen._beartype_ref_proxies:" conditional
+    #  below entirely.
+    #* Call BeartypeCheckExprScope.dememoize() from "wrapmain" instead.
+    #
+    #That should do it. Emphasis on "should." More sighing.
 
     # If the decorated callable is annotated by one or more forward references
     # *NOT* resolvable at decoration time, these references have all been
     # proxied by beartype-specific forward reference proxies. In this case...
-    if func_scope_frozen.beartype_ref_proxies:
+    if func_scope_frozen._beartype_ref_proxies:
         # Overwrite the default values of all uninitialized class variables
         # bound to these proxies with non-default initialized values passed
         # by the caller.
         set_beartype_ref_proxies_classvars_uninitted(
-            ref_proxies=func_scope_frozen.beartype_ref_proxies,
+            ref_proxies=func_scope_frozen._beartype_ref_proxies,
             call_curr=decor_func,
             exception_prefix=prefix_decor_func_callable_pith(
                 decor_func=decor_func, pith_name=pith_name),

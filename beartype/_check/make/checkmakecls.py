@@ -428,12 +428,12 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         # If this hint is annotated by one or more forward references *NOT*
         # resolvable at decoration time, these references have all been proxied
         # by beartype-specific forward reference proxies. In this case...
-        if func_scope_frozen.beartype_ref_proxies:
+        if func_scope_frozen._beartype_ref_proxies:
             # Overwrite the default values of all uninitialized class variables
             # bound to these proxies with non-default initialized values passed
             # by the caller.
             set_beartype_ref_proxies_classvars_uninitted(
-                ref_proxies=func_scope_frozen.beartype_ref_proxies,
+                ref_proxies=func_scope_frozen._beartype_ref_proxies,
                 call_curr=call_curr,
                 exception_prefix=exception_prefix,
             )

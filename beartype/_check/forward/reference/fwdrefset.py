@@ -16,12 +16,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.forward.reference.fwdreftyping import (
-    TupleBeartypeForwardRefs)
+    FrozenSetBeartypeForwardRefs)
 
 # ....................{ SETTERS                            }....................
 #FIXME: Unit test us up, please. *sigh*
+#FIXME: Excise up this entire submodule, which should no longer be required! \o/
 def set_beartype_ref_proxies_classvars_uninitted(
-    ref_proxies: TupleBeartypeForwardRefs,
+    ref_proxies: FrozenSetBeartypeForwardRefs,
     call_curr: BeartypeCallDataABC,
     exception_prefix: str,
 ) -> None:
@@ -67,7 +68,8 @@ def set_beartype_ref_proxies_classvars_uninitted(
         Human-readable substring prefixing exception messages to be raised by
         these proxies.
     '''
-    assert isinstance(ref_proxies, tuple), f'{repr(ref_proxies)} not tuple.'
+    assert isinstance(ref_proxies, frozenset), (
+        f'{repr(ref_proxies)} not frozen set.')
     assert isinstance(call_curr, BeartypeCallDataABC), (
         f'{repr(call_curr)} not beartype call metadata.')
     assert isinstance(exception_prefix, str), (

@@ -152,14 +152,35 @@ class BeartypeCallDataABC(object, metaclass=BeartypeSlottedABCMeta):
         self.decoratee = decoratee
         self.decoratee_annotations = decoratee_annotations
 
+    # ..................{ PROPERTIES                         }..................
+    #FIXME: Unit test us up, please.
+    @property
+    def is_minified(self) -> bool:
+        '''
+        :data:`True` only if this beartype call metadata is already in
+        **minified form** (i.e., if this metadata is already the minimal
+        metadata required to type-check the callable
+        currently being decorated by the :func:`beartype.beartype` decorator at
+        the post-decoration time that callable is subsequently called).
+
+        This property is equivalent to the following equality:
+
+        .. code-block:: python
+
+           call_curr.is_minified == (call_curr is call_curr.minify())
+        '''
+
+        # Return true by default, as almost *ALL* concrete subclasses of this
+        # ABC are already minified.
+        return True
+
     # ..................{ MINIFIERS                          }..................
     def minify(self) -> 'BeartypeCallDataABC':
         '''
         **Beartype callable decorator call minimal metadata** (i.e., dataclass
-        encapsulating the minimal metadata required to type-check the callable
-        currently being decorated by the :func:`beartype.beartype` decorator at
-        the post-decoration time that callable is subsequently called) minified
-        from this possibly maximal metadata.
+        encapsulating the minimal metadata required to type-check the
+        user-defined callable, type, or statement currently being type-checked
+        by the end user) minified from this possibly maximal metadata.
 
         Specifically:
 

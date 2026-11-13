@@ -1791,6 +1791,34 @@ class _BeartypeClawImportlibIsPathHookActiveException(
 
     pass
 
+# ....................{ PRIVATE ~ check                      }..................
+class _BeartypeCheckException(BeartypeException):
+    '''
+    Abstract base class of all **beartype type-checking code generation
+    exceptions.**
+
+    Instances of subclasses of this exception are raised by various submodules
+    of the private :mod:`beartype._ctheck` subpackage. These exceptions denote
+    critical internal issues and should thus *never* be raised, let alone
+    allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeCheckExprScopeException(_BeartypeCheckException):
+    '''
+    **Beartype type-checking expression lexical scope exception.**
+
+    This exception is raised from the private
+    :func:`beartype._check.cls.scope.checkexprscope` submodule.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
 # ....................{ PRIVATE ~ door                       }..................
 class _BeartypeDoorTextException(BeartypeDoorException):
     '''
@@ -1813,6 +1841,9 @@ class _BeartypeValeUtilException(BeartypeValeException):
 
     This exception is raised from various submodules of the private
     :func:`beartype.vale._util` subpackage.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
     pass
@@ -1973,8 +2004,8 @@ class _BeartypeCallHintPepRaiseException(_BeartypeCallHintRaiseException):
     **Beartype PEP-compliant human-readable exception raiser exception.**
 
     This exception is raised by the
-    :func:`beartype._check.error.errmain.get_func_pith_violation`
-    exception raiser function when an unexpected failure occurs.
+    :func:`beartype._check.error.errmain.get_func_pith_violation` exception
+    raiser function when an unexpected failure occurs.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.

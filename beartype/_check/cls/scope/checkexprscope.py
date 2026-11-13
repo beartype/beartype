@@ -13,10 +13,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar._roarexc import _BeartypeCheckExprScopeException
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.forward.reference.fwdreftest import is_beartype_ref_proxy
 from beartype._check.forward.reference.fwdreftyping import (
-    TupleBeartypeForwardRefs)
+    FrozenSetBeartypeForwardRefs)
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDictStrToAny
 from typing import (
     TYPE_CHECKING,
@@ -35,16 +37,16 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
 
     Attributes
     ----------
-    beartype_ref_proxies : tuple[BeartypeForwardRefMetaclass, ...]
-        Tuple of all :mod:`beartype`-specific **forward reference proxies**
-        (i.e., classes whose metaclass defers the resolution of PEP-compliant
-        forward references referencing undefined type hints that have yet to be
-        defined in the lexical scopes of external callers).
     is_check_expr_cacheable : bool
         :data:`True` only if callers may safely cache (memoize) this scope.
         Unsurprisingly, this boolean is an alias of the comparable
         :attr:`beartype._check.cls.hint.tree.hinttreecode.HintTreeCode.is_check_expr_cacheable`
         boolean. See also that instance variable for further details.
+    _beartype_ref_proxies : frozenset[BeartypeForwardRefMetaclass, ...]
+        Frozen set of all :mod:`beartype`-specific **forward reference proxies**
+        (i.e., classes whose metaclass defers the resolution of PEP-compliant
+        forward references referencing undefined type hints that have yet to be
+        defined in the lexical scopes of external callers).
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -53,15 +55,15 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'beartype_ref_proxies',
         'is_check_expr_cacheable',
+        '_beartype_ref_proxies',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        beartype_ref_proxies: TupleBeartypeForwardRefs
         is_check_expr_cacheable: bool
+        _beartype_ref_proxies: FrozenSetBeartypeForwardRefs
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
@@ -71,7 +73,7 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
         *args,
 
         # Optional keyword-only parameters.
-        beartype_ref_proxies: Optional[TupleBeartypeForwardRefs] = None,
+        beartype_ref_proxies: Optional[FrozenSetBeartypeForwardRefs] = None,
         is_check_expr_cacheable: bool = False,
         **kwargs
     ) -> None:
@@ -86,44 +88,45 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
 
         Parameters
         ----------
-        beartype_ref_proxies : tuple[BeartypeForwardRefMetaclass, ...], default: None
-            Tuple of all :mod:`beartype`-specific **forward reference proxies**
-            (i.e., classes whose metaclass defers the resolution of forward
-            reference type hints referencing type hints that have yet to be
-            defined in the lexical scopes of external callers). Defaults to
-            :data:`None`, in which case this tuple is automatically introspected
-            by iteration over the initial contents of this dictionary.
+        beartype_ref_proxies : frozenset[BeartypeForwardRefs], default: None
+            Frozen set of all :mod:`beartype`-specific **forward reference
+            proxies** (i.e., classes whose metaclass defers the resolution of
+            forward reference type hints referencing type hints that have yet to
+            be defined in the lexical scopes of external callers). Defaults to
+            :data:`None`, in which case this frozen set is automatically
+            introspected by iteration over the initial contents of this
+            dictionary.
         is_check_expr_cacheable: bool, default: False
             :data:`True` only if callers may safely cache (memoize) this scope.
             Unsurprisingly, this boolean is an alias of the comparable
             :attr:`beartype._check.cls.hint.tree.hinttreecode.HintTreeCode.is_check_expr_cacheable`
             boolean. Defaults to :data:`False` for safety.
         '''
-        assert isinstance(beartype_ref_proxies, NoneTypeOr[tuple]), (
-            f'{repr(beartype_ref_proxies)} neither tuple nor "None".')
+        assert isinstance(beartype_ref_proxies, NoneTypeOr[frozenset]), (
+            f'{repr(beartype_ref_proxies)} neither frozen set nor "None".')
         assert isinstance(is_check_expr_cacheable, bool), (
             f'{repr(is_check_expr_cacheable)} not boolean.')
 
         # Instantiate this scope with all passed parameters.
         super().__init__(*args, **kwargs)
 
-        # If the caller failed to pass a tuple of all beartype-specific forward
-        # reference proxies, introspect this tuple as the proper subset of all
-        # attribute values accessed by this scope that are such proxies.
+        # If the caller failed to pass this frozen set, default to the proper
+        # subset of all attribute values accessed by this scope that are
+        # beartype-specific forward reference proxies.
         if beartype_ref_proxies is None:
-            self.beartype_ref_proxies = tuple(
+            self._beartype_ref_proxies = frozenset(
                 scope_value
                 for scope_value in self.values()
                 if is_beartype_ref_proxy(scope_value)
             )
         # Else, the caller passed such a tuple. In this case, reuse that tuple.
         else:
-            self.beartype_ref_proxies = beartype_ref_proxies
+            self._beartype_ref_proxies = beartype_ref_proxies
 
         # Classify all remaining parameters.
         self.is_check_expr_cacheable = is_check_expr_cacheable
 
-    # ..................{ REFREEZERS                         }..................
+    # ..................{ FREEZERS                           }..................
     def refreeze(self, *args, **kwargs) -> 'BeartypeCheckExprScope':
         '''
         New type-checking expression scope initialized both by the passed
@@ -150,7 +153,161 @@ class BeartypeCheckExprScope(FrozenDictStrToAny):
             *args,
             # Reuse all previously computed instance variables bound to this
             # scope, for efficiency.
-            beartype_ref_proxies=self.beartype_ref_proxies,
+            beartype_ref_proxies=self._beartype_ref_proxies,
             is_check_expr_cacheable=self.is_check_expr_cacheable,
             **kwargs
         )
+
+
+    #FIXME: Unit test us up, please. *sigh*
+    #FIXME: Revise docstring, please. *sigh*
+    #FIXME: Call this method everywhere in lieu of the obsolete
+    #set_beartype_ref_proxies_classvars_uninitted() setter, which should now be
+    #entirely excised away. *sigh*
+    #
+    #Note that this will prove somewhat non-trivial. Essential tasks to get us
+    #there include:
+    #* Define a new __or__() dunder method copy-pasted from our existing
+    #  "FrozenDict" type with these obvious additions:
+    #  * Merge "is_check_expr_cacheable" on both scopes into the returned scope.
+    #  * Merge "_beartype_ref_proxies" on both scopes into the returned scope.
+    #* Define a "BEARTYPE_CHECK_EXPR_SCOPE_EMPTY" global constant resembling:
+    #      BEARTYPE_CHECK_EXPR_SCOPE_EMPTY = BeartypeCheckExprScope(
+    #          # The empty scope is trivially cacheable.
+    #          is_check_expr_cacheable=True)
+    #* Refactor the "BeartypeCallDecorFuncData.func_wrapper_locals" instance
+    #  variable to instead resemble:
+    #      func_wrapper_scope: BeartypeCheckExprScope
+    #* Initialize:
+    #      self.func_wrapper_scope = BEARTYPE_CHECK_EXPR_SCOPE_EMPTY
+    #* Refactor code_check_args() as follows:
+    #  * Refactor the "func_scope" local as follows:
+    #        func_scope_arg: BeartypeCheckExprScope = None  # type: ignore[assignment]
+    #  * Update "func_wrapper_scope" each iteration as follows:
+    #        #FIXME: Note that this is somewhat inefficient. We can optimize
+    #        #this later by redefining "func_wrapper_scope" to be an instance of
+    #        #an unfrozen "BeartypeCheckExprScopeUnfrozen" type, which would
+    #        #then enable us to efficiently update() that in-place. *WHATEVAHS*.
+    #        decor_func.func_wrapper_scope |= func_scope_arg
+    #* Refactor code_check_return() as follows:
+    #        #FIXME: Note that this is somewhat inefficient. See "_wrapargs".
+    #        decor_func.func_wrapper_scope |= func_scope_return
+    #* Define a new "is_dememoizable" property resembling:
+    #       @property
+    #       def is_dememoizable(self) -> bool:
+    #           return bool(self._beartype_ref_proxies)
+    #* Refactor generate_code() as follows:
+    #        decor_func_minified = decor_func.minify()
+    #
+    #        if decor_func.func_wrapper_scope.is_dememoizable:
+    #            decor_func.func_wrapper_scope.dememoize(
+    #                call_curr=decor_func_minified,
+    #                exception_prefix=f'{decor_func..func_wrapper_name}() ',
+    #            )
+    #
+    #        func_scope[ARG_NAME_CALL_META] = decor_func_minified
+    #        ...
+    #* Also, rename:
+    #  * generate_code() to make_func_code().
+    #  * _code_check_args() to _make_func_code_args().
+    #  * _code_check_return() to _make_func_code_return().
+    def dememoize(
+        self, call_curr: BeartypeCallDataABC, exception_prefix: str) -> None:
+        '''
+        **Dememoize** (i.e., contextualize, relativize) various previously
+        memoized metadata accessible to the passed lexical scope to be
+        contextually relative to the passed beartype call minimal metadata.
+
+        This function is intended to be called late during type-checking code
+        generation and thus intentionally accepts parameters unavailable earlier
+        (e.g., beartype call minimal metadata created and returned by the
+        :meth:`beartype._check.cls.call.calldatadecorfunc.BeartypeCallDecorFuncData.minify`
+        method).
+
+        Specifically, this method:
+
+        * Overwrites the default values of all **uninitialized class variables**
+          (i.e., class variables that the
+          :func:`beartype._check.forward.reference.fwdrefproxy._proxy_hint_ref`
+          factory function assigned default uninitialized values rather than
+          non-default initialized values) bound to all :mod:`beartype`-specific
+          **forward reference proxies** (i.e., classes whose
+          :class:`.BeartypeForwardRefMetaclass` metaclass defers the resolution
+          of forward references referencing type hints that have yet to be
+          defined in this lexical scope) with non-default values derived from
+          the passed parameters. Specifically, this method overwrites on these
+          forward reference proxies the default uninitialized values of:
+
+          * The ``__call_curr_beartype__`` class variable with the passed
+            beartype call minimal metadata, enabling proxies whose forward
+            references reference other forward references to proxy the latter.
+          * The ``__exception_prefix_beartype__`` class variable with the passed
+            exception prefix, improving the readability of exceptions raised at
+            type-checking wrapper call time when one of these proxies fails to
+            resolve the reference it proxies.
+
+        Parameters
+        ----------
+        call_curr : BeartypeCallDataABC
+            **Beartype call minimal metadata** (i.e., dataclass aggregating the
+            minimal metadata required to type-check the user-defined callable,
+            type, or statement currently being type-checked by the end user).
+        exception_prefix : str
+            Human-readable substring prefixing exception messages to be raised
+            by these proxies.
+
+        Raises
+        ------
+        _BeartypeCheckExprScopeException
+            If this beartype call metadata is *not* already minified.
+        '''
+        assert isinstance(call_curr, BeartypeCallDataABC), (
+            f'{repr(call_curr)} not beartype call metadata.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        #FIXME: Unit test us up, please. *sigh*
+        # If this beartype call metadata is *NOT* minified, raise an exception.
+        if not call_curr.is_minified:  # pragma: no cover
+            raise _BeartypeCheckExprScopeException(
+                f'Beartype call metadata {repr(call_curr)} not minified.')
+        # Else, this beartype call metadata is minified.
+
+        # For each beartype-specific forward reference proxy proxying a
+        # PEP-compliant forward reference type hint *NOT* resolvable at
+        # decoration time transitively annotating the currently decorated
+        # callable and thus accessible to this scope...
+        for ref_proxy in self._beartype_ref_proxies:
+            #FIXME: *UNSAFE*. This scope is frozen. Frozen means frozen.
+            #*NOTHING* is safely modifiable on this scope. See "FIXME:"
+            #commentary elsewhere for how to repair this. *sigh*
+            #FIXME: *OH HO*. Okay. Insanely, this *IS* actually safe. Why?
+            #Because the existence of even a single forward reference proxy
+            #renders this *ENTIRE* scope uncacheable. Ergo, even though it's
+            #technically "frozen", it's not safely cacheable, so nobody does.
+            #More specifically, beartype *NEVER* reuses forward reference
+            #proxies anywhere. For each forward reference type hint annotating
+            #something, beartype creates exactly one and only one proxy uniquely
+            #proxying that reference. Ergo, this is totally safe after all.
+            #Guess we should've documented that, huh? That also explains why
+            #this *NEVER* blew up in the past. It all makes sense now. Our prior
+            #self wasn't dumb, y'all! \o/
+
+            # Initialize all uninitialized class variables bound to this proxy
+            # with these passed parameters.
+            #
+            # Notably, this replaces the non-minified beartype call metadata
+            # currently set on this proxy with the passed equivalent minified
+            # beartype call metadata. This is *NOT* simply a negligible
+            # optimization reducing space consumption, although it certainly is
+            # that. Minification has the beneficial side effect of effectively
+            # shallowly copying this metadata in the common case that this
+            # metadata is an instance of the non-minified
+            # "BeartypeCallDecorFuncData" dataclass. For efficiency, that
+            # instance is reused across *EVERY* call to the @beartype decorator,
+            # preventing these proxies from referencing that instance across
+            # @beartype decorations. These proxies must instead reference the
+            # shallow copy of that instance produced by minifying that instance.
+            # It doesn't have to make sense. It's QA.
+            ref_proxy.__call_curr_beartype__ = call_curr
+            ref_proxy.__exception_prefix_beartype__ = exception_prefix
