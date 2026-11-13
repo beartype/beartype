@@ -81,6 +81,18 @@ class BeartypeClawDecorWarning(BeartypeClawWarning):
 
     pass
 
+class BeartypeClawTypeCheckingWarning(BeartypeClawWarning):
+    '''
+    **Beartype import hook** ``if TYPE_CHECKING:`` **warning.**
+
+    This warning is issued at module importation time from the import hooks
+    registered by the :func:`beartype.claw` subpackage when a module imports
+    type hints in a runtime-hostile ``if TYPE_CHECKING:`` block that those hooks
+    are unable to reduce to equivalent lazy imports.
+    '''
+
+    pass
+
 # ....................{ CLAW ~ importlib                   }....................
 class BeartypeClawImportlibWarning(BeartypeClawWarning):
     '''

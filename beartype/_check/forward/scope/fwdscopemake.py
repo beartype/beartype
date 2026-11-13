@@ -33,6 +33,7 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._util.cls.utilclsget import get_type_locals
+from beartype._util.hint.pep.proposal.pep810 import get_scope_nonlazy_or_none
 from beartype._util.func.utilfunccodeobj import get_func_codeobject
 from beartype._util.func.utilfuncframe import (
     GET_FRAME_CALLER_PARENT,
@@ -559,7 +560,16 @@ def make_scope_forward_decor_curr(
     # overwriting each builtin attribute previously copied into this forward
     # scope with each global attribute of the same name. Globals *ALWAYS* assume
     # precedence over builtins.
-    func_scope.update(func_globals)
+    #
+    # Note that PEP 810-compliant lazily imported globals are intentionally
+    # excluded. Evaluating a stringified type hint referring to such a global
+    # would implicitly reify that global, destroying its laziness. Excluding
+    # these globals instead induces this scope to replace each such global
+    # referred to by a stringified type hint with a forward reference proxy
+    # resolving that global only when first type-checked.
+    func_globals_nonlazy = get_scope_nonlazy_or_none(func_globals)
+    func_scope.update(
+        func_globals if func_globals_nonlazy is None else func_globals_nonlazy)
     # print(f'func: {func}; parent_func: {parent_func}')
 
     # If...
