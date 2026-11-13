@@ -695,11 +695,6 @@ _HINT_SIGNS_SUPPORTED_SHALLOW: FrozenSetHintSign = frozenset((
     # HintSignPep646TupleUnpacked,
     # HintSignPep646TypeVarTupleUnpacked,
 
-    # ..................{ PEP 646                            }..................
-    #FIXME: Shift into "HINT_SIGNS_SEQUENCE_ARGS_N" *AFTER* deeply type-checking
-    #PEP 646-compliant tuple hints.
-    HintSignPep646TupleFixedVariadic,
-
     # ..................{ PEP 647                            }..................
     HintSignTypeGuard,
 
