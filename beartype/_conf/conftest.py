@@ -355,6 +355,7 @@ def sanify_conf_kwargs(conf_kwargs: DictStrToAny) -> None:
 
 # ....................{ PRIVATE ~ globals                  }....................
 _ARG_NAMES_BOOL = (
+    'claw_is_trace_imports',
     'is_debug',
     'is_pep484_tower',
     'is_pep557_fields',
