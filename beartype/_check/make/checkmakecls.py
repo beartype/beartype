@@ -19,7 +19,8 @@ from beartype._cache.cls.cacheclsmega import CacheMegaStrongABC
 from beartype._check.cls.call.calldataexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._check.cls.scope.checkexprscope import BeartypeCheckExprScope
+from beartype._check.cls.scope.checkexprscope import (
+    BeartypeCheckExprScopeFrozen)
 from beartype._check.code.codemain import CodeGenerated
 from beartype._check.convert.convmain import sanify_hint_root_statement
 from beartype._check.forward.reference.fwdrefset import (
@@ -39,6 +40,7 @@ from beartype._data.typing.datatypingport import Hint
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.utilfuncmake import make_func
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from collections.abc import Callable
 from itertools import count
 from warnings import catch_warnings
@@ -266,7 +268,7 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         exception_prefix: str,
         hint: Hint,
         make_code_check: Callable[..., CodeGenerated],
-    ) -> tuple[CallableRaiserOrTester, BeartypeCheckExprScope]:
+    ) -> tuple[CallableRaiserOrTester, BeartypeCheckExprScopeFrozen]:
         '''
         **Non-thread-safe type-checking function factory** (i.e., low-level
         method non-thread-safely generating a pure-Python function detecting
@@ -302,7 +304,7 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
 
         Returns
         -------
-        tuple[CallableRaiserOrTester, BeartypeCheckExprScope]
+        tuple[CallableRaiserOrTester, BeartypeCheckExprScopeFrozen]
             2-tuple ``(func_checker, func_checker_locals)`` such that:
 
             * ``func_checker`` is the **type-checking function** (i.e.,
@@ -442,7 +444,7 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         # ....................{ SCOPE                      }....................
         # Mutable dictionary coerced from this immutable frozen dictionary if
         # this dictionary is *NOT* already mutable.
-        func_scope = dict(func_scope_frozen)
+        func_scope_unfrozen = func_scope_frozen.unfreeze()
 
         # Expose this beartype external call metadata singleton to this wrapper
         # function as a beartype-specific hidden parameter passed to this
@@ -451,10 +453,10 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         # of this wrapper function by enabling this metadata to be passed as a
         # single unified parameter (rather than individually as multiple
         # distinct parameters).
-        func_scope[ARG_NAME_CALL_META] = call_curr
+        func_scope_unfrozen[ARG_NAME_CALL_META] = call_curr
 
         # Type-checking expression lexical scope to be returned.
-        func_scope_refrozen = func_scope_frozen.refreeze(func_scope)
+        func_scope_refrozen = func_scope_unfrozen.refreeze()
 
         # ....................{ FUNCTION                   }....................
         # Unqualified basename of this type-checking function to be created,
@@ -466,7 +468,7 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         # function function to be defined and returned by this factory.
         code_signature = make_func_signature(
             func_name=func_checker_name,
-            func_scope=func_scope,
+            func_scope=func_scope_refrozen,
             code_signature_format=CODE_CHECKER_SIGNATURE,
             conf=conf,
         )
@@ -479,7 +481,7 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         func_checker = make_func(
             func_name=func_checker_name,
             func_code=func_checker_code,
-            func_locals=func_scope,
+            func_locals=func_scope_unfrozen,  # type: ignore[arg-type]
             func_label=EXCEPTION_PLACEHOLDER,
             is_debug=conf.is_debug,
         )
@@ -515,7 +517,10 @@ def _func_checker_ignorable(obj: object) -> bool:
 
 _FUNC_CHECKER_IGNORABLE = (
     _func_checker_ignorable,
-    BeartypeCheckExprScope(is_check_expr_cacheable=True),
+    BeartypeCheckExprScopeFrozen(
+        check_expr_scope=FrozenDict(),
+        is_check_expr_cacheable=True,
+    ),
 )
 '''
 **Ignorable type-checking function data** (i.e., 2-tuple ``(func_checker,

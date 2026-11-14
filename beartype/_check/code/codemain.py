@@ -61,7 +61,7 @@ from beartype._check.code.snip.codesnipstr import (
 )
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import HintSane
-from beartype._check.cls.scope.checkexprscope import BeartypeCheckExprScope
+from beartype._check.cls.scope.checkexprscope import BeartypeCheckExprScopeFrozen
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.datacodelen import (
     LINE_RSTRIP_INDEX_AND,
@@ -105,7 +105,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignCounter,
     HintSignPep484585GenericUnsubbed,
     HintSignLiteral,
-    HintSignNamedTuple,
+    # HintSignNamedTuple,
     HintSignPep484585TupleFixed,
     HintSignType,
 )
@@ -142,13 +142,14 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
 )
 from beartype._util.hint.utilhinttest import die_as_hint_unsupported
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from random import getrandbits
 
 # ....................{ HINTS                              }....................
-CodeGenerated = tuple[str, BeartypeCheckExprScope]
+CodeGenerated = tuple[str, BeartypeCheckExprScopeFrozen]
 '''
 :pep:`585`-compliant type hint matching **generated code** (i.e., tuple
 containing a Python code snippet dynamically generated on-the-fly by the
@@ -1540,15 +1541,33 @@ def make_check_expr(
     # *AFTER* finalizing these instance variables above.
     check_expr = (
         func_wrapper_code,
+
+        #FIXME: *AWKWARD*. It would be substantially more streamlined to
+        #refactor "hint_tree" as follows:
+        #* Define a new "hint_tree.func_wrapper_scope" instance variable to be
+        #  a *MUTABLE* expression lexical scope as follows:
+        #      func_wrapper_scope: BeartypeCheckExprScopeUnfrozen
+        #* Refactor all references to:
+        #  * The "hint_tree.func_wrapper_locals" instance variables to instead
+        #    reference "hint_tree.func_wrapper_scope".
+        #  * The "hint_tree.is_check_expr_cacheable" instance variables to
+        #    instead reference
+        #    "hint_tree.func_wrapper_scope.is_check_expr_cacheable".
+        #* Remove both the "hint_tree.func_wrapper_locals" *AND*
+        #  "hint_tree.is_check_expr_cacheable" instance variables.
+        #* Then trivially reduce this local variable assignment to merely:
+        #      check_expr = (
+        #          func_wrapper_code, hint_tree.func_wrapper_scope.refreeze())
+
         # Coerce this currently mutable non-frozen dictionary into an immutable
         # frozen dictionary, preventing callers from erroneously modifying this
         # frozen dictionary when memoized below and subsequently returned to
         # different callers. Freezing this dictionary slightly reduces
         # efficiency (which is slightly bad) but *DRAMATICALLY* eliminates
         # otherwise impossible to debug memoization issues. Debugging wins! \o/
-        BeartypeCheckExprScope(
-            hint_tree.func_wrapper_locals,
-            is_check_expr_cacheable=hint_tree.is_check_expr_cacheable
+        BeartypeCheckExprScopeFrozen(
+            check_expr_scope=FrozenDict(hint_tree.func_wrapper_locals),
+            is_check_expr_cacheable=hint_tree.is_check_expr_cacheable,
         ),
     )
 

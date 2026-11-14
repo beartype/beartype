@@ -22,7 +22,7 @@ from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
-    LexicalScope,
+    LexicalScopeMutable,
 )
 from typing import (
     NoReturn,
@@ -414,7 +414,7 @@ class BeartypeForwardRefSubbedABC(BeartypeForwardRefABC):
     '''
 
 
-    __kwargs_beartype__: LexicalScope = None  # type: ignore[assignment]
+    __kwargs_beartype__: LexicalScopeMutable = None  # type: ignore[assignment]
     '''
     Dictionary of all keyword arguments subscripting this forward reference.
     '''

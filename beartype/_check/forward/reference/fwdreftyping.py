@@ -15,6 +15,7 @@ from beartype._check.forward.reference._cls.fwdrefabc import (
     BeartypeForwardRefABC)
 from beartype._check.forward.reference._cls.fwdreffake import (
     BeartypeForwardRefFakeABC)
+from collections.abc import Set
 
 # ....................{ HINTS ~ type                       }....................
 #FIXME: Replace all unsafe external references to the private
@@ -39,8 +40,22 @@ accessed).
 '''
 
 # ....................{ HINTS ~ container                  }....................
+AbstractSetBeartypeForwardRefs = Set[BeartypeForwardRef]
+'''
+:pep:`585`-compliant type hint matching any abstract set of zero or more
+:mod:`beartype`-specific forward reference proxies.
+'''
+
+
 FrozenSetBeartypeForwardRefs = frozenset[BeartypeForwardRef]
 '''
 :pep:`585`-compliant type hint matching any frozen set of zero or more
 :mod:`beartype`-specific forward reference proxies.
+'''
+
+
+SetBeartypeForwardRefs = set[BeartypeForwardRef]
+'''
+:pep:`585`-compliant type hint matching any **set** (i.e., :class:`set`
+instance) of zero or more :mod:`beartype`-specific forward reference proxies.
 '''

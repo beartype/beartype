@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype type-checking function code factories** (i.e., low-level
+Beartype **type-checking function code factories** (i.e., low-level
 callables dynamically generating pure-Python code snippets type-checking
 arbitrary objects passed to arbitrary callables against PEP-compliant type hints
 passed to those same callables).
@@ -30,6 +30,10 @@ from beartype._check.cls.call.calldatadecorfunc import (
     prefix_decor_func_callable_pith,
 )
 from beartype._check.cls.hint.hintsane import HintSane
+from beartype._check.cls.scope.checkexprscope import (
+    BeartypeCheckExprScopeFrozen,
+    BeartypeCheckExprScopeUnfrozen,
+)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.check.code.datacodename import (
     ARG_NAME_CONF,
@@ -53,14 +57,16 @@ from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
 )
-from beartype._data.typing.datatyping import LexicalScope
+from beartype._data.typing.datatyping import (
+    LexicalScopeMutable,
+    MappingStrToAny,
+    MappingMutableStrToAny,
+)
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.hint.utilhintget import get_hint_repr
-from beartype._util.kind.maplike.utilmapfrozen import (
-    FrozenDict,
-    FrozenDictStrToAny,
-)
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+from collections.abc import Mapping
 from itertools import count
 from typing import Optional
 from warnings import warn
@@ -176,7 +182,7 @@ def make_code_raiser_func_pith_check(
     #perform this logic on "func_scope" *AFTER* defining that below.
     #FIXME: Call the following both here and in _make_func_checker():
     #    func_scope = func_scope_frozen.unfreeze()
-    #FIXME: Define a new "BeartypeCheckExprScope*" type hierarchy resembling:
+    #FIXME: Define a new "BeartypeCheckExprScopeFrozen*" type hierarchy resembling:
     #class _BeartypeCheckExprScopeMixin():
     #    #FIXME: Shift "__slots__" and __init__() from
     #    #"BeartypeCheckExprScopeFrozen" here, yo! *sigh*
@@ -188,7 +194,7 @@ def make_code_raiser_func_pith_check(
     #    ...
     #class BeartypeCheckExprScopeFrozen(FrozenDictStrToAny, _BeartypeCheckExprScopeMixin):
     #    ...
-    #FIXME: Define a new BeartypeCheckExprScope.unfreeze() method resembling:
+    #FIXME: Define a new BeartypeCheckExprScopeFrozen.unfreeze() method resembling:
     #FIXME: Unit test us up, please. *sigh*
     #FIXME: Docstring us up, please. *sigh*
     #FIXME: Remove the set_beartype_ref_proxies_classvars_uninitted() function,
@@ -309,7 +315,7 @@ def make_code_raiser_func_pith_check(
     #return. Currently, this logic is instead being performed *FOR EACH
     #PARAMETER AND RETURN* -- which is both slow and totally wrong. Yikes. We
     #really botched that one, huh? In light of this, let's:
-    #* Define a new BeartypeCheckExprScope.dememoize() method resembling:
+    #* Define a new BeartypeCheckExprScopeFrozen.dememoize() method resembling:
     #      #FIXME: Not quite right, of course. We need to accept a few
     #      #parameters. See above for similar code. *sigh*
     #      def dememoize(self) -> None:
@@ -357,10 +363,10 @@ def make_code_raiser_func_pith_check(
     #         # Else, the decorated callable is annotated by *NO* such references.
     #* In _make_func_checker(), replace the "if
     #  func_scope_frozen._beartype_ref_proxies:" conditional with a call to
-    #  BeartypeCheckExprScope.dememoize() instead.
+    #  BeartypeCheckExprScopeFrozen.dememoize() instead.
     #* Remove the "if func_scope_frozen._beartype_ref_proxies:" conditional
     #  below entirely.
-    #* Call BeartypeCheckExprScope.dememoize() from "wrapmain" instead.
+    #* Call BeartypeCheckExprScopeFrozen.dememoize() from "wrapmain" instead.
     #
     #That should do it. Emphasis on "should." More sighing.
 
@@ -381,12 +387,12 @@ def make_code_raiser_func_pith_check(
 
     # ....................{ SCOPE                          }....................
     # Mutable dictionary coerced from this immutable frozen dictionary.
-    func_scope = dict(func_scope_frozen)
+    func_scope_unfrozen = func_scope_frozen.unfreeze()
 
     # Expose the get_func_pith_violation() getter called by the
     # "CODE_GET_FUNC_PITH_VIOLATION" snippet as a "beartype"-specific hidden
     # parameter passed to this wrapper function.
-    func_scope[ARG_NAME_GET_VIOLATION] = get_func_pith_violation
+    func_scope_unfrozen[ARG_NAME_GET_VIOLATION] = get_func_pith_violation
 
     # ....................{ RAISER                         }....................
     #FIXME: [SPEED] Globalize CODE_GET_FUNC_PITH_VIOLATION.format() as
@@ -394,7 +400,7 @@ def make_code_raiser_func_pith_check(
     # Code snippet generating a human-readable violation exception or warning
     # when the root pith violates the root type hint.
     code_get_violation = CODE_GET_FUNC_PITH_VIOLATION.format(
-        arg_random_int=_get_func_scope_arg_random_int(func_scope),
+        arg_random_int=_get_func_scope_arg_random_int(func_scope_unfrozen),
         pith_name=get_hint_repr(pith_name),
     )
 
@@ -403,7 +409,7 @@ def make_code_raiser_func_pith_check(
     # non-fatal warning.
     code_handle_violation = _make_code_raiser_violation(
         conf=decor_func.conf,
-        func_scope=func_scope,
+        func_scope=func_scope_unfrozen,  # type: ignore[arg-type]
 
         #FIXME: *SUPER-SILLY*. This can be trivially deduced from the passed
         #"pith_name". Clearly, this is an ancient vestigial artifact of an era
@@ -429,19 +435,15 @@ def make_code_raiser_func_pith_check(
     # Type-checking expression lexical scope to be returned *AFTER* finalizing
     # modifications to this scope above -- notably, *AFTER* calling the
     # _make_code_raiser_violation() factory, which modifies this scope above.
-    func_scope_refrozen = func_scope_frozen.refreeze(func_scope)
+    func_scope_refrozen = func_scope_unfrozen.refreeze()
 
     # Return all metadata required by higher-level callers.
     return (func_code, func_scope_refrozen)
 
 # ....................{ FACTORIES ~ callable : pep : 484   }....................
-#FIXME: Pretty sure *ALL* factories (including this factory) should return a
-#full-blown "CodeGenerated" 2-tuple rather than the hacky
-#"tuple[str, FrozenDictStrToAny]" we're currently returning. Oh, well. The
-#current approach works, technically. It's just non-orthogonal and weird. *sigh*
 @callable_cached
 def make_code_raiser_func_pep484_noreturn_check(
-    conf: BeartypeConf) -> tuple[str, FrozenDictStrToAny]:
+    conf: BeartypeConf) -> CodeGenerated:
     '''
     Pure-Python code snippet of a type-checking raiser function type-checking a
     return of a decorated callable against the :obj:`typing.NoReturn` type hint
@@ -459,14 +461,14 @@ def make_code_raiser_func_pep484_noreturn_check(
 
     Returns
     -------
-    tuple[str, FrozenDictStrToAny]
+    tuple[str, BeartypeCheckExprScopeFrozen]
         Tuple containing the Python code snippet dynamically generated by this
         code factory and metadata describing that code. See also the
         :attr:`beartype._data.typing.datatyping.CodeGenerated` type hint.
     '''
 
     # Lexical scope to be returned, initialized to the empty dictionary.
-    func_scope: LexicalScope = {}
+    func_scope: LexicalScopeMutable = {}
 
     # Pass hidden parameters to this raiser function exposing the
     # get_func_pith_violation() getter called by the
@@ -494,7 +496,8 @@ def make_code_raiser_func_pep484_noreturn_check(
     # different callers. Freezing this dictionary slightly reduces efficiency
     # (which is slightly bad) but *DRAMATICALLY* eliminates otherwise impossible
     # to debug memoization issues. Debugging wins! \o/
-    func_scope_frozen: FrozenDictStrToAny = FrozenDict(func_scope)
+    func_scope_frozen = BeartypeCheckExprScopeFrozen(
+        check_expr_scope=FrozenDict(func_scope))
 
     # Return all metadata required by higher-level callers.
     return (func_code, func_scope_frozen)
@@ -571,7 +574,7 @@ def make_code_raiser_hint_object_check(
 
     # ....................{ SCOPE                          }....................
     # Mutable dictionary coerced from this immutable frozen dictionary.
-    func_scope = dict(func_scope_frozen)
+    func_scope_unfrozen = func_scope_frozen.unfreeze()
 
     # Pass hidden parameters to this raiser function exposing:
     # * The passed exception prefix accessed by this snippet.
@@ -582,22 +585,22 @@ def make_code_raiser_hint_object_check(
     #   from having a terse readable to verbose unreadable representation in
     #   violation messages raised by this raiser function. An insane hint is
     #   preferable for the purposes of generating readable violations.
-    func_scope[ARG_NAME_EXCEPTION_PREFIX] = exception_prefix
-    func_scope[ARG_NAME_GET_VIOLATION] = get_hint_object_violation
-    func_scope[ARG_NAME_RAISER_HINT] = hint_insane
+    func_scope_unfrozen[ARG_NAME_EXCEPTION_PREFIX] = exception_prefix
+    func_scope_unfrozen[ARG_NAME_GET_VIOLATION] = get_hint_object_violation
+    func_scope_unfrozen[ARG_NAME_RAISER_HINT] = hint_insane
 
     # ....................{ RAISER                         }....................
     #FIXME: [SPEED] Globalize this bound method as a negligible efficiency gain.
     # Code snippet generating a human-readable violation exception or warning
     # when the root pith violates the root type hint.
     code_get_violation = CODE_GET_HINT_OBJECT_VIOLATION.format(
-        arg_random_int=_get_func_scope_arg_random_int(func_scope))
+        arg_random_int=_get_func_scope_arg_random_int(func_scope_unfrozen))
 
     # Code snippet handling the previously generated violation by either raising
     # that violation as a fatal exception or emitting that violation as a
     # non-fatal warning.
     code_handle_violation = _make_code_raiser_violation(
-        conf=conf, func_scope=func_scope)
+        conf=conf, func_scope=func_scope_unfrozen)  # type: ignore[arg-type]
 
     # ....................{ RETURN                         }....................
     # Code snippet type-checking the root pith against the root hint.
@@ -609,7 +612,7 @@ def make_code_raiser_hint_object_check(
     )
 
     # Type-checking expression lexical scope to be returned. See above.
-    func_scope_refrozen = func_scope_frozen.refreeze(func_scope)
+    func_scope_refrozen = func_scope_unfrozen.refreeze()
 
     # Return all metadata required by higher-level callers.
     return (func_code, func_scope_refrozen)
@@ -710,7 +713,7 @@ def _func_checker_ignorable(obj: object) -> bool:
 
 # ....................{ PRIVATE ~ getters                  }....................
 #FIXME: Unit test us up, please.
-def _get_func_scope_arg_random_int(func_scope: LexicalScope) -> str:
+def _get_func_scope_arg_random_int(func_scope: MappingStrToAny) -> str:
     '''
     Code snippet intended to be embedded as the ``arg_random_int`` format
     variable of either the parent :data:`.CODE_GET_HINT_OBJECT_VIOLATION` or
@@ -718,7 +721,7 @@ def _get_func_scope_arg_random_int(func_scope: LexicalScope) -> str:
 
     Parameters
     ----------
-    func_scope : LexicalScope
+    func_scope : MappingStrToAny
         **Lexical scope** (i.e., dictionary mapping from the relative
         unqualified name to value of each locally or globally scoped attribute
         accessible to a callable or class).
@@ -735,7 +738,8 @@ def _get_func_scope_arg_random_int(func_scope: LexicalScope) -> str:
           type-checking exception raiser function call.
         * Else, the empty string.
     '''
-    assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
+    assert isinstance(func_scope, Mapping), (
+        f'{repr(func_scope)} not mapping.')
 
     # Return either...
     return (
@@ -751,7 +755,7 @@ def _get_func_scope_arg_random_int(func_scope: LexicalScope) -> str:
 def _make_code_raiser_violation(
     # Mandatory parameters.
     conf: BeartypeConf,
-    func_scope: LexicalScope,
+    func_scope: MappingMutableStrToAny,
 
     # Optional parameters.
     pith_kind: Optional[bool] = PITH_KIND_NONFUNC_OBJECT,
@@ -772,7 +776,7 @@ def _make_code_raiser_violation(
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
-    func_scope : LexicalScope
+    func_scope : MutableMapping[str, object]
         **Lexical scope** (i.e., dictionary mapping from the relative
         unqualified name to value of each locally or globally scoped attribute
         accessible to a callable or class).
@@ -814,7 +818,9 @@ def _make_code_raiser_violation(
         Further details.
     '''
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
+    #FIXME: Tighten up to "MutableMapping", yo. *sigh*
+    assert isinstance(func_scope, Mapping), (
+        f'{repr(func_scope)} not mapping.')
     assert isinstance(pith_kind, NoneTypeOr[bool]), (
         f'{repr(pith_kind)} neither boolean nor "None".')
 

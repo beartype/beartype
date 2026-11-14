@@ -29,12 +29,12 @@ from beartype._data.check.code.datacodename import (
     ARG_NAME_FUNC,
 )
 from beartype._decor._nontype._wrap._wrapargs import (
-    code_check_args as _code_check_args)
+    code_check_args as make_func_check_args)
 from beartype._decor._nontype._wrap._wrapreturn import (
-    code_check_return as _code_check_return)
+    code_check_return as make_func_check_return)
 
 # ....................{ GENERATORS                         }....................
-def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
+def make_func_check(decor_func: BeartypeCallDecorFuncData) -> str:
     '''
     Generate a Python code snippet dynamically defining the wrapper function
     type-checking the passed decorated callable.
@@ -119,12 +119,12 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
     # Python code snippet type-checking all callable parameters if one or more
     # such parameters are annotated with unignorable type hints *OR* the empty
     # string otherwise.
-    code_check_params = _code_check_args(decor_func)
+    code_check_params = make_func_check_args(decor_func)
 
     # ....................{ (RETURN|YIELD)                 }....................
     # Python code snippet type-checking the callable return if this return is
     # annotated with an unignorable type hint *OR* the empty string otherwise.
-    code_check_return = _code_check_return(decor_func)
+    code_check_return = make_func_check_return(decor_func)
     # print(f'forward scope: {repr(decor_func.decoratee_scope_forward)}')
 
     # If the callable return requires *NO* type-checking...
@@ -149,7 +149,7 @@ def generate_code(decor_func: BeartypeCallDecorFuncData) -> str:
     # ....................{ SCOPE                          }....................
     # Dictionary mapping from the name to value of each attribute referenced in
     # the signature of this wrapper function, localized merely for readability.
-    func_scope = decor_func.func_wrapper_locals
+    func_scope = decor_func.func_wrapper_scope
 
     # Expose the minimal metadata required by each call to this wrapper function
     # as a beartype-specific hidden parameter passed to this wrapper function,

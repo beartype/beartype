@@ -26,7 +26,7 @@ from beartype._check.forward.scope.fwdscopemake import (
     make_scope_forward_decor_curr)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    LexicalScopeMutable,
     TypeException,
 )
 from beartype._data.typing.datatypingport import Hint
@@ -492,7 +492,7 @@ def _resolve_hint_pep484_ref_str(
     conf: BeartypeConf,
     hint: str,
     hint_parent_sane: Optional[HintSane],
-    scope_forward: LexicalScope,
+    scope_forward: LexicalScopeMutable,
 
     # Optional parameters.
     exception_cls: TypeException = (
@@ -533,7 +533,7 @@ def _resolve_hint_pep484_ref_str(
           by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
           the possibly PEP-noncompliant parent hint of this child hint into a
           fully PEP-compliant parent hint).
-    scope_forward : LexicalScope
+    scope_forward : LexicalScopeMutable
         **Forward scope** (i.e., dictionary mapping from the names to values of
         all attributes accessible to the lexical scope of the passed decorated
         callable where this scope comprises both the global scope and all local

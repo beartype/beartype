@@ -21,7 +21,7 @@ from beartype.vale._util._valeutilsnip import (
 )
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    LexicalScopeMutable,
     TypeOrTupleTypes,
 )
 from beartype._util.cache.func.utilcachefunc import callable_cached
@@ -200,7 +200,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
-        is_valid_code_locals: LexicalScope = {}
+        is_valid_code_locals: LexicalScopeMutable = {}
 
         # Name of a new parameter added to the signature of wrapper functions
         # whose value is this type or tuple of types, enabling this type or
@@ -403,7 +403,7 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
-        is_valid_code_locals: LexicalScope = {}
+        is_valid_code_locals: LexicalScopeMutable = {}
 
         # Name of a new parameter added to the signature of wrapper functions
         # whose value is this type or tuple of types, enabling this type or

@@ -37,7 +37,7 @@ from beartype._data.py.databuiltins import (
     GLOBAL_SCOPE_BUILTINS_BASENAME,
 )
 from beartype._data.typing.datatyping import BeartypeableT
-from beartype._decor._nontype._wrap.wrapmain import generate_code
+from beartype._decor._nontype._wrap.wrapmain import make_func_check
 from beartype._util.bear.utilbearblack import is_object_blacklisted
 from beartype._util.bear.utilbearfunc import (
     is_func_unbeartypeable,
@@ -481,7 +481,7 @@ def beartype_func(
 
     # Dynamically generated Pure-Python code snippet fully defining both the
     # signature and body of the wrapper function type-checking that callable.
-    func_wrapper_code = generate_code(decor_func)
+    func_wrapper_code = make_func_check(decor_func)
     # print(f'func_wrapper_code: {func_wrapper_code}')
 
     # If that callable requires *NO* type-checking, silently reduce to a noop
@@ -609,7 +609,7 @@ def beartype_func(
         #unified scope -- with our fake local scope taking precedence. Since the
         #latter *ONLY* defines "__beartype_"-prefixed variables, there should be
         #*NO* conflict. Maybe? Let's give it a go, yo.
-        func_locals=decor_func.func_wrapper_locals,
+        func_locals=decor_func.func_wrapper_scope,  # type: ignore[arg-type]
         func_wrapped=decor_func.func_wrapper,  # pyright: ignore
         func_labeller=decor_func.label_func_wrapper,
         is_debug=conf.is_debug,

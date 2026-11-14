@@ -51,6 +51,7 @@ from collections.abc import (
     Iterable,
     Iterator,
     Mapping,
+    MutableMapping,
     Set,
 )
 from importlib.abc import Loader
@@ -392,7 +393,7 @@ objects.
 # ....................{ ITERABLE                           }....................
 IterableStrs = Iterable[str]
 '''
-PEP-compliant type hint matching *any* iterable of zero or more strings.
+:pep:`585`-compliant type hint matching *any* iterable of zero or more strings.
 '''
 
 # ....................{ ITERATOR                           }....................
@@ -420,14 +421,37 @@ zero or more 2-tuples of the form ``(item_index, item)``, where:
 # ....................{ LIST                               }....................
 ListStrs = list[str]
 '''
-:pep:`585`-compliant type hint matching a list of strings.
+:pep:`585`-compliant type hint matching any list of strings.
 '''
 
 # ....................{ MAPPING                            }....................
-MappingStrToAny = Mapping[str, object]
+MappingStrToAny = Mapping[str, Any]
 '''
-PEP-compliant type hint matching a mapping mapping from keys to arbitrary
-objects.
+:pep:`585`-compliant type hint matching any mapping mapping from keys to
+arbitrary objects.
+'''
+
+
+MappingMutableStrToAny = MutableMapping[str, Any]
+'''
+:pep:`585`-compliant type hint matching any mapping mapping from keys to
+arbitrary objects.
+'''
+
+
+LexicalScope = MappingStrToAny
+'''
+:pep:`585`-compliant type hint matching a **lexical scope** (i.e., possibly
+immutable dictionary mapping from the relative unqualified name to value of each
+locally or globally scoped attribute accessible to a callable or class).
+'''
+
+
+LexicalScopeMutable = MappingMutableStrToAny
+'''
+:pep:`585`-compliant type hint matching a **mutable lexical scope** (i.e.,
+mutable dictionary mapping from the relative unqualified name to value of each
+locally or globally scoped attribute accessible to a callable or class).
 '''
 
 # ....................{ OBJECT                             }....................
@@ -499,14 +523,6 @@ DictStrToAny = dict[str, Any]
 '''
 :pep:`585`-compliant type hint matching a dictionary mapping from strings to
 arbitrary objects.
-'''
-
-
-LexicalScope = DictStrToAny
-'''
-:pep:`585`-compliant type hint matching a **lexical scope** (i.e., dictionary
-mapping from the relative unqualified name to value of each locally or globally
-scoped attribute accessible to a callable or class).
 '''
 
 

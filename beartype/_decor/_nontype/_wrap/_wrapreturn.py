@@ -23,6 +23,8 @@ from beartype._check.cls.call.calldatadecorfunc import (
     prefix_decor_func_callable_return,
 )
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.scope.checkexprscope import (
+    BeartypeCheckExprScopeFrozen)
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_CALL_CHECKED_format)
 from beartype._data.check.code.pep.datacodepep484 import (
@@ -30,7 +32,6 @@ from beartype._data.check.code.pep.datacodepep484 import (
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.kind.datakindiota import SENTINEL
-from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
@@ -100,7 +101,7 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
     # Lexical scope (i.e., dictionary mapping from the relative unqualified name
     # to value of each locally or globally scoped attribute accessible to a
     # callable or class), initialized to "None" for safety.
-    func_scope: LexicalScope = None  # type: ignore[assignment]
+    func_scope_return: BeartypeCheckExprScopeFrozen = None  # type: ignore[assignment]
 
     # ..................{ GENERATE                           }..................
     # Attempt to...
@@ -145,7 +146,7 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
                 # Code snippet handling the previously generated violation by
                 # either raising that violation as a fatal exception *OR*
                 # emitting that violation as a non-fatal warning.
-                code_noreturn_violation, func_scope = (
+                code_noreturn_violation, func_scope_return = (
                     make_code_raiser_func_pep484_noreturn_check(
                         decor_func.conf))
 
@@ -162,7 +163,7 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
                 # passed positionally for efficiency.
                 (
                     code_return_check,
-                    func_scope,
+                    func_scope_return,
                 ) = make_code_raiser_func_pith_check(
                     decor_func=decor_func,
                     hint_sane=hint_sane,
@@ -210,8 +211,8 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
     # ..................{ RETURN                             }..................
     # If a local scope is required to type-check this return, merge this scope
     # into the local scope currently required by the current wrapper function.
-    if func_scope:
-        update_mapping(decor_func.func_wrapper_locals, func_scope)
+    if func_scope_return:
+        update_mapping(decor_func.func_wrapper_scope, func_scope_return)  # type: ignore[arg-type]
     # Else, *NO* local scope is required to type-check this return.
 
     # Return this code.

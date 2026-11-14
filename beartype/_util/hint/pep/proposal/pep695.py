@@ -154,7 +154,7 @@ from beartype._check.forward.reference.fwdrefproxy import (
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    LexicalScopeMutable,
     Pep695Parameterizable,
     TuplePep484612646TypeArgsPacked,
     TypeException,
@@ -420,7 +420,7 @@ def get_hint_pep695_unsubbed_alias(
 #FIXME: Unit test us up, please.
 def add_func_scope_hint_pep695_parameterizable_typeparams(
     # Mandatory parameters.
-    func_scope: LexicalScope,
+    func_scope: LexicalScopeMutable,
     parameterizable: Pep695Parameterizable,
 
     # Optional parameters.
@@ -444,7 +444,7 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
 
     Parameters
     ----------
-    func_scope : LexicalScope
+    func_scope : LexicalScopeMutable
         Local or global scope to map these type parameters to.
     parameterizable : Pep695Parameterizable
         :pep:`695`-compliant parameterizable to be inspected.
@@ -613,7 +613,7 @@ def _get_hint_pep695_parameterizable_typeparams(
 # ....................{ RESOLVERS                          }....................
 #FIXME: Unit test us up, please.
 def resolve_func_scope_pep695(
-    func_scope: LexicalScope,
+    func_scope: LexicalScopeMutable,
     func: Callable,
     cls_stack: TypeStack,
 
@@ -638,7 +638,7 @@ def resolve_func_scope_pep695(
 
     Parameters
     ----------
-    func_scope : LexicalScope
+    func_scope : LexicalScopeMutable
         **Lexical scope** (i.e., dictionary mapping from the name to value of
         each locally and globally accessible attribute in the local and global
         scope) of that callable.
@@ -686,7 +686,7 @@ def resolve_func_scope_pep695(
     # non-type parameters. The only means of doing so sanely is to isolate type
     # parameters resolved by this function to this unique dictionary. See also:
     #     https://peps.python.org/pep-0695/#type-parameter-scopes
-    scope_pep695: LexicalScope = acquire_instance(dict)
+    scope_pep695: LexicalScopeMutable = acquire_instance(dict)
 
     # ....................{ SCOPES ~ type                  }....................
     # If one or more parent classes lexically enclose the decorated callable...

@@ -79,6 +79,8 @@ from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
+from beartype._check.cls.scope.checkexprscope import (
+    BeartypeCheckExprScopeFrozen)
 from beartype._data.check.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_INIT_ARGS_LEN,
@@ -86,14 +88,10 @@ from beartype._data.check.code.func.datacodefuncwrap import (
 )
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
-from beartype._util.func.arg.utilfuncargiter import (
-    ArgKind,
-    iter_func_args,
-)
+from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._data.kind.datakindiota import SENTINEL
@@ -156,7 +154,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
     # Lexical scope (i.e., dictionary mapping from the relative unqualified name
     # to value of each locally or globally scoped attribute accessible to a
     # callable or class), initialized to "None" for safety.
-    func_scope: LexicalScope = None  # type: ignore[assignment]
+    func_scope_arg: BeartypeCheckExprScopeFrozen = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ parameter                 }..................
     #FIXME: Remove this *AFTER* optimizing signature generation, please.
@@ -356,7 +354,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
                 # passed positionally for efficiency.
                 (
                     code_arg_check,
-                    func_scope,
+                    func_scope_arg,
                 ) = make_code_raiser_func_pith_check(
                     decor_func=decor_func,
                     hint_sane=hint_sane,
@@ -372,7 +370,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
 
                 # Merge the local scope required to check this parameter into
                 # the local scope required by the current wrapper function.
-                update_mapping(decor_func.func_wrapper_locals, func_scope)
+                update_mapping(decor_func.func_wrapper_scope, func_scope_arg)  # type: ignore[arg-type]
 
             # If one or more warnings were issued, reissue these warnings with
             # each placeholder substring (i.e., "EXCEPTION_PLACEHOLDER"
@@ -410,7 +408,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
     # the set of the names of all keywordable parameters to this wrapper
     # function needed to type-check that annotated variadic keyword parameter.
     if args_name_keywordable is not None:
-        decor_func.func_wrapper_locals[ARG_NAME_ARGS_NAME_KEYWORDABLE] = (
+        decor_func.func_wrapper_scope[ARG_NAME_ARGS_NAME_KEYWORDABLE] = (
             args_name_keywordable)
     # Else, that callable accepts *NO* annotated variadic parameter.
 

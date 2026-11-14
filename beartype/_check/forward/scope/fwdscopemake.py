@@ -29,7 +29,7 @@ from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    LexicalScopeMutable,
     TypeException,
 )
 from beartype._util.cls.utilclsget import get_type_locals
@@ -163,7 +163,7 @@ def make_scope_forward_decor_curr(
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
-) -> LexicalScope:
+) -> LexicalScopeMutable:
     '''
     Create and return a new **forward scope** (i.e., dictionary mapping from the
     name to value of each locally and globally accessible attribute in the local
@@ -202,7 +202,7 @@ def make_scope_forward_decor_curr(
 
     Returns
     -------
-    LexicalScope
+    LexicalScopeMutable
         Forward scope relative to the currently decorated callable.
     '''
     assert isinstance(decor_curr, BeartypeCallDecorDataABC), (
@@ -299,7 +299,7 @@ def make_scope_forward_decor_curr(
     func_locals_frame: CallableFrameType | None = None
 
     # Local scope of that call, defaulting to the empty dictionary.
-    func_locals: LexicalScope = FROZENDICT_EMPTY
+    func_locals: LexicalScopeMutable = FROZENDICT_EMPTY
 
     # Global scope of the decorated callable.
     func_globals = get_func_globals(func=decoratee, exception_cls=exception_cls)

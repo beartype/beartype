@@ -24,14 +24,12 @@ from beartype._data.func.datafunccodeobj import (
     CODE_OBJECT_FILENAME_EVAL,
 )
 from beartype._data.typing.datatyping import (
-    LexicalScope,
-    MappingStrToAny,
+    DictStrToAny,
     TypeException,
 )
 from collections.abc import (
     Callable,
     Iterable,
-    Mapping,
 )
 from typing import Optional
 
@@ -487,7 +485,7 @@ def get_frame_codeobject_or_none(
 
 # ....................{ GETTERS ~ attribute : scope        }....................
 #FIXME: Unit test up, please. *sigh*
-def get_frame_globals(frame: CallableFrameType) -> LexicalScope:
+def get_frame_globals(frame: CallableFrameType) -> DictStrToAny:
     '''
     **Global scope** encapsulated by the passed **stack frame** (i.e.,
     :class:`.CallableFrameType` instance encapsulating all metadata describing a
@@ -504,7 +502,7 @@ def get_frame_globals(frame: CallableFrameType) -> LexicalScope:
 
     Returns
     -------
-    LexicalScope
+    LexicalScopeMutable
         **Global scope** encapsulated by this frame.
     '''
     assert isinstance(frame, CallableFrameType), (
@@ -515,7 +513,7 @@ def get_frame_globals(frame: CallableFrameType) -> LexicalScope:
     # is *NOT* a "dict" instance, coerce this scope-like into a "dict" instance.
     # Why? Several justifiable reasons:
     # * Higher-level callers calling this lower-level coercer are typically
-    #   annotated as returning a "LexicalScope", which is currently just a
+    #   annotated as returning a "LexicalScopeMutable", which is currently just a
     #   readable alias for "DictStrToAny", which is itself an efficiency alias
     #   for "Dict[Str, object]". Ergo, static type-checkers expect this getter
     #   to return "dict" instances.
@@ -548,7 +546,7 @@ def get_frame_globals(frame: CallableFrameType) -> LexicalScope:
 
 
 #FIXME: Unit test up, please. *sigh*
-def get_frame_locals(frame: CallableFrameType) -> LexicalScope:
+def get_frame_locals(frame: CallableFrameType) -> DictStrToAny:
     '''
     Safely mutable **local scope** encapsulated by the passed **stack frame**
     (i.e., :class:`.CallableFrameType` instance encapsulating all metadata
@@ -564,7 +562,7 @@ def get_frame_locals(frame: CallableFrameType) -> LexicalScope:
 
     Returns
     -------
-    LexicalScope
+    DictStrToAny
         **Local scope** encapsulated by this frame.
     '''
     assert isinstance(frame, CallableFrameType), (

@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: The BeartypeForwardScope.__init__() "scope_dict: LexicalScope" parameter
+#FIXME: The BeartypeForwardScope.__init__() "scope_dict: LexicalScopeMutable" parameter
 #should probably instead be typed as:
 #    from collections import ChainMap
 #    ...
@@ -49,7 +49,8 @@ from beartype._data.kind.datakindiota import (
 from beartype._data.py.databuiltins import BUILTIN_NAME_TO_VALUE
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
-    LexicalScope,
+    DictStrToAny,
+    LexicalScopeMutable,
     SetStrs,
 )
 from beartype._data.typing.datatypingport import Hint
@@ -71,7 +72,7 @@ from typing import (
 )
 
 # ....................{ SUPERCLASSES                       }....................
-class BeartypeForwardScope(LexicalScope):
+class BeartypeForwardScope(DictStrToAny):
     '''
     **Forward scope** (i.e., dictionary mapping from the name to value of each
     locally and globally accessible attribute in the local and global scope of a
@@ -205,7 +206,7 @@ class BeartypeForwardScope(LexicalScope):
         # Optional parameters.
         func_local_parent_codeobj_weakref: FuncLocalParentCodeObjectWeakref = (
             None),
-        scope_dict: LexicalScope = BUILTIN_NAME_TO_VALUE,
+        scope_dict: LexicalScopeMutable = BUILTIN_NAME_TO_VALUE,
     ) -> None:
         '''
         Initialize this forward scope to the immutable dictionary of all
@@ -252,7 +253,7 @@ class BeartypeForwardScope(LexicalScope):
             locally decorated callable *or* :data:`None` otherwise. See also the
             :attr:`beartype._check.forward.reference._cls.fwdrefabc.BeartypeForwardRefABC.__func_local_parent_codeobj_weakref_beartype__`
             class variable for further details.
-        scope_dict : LexicalScope, default: scope_builtins
+        scope_dict : LexicalScopeMutable, default: scope_builtins
             Initial dictionary from which to populate this forward scope.
             Defaults to the immutable dictionary of all **builtin attributes.**
 
@@ -310,14 +311,15 @@ class BeartypeForwardScope(LexicalScope):
     # ..................{ DUNDERS                            }..................
     def __getitem__(self, hint_name: str) -> Hint:
         '''
-        Dunder method implicitly called on each ``[``- and ``]``-delimited
-        attempt to access a with the passed name against this forward scope.
+        Value of the type hint with the passed name accessible to this forward
+        scope, implicitly called on each ``[``- and ``]``-delimited attempt to
+        access that hint on this scope.
 
         Parameters
         ----------
         hint_name : str
             Relative (i.e., unqualified) or absolute (i.e., fully-qualified)
-            name of this unresolved type hint.
+            name of the type hint to access on this scope.
 
         Returns
         -------
@@ -352,7 +354,6 @@ class BeartypeForwardScope(LexicalScope):
 
         # Return this non-string type hint
         return hint
-
 
     # ..................{ OVERRIDES                          }..................
     def clear(self) -> None:
@@ -735,7 +736,7 @@ class BeartypeForwardScope(LexicalScope):
         return self[hint_name]
 
     # ..................{ MINIFIERS                          }..................
-    def minify(self) -> LexicalScope:
+    def minify(self) -> LexicalScopeMutable:
         '''
         **Minimal lexical scope** (i.e., dictionary mapping from the name to
         value of each locally and globally accessible attribute in the local and
@@ -767,7 +768,7 @@ class BeartypeForwardScope(LexicalScope):
 
         Returns
         -------
-        LexicalScope
+        LexicalScopeMutable
             Minimal dictionary minified from this maximal forward scope.
         '''
 

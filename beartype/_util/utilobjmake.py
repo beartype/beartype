@@ -16,7 +16,7 @@ from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.typing.datatyping import (
     T,
     FrozenSetStrs,
-    LexicalScope,
+    LexicalScopeMutable,
     TypeException,
 )
 from beartype._data.kind.datakindiota import SENTINEL
@@ -27,7 +27,7 @@ from typing import Optional
 def permute_object(
     # Mandatory parameters.
     obj: T,
-    init_arg_name_to_value: LexicalScope,
+    init_arg_name_to_value: LexicalScopeMutable,
     init_arg_names: FrozenSetStrs,
 
     # Optional parameters.
@@ -57,7 +57,7 @@ def permute_object(
     ----------
     obj : T
         Object to be permuted.
-    init_arg_name_to_value : LexicalScope
+    init_arg_name_to_value : LexicalScopeMutable
         Dictionary mapping from the name to value of each:
 
         * Parameter to be passed to the ``__init__`` method of the type of the

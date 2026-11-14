@@ -37,7 +37,7 @@ from beartype._check.forward.reference.fwdreftyping import (
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
-    LexicalScope,
+    LexicalScopeMutable,
     TupleTypes,
 )
 from beartype._util.cache.func.utilcachefunc import callable_cached
@@ -171,7 +171,7 @@ def proxy_hint_pep484_ref_str_subbed(
     hint_name: str,
     hint_parent_sane: Optional[HintSane],
     args: tuple,
-    kwargs: LexicalScope,
+    kwargs: LexicalScopeMutable,
 ) -> type[BeartypeForwardRefSubbedABC]:
     '''
     Create and return a new **subscripted forward reference proxy** (i.e.,
@@ -227,7 +227,7 @@ def proxy_hint_pep484_ref_str_subbed(
           reference into a fully PEP-compliant parent hint).
     args : tuple
         Tuple of all positional arguments subscripting this forward reference.
-    kwargs : LexicalScope
+    kwargs : LexicalScopeMutable
         Dictionary of all keyword arguments subscripting this forward reference.
 
     Returns

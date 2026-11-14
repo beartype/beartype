@@ -335,7 +335,7 @@ def test_union_custom_instancecheck_order() -> None:
 #     from beartype._check.code.codescope import (
 #         express_hints_meta_scope_type_ref)
 #     from beartype._check.cls.hint.tree.hinttreecode import HintTreeCode
-#     from beartype._data.typing.datatyping import LexicalScope
+#     from beartype._data.typing.datatyping import LexicalScopeMutable
 #     from pytest import raises
 #     from typing import (
 #         ForwardRef,
@@ -377,7 +377,7 @@ def test_union_custom_instancecheck_order() -> None:
 #
 #     # ....................{ CALLABLES                      }....................
 #     def _make_hints_meta(
-#         func_wrapper_locals: LexicalScope,
+#         func_wrapper_locals: LexicalScopeMutable,
 #         hint_refs_type_basename: Optional[set],
 #     ) -> HintTreeCode:
 #         '''
@@ -389,7 +389,7 @@ def test_union_custom_instancecheck_order() -> None:
 #
 #         Parameters
 #         ----------
-#         func_wrapper_locals : LexicalScope
+#         func_wrapper_locals : LexicalScopeMutable
 #             Local or global scope to add this forward reference to.
 #         hint_refs_type_basename : Optional[set]
 #             Set of all existing **relative forward references** (i.e.,

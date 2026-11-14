@@ -21,6 +21,7 @@ from beartype._data.check.code.func.datacodefuncwrap import (
 )
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._util.text.utiltextrepr import represent_object
+from collections.abc import Mapping
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
@@ -79,7 +80,7 @@ def make_func_signature(
         Signature of this callable.
     '''
     assert isinstance(func_name, str), f'{repr(func_name)} not string.'
-    assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
+    assert isinstance(func_scope, Mapping), f'{repr(func_scope)} not mapping.'
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert isinstance(code_signature_format, str), (
         f'{repr(code_signature_format)} not string.')
@@ -88,7 +89,7 @@ def make_func_signature(
 
     # Python code snippet declaring all optional private beartype-specific
     # parameters directly derived from the local scope established by the above
-    # calls to the _code_check_args() and _code_check_return() functions.
+    # calls to the make_func_check_args() and make_func_check_return() functions.
     code_signature_scope_args = ''
 
     # For the name and value of each such parameter...

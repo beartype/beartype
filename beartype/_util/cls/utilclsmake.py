@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    LexicalScopeMutable,
     TupleTypes,
     TypeException,
 )
@@ -81,7 +81,7 @@ def make_type(
     # Optional arguments.
     type_module_name: Optional[str] = None,
     type_bases: TupleTypes = (),
-    type_scope: LexicalScope = FROZENDICT_EMPTY,
+    type_scope: LexicalScopeMutable = FROZENDICT_EMPTY,
     type_doc: Optional[str] = None,
     exception_cls: TypeException = _BeartypeUtilTypeException,
     exception_prefix: str = '',
