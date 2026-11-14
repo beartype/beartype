@@ -85,3 +85,42 @@ def test_decor_numpy() -> None:
     with raises(BeartypeCallHintParamViolation):
         search_thea_search(
             "Upon all space: space starr'd, and lorn of light;")
+
+
+@skip_unless_package('numpy')
+def test_decor_numpy_dtype_union() -> None:
+    '''
+    Test :func:`beartype.door.is_bearable` against NumPy arrays subscripted by
+    unions of scalar types and unions of dtypes.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import is_bearable
+    from numpy import (
+        dtype,
+        float32,
+        float64,
+        floating,
+        int64,
+        ndarray,
+        zeros,
+    )
+    from numpy.typing import NDArray
+
+    array_f32 = zeros(2, dtype=float32)
+    array_f64 = zeros(2, dtype=float64)
+    array_i64 = zeros(2, dtype=int64)
+
+    for hint in (
+        NDArray[float32 | float64],
+        ndarray[tuple[int], dtype[float32 | float64]],
+        ndarray[tuple[int], dtype[float32] | dtype[float64]],
+    ):
+        assert is_bearable(array_f32, hint) is True
+        assert is_bearable(array_f64, hint) is True
+        assert is_bearable(array_i64, hint) is False
+
+    hint_abc = NDArray[floating | int64]
+    assert is_bearable(array_f32, hint_abc) is True
+    assert is_bearable(array_i64, hint_abc) is True
+    assert is_bearable(zeros(2, dtype=bool), hint_abc) is False
