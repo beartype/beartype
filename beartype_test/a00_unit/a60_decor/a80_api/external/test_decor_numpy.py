@@ -85,3 +85,39 @@ def test_decor_numpy() -> None:
     with raises(BeartypeCallHintParamViolation):
         search_thea_search(
             "Upon all space: space starr'd, and lorn of light;")
+
+
+@skip_unless_package('numpy')
+def test_decor_numpy_parametrized_scalar() -> None:
+    '''
+    Test :func:`beartype.door.is_bearable` against NumPy arrays of parametric dtypes.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import is_bearable
+    from numpy import (
+        array,
+        bytes_,
+        datetime64,
+        float64,
+        str_,
+        timedelta64,
+        void,
+        zeros,
+    )
+    from numpy.typing import NDArray
+
+    array_f64 = zeros(1, dtype=float64)
+
+    for scalar, arr in (
+        (str_, array(['a'])),
+        (bytes_, array([b'a'])),
+        (void, zeros(1, dtype='V8')),
+        (void, zeros(1, dtype=[('x', 'f8')])),
+        (datetime64, array(['2020-01-01'], dtype='M8[s]')),
+        (timedelta64, array([1], dtype='m8[s]')),
+    ):
+        assert is_bearable(arr, NDArray[scalar]) is True
+        assert is_bearable(array_f64, NDArray[scalar]) is False
+
+    assert is_bearable(array(['2020-01-01'], dtype='M8[s]'), NDArray[str_]) is False

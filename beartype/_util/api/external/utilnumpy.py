@@ -54,8 +54,10 @@ def get_numpy_dtype_type_abcs() -> FrozenSetTypes:
 
     # Avoid third-party import dependencies.
     from numpy import (  # pyright: ignore
+        bytes_,
         character,
         complexfloating,
+        datetime64,
         flexible,
         floating,
         generic,
@@ -63,11 +65,22 @@ def get_numpy_dtype_type_abcs() -> FrozenSetTypes:
         integer,
         number,
         signedinteger,
+        str_,
+        timedelta64,
         unsignedinteger,
+        void,
     )
 
     # Create, return, and cache a frozen set listing these ABCs.
     return frozenset((
+        # parametric (e.g., "np.dtype('<U1') != np.dtype(np.str_)")
+        bytes_,
+        str_,
+        void,
+        datetime64,
+        timedelta64,
+
+        # abstract
         character,
         complexfloating,
         flexible,
@@ -175,7 +188,7 @@ def reduce_numpy_dtype(
     # Sanitized name of this dtype, efficiently truncating *ALL* digits and
     # underscores from this name (e.g., sanitizing "complex128" to "complex").
     dtype_name_sanitized = dtype.name.translate(  # type: ignore[attr-defined]
-        _TRANSLATION_TABLE_DTYPE_NAME_SANITIZER) 
+        _TRANSLATION_TABLE_DTYPE_NAME_SANITIZER)
 
     # Dictionary mapping from each sanitized NumPy data type name to the
     # corresponding reduced type (e.g., from the string "complex" to the
