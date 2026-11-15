@@ -19,11 +19,10 @@ from beartype._cache.cls.cacheclsmega import CacheMegaStrongABC
 from beartype._check.cls.call.calldataexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._check.cls.scope.checkexprscope import BeartypeCheckExprScope
+from beartype._check.cls.scope.checkexprscope import (
+    BeartypeCheckExprScopeFrozen)
 from beartype._check.code.codemain import CodeGenerated
 from beartype._check.convert.convmain import sanify_hint_root_statement
-from beartype._check.forward.reference.fwdrefset import (
-    set_beartype_ref_proxies_classvars_uninitted)
 from beartype._check.make.checkmakesig import make_func_signature
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.conftest import die_unless_conf
@@ -39,6 +38,7 @@ from beartype._data.typing.datatypingport import Hint
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.utilfuncmake import make_func
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from collections.abc import Callable
 from itertools import count
 from warnings import catch_warnings
@@ -266,7 +266,7 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         exception_prefix: str,
         hint: Hint,
         make_code_check: Callable[..., CodeGenerated],
-    ) -> tuple[CallableRaiserOrTester, BeartypeCheckExprScope]:
+    ) -> tuple[CallableRaiserOrTester, BeartypeCheckExprScopeFrozen]:
         '''
         **Non-thread-safe type-checking function factory** (i.e., low-level
         method non-thread-safely generating a pure-Python function detecting
@@ -275,9 +275,14 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         boolean return *or* raising a fatal exception or emitting a non-fatal
         warning if that result is :data:`False`).
 
-        This low-level private factory method is non-thread-safe and intended to
-        be called *only* by the higher-level public :meth:`.cache_func_checker`
-        factory method.
+        This factory is directly called by the :meth:`.cache_func_checker`
+        factory, itself directly called by the :func:`beartype.door.is_bearable`
+        and :func:`beartype.door.die_if_unbearable` functions to dynamically
+        generate code type-checking arbitrary objects against the type hints
+        passed to those functions.
+
+        This factory is non-thread-safe and thus intended to be called *only* by
+        the thread-safe :meth:`.cache_func_checker` factory.
 
         Parameters
         ----------
@@ -297,7 +302,7 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
 
         Returns
         -------
-        tuple[CallableRaiserOrTester, BeartypeCheckExprScope]
+        tuple[CallableRaiserOrTester, BeartypeCheckExprScopeFrozen]
             2-tuple ``(func_checker, func_checker_locals)`` such that:
 
             * ``func_checker`` is the **type-checking function** (i.e.,
@@ -355,6 +360,19 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         #      exception_prefix=EXCEPTION_PLACEHOLDER,
         #* Refactor the caller to stop replacing either exceptions or warnings.
         #  Seriously. Some madness goin' on here, y'all.
+        #FIXME: Of course, all of the above naturally raises the question: where
+        #*SHOULD* this dememoization be performed? At the high-level (e.g.,
+        #here) or at the low-level (e.g., in reduce_hint())? Clearly, it
+        #shouldn't be performed at *BOTH* levels. Gut instinct says that, for
+        #both efficiency and sanity, dememoization should *ONLY* be performed at
+        #this high-level (e.g., here). Ergo, dememoization logic should be
+        #removed from reduce_hint().
+        #
+        #Which then also begs the question: why were we performing dememoization
+        #in reduce_hint() to begin with when we were already doing it at this
+        #higher-level? No idea, honestly. Left hand wasn't talking to the right
+        #hand, I suppose. Accept, in this case, both hands are me. Uh, oh.
+        #Pretty sure this is an Evil Dead QA scenario right here.
 
         # Metadata encapsulating the sanification of this possibly insane hint
         # if this hint is supported by @beartype *OR* raise an exception
@@ -403,28 +421,10 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         )
         # print(f'func_scope: {func_scope}')
 
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with similar logic in
-        # make_code_raiser_func_pith_check() below.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # If this hint is annotated by one or more forward references *NOT*
-        # resolvable at decoration time, these references have all been proxied
-        # by beartype-specific forward reference proxies. In this case...
-        if func_scope_frozen.beartype_ref_proxies:
-            # Overwrite the default values of all uninitialized class variables
-            # bound to these proxies with non-default initialized values passed
-            # by the caller.
-            set_beartype_ref_proxies_classvars_uninitted(
-                ref_proxies=func_scope_frozen.beartype_ref_proxies,
-                call_curr=call_curr,
-                exception_prefix=exception_prefix,
-            )
-        # Else, this hint is annotated by *NO* such references.
-
         # ....................{ SCOPE                      }....................
         # Mutable dictionary coerced from this immutable frozen dictionary if
         # this dictionary is *NOT* already mutable.
-        func_scope = dict(func_scope_frozen)
+        func_scope_unfrozen = func_scope_frozen.unfreeze()
 
         # Expose this beartype external call metadata singleton to this wrapper
         # function as a beartype-specific hidden parameter passed to this
@@ -433,10 +433,15 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         # of this wrapper function by enabling this metadata to be passed as a
         # single unified parameter (rather than individually as multiple
         # distinct parameters).
-        func_scope[ARG_NAME_CALL_META] = call_curr
+        func_scope_unfrozen[ARG_NAME_CALL_META] = call_curr
+
+        # Fully initialize this lexical scope *AFTER* exposing all necessary
+        # attributes to this scope above.
+        func_scope_unfrozen.conclude_scope(
+            call_curr=call_curr, exception_prefix=exception_prefix)
 
         # Type-checking expression lexical scope to be returned.
-        func_scope_refrozen = func_scope_frozen.refreeze(func_scope)
+        func_scope_refrozen = func_scope_unfrozen.refreeze()
 
         # ....................{ FUNCTION                   }....................
         # Unqualified basename of this type-checking function to be created,
@@ -448,7 +453,7 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         # function function to be defined and returned by this factory.
         code_signature = make_func_signature(
             func_name=func_checker_name,
-            func_scope=func_scope,
+            func_scope=func_scope_refrozen,
             code_signature_format=CODE_CHECKER_SIGNATURE,
             conf=conf,
         )
@@ -461,7 +466,7 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         func_checker = make_func(
             func_name=func_checker_name,
             func_code=func_checker_code,
-            func_locals=func_scope,
+            func_locals=func_scope_unfrozen,  # type: ignore[arg-type]
             func_label=EXCEPTION_PLACEHOLDER,
             is_debug=conf.is_debug,
         )
@@ -497,7 +502,10 @@ def _func_checker_ignorable(obj: object) -> bool:
 
 _FUNC_CHECKER_IGNORABLE = (
     _func_checker_ignorable,
-    BeartypeCheckExprScope(is_check_expr_cacheable=True),
+    BeartypeCheckExprScopeFrozen(
+        check_expr_scope=FrozenDict(),
+        is_check_expr_cacheable=True,
+    ),
 )
 '''
 **Ignorable type-checking function data** (i.e., 2-tuple ``(func_checker,

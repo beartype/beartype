@@ -28,7 +28,7 @@ from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (
     HintSignOrNoneOrSentinel,
-    LexicalScope,
+    LexicalScopeMutable,
 )
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._util.cache.pool.utilcachepoollistfixed import (
@@ -121,7 +121,7 @@ class HintTreeCode(HintTreeABC):
           code snippet type-checking the current pith against this hint.
         * If the currently visited hint is only shallowly type-checkable,
           :data:`None`.
-    func_wrapper_locals : LexicalScope
+    func_wrapper_locals : LexicalScopeMutable
         **Local scope** (i.e., dictionary mapping from the name to value of each
         attribute referenced in the signature) of this wrapper function required
         by this Python code snippet.
@@ -213,7 +213,7 @@ class HintTreeCode(HintTreeABC):
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         func_curr_code: str
-        func_wrapper_locals: LexicalScope
+        func_wrapper_locals: LexicalScopeMutable
         hint_curr : HintDataCode
         hint_curr_expr : Optional[str]
         indent_curr: str
@@ -609,12 +609,12 @@ class HintTreeCode(HintTreeABC):
         #* Inside the BeartypeForwardRefMetaclass.__instancecheck__() method:
         #  * Set the "BeartypeConf(hint_overrides=...)" configuration setting to
         #    a frozen dictionary mapping strings of the form
-        #    f"'{cls.__hint_name_beartype__}'" to the ignorable "object"
+        #    f"'{cls.__hint_str_beartype__}'" to the ignorable "object"
         #    superclass.
         #
         #Thus, inside BeartypeForwardRefMetaclass.__instancecheck__():
         #    hint_overrides = FrozenDict({
-        #        f"'{cls.__hint_name_beartype__}'": object})
+        #        f"'{cls.__hint_str_beartype__}'": object})
         #    conf = BeartypeConf(
         #        hint_overrides=hint_overrides,
         #        is_random=False,
@@ -638,7 +638,7 @@ class HintTreeCode(HintTreeABC):
         #    @property_cached
         #    def __conf_beartype__(cls: BeartypeForwardRefABC) -> BeartypeConf:
         #        hint_overrides = FrozenDict({
-        #            f"'{cls.__hint_name_beartype__}'": object})
+        #            f"'{cls.__hint_str_beartype__}'": object})
         #        conf = BeartypeConf(
         #            hint_overrides=hint_overrides,
         #            is_random=False,

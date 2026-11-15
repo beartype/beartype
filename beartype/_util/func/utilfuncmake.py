@@ -14,12 +14,17 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._data.typing.datatyping import (
     LexicalScope,
+    LexicalScopeMutable,
     TypeException,
 )
 from beartype._util.text.utiltextlabel import label_exception_message
 from beartype._util.text.utiltextmunge import number_str_lines
 from beartype._util.utilobjget import get_object_name
-from collections.abc import Callable
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+)
 from functools import update_wrapper
 from linecache import cache as linecache_cache  # type: ignore[attr-defined]
 from typing import Optional
@@ -32,8 +37,8 @@ def make_func(
     func_code: str,
 
     # Optional arguments.
-    func_globals: Optional[LexicalScope] = None,
-    func_locals: Optional[LexicalScope] = None,
+    func_globals: Optional[LexicalScopeMutable] = None,
+    func_locals: Optional[LexicalScopeMutable] = None,
     func_doc: Optional[str] = None,
     func_label: Optional[str] = None,
     func_labeller: Optional[Callable[[], str]] = None,
@@ -55,17 +60,26 @@ def make_func(
         signature prefixed by zero or more decorations *and* body. **This
         snippet must be unindented.** If this snippet is indented, this factory
         raises a syntax error.
-    func_globals : dict[str, Any] | None, default: {}
-        Dictionary mapping from the name to value of each **globally scoped
-        attribute** (i.e., internally referenced in the body of the function
-        declared by this code snippet). Defaults to the empty dictionary.
-    func_locals : dict[str, Any] | None, default: {}
-        Dictionary mapping from the name to value of each **locally scoped
-        attribute** (i.e., internally referenced either in the signature of
-        the function declared by this code snippet *or* as decorators
-        decorating that function). **Note that this factory necessarily
-        modifies the contents of this dictionary.** Defaults to the empty
+    func_globals : Mapping[str, Any] | None, default: None
+        Possibly immutable dictionary mapping from the name to value of each
+        **globally scoped attribute** (i.e., internally referenced in the body
+        of the function declared by this code snippet). Defaults to
+        :data:`None`, in which case this dictionary defaults to a new empty
         dictionary.
+
+        Note that the low-level :exec:`builtin` internally called by this
+        higher-level factory does *not* mutate this dictionary. Ergo, this
+        dictionary may be a frozen dictionary for safety.
+    func_locals : MutableMapping[str, Any] | None, default: None
+        Mutable dictionary mapping from the name to value of each **locally
+        scoped attribute** (i.e., internally referenced either in the signature
+        of the function declared by this code snippet *or* as decorators
+        decorating that function). Defaults to :data:`None`, in which case this
+        dictionary defaults to a new empty dictionary.
+
+        Note that the low-level :exec:`builtin` internally called by this
+        higher-level factory mutates this dictionary. To guard against unwanted
+        modification, consider passing a shallow copy of this dictionary.
     func_doc : str | None
         Human-readable docstring documenting this function. Defaults to
         :data:`None`, in which case this function remains undocumented.
@@ -152,10 +166,10 @@ def make_func(
         func_globals = {}
     if func_locals is None:
         func_locals = {}
-    assert isinstance(func_globals, dict), (
-        f'{repr(func_globals)} not dictionary.')
-    assert isinstance(func_locals, dict), (
-        f'{repr(func_locals)} not dictionary.')
+    assert isinstance(func_globals, Mapping), (
+        f'{repr(func_globals)} not mapping.')
+    assert isinstance(func_locals, MutableMapping), (
+        f'{repr(func_locals)} not mutable mapping.')
 
     # If "func_labeller" is unpassed...
     if func_labeller is None:
@@ -273,7 +287,7 @@ def make_func(
         # Python fails to capture that function (i.e., expose that function to
         # this factory) when the locals() dictionary is passed; instead, a
         # unique local dictionary *MUST* be passed.
-        exec(func_code_compiled, func_globals, func_locals)
+        exec(func_code_compiled, func_globals, func_locals)  # type: ignore[arg-type]
     # If doing so fails for *ANY* reason whatsoever, wrap that low-level
     # exception with a higher-level exception exhibiting the exact issue. Doing
     # so enables users to submit meaningful issues to our tracker.

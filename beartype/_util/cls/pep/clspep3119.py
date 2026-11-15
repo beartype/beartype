@@ -1371,7 +1371,7 @@ def _is_exception_sufficient(exception: Exception) -> bool:
 
        # ...is considerably more useful to end users than this insane wrapper.
        beartype.roar.BeartypeDecorHintNonpepException: Die_if_unbearable()
-       <forwardref OfPearl(__hint_name_beartype__='OfPearl',
+       <forwardref OfPearl(__hint_str_beartype__='OfPearl',
        __scope_name_beartype__='beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve')>
        uncheckable at runtime (i.e., not passable as second parameter to
        isinstance(), due to raising "BeartypeCallHintForwardRefException:

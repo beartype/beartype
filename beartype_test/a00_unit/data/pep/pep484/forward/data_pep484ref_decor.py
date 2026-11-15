@@ -349,8 +349,8 @@ def between_the_woods_and_frozen_lake() -> tuple[Callable, Callable, type]:
         'WhoseWoodsTheseAreIThinkIKnow'):
         '''
         :func:`beartype.beartype`-decorated decorated closure annotated by an
-        unnested unqualified forward reference referring to a type that has yet
-        to be declared.
+        :pep:`484`-compliant stringified relative forward reference referring to
+        a type that has yet to be declared.
         '''
 
         return a_farmhouse_near
@@ -366,8 +366,9 @@ def between_the_woods_and_frozen_lake() -> tuple[Callable, Callable, type]:
         TheDarkestNestedUnionOfTheYear):
         '''
         :func:`beartype.beartype`-decorated decorated closure annotated by a
-        type hint subscripted by a :pep:`484`-compliant stringified relative
-        forward reference referring to a type that has yet to be declared.
+        :pep:`484`-compliant union subscripted by a :pep:`484`-compliant
+        stringified relative forward reference referring to a type that has yet
+        to be declared.
         '''
 
         return fill_up_with_snow

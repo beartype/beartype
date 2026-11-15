@@ -20,7 +20,7 @@ from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
 from beartype._data.check.error.dataerrmagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    LexicalScopeMutable,
     SetOrTupleTypes,
     TypeOrSetOrTupleTypes,
     TupleTypes,
@@ -90,7 +90,7 @@ def add_hints_meta_scope_type_or_types(
 #FIXME: Unit test us up, please.
 def add_func_scope_type_or_types(
     # Mandatory parameters.
-    func_scope: LexicalScope,
+    func_scope: LexicalScopeMutable,
     type_or_types: TypeOrSetOrTupleTypes,
 
     # Optional parameters.
@@ -111,7 +111,7 @@ def add_func_scope_type_or_types(
 
     Parameters
     ----------
-    func_scope : LexicalScope
+    func_scope : LexicalScopeMutable
         Local or global scope to add this class or tuple of classes to.
     type_or_types : TypeOrSetOrTupleTypes
         Classes to be added to this scope, defined as either:
@@ -173,7 +173,7 @@ def add_func_scope_type_or_types(
 
 def add_func_scope_type(
     # Mandatory parameters.
-    func_scope: LexicalScope,
+    func_scope: LexicalScopeMutable,
     cls: type,
 
     # Optional parameters.
@@ -189,7 +189,7 @@ def add_func_scope_type(
 
     Parameters
     ----------
-    func_scope : LexicalScope
+    func_scope : LexicalScopeMutable
         Local or global scope to add this class to.
     cls : type
         Arbitrary class to be added to this scope.
@@ -244,7 +244,7 @@ def add_func_scope_type(
 
 def add_func_scope_types(
     # Mandatory parameters.
-    func_scope: LexicalScope,
+    func_scope: LexicalScopeMutable,
     types: SetOrTupleTypes,
 
     # Optional parameters.
@@ -266,7 +266,7 @@ def add_func_scope_types(
 
     Parameters
     ----------
-    func_scope : LexicalScope
+    func_scope : LexicalScopeMutable
         Local or global scope to add this object to.
     types : SetOrTupleOfTypes
         Set or tuple of arbitrary types to be added to this scope.

@@ -25,7 +25,7 @@ from beartype.vale._util._valeutilsnip import (
     VALE_CODE_INDENT_1,
 )
 from beartype.vale._core._valecore import BeartypeValidator
-from beartype._data.typing.datatyping import LexicalScope
+from beartype._data.typing.datatyping import LexicalScopeMutable
 from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.func.utilfuncscope import add_func_scope_attr
@@ -244,7 +244,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
-        is_valid_code_locals: LexicalScope = {}
+        is_valid_code_locals: LexicalScopeMutable = {}
 
         # If this attribute name is unqualified (i.e., contains no "."
         # delimiters), prefer an efficient optimization avoiding iteration.

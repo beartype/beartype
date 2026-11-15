@@ -44,7 +44,7 @@ class _BeartypeForwardRefFakeMeta(type):
         # representations are prefixed by the "<" character, which are usefully
         # treated as having a standard representation that is ignorable for most
         # intents and purposes. This includes:
-        #   * The die_if_hint_pep604_inconsistent() raiser.
+        # * The die_if_hint_pep604_inconsistent() raiser.
         return f'<forwardreffake {cls.__module__}.{cls.__name__}>'
 
     # ....................{ DUNDERS ~ pep : 3119           }....................

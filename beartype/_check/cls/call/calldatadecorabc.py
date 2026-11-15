@@ -20,7 +20,7 @@ from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     Decoratee,
-    LexicalScope,
+    LexicalScopeMutable,
     Pep649749HintableAnnotations,
     # TypeException,
     TypeStack,
@@ -46,7 +46,7 @@ class BeartypeCallDecorDataABC(BeartypeCallDataABC):
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
         current decoration of the currently decorated callable).
-    decoratee_scope_forward : Optional[LexicalScope]
+    decoratee_scope_forward : Optional[LexicalScopeMutable]
         Either:
 
         * If the decoratee is annotated by at least one **stringified type
@@ -86,7 +86,7 @@ class BeartypeCallDecorDataABC(BeartypeCallDataABC):
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         conf: BeartypeConf  # pyright: ignore
-        decoratee_scope_forward: Optional[LexicalScope]  # pyright: ignore
+        decoratee_scope_forward: Optional[LexicalScopeMutable]  # pyright: ignore
 
         # Re-annotate these class variables defined by a superclass with tighter
         # bounds more suitable to this subclass.
@@ -100,7 +100,7 @@ class BeartypeCallDecorDataABC(BeartypeCallDataABC):
         conf: BeartypeConf,
         decoratee: Decoratee,
         decoratee_annotations: Pep649749HintableAnnotations,
-        decoratee_scope_forward: Optional[LexicalScope],
+        decoratee_scope_forward: Optional[LexicalScopeMutable],
     ) -> None:
         '''
         Initialize this metadata with the passed parameters.

@@ -34,9 +34,9 @@ def hints_piths_nonpep_meta() -> (
 
     # ..................{ LIST                               }..................
     _hints_nonpep_meta = make_container_from_funcs((
-        # PEP-compliant type hints.
-        'beartype_test.a00_unit.data.hint.nonpep.api._data_nonpepapithreading.hints_nonpep_api_threading_meta',
-        'beartype_test.a00_unit.data.hint.nonpep.beartype._data_nonpepbeartype.hints_nonpepbeartype_meta',
+        # PEP-noncompliant type hints.
+        'beartype_test.a00_unit.data.hint.nonpep.api.beartype._data_nonpepbeartype.hints_nonpep_beartype_meta',
+        'beartype_test.a00_unit.data.hint.nonpep.api.standard._data_nonpepthreading.hints_nonpep_threading_meta',
         'beartype_test.a00_unit.data.hint.nonpep.proposal._data_nonpep484.hints_nonpep484_meta',
         'beartype_test.a00_unit.data.hint.nonpep.proposal._data_nonpep695.hints_nonpep695_meta',
     ))

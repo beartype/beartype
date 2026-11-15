@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavefast import NoneType
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    LexicalScopeMutable,
     FrozenSetTypes,
 )
 from builtins import __dict__ as _BUILTINS_DICT  # type: ignore[attr-defined]
@@ -35,7 +35,7 @@ attributes and is thus considered harmful for most real-world purposes.
 
 
 # Defined below by the _init() function.
-BUILTIN_NAME_TO_VALUE: LexicalScope = None  # type: ignore[assignment]
+BUILTIN_NAME_TO_VALUE: LexicalScopeMutable = None  # type: ignore[assignment]
 '''
 **Builtins module dictionary** mapping from the name to value of each **builtin
 attribute** (i.e., object defined by the standard :mod:`builtins` module and
@@ -54,7 +54,7 @@ This dictionary intentionally excludes:
 
 
 # Defined below by the _init() function.
-BUILTIN_NAME_TO_TYPE: LexicalScope = None  # type: ignore[assignment]
+BUILTIN_NAME_TO_TYPE: LexicalScopeMutable = None  # type: ignore[assignment]
 '''
 Dictionary mapping from the name of each **non-fake builtin type** (i.e.,
 globally accessible C-based type implicitly accessible from all scopes and thus

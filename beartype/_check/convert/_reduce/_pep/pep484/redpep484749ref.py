@@ -96,7 +96,7 @@ from beartype._check.cls.hint.hintsane import (
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import HintPep484749Ref
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
+from beartype._util.hint.pep.proposal.pep749.pep484749ref import (
     get_hint_pep484749_ref_names,
     is_hint_pep484749_ref_object_resolvable,
 )

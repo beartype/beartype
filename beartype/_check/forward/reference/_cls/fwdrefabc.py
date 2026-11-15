@@ -22,7 +22,7 @@ from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
     FuncLocalParentCodeObjectWeakref,
-    LexicalScope,
+    LexicalScopeMutable,
 )
 from typing import (
     NoReturn,
@@ -119,10 +119,21 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     '''
 
 
-    __hint_name_beartype__: str = None  # type: ignore[assignment]
+    __hint_str_beartype__: str = None  # type: ignore[assignment]
     '''
-    Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of the
-    type hint referenced by this forward reference subclass.
+    Stringified type hint expression by this forward reference subclass. If this
+    expression originates from:
+
+    * A :pep:`484`-compliant quoted forward reference, this expression is either
+      the absolute (i.e., fully-qualified) or relative (i.e., unqualified) name
+      of this unresolved type hint to be proxied.
+    * A :pep:`749`-compliant unquoted forward reference, this expression is an
+      arbitrary Python expression to be proxied. Like :pep:`484`-compliant
+      quoted forward references, this expression may be constrained to the
+      absolute or relative name of an unresolved hint. Unlike
+      :pep:`484`-compliant quoted forward references, this expression could be
+      an arbitrary Python expression that is *not* trivially reducible to a
+      simple string.
 
     This class variable is mandatory but defaults to :data:`None` to improve
     debuggability in the event of developer error [read: us].
@@ -159,8 +170,8 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMetaclass):
     '''
     Fully-qualified name of the lexical scope to which the type hint referenced
     by this forward reference subclass is relative if that type hint is relative
-    (i.e., if :attr:`__hint_name_beartype__` is relative) *or* ignored otherwise
-    (i.e., if :attr:`__hint_name_beartype__` is absolute).
+    (i.e., if :attr:`__hint_str_beartype__` is relative) *or* ignored otherwise
+    (i.e., if :attr:`__hint_str_beartype__` is absolute).
 
     Caveats
     -------
@@ -403,7 +414,7 @@ class BeartypeForwardRefSubbedABC(BeartypeForwardRefABC):
     '''
 
 
-    __kwargs_beartype__: LexicalScope = None  # type: ignore[assignment]
+    __kwargs_beartype__: LexicalScopeMutable = None  # type: ignore[assignment]
     '''
     Dictionary of all keyword arguments subscripting this forward reference.
     '''
@@ -456,7 +467,7 @@ class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
             func_local_parent_codeobj_weakref=(
                 cls.__func_local_parent_codeobj_weakref_beartype__),
             scope_name=cls.__scope_name_beartype__,  # type: ignore[arg-type]
-            hint_name=cls.__hint_name_beartype__,
+            hint_name=cls.__hint_str_beartype__,
             hint_parent_sane=cls.__hint_parent_sane_beartype__,
             args=args,
             kwargs=kwargs,

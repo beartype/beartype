@@ -17,7 +17,8 @@ from beartype.roar._roarexc import (
 )
 from beartype._cave._cavefast import CallableFrameType
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    DictStrToAny,
+    LexicalScopeMutable,
     TypeException,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
@@ -35,7 +36,7 @@ def get_func_globals(
     # Optional parameters.
     exception_cls: TypeException = _BeartypeUtilCallableScopeException,
     exception_prefix: str = '',
-) -> LexicalScope:
+) -> DictStrToAny:
     '''
     **Global scope** (i.e., dictionary mapping from the name to value of each
     globally scoped attribute declared by the module transitively declaring
@@ -54,7 +55,7 @@ def get_func_globals(
     ----------
     func : Callable
         Callable to be inspected.
-    exception_cls : Type[Exception], default: _BeartypeUtilCallableScopeException
+    exception_cls : type[Exception], default: _BeartypeUtilCallableScopeException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`._BeartypeUtilCallableScopeException`.
     exception_prefix : str, default: ''
@@ -127,7 +128,7 @@ def get_func_freevars(
     # Optional parameters.
     exception_cls: TypeException = _BeartypeUtilCallableScopeException,
     exception_prefix: str = '',
-) -> LexicalScope:
+) -> DictStrToAny:
     '''
     **Closure scope** (i.e., dictionary mapping from the name to value of each
     closure-scoped local attribute defined in the body of the parent callable
@@ -163,7 +164,7 @@ def get_func_freevars(
     ----------
     func : Callable
         Callable to be inspected.
-    exception_cls : Type[Exception], default: _BeartypeUtilCallableScopeException
+    exception_cls : type[Exception], default: _BeartypeUtilCallableScopeException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`._BeartypeUtilCallableScopeException`.
     exception_prefix : str, default: ''
@@ -244,7 +245,7 @@ def find_func_locals_frame(
     ignore_func_scope_names: int = 0,
     exception_cls: TypeException = _BeartypeUtilCallableScopeException,
     **kwargs
-) -> tuple[LexicalScope, Optional[CallableFrameType]]:
+) -> tuple[DictStrToAny, Optional[CallableFrameType]]:
     '''
     Possibly immutable **local scope** (i.e., dictionary mapping from the name
     to value of each locally scoped attribute declared by a parent callable or
@@ -362,7 +363,7 @@ def find_func_locals_frame(
         stack (e.g., due to being currently decorated by
         :func:`beartype.beartype`). See the :mod:`beartype._decor._pep.pep563`
         submodule for the standard use case. Defaults to 0.
-    exception_cls : Type[Exception], default: _BeartypeUtilCallableScopeException
+    exception_cls : type[Exception], default: _BeartypeUtilCallableScopeException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableScopeException`.
 
@@ -371,7 +372,7 @@ def find_func_locals_frame(
 
     Returns
     -------
-    tuple[LexicalScope, CallableFrameType]
+    tuple[LexicalScopeMutable, CallableFrameType]
         2-tuple ``(scope_local, scope_frame)`` for that callable, where:
 
         * ``scope_local`` is the local scope of the parent call to that callable
@@ -448,7 +449,7 @@ def find_func_locals_frame(
 
     # ..................{ LOCALS                             }..................
     # Local scope of the passed callable to be returned.
-    func_scope: LexicalScope = {}
+    func_scope: DictStrToAny = {}
 
     # Unqualified basename of that nested callable.
     func_name_unqualified = func.__name__
@@ -696,7 +697,7 @@ def find_func_locals_frame(
 def add_func_scope_attr(
     # Mandatory parameters.
     attr: object,
-    func_scope: LexicalScope,
+    func_scope: LexicalScopeMutable,
 
     # Optional parameters.
     exception_prefix: str = 'Globally or locally scoped attribute ',
@@ -713,7 +714,7 @@ def add_func_scope_attr(
     ----------
     attr : object
         Arbitrary object to be added to this scope.
-    func_scope : LexicalScope
+    func_scope : LexicalScopeMutable
         Local or global scope to add this object to.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the

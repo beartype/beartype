@@ -448,7 +448,7 @@ class HintTreeError(HintTreeABC):
         # Getter function returning the desired string.
         cause_finder: Callable[[HintTreeError], HintTreeError] = None  # type: ignore[assignment]
 
-        # Sign uniquely identifying this hint, localized purely for readibility.
+        # Sign uniquely identifying this hint, localized purely for readability.
         hint_sign = self.hint_curr.hint_sign
 
         # ..................{ SHALLOW                        }..................

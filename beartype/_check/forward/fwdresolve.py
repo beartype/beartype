@@ -26,7 +26,7 @@ from beartype._check.forward.scope.fwdscopemake import (
     make_scope_forward_decor_curr)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
-    LexicalScope,
+    LexicalScopeMutable,
     TypeException,
 )
 from beartype._data.typing.datatypingport import Hint
@@ -209,19 +209,6 @@ def resolve_hint_pep484_ref_str_decor_curr(
     assert isinstance(exception_cls, type), (
         f'{repr(exception_cls)} not exception type.')
     # print(f'Resolving decorator-time PEP 484 forward reference {repr(hint)} under {repr(decor_curr)}...')
-
-    #FIXME: Non-ideal. *ALL* builtin objects that are valid as type hints (so,
-    #"None" and all builtin types, basically) should be handled similarly.
-    #Special-casing "None" like this may be trivial, but it's also insufficient.
-    #
-    #Perhaps more importantly, however, this fails to account for *SHADOWING*.
-    #Although inadvisable, Python permits both globals and locals to shadow
-    #builtins. Ergo, this doesn't work for even "None" in the general case.
-
-    # # Unlike a named forward reference, the None keyword requires no namespace.
-    # # Resolve it even for dynamically defined callables without a module.
-    # if hint == 'None':
-    #     return None
 
     # ..................{ LOCALS                             }..................
     # Decorated callable and metadata associated with that callable, localized
@@ -505,7 +492,7 @@ def _resolve_hint_pep484_ref_str(
     conf: BeartypeConf,
     hint: str,
     hint_parent_sane: Optional[HintSane],
-    scope_forward: LexicalScope,
+    scope_forward: LexicalScopeMutable,
 
     # Optional parameters.
     exception_cls: TypeException = (
@@ -546,7 +533,7 @@ def _resolve_hint_pep484_ref_str(
           by :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
           the possibly PEP-noncompliant parent hint of this child hint into a
           fully PEP-compliant parent hint).
-    scope_forward : LexicalScope
+    scope_forward : LexicalScopeMutable
         **Forward scope** (i.e., dictionary mapping from the names to values of
         all attributes accessible to the lexical scope of the passed decorated
         callable where this scope comprises both the global scope and all local

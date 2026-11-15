@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`649` **type hint utility** unit tests.
+Project-wide :pep:`649`- and :pep:`749`-compliant ``__annotate__()`` **dunder
+method utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.proposal.pep749.pep649749annotate` submodule.
@@ -27,24 +28,28 @@ def test_get_hintable_pep649749_annotations() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep649Exception
-    from beartype.typing import Optional
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
         get_hintable_pep649749_annotations)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
-    from pytest import raises
+    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
+    from beartype_test._util.error.pyterrraise import raises_uncached
+    from typing import Optional
 
-    # If the active Python interpreter targets Python >= 3.14 and thus supports
-    # PEP 649...
-    if IS_PYTHON_AT_LEAST_3_14:
-        # Defer version-specific imports.
-        from beartype_test.a00_unit.data.pep.data_pep649 import (
-            unit_test_get_hintable_pep649749_annotations)
-
-        # Perform this test.
-        unit_test_get_hintable_pep649749_annotations()
-    # Else, this interpreter targets Python < 3.14 and thus fails to support PEP
-    # 649.
+    #FIXME: ...uh. Never actually defined this unit test, did we? Oh, well. It's
+    #been years and we no longer even recall the core issue we wanted to guard
+    #against with this unit test. So be it. We did nothing. We're still doing
+    #nothing. And this is the state of QA in 2026: nothingburgers all the way.
+    # # If the active Python interpreter targets Python >= 3.14 and thus supports
+    # # PEP 649 and 749...
+    # if IS_PYTHON_AT_LEAST_3_14:
+    #     # Defer version-specific imports.
+    #     from beartype_test.a00_unit.data.pep.data_pep649 import (
+    #         unit_test_get_hintable_pep649749_annotations)
+    #
+    #     # Perform this test.
+    #     unit_test_get_hintable_pep649749_annotations()
+    # # Else, this interpreter targets Python < 3.14 and thus fails to support PEP
+    # # 649 and 749.
 
     # ....................{ CALLABLES                      }....................
     def too_huge(for_mortal_tongue: set['MoreSorrow']) -> Optional[bytes]:
@@ -85,6 +90,6 @@ def test_get_hintable_pep649749_annotations() -> None:
     # ....................{ FAIL                           }....................
     # Assert this getter rejects objects that are *NOT* PEP 649-compliant
     # hintables (i.e., objects that are neither callables, modules, nor types).
-    with raises(BeartypeDecorHintPep649Exception):
+    with raises_uncached(BeartypeDecorHintPep649Exception):
         get_hintable_pep649749_annotations(
             'More sorrow like to this, and such like woe,')

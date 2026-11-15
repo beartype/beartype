@@ -21,6 +21,8 @@ from beartype._check.cls.hint.hintsane import (
     make_hint_sane,
 )
 from beartype._data.hint.sign.datahintsignset import HINT_SIGNS_UNION
+from beartype._util.bear.plug.utilbearplugtype import (
+    get_type_beartype_plugin_get_violation_str_or_none)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
@@ -155,33 +157,29 @@ def find_cause_pep484604_union(cause: HintTreeError) -> HintTreeError:
             # Else, this pith is *NOT* an instance of this type, implying that
             # this pith violates this hint.
 
-            #FIXME: Do smart stuff pertaining to __instancecheck_str__() here!
-            #Specifically:
-            #* Define a new "beartype._util.bear.utilbeartype" submodule.
-            #* In that submodule:
-            #  * Define a new get_type_beartype_violation_str_or_none() getter
-            #    with signature:
-            #        def get_type_beartype_violation_str_or_none(cls: type) ->
-            #            Optional[Callable[type, object], str]]:
-            #* Refactor find_cause_instance_type() to call that
-            #  get_type_beartype_violation_str_or_none() getter.
-            #* Remove the unconditional call to hint_childs_nonpep.add() below.
-            #* Refactor this logic to call that getter as well: e.g.,
-            #
-            # # Metaclass-specific __instancecheck_str__() dunder method if the
-            # # metaclass of this class defines this method *OR* "None" otherwise
-            # # (i.e., if that metaclass does *NOT* define this method).
-            # hint_child_get_beartype_violation_str = (
-            #     get_type_beartype_violation_str_or_none(hint_child))
-            # if hint_child_get_beartype_violation_str is None:
-            #     # Add this class to the subset of all types this pith violates.
-            #     hint_childs_nonpep.add(hint_child)
-            #     # print(f'[union] Appended PEP-noncompliant child hint {hint_child}!')
-            # else:
-            #     hint_childs_sane_unignorable.append(hint_child_sane)
+            # Beartype-specific __instancecheck_str__() dunder method if the
+            # metaclass of this type defines this method *OR* "None" otherwise
+            # (i.e., if that metaclass does *NOT* define this method).
+            get_hint_child_violation_str = (
+                get_type_beartype_plugin_get_violation_str_or_none(hint_child))
 
-            # Add this class to the subset of all types this pith violates.
-            hint_childs_nonpep.add(hint_child)
+            # If the metaclass of this type does *NOT* define this method. In
+            # this case, describe this type along with all other "normal"
+            # PEP-noncompliant types subscripting this union also *NOT* defining
+            # this method. Specifically...
+            #
+            # Note that this is the common case and thus intentionally tested
+            # first. By "common case", we mean 99.99999999999% of all types.
+            if get_hint_child_violation_str is None:
+                # Add this class to the subset of all types this pith violates.
+                hint_childs_nonpep.add(hint_child)
+            # Else, the metaclass of this type defines this method. In this
+            # case, describe this type visually demarcated from the other
+            # "normal" PEP-noncompliant types subscripting this union that do
+            # *NOT* define this method. Specifically...
+            else:
+                # Append this child hint's sanified metadata to this list.
+                hint_childs_sane_unignorable.append(hint_child_sane)
             # print(f'[union] Appended PEP-noncompliant child hint {hint_child}!')
 
     # ....................{ PHASE ~ types                  }....................

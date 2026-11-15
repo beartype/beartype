@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`749` **type hint utility** unit tests.
+Project-wide :pep:`749`-compliant ``__evaluate__()`` **dunder method utility**
+unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.proposal.pep749.pep749evaluate` submodule.

@@ -116,7 +116,7 @@ class BeartypeSlottedMetaclassMixin(object):
 
         Returns
         -------
-        LexicalScope
+        LexicalScopeMutable
             Initial class dictionary for the class to be created.
         '''
 

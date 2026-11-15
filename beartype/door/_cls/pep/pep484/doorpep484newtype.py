@@ -61,7 +61,7 @@ class NewTypeTypeHint(UnsubscriptedTypeHint):
             # __init__() method to be called exactly once for each "NewType"
             # type hint.
             self._origin_type = make_type(
-                type_name=hint_name,
+                type_basename=hint_name,
                 type_bases=(hint_alias,),  # type: ignore[arg-type]
             )
         # Else, this child hint is a non-type (e.g., "typing.Any").

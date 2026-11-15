@@ -24,7 +24,7 @@ from beartype.vale._util._valeutiltyping import (
     BeartypeValidatorRepresenter,
 )
 from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
-from beartype._data.typing.datatyping import LexicalScope
+from beartype._data.typing.datatyping import LexicalScopeMutable
 from beartype._util.func.arg.utilfuncargtest import is_func_argless
 from beartype._util.text.utiltextrepr import represent_object
 
@@ -67,7 +67,7 @@ class BeartypeValidator(metaclass=BeartypeSlottedABCMeta):
         Despite performing the same validation as the :meth:`is_valid`
         callable, this code avoids the additional stack frame imposed by
         calling that callable and thus constitutes an optimization.
-    _is_valid_code_locals : LexicalScope
+    _is_valid_code_locals : LexicalScopeMutable
         **Validator code local scope** (i.e., dictionary mapping from the name
         to value of each local attribute referenced in :attr:`code`) required
         to dynamically compile this validator code into byte code at runtime.
@@ -101,7 +101,7 @@ class BeartypeValidator(metaclass=BeartypeSlottedABCMeta):
         # Mandatory keyword-only parameters.
         is_valid: BeartypeValidatorTester,
         is_valid_code: str,
-        is_valid_code_locals: LexicalScope,
+        is_valid_code_locals: LexicalScopeMutable,
         get_repr: BeartypeValidatorRepresenter,
     ) -> None:
         '''
@@ -129,7 +129,7 @@ class BeartypeValidator(metaclass=BeartypeSlottedABCMeta):
               :pep:`8`-compliant and well-established Python style guides, any
               additional indentation hard-coded into this code should be
               aligned to **four-space indentation.**
-        is_valid_code_locals : LexicalScope
+        is_valid_code_locals : LexicalScopeMutable
             **Validator code local scope** (i.e., dictionary mapping from the
             name to value of each local attribute referenced in
             :attr:`is_valid_code` code) required to dynamically compile this

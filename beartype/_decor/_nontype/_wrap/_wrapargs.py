@@ -79,6 +79,8 @@ from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
+from beartype._check.cls.scope.checkexprscope import (
+    BeartypeCheckExprScopeFrozen)
 from beartype._data.check.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_INIT_ARGS_LEN,
@@ -86,14 +88,10 @@ from beartype._data.check.code.func.datacodefuncwrap import (
 )
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
-from beartype._util.func.arg.utilfuncargiter import (
-    ArgKind,
-    iter_func_args,
-)
+from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._data.kind.datakindiota import SENTINEL
@@ -156,7 +154,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
     # Lexical scope (i.e., dictionary mapping from the relative unqualified name
     # to value of each locally or globally scoped attribute accessible to a
     # callable or class), initialized to "None" for safety.
-    func_scope: LexicalScope = None  # type: ignore[assignment]
+    func_scope_arg: BeartypeCheckExprScopeFrozen = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ parameter                 }..................
     #FIXME: Remove this *AFTER* optimizing signature generation, please.
@@ -356,7 +354,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
                 # passed positionally for efficiency.
                 (
                     code_arg_check,
-                    func_scope,
+                    func_scope_arg,
                 ) = make_code_raiser_func_pith_check(
                     decor_func=decor_func,
                     hint_sane=hint_sane,
@@ -372,7 +370,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
 
                 # Merge the local scope required to check this parameter into
                 # the local scope required by the current wrapper function.
-                update_mapping(decor_func.func_wrapper_locals, func_scope)
+                update_mapping(decor_func.func_wrapper_scope, func_scope_arg)
 
             # If one or more warnings were issued, reissue these warnings with
             # each placeholder substring (i.e., "EXCEPTION_PLACEHOLDER"
@@ -410,7 +408,7 @@ def code_check_args(decor_func: BeartypeCallDecorFuncData) -> str:
     # the set of the names of all keywordable parameters to this wrapper
     # function needed to type-check that annotated variadic keyword parameter.
     if args_name_keywordable is not None:
-        decor_func.func_wrapper_locals[ARG_NAME_ARGS_NAME_KEYWORDABLE] = (
+        decor_func.func_wrapper_scope[ARG_NAME_ARGS_NAME_KEYWORDABLE] = (
             args_name_keywordable)
     # Else, that callable accepts *NO* annotated variadic parameter.
 
@@ -446,117 +444,3 @@ Frozen set of all **positional parameter kinds** (i.e., :class:`.ArgKind`
 enumeration members signifying that a callable parameter either may *or* must be
 passed positionally).
 '''
-
-# ....................{ PRIVATE ~ raisers                  }....................
-#FIXME: Preserved for posterity. We'll almost certainly want to restore this at
-#some future date. Until then, we sigh. *sigh*
-# def _die_if_arg_default_unbearable(
-#     decor_func: BeartypeCallDecorFuncData, arg_default: object, hint: Hint) -> None:
-#     '''
-#     Raise a violation exception if the annotated optional parameter of the
-#     decorated callable with the passed default value violates the type hint
-#     annotating that parameter at decoration time.
-#
-#     Parameters
-#     ----------
-#     decor_func : BeartypeCallDecorFuncData
-#         Decorated callable to be type-checked.
-#     arg_default : object
-#         Either:
-#
-#         * If this parameter is mandatory, the :data:`.ArgMandatory` singleton.
-#         * If this parameter is optional, the default value of this optional
-#           parameter to be type-checked.
-#     hint : Hint
-#         Type hint to type-check against this default value.
-#
-#     Warns
-#     -----
-#     BeartypeDecorHintParamDefaultForwardRefWarning
-#         If this type hint contains one or more forward references that *cannot*
-#         be resolved at decoration time. While this does *not* necessarily
-#         constitute a fatal error from the end user perspective, this does
-#         constitute a non-fatal issue worth informing the end user of.
-#
-#     Raises
-#     ------
-#     BeartypeDecorHintParamDefaultViolation
-#         If this default value violates this type hint.
-#     '''
-#     assert isinstance(decor_func, BeartypeCallDecorFuncData), (
-#         f'{repr(decor_func)} not beartype call.')
-#
-#     # ..................{ PREAMBLE                           }..................
-#     # If this parameter is mandatory, silently reduce to a noop.
-#     if arg_default is ArgMandatory:
-#         return
-#     # Else, this parameter is optional and thus defaults to a default value.
-#
-#     # ..................{ IMPORTS                            }..................
-#     # Defer heavyweight imports prohibited at global scope.
-#     from beartype.door import (
-#         die_if_unbearable,
-#         is_bearable,
-#     )
-#
-#     # ..................{ MAIN                               }..................
-#     # Attempt to...
-#     try:
-#         # If this default value satisfies this hint, silently reduce to a noop.
-#         #
-#         # Note that this is a non-negligible optimization. Technically, this
-#         # preliminary test is superfluous: only the call to the
-#         # die_if_unbearable() raiser below is required. Pragmatically, this
-#         # preliminary test avoids a needlessly expensive dictionary copy in the
-#         # common case that this value satisfies this hint.
-#         if is_bearable(obj=arg_default, hint=hint, conf=decor_func.conf):
-#             return
-#         # Else, this default value violates this hint.
-#     #FIXME: Probably generalize this to *ANY* exception whatsoever, no?
-#     # If doing so raises a forward hint exception, this hint contains one or
-#     # more unresolvable forward references to user-defined objects that have yet
-#     # to be defined. In all likelihood, these objects are subsequently defined
-#     # after the definition of this decorated callable. While this does *NOT*
-#     # necessarily constitute a fatal error from the end user perspective, this
-#     # does constitute a non-fatal issue worth informing the end user of. In this
-#     # case, we coerce this exception into a warning.
-#     except _BeartypeHintForwardRefExceptionMixin as exception:
-#         # Forward hint exception message raised above. To readably embed this
-#         # message in the longer warning message emitted below, the first
-#         # character of this message is lowercased as well.
-#         exception_message = lowercase_str_char_first(str(exception))
-#
-#         # Emit this non-fatal warning.
-#         issue_warning(
-#             cls=BeartypeDecorHintParamDefaultForwardRefWarning,
-#             message=(
-#                 f'{EXCEPTION_PREFIX_DEFAULT}value '
-#                 f'{prefix_pith_value(pith=arg_default, is_color=decor_func.conf.is_color)}'
-#                 f'uncheckable at @beartype decoration time, as '
-#                 f'{exception_message}'
-#             ),
-#         )
-#
-#         # Loudly reduce to a noop. Since this forward reference is unresolvable,
-#         # further type-checking attempts are entirely fruitless.
-#         return
-#
-#     # Modifiable keyword dictionary encapsulating this beartype configuration.
-#     conf_kwargs = decor_func.conf.kwargs.copy()
-#
-#     #FIXME: This should probably be configurable as well. For now, this is fine.
-#     #We shrug noncommittally. We shrug, everyone! *shrug*
-#     # Set the type of violation exception raised by the subsequent call to the
-#     # die_if_unbearable() function to the expected type.
-#     conf_kwargs['violation_door_type'] = BeartypeDecorHintParamDefaultViolation
-#
-#     # New beartype configuration initialized by this dictionary.
-#     conf = BeartypeConf(**conf_kwargs)
-#
-#     # Raise this type of violation exception.
-#     die_if_unbearable(
-#         obj=arg_default,
-#         hint=hint,
-#         conf=conf,
-#         exception_prefix=EXCEPTION_PREFIX_DEFAULT,
-#     )

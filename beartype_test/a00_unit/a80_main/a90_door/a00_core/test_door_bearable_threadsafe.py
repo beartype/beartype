@@ -73,9 +73,9 @@ def test_door_threadsafe() -> None:
             # dynamically generate type-checking code concurrently and thus
             # potentially trigger any lingering race conditions.
             SadSignOfRuin = make_type(
-                type_name=f'SadSignOfRuin{iteration_index}')
+                type_basename=f'SadSignOfRuin{iteration_index}')
             SuddenDismay = make_type(
-                type_name=f'SuddenDismay{iteration_index}')
+                type_basename=f'SuddenDismay{iteration_index}')
 
             # Non-empty tuple of arbitrary PEP 585-compliant type hints
             # subscripted by these types.

@@ -82,9 +82,9 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
     assert type_ref_str_proxy_module_absolute.__module__ == TYPE_SUBPACKAGE_NAME
 
     # Assert that these proxies have the expected hint names.
-    assert type_ref_str_proxy_absolute.__hint_name_beartype__ == TYPE_NAME
-    assert type_ref_str_proxy_relative.__hint_name_beartype__ == TYPE_BASENAME
-    assert type_ref_str_proxy_module_absolute.__hint_name_beartype__ == (
+    assert type_ref_str_proxy_absolute.__hint_str_beartype__ == TYPE_NAME
+    assert type_ref_str_proxy_relative.__hint_str_beartype__ == TYPE_BASENAME
+    assert type_ref_str_proxy_module_absolute.__hint_str_beartype__ == (
         TYPE_SUBMODULE_NAME)
 
     # Assert that these proxies have the expected scope names.
@@ -107,7 +107,7 @@ def test_proxy_hint_pep484_ref_str_subbable() -> None:
         # Machine-readable representations of all class variables of all
         # unsubscripted forward reference proxies.
         repr(type_ref_str_proxy_absolute.__scope_name_beartype__),
-        repr(type_ref_str_proxy_absolute.__hint_name_beartype__),
+        repr(type_ref_str_proxy_absolute.__hint_str_beartype__),
     )
 
     # Assert that this representation contains the expected substrings.
@@ -270,7 +270,7 @@ def test_proxy_hint_pep484_ref_str_subbable_getattr() -> None:
         f'{TYPE_SUBPACKAGE_NAME}.{TYPE_SUBMODULE_BASENAME}')
 
     # Assert that these proxies have the expected hint names.
-    assert type_ref_str_proxy_module_absolute_class.__hint_name_beartype__ == (
+    assert type_ref_str_proxy_module_absolute_class.__hint_str_beartype__ == (
         TYPE_NAME)
 
     # Assert that these proxies have the expected scope names.

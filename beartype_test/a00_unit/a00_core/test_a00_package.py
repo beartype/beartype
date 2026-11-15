@@ -27,12 +27,14 @@ this might be occurring, we have *no* recourse but to perform these tests early.
 # ....................{ TESTS                              }....................
 def test_api_beartype() -> None:
     '''
-    Test the public API of the :mod:`beartype` package itself.
+    Test the public API of the :mod:`beartype` package itself as a trivial smoke
+    test *before* exercising actual functionality with subsequent unit tests.
     '''
 
     # Defer test-specific imports.
     import beartype
     from beartype._cave._cavefast import DecoratorTypes
+    from beartype.door import die_if_unbearable
     from enum import Enum
 
     # Assert this package's public attributes to be of the expected types.
@@ -42,6 +44,7 @@ def test_api_beartype() -> None:
     assert issubclass(beartype.BeartypeStrategy, Enum)
     assert isinstance(beartype.__version__, str)
     assert isinstance(beartype.__version_info__, tuple)
+    assert callable(die_if_unbearable)
 
 
 def test_api_deprecations() -> None:
