@@ -115,7 +115,7 @@ def make_func_check(decor_func: BeartypeCallDecorFuncData) -> str:
         happen, a private non-human-readable exception is raised in this case.
     '''
 
-    # ....................{ ARGS                           }....................
+    # ....................{ PARAMETERS                     }....................
     # Python code snippet type-checking all callable parameters if one or more
     # such parameters are annotated with unignorable type hints *OR* the empty
     # string otherwise.
@@ -147,9 +147,22 @@ def make_func_check(decor_func: BeartypeCallDecorFuncData) -> str:
     # Else, the callable return requires type-checking.
 
     # ....................{ SCOPE                          }....................
-    # Dictionary mapping from the name to value of each attribute referenced in
-    # the signature of this wrapper function, localized merely for readability.
-    func_scope = decor_func.func_wrapper_scope
+    # Wrapper scope (i.e., dictionary mapping from the name to value of each
+    # attribute referenced in the signature of this wrapper function), localized
+    # merely for readability.
+    func_scope_unfrozen = decor_func.func_wrapper_scope
+
+    # Minimal metadata required by each call to this wrapper function.
+    decor_func_minified = decor_func.minify()
+
+    # If this wrapper scope has yet to be fully initialized, do so *AFTER*
+    # exposing all necessary attributes to this scope above.
+    if func_scope_unfrozen.is_concludable:
+        func_scope_unfrozen.conclude_scope(
+            call_curr=decor_func_minified,
+            exception_prefix=f'{decor_func.func_wrapper_name}() ',
+        )
+    # Else, this wrapper scope has already been fully initialized.
 
     # Expose the minimal metadata required by each call to this wrapper function
     # as a beartype-specific hidden parameter passed to this wrapper function,
@@ -157,7 +170,7 @@ def make_func_check(decor_func: BeartypeCallDecorFuncData) -> str:
     # get_func_pith_violation() getter inside the body of this wrapper function
     # by enabling this metadata to be passed as a single unified parameter
     # (rather than individually as multiple distinct parameters).
-    func_scope[ARG_NAME_CALL_META] = decor_func.minify()
+    func_scope_unfrozen[ARG_NAME_CALL_META] = decor_func_minified
     # print(f'forward scope (max): {repr(decor_func.decoratee_scope_forward)}')
     # print(f'forward scope (min): {repr(func_scope[ARG_NAME_CALL_META].decoratee_scope_forward)}')
 
@@ -167,7 +180,7 @@ def make_func_check(decor_func: BeartypeCallDecorFuncData) -> str:
     # of this wrapper function. Pragmatically, doing so is a trivial
     # optimization that could yield non-trivial benefits (e.g., if this wrapper
     # function is frequently called).
-    func_scope[ARG_NAME_FUNC] = decor_func.func_wrappee
+    func_scope_unfrozen[ARG_NAME_FUNC] = decor_func.func_wrappee
 
     # ....................{ SIGNATURE                      }....................
     # Python code snippet declaring the signature of this type-checking wrapper
@@ -175,7 +188,7 @@ def make_func_check(decor_func: BeartypeCallDecorFuncData) -> str:
     # function is even required.
     code_signature = make_func_signature(
         func_name=decor_func.func_wrapper_name,
-        func_scope=func_scope,
+        func_scope=func_scope_unfrozen,
         code_signature_format=CODE_WRAPPER_SIGNATURE,
         code_signature_prefix=decor_func.func_wrapper_code_signature_prefix,
         conf=decor_func.conf,

@@ -23,8 +23,6 @@ from beartype._check.cls.scope.checkexprscope import (
     BeartypeCheckExprScopeFrozen)
 from beartype._check.code.codemain import CodeGenerated
 from beartype._check.convert.convmain import sanify_hint_root_statement
-from beartype._check.forward.reference.fwdrefset import (
-    set_beartype_ref_proxies_classvars_uninitted)
 from beartype._check.make.checkmakesig import make_func_signature
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.conftest import die_unless_conf
@@ -423,24 +421,6 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         )
         # print(f'func_scope: {func_scope}')
 
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with similar logic in
-        # make_code_raiser_func_pith_check() below.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # If this hint is annotated by one or more forward references *NOT*
-        # resolvable at decoration time, these references have all been proxied
-        # by beartype-specific forward reference proxies. In this case...
-        if func_scope_frozen._beartype_ref_proxies:
-            # Overwrite the default values of all uninitialized class variables
-            # bound to these proxies with non-default initialized values passed
-            # by the caller.
-            set_beartype_ref_proxies_classvars_uninitted(
-                ref_proxies=func_scope_frozen._beartype_ref_proxies,
-                call_curr=call_curr,
-                exception_prefix=exception_prefix,
-            )
-        # Else, this hint is annotated by *NO* such references.
-
         # ....................{ SCOPE                      }....................
         # Mutable dictionary coerced from this immutable frozen dictionary if
         # this dictionary is *NOT* already mutable.
@@ -454,6 +434,11 @@ class BeartypeFuncCheckerFactoryCache(CacheMegaStrongABC):
         # single unified parameter (rather than individually as multiple
         # distinct parameters).
         func_scope_unfrozen[ARG_NAME_CALL_META] = call_curr
+
+        # Fully initialize this lexical scope *AFTER* exposing all necessary
+        # attributes to this scope above.
+        func_scope_unfrozen.conclude_scope(
+            call_curr=call_curr, exception_prefix=exception_prefix)
 
         # Type-checking expression lexical scope to be returned.
         func_scope_refrozen = func_scope_unfrozen.refreeze()

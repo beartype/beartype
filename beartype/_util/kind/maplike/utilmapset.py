@@ -326,10 +326,7 @@ def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:
     :func:`beartype._util.kind.maplike.utilmaptest.die_if_mappings_two_items_collide`
         Further details.
     '''
-    #FIXME: Restore this more fine-grained assertion once we've properly
-    #subclassed "BeartypeCheckExprScopeUnfrozen" from "MutableMappingStrToAny"!
-    # assert isinstance(mapping_trg, MutableMapping), (
-    assert isinstance(mapping_trg, Mapping), (
+    assert isinstance(mapping_trg, MutableMapping), (
         f'{repr(mapping_trg)} not mutable mapping.')
     assert isinstance(mapping_src, Mapping), (
         f'{repr(mapping_src)} not mapping.')

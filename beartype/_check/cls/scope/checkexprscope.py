@@ -22,10 +22,11 @@ from beartype._check.forward.reference.fwdreftyping import (
     FrozenSetBeartypeForwardRefs,
     SetBeartypeForwardRefs,
 )
+from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatyping import (
     DictStrToAny,
+    MappingMutableStrToAny,
     MappingStrToAny,
-    # MappingMutableStrToAny,
 )
 from beartype._util.kind.maplike.utilmapfrozen import (
     FrozenDict,
@@ -38,11 +39,13 @@ from collections.abc import (
 )
 from typing import (
     TYPE_CHECKING,
+    Never,
     Optional,
 )
 
 # ....................{ SUPERCLASSES                       }....................
-class BeartypeCheckExprScopeABC(MappingStrToAny):
+class BeartypeCheckExprScopeABC(
+    MappingStrToAny, metaclass=BeartypeSlottedABCMeta):
     '''
     Beartype **type-checking expression lexical scope abstract base class
     (ABC)** (i.e., abstract superclass subclassed by concrete mutable and
@@ -189,30 +192,29 @@ class BeartypeCheckExprScopeABC(MappingStrToAny):
         # The one-liner gave a loud scream.
         return self._check_expr_scope.__getitem__(attr_name)
 
+    # ..................{ PROPERTIES                         }..................
+    #FIXME: Unit test us up, please. *sigh*
+    @property
+    def is_concludable(self) -> bool:
+        '''
+        :data:`True` only if this lexical scope has yet to be fully initialized,
+        in which case the caller *must* explicitly call the
+        :meth:`.conclude_scope` method to fully initialize all remaining
+        **partially initialized metadata** (i.e., attributes accessible to this
+        lexical scope whose values have yet to be fully initialized).
+        '''
+
+        # Note that this lexical scope has yet to be fully initialized if and
+        # only if one or more beartype-specific forward reference proxies are
+        # accessible to this scope.
+        return bool(self._beartype_ref_proxies)
+
     # ..................{ FINISHERS                          }..................
     #FIXME: Unit test us up, please. *sigh*
     #FIXME: Call this method everywhere in lieu of the obsolete
     #set_beartype_ref_proxies_classvars_uninitted() setter, which should now be
     #entirely excised away. *sigh*
-    #
-    #Note that this will prove somewhat non-trivial. Essential tasks to get us
-    #there include:
-    #* Define a new "is_dememoizable" property resembling:
-    #       @property
-    #       def is_dememoizable(self) -> bool:
-    #           return bool(self._beartype_ref_proxies)
-    #* Refactor make_func_check() as follows:
-    #        decor_func_minified = decor_func.minify()
-    #
-    #        if decor_func.func_wrapper_scope.is_dememoizable:
-    #            decor_func.func_wrapper_scope.dememoize(
-    #                call_curr=decor_func_minified,
-    #                exception_prefix=f'{decor_func..func_wrapper_name}() ',
-    #            )
-    #
-    #        func_scope[ARG_NAME_CALL_META] = decor_func_minified
-    #        ...
-    def finish_scope(
+    def conclude_scope(
         self, call_curr: BeartypeCallDataABC, exception_prefix: str) -> None:
         '''
         Fully initialize all remaining **partially initialized metadata** (i.e.,
@@ -419,9 +421,8 @@ class BeartypeCheckExprScopeFrozen(BeartypeCheckExprScopeABC):
 
 
 #FIXME: Unit test us up, please.
-#FIXME: Refactor to additionally subclass "MutableMappingStrToAny". No time or
-#necessity at the moment. *shrug*
-class BeartypeCheckExprScopeUnfrozen(BeartypeCheckExprScopeABC):
+class BeartypeCheckExprScopeUnfrozen(
+    BeartypeCheckExprScopeABC, MappingMutableStrToAny):
     '''
     Beartype **frozen type-checking expression lexical scope** (i.e., immutable
     dictionary mapping from the name to value of each attribute referenced in
@@ -487,10 +488,35 @@ class BeartypeCheckExprScopeUnfrozen(BeartypeCheckExprScopeABC):
         )
 
     # ..................{ DUNDERS ~ attribute                }..................
-    #FIXME: Implement to unconditionally raise an exception, yo. *shrug*
-    # def __delitem__(self, attr_name: str) -> NoReturn:
-    #     '''
-    #     '''
+    #FIXME: Unit test us up, please. *sigh*
+    def __delitem__(self, attr_name: str) -> Never:
+        '''
+        Unconditionally raise an exception on any attempt to delete any
+        attribute previously accessible to this scope, implicitly called on each
+        statement of the form ``del func_scope[attr_name]``.
+
+        This dunder method intentionally raises exceptions as a safeguard
+        against accidental attribute deletion. Attributes should only ever be
+        incrementally added to lexical scopes; attributes should *never* be
+        incrementally deleted from lexical scopes.
+
+        Parameters
+        ----------
+        attr_name : str
+            Name of the attribute to be deleted.
+
+        Raises
+        ------
+        _BeartypeCheckExprScopeException
+            Unconditionally.
+        '''
+
+        # Prevent callers from accidentally deleting attributes for safety.
+        raise _BeartypeCheckExprScopeException(
+            f'Attribute "{attr_name}" not deletable from '
+            f'type-checking expression lexical scope.'
+        )
+
 
     #FIXME: Unit test us up, please. *sigh*
     def __setitem__(self, attr_name: str, attr_value: object) -> None:
@@ -516,7 +542,7 @@ class BeartypeCheckExprScopeUnfrozen(BeartypeCheckExprScopeABC):
 
     # ..................{ UPDATERS                           }..................
     #FIXME: Unit test us up, please. *sigh*
-    def update(self, other: BeartypeCheckExprScopeABC) -> None:
+    def update(self, other: BeartypeCheckExprScopeABC) -> None:  # type: ignore[override]
         '''
         Add all attributes accessible to the passed scope to this scope as well.
 

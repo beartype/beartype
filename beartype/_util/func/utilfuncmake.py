@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._data.typing.datatyping import (
+    LexicalScope,
     LexicalScopeMutable,
     TypeException,
 )
@@ -22,7 +23,7 @@ from beartype._util.utilobjget import get_object_name
 from collections.abc import (
     Callable,
     Mapping,
-    # MutableMapping,
+    MutableMapping,
 )
 from functools import update_wrapper
 from linecache import cache as linecache_cache  # type: ignore[attr-defined]
@@ -36,9 +37,6 @@ def make_func(
     func_code: str,
 
     # Optional arguments.
-
-    #FIXME: Actually, we're pretty sure *ONLY* "func_locals" needs to be
-    #mutable. "func_globals" can probably be immutable. *shrug*
     func_globals: Optional[LexicalScopeMutable] = None,
     func_locals: Optional[LexicalScopeMutable] = None,
     func_doc: Optional[str] = None,
@@ -62,19 +60,20 @@ def make_func(
         signature prefixed by zero or more decorations *and* body. **This
         snippet must be unindented.** If this snippet is indented, this factory
         raises a syntax error.
-    func_globals : MutableMapping[str, Any] | None, default: None
-        Mutable dictionary mapping from the name to value of each **globally
-        scoped attribute** (i.e., internally referenced in the body of the
-        function declared by this code snippet). Defaults to :data:`None`, in
-        which case this dictionary defaults to a new empty dictionary.
+    func_globals : Mapping[str, Any] | None, default: None
+        Possibly immutable dictionary mapping from the name to value of each
+        **globally scoped attribute** (i.e., internally referenced in the body
+        of the function declared by this code snippet). Defaults to
+        :data:`None`, in which case this dictionary defaults to a new empty
+        dictionary.
 
         Note that the low-level :exec:`builtin` internally called by this
-        higher-level factory mutates this dictionary. To guard against unwanted
-        modification, consider passing a shallow copy of this dictionary.
+        higher-level factory does *not* mutate this dictionary. Ergo, this
+        dictionary may be a frozen dictionary for safety.
     func_locals : MutableMapping[str, Any] | None, default: None
-        Mutable dictionary mapping from the name to value of each **locally scoped
-        attribute** (i.e., internally referenced either in the signature of
-        the function declared by this code snippet *or* as decorators
+        Mutable dictionary mapping from the name to value of each **locally
+        scoped attribute** (i.e., internally referenced either in the signature
+        of the function declared by this code snippet *or* as decorators
         decorating that function). Defaults to :data:`None`, in which case this
         dictionary defaults to a new empty dictionary.
 
@@ -167,16 +166,9 @@ def make_func(
         func_globals = {}
     if func_locals is None:
         func_locals = {}
-
-    #FIXME: Tighten these back up to "MutableMapping" once
-    #"BeartypeCheckExprScopeUnfrozen" properly subclasses "MutableMapping".
-    # assert isinstance(func_globals, MutableMapping), (
-    #     f'{repr(func_globals)} not mutable mapping.')
-    # assert isinstance(func_locals, MutableMapping), (
-    #     f'{repr(func_locals)} not mutable mapping.')
     assert isinstance(func_globals, Mapping), (
-        f'{repr(func_globals)} not mutable mapping.')
-    assert isinstance(func_locals, Mapping), (
+        f'{repr(func_globals)} not mapping.')
+    assert isinstance(func_locals, MutableMapping), (
         f'{repr(func_locals)} not mutable mapping.')
 
     # If "func_labeller" is unpassed...

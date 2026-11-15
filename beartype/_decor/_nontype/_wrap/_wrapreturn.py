@@ -212,7 +212,7 @@ def code_check_return(decor_func: BeartypeCallDecorFuncData) -> str:
     # If a local scope is required to type-check this return, merge this scope
     # into the local scope currently required by the current wrapper function.
     if func_scope_return:
-        update_mapping(decor_func.func_wrapper_scope, func_scope_return)  # type: ignore[arg-type]
+        update_mapping(decor_func.func_wrapper_scope, func_scope_return)
     # Else, *NO* local scope is required to type-check this return.
 
     # Return this code.
