@@ -39,7 +39,7 @@ from collections.abc import (
 )
 from typing import (
     TYPE_CHECKING,
-    Never,
+    NoReturn,
     Optional,
 )
 
@@ -489,7 +489,7 @@ class BeartypeCheckExprScopeUnfrozen(
 
     # ..................{ DUNDERS ~ attribute                }..................
     #FIXME: Unit test us up, please. *sigh*
-    def __delitem__(self, attr_name: str) -> Never:
+    def __delitem__(self, attr_name: str) -> NoReturn:
         '''
         Unconditionally raise an exception on any attempt to delete any
         attribute previously accessible to this scope, implicitly called on each

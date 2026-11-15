@@ -42,7 +42,7 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.cls.utilclsmake import make_type
-from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
+from beartype._util.hint.pep.proposal.pep749.pep484749ref import (
     get_hint_pep484749_ref_names)
 from beartype._util.text.utiltextidentifier import (
     die_unless_identifier,

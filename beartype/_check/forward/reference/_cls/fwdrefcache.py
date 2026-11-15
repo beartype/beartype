@@ -41,7 +41,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_unsubbed_type)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic)
-from beartype._util.hint.pep.proposal.pep749.pep484749forwardref import (
+from beartype._util.hint.pep.proposal.pep749.pep484749ref import (
     resolve_hint_pep484749_ref_object)
 # from beartype._util.hint.utilhinttest import (
 #     die_unless_hint,

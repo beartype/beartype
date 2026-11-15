@@ -341,20 +341,20 @@ def get_hint_object_violation(
     # While temporarily ignoring *ALL* beartype-specific warnings...
     #
     # Note that beartype-specific warnings are intentionally ignored here to
-    # prevent these warnings from being inappropriate issued twice.
+    # prevent these warnings from being inappropriately issued twice.
     # Specifically:
     # * If this getter is called from within the body of a @beartype-decorated
     #   type-checking wrapper function, the @beartype decorator has already
     #   issued *ALL* of these same warnings at early decoration time. Repeatedly
     #   re-issuing these warnings again at later call time when any call fails a
-    #   type-check would be of no be benefit and of demonstrable harm.
+    #   type-check would be of no benefit and of demonstrable harm.
     # * If this getter is called from within the body of an internally memoized
     #   type-checking function dynamically generated and cached by the
     #   die_if_unbearable() statement-level type-checker, the first call to that
     #   type-checker passed some type hint has already issued *ALL* of these
     #   same warnings for that unique hint. Repeatedly re-issuing these warnings
     #   again on each subsequent call to that type-checker passed the same hint
-    #   when failing a type-check would be of no be benefit and, again, of harm.
+    #   when failing a type-check would be of no benefit and, again, of harm.
     with warnings_ignored(warning_cls=BeartypeWarning):
         # Type-checking violation cause (i.e., object providing various metadata
         # describing the failure of the passed object to satisfy the passed type
@@ -369,13 +369,78 @@ def get_hint_object_violation(
             exception_prefix=exception_prefix,
         )
 
+    # ....................{ MESSAGE ~ prefix               }....................
+    # Machine-readable representation of this hint embellished with colour.
+    hint_repr = f'{color_hint(text=repr(hint), is_color=conf.is_color)}'
+
+    #FIXME: *LOL*. This is seriously trash. Although the
+    #"BeartypeViolationVerbosity" enumeration still has value *IN THEORY*, this
+    #current implementation is laughably bad. Since this isn't doing anything of
+    #any value whatsoever at the moment, let's just silently elide this for now.
+    # # Dictionary mapping from each possibly violation verbosity to a
+    # # corresponding substring prepending this exception message.
+    # VIOLATION_VERBOSITY_TO_PREFIX = {
+    #     BeartypeViolationVerbosity.MINIMAL: (
+    #         f'{exception_prefix}expected to be of type {hint_repr}'),
+    #     BeartypeViolationVerbosity.DEFAULT: (
+    #         f'{exception_prefix}violates type hint {hint_repr}'),
+    # }
+    # VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.MAXIMAL] = (  # <-- alias!
+    #     VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.DEFAULT])
+
+    # Human-readable substring prepending this exception message.
+    violation_prefix = (
+        f'{violation_cause.exception_prefix}violates type hint {hint_repr}')
+
+    # ....................{ MESSAGE ~ infix                }....................
+    # Dictionary mapping from each possibly violation verbosity to a
+    # corresponding substring embedded in the middle of this exception message.
+    VIOLATION_VERBOSITY_TO_INFIX = {
+        BeartypeViolationVerbosity.MINIMAL: '',
+        BeartypeViolationVerbosity.DEFAULT: '',
+        BeartypeViolationVerbosity.MAXIMAL: (
+            # If this configuration is the default configuration, avoid
+            # needlessly representing this default configuration.
+            ''
+            if conf == BEARTYPE_CONF_DEFAULT else
+            # Else, this configuration is *NOT* the default configuration. In
+            # this case, append the machine-readable representation of this
+            # non-default configuration to this exception message for
+            # disambiguity and clarity.
+            f' under non-default configuration {repr(conf)}'
+        ),
+    }
+
+    # ....................{ MESSAGE ~ suffix               }....................
     # Human-readable string describing the failure of this object to satisfy
     # this hint under this configuration.
     #
-    # Note that the lower-level _find_hint_object_violation_cause() finder
-    # called above has already internally validated this instance variable to be
-    # a non-empty string.
-    violation_message: str = violation_cause.cause_str_or_none  # type: ignore[assignment]
+    # Note that the _find_hint_object_violation_cause() finder called above has
+    # already internally validated this string to be non-empty.
+    violation_message_cause: str = violation_cause.cause_str_or_none  # type: ignore[assignment]
+
+    # This failure suffixed by a period if *NOT* yet suffixed by a period.
+    violation_message_cause = suffix_str_unless_suffixed(
+        text=violation_message_cause, suffix='.')
+
+    # Dictionary mapping from each possibly violation verbosity to a
+    # corresponding substring appending this exception message.
+    VIOLATION_VERBOSITY_TO_SUFFIX = {
+        BeartypeViolationVerbosity.MINIMAL: '.',
+        BeartypeViolationVerbosity.DEFAULT: f', as {violation_message_cause}',
+    }
+    VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.MAXIMAL] = (  # <-- alias!
+        VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.DEFAULT])
+
+    # ....................{ MESSAGE                        }....................
+    # Human-readable violation message to be raised, replacing the original
+    # substring associated with this cause as a trivial means of transparently
+    # returning this message to the caller.
+    violation_message = (
+        f'{violation_prefix}'
+        f'{VIOLATION_VERBOSITY_TO_INFIX[conf.violation_verbosity]}'
+        f'{VIOLATION_VERBOSITY_TO_SUFFIX[conf.violation_verbosity]}'
+    )
 
     # Uppercase the first character of this violation message for readability.
     #
@@ -472,9 +537,8 @@ def get_hint_object_violation_message(
     # Human-readable string describing the failure of this object to satisfy
     # this hint under this configuration.
     #
-    # Note that the lower-level _find_hint_object_violation_cause() finder
-    # called above has already internally validated this instance variable to be
-    # a non-empty string.
+    # Note that the _find_hint_object_violation_cause() finder called above has
+    # already internally validated this string to be non-empty.
     violation_message: str = violation_cause.cause_str_or_none  # type: ignore[assignment]
 
     # Return this string.
@@ -616,11 +680,28 @@ def _find_hint_object_violation_cause(
         exception_prefix=exception_prefix,
     ).find_cause()
 
-    # If this pith satisfies this hint, *SOMETHING HAS GONE VERY TERRIBLY AWRY.*
-    # In theory, this should never happen, as the parent wrapper function
-    # performing type checking should *ONLY* call this child helper function
-    # when this pith does *NOT* satisfy this hint. In this case...
-    if not violation_cause.cause_str_or_none:
+    # ....................{ MESSAGE                        }....................
+    # If this cause describes why this pith violates this hint...
+    if violation_cause.cause_str_or_none:
+        #FIXME: In theory, this should no longer be needed. Consider:
+        #* Refactoring all instances of "is_color=True" throughout this subpackage
+        #  to instead read "is_color=cause.conf.is_color".
+        #* Refactoring all calls to the represent_pith() function throughout this
+        #  subpackage to additionally pass a new optional
+        #  "is_color=cause.conf.is_color" parameter.
+        #* Refactoring this call away.
+        #* Validating with unit tests that violation messages contain *NO* ANSI when
+        #  configured such that "BeartypeConf(is_color=False)".
+        # Strip all ANSI escape sequences from this message if requested by this
+        # external user-defined configuration.
+        violation_cause.cause_str_or_none = strip_str_ansi(
+            text=violation_cause.cause_str_or_none, is_color=conf.is_color)
+    # Else, this cause describes why this pith violates this hint, implying that
+    # this pith instead satisfies this hint. This means that *SOMETHING HAS GONE
+    # TERRIBLY AWRY.* In theory, this should never happen, as the parent wrapper
+    # function performing type checking should *ONLY* call this child helper
+    # function when this pith does *NOT* satisfy this hint. In this case...
+    else:
         # Machine-readable representation of this pith.
         pith_value_repr = represent_object(
             obj=obj, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
@@ -639,85 +720,6 @@ def _find_hint_object_violation_cause(
             f'know that you are not alone.'
         )
     # Else, this pith violates this hint as expected and as required for sanity.
-
-    # ....................{ MESSAGE                        }....................
-    # Violation verbosity, localized for negligible efficiency. *vomits*
-    violation_verbosity = conf.violation_verbosity
-
-    # Machine-readable representation of this hint embellished with colour.
-    hint_repr = f'{color_hint(text=repr(hint), is_color=conf.is_color)}'
-
-    #FIXME: *LOL*. This is seriously trash. Although the
-    #"BeartypeViolationVerbosity" enumeration still has value *IN THEORY*, this
-    #current implementation is laughably bad. Since this isn't doing anything of
-    #any value whatsoever at the moment, let's just silently elide this for now.
-    # # Dictionary mapping from each possibly violation verbosity to a
-    # # corresponding substring prepending this exception message.
-    # VIOLATION_VERBOSITY_TO_PREFIX = {
-    #     BeartypeViolationVerbosity.MINIMAL: (
-    #         f'{exception_prefix}expected to be of type {hint_repr}'),
-    #     BeartypeViolationVerbosity.DEFAULT: (
-    #         f'{exception_prefix}violates type hint {hint_repr}'),
-    # }
-    # VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.MAXIMAL] = (  # <-- alias!
-    #     VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.DEFAULT])
-
-    # Human-readable substring prepending this exception message.
-    violation_prefix = f'{exception_prefix}violates type hint {hint_repr}'
-
-    # Dictionary mapping from each possibly violation verbosity to a
-    # corresponding substring embedded in the middle of this exception message.
-    VIOLATION_VERBOSITY_TO_INFIX = {
-        BeartypeViolationVerbosity.MINIMAL: '',
-        BeartypeViolationVerbosity.DEFAULT: '',
-        BeartypeViolationVerbosity.MAXIMAL: (
-            # If this configuration is the default configuration, avoid
-            # needlessly representing this default configuration.
-            ''
-            if conf == BEARTYPE_CONF_DEFAULT else
-            # Else, this configuration is *NOT* the default configuration. In
-            # this case, append the machine-readable representation of this
-            # non-default configuration to this exception message for
-            # disambiguity and clarity.
-            f' under non-default configuration {repr(conf)}'
-        ),
-    }
-
-    # This failure suffixed by a period if *NOT* yet suffixed by a period.
-    violation_cause_suffixed = suffix_str_unless_suffixed(
-        text=violation_cause.cause_str_or_none, suffix='.')
-
-    # Dictionary mapping from each possibly violation verbosity to a
-    # corresponding substring appending this exception message.
-    VIOLATION_VERBOSITY_TO_SUFFIX = {
-        BeartypeViolationVerbosity.MINIMAL: '.',
-        BeartypeViolationVerbosity.DEFAULT: f', as {violation_cause_suffixed}',
-    }
-    VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.MAXIMAL] = (  # <-- alias!
-        VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.DEFAULT])
-
-    # Human-readable violation message to be raised, replacing the original
-    # substring associated with this cause as a trivial means of transparently
-    # returning this message to the caller.
-    violation_cause.cause_str_or_none = (
-        f'{violation_prefix}'
-        f'{VIOLATION_VERBOSITY_TO_INFIX[violation_verbosity]}'
-        f'{VIOLATION_VERBOSITY_TO_SUFFIX[violation_verbosity]}'
-    )
-
-    #FIXME: In theory, this should no longer be needed. Consider:
-    #* Refactoring all instances of "is_color=True" throughout this subpackage
-    #  to instead read "is_color=cause.conf.is_color".
-    #* Refactoring all calls to the represent_pith() function throughout this
-    #  subpackage to additionally pass a new optional
-    #  "is_color=cause.conf.is_color" parameter.
-    #* Refactoring this call away.
-    #* Validating with unit tests that violation messages contain *NO* ANSI when
-    #  configured such that "BeartypeConf(is_color=False)".
-    # Strip all ANSI escape sequences from this message if requested by this
-    # external user-defined configuration.
-    violation_cause.cause_str_or_none = strip_str_ansi(
-        text=violation_cause.cause_str_or_none, is_color=conf.is_color)
 
     # ....................{ RETURN                         }....................
     # Return this cause.
