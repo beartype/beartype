@@ -16,7 +16,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._cache.cls.cacheclsmega import CacheMegaStrongCaller
 from beartype._cave._cavefast import NoneType
 from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._data.hint.sign.datahintsigns import (
+    HintSignPep646TupleFixedVariadic)
 from beartype._data.typing.datatypingport import Hint
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from threading import RLock
 from typing import TYPE_CHECKING
 
@@ -177,6 +180,8 @@ class _TypeHintMetaclass(BeartypeSlottedABCMeta):
         # ................{ IMPORTS                            }................
         # Avoid circular import dependencies.
         from beartype.door._cls._doormap import get_typehint_subclass
+        from beartype.door._cls.pep.pep646.doorpep646 import (
+            reduce_hint_door_pep646_tuple)
 
         # ................{ REDUCTION                          }................
         # Reduce this hint to a more amenable form suitable for mapping to a
@@ -203,6 +208,37 @@ class _TypeHintMetaclass(BeartypeSlottedABCMeta):
         if hint is None:
             hint = NoneType  # type: ignore[assignment]
         # Else, this is *NOT* the PEP 484-compliant "None" singleton.
+        #
+        # ................{ REDUCTION ~ pep 646                }................
+        # Else, if this is a PEP 646-compliant fixed-variadic tuple hint (e.g.,
+        # "tuple[*tuple[int]]"), return the wrapper wrapping the semantically
+        # equivalent tuple hint to which this hint reduces.
+        #
+        # Note that this is a *SEMANTICS-PRESERVING* reduction rather than one
+        # of the semantics-eroding reductions intentionally ignored above.
+        # Unpacking an unpacked child tuple hint into its parent tuple hint is
+        # pure notation: "tuple[*tuple[int]]" and "tuple[int]" are the same
+        # hint, spelt differently. The reducer called here raises an exception
+        # rather than reduce a hint whose semantics would *NOT* be preserved.
+        #
+        # Note also that this reduction is intentionally implemented by
+        # recursively deferring to the caching __call__() dunder method above
+        # rather than by merely replacing this hint. Why? Because doing so
+        # guarantees that both spellings of this hint are wrapped by the same
+        # wrapper singleton: e.g.,
+        #     >>> TypeHint(tuple[*tuple[int]]) is TypeHint(tuple[int])
+        #     True
+        #
+        # Note lastly that this reduction is intentionally performed here on the
+        # cache *MISS* path rather than in the __call__() dunder method above on
+        # the cache *HIT* path. Why? Efficiency. The latter is the hottest path
+        # in this API; reducing there would tax *EVERY* instantiation of this
+        # superclass, the vast majority of which are passed hints that are *NOT*
+        # PEP 646-compliant tuple hints.
+        elif get_hint_pep_sign_or_none(hint) is (
+            HintSignPep646TupleFixedVariadic):
+            return cls(reduce_hint_door_pep646_tuple(hint))  # type: ignore[return-value]
+        # Else, this is *NOT* a PEP 646-compliant fixed-variadic tuple hint.
 
         # ................{ INSTANTIATION                      }................
         # Concrete "TypeHint" subclass handling this hint if this hint is

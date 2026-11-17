@@ -141,6 +141,7 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
     from beartype.roar import (
         BeartypeDoorHintViolation,
         BeartypeDoorNonpepException,
+        BeartypeDoorPepUnsupportedException,
     )
     from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithUnsatisfiedMetadata)
@@ -161,7 +162,10 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
 
         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
         #all currently unsupported type hints.
-        with suppress(BeartypeDoorNonpepException):
+        with suppress(
+            BeartypeDoorNonpepException,
+            BeartypeDoorPepUnsupportedException,
+        ):
             # Wrapper wrapping this type hint.
             typehint = TypeHint(hint)
 
@@ -274,7 +278,10 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.door import TypeHint
-    from beartype.roar import BeartypeDoorNonpepException
+    from beartype.roar import (
+        BeartypeDoorNonpepException,
+        BeartypeDoorPepUnsupportedException,
+    )
     from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithUnsatisfiedMetadata)
     from contextlib import suppress
@@ -297,7 +304,10 @@ def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
 
         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
         #all currently unsupported type hints.
-        with suppress(BeartypeDoorNonpepException):
+        with suppress(
+            BeartypeDoorNonpepException,
+            BeartypeDoorPepUnsupportedException,
+        ):
             # Assert this tester returns the expected boolean when passed this
             # pith and hint.
             assert TypeHint(hint).is_bearable(pith, conf=conf) is (
