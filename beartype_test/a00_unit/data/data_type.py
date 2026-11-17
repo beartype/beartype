@@ -654,58 +654,6 @@ class ClassCallable(object):
 
         return len(args) + len(kwargs)
 
-# ....................{ CLASSES ~ dunder : instancecheck   }....................
-#FIXME: Shift into a new "beartype_test.a00_unit.data.pep.pep3119" submodule.
-class NonIsinstanceableMetaclass(type):
-    '''
-    :pep:`3119`-compliant metaclass overriding the ``__instancecheck__()``
-    dunder method to unconditionally raise an exception, preventing classes with
-    this metaclass from being passed as the second parameter to the
-    :func:`isinstance` builtin.
-    '''
-
-    def __instancecheck__(self, obj: object) -> bool:
-        raise TypeError(
-            f'{self} not passable as second parameter to isinstance().')
-
-
-#FIXME: Shift into a new "beartype_test.a00_unit.data.pep.pep3119" submodule.
-class NonIsinstanceableClass(object, metaclass=NonIsinstanceableMetaclass):
-    '''
-    Class whose :pep:`3119`-compliant metaclass overrides the
-    ``__instancecheck__()`` dunder method to unconditionally raise an exception,
-    preventing this class from being passed as the second parameter to the
-    :func:`isinstance` builtin.
-    '''
-
-    pass
-
-# ....................{ CLASSES ~ dunder : subclasscheck   }....................
-#FIXME: Shift into a new "beartype_test.a00_unit.data.pep.pep3119" submodule.
-class NonIssubclassableMetaclass(type):
-    '''
-    :pep:`3119`-compliant metaclass overriding the ``__subclasscheck__()``
-    dunder method to unconditionally raise an exception, preventing classes with
-    this metaclass from being passed as the second parameter to the
-    :func:`issubclass` builtin.
-    '''
-
-    def __subclasscheck__(self, obj: object) -> bool:
-        raise TypeError(
-            f'{self} not passable as second parameter to issubclass().')
-
-
-#FIXME: Shift into a new "beartype_test.a00_unit.data.pep.pep3119" submodule.
-class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
-    '''
-    Class whose :pep:`3119`-compliant metaclass overrides the
-    ``__subclasscheck__()`` dunder method to unconditionally raise an exception,
-    preventing this class from being passed as the second parameter to the
-    :func:`issubclass` builtin.
-    '''
-
-    pass
-
 # ....................{ CLASSES ~ dunder : module          }....................
 class ClassModuleNameFake(object):
     '''

@@ -45,8 +45,9 @@ def hints_pep695_meta() -> 'list[HintPepMetadata]':
         Subclass,
         OtherClass,
         OtherSubclass,
-        NonIsinstanceableMetaclass,
     )
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIsinstanceableMetaclass)
     from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
         AliasSimple,
         AliasPep484604,
@@ -644,7 +645,7 @@ def hints_pep695_meta() -> 'list[HintPepMetadata]':
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Arbitrary metaclass.
-                PithSatisfiedMetadata(NonIsinstanceableMetaclass),
+                PithSatisfiedMetadata(Pep3119NonIsinstanceableMetaclass),
                 # Arbitrary class.
                 PithUnsatisfiedMetadata(int),
                 # String constant.

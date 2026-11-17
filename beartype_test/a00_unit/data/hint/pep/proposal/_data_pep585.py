@@ -64,7 +64,6 @@ def hints_pep585_meta() -> (
         SubclassSubclass,
         OtherClass,
         OtherSubclass,
-        NonIsinstanceableMetaclass,
         context_manager_factory,
         default_dict_int_to_str,
         default_dict_str_to_str,
@@ -76,6 +75,8 @@ def hints_pep585_meta() -> (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIsinstanceableMetaclass)
     from beartype_test.a00_unit.data.pep.generic.data_pep484585generic import (
         Pep484585GenericIntTSequenceU,
         Pep484585GenericIntFloatSequenceU,
@@ -2762,7 +2763,7 @@ def hints_pep585_meta() -> (
             is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Arbitrary metaclass.
-                PithSatisfiedMetadata(NonIsinstanceableMetaclass),
+                PithSatisfiedMetadata(Pep3119NonIsinstanceableMetaclass),
                 # Arbitrary class.
                 PithUnsatisfiedMetadata(int),
                 # String constant.

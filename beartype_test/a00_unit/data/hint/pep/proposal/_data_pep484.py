@@ -119,12 +119,13 @@ def hints_pep484_meta() -> (
         SubclassSubclass,
         OtherClass,
         OtherSubclass,
-        NonIsinstanceableMetaclass,
         context_manager_factory,
         default_dict_int_to_str,
         default_dict_str_to_str,
         sync_generator,
     )
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIsinstanceableMetaclass)
     from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintPepMetadata)
     from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
@@ -3420,7 +3421,7 @@ def hints_pep484_meta() -> (
             isinstanceable_type=type,
             piths_meta=(
                 # Arbitrary metaclass.
-                PithSatisfiedMetadata(NonIsinstanceableMetaclass),
+                PithSatisfiedMetadata(Pep3119NonIsinstanceableMetaclass),
                 # Arbitrary class.
                 PithUnsatisfiedMetadata(int),
                 # String constant.

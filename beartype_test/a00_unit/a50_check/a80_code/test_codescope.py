@@ -29,7 +29,8 @@ def test_add_func_scope_type() -> None:
     from beartype._cave._cavefast import NoneType, RegexCompiledType
     from beartype._check.code.codescope import add_func_scope_type
     from beartype._util.utilobjget import get_object_type_basename
-    from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIsinstanceableClass)
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -81,7 +82,8 @@ def test_add_func_scope_type() -> None:
     # classes whose metaclasses define an __instancecheck__() dunder method to
     # unconditionally raise exceptions.
     with raises(BeartypeDecorHintPep3119Exception):
-        add_func_scope_type(cls=NonIsinstanceableClass, func_scope=func_scope)
+        add_func_scope_type(
+            cls=Pep3119NonIsinstanceableClass, func_scope=func_scope)
 
 
 def test_add_func_scope_types() -> None:
@@ -96,7 +98,10 @@ def test_add_func_scope_types() -> None:
         BeartypeDecorHintNonpepException,
         BeartypeDecorHintPep3119Exception,
     )
-    from beartype._cave._cavefast import CallableTypes, ModuleOrStrTypes
+    from beartype._cave._cavefast import (
+        CallableTypes,
+        ModuleOrStrTypes,
+    )
     from beartype._cave._cavemap import NoneTypeOr
     from beartype._check.code.codescope import add_func_scope_types
     from beartype._util.utilobjget import get_object_type_basename
@@ -104,20 +109,18 @@ def test_add_func_scope_types() -> None:
         type_ref_str_proxy_absolute,
         type_ref_str_proxy_relative,
     )
-    from beartype_test.a00_unit.data.data_type import (
-        Class,
-        NonIsinstanceableClass,
-    )
+    from beartype_test.a00_unit.data.data_type import Class
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIsinstanceableClass)
     from pytest import raises
 
-    # ....................{ LOCALS                         }....................
+    # ....................{ PASS                           }....................
     # Arbitrary scope to be added to below.
     func_scope = {}
 
     # Arbitrary tuple of one or more standard types.
     types = CallableTypes
 
-    # ....................{ PASS                           }....................
     # Assert this function adds a tuple of one or more standard types.
     #
     # Note that, unlike types, tuples are internally added under different
@@ -176,7 +179,7 @@ def test_add_func_scope_types() -> None:
     assert func_scope[types_scope_name_b] == types_b
     assert func_scope[types_scope_name_a] != func_scope[types_scope_name_b]
 
-    # ....................{ PASS ~ forwardref              }....................
+    # ....................{ PASS ~ order : forwardref      }....................
     # Assert that this function implicitly reorders tuples containing:
     # * One or more forward reference proxies.
     # * One or more standard classes that are *NOT* forward reference proxies.
@@ -210,6 +213,36 @@ def test_add_func_scope_types() -> None:
         type_ref_str_proxy_relative,
     )
     assert added_types == expected_types
+
+    # ....................{ PASS ~ order : non-forwardref  }....................
+    # Assert that this function preserves the ordering of dictionary key views
+    # containing *NO* forward reference proxies.
+
+    # Arbitrary scope to be added to below, intentionally reset here to exercise
+    # that this adder preserves order when passed a tuple of types.
+    func_scope = {}
+
+    # Arbitrary tuple of one or more builtin types.
+    types = (str, int, float, bytes)
+
+    # Assert this function preserves the ordering of a dictionary key view
+    # coerced from this tuple of builtin types.
+    types_scope_name = add_func_scope_types(
+        types=dict.fromkeys(types).keys(), func_scope=func_scope)
+    assert func_scope[types_scope_name] == types
+
+    # Arbitrary scope to be added to below, intentionally reset here to exercise
+    # that this adder preserves order when passed a tuple of types.
+    func_scope = {}
+
+    # Arbitrary tuple of the same builtin types (in reverse order).
+    types = types[::-1]
+
+    # Assert this function preserves the ordering of a dictionary key view
+    # coerced from this tuple of builtin types.
+    types_scope_name = add_func_scope_types(
+        types=dict.fromkeys(types).keys(), func_scope=func_scope)
+    assert func_scope[types_scope_name] == types
 
     # ....................{ FAIL                           }....................
     # Arbitrary scope to be added to below.
@@ -255,22 +288,17 @@ def test_add_func_scope_types() -> None:
     # __instancecheck__() dunder method to unconditionally raise exceptions.
     with raises(BeartypeDecorHintPep3119Exception):
         add_func_scope_types(
-            types=(bool, NonIsinstanceableClass, float), func_scope=func_scope)
-
-def test_add_func_scope_types_ordered_key_view() -> None:
-    '''Dictionary key views retain their existing order without deduplication.'''
-    from beartype._check.code.codescope import add_func_scope_types
-
-    types = (str, int, float, bytes)
-    for ordered_types in (types, types[::-1]):
-        func_scope = {}
-        types_scope_name = add_func_scope_types(
-            types=dict.fromkeys(ordered_types).keys(), func_scope=func_scope)
-        assert func_scope[types_scope_name] == ordered_types
+            types=(bool, Pep3119NonIsinstanceableClass, float),
+            func_scope=func_scope,
+        )
 
 
+#FIXME: Properly docstring, comment, and refactor for human sanity, yo. *sigh*
 def test_union_custom_instancecheck_order() -> None:
-    '''Union checks short-circuit in caller order for custom metaclasses.'''
+    '''
+    Union checks short-circuit in caller order for custom metaclasses.
+    '''
+
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
     from pytest import raises
@@ -316,7 +344,6 @@ def test_union_custom_instancecheck_order() -> None:
         with raises(BeartypeCallHintParamViolation):
             check('invalid')
         assert body_calls == ['valid']
-
 
 # ....................{ TESTS ~ expresser                  }....................
 #FIXME: Refactor into an equivalent unit test validating that beartype correctly

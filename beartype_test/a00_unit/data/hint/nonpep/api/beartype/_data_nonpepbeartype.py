@@ -31,43 +31,14 @@ def hints_nonpep_beartype_meta() -> (
     # from beartype.plug import BeartypeHintable
     # from beartype.vale import Is
     # from beartype._util.api.standard.utiltyping import get_typing_attrs
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        BeartypeInstancecheckStrClass)
     from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintNonpepMetadata)
     from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
-
-    # ..................{ CLASSES                            }..................
-    class _TheMysteryAndMetaclass(type):
-        '''
-        Arbitrary metaclass correctly defining the :mod:`beartype`-specific
-        ``__instancecheck_str__()`` dunder method.
-        '''
-
-        def __instancecheck_str__(cls: 'TheMysteryAnd', obj: object) -> str:
-            '''
-            Correct implementation accepting the expected number of parameters
-            and returning the passed object trivially coerced into a string.
-            '''
-
-            # Return the passed object coerced into a string.
-            return (
-                f'object {repr(obj)} not instance of '
-                f'"{cls.__module__}.{cls.__name__}"; '
-                f'Gaze on the empty scene as vacantly'
-            )
-
-
-    #FIXME: Test below, please! *sigh*
-    #FIXME: Additionally test unions, please. *sigh*
-    class TheMysteryAnd(object, metaclass=_TheMysteryAndMetaclass):
-        '''
-        Arbitrary class whose metaclass correctly defines the
-        :mod:`beartype`-specific ``__instancecheck_str__()`` dunder method.
-        '''
-
-        pass
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-noncompliant type hint metadata to be returned.
@@ -80,18 +51,23 @@ def hints_nonpep_beartype_meta() -> (
         # Beartype-specific types whose metaclasses define the PEP-noncompliant
         # __instancecheck_str__() dunder method currently supported *ONLY* by
         # beartype.
+
+        # This type.
         HintNonpepMetadata(
-            hint=TheMysteryAnd,
+            hint=BeartypeInstancecheckStrClass,
             piths_meta=(
                 # Class instance.
-                PithSatisfiedMetadata(TheMysteryAnd()),
+                PithSatisfiedMetadata(BeartypeInstancecheckStrClass()),
                 # String constant.
                 PithUnsatisfiedMetadata(
                     pith="As ocean's moon looks on the moon in heaven.",
                     # Match that the exception message raised for this pith
-                    # contains the sentence fragment returned by the
-                    # TheMysteryAnd.__instancecheck_str__() dunder method.
+                    # contains...
                     exception_str_match_regexes=(
+                        # The unqualified basename of this type.
+                        r'\bBeartypeInstancecheckStrClass\b',
+                        # The sentence fragment returned by this type's
+                        # __instancecheck_str__() dunder method.
                         r'\bGaze on the empty scene as vacantly\b',
                     ),
                     # Match that the exception message raised for this pith

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Test-wide :pep:`252` **non-data and data descriptor types submodule.**
+Test-wide :pep:`252` **non-data and data descriptor types** submodule.
 
 This submodule defines :pep:`252`-compliant:
 

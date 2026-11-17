@@ -33,13 +33,15 @@ def test_get_hint_pep_childs(hints_piths_pep_meta) -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype.typing import Tuple
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_childs,
         _HINT_ARGS_EMPTY_TUPLE,
     )
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from pytest import raises
+
+    # Intentionally import this deprecated PEP 484-compliant type hint factory.
+    from typing import Tuple
 
     # ....................{ CLASSES                        }....................
     class TheWholeMammothBrood(object):

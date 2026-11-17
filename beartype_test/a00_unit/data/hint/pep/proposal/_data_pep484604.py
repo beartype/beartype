@@ -47,6 +47,8 @@ def hints_pep484604_meta() -> 'list[HintPepMetadata]':
         PithSatisfiedMetadata,
         PithUnsatisfiedMetadata,
     )
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        BeartypeInstancecheckStrClass)
     from beartype_test.a00_unit.data.pep.pep484.data_pep484 import (
         S,
         T,
@@ -171,13 +173,13 @@ def hints_pep484604_meta() -> 'list[HintPepMetadata]':
                 # simply characters.
                 PithUnsatisfiedMetadata(
                     pith=802.11,
-                    # Match that the exception message raised for this object
+                    # Match that the exception message raised for this pith
                     # declares the types *NOT* satisfied by this object.
                     exception_str_match_regexes=(
                         r'\bSequence\b',
                         r'\bint\b',
                     ),
-                    # Match that the exception message raised for this object
+                    # Match that the exception message raised for this pith
                     # does *NOT* contain a newline or bullet delimiter.
                     exception_str_not_match_regexes=(
                         r'\n',
@@ -188,14 +190,14 @@ def hints_pep484604_meta() -> 'list[HintPepMetadata]':
                 # Tuple of integers.
                 PithUnsatisfiedMetadata(
                     pith=(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89,),
-                    # Match that the exception message raised for this
-                    # object...
+                    # Match that the exception message raised for this pith
+                    # contains...
                     exception_str_match_regexes=(
-                        # Contains a bullet point declaring the non-"typing"
-                        # type *NOT* satisfied by this object.
+                        # A bullet point declaring the non-"typing" type *NOT*
+                        # satisfied by this pith.
                         r'\n\*\s.*\bint\b',
-                        # Contains a bullet point declaring the index of the
-                        # random tuple item *NOT* satisfying this hint.
+                        # A bullet point declaring the index of the random tuple
+                        # item *NOT* satisfying this hint.
                         r'\n\*\s.*\b[Tt]uple index \d+ item\b',
                     ),
                 ),
@@ -693,6 +695,44 @@ def hints_pep484604_meta() -> 'list[HintPepMetadata]':
                 ),
             ),
         ),
+
+        # ................{ PEP 604 ~ __instancecheck_str__()  }................
+        # Beartype-specific types whose metaclasses define the PEP-noncompliant
+        # __instancecheck_str__() dunder method currently supported *ONLY* by
+        # beartype.
+
+        # PEP 604-compliant union subscripted by this type and an arbitrary
+        # non-"typing" type.
+        HintPepMetadata(
+            hint=BeartypeInstancecheckStrClass | bytes,
+            pep_sign=HintSignUnion,
+            is_args=True,
+            is_type_typing=_PEP604_IS_TYPING,
+            piths_meta=(
+                # Class instance.
+                PithSatisfiedMetadata(BeartypeInstancecheckStrClass()),
+                # Byte string constant.
+                PithSatisfiedMetadata(b'Many and many a verse I hope to write'),
+                # String constant.
+                PithUnsatisfiedMetadata(
+                    pith="Before the daisies, vermeil rimm'd and white,",
+                    # Match that the exception message raised for this pith
+                    # contains...
+                    exception_str_match_regexes=(
+                        # The unqualified basename of this type.
+                        r'\bBeartypeInstancecheckStrClass\b',
+                        # A bullet point declaring the non-"typing" type *NOT*
+                        # satisfied by this pith.
+                        r'\n\*\s.*\bbytes\b',
+                        # A bullet point containing the sentence fragment
+                        # returned by this type's __instancecheck_str__() dunder
+                        # method.
+                        r'\n\*\sObject\b.*\bGaze on the empty scene as vacantly\b',
+                    ),
+                ),
+            ),
+        ),
+
 
         # ................{ PEP 604 ~ nested                   }................
         # Nested unions exercising edge cases induced by Python >= 3.8

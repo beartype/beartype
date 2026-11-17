@@ -30,10 +30,9 @@ def test_die_unless_object_isinstanceable() -> None:
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype._util.cls.pep.clspep3119 import (
         die_unless_object_isinstanceable)
-    from beartype_test.a00_unit.data.data_type import (
-        Class,
-        NonIsinstanceableClass,
-    )
+    from beartype_test.a00_unit.data.data_type import Class
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIsinstanceableClass)
     from pytest import raises
 
     # ....................{ PASS                           }....................
@@ -56,18 +55,18 @@ def test_die_unless_object_isinstanceable() -> None:
     # Assert this raiser raises the expected exception when passed a
     # non-isinstanceable type.
     with raises(BeartypeDecorHintPep3119Exception):
-        die_unless_object_isinstanceable(NonIsinstanceableClass)
+        die_unless_object_isinstanceable(Pep3119NonIsinstanceableClass)
 
     # Assert this raiser raises the expected exception when passed a tuple of
     # one isinstanceable type and one non-isinstanceable type.
     with raises(BeartypeDecorHintPep3119Exception):
-        die_unless_object_isinstanceable((Class, NonIsinstanceableClass))
+        die_unless_object_isinstanceable((Class, Pep3119NonIsinstanceableClass))
 
     # Assert this raiser raises the expected exception when passed a PEP
     # 604-compliant new-style union of one isinstanceable type and one
     # non-isinstanceable type.
     with raises(BeartypeDecorHintPep3119Exception):
-        die_unless_object_isinstanceable(Class | NonIsinstanceableClass)
+        die_unless_object_isinstanceable(Class | Pep3119NonIsinstanceableClass)
 
 
 def test_die_unless_type_isinstanceable() -> None:
@@ -82,10 +81,9 @@ def test_die_unless_type_isinstanceable() -> None:
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype._util.cls.pep.clspep3119 import (
         die_unless_type_isinstanceable)
-    from beartype_test.a00_unit.data.data_type import (
-        Class,
-        NonIsinstanceableClass,
-    )
+    from beartype_test.a00_unit.data.data_type import Class
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIsinstanceableClass)
     from pytest import raises
 
     # ....................{ PASS                           }....................
@@ -96,7 +94,7 @@ def test_die_unless_type_isinstanceable() -> None:
     # Assert this validator raises the expected exception when passed a
     # non-isinstanceable type.
     with raises(BeartypeDecorHintPep3119Exception):
-        die_unless_type_isinstanceable(NonIsinstanceableClass)
+        die_unless_type_isinstanceable(Pep3119NonIsinstanceableClass)
 
     # Assert this validator raises the expected exception when passed a
     # non-type.
@@ -116,10 +114,9 @@ def test_die_unless_object_issubclassable() -> None:
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype._util.cls.pep.clspep3119 import (
         die_unless_object_issubclassable)
-    from beartype_test.a00_unit.data.data_type import (
-        Class,
-        NonIssubclassableClass,
-    )
+    from beartype_test.a00_unit.data.data_type import Class
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIssubclassableClass)
     from pytest import raises
 
     # ....................{ PASS                           }....................
@@ -142,18 +139,18 @@ def test_die_unless_object_issubclassable() -> None:
     # Assert this raiser raises the expected exception when passed a
     # non-issubclassable type.
     with raises(BeartypeDecorHintPep3119Exception):
-        die_unless_object_issubclassable(NonIssubclassableClass)
+        die_unless_object_issubclassable(Pep3119NonIssubclassableClass)
 
     # Assert this raiser raises the expected exception when passed a tuple of
     # one issubclassable type and one non-issubclassable type.
     with raises(BeartypeDecorHintPep3119Exception):
-        die_unless_object_issubclassable((Class, NonIssubclassableClass))
+        die_unless_object_issubclassable((Class, Pep3119NonIssubclassableClass))
 
     # Assert this raiser raises the expected exception when passed a PEP
     # 604-compliant new-style union of one issubclassable type and one
     # non-issubclassable type.
     with raises(BeartypeDecorHintPep3119Exception):
-        die_unless_object_issubclassable(Class | NonIssubclassableClass)
+        die_unless_object_issubclassable(Class | Pep3119NonIssubclassableClass)
 
 
 def test_die_unless_type_issubclassable() -> None:
@@ -168,10 +165,9 @@ def test_die_unless_type_issubclassable() -> None:
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype._util.cls.pep.clspep3119 import (
         die_unless_type_issubclassable)
-    from beartype_test.a00_unit.data.data_type import (
-        Class,
-        NonIssubclassableClass,
-    )
+    from beartype_test.a00_unit.data.data_type import Class
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIssubclassableClass)
     from pytest import raises
 
     # ....................{ PASS                           }....................
@@ -182,7 +178,7 @@ def test_die_unless_type_issubclassable() -> None:
     # Assert this validator raises the expected exception when passed a
     # non-issubclassable type.
     with raises(BeartypeDecorHintPep3119Exception):
-        die_unless_type_issubclassable(NonIssubclassableClass)
+        die_unless_type_issubclassable(Pep3119NonIssubclassableClass)
 
     # Assert this validator raises the expected exception when passed a
     # non-type.

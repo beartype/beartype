@@ -119,7 +119,8 @@ def test_api_vale_isinstance_fail() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import IsInstance
-    from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIsinstanceableClass)
     from pytest import raises
 
     # Assert that subscripting this factory with the empty tuple raises the
@@ -135,7 +136,7 @@ def test_api_vale_isinstance_fail() -> None:
     # Assert that subscripting this factory with a non-isinstanceable class
     # raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
-        IsInstance[NonIsinstanceableClass]
+        IsInstance[Pep3119NonIsinstanceableClass]
 
     # Assert that subscripting this factory with both a class and non-class
     # raises the expected exception.
@@ -145,7 +146,7 @@ def test_api_vale_isinstance_fail() -> None:
     # Assert that subscripting this factory with both an isinstanceable and
     # non-isinstanceable class raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
-        IsInstance[bytes, NonIsinstanceableClass]
+        IsInstance[bytes, Pep3119NonIsinstanceableClass]
 
 # ....................{ TESTS ~ class : issubclass        }....................
 def test_api_vale_issubclass_pass() -> None:
@@ -241,7 +242,8 @@ def test_api_vale_issubclass_fail() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import IsSubclass
-    from beartype_test.a00_unit.data.data_type import NonIssubclassableClass
+    from beartype_test.a00_unit.data.pep.data_pep3119 import (
+        Pep3119NonIssubclassableClass)
     from pytest import raises
 
     # Assert that subscripting this factory with the empty tuple raises the
@@ -257,7 +259,7 @@ def test_api_vale_issubclass_fail() -> None:
     # Assert that subscripting this factory with a non-issubclassable class
     # raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
-        IsSubclass[NonIssubclassableClass]
+        IsSubclass[Pep3119NonIssubclassableClass]
 
     # Assert that subscripting this factory with both a class and non-class
     # raises the expected exception.
@@ -267,4 +269,4 @@ def test_api_vale_issubclass_fail() -> None:
     # Assert that subscripting this factory with both an issubclassable and
     # non-issubclassable class raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
-        IsSubclass[bytes, NonIssubclassableClass]
+        IsSubclass[bytes, Pep3119NonIssubclassableClass]
