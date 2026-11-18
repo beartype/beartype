@@ -13,6 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ TODO                               }....................
 #FIXME: Unit test against all possible dataclass edge cases, including:
+#* "dataclasses.KW_ONLY". Dataclass fields whose type hints are
+#  "dataclasses.KW_ONLY" are ignorable pseudo-fields. Sheesh. See also:
+#      https://docs.python.org/3/library/dataclasses.html#dataclasses.KW_ONLY
 #* "typing.Self". We're *NOT* passing "cls_stack" to either the is_bearable() or
 #  die_if_unbearable() functions, because those functions currently fail to
 #  accept an optional "cls_stack" parameter. We should probably generalize both
@@ -274,6 +277,18 @@ def beartype_pep557_dataclass_fields(
     #      obj: Annotationsable
     #FIXME: Actually, the above should just work now without any additional
     #improvements. Test that up though, please.
+
+    #FIXME: *NOPE*. Deciding which class attributes are normal dataclass fields
+    #worth consideration and which class attributes are ignorable for field
+    #purposes is *HIGHLY* non-trivial. Here, we are naively ignoring this
+    #decision process. That's... awful, frankly. Instead, we need to:
+    #* Our existing get_pep557_dataclass_field_name_to_data() getter: e.g.,
+    #      datacls_field_name_to_data = get_pep557_dataclass_field_name_to_data(
+    #          datacls=datacls, exception_prefix=exception_prefix)
+    #* At the start of body of this "for" loop, ignore the current "field_name"
+    #  if *NOT* also a key of "datacls_field_name_to_data": e.g.,
+    #      if field_name not in datacls_field_name_to_data:
+    #          continue
 
     # For the name and unsanified hint of each class attribute of this
     # dataclass...

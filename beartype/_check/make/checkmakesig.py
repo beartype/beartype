@@ -19,7 +19,7 @@ from beartype._data.check.code.func.datacodefuncwrap import (
     CODE_SIGNATURE_SCOPE_ARG_format,
     CODE_INIT_RANDOM_INT,
 )
-from beartype._data.typing.datatyping import LexicalScope
+from beartype._data.typing.datatyping import LexicalScopeImmutable
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Mapping
 
@@ -28,7 +28,7 @@ from collections.abc import Mapping
 def make_func_signature(
     # Mandatory parameters.
     func_name: str,
-    func_scope: LexicalScope,
+    func_scope: LexicalScopeImmutable,
     code_signature_format: str,
     conf: BeartypeConf,
 
@@ -46,7 +46,7 @@ def make_func_signature(
     ----------
     func_name : str
         Unqualified basename of the callable declared by this signature.
-    func_scope : LexicalScope
+    func_scope : LexicalScopeImmutable
         **Local scope** (i.e., dictionary mapping from the name to value of
         each hidden parameter declared in this signature) of that callable,
         where a "hidden parameter" is a parameter whose name is prefixed by

@@ -25,7 +25,7 @@ from beartype._data.kind.datakindiota import (
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatypingport import (
     Hint,
-    Pep484612646TypeArgUnpackedToHint,
+    Pep484612646TypeArgUnpackedToHintImmutable,
 )
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.utilobjmake import permute_object
@@ -329,8 +329,8 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
             *or* ``type[typing.Union[cls1, typing.Annotated[cls2, ...]]]``
             should be reduced to ``typing.Type[typing.Union[cls1, cls2]]`` *or*
             ``type[typing.Union[cls1, cls2]]``.
-    typearg_to_hint : Pep484612646TypeArgUnpackedToHint
-        **Type parameter lookup table** (i.e., immutable dictionary mapping from
+    typearg_to_hint : Pep484612646TypeArgUnpackedToHintImmutable
+        **Type parameter lookup table** (i.e., frozen dictionary mapping from
         all **PEP-compliant unpacked type parameters** (i.e.,
         :pep:`484`-compliant type variable, :pep:`612`-compliant unpacked
         parameter specification, or :pep:`646`-compliant unpacked type variable
@@ -390,7 +390,7 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
         hint_recursable_to_depth: FrozenDictHintToInt
         is_check_expr_cacheable: bool
         is_hint_parent_pep484585_subclass: bool
-        typearg_to_hint: Pep484612646TypeArgUnpackedToHint
+        typearg_to_hint: Pep484612646TypeArgUnpackedToHintImmutable
         _hash: int
 
 
@@ -421,7 +421,8 @@ class HintSane(object, metaclass=_HintSaneMetaclass):
         is_check_expr_cacheable: bool = True,
         is_hint_parent_pep484585_subclass: bool = False,
         is_unmemoized: bool = False,
-        typearg_to_hint: Pep484612646TypeArgUnpackedToHint = FROZENDICT_EMPTY,
+        typearg_to_hint: Pep484612646TypeArgUnpackedToHintImmutable = (
+            FROZENDICT_EMPTY),
     ) -> None:
         '''
         Initialize this sanified type hint metadata with the passed parameters.

@@ -17,6 +17,11 @@ from beartype._data.typing.datatyping import TypeException
 from beartype._util.cache.func.utilcachefunc import callable_cached
 from dataclasses import (  # type: ignore[attr-defined]
     # Public attributes of the "dataclasses" module.
+    MISSING,
+    Field,
+    dataclass,
+    field,
+    fields,
     is_dataclass,
 
     # Private attributes of the "dataclasses" module. Although non-ideal, the
@@ -165,7 +170,174 @@ def is_pep557_dataclass_frozen(datacls: type) -> bool:
     # Return true only if this dataclass was configured to be frozen.
     return datacls_kwargs.frozen  # type: ignore[attr-defined]
 
-# ....................{ GETTERS                            }....................
+# ....................{ TESTERS ~ field                    }....................
+#FIXME: Unit test us up, yo! *sigh*
+def is_pep557_field_optional(field: Field) -> bool:
+    '''
+    :data:`True` only if the :pep:`557`-compliant **field** (i.e., class
+    variable bound to an instance variable of the same names) of of some
+    :pep:`557`-compliant dataclass described by the passed **field metadata**
+    (i.e., :class:`.Field` object) is **optional** (i.e., assigned a default
+    value at dataclass declaration time).
+
+    Parameters
+    ----------
+    field : Field
+        Dataclass field metadata to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if the field described by this metadata is optional.
+
+    See Also
+    --------
+    https://stackoverflow.com/a/63582320/2809027
+        StackOverflow comment strongly inspiring this tester.
+    '''
+    assert isinstance(field, Field), f'{repr(field)} not dataclass field.'
+
+    # Return true only if the field described by this metadata neither...
+    #
+    # Although semantically confusing, this test is the fastest means of
+    # deciding field optionality. This test effectively semantically reduces to:
+    # "Return true only if the field described by this metadata has either a
+    # default value *OR* default factory."
+    return not (
+        # Has *NO* default value *NOR*...
+        field.default is MISSING and
+        # Has *NO* default factory.
+        field.default_factory is MISSING
+    )
+
+# ....................{ GETTERS ~ field                    }....................
+#FIXME: Unit test us up, yo! *sigh*
+@callable_cached
+def get_pep557_dataclass_field_name_to_data(
+    # Mandatory parameters.
+    datacls: type,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep557Exception,
+    exception_prefix: str = '',
+) -> dict[str, Field]:
+    '''
+    Dictionary mapping from the unqualified basename of each
+    :pep:`557`-compliant **field** (i.e., class variable bound to an instance
+    variable of the same names) of the passed :pep:`557`-compliant dataclass to
+    **field metadata** (i.e., :class:`.Field` object) describing that field.
+
+    This getter is memoized for efficiency.
+
+    Parameters
+    ----------
+    datacls: type
+        Dataclass to be inspected.
+    exception_cls : TypeException, default: BeartypeDecorHintPep557Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep557Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    BeartypeDecorHintPep557Exception
+        If this dataclass is *not* actually a dataclass.
+
+    Returns
+    -------
+    dict[str, Field]
+        Dictionary mapping from the unqualified basename of each dataclass field
+        to field metadata describing that field.
+    '''
+
+    # If this dataclass is *NOT* actually a dataclass, raise an exception.
+    die_unless_type_pep557_dataclass(
+        cls=datacls,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # Else, this dataclass is actually a dataclass.
+
+    # Tuple of all field metadata describing all fields of this dataclass.
+    datacls_fields: tuple[Field, ...] = fields(datacls)
+
+    # Dictionary mapping from the unqualified basename of each dataclass field
+    # to field metadata describing that field.
+    datacls_field_name_to_data: dict[str, Field] = {}
+
+    # For each field metadata describing a field of this dataclass...
+    for datacls_field in datacls_fields:
+        datacls_field_name_to_data[datacls_field.name] = datacls_field
+
+    # Return this dictionary.
+    return datacls_field_name_to_data
+
+# ....................{ GETTERS ~ init                     }....................
+@callable_cached
+def get_pep557_dataclass_init_arg_default_factory() -> object:
+    '''
+    :pep:`557`-compliant **dataclass constructor default factory** (i.e.,
+    singleton sentinel object that the :mod:`dataclasses` submodule implicitly
+    substitutes for the default values of all fields assigned
+    :class:`dataclasses.field` objects explicitly initialized with
+    ``default_factory`` parameters).
+
+    This getter effectively safely returns the private
+    :obj:`dataclasses._HAS_DEFAULT_FACTORY` singleton *without* unsafely
+    violating privacy encapsulation in the standard :mod:`dataclasses` module.
+    This getter is surprisingly non-trivial and thus implemented as a full-blown
+    function (rather than magic constant globalized elsewhere).
+
+    This getter is memoized for efficiency.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Avoid circular import dependencies.
+    from beartype._util.func.arg.utilfuncargget import (
+        get_func_arg_name_to_default)
+    from beartype._util.func.arg.utilfuncargiter import ArgMandatory
+
+    # ....................{ DATACLASSES                    }....................
+    # Uhm... yeah. This really *IS* as crazy as it looks.
+    @dataclass
+    class MuhDataclass(object):
+        '''
+        Arbitrary :pep:`557`-compliant dataclass.
+        '''
+
+        muh_field: list[int] = field(default_factory=list)
+        '''
+        Arbitrary :pep:`557`-compliant dataclass field assigned an arbitrary
+        dataclass constructor default factory.
+        '''
+
+    # ....................{ LOCALS                         }....................
+    # Dictionary mapping from the name of each parameter accepted by the
+    # MuhDataclass.__init__() constructor to "arg_default_or_mandatory".
+    init_arg_name_to_default = (
+        get_func_arg_name_to_default(MuhDataclass.__init__))
+
+    # 2-tuple "(arg_kind, arg_default_or_mandatory)" describing the "muh_field"
+    # parameter accepted by the MuhDataclass.__init__() constructor.
+    init_arg_default = init_arg_name_to_default['muh_field']
+
+    # Assert that the "muh_field" parameter has a default value as expected.
+    assert init_arg_default is not ArgMandatory
+
+    # ....................{ RETURN                         }....................
+    # Return this default value as is.
+    #
+    # Note that this default value is *NOT* the "field(default_factory=list)"
+    # object assigned to the "MuhDataclass.muh_field" class variable. Thanks to
+    # undocumented dataclass shenanigans, the default value for the "muh_field"
+    # parameter accepted by the MuhDataclass.__init__() constructor is the
+    # undocumented private "dataclasses._HAS_DEFAULT_FACTORY_CLASS" singleton.
+    # Don't ask. We didn't. When darkness rears its head, innocents must flee.
+    return init_arg_default
+
+# ....................{ GETTERS ~ kwargs                   }....................
 def get_pep557_dataclass_kwargs(
     # Mandatory parameters.
     datacls: type,
@@ -175,7 +347,7 @@ def get_pep557_dataclass_kwargs(
     exception_prefix: str = '',
 ) -> object:
     '''
-    Object encapsulating all keyword parameter originally passed to the
+    Object encapsulating all keyword parameters originally passed to the
     :pep:`557`-compliant :func:`dataclasses.dataclass` decorator decorating the
     passed dataclass.
 
@@ -183,6 +355,9 @@ def get_pep557_dataclass_kwargs(
     decorator, the object returned by this getter defines an instance variable
     of the same name whose value is the value either explicitly passed *or*
     implicitly defaulting to that keyword parameter.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator). Why? Because, whereas
 
     Caveats
     -------
@@ -201,20 +376,22 @@ def get_pep557_dataclass_kwargs(
       containers dependent on sane hashability** (e.g., dictionaries, sets).
 
     In short, this getter sucks. Avoid doing *anything* with the object returned
-    by this getter except directly accessing their public instance variables.
+    by this getter except directly accessing its public instance variables.
 
     Parameters
     ----------
     datacls: type
         Dataclass to be inspected.
     exception_cls : TypeException, default: BeartypeDecorHintPep557Exception
-        Type of exception to be raised.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep557Exception`.
     exception_prefix : str, default: ''
-        Human-readable substring prefixing raised exceptions messages.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
-    Object
+    object
         Object encapsulating all keyword arguments originally configuring this
         dataclass.
 
@@ -232,8 +409,9 @@ def get_pep557_dataclass_kwargs(
     )
     # Else, this dataclass is actually a dataclass.
 
-    # Dictionary of all keyword arguments originally passed to @dataclass.
+    # Object encapsulating all keyword arguments originally passed by the caller
+    # to the @dataclass decorator on the definition of this dataclass.
     datacls_kwargs = getattr(datacls, _PARAMS)
 
-    # Return this dictionary.
+    # Return this object.
     return datacls_kwargs

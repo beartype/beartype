@@ -1566,7 +1566,7 @@ def make_check_expr(
         # efficiency (which is slightly bad) but *DRAMATICALLY* eliminates
         # otherwise impossible to debug memoization issues. Debugging wins! \o/
         BeartypeCheckExprScopeFrozen(
-            check_expr_scope=FrozenDict(hint_tree.func_wrapper_locals),
+            check_expr_scope=FrozenDict(hint_tree.func_wrapper_locals),  # pyright: ignore
             is_check_expr_cacheable=hint_tree.is_check_expr_cacheable,
         ),
     )

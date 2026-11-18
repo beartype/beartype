@@ -62,6 +62,7 @@ from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.utilobjattr import get_object_method_name_to_value
 from collections.abc import (
     Collection as CollectionABC,
+    Mapping as MappingABC,
 )
 from typing import (
     TYPE_CHECKING,
@@ -415,7 +416,7 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     return node_curr.hint_factory
 
 # ....................{ PRIVATE ~ hints                    }....................
-_FiniteStateMachine = dict[FrozenSetStrs, '_FiniteStateMachineNode']
+_FiniteStateMachine = MappingABC[FrozenSetStrs, '_FiniteStateMachineNode']
 '''
 PEP-compliant type hint matching a :mod:`collections.abc` **fine state machine
 (FSM)** as a dictionary whose:
@@ -526,8 +527,8 @@ class _FiniteStateMachineNode(object):
 
             Defaults to the empty dictionary.
         '''
-        assert isinstance(nodes_next, dict), (
-            f'{repr(nodes_next)} not dictionary.')
+        assert isinstance(nodes_next, MappingABC), (
+            f'{repr(nodes_next)} not mapping.')
 
         # Classify all passed parameters.
         self.hint_factory = hint_factory
@@ -830,7 +831,7 @@ def get_finite_state_machine() -> _FiniteStateMachineNode:
         from collections.abc import Buffer  # type: ignore[attr-defined]
 
         # Add the "collections.abc.Buffer" FSM.
-        _START_NODE_NODES_NEXT[frozenset(('__buffer__',))] = (
+        _START_NODE_NODES_NEXT[frozenset(('__buffer__',))] = (  # type: ignore[index]
             _FiniteStateMachineNode(hint_factory=Buffer))
     # Else, the active Python interpreter targets Python < 3.12.
 

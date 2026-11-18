@@ -181,60 +181,22 @@ def reduce_hint_pep557_descriptor_data_if_able(
         #    not assigned a descriptor object as its default value, the field
         #    will act like a normal field.
         #Ergo, we *ALSO* need to do something resembling:
-        #    if isinstance(call_curr, BeartypeCallDecorFuncMinimalData):
-        #        #FIXME: *HMMMM*. Wait. Pretty sure dataclasses expose a
-        #        #dataclass-specific interface for getting field defaults. Don't
-        #        #they? Let's see here. Instead of doing this...
-        #        #    call_curr.func_wrappee_wrappee_arg_name_to_kind_default.get(
-        #        #        pith_name)
-        #        #
-        #        #Oh, right! Looks we want to define yet another new PEP
-        #        #557-compliant utility function resembling:
-        #        from dataclasses import (
-        #            MISSING,
-        #            fields,
-        #        )
+        #    from beartype._util.cls.pep.clspep557 import (
+        #        get_pep557_dataclass_field_name_to_data,
+        #        is_pep557_field_optional,
+        #    )
         #
-        #        #FIXME: Definitely need to unit test this one up. Kinda
-        #        #cray-cray, honestly. *shrug*
-        #        #FIXME: Honestly, should probably just refactor this into
-        #        #get_type_pep557_field_name_to_data() for generality, defined
-        #        #as:
-        #        #@callable_cached
-        #        #def get_type_pep557_field_name_to_data(cls: type, field_name: str) -> (
-        #        #    dict[str, field]):
-        #        #    ...
-        #        #
-        #        #Given that, we can then define yet another PEP 557 utility
-        #        #resembling:
-        #        #
-        #        #def is_pep557_field_optional(field: field) -> bool:
-        #        #    return (
-        #        #        field.default is MISSING or
-        #        #        field.default_factory is MISSING
-        #        #    )
+        #    datacls = call_curr.cls_stack[-1]
+        #    if is_type_pep557_dataclass(datacls):
+        #        datacls_field_name_to_data = get_pep557_dataclass_field_name_to_data(
+        #            datacls)
         #
-        #        @callable_cached
-        #        def is_type_pep557_field_optional(cls: type, field_name: str) -> bool:
-        #
-        #            #FIXME: Super-inefficient dumb O(n) algorithm, obviously.
-        #            #If we find ourselves doing this sort of thing more
-        #            #frequently, define a new memoized getter returning a
-        #            #dictionary mapping from field names to tuples describing
-        #            #those fields.
-        #            datacls_fields = fields(cls)
-        #            for field in datacls_fields:
-        #                if field.name == field_name:
-        #                    return (
-        #                        field.default is MISSING or
-        #                        field.default_factory is MISSING
-        #                    )
-        #
-        #            return False
-        #
-        #        Note that the above tester is strongly inspired by this
-        #        StackOverflow post:
-        #            https://stackoverflow.com/a/63582320/2809027
+        #        datacls_field_data = datacls_field_name_to_data.get(pith_name)
+        #        if (
+        #            datacls_field_data is not None and
+        #            is_pep557_field_optional(datacls_field_data)
+        #        ):
+        #            return hint
     ):
     # Then either a PEP 557-compliant dataclass is not currently being decorated
     # *OR* this hint is not a PEP 252-compliant runtime-hostile data descriptor.

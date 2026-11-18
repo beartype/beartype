@@ -109,7 +109,32 @@ def test_is_pep557_dataclass_frozen() -> None:
     with raises(BeartypeDecorHintPep557Exception):
         is_pep557_dataclass_frozen('About old forests; while the willow trails')
 
-# ....................{ TESTS ~ getter                     }....................
+# ....................{ TESTS ~ getter : init              }....................
+def test_get_pep557_dataclass_init_arg_default_factory() -> None:
+    '''
+    Test the
+    :mod:`beartype._util.cls.pep.clspep557.get_pep557_dataclass_init_arg_default_factory`
+    getter.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.cls.pep.clspep557 import (
+        get_pep557_dataclass_init_arg_default_factory)
+    from dataclasses import _HAS_DEFAULT_FACTORY
+
+    # PEP 557-compliant dataclass constructor default factory.
+    FUNC_PEP557_INIT_ARG_DEFAULT_FACTORY = (
+        get_pep557_dataclass_init_arg_default_factory())
+
+    # Assert that this factory is the expected private magic constant internal
+    # to the standard "dataclasses" module.
+    #
+    # Note that violating privacy encapsulation renders this test fragile
+    # against new CPython versions, but that doing so here is still superior to
+    # doing so in the main codebase. It is what it is. So, we sigh. *megasigh*
+    assert FUNC_PEP557_INIT_ARG_DEFAULT_FACTORY is _HAS_DEFAULT_FACTORY
+
+# ....................{ TESTS ~ getter : kwargs            }....................
 def test_get_pep557_dataclass_kwargs() -> None:
     '''
     Test the

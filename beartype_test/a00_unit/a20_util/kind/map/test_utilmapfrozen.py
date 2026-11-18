@@ -15,12 +15,22 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import (
+    skip_if_python_version_greater_than_or_equal_to)
 
 # ....................{ TESTS                              }....................
+#FIXME: Remove after dropping Python 3.14 support. *shrug*
+@skip_if_python_version_greater_than_or_equal_to('3.15.0')
 def test_frozendict() -> None:
     '''
     Test the :func:`beartype._util.kind.maplike.utilmapfrozen.FrozenDict`
-    subclass.
+    subclass if the active Python interpreter targets Python <= 3.14.0 *or*
+    skipped otherwise.
+
+    This test is intentionally skipped if the active Python interpreter targets
+    Python >= 3.15.0, as the "frozendict" builtin is assumed to work as
+    advertised (and, in any case, raises different exceptions than the
+    :mod:`beartype.roar`-specific exceptions tested below).
     '''
 
     # ....................{ IMPORTS                        }....................

@@ -18,7 +18,8 @@ from beartype._data.typing.datatypingport import (
     Hint,
     HintOrNone,
     ListHints,
-    Pep484612646TypeArgUnpackedToHint,
+    Pep484612646TypeArgUnpackedToHintImmutable,
+    Pep484612646TypeArgUnpackedToHintMutable,
     TupleHints,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
@@ -580,7 +581,7 @@ def find_hint_pep484585_generic_args_full(
         # that same numeric position of that direct parent pseudo-superclass.
         # See also the "hint_base_typearg_to_hint" dictionary for commentary.
         # Specifically...
-        hint_base_parent_typearg_to_hint: Pep484612646TypeArgUnpackedToHint = (
+        hint_base_parent_typearg_to_hint: Pep484612646TypeArgUnpackedToHintImmutable = (
             # If this pseudo-superclass has a parent pseudo-superclass (i.e.,
             # this pseudo-superclass is *NOT* the passed root generic and is
             # thus a transitive child of that generic), the dictionary
@@ -653,7 +654,7 @@ def find_hint_pep484585_generic_args_full(
             #
             # For the above call, the contents of this dictionary resemble:
             #     hint_base_typearg_to_hint == {T: int}
-            hint_base_typearg_to_hint: Pep484612646TypeArgUnpackedToHint = {}
+            hint_base_typearg_to_hint: Pep484612646TypeArgUnpackedToHintMutable = {}
 
             # This pseudo-superclass in unsubscripted form (i.e., unsubscripted
             # generic underlying this pseudo-superclass if this
@@ -1085,7 +1086,7 @@ def find_hint_pep484585_generic_args_full(
 _HintBaseData = list[Union[
     #FIXME: Document what all of these actually correspond to. Ugh! Ugh!
     Hint,
-    Pep484612646TypeArgUnpackedToHint,
+    Pep484612646TypeArgUnpackedToHintImmutable,
     '_HintBaseData',
 ]]
 '''

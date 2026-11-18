@@ -219,7 +219,7 @@ def _get_hint_typearg_packed_field_name_to_value(
     )
 
     # Coerce this mutable dictionary into a frozen dictionary.
-    hint_field_name_to_value = FrozenDict(hint_field_name_to_value)
+    hint_field_name_to_value = FrozenDict(hint_field_name_to_value)  # pyright: ignore
 
     #FIXME: Preserved in the likelihood we'll want to resurrect this later...
     # # If doing so raises a beartype-specific exception, permit that exception to

@@ -14,13 +14,14 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.typing.datatyping import (
-    LexicalScopeMutable,
+    LexicalScopeImmutable,
     TupleTypes,
     TypeException,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import T
 from beartype._util.text.utiltextidentifier import die_unless_identifier
+from collections.abc import Mapping
 from typing import Optional
 
 # ....................{ COPIERS                            }....................
@@ -81,7 +82,7 @@ def make_type(
     # Optional arguments.
     type_module_name: Optional[str] = None,
     type_bases: TupleTypes = (),
-    type_scope: LexicalScopeMutable = FROZENDICT_EMPTY,
+    type_scope: LexicalScopeImmutable = FROZENDICT_EMPTY,
     type_doc: Optional[str] = None,
     exception_cls: TypeException = _BeartypeUtilTypeException,
     exception_prefix: str = '',
@@ -135,7 +136,7 @@ def make_type(
     assert isinstance(type_module_name, NoneTypeOr[str]), (
         f'{repr(type_module_name)} neither string nor "None".')
     assert isinstance(type_bases, tuple), f'{repr(type_bases)} not tuple.'
-    assert isinstance(type_scope, dict), f'{repr(type_scope)} not dictionary.'
+    assert isinstance(type_scope, Mapping), f'{repr(type_scope)} not mapping.'
     assert isinstance(type_doc, NoneTypeOr[str]), (
         f'{repr(type_doc)} neither string nor "None".')
 

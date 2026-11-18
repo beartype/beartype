@@ -23,6 +23,17 @@ This submodule defines :pep:`252`-compliant:
 from beartype._util.utilobjset import set_object_attr
 from typing import Optional
 
+# ....................{ EXCEPTIONS                         }....................
+class TestDescriptorException(Exception):
+    '''
+    **Test descriptor exception.**
+
+    This exception is raised from methods defined by test-specific data and
+    non-data descriptors declared by this submodule.
+    '''
+
+    pass
+
 # ....................{ CLASSES ~ descriptor               }....................
 class NondataDescriptor(object):
     '''
@@ -140,6 +151,113 @@ class DataDescriptor(NondataDescriptor):
         set_object_attr(obj, self._attr_name, value)
 
 # ....................{ CLASSES ~ descriptor : str         }....................
+class DataDescriptorStr(object):
+    '''
+    **String data descriptor** (i.e., pure-Python type defining both the
+    :meth:`.__get__` *and* :meth:`.__set__` dunder method implicitly called by
+    Python when instances of this type are assigned to class variables and then
+    subsequently accessed or modified respectively via those class variables
+    whose values are strings on instances of those classes).
+
+    String data descriptors encapsulate mutable instance and class variables
+    whose string values require dynamic computation and which can be externally
+    modified.
+
+    Attributes
+    ----------
+    _attr_name : str
+        Unqualified basename of the attribute that this descriptor dynamically
+        looks up on both classes and instances to which this descriptor is
+        bound.
+    '''
+
+    def __init__(self, attr_name: str) -> None:
+        '''
+        Initialize this string data descriptor.
+
+        Parameters
+        ----------
+        attr_name : str
+            Unqualified basename of the attribute that this descriptor
+            dynamically looks up on both classes and instances to which this
+            descriptor is bound.
+        '''
+        assert isinstance(attr_name, str), f'{repr(attr_name)} not string.'
+
+        # Classify all passed parameters.
+        self._attr_name = attr_name
+
+
+    def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this non-data descriptor.
+        '''
+
+        # A one-liner that invited disaster.
+        return f'DataDescriptorStr({repr(self._attr_name)})'
+
+
+    def __get__(
+        self,
+        obj: object,
+        obj_type_if_instance_lookup: Optional[type] = None,
+    ) -> str:
+        '''
+        String value of the attribute bound to the passed object whose
+        unqualified basename is that of the basename with which this descriptor
+        was initialized.
+
+        Parameters
+        ----------
+        obj : object
+            Object to retrieve this attribute from.
+        obj_type_if_instance_lookup : Optional[type], default: None
+            Either:
+
+            * If this attribute was looked up as an **instance variable** (i.e.,
+              on the instance of the pure-Python type to which this descriptor
+              was bound as a class variable), that type.
+            * If this attribute was looked up as a **class variable** (i.e., on
+              the pure-Python type to which this descriptor was bound as a class
+              variable), :data:`None`.
+
+            This parameter thus enables this method to differentiate between
+            instance and class variable lookup. Defaults to :data:`None`.
+        '''
+
+        # Through the storm, one-liner will find a way.
+        return getattr(obj, self._attr_name)
+
+
+    def __set__(self, obj: object, text: str) -> None:
+        '''
+        Set the string value of the attribute bound to the passed object whose
+        unqualified basename is that of the basename with which this descriptor
+        was initialized to the passed value.
+
+        Parameters
+        ----------
+        obj : object
+            Object to modify this attribute on.
+        text : object
+            Value to modify this attribute to.
+
+        Raises
+        ------
+        TestDescriptorException
+            If the passed value is *not* a string.
+        '''
+
+        # If the passed value is *NOT* a string, raise an exception.
+        if not isinstance(text, str):
+            raise TestDescriptorException(f'{repr(text)} not string.')
+        # Else, this value is a string.
+
+        # Set this string as the value of the attribute with this name bound to
+        # the passed object.
+        set_object_attr(obj, self._attr_name, text)
+
+
 class DataDescriptorStrSelfSwapCase(object):
     '''
     **String case-swapping data descriptor** (i.e., pure-Python type defining
@@ -298,7 +416,17 @@ class DataDescriptorStrSelfSwapCase(object):
             Object to modify this attribute on.
         text : str
             Value to modify this attribute to after case-swapping.
+
+        Raises
+        ------
+        TestDescriptorException
+            If the passed value is *not* a string.
         '''
+
+        # If the passed value is *NOT* a string, raise an exception.
+        if not isinstance(text, str):
+            raise TestDescriptorException(f'{repr(text)} not string.')
+        # Else, this value is a string.
 
         # Safely set this object attribute to the passed string case-swapped.
         set_object_attr(obj, self._attr_name, text.swapcase())

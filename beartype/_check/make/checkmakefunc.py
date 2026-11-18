@@ -276,7 +276,7 @@ def make_code_raiser_func_pep484_noreturn_check(
     # (which is slightly bad) but *DRAMATICALLY* eliminates otherwise impossible
     # to debug memoization issues. Debugging wins! \o/
     func_scope_frozen = BeartypeCheckExprScopeFrozen(
-        check_expr_scope=FrozenDict(func_scope))
+        check_expr_scope=FrozenDict(func_scope))  # pyright: ignore
 
     # Return all metadata required by higher-level callers.
     return (func_code, func_scope_frozen)

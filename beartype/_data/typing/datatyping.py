@@ -439,7 +439,7 @@ arbitrary objects.
 '''
 
 
-LexicalScope = MappingStrToAny
+LexicalScopeImmutable = MappingStrToAny
 '''
 :pep:`585`-compliant type hint matching a **lexical scope** (i.e., possibly
 immutable dictionary mapping from the relative unqualified name to value of each
@@ -523,19 +523,6 @@ DictStrToAny = dict[str, Any]
 '''
 :pep:`585`-compliant type hint matching a dictionary mapping from strings to
 arbitrary objects.
-'''
-
-
-DictStrToType = dict[str, type]
-'''
-PEP-compliant type hint matching a dictionary mapping from strings to types.
-'''
-
-
-DictStrToFrozenSetStrs = dict[str, FrozenSetStrs]
-'''
-PEP-compliant type hint matching a dictionary mapping from strings to frozen
-sets of strings.
 '''
 
 # ....................{ SIGN                               }....................

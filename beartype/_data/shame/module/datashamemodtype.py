@@ -20,11 +20,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #uses those data structures directly. *shrug*
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.typing.datatyping import DictStrToFrozenSetStrs
-from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+from beartype._util.kind.maplike.utilmapfrozen import (
+    FrozenDict,
+    FrozenDictStrToFrozenSetStrs,
+)
 
 # ....................{ DICTS                              }....................
-BLACKLIST_MODULE_NAME_TO_TYPE_NAMES: DictStrToFrozenSetStrs = FrozenDict({
+BLACKLIST_MODULE_NAME_TO_TYPE_NAMES: FrozenDictStrToFrozenSetStrs = FrozenDict({  # pyright: ignore
     # ....................{ ANTIPATTERN ~ decor-hostile    }....................
     # These third-party packages and modules widely employ the decorator-hostile
     # decorator antipattern throughout their codebases and are thus
@@ -72,7 +74,7 @@ following antipatterns:
 
 
 BLACKLIST_TYPE_MRO_ROOT_MODULE_NAME_TO_TYPE_NAMES: (
-    DictStrToFrozenSetStrs) = FrozenDict({
+    FrozenDictStrToFrozenSetStrs) = FrozenDict({  # pyright: ignore
     # ....................{ ANTIPATTERN ~ decor-hostile    }....................
     # These third-party packages and modules widely employ the decorator-hostile
     # decorator antipattern throughout their codebases and are thus

@@ -40,6 +40,7 @@ from beartype._conf.decorplace.confplacetrie import (
     BeartypeDecorPlacePackageTrie,
     BeartypeDecorPlaceTypeTrie,
 )
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from typing import Optional
 
 # ....................{ HINTS                              }....................
@@ -62,7 +63,8 @@ beforelist (sub)trie), constrained to be either:
 '''
 
 
-BeartypeDecorPlaceTrie = dict[str, dict[str, BeartypeDecorPlaceSubtrie]]
+BeartypeDecorPlaceTrie = FrozenDict[
+    str, FrozenDict[str, BeartypeDecorPlaceSubtrie]]
 '''
 PEP-compliant recursive alias matching a **beforelist trie** (i.e., recursive
 tree structure whose nodes are the unqualified basenames of problematic

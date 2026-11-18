@@ -192,7 +192,7 @@ def make_hint_sane_recursable(
         # Recursion guard recording the recursable form of this root hint to
         # have now been visited exactly once.
         hint_recursable_to_depth: FrozenDictHintToInt = FrozenDict(
-            {hint_recursable: 1})
+            {hint_recursable: 1})  # pyright: ignore
 
         # Metadata encapsulating this hint and recursion guard.
         hint_sane = HintSane(
@@ -211,7 +211,7 @@ def make_hint_sane_recursable(
 
         # Recursion guard recording the recursable form of this root hint to
         # have been visited this number of times.
-        hint_recursable_to_depth = FrozenDict({
+        hint_recursable_to_depth = FrozenDict({  # pyright: ignore
             hint_recursable: hint_recursable_depth})
 
         # If the parent hint is also associated with a recursion guard...

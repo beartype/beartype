@@ -24,14 +24,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
-    FrozenSet,
     Iterable,
-    List,
     Optional,
-    Sequence,
-    Set,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -39,6 +33,11 @@ from beartype._data.kind.datakindiota import Iota
 from beartype._util.api.standard.utiltyping import (
     import_typing_attr_or_fallback)
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
 # Note that, although this higher-level submodule can safely import from the
@@ -201,7 +200,7 @@ PEP-compliant type hint matching either any PEP-compliant type hint *or*
 #FIXME: Ideally, all of the below should themselves be annotated as ": Hint".
 #Mypy likes that but pyright hates that. This is why we can't have good things.
 
-FrozenSetHints = FrozenSet[Hint]
+FrozenSetHints = frozenset[Hint]
 '''
 :pep:`585`-compliant type hint matching *any* **type hint frozen set** (i.e.,
 frozen set of zero or more type hints).
@@ -215,7 +214,7 @@ iterable iteratively yielding zero or more type hints).
 '''
 
 
-ListHints = List[Hint]
+ListHints = list[Hint]
 '''
 :pep:`585`-compliant type hint matching *any* **type hint list** (i.e., list of
 zero or more type hints).
@@ -229,21 +228,21 @@ sequence of zero or more type hints).
 '''
 
 
-SetHints = Set[Hint]
+SetHints = set[Hint]
 '''
 :pep:`585`-compliant type hint matching *any* **type hint set** (i.e., set of
 zero or more type hints).
 '''
 
 # ....................{ HINTS ~ container : dict           }....................
-DictStrToHint = Dict[str, Hint]
+DictStrToHint = dict[str, Hint]
 '''
 :pep:`585`-compliant type hint matching a dictionary mapping from strings to
 PEP-compliant type hints.
 '''
 
 # ....................{ HINTS ~ container : tuple          }....................
-TupleHints = Tuple[Hint, ...]
+TupleHints = tuple[Hint, ...]
 '''
 :pep:`585`-compliant type hint matching *any* **child type hints** (i.e., tuple
 of zero or more child type hints subscripting a parent type hint).
@@ -257,7 +256,7 @@ of zero or more type hints.
 '''
 
 # ....................{ PEP ~ 484                          }....................
-Pep484TypeVarToHint = Dict[TypeVar, Hint]
+Pep484TypeVarToHint = dict[TypeVar, Hint]
 '''
 :pep:`585`-compliant type hint matching a **type variable lookup table** (i.e.,
 dictionary mapping from :pep:`484`-compliant type variables to the arbitrary
@@ -285,14 +284,15 @@ HintOrSentinel = Union[Hint, Iota]
 '''
 
 # ....................{ PEP ~ (484|646)                    }....................
-Pep484612646TypeArgUnpackedToHint = Dict[Pep484612646TypeArgUnpacked, Hint]
+Pep484612646TypeArgUnpackedToHintImmutable = (
+    Mapping[Pep484612646TypeArgUnpacked, Hint])
 '''
 :pep:`585`-compliant type hint matching a :pep:`484`-, :pep:`612`-, and
-:pep:`646`-compliant **unpacked type parameter lookup table** (i.e., dictionary
-mapping from **unpacked type parameters** (i.e., :pep:`484`-compliant type
-variables, :pep:`612`-compliant unpacked parameter specifications, and
-:pep:`646`-compliant unpacked type variable tuples) to the arbitrary type hints
-those type parameters map to).
+:pep:`646`-compliant **immutable unpacked type parameter lookup table** (i.e., 
+frozen dictionary mapping from **unpacked type parameters** (i.e.,
+:pep:`484`-compliant type variables, :pep:`612`-compliant unpacked parameter
+specifications, and :pep:`646`-compliant unpacked type variable tuples) to the
+arbitrary type hints those type parameters map to).
 
 Type parameter lookup tables are commonly employed throughout the
 :mod:`beartype` codebase to record **type parameter substitutions** (i.e., the
@@ -311,4 +311,21 @@ For example, in the generic class declaration:
 
 It's literally infeasible to syntactically subscript or parametrize a type hint
 by a :pep:`646`-compliant packed type variable tuple.
+'''
+
+
+Pep484612646TypeArgUnpackedToHintMutable = (
+    MutableMapping[Pep484612646TypeArgUnpacked, Hint])
+'''
+:pep:`585`-compliant type hint matching a :pep:`484`-, :pep:`612`-, and
+:pep:`646`-compliant **mutable unpacked type parameter lookup table** (i.e.,
+mutable dictionary mapping from **unpacked type parameters** (i.e.,
+:pep:`484`-compliant type variables, :pep:`612`-compliant unpacked parameter
+specifications, and :pep:`646`-compliant unpacked type variable tuples) to the
+arbitrary type hints those type parameters map to).
+
+See Also
+--------
+Pep484612646TypeArgUnpackedToHintImmutable
+    Further details.
 '''

@@ -596,7 +596,7 @@ class BeartypeCheckExprScopeUnfrozen(
         # Create and return a new frozen type-checking expression scope,
         # initialized from this unfrozen type-checking expression scope.
         return BeartypeCheckExprScopeFrozen(
-            check_expr_scope=FrozenDict(self._check_expr_scope),
+            check_expr_scope=FrozenDict(self._check_expr_scope),  # pyright: ignore
             beartype_ref_proxies=frozenset(self._beartype_ref_proxies),
             is_check_expr_cacheable=self.is_check_expr_cacheable,
         )

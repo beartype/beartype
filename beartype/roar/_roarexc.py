@@ -425,7 +425,7 @@ class BeartypeCallException(BeartypeException):
 
 class BeartypeCallUnavailableTypeException(BeartypeCallException):
     '''
-    **Beartyped callable unavailable type exceptions.**
+    **Beartyped callable unavailable type exception.**
 
     This exception is raised from the :class:`beartype.cave.UnavailableType`
     class when passed to either the :func:`isinstance` or :func:`issubclass`

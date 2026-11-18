@@ -29,6 +29,7 @@ from beartype._check.forward.scope.fwdscopecls import BeartypeForwardScope
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import (
+    LexicalScopeImmutable,
     LexicalScopeMutable,
     TypeException,
 )
@@ -299,7 +300,7 @@ def make_scope_forward_decor_curr(
     func_locals_frame: CallableFrameType | None = None
 
     # Local scope of that call, defaulting to the empty dictionary.
-    func_locals: LexicalScopeMutable = FROZENDICT_EMPTY
+    func_locals: LexicalScopeMutable = FROZENDICT_EMPTY  # type: ignore[assignment]
 
     # Global scope of the decorated callable.
     func_globals = get_func_globals(func=decoratee, exception_cls=exception_cls)
@@ -328,7 +329,7 @@ def make_scope_forward_decor_curr(
         # Attempt to...
         try:
             # Local scope and associated stack frame of the decorated callable.
-            func_locals, func_locals_frame = find_func_locals_frame(
+            func_locals, func_locals_frame = find_func_locals_frame(  # type: ignore[assignment]
                 func=decoratee,
 
                 # Ignore all lexical scopes in the fully-qualified name of the
@@ -499,7 +500,7 @@ def make_scope_forward_decor_curr(
     # Else, the decorated callable is global and thus guaranteed to have an
     # empty local scope. In this case, default to the empty frozen dictionary.
     else:
-        func_locals = FROZENDICT_EMPTY
+        func_locals = FROZENDICT_EMPTY  # type: ignore[assignment]
 
     # ..................{ SCOPE ~ parent                     }..................
     # If the decorated callable is locally declared by some parent callable

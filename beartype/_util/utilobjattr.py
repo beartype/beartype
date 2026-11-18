@@ -16,8 +16,8 @@ from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.func.datafunc import OBJECT_SLOT_WRAPPERS
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import (
-    DictStrToAny,
     FrozenSetStrs,
+    LexicalScopeImmutable,
     ListStrs,
 )
 from collections.abc import Callable
@@ -151,7 +151,7 @@ def get_object_attr_name_to_value(
     predicate: Optional[Callable[[str, object], bool]] = None,
     predicate_attr_names_all: Optional[FrozenSetStrs] = None,
     predicate_attr_names_any: Optional[FrozenSetStrs] = None,
-) -> DictStrToAny:
+) -> LexicalScopeImmutable:
     '''
     Dictionary mapping from the name to **explicit value** (i.e., value
     retrieved *without* implicitly calling the :func:`property`-decorated method
@@ -289,7 +289,7 @@ def get_object_attr_name_to_value(
 
     Returns
     -------
-    DictStrToAny
+    LexicalScopeImmutable
         Either:
 
         * If the caller passed a ``predicate_attr_names_*`` parameter whose
@@ -419,7 +419,7 @@ def get_object_attr_name_to_value(
     return attrs_name_to_value
 
 # ....................{ GETTERS ~ explicit : methods       }....................
-def get_object_method_name_to_value(obj: object, **kwargs) -> DictStrToAny:
+def get_object_method_name_to_value(obj: object, **kwargs) -> LexicalScopeImmutable:
     '''
     Dictionary mapping from the name to **explicit value** (i.e., value
     retrieved *without* implicitly calling the :func:`property`-decorated method
@@ -453,7 +453,7 @@ def get_object_method_name_to_value(obj: object, **kwargs) -> DictStrToAny:
 
     Returns
     -------
-    DictStrToAny
+    LexicalScopeImmutable
         Dictionary mapping from the name to explicit value of each method bound
         to the passed object.
 
@@ -471,7 +471,7 @@ def get_object_method_name_to_value(obj: object, **kwargs) -> DictStrToAny:
     )
 
 
-def get_object_uncallable_name_to_value(obj: object, **kwargs) -> DictStrToAny:
+def get_object_uncallable_name_to_value(obj: object, **kwargs) -> LexicalScopeImmutable:
     '''
     Dictionary mapping from the name to **explicit value** (i.e., value
     retrieved *without* implicitly calling the :func:`property`-decorated method
@@ -498,7 +498,7 @@ def get_object_uncallable_name_to_value(obj: object, **kwargs) -> DictStrToAny:
 
     Returns
     -------
-    DictStrToAny
+    LexicalScopeImmutable
         Dictionary mapping from the name to explicit value of each uncallable
         bound to the passed object.
 

@@ -264,7 +264,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # to this instance.
         self._map_scoped_attr_name_to_subtrie(
             attr_name=assigned_attr_basename_first,
-            attr_name_subtrie=assigned_attr_basename_subtrie,
+            attr_name_subtrie=assigned_attr_basename_subtrie,  # pyright: ignore
         )
 
     # ..................{ VISITORS                           }..................
@@ -356,7 +356,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # Map the unqualified basename of that package to this subtrie.
             self._map_scoped_attr_name_to_subtrie(
                 attr_name=import_package_name,
-                attr_name_subtrie=import_package_name_subtrie,
+                attr_name_subtrie=import_package_name_subtrie,  # type: ignore[arg-type]
             )
 
         # ..................{ RETURN                         }..................
@@ -583,7 +583,7 @@ class BeartypeNodeTransformerImportMixin(object):
             #   type, or instance transitively defining decorator-hostile
             #   decorators), the sentinel placeholder.
             import_module_name_subtrie = (
-                import_module_name_subtrie_parent.get(
+                import_module_name_subtrie_parent.get(  # type: ignore[assignment]
                     import_module_basename, SENTINEL))
             # print(f'Visiting imported-from module basename "{import_module_basename}"...')
             # print(f'...associated with subtrie {import_module_name_subtrie}.')
@@ -1389,4 +1389,4 @@ class BeartypeNodeTransformerImportMixin(object):
         assert isinstance(attr_name_subtrie, BeartypeDecorPlaceTrieABC)
 
         # Return the most recently visited imported attribute name (sub)trie.
-        return attr_name_subtrie
+        return attr_name_subtrie  # pyright: ignore

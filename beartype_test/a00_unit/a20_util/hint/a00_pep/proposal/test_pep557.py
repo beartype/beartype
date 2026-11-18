@@ -39,28 +39,3 @@ def test_get_hint_pep557_initvar_arg() -> None:
     with raises(BeartypeDecorHintPep557Exception):
         get_hint_pep557_initvar_arg(
             'Large codes of fraud and woe; not understood')
-
-
-def test_get_func_pep557_init_arg_default_factory() -> None:
-    '''
-    Test the public
-    :mod:`beartype._util.hint.pep.proposal.pep557.get_func_pep557_init_arg_default_factory`
-    getter.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep557 import (
-        get_func_pep557_init_arg_default_factory)
-    from dataclasses import _HAS_DEFAULT_FACTORY
-
-    # PEP 557-compliant dataclass constructor default factory.
-    FUNC_PEP557_INIT_ARG_DEFAULT_FACTORY = (
-        get_func_pep557_init_arg_default_factory())
-
-    # Assert that this factory is the expected private magic constant internal
-    # to the standard "dataclasses" module.
-    #
-    # Note that violating privacy encapsulation renders this test fragile
-    # against new CPython versions, but that doing so here is still superior to
-    # doing so in the main codebase. It is what it is. So, we sigh. *megasigh*
-    assert FUNC_PEP557_INIT_ARG_DEFAULT_FACTORY is _HAS_DEFAULT_FACTORY

@@ -20,12 +20,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeLibraryNumpyException
 from beartype._data.typing.datatyping import (
-    DictStrToType,
     FrozenSetTypes,
     TypeException,
 )
 from beartype._util.cache.func.utilcachefunc import callable_cached
-from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+from beartype._util.kind.maplike.utilmapfrozen import (
+    FrozenDict,
+    FrozenDictStrToType,
+)
 from string import digits
 
 # ....................{ GETTERS                            }....................
@@ -83,7 +85,7 @@ def get_numpy_dtype_type_abcs() -> FrozenSetTypes:
 
 #FIXME: Unit test us up, please.
 @callable_cached
-def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
+def get_numpy_dtype_name_sanitized_to_type_reduced() -> FrozenDictStrToType:
     '''
     Dictionary mapping from each **sanitized NumPy data type name** (i.e.,
     string value of the :attr:`numpy.dtype.name` instance variable after being
@@ -108,7 +110,7 @@ def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
     # lacking a corresponding builtin type, interestingly. Since Python itself
     # has no concept of an "unsigned integer" the NumPy-specific
     # "unsignedinteger" ABC is preferred instead.
-    _DTYPE_NAME_SANITIZED_TO_BUILTIN_TYPE: dict[str, type] = FrozenDict({
+    _DTYPE_NAME_SANITIZED_TO_BUILTIN_TYPE: FrozenDictStrToType = FrozenDict({  # pyright: ignore
         'bool': bool,
         'bytes': bytes,
         'complex': complex,
@@ -175,7 +177,7 @@ def reduce_numpy_dtype(
     # Sanitized name of this dtype, efficiently truncating *ALL* digits and
     # underscores from this name (e.g., sanitizing "complex128" to "complex").
     dtype_name_sanitized = dtype.name.translate(  # type: ignore[attr-defined]
-        _TRANSLATION_TABLE_DTYPE_NAME_SANITIZER) 
+        _TRANSLATION_TABLE_DTYPE_NAME_SANITIZER)
 
     # Dictionary mapping from each sanitized NumPy data type name to the
     # corresponding reduced type (e.g., from the string "complex" to the

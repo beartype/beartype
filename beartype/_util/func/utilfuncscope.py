@@ -18,6 +18,7 @@ from beartype.roar._roarexc import (
 from beartype._cave._cavefast import CallableFrameType
 from beartype._data.typing.datatyping import (
     DictStrToAny,
+    LexicalScopeImmutable,
     LexicalScopeMutable,
     TypeException,
 )
@@ -245,7 +246,7 @@ def find_func_locals_frame(
     ignore_func_scope_names: int = 0,
     exception_cls: TypeException = _BeartypeUtilCallableScopeException,
     **kwargs
-) -> tuple[DictStrToAny, Optional[CallableFrameType]]:
+) -> tuple[LexicalScopeImmutable, Optional[CallableFrameType]]:
     '''
     Possibly immutable **local scope** (i.e., dictionary mapping from the name
     to value of each locally scoped attribute declared by a parent callable or

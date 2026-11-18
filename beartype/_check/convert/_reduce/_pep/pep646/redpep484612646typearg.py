@@ -79,7 +79,8 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._data.typing.datatypingport import (
     Hint,
-    Pep484612646TypeArgUnpackedToHint,
+    Pep484612646TypeArgUnpackedToHintImmutable,
+    Pep484612646TypeArgUnpackedToHintMutable,
     TupleHints,
 )
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
@@ -243,7 +244,7 @@ def reduce_hint_typearg(
             # immutable frozen dictionary into a mutable standard dictionary.
             # This enables type parameters reduced by the iteration below to be
             # popped off this copy as a simple (but effective) recursion guard.
-            typearg_to_hint_stack = typearg_to_hint.copy()
+            typearg_to_hint_stack = dict(typearg_to_hint)
 
             #FIXME: [SPEED] *INEFFICIENT.* This has to be done either way, but
             #rather than reperform this O(n) algorithm on every single instance
@@ -794,9 +795,9 @@ def _make_hint_typearg_to_hint(
     hint: Hint,
     hints_typearg: TuplePep484612646TypeArgsUnpacked,
     hints_child: TupleHints,
-) -> Pep484612646TypeArgUnpackedToHint:
+) -> Pep484612646TypeArgUnpackedToHintImmutable:
     '''
-    Type parameter lookup table mapping from the passed :pep:`484`- or
+    Immutable type parameter lookup table mapping from the passed :pep:`484`- or
     :pep:`646`-compliant **type parameters** (i.e., :pep:`484`-compliant type
     variables or :pep:`646`-compliant type variable tuples) to the associated
     passed type hints as key-value pairs of this table.
@@ -877,7 +878,7 @@ def _make_hint_typearg_to_hint(
 
     # ....................{ LOCALS                         }....................
     # Type parameter lookup table to be returned.
-    typearg_to_hint: Pep484612646TypeArgUnpackedToHint = {}
+    typearg_to_hint: Pep484612646TypeArgUnpackedToHintMutable = {}
 
     # 0-based index of the current type parameter *AND* corresponding child hint
     # of the passed tuples visited by the "while" loop below.
@@ -1330,4 +1331,4 @@ def _make_hint_typearg_to_hint(
 
     # ....................{ RETURN                         }....................
     # Return this table, coerced into an immutable frozen dictionary.
-    return FrozenDict(typearg_to_hint)
+    return FrozenDict(typearg_to_hint)  # pyright: ignore

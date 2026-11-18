@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._data.typing.datatyping import (
     Codeobjable,
+    DictStrToAny,
     TupleStrs,
     TypeException,
 )
@@ -39,6 +40,67 @@ the :func:`.get_func_arg_name_to_kind_default` getter.
 '''
 
 # ....................{ GETTERS ~ metadata                 }....................
+#FIXME: Unit test us up, please. *sigh*
+def get_func_arg_name_to_default(*args, **kwargs) -> DictStrToAny:
+    '''
+    Dictionary mapping from the name of each parameter accepted by the passed
+    callable to the either:
+
+    * If that parameter is mandatory, the magic constant
+      :data:`beartype._util.func.arg.utilfuncargiter.ArgMandatory`.
+    * Else, that parameter is optional and thus defaults to a default value
+      when unpassed. In this case, this is that default value.
+
+    Naturally, this dictionary preserves the order of these parameters as they
+    were originally defined in the signature of that callable.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator). Why? Because, whereas
+    :func:`beartype.beartype`-decorated classes tend to be defined sparingly,
+    :func:`beartype.beartype`-decorated callables tend to be (re)defined
+    copiously (e.g., closures by a parent closure factory). Ergo, memoizing
+    callables is fundamentally unsafe and invites unbounded space consumption. 
+
+    Caveats
+    -------
+    **This getter exhibits linear-time complexity** :math:`O(n)` **for**
+    :math:`O(n)` **the total number of parameters accepted by that callable,**
+    due to unavoidably performing a linear search over these parameters to
+    iteratively construct the dictionary returned by this getter. This getter
+    should thus be called sparingly.
+
+    Parameters
+    ----------
+    All parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobject` getter.
+
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary mapping from the name of each parameter accepted by the
+        passed callable to the either:
+
+        * If that parameter is mandatory, the magic constant
+          :data:`beartype._util.func.arg.utilfuncargiter.ArgMandatory`.
+        * Else, that parameter is optional and thus defaults to a default value
+          when unpassed. In this case, this is that default value.
+    '''
+
+    # Dictionary to be returned.
+    func_arg_name_to_default: DictStrToAny = {}
+
+    # For metadata describing each parameter accepted by that callable...
+    for arg_data in iter_func_args(*args, **kwargs):
+        # Name of this parameter.
+        arg_name: str = arg_data[ARG_META_INDEX_NAME]  # type: ignore[assignment]
+
+        # Map this name to the 2-tuple of all remaining metadata.
+        func_arg_name_to_default[arg_name] = arg_data[ARG_META_INDEX_DEFAULT]
+
+    # Return this dictionary.
+    return func_arg_name_to_default
+
+
 def get_func_arg_name_to_kind_default(*args, **kwargs) -> (
     FuncArgNameToKindDefault):
     '''
@@ -59,6 +121,13 @@ def get_func_arg_name_to_kind_default(*args, **kwargs) -> (
 
     Naturally, this dictionary preserves the order of these parameters as they
     were originally defined in the signature of that callable.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator). Why? Because, whereas
+    :func:`beartype.beartype`-decorated classes tend to be defined sparingly,
+    :func:`beartype.beartype`-decorated callables tend to be (re)defined
+    copiously (e.g., closures by a parent closure factory). Ergo, memoizing
+    callables is fundamentally unsafe and invites unbounded space consumption. 
 
     Caveats
     -------
