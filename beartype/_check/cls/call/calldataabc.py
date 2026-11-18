@@ -21,7 +21,7 @@ from abc import abstractmethod
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatyping import (
     Decoratee,
     Pep649749HintableAnnotations,

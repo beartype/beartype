@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from abc import abstractmethod
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._core._valecore import BeartypeValidator
-from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedABCMeta
 from beartype._util.text.utiltextrepr import represent_object
 from typing import Any
 

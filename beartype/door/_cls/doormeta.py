@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._cache.cls.cacheclsmega import CacheMegaStrongCaller
 from beartype._cave._cavefast import NoneType
-from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatypingport import Hint
 from threading import RLock
 from typing import TYPE_CHECKING

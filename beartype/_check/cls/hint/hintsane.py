@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.cls.dataclsslot import BeartypeSlottedMetaclass
+from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedMetaclass
 from beartype._data.kind.datakindiota import (
     SENTINEL,
     Iota,

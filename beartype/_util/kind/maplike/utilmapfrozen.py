@@ -18,7 +18,7 @@ from beartype._data.typing.datatyping import (
     T,
     FrozenSetStrs,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_15
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_14
 from beartype._util.utilobjget import get_object_type_basename
 from collections.abc import Mapping
 from typing import (
@@ -30,27 +30,23 @@ from typing import (
 )
 
 # ....................{ SUBCLASSES                         }....................
-# If either...
-if (
-    # This submodule is currently being statically type-checked *OR*...
-    TYPE_CHECKING or
-    # The active Python interpreter targets Python >= 3.15...
-    IS_PYTHON_AT_LEAST_3_15
-):
-    # Alias the "FrozenDict" type to the PEP 814-compliant "frozendict" builtin.
-    FrozenDict = frozendict
-
 #FIXME: Once we drop this branch, we should also:
 #* Deprecate the effectively useless "beartype.FrozenDict" public attribute.
 #  Advise everyone to just use the "frozendict" builtin instead. *shrug*
 
-# Else, the active Python interpreter targets Python <= 3.14. In this case,
-# define a bespoke "FrozenDict" type semantically analogous to the PEP
-# 814-compliant "frozendict" builtin.
-else:
+# If either...
+if (
+    # This submodule is currently being statically type-checked *OR*...
+    TYPE_CHECKING or
+    # The active Python interpreter targets Python <= 3.14...
+    IS_PYTHON_AT_MOST_3_14
+):
+    # In either case, define a bespoke beartype-specific "FrozenDict" type
+    # semantically analogous to the PEP 814-compliant "frozendict" builtin.
+
     #FIXME: Generalize *ALL* of the methods below to leverage the "S" and "T" type
     #variables subscripting this declaration. For the moment, we can't be bothered!
-    class FrozenDict(dict[S, T]):
+    class FrozenDict(dict[S, T]):  # type: ignore[no-redef]
         '''
         **Frozen dictionary** (i.e., immutable mapping preserving :math:`O(1)`
         complexity while prohibiting modification).
@@ -300,6 +296,14 @@ else:
                 f'not updatable from positional arguments {repr(args)} '
                 f'and keyword arguments {repr(kwargs)}.'
             )
+# Else, the active Python interpreter targets Python >= 3.15 and thus supports
+# PEP 814. In this case, alias the beartype-specific "FrozenDict" type to the
+# PEP 814-compliant "frozendict" builtin. Why? Both efficiency and robustness.
+# That builtin is implemented in C and thus (almost certainly) faster than the
+# pure-Python subclass defined above. Moreover, that builtin is (almost
+# certainly) tested more exhaustively than the above subclass.
+else:
+    FrozenDict = frozendict  # type: ignore[name-defined]
 
 # ....................{ HINTS                              }....................
 FrozenDictStrToAny = FrozenDict[str, Any]

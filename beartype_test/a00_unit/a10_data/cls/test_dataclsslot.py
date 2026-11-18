@@ -7,7 +7,7 @@
 Beartype **slotted type hierarchy** unit tests.
 
 This submodule unit tests the public API of the public
-:mod:`beartype._data.cls.dataclsslot` submodule.
+:mod:`beartype._util.cls.metacls.utilmetaclsslot` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,12 +19,12 @@ This submodule unit tests the public API of the public
 # ....................{ TESTS                              }....................
 def test_beartype_slotted_metaclass() -> None:
     '''
-    Test the :class:`beartype._data.cls.dataclsslot.BeartypeSlottedMetaclass`
+    Test the :class:`beartype._util.cls.metacls.utilmetaclsslot.BeartypeSlottedMetaclass`
     metaclass.
     '''
 
     # Defer test-specific imports.
-    from beartype._data.cls.dataclsslot import BeartypeSlottedMetaclass
+    from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedMetaclass
 
     # Assert that this slotted metaclass behaves as expected.
     _assert_beartype_slotted_metaclass(BeartypeSlottedMetaclass)
@@ -32,12 +32,12 @@ def test_beartype_slotted_metaclass() -> None:
 
 def test_beartype_slotted_abc_meta() -> None:
     '''
-    Test the :class:`beartype._data.cls.dataclsslot.BeartypeSlottedABCMeta`
+    Test the :class:`beartype._util.cls.metacls.utilmetaclsslot.BeartypeSlottedABCMeta`
     metaclass.
     '''
 
     # Defer test-specific imports.
-    from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+    from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedABCMeta
 
     # Assert that this slotted metaclass behaves as expected.
     _assert_beartype_slotted_metaclass(BeartypeSlottedABCMeta)
@@ -45,22 +45,22 @@ def test_beartype_slotted_abc_meta() -> None:
 # ....................{ PRIVATE ~ asserters                }....................
 def _assert_beartype_slotted_metaclass(
     metacls: (
-        'type[beartype._data.cls.dataclsslot.BeartypeSlottedMetaclassMixin]')
+        'type[beartype._util.cls.metacls.utilmetaclsslot.BeartypeSlottedMetaclassMixin]')
 ) -> None:
     '''
     Test the passed **slotted metaclass** (i.e.,
-    :class:`beartype._data.cls.dataclsslot.BeartypeSlottedMetaclassMixin`
+    :class:`beartype._util.cls.metacls.utilmetaclsslot.BeartypeSlottedMetaclassMixin`
     subclass).
 
     Parameters
     ----------
-    metacls: type[beartype._data.cls.dataclsslot.BeartypeSlottedMetaclassMixin]
+    metacls: type[beartype._util.cls.metacls.utilmetaclsslot.BeartypeSlottedMetaclassMixin]
         Slotted metaclass to be tested.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._data.cls.dataclsslot import BeartypeSlottedMetaclassMixin
+    from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedMetaclassMixin
     from pytest import raises
 
     # ....................{ CLASSES                        }....................

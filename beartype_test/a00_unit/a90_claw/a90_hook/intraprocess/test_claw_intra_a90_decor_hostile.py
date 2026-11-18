@@ -31,8 +31,8 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     Test the :mod:`beartype.claw.beartype_package` import hook against a single
     data subpackage in this test suite exercising *all* edge cases associated
     with this import hook unique to **decorator-hostile decorators** (i.e.,
-    decorators hostile to other decorators by prohibiting other decorators from
-    being applied after they are applied in a chain of one or more decorators).
+    decorators hostile to other decorators by prohibiting the latter from being
+    applied after the former are applied in a chain of one or more decorators).
     '''
 
     # ....................{ IMPORTS                        }....................

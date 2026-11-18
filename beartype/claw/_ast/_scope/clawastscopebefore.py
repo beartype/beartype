@@ -14,14 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeConfParamException
-from beartype.typing import (
-    TYPE_CHECKING,
-    ChainMap as ChainMapHint,
-    Optional,
-)
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.shame.datashamedecor import (
-    DECOR_HOSTILE_ATTR_NAME_TRIE,
     BeartypeDecorPlaceTrie,
     BeartypeDecorPlaceSubtrie,
 )
@@ -32,9 +26,13 @@ from beartype._data.typing.datatyping import (
 from beartype._data.typing.datatypingport import TypeIs
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from collections import ChainMap
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+)
 
 # ....................{ HINTS                              }....................
-ScopedAttrNameTrie = ChainMapHint[str, BeartypeDecorPlaceSubtrie]
+ScopedAttrNameTrie = ChainMap[str, BeartypeDecorPlaceSubtrie]
 '''
 PEP-compliant recursive alias matching a **beforelist imported attribute name
 trie** (i.e., recursive tree structure whose nodes are the unqualified basenames
@@ -421,6 +419,15 @@ def make_node_scope_beforelist_global() -> BeartypeNodeScopeBeforelist:
     BeartypeNodeScopeBeforelist
         Global scope beforelist of the currently visited module.
     '''
+
+    # Defer the importation of this external global to the body of this factory.
+    # Why? Unit tests, frankly. Yes, this is a bad reason. Yes, we do *NOT* care
+    # at the moment. Deferring this importation allows the questionable
+    # test_claw_intraprocess_decorator_hostile() unit test to externally
+    # monkey-patch this external global and then have that monkey-patch
+    # reflected in this factory. QA: it is what it is. *sigh*
+    from beartype._data.shame.datashamedecor import (
+        DECOR_HOSTILE_ATTR_NAME_TRIE)
 
     # Create and return this global scope beforelist.
     return BeartypeNodeScopeBeforelist(

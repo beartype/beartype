@@ -19,7 +19,7 @@ from beartype._check.cls.hint.tree.hinttreecode import HintTreeCode
 from beartype._check.cls.hint.tree.hinttreeerror import HintTreeError
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedABCMeta
 from beartype._data.check.code.pep.datacodepep484585 import (
     CODE_PEP484585_SEQUENCE_NONRANDOM_PITH_CHILD_EXPR,
     CODE_PEP484585_SEQUENCE_RANDOM_PITH_CHILD_EXPR,

@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import abstractmethod
-from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedABCMeta
 from contextlib import AbstractContextManager
 from threading import (
     Lock,

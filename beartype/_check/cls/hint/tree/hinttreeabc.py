@@ -34,7 +34,7 @@ from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.hint.hintsane import HintSane
 from beartype._check.cls.hint.data.hintdataabc import HintDataABC
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatypingport import Hint
 from typing import (
     TYPE_CHECKING,

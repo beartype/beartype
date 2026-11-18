@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.cls.hint.hintsane import HintSane
-from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedABCMeta
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from typing import (
     TYPE_CHECKING,

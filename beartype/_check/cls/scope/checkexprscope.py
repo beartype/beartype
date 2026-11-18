@@ -22,7 +22,7 @@ from beartype._check.forward.reference.fwdreftyping import (
     FrozenSetBeartypeForwardRefs,
     SetBeartypeForwardRefs,
 )
-from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatyping import (
     DictStrToAny,
     MappingMutableStrToAny,

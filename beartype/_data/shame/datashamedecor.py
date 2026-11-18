@@ -97,7 +97,7 @@ matching the root and non-root nesting levels of this trie.
 #wide variety of metadata into this data structure. For example, third-party
 #*DECORATOR-DISABLING DECORATORS*. "But what are decorator-disabling
 #decorators!?", you might now be cogitating. As the term suggests, they're
-#decorators whose existence in a chain of one or more decorators signals to
+#decorators whose existence in a chain of one or more decorators signaling to
 #other decorators that those decorators should *NOT* be applied in the first
 #place. A great real-world example of a decorator-disabling decorator is the
 #@jaxtyping.jaxtyped decorator, which already internally applies a runtime

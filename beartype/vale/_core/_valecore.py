@@ -23,7 +23,7 @@ from beartype.vale._util._valeutiltyping import (
     BeartypeValidatorTester,
     BeartypeValidatorRepresenter,
 )
-from beartype._data.cls.dataclsslot import BeartypeSlottedABCMeta
+from beartype._util.cls.metacls.utilmetaclsslot import BeartypeSlottedABCMeta
 from beartype._data.typing.datatyping import LexicalScopeMutable
 from beartype._util.func.arg.utilfuncargtest import is_func_argless
 from beartype._util.text.utiltextrepr import represent_object

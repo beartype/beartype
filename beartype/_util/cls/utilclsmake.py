@@ -153,7 +153,7 @@ def make_type(
     # Else, this classname is a valid unqualified Python identifier.
 
     # Thank you, bizarre 3-parameter variant of the type.__init__() constructor.
-    cls = type(type_basename, type_bases, type_scope)
+    cls = type(type_basename, type_bases, type_scope)  # type: ignore[call-overload]
 
     # If this class has a module name...
     if type_module_name is not None:
