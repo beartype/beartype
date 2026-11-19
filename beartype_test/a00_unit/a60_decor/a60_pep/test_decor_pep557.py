@@ -515,6 +515,8 @@ def test_decor_pep557_pep252() -> None:
             '''
 
             # ..................{ OPTIONAL ~ non-pep         }..................
+            #FIXME: Additionally test the edge case of a descriptor-typed field
+            #whose descriptor's __get__() dunder method is unannotated. *sigh*
             to_me_his_arms: DataDescriptorStrSelfSwapCase = (
                 DataDescriptorStrSelfSwapCase(text_default=(
                     'To me his arms were spread, to me his voice')))

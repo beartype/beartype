@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep557Exception
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import TypeException
 from beartype._util.cache.func.utilcachefunc import callable_cached
 from dataclasses import (  # type: ignore[attr-defined]
@@ -172,45 +173,90 @@ def is_pep557_dataclass_frozen(datacls: type) -> bool:
 
 # ....................{ TESTERS ~ field                    }....................
 #FIXME: Unit test us up, yo! *sigh*
-def is_pep557_field_optional(field: Field) -> bool:
+#FIXME: Extremely useful and thus preserved for posterity, although we currently
+#do *NOT* require this lamentably interesting implementation. *sigh*
+# def is_pep557_field_optional(field: Field) -> bool:
+#     '''
+#     :data:`True` only if the :pep:`557`-compliant **field** (i.e., class
+#     variable bound to an instance variable of the same names) of of some
+#     :pep:`557`-compliant dataclass described by the passed **field metadata**
+#     (i.e., :class:`.Field` object) is **optional** (i.e., assigned a default
+#     value at dataclass declaration time).
+#
+#     Parameters
+#     ----------
+#     field : Field
+#         Dataclass field metadata to be inspected.
+#
+#     Returns
+#     -------
+#     bool
+#         :data:`True` only if the field described by this metadata is optional.
+#
+#     See Also
+#     --------
+#     https://stackoverflow.com/a/63582320/2809027
+#         StackOverflow comment strongly inspiring this tester.
+#     '''
+#     assert isinstance(field, Field), f'{repr(field)} not dataclass field.'
+#
+#     # Return true only if the field described by this metadata neither...
+#     #
+#     # Although semantically confusing, this test is the fastest means of
+#     # deciding field optionality. This test effectively semantically reduces to:
+#     # "Return true only if the field described by this metadata has either a
+#     # default value *OR* default factory."
+#     return not (
+#         # Has *NO* default value *NOR*...
+#         field.default is MISSING and
+#         # Has *NO* default factory.
+#         field.default_factory is MISSING
+#     )
+
+# ....................{ GETTERS ~ field                    }....................
+#FIXME: Unit test us up, yo! *sigh*
+def get_pep557_dataclass_field_default_or_sentinel(
+    datacls_field: Field) -> object:
     '''
-    :data:`True` only if the :pep:`557`-compliant **field** (i.e., class
-    variable bound to an instance variable of the same names) of of some
-    :pep:`557`-compliant dataclass described by the passed **field metadata**
-    (i.e., :class:`.Field` object) is **optional** (i.e., assigned a default
-    value at dataclass declaration time).
+    Default value stored in the passed **field metadata** (i.e., :class:`.Field`
+    object) describing some :pep:`557`-compliant **field** (i.e., class variable
+    bound to an instance variable of the same names) of some
+    :pep:`557`-compliant dataclass if this dataclass assigned this field a
+    default value at dataclass declaration time *or* the sentinel placeholder
+    otherwise (i.e., if this field is mandatory).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), as this getter trivially reduces to a
+    one-liner.
 
     Parameters
     ----------
-    field : Field
-        Dataclass field metadata to be inspected.
+    datacls_field : Field
+        Dataclass field metadata to be inspected. Note that this parameter is
+        intentionally named ``"datacls_field"`` rather than merely ``"field"``
+        for disambiguity from the standard :func:`.field` function.
 
     Returns
     -------
-    bool
-        :data:`True` only if the field described by this metadata is optional.
+    object
+        Either:
 
-    See Also
-    --------
-    https://stackoverflow.com/a/63582320/2809027
-        StackOverflow comment strongly inspiring this tester.
+        * If this field is mandatory, the sentinel placeholder.
+        * Else, the default value assigned to this field.
     '''
-    assert isinstance(field, Field), f'{repr(field)} not dataclass field.'
+    assert isinstance(datacls_field, Field), (
+        f'{repr(datacls_field)} not dataclass field metadata.')
 
-    # Return true only if the field described by this metadata neither...
-    #
-    # Although semantically confusing, this test is the fastest means of
-    # deciding field optionality. This test effectively semantically reduces to:
-    # "Return true only if the field described by this metadata has either a
-    # default value *OR* default factory."
-    return not (
-        # Has *NO* default value *NOR*...
-        field.default is MISSING and
-        # Has *NO* default factory.
-        field.default_factory is MISSING
+    # Return either...
+    return (
+        # If this field is mandatory, the sentinel placeholder;
+        SENTINEL
+        if datacls_field.default is MISSING else
+        # Else, the default value assigned to this field.
+        datacls_field.default
     )
 
-# ....................{ GETTERS ~ field                    }....................
+# ....................{ GETTERS ~ fields                   }....................
 #FIXME: Unit test us up, yo! *sigh*
 @callable_cached
 def get_pep557_dataclass_field_name_to_data(
@@ -357,7 +403,8 @@ def get_pep557_dataclass_kwargs(
     implicitly defaulting to that keyword parameter.
 
     This getter is intentionally *not* memoized (e.g., by the
-    ``@callable_cached`` decorator). Why? Because, whereas
+    ``@callable_cached`` decorator), as this getter trivially reduces to a
+    one-liner.
 
     Caveats
     -------
