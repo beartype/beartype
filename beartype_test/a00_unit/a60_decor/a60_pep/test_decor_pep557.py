@@ -37,7 +37,7 @@ def test_decor_pep557() -> None:
     from beartype_test._util.error.pyterrraise import raises_uncached
     from beartype_test.a00_unit.data.pep.data_pep252 import (
         DataDescriptor,
-        DataDescriptorStrSelfSwapCase,
+        Pep557FriendlyDataDescriptorStrSwapCase,
     )
     from dataclasses import (
         FrozenInstanceError,
@@ -142,8 +142,8 @@ def test_decor_pep557() -> None:
                 #failing because we obviously forgot to actually sanify type
                 #hints. Which... is insane, honestly. Srsly! *sigh*
 
-                # to_me_his_arms: DataDescriptorStrSelfSwapCase = (
-                #     DataDescriptorStrSelfSwapCase(text_default=(
+                # to_me_his_arms: Pep557FriendlyDataDescriptorStrSwapCase = (
+                #     Pep557FriendlyDataDescriptorStrSwapCase(text_default=(
                 #         'To me his arms were spread, to me his voice')))
                 # '''
                 # Optional descriptor-typed field annotated by a PEP-noncompliant
@@ -411,7 +411,7 @@ def test_decor_pep557() -> None:
 #FIXME: Merge with the more general-purpose test_decor_pep557() unit test
 #defined above once we generalize the @beartype decorator to fully support
 #descriptor-typed dataclass fields under "BeartypeConf(is_pep557_fields=True)".
-@skip('Currently brokey, yo. Sadness.')
+# @skip('Currently brokey, yo. Sadness.')
 def test_decor_pep557_pep252() -> None:
     '''
     Test :pep:`557` support implemented in the :func:`beartype.beartype`
@@ -440,7 +440,9 @@ def test_decor_pep557_pep252() -> None:
     from beartype_test._util.error.pyterrraise import raises_uncached
     from beartype_test.a00_unit.data.pep.data_pep252 import (
         DataDescriptorStr,
-        DataDescriptorStrSelfSwapCase,
+        Pep557FriendlyDataDescriptorStrSwapCase,
+        Pep557FriendlyDataDescriptorUnhinted,
+        TestDescriptorException,
     )
     from dataclasses import (
         FrozenInstanceError,
@@ -515,18 +517,20 @@ def test_decor_pep557_pep252() -> None:
             '''
 
             # ..................{ OPTIONAL ~ non-pep         }..................
-            #FIXME: Additionally test the edge case of a descriptor-typed field
-            #whose descriptor's __get__() dunder method is unannotated. *sigh*
-            to_me_his_arms: DataDescriptorStrSelfSwapCase = (
-                DataDescriptorStrSelfSwapCase(text_default=(
+            to_me_his_arms: Pep557FriendlyDataDescriptorStrSwapCase = (
+                Pep557FriendlyDataDescriptorStrSwapCase(default_value=(
                     'To me his arms were spread, to me his voice')))
             '''
-            Optional :pep:`557`-compliant descriptor-typed field annotated by a
-            :pep:`252`-compliant data descriptor and assigned an instance of the
-            same descriptor as a default value, itself initialized with a
-            suitable default value for this field passed by the
-            :func:`.dataclass` decorator to the implicit :meth:`__init__` method
-            synthesized for this dataclass.
+            Optional :pep:`557`-compliant descriptor-typed field:
+
+            * Annotated by a :pep:`252`-compliant data descriptor whose
+              :meth:`Pep557FriendlyDataDescriptorStrSwapCase.__get__` and
+              :meth:`Pep557FriendlyDataDescriptorStrSwapCase.__set__` dunder methods are
+              both annotated by unignorable type hints.
+            * Assigned an instance of the same descriptor as a default value,
+              itself initialized with a suitable default value for this field
+              passed by the :func:`.dataclass` decorator to the implicit
+              :meth:`__init__` method synthesized for this dataclass.
 
             Note that descriptor-typed fields have yet to be standardized by any
             peer-reviewed PEP and are thus technically PEP-noncompliant, despite
@@ -536,6 +540,25 @@ def test_decor_pep557_pep252() -> None:
             --------
             https://docs.python.org/3/library/dataclasses.html#descriptor-typed-fields
                 Official Python documentation on descriptor-typed fields.
+            '''
+
+
+            vermeil_rimmed_and_white: Pep557FriendlyDataDescriptorUnhinted = (
+                Pep557FriendlyDataDescriptorUnhinted(
+                    default_value='I must be near the middle of my story.'))
+            '''
+            Optional :pep:`557`-compliant descriptor-typed field:
+
+            * Annotated by a :pep:`252`-compliant data descriptor whose
+              :meth:`Pep557FriendlyDataDescriptorStrSwapCase.__get__` and
+              :meth:`Pep557FriendlyDataDescriptorStrSwapCase.__set__` dunder methods are
+              both left unannotated (i.e., *not* annotated by type hints).
+            * Assigned an instance of the same descriptor as a default value,
+              trivially getting and setting an arbitrary instance variable with
+              the initialized name bound to this parent dataclass instance.
+              Unlike the unrelated :class:`.DataDescriptorStr` objects defined
+              above, this test *does* access this instance variable through this
+              data descriptor. Ergo, this name is marginally meaningful.
             '''
 
             # ..................{ METHODS                    }..................
@@ -568,6 +591,25 @@ def test_decor_pep557_pep252() -> None:
         # True only if this dataclass is slotted, defaulting to false.
         IS_DATACLASS_SLOTTED = dataclass_kwargs.get('slots', False)
 
+        # ..................{ ASSERTS ~ fields : access      }..................
+        # Assert that this dataclass preserves the initial values of these
+        # non-descriptor-typed fields declared above.
+        assert its_delicate_amber.while_the_willow_trails is and_the_dairy_pails
+        assert its_delicate_amber.that_man_may_be is None
+
+        # If this dataclass is *NOT* slotted...
+        if not IS_DATACLASS_SLOTTED:
+            # Assert that this dataclass preserves the initial values of these
+            # non-descriptor-typed fields declared above.
+            #
+            # Note that slotted dataclasses silently reduce descriptor-typed
+            # fields to non-dynamic static fields. See discussion below. *sigh*
+            assert its_delicate_amber.to_me_his_arms == (
+                'tO ME HIS ARMS WERE SPREAD, TO ME HIS VOICE')
+            assert its_delicate_amber.vermeil_rimmed_and_white == (
+                'I must be near the middle of my story.')
+        # Else, this dataclass is slotted.
+
         # ..................{ ASSERTS ~ fields : modify      }..................
         # If this dataclass is frozen...
         if IS_DATACLASS_FROZEN:
@@ -582,6 +624,9 @@ def test_decor_pep557_pep252() -> None:
             with raises_uncached(FrozenInstanceError):
                 its_delicate_amber.to_me_his_arms = (
                     'Its delicate amber; and the dairy pails')
+            with raises_uncached(FrozenInstanceError):
+                its_delicate_amber.vermeil_rimmed_and_white = (
+                    "Before the daisies, vermeil rimm'd and white,")
         # Else, this dataclass is *NOT* frozen. In this case...
         else:
             # Assert that this dataclass allows callers to set these fields
@@ -614,6 +659,18 @@ def test_decor_pep557_pep252() -> None:
                     'Bring home increase of milk. And, as the year')
                 assert its_delicate_amber.to_me_his_arms == (
                     'bRING HOME INCREASE OF MILK. aND, AS THE YEAR')
+
+                its_delicate_amber.vermeil_rimmed_and_white = (
+                    'Hide in deep herbage; and ere yet the bees')
+                assert its_delicate_amber.vermeil_rimmed_and_white == (
+                    'Hide in deep herbage; and ere yet the bees')
+
+                # Assert that this descriptor-typed field raises the expected
+                # beartype-agnostic field-specific exception when set to an
+                # invalid value.
+                with raises_uncached(TestDescriptorException):
+                    its_delicate_amber.to_me_his_arms = (
+                        b'Hum about globes of clover and sweet peas')
             # Else, this dataclass is slotted.
         # Else, this dataclass is *NOT* frozen.
 

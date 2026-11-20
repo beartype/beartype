@@ -34,7 +34,7 @@ class TestDescriptorException(Exception):
 
     pass
 
-# ....................{ CLASSES ~ descriptor               }....................
+# ....................{ DESCRIPTORS                        }....................
 class NondataDescriptor(object):
     '''
     **Non-data descriptor** (i.e., pure-Python type defining the
@@ -115,7 +115,7 @@ class NondataDescriptor(object):
 class DataDescriptor(NondataDescriptor):
     '''
     **Data descriptor** (i.e., pure-Python type defining both the
-    :meth:`.__get__` *and* :meth:`.__set__` dunder method implicitly called by
+    :meth:`.__get__` *and* :meth:`.__set__` dunder methods implicitly called by
     Python when instances of this type are assigned to class variables and then
     subsequently accessed or modified respectively via those class variables on
     instances of those classes).
@@ -150,7 +150,7 @@ class DataDescriptor(NondataDescriptor):
         # One-liner or it didn't happen.
         set_object_attr(obj, self._attr_name, value)
 
-# ....................{ CLASSES ~ descriptor : str         }....................
+# ....................{ DESCRIPTORS ~ str                  }....................
 class DataDescriptorStr(object):
     '''
     **String data descriptor** (i.e., pure-Python type defining both the
@@ -257,55 +257,57 @@ class DataDescriptorStr(object):
         # the passed object.
         set_object_attr(obj, self._attr_name, text)
 
-
-class DataDescriptorStrSelfSwapCase(object):
+# ....................{ DESCRIPTORS ~ str : swap           }....................
+class _Pep557CompatibleDataDescriptorABC(object):
     '''
-    **String case-swapping data descriptor** (i.e., pure-Python type defining
-    both the :meth:`.__get__` *and* :meth:`.__set__` dunder methods implicitly
-    called by Python when instances of this type are assigned to class variables
-    and then subsequently accessed or modified respectively with those class
-    variables on instances of those classes such that that :meth:`.__get__`
-    dunder method returns a string and that :meth:`.__set__` dunder method
-    accepts a string whose case is swapped by that method).
+    **Dataclass-compatible data descriptor abstract base class** (i.e.,
+    superclass of concrete subclasses below satisfying the data descriptor
+    protocol in a portable manner compatible with :pep:`557`-compliant
+    dataclasses, whose obscure implementation imposes non-trivial constraints on
+    descriptor-typed fields in particular).
 
-    This data descriptor specifically **swaps case** (i.e., converts uppercase
-    characters to lowercase and lowercase characters to uppercase) of the string
-    passed to the :meth:`.__set__` dunder method, enabling callers to validate
-    that that method performed meaningful work and was thus called.
+    Data descriptors encapsulate mutable instance and class variables whose
+    values require dynamic computation and which can be externally modified.
+    This ABC defines both the :meth:`.__get__` *and* :meth:`.__set__` dunder
+    methods implicitly called by Python when instances of this type are assigned
+    to class variables and then subsequently accessed or modified respectively
+    with those class variables on instances of those classes.
+
+    Caveats
+    -------
+    **All methods defined by this ABC are intentionally left unannotated.**
+    Doing so enables unit tests to explicitly test unannotated data descriptors,
+    which tend to exhibit different semantics in common use cases (e.g.,
+    descriptor-typed fields).
 
     Attributes
     ----------
     _attr_name : str
-        Unqualified basename of the attribute that this descriptor dynamically
-        looks up on both classes and instances to which this descriptor is
+        Unqualified basename of the variable this descriptor dynamically
+        accesses on both classes and instances to which this descriptor is
         bound.
-    _text_default : str, default: SENTINEL
-        Default string with which to initialize this descriptor. Defaults to
-        the sentinel placeholder, in which case this descriptor remains
-        uninitialized by default.
+    _default_value : str, default: SENTINEL
+        Default value to which this descriptor initializes that lower-level
+        variable. Defaults to the sentinel placeholder, in which case this
+        descriptor remains uninitialized by default.
     '''
 
-    def __init__(self, text_default: Optional[str] = None) -> None:
+    def __init__(self, default_value = None):  # <-- look, ma! no type hints!
         '''
         Initialize this string case-swapping data descriptor.
 
         Parameters
         ----------
-        text_default : Optional[str], default: None
-            Default string with which to initialize this descriptor. Defaults to
+        default_value : Optional[str], default: None
+            Default value to which this descriptor initializes the lower-level
+            variable dynamically accessed by this descriptor. Defaults to
             :data:`None`, in which case this descriptor remains uninitialized by
             default.
         '''
 
         # Classify all passed parameters.
-        self._text_default = text_default
-
-        # If the caller explicitly passed a default string with which to
-        # initialize this descriptor, preserve this default string in
-        # case-swapped form for subsequent use.
-        if self._text_default is not None:
-            self._text_default = self._text_default.swapcase()
-        # Else, the caller passed *NO* such default.
+        self._default_value = default_value
+        # print(f'default_value = {repr(default_value)}')
 
         # Nullify the "_attr_name" instance variable set by the __set_name__()
         # dunder method in a safe manner preserving that variable if already set
@@ -313,10 +315,10 @@ class DataDescriptorStrSelfSwapCase(object):
         self._attr_name = getattr(self, '_attr_name', None)
 
 
-    def __set_name__(self, cls: type, attr_name: str) -> None:
+    def __set_name__(self, cls, attr_name):  # <-- no sleep till type hints
         '''
-        Set the unqualified basename of the attribute that this descriptor
-        dynamically looks up on both classes and instances to which this
+        Set the unqualified basename of the variable that this descriptor
+        dynamically accesses on both classes and instances to which this
         descriptor is bound to the passed basename.
 
         The standard :class:`type.__new__` constructor explicitly calls this
@@ -339,29 +341,25 @@ class DataDescriptorStrSelfSwapCase(object):
         self._attr_name = f'_{attr_name}'
 
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         '''
         Machine-readable representation of this data descriptor.
         '''
 
         # Aloft on the divine wing of a one-liner! Arise, we beg this!
-        return f'DataDescriptorStrSelfSwapCase({repr(self._attr_name)})'
+        return f'{self.__class__.__name__}({repr(self._attr_name)})'
 
 
-    def __get__(
-        self,
-        obj: object,
-        obj_type_if_instance_lookup: Optional[type] = None,
-    ) -> str:
+    def __get__(self, obj, obj_type_if_instance_lookup = None):  # *NO HINTS YO*
         '''
-        Case-swapped string value of the attribute bound to the passed object
-        whose unqualified basename is that of the basename with which this
-        descriptor was initialized.
+        Value of the variable bound to the passed object whose unqualified
+        basename is that of the basename with which this descriptor was
+        initialized.
 
         Parameters
         ----------
         obj : object
-            Object to retrieve this attribute from.
+            Object to retrieve this variable from.
         obj_type_if_instance_lookup : Optional[type], default: None
             Either:
 
@@ -385,8 +383,9 @@ class DataDescriptorStrSelfSwapCase(object):
         # with an object explicitly set to "None", which this method is expected
         # to respond to by returning the default value with which this
         # descriptor was initialized. Ergo, we do just that. Ignorance is bliss.
-        if self._text_default is not None:
-            return self._text_default
+        if self._default_value is not None:
+            # print(f'Returning default value {repr(self._default_value)}...')
+            return self._default_value
         # Else, an object was passed. Thank the Pythonic Gods.
         #
         # If this attribute was looked up as a class variable, return this
@@ -399,23 +398,99 @@ class DataDescriptorStrSelfSwapCase(object):
             return self
         # Else, this attribute was looked up as an instance variable.
 
-        # Return the current string value of the attribute bound to the passed
-        # object.
-        return getattr(obj, self._attr_name)
+        # Return the current value of the attribute bound to the passed object.
+        value = getattr(obj, self._attr_name)
+        # print(f'Getting attribute {repr(value)}...')
+        return value
 
 
-    def __set__(self, obj: object, text: str) -> None:
+    def __set__(self, obj, value):  # <-- no hints, no qa, no service
         '''
-        Set the value of the attribute bound to the passed object whose
+        Set the value of the variable bound to the passed object whose
+        unqualified basename is that of the basename with which this descriptor
+        was initialized to the passed value.
+
+        Parameters
+        ----------
+        obj : object
+            Object to modify this variable on.
+        value : object
+            Value to modify this variable to.
+        '''
+        # print(f'Setting attribute to {repr(value)}...')
+
+        # Safely set this object attribute to the passed value.
+        set_object_attr(obj, self._attr_name, value)
+
+        # Nullify any default value with which this descriptor was initialized,
+        # preventing the next call to the __get__() dunder method from
+        # erroneously returning this default value if previously defined.
+        self._default_value = None
+
+
+class Pep557FriendlyDataDescriptorUnhinted(_Pep557CompatibleDataDescriptorABC):
+    '''
+    **Unannotated data descriptor** (i.e., pure-Python type defining both the
+    :meth:`.__get__` *and* :meth:`.__set__` dunder methods implicitly called by
+    Python when instances of this type are assigned to class variables and then
+    subsequently accessed or modified respectively via those class variables on
+    instances of those classes, where those dunder methods are intentionally
+    left unannotated by *any* type hints to enable unit tests defined elsewhere
+    to exercise various edge cases).
+    '''
+
+    pass
+
+
+class Pep557FriendlyDataDescriptorStrSwapCase(
+    _Pep557CompatibleDataDescriptorABC):
+    '''
+    **String case-swapping data descriptor** (i.e., pure-Python type defining
+    both the :meth:`.__get__` *and* :meth:`.__set__` dunder methods implicitly
+    called by Python when instances of this type are assigned to class variables
+    and then subsequently accessed or modified respectively with those class
+    variables on instances of those classes such that that :meth:`.__get__`
+    dunder method returns a string and that :meth:`.__set__` dunder method
+    accepts a string whose case is swapped by that method).
+
+    This data descriptor specifically **swaps case** (i.e., converts uppercase
+    characters to lowercase and lowercase characters to uppercase) of the string
+    passed to the :meth:`.__set__` dunder method, enabling callers to validate
+    that that method performed meaningful work and was thus called.
+    '''
+
+    def __init__(self, default_value: Optional[str] = None) -> None:
+
+        # If the caller explicitly passed a default string with which to
+        # initialize this descriptor...
+        if default_value is not None:
+            # If the passed default value is *NOT* a string, raise an exception.
+            if not isinstance(default_value, str):
+                raise TestDescriptorException(
+                    f'{repr(default_value)} not string.')
+            # Else, this default value is a string.
+
+            #FIXME: *NOPE*! Don't ask. We didn't. *shrug*
+            # Preserve this string in case-swapped form for subsequent use.
+            # default_value = default_value.swapcase()
+        # Else, the caller passed *NO* such default.
+
+        # Initialize our superclass with all passed parameters.
+        super().__init__(default_value)
+
+
+    def __set__(self, obj: object, value: str) -> None:
+        '''
+        Set the value of the variable bound to the passed object whose
         unqualified basename is that of the basename with which this descriptor
         was initialized to the case-swapped variant of the passed string.
 
         Parameters
         ----------
         obj : object
-            Object to modify this attribute on.
-        text : str
-            Value to modify this attribute to after case-swapping.
+            Object to modify this variable on.
+        value : str
+            Value to modify this variable to after case-swapping.
 
         Raises
         ------
@@ -424,17 +499,15 @@ class DataDescriptorStrSelfSwapCase(object):
         '''
 
         # If the passed value is *NOT* a string, raise an exception.
-        if not isinstance(text, str):
-            raise TestDescriptorException(f'{repr(text)} not string.')
+        if not isinstance(value, str):
+            raise TestDescriptorException(f'{repr(value)} not string.')
         # Else, this value is a string.
 
-        # Safely set this object attribute to the passed string case-swapped.
-        set_object_attr(obj, self._attr_name, text.swapcase())
+        # Swap the case of this string.
+        value = value.swapcase()
 
-        # Nullify any default string with which this descriptor was initialized,
-        # preventing the next call to the __get__() dunder method from
-        # erroneously returning this default string if previously defined.
-        self._text_default = None
+        # Defer to our superclass implementation.
+        super().__set__(obj, value)
 
 # ....................{ CLASSES ~ store                    }....................
 class DataAndNondataDescriptorStore(object):
