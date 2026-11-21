@@ -44,7 +44,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintNonpepNumpyException
-from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
+from beartype._check.cls.hint.hintsane import (
+    HINT_SANE_IGNORABLE,
+    HintSane,
+)
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.api.external.utilnumpy import (
     get_numpy_dtype_type_abcs,
@@ -53,7 +56,15 @@ from beartype._util.api.external.utilnumpy import (
 from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.utilobjtest import is_object_hashable
-from typing import Annotated
+from collections.abc import Callable
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+)
+
+if TYPE_CHECKING:
+    from beartype.vale._core._valecore import BeartypeValidator
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_numpy_ndarray(
@@ -186,6 +197,11 @@ def reduce_hint_numpy_ndarray(
     # NumPy-specific data type) child hints subscripting this hint.
     hint_child_shape, hint_child_dtype = hint_childs
 
+    # Validator validating the shapes of arrays against this shape child hint if
+    # this hint is unignorable *OR* "None" otherwise.
+    hint_shape_validator = _make_shape_validator(
+        hint=hint_child_shape, reduce_hint_child=reduce_hint_child, kwargs=kwargs)
+
     # ..................{ LOCALS ~ childs : dtype            }..................
     # Child child hints subscripting this dtype child hint if any *OR* the empty
     # tuple otherwise.
@@ -253,7 +269,10 @@ def reduce_hint_numpy_ndarray(
         #
         # Note the similar test matching the unsubscripted "NDArray" hint above.
         if hint_dtypelike_sane is HINT_SANE_IGNORABLE:
-            return ndarray  # pyright: ignore
+            return (
+                ndarray if hint_shape_validator is None else
+                Annotated[ndarray, hint_shape_validator]
+            )  # pyright: ignore
         # Else, this child hint is unignorable.
 
         # Dtype-like object sanified from this child hint. For example:
@@ -322,4 +341,43 @@ def reduce_hint_numpy_ndarray(
     hint_validator.get_repr = repr(hint)
 
     # Return this validator annotating the NumPy array type.
-    return Annotated[ndarray, hint_validator]  # type: ignore[return-value]  # pyright: ignore
+    return (
+        Annotated[ndarray, hint_validator]
+        if hint_shape_validator is None else
+        Annotated[ndarray, hint_shape_validator, hint_validator]
+    )  # type: ignore[return-value]  # pyright: ignore
+
+# ....................{ PRIVATE                            }....................
+def _make_shape_validator(
+    hint: Hint,
+    reduce_hint_child: Callable[..., HintSane],
+    kwargs: Any,
+) -> 'BeartypeValidator | None':
+    '''
+    Beartype validator validating the ``shape`` attribute of arrays against the
+    passed shape child hint if this hint is sized (not ignorable).
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype.door import is_bearable
+    from beartype.vale import Is
+
+    hint_sane = reduce_hint_child(
+        hint=hint, is_hint_nonpep_irreducible=True, **kwargs)
+
+    # Ignore the hint if the shape-type is a variadic gradual- or top-type.
+    if (
+        hint_sane is HINT_SANE_IGNORABLE or
+        hint_sane.hint in (tuple, tuple[Any, ...], tuple[int, ...])
+    ):
+        return None
+    # Else, this hint is unignorable and has a static size.
+
+    hint_shape = hint_sane.hint
+
+    def is_array_shape(array) -> bool:
+        return is_bearable(array.shape, hint_shape)
+
+    validator = Is[is_array_shape]
+    validator.get_repr = f'array.shape: {hint_shape!r}'
+    return validator

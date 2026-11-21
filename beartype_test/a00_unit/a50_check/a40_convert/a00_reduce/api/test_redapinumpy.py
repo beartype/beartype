@@ -16,6 +16,7 @@ third-party NumPy-specific type hints.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS ~ reducers                   }....................
 def test_reduce_hint_api_numpy() -> None:
@@ -64,3 +65,56 @@ def test_reduce_hint_api_numpy() -> None:
     with raises(BeartypeDecorHintNonpepNumpyException):
         reduce_hint_any(
             NDArray['From_my_wings_are_shaken_the_dews_that_waken'])
+
+
+@skip_unless_package('numpy')
+def test_reduce_hint_api_numpy_shape() -> None:
+    '''
+    Test :func:`beartype.door.is_bearable` against NumPy arrays subscripted by
+    a shape-type.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import is_bearable
+    from numpy import (
+        dtype,
+        float64,
+        ndarray,
+        zeros,
+    )
+    from numpy.typing import NDArray
+    from typing import (
+        Any,
+        Literal,
+    )
+
+    array_0d = zeros((), dtype=float64)
+    array_1d = zeros(2, dtype=float64)
+    array_2d = zeros((2, 2), dtype=float64)
+
+    hint_1d = ndarray[tuple[int], dtype[float64]]
+    assert is_bearable(array_1d, hint_1d) is True
+    assert is_bearable(array_2d, hint_1d) is False
+
+    hint_0d = ndarray[tuple[()], dtype[float64]]
+    assert is_bearable(array_0d, hint_0d) is True
+    assert is_bearable(array_1d, hint_0d) is False
+
+    # Shapes are validated even when dtypes are ignorable.
+    hint_any_dtype = ndarray[tuple[int], dtype[Any]]
+    assert is_bearable(array_1d, hint_any_dtype) is True
+    assert is_bearable(array_2d, hint_any_dtype) is False
+
+    # Unions of shapes and fixed dimension sizes.
+    hint_union = ndarray[tuple[int] | tuple[int, int], dtype[float64]]
+    assert is_bearable(array_2d, hint_union) is True
+    assert is_bearable(array_0d, hint_union) is False
+
+    hint_literal = ndarray[tuple[Literal[2]], dtype[float64]]
+    assert is_bearable(array_1d, hint_literal) is True
+    assert is_bearable(zeros(3, dtype=float64), hint_literal) is False
+
+    # Gradual shapes match all shapes.
+    assert is_bearable(array_2d, NDArray[float64]) is True
+    assert is_bearable(array_2d, ndarray[tuple[int, ...], dtype[float64]]) is True
+    assert is_bearable(array_2d, ndarray[Any, dtype[float64]]) is True
