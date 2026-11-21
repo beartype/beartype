@@ -113,35 +113,19 @@ def _sweeping_from_some_strange_harp() -> None:
     scope.
     '''
 
-    #FIXME: *BIG YIKES.* CPython's low-level C-based implementation of PEP
-    #695-compliant type aliases currently fails to properly resolve unquoted
-    #relative forward references defined in a local rather than global scope. I
-    #tried literally everything to get this to work via AST transformations --
-    #but whatever arcane type alias machinery it is that they've implemented
-    #simply does *NOT* behave as expected at local scope. That said, we've
-    #verified this *SHOULD* work via this simple snippet:
-    #    >>> type bar = wut
-    #    >>> globals()['wut'] = str
-    #    >>> print(bar.__value__)
-    #    str
-    #
-    #That behaves as expected -- until you actually then define the expected
-    #class at local scope:
+    #FIXME: Support local forward references without relying on module globals.
+    #A later class declaration binds its name locally throughout this function.
+    #Evaluating an alias before that declaration therefore reads an unbound
+    #local cell, even if a global proxy with the same name has been installed:
     #    def foo():
     #        type bar = wut
     #        globals()['wut'] = str
-    #        print(bar.__value__)
-    #        class wut(object): pass  # <-- this causes madness; WTF!?!?!?
-    #    foo()
+    #        print(bar.__value__)  # NameError: unbound free variable 'wut'.
+    #        class wut: pass
     #
-    #The above print() statement now raises non-human readable exceptions
-    #resembling:
-    #    NameError: cannot access free variable 'wut' where it is not associated
-    #    with a value in enclosing scope
-    #
-    #Clearly, this is madness. At the point at which the print() statement is
-    #run, the "wut" class has yet to be redefined as a class. This constitutes a
-    #profound CPython bug. Please submit us up the F-F-F-bomb.
+    #Evaluation after the class definition succeeds. This is normal lexical
+    #scoping, also exhibited by ordinary closures reading the same local name:
+    #    https://docs.python.org/3/reference/executionmodel.html#resolution-of-names
 
     # ....................{ ALIASES                        }....................
     # Local forward referenced type alias containing an unquoted relative
@@ -188,8 +172,8 @@ def _sweeping_from_some_strange_harp() -> None:
 # ....................{ FAIL                               }....................
 # Assert that @beartype raises the expected exception when attempting to define
 # a local forward referenced type alias containing an unquoted relative forward
-# reference to a user-defined class that has yet to be defined. Sadly, CPython's
-# current implementation of PEP 695 is fundamentally broken -- especially in
-# local scopes. See above.
+# reference to a user-defined class that has yet to be defined. The current
+# module-global proxy workaround cannot initialize its captured local cell.
+# See above.
 with raises(BeartypeDecorHintPep695Exception):
     _sweeping_from_some_strange_harp()
