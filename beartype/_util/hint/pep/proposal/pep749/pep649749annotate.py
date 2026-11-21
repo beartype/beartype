@@ -736,27 +736,14 @@ if IS_PYTHON_AT_LEAST_3_14:
                     ``__annotations__`` dunder dictionary set on this hintable.
                 '''
 
-                #FIXME: Submit an upstream CPython issue about this. This
-                #behaviour is super-weird, non-orthogonal, and invites extremely
-                #subtle and non-trivial to debug issues in user code like this.
-                #To resolve this, CPython devs should consider:
-                #* Defining a new "_annotationlib" C extension.
-                #* Moving the existing "annotationlib.HintPep749RefFormat" enum
-                #  to this C extension.
-                #* Adding to the top of "annotationlib":
-                #      from _annotationlib import Format
-                #* Refactoring the C-based CPython interpreter to pass the
-                #  "_annotationlib.Format.VALUE" enum member rather than the
-                #  magic integer constant "1" to __annotate__() dunder methods
-                #  when creating the "__annotations__" dunder dictionary.
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                # CAUTION: CPython implicitly calls this monkey-patched dunder
-                # function with magic integer constants (e.g., "1") rather than
-                # readable enum members (e.g., "Format.FORWARDREF"). In other
-                # words, *THIS FUNCTION MUST NOT ATTEMPT TO COMPARE THE PASSED
-                # PARAMETER TO ENUM MEMBERS WITH THE "is" BUILTIN.* Doing so is
-                # guaranteed to silently fail in non-debuggable ways with
-                # sporadic false negatives or positives. We know. We were there.
+                # CAUTION: PEP 749 specifies integer format values for contexts
+                # where the enum is unavailable, including C implementations:
+                #     https://peps.python.org/pep-0749/#adding-the-value-with-fake-globals-format
+                # CPython can therefore pass integer 1 rather than the
+                # Format.VALUE enum member to this __annotate__() function.
+                # Compare formats with "==", not "is": the integer compares
+                # equal to its enum member but is not the same object.
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 #FIXME: [SPEED] Globalize access to frequently accessed
@@ -917,24 +904,18 @@ if IS_PYTHON_AT_LEAST_3_14:
                 # print(f'{hintable}.__annotate__(3): {hintable.__annotate__(HintPep749RefFormat.FORWARDREF)}')
                 # hintable_annotations_cached = get_hintable_pep649749_annotations(hintable)
                 # print(f'{hintable}.__annotate__(3) [cached]: {hintable_annotations_cached}')
-            # If doing so fails with an exception resembling the following, this
-            # hintable is *NOT* pure-Python. The canonical example are C-based
-            # decorator objects (e.g., class, property, or static method
-            # descriptors), whose exception message reads:
+            # If assignment fails, this hintable may be a bound method or
+            # another object with read-only annotation attributes. For example,
+            # assigning to a bound method's __annotate__ raises:
             #     AttributeError: 'method' object has no attribute
             #     '__annotate__' and no __dict__ for setting new attributes. Did
             #     you mean: '__getstate__'?
             #
-            # C-based decorator objects only define:
-            # * A read-only __annotate__() dunder method that proxies an
-            #   original writeable __annotate__() dunder method of the
-            #   pure-Python callables they originally decorated.
-            # * A read-only "__annotations__" dunder attribute that proxies an
-            #   original writeable "__annotations__" dunder attribute of the
-            #   pure-Python callables they originally decorated.
-            #
-            # Detecting this edge case is non-trivial and most easily deferred
-            # to this late time. While non-ideal, simplicity >>>> idealism here.
+            # Bound methods expose the underlying function's __annotate__ and
+            # __annotations__ for reading, but do not permit rebinding them.
+            # Raw classmethod and staticmethod wrappers are different objects:
+            # their annotation attributes are writable under PEP 749.
+            # Detect read-only objects by attempting the assignment here.
             except AttributeError as exception:
                 # print(f'{hintable}.__annotate__() not settable: {repr(AttributeError)}')
 
@@ -954,42 +935,16 @@ if IS_PYTHON_AT_LEAST_3_14:
                 # See also the "beartype._util.func.utilfuncwrap" submodule.
                 hintable_func = getattr(hintable, '__func__', None)
 
-                #FIXME: File an upstream CPython issue about this, please. *sigh*
-                #FIXME: Remove this edge case *AFTER* some future Python version
-                #fully satisfies PEP 749 by implementing this paragraph:
-                #    The constructors for classmethod() and staticmethod() currently
-                #    copy the __annotations__ attribute from the wrapped object to
-                #    the wrapper. They will instead have writable attributes for
-                #    __annotate__ and __annotations__. Reading these attributes will
-                #    retrieve the corresponding attribute from the underlying
-                #    callable and cache it in the wrapper’s __dict__. Writing to
-                #    these attributes will directly update the __dict__, without
-                #    affecting the wrapped callable.
-                #
-                #Currently, Python does *NOT* do that. Neither the __annotate__()
-                #nor "__annotate__" dunder attributes are settable on @classmethod
-                #or @staticmethod descriptors:
-                #    class Yum(object):
-                #        @classmethod
-                #        def guh(cls) -> None: pass
-                #
-                #    def ugh_annotate(): return {}
-                #
-                #    yim = Yum()
-                #    print(Yum.guh.__annotate__)          # <-- reading this works
-                #    Yum.guh.__annotate__ = ugh_annotate  # <-- writing this fails
-                #
-                #The above example currently raises:
-                #    AttributeError: 'method' object has no attribute '__annotate__'
-                #    and no __dict__ for setting new attributes. Did you mean:
-                #    '__getstate__'?
-                #
-                #Presumably, Python will start doing that at some point. Once Python
-                #does, this issue becomes a non-issue. For the moment, efficiency is
-                #irrelevant. We just need this to work for a temporary span of time.
-                #FIXME: Once Python resolves this issue, also remove the
-                #temporary "if IS_PYTHON_AT_MOST_3_13:" hack from our companion
-                #test_resolve_pep563() unit test. *sigh*
+                # Retain this fallback for bound methods. PEP 749 requires
+                # writable annotation attributes on raw classmethod and
+                # staticmethod wrappers, not on the bound methods returned by
+                # descriptor access:
+                #     https://peps.python.org/pep-0749/#wrappers-that-provide-annotations
+                # For example, Yum.__dict__['guh'] is the raw classmethod
+                # wrapper, whereas Yum.guh is a bound method. Assigning to the
+                # wrapper updates its own attributes without changing the
+                # underlying function. Assigning to the bound method fails, so
+                # unwrap its __func__ and update that function below.
 
                 # If...
                 if (
@@ -1017,12 +972,10 @@ if IS_PYTHON_AT_LEAST_3_14:
                     # Set the "__annotations__" dunder dictionary on this
                     # lower-level pure-Python callable *BEFORE* setting the
                     # __annotate__() dunder method on this callable below. Why?
-                    # Because CPython currently propagates *ONLY*
-                    # "__annotations__" but not __annotate__() from this
-                    # lower-level pure-Python callable on up to this
-                    # higher-level C-based decorator object. Do so *BEFORE*
-                    # setting __annotate__(), which implicitly nullifies
-                    # "__annotations__". (Look. All of this is busted. I sigh.)
+                    # Assigning __annotations__ clears the function's
+                    # __annotate__, so install the replacement evaluator only
+                    # after this assignment. Bound methods read both attributes
+                    # from the underlying function.
                     hintable_func.__annotations__ = annotations
 
                     # Set the __annotate__() dunder method on this lower-level
@@ -1432,17 +1385,14 @@ else:
             # "__annotations__" dunder dictionary with these new annotations. Do
             # so atomically for both safety and efficiency.
             hintable.__annotations__ = annotations
-        # If doing so fails with an exception resembling the following, this
-        # hintable is *NOT* pure-Python. The canonical example are C-based
-        # decorator objects (e.g., class, property, or static method
-        # descriptors), whose exception message reads:
+        # If assignment fails, this hintable may be a bound method or another
+        # object with a read-only __annotations__ attribute. For example:
         #     AttributeError: 'method' object has no attribute '__annotations__'
         #
-        # C-based decorator objects define a read-only "__annotations__" dunder
-        # attribute that proxies an original writeable "__annotations__" dunder
-        # attribute of the pure-Python callables they originally decorated.
-        # Detecting this edge case is non-trivial and most easily deferred to
-        # this late time. While non-ideal, simplicity >>>> idealism here.
+        # Bound methods expose the underlying function's annotation dictionary
+        # without permitting the attribute to be rebound. Its entries can
+        # still be updated in place below. Raw classmethod and staticmethod
+        # wrappers should not be assumed to share this restriction.
         except AttributeError:
             # For the name of each annotated attribute of this hintable and the
             # new hint which which to annotate this attribute, overwrite the
