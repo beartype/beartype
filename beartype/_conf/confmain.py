@@ -90,6 +90,7 @@ callers.
 #             b * check_time_max_multiplier >= T
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeConfParamException
 from beartype.roar._roarwarn import (
     _BeartypeConfReduceDecoratorExceptionToWarningDefault)
 from beartype._check.cls.hint.hintsane import HintSane
@@ -148,6 +149,9 @@ class BeartypeConf(object):
         (i.e., :pep:`526`-compliant assignments to local, global, class, and
         instance variables annotated by type hints) when importing modules
         under import hooks published by the :mod:`beartype.claw` subpackage.
+    _claw_is_trace_imports : bool
+        :data:`True` only if tracing modules selected by import hooks to
+        the current standard error stream before loading their code.
     _claw_skip_package_names: Collection[str], optional
         Collection of the absolute names of all packages and modules to be
         **skipped** (i.e., blacklisted, excluded, ignored, omitted) rather than
@@ -280,6 +284,7 @@ class BeartypeConf(object):
         '_claw_decor_place_func',
         '_claw_decor_place_type',
         '_claw_is_pep526',
+        '_claw_is_trace_imports',
         '_claw_skip_package_names',
         '_conf_args',
         '_conf_kwargs',
@@ -310,6 +315,7 @@ class BeartypeConf(object):
         _claw_decor_place_func: BeartypeDecorPlace
         _claw_decor_place_type: BeartypeDecorPlace
         _claw_is_pep526: bool
+        _claw_is_trace_imports: bool
         _claw_skip_package_names: CollectionStrs
         _conf_args: tuple
         _conf_kwargs: DictStrToAny
@@ -353,6 +359,7 @@ class BeartypeConf(object):
         claw_decor_place_type: BeartypeDecorPlace = (
             BeartypeDecorPlace.LAST),
         claw_is_pep526: bool = True,
+        claw_is_trace_imports: bool = False,
         claw_skip_package_names: CollectionStrs = (),
         hint_overrides: FrozenDict = FROZENDICT_EMPTY,
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,  # pyright: ignore
@@ -493,6 +500,13 @@ class BeartypeConf(object):
             performance-sensitive modules *after* profiling those modules to
             suffer performance regressions under :mod:`beartype.claw` import
             hooks. Defaults to :data:`True`.
+        claw_is_trace_imports : bool, optional
+            :data:`True` only if printing the fully-qualified name of each
+            module selected by :mod:`beartype.claw` import hooks to the current
+            :data:`sys.stderr` stream before loading its code. This includes
+            loading cached bytecode and attempted imports that subsequently
+            fail, but excludes modules skipped by those hooks. Defaults to
+            :data:`False`, preserving silent imports.
         claw_skip_package_names: Collection[str], optional
             Collection of the absolute names of all packages and modules to be
             **skipped** (i.e., blacklisted, excluded, ignored, omitted) rather
@@ -784,6 +798,7 @@ class BeartypeConf(object):
             If either:
 
             * ``is_color`` is *not* a tri-state boolean.
+            * ``claw_is_trace_imports`` is *not* a boolean.
             * ``is_debug`` is *not* a boolean.
             * ``is_pep484_tower`` is *not* a boolean.
             * ``is_pep557_fields`` is *not* a boolean.
@@ -807,6 +822,14 @@ class BeartypeConf(object):
             * ``claw_decoration_position_types``.
             * ``is_check_pep557``.
         '''
+
+        # Validate before cache lookup: integers compare equal to booleans and
+        # could otherwise reuse a cached configuration without being checked.
+        if not isinstance(claw_is_trace_imports, bool):
+            raise BeartypeConfParamException(
+                f'Beartype configuration parameter "claw_is_trace_imports" '
+                f'value {repr(claw_is_trace_imports)} not boolean.'
+            )
 
         # In a non-reentrant thread lock isolated to this constructor...
         #
@@ -867,6 +890,7 @@ class BeartypeConf(object):
                 claw_decor_place_func,
                 claw_decor_place_type,
                 claw_is_pep526,
+                claw_is_trace_imports,
                 claw_skip_package_names,
                 hint_overrides,
                 is_color,
@@ -900,6 +924,7 @@ class BeartypeConf(object):
                 claw_decor_place_func=claw_decor_place_func,
                 claw_decor_place_type=claw_decor_place_type,
                 claw_is_pep526=claw_is_pep526,
+                claw_is_trace_imports=claw_is_trace_imports,
                 claw_skip_package_names=claw_skip_package_names,
                 hint_overrides=hint_overrides,
                 is_color=is_color,
@@ -979,6 +1004,8 @@ class BeartypeConf(object):
             self._claw_decor_place_type = conf_kwargs[  # pyright: ignore
                 'claw_decor_place_type']
             self._claw_is_pep526 = conf_kwargs['claw_is_pep526']  # pyright: ignore
+            self._claw_is_trace_imports = conf_kwargs[
+                'claw_is_trace_imports']  # pyright: ignore
             self._claw_skip_package_names = conf_kwargs[
                 'claw_skip_package_names']  # pyright: ignore
             self._hint_overrides = conf_kwargs['hint_overrides']  # pyright: ignore
@@ -1293,6 +1320,21 @@ class BeartypeConf(object):
         '''
 
         return self._claw_is_pep526
+
+
+    @property
+    def claw_is_trace_imports(self) -> bool:
+        '''
+        :data:`True` only if tracing modules selected by :mod:`beartype.claw`
+        import hooks to the current standard error stream before loading code.
+
+        See Also
+        --------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._claw_is_trace_imports
 
 
     @property
