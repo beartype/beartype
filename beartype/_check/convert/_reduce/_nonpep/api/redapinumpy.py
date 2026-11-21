@@ -50,6 +50,7 @@ from beartype._util.api.external.utilnumpy import (
     get_numpy_dtype_type_abcs,
     make_numpy_dtype,
 )
+from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.utilobjtest import is_object_hashable
@@ -123,9 +124,13 @@ def reduce_hint_numpy_ndarray(
     from beartype.vale import (
         IsAttr,
         IsEqual,
+        IsInstance,
         IsSubclass,
     )
-    from numpy import ndarray  # pyright: ignore
+    from numpy import (  # pyright: ignore
+        dtype,
+        ndarray,
+    )
     from numpy.typing import NDArray  # type: ignore[attr-defined]
 
     #FIXME: Consider submitting an upstream issue about this. We don't
@@ -187,6 +192,19 @@ def reduce_hint_numpy_ndarray(
     hint_child_shape, hint_child_dtype = hint_childs
 
     # ..................{ LOCALS ~ childs : dtype            }..................
+    # If this dtype child hint is a(n unsubscripted) dtype class (e.g.,
+    # "numpy.dtype" or "numpy.dtypes.Float64DType")
+    if is_type_subclass(hint_child_dtype, dtype):
+        # If this class is "np.dtype" itself, accept any dtype...
+        if hint_child_dtype is dtype:
+            return ndarray  # pyright: ignore
+
+        # Else, this hint only matches arrays whose dtypes are of this class.
+        hint_validator = IsAttr['dtype', IsInstance[hint_child_dtype]]
+        hint_validator.get_repr = repr(hint)
+        return Annotated[ndarray, hint_validator]  # type: ignore[return-value]  # pyright: ignore
+    # Else, this dtype child hint is *NOT* an unsubscripted dtype class.
+
     # Child child hints subscripting this dtype child hint if any *OR* the empty
     # tuple otherwise.
     hint_child_dtype_childs = get_hint_pep_childs(hint_child_dtype)
