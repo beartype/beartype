@@ -24,16 +24,20 @@ def test_decor_space() -> None:
     references to arbitrary user-defined callables and classes decorated by that
     decorator.
 
-    This test guards against safety regressions in an `issue kindly
-    submitted by openZIM, Kiwix, and Wikipedia maestro @benoit74 <issue_>`__.
-    The :func:`beartype.decorator` decorator previously employed an overly eager
+    This test guards against safety regressions in multiple intersecting issues.
+    The :func:`beartype.beartype` decorator previously employed an overly eager
     memoization strategy. Doing so caused :mod:`beartype` to improperly hold
     strong references to arbitrary user-defined callables and classes decorated
     by that decorator, which then caused :mod:`beartype` to dangerously consume
     an unbounded amount of space.
 
-    .. _issue:
-       https://github.com/beartype/beartype/issues/673
+    See Also
+    --------
+    https://github.com/beartype/beartype/issues/673
+       Regression whose minimal reproducible example (MRE) inspired this test.
+    https://github.com/beartype/beartype/issues/769
+       Regression whose minimal reproducible example (MRE) inspired generalizing
+       this test to cover :pep:`484`-compliant quoted forward references.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -43,12 +47,6 @@ def test_decor_space() -> None:
     from weakref import ref as weakref_ref
 
     # ....................{ LOCALS                         }....................
-    # Total number of times to repeatedly call the and_still_he() function
-    # defined below. This number has been intentionally selected so as to
-    # increase the likelihood of exposing space consumption regressions in the
-    # @beartype decorator.
-    AND_STILL_HE_CALLS_MAX = 2000
-
     # List of weak references to all previously instantiated "UntilItCeased"
     # objects, intentionally defined *BEFORE* defining the
     # UntilItCeased.__init__() method accessing this list.
@@ -82,7 +80,7 @@ def test_decor_space() -> None:
         kept_them_wide = UntilItCeased()
 
         @beartype
-        def and_still_they(bright_patient_stars: int) -> int:
+        def and_still_they(bright_patient_stars: 'int') -> int:
             '''
             :func:`beartype.beartype`-decorated closure annotated by one or more
             PEP-compliant type hints whose body intentionally accesses the
@@ -90,6 +88,23 @@ def test_decor_space() -> None:
             implicitly hold a strong reference to this instance as a free
             variable (i.e., closure-specific object exposed via the low-level
             ``__code__.co_freevars`` dunder attribute).
+
+            Note that one of these type hints is intentionally defined as a
+            :pep:`484`-compliant quoted forward reference. Resolving such
+            references is highly non-trivial and thus tends to enter more
+            complicated internal code paths deep inside the :mod:`beartype`
+            package *not* entered for normal type hints. Previously, a small
+            proper subset of that machinery was improperly memoized. Although
+            small, the improper memoization of that machinery ultimately
+            resulted in unbounded space consumption *only* the edge case of
+            closures annotated by one or more :pep:`484`-compliant quoted
+            forward references.
+
+            See Also
+            --------
+            https://github.com/beartype/beartype/issues/769
+               Regression whose minimal reproducible example (MRE) inspired
+               generalizing this test to cover these references.
             '''
 
             # Perform an arbitrary operation accessing the instance defined
@@ -104,12 +119,17 @@ def test_decor_space() -> None:
         # Return the arbitrary result of calling the closure defined above.
         return and_still_they(were_the_same)
 
-    # ....................{ LOCALS                         }....................
-    for i in range(AND_STILL_HE_CALLS_MAX):
+    # ....................{ GARBAGE COLLECT                }....................
+    # Repeatedly call the closure defined above an arbitrary number of times.
+    # This number has been intentionally selected so as to increase the
+    # likelihood of exposing space consumption regressions in the @beartype
+    # decorator specifically and across the "beartype" package generally.
+    for i in range(2000):
         and_still_he(i)
 
-    # Garbage collect (i.e., free the space previously consumed by) all dead
-    # objects.
+    # Garbage-collect (i.e., free the space previously consumed by) all
+    # currently dead objects (i.e., which are no longer referred to outside
+    # those objects) that have yet to be garbage-collected.
     #
     # Ideally, the @beartype decorator has been safely implemented to avoid
     # holding strong references to the callables and classes it decorates. This
