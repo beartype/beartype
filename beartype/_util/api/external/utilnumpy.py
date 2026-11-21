@@ -56,8 +56,10 @@ def get_numpy_dtype_type_abcs() -> FrozenSetTypes:
 
     # Avoid third-party import dependencies.
     from numpy import (  # pyright: ignore
+        bytes_,
         character,
         complexfloating,
+        datetime64,
         flexible,
         floating,
         generic,
@@ -65,11 +67,22 @@ def get_numpy_dtype_type_abcs() -> FrozenSetTypes:
         integer,
         number,
         signedinteger,
+        str_,
+        timedelta64,
         unsignedinteger,
+        void,
     )
 
     # Create, return, and cache a frozen set listing these ABCs.
     return frozenset((
+        # parametric (e.g., "np.dtype('<U1') != np.dtype(np.str_)")
+        bytes_,
+        str_,
+        void,
+        datetime64,
+        timedelta64,
+
+        # abstract
         character,
         complexfloating,
         flexible,
