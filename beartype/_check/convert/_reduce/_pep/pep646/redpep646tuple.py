@@ -12,61 +12,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Currently, we only shallowly type-check PEP 646-compliant mixed
-#fixed-variadic tuple hints as... tuples. It's not much. Obviously, we need to
-#deeply type-check these tuple data structures as soon as feasible. There exist
-#two distinct use cases here:
-#* Fixed-variadic tuple hints containing exactly one unpacked child tuple hint
-#  (e.g., "tuple[int, *tuple[str, ...], float]"). Note that a tuple hint may
-#  only contain *AT MOST* one unpacked child tuple hint.
-#* Fixed-variadic tuple hints containing exactly one type variable tuple, either
-#  as:
-#  * The first child hint (e.g., "tuple[*Ts, int]").
-#  * The last child hint (e.g., "tuple[str, bytes, *Ts]"). Note that this case
-#    has a prominent edge case. Fixed-variadic tuple hints of the form
-#    "tuple[hint_child, *Ts]" for *ANY* "hint_child" and type variable tuple
-#    "Ts" trivially reduce to variadic tuple hints of the form
-#    "tuple[hint_child, ...]" at the moment, as we silently ignore *ALL* type
-#    variable tuples. Ergo, if a hint is a fixed-variadic tuple hint whose last
-#    child hint is a type variable tuple, this hint *MUST* by definition be
-#    prefixed by two or more child hints that are *NOT* type variable tuples.
-#  * Any child hint other than the first or last (e.g.,
-#    "tuple[float, *Ts, bool]").
-#
-#  Note that:
-#  * A parent tuple hint can contain at most *ONE* unpacked child tuple hint.
-#    So, we'll now need to record the number of unpacked child tuple hints that
-#    have been previously visited and raise an exception if two or more are
-#    seen. Ugh!
-#  * Again, these cases have a prominent edge case. Fixed-variadic tuple hints
-#    of the form "tuple[*Ts]" for *ANY* type variable tuple "Ts" trivially
-#    reduce to the builtin type "tuple" at the moment, as we silently ignore
-#    *ALL* type variable tuples.
-#  * Fixed-variadic tuple hints *CANNOT* contain both an unpacked type variable
-#    tuple *AND* unpacked child tuple hint (e.g., "tuple[*Ts, *tuple[int,
-#    ...]]"). Fixed-variadic tuple hints can contain at most one unpacked child
-#    hint. Hopefully, this constraint reduces the complexity of code generation.
-#
-#The first place to start with all of this is implementing a new code generation
-#algorithm for the new "HintSignPep646TupleFixedVariadic" sign, which currently
-#just shallowly reduces to the builtin "tuple" type. Obviously, that's awful.
-#The first-draft implementation of this algorithm should just focus on
-#fixed-variadic tuple hints containing exactly one type variable tuple (e.g.,
-#"tuple[float, *Ts, bool]") for now, as that's the simpler use case. Of course,
-#even that's *NOT* simple -- but it's a more reasonable start than unpacked
-#child tuple hints, which spiral into madness far faster and harder.
-#
-#Lastly, note that we can trivially handle unpacked child tuple hints in a
-#simple, effective way *WITHOUT* actually investing any effort in doing so. How?
-#By simply treating each unpacked child tuple hint as a type variable tuple
-#(e.g., by treating "tuple[str, *tuple[int, ...], bytes]" as equivalent to
-#"tuple[str, *Ts, bytes]"). Since we already need to initially handle type
-#variable tuples anyway, we shatter two birds with one hand. Yes! Yes!
-#FIXME: Actually, it's *DEFINITELY* not the case that we "silently ignore *ALL*
-#type variable tuples." We reduce both type variables and type variable tuples
-#to lookup tables. So, stop ignoring type variable tuples below, please.
-#
-#Otherwise, everything above seems great -- by which I mean, exhausting.
+#FIXME: Type variable tuples are currently unconstrained (e.g., the "*Ts" in
+#"tuple[int, *Ts]" matches zero or more arbitrary items), even when a parent
+#hint maps that type variable tuple to concrete child hints. Substitute those.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep646Exception
@@ -415,15 +363,12 @@ def reduce_hint_pep646_tuple(hint: Hint) -> Hint:
     # ....................{ RETURN                         }....................
     # Reduce this non-trivial PEP 646-compliant tuple hint to either...
     hint_reduced = (
-        #FIXME: *STOP DOING THIS* as soon as we implement a proper code
-        #generator for PEP 646-compliant tuple hints, please. *sigh*
         # If this PEP 646-compliant parent tuple hint is irreducible to a PEP
-        # 585-compliant parent tuple hint, the builtin "tuple" type as a
-        # temporary means of shallowly ignoring *ALL* child hints subscripting
-        # this hint. Although obviously non-ideal, this simplistic approach does
-        # have the benefit of actually working -- an improvement over our prior
-        # approach of raising fatal exceptions for these hints.
-        tuple
+        # 585-compliant parent tuple hint, this hint as is. This hint is then
+        # subscripted by exactly one unpacked child variable-length tuple hint
+        # or type variable tuple and deeply type-checked as such by the
+        # make_hint_pep646_tuple_check_expr() code factory.
+        hint
         if hint_pep585_childs is None else
         # Else, this PEP 646-compliant parent tuple hint is reducible to a PEP
         # 585-compliant parent tuple hint. In this case, the latter.

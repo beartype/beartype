@@ -25,9 +25,11 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignPep484585TupleFixed,
     HintSignPep484585TupleVariadic,
     HintSignPep646TupleFixedVariadic,
+    HintSignPep646TypeVarTupleUnpacked,
 )
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
+from beartype._util.cache.func.utilcachefunc import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484 import (
     HINT_PEP484_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.pep585 import (
@@ -309,6 +311,72 @@ def get_hint_pep484585646_tuple_args_unpacked_if_needed(
 
     # Return this tuple.
     return hint_args
+
+# ....................{ GETTERS ~ pep 646                  }....................
+@callable_cached
+def get_hint_pep646_tuple_fixed_variadic_args(
+    hint: Hint) -> tuple[TupleHints, Hint, TupleHints]:
+    '''
+    3-tuple ``(hints_prefix, hint_variadic, hints_suffix)`` of the passed
+    :pep:`646`-compliant **fixed-variadic tuple hint** (i.e., tuple hint
+    subscripted by exactly one unpacked child hint that is either an unpacked
+    child variable-length tuple hint *or* an unpacked type variable tuple, as
+    guaranteed by the :func:`.reduce_hint_pep646_tuple` reducer), where:
+
+    * ``hints_prefix`` is the tuple of all child hints preceding that unpacked
+      child hint.
+    * ``hint_variadic`` is the child hint constraining all items matched by that
+      unpacked child hint: either ``{hint}`` for ``*tuple[{hint}, ...]`` *or*
+      the ignorable :class:`object` superclass for ``*Ts``.
+    * ``hints_suffix`` is the tuple of all child hints following that unpacked
+      child hint.
+
+    This getter is memoized for efficiency, as this getter is called both when
+    generating type-checking code *and* when describing type-checking
+    violations.
+
+    Parameters
+    ----------
+    hint : Hint
+        :pep:`646`-compliant fixed-variadic tuple hint to be inspected.
+
+    Returns
+    -------
+    tuple[TupleHints, Hint, TupleHints]
+        3-tuple ``(hints_prefix, hint_variadic, hints_suffix)``.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_childs
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+
+    # Tuple of the child hints subscripting this parent tuple hint.
+    hint_childs = get_hint_pep_childs(hint)
+
+    # For the 0-based index of each child hint and that child hint...
+    for hint_child_index, hint_child in enumerate(hint_childs):
+        # Sign uniquely identifying this child hint if any *OR* "None".
+        hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+
+        # If this child hint is the unpacked child hint, return this 3-tuple.
+        if hint_child_sign in HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED:
+            return (
+                hint_childs[:hint_child_index],
+                # Either the ignorable "object" superclass if this child hint is
+                # an unpacked type variable tuple *OR* the first child child
+                # hint subscripting this unpacked child variable-length tuple
+                # hint otherwise (e.g., "str" for "*tuple[str, ...]").
+                object
+                if hint_child_sign is HintSignPep646TypeVarTupleUnpacked else
+                get_hint_pep484585646_tuple_args_unpacked_if_needed(
+                    hint_child)[0],
+                hint_childs[hint_child_index + 1:],
+            )
+        # Else, this child hint is *NOT* the unpacked child hint.
+
+    # Else, this hint is subscripted by *NO* unpacked child hint.
+    raise AssertionError(  # pragma: no cover
+        f'PEP 646 tuple hint {repr(hint)} subscripted by no unpacked child hint.')
 
 # ....................{ DISAMBIGUATORS                     }....................
 #FIXME: Unit test us up, please.

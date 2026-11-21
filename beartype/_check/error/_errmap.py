@@ -45,6 +45,7 @@ def _init() -> None:
         HintSignNoReturn,
         HintSignPep484585GenericUnsubbed,
         HintSignPep484585TupleFixed,
+        HintSignPep646TupleFixedVariadic,
         HintSignType,
     )
     from beartype._data.hint.sign.datahintsignset import (
@@ -73,6 +74,8 @@ def _init() -> None:
         find_cause_pep484585_mapping)
     from beartype._check.error._pep.pep484585.errpep484585subclass import (
         find_cause_pep484585_subclass)
+    from beartype._check.error._pep.pep646.errpep646tuple import (
+        find_cause_pep646_tuple_fixed_variadic)
 
     # ....................{ FALLBACKS                      }....................
     # Map each originative sign to the appropriate finder *BEFORE* any other
@@ -118,6 +121,10 @@ def _init() -> None:
 
         # ....................{ PEP 593                    }....................
         HintSignAnnotated: find_cause_pep593_annotated,
+
+        # ....................{ PEP 646                    }....................
+        HintSignPep646TupleFixedVariadic: (
+            find_cause_pep646_tuple_fixed_variadic),
     })
 
 
