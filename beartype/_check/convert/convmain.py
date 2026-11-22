@@ -175,9 +175,38 @@ def sanify_hint_root_func(
     # this logic *ONLY* pertains to callables (rather than statements) and is
     # thus *NOT* performed by the sanify_hint_root_statement() sanitizer.
     if pith_name == ARG_NAME_RETURN:
+        # If this hint is still a stringified forward reference (e.g., a
+        # PEP 563-postponed annotation under "from __future__ import
+        # annotations"), resolve it against the decorated callable's scope
+        # *BEFORE* the contextual validation performed below, which cannot
+        # inspect unresolved strings (e.g., would otherwise falsely reject
+        # "Iterator[int]" as the return hint of a generator).
+        #
+        # Resolution is iterative: a quoted annotation under PEP 563 (e.g.,
+        # "'Iterator[int]'") evaluates to another string on the first pass
+        # and requires a second. Resolution is also skipped for strings
+        # matching a string-keyed hint override (e.g.,
+        # "BeartypeConf(hint_overrides=FrozenDict({'int': str}))"), which
+        # "reduce_hint()" deliberately applies *BEFORE* forward-reference
+        # resolution and must thus see the original string.
+        hint_overrides = decor_func.conf.hint_overrides
+        while isinstance(hint, str) and hint not in hint_overrides:
+            hint_resolved = decor_func.resolve_hint_pep484_ref_str(
+                conf=decor_func.conf,
+                hint=hint,
+                hint_parent_sane=None,
+                exception_prefix=exception_prefix,
+            )
+
+            # If resolution made no progress (pathological), stop here.
+            if isinstance(hint_resolved, str) and hint_resolved == hint:
+                break
+
+            hint = hint_resolved
+
         hint = reduce_hint_pep484585_func_return(
             func=decor_func.func_wrappee,
-            func_annotations=decor_func.decoratee_annotations,
+            hint=hint,
             exception_prefix=exception_prefix,
         )
     # Else, this hint annotates a parameter.

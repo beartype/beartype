@@ -417,3 +417,116 @@ def test_decor_pep342_sync_generator_api() -> None:
         # nothing further to yield and has thus been exhausted (finalized).
         with raises(StopIteration):
             next(thus_distraught)
+
+
+def test_decor_pep342_sync_generator_hint_str() -> None:
+    '''
+    Test :func:`beartype.beartype`-decorated synchronous generators whose
+    returns are annotated by :pep:`484`-compliant **stringified forward
+    references** (i.e., strings rather than actual hints), as produced by
+    :pep:`563`-postponed annotation evaluation under ``from __future__
+    import annotations``.
+
+    This test exercises a regression in which such hints were contextually
+    validated *before* being resolved, falsely rejecting valid generator
+    return hints like ``Iterator[int]``.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from collections.abc import Iterator
+
+    # ....................{ LOCALS                         }....................
+    # Decorated synchronous generator whose return is annotated by a
+    # stringified forward reference to a PEP-compliant generator hint.
+    @beartype
+    def gen() -> 'Iterator[int]':
+        yield 1
+
+    # ....................{ PASS                           }....................
+    # Assert that decorating and calling this generator behave as expected.
+    assert list(gen()) == [1]
+
+
+def test_decor_pep342_sync_generator_hint_str_quoted() -> None:
+    '''
+    Test :func:`beartype.beartype`-decorated synchronous generators whose
+    returns are annotated by **quoted stringified forward references** (i.e.,
+    strings containing quoted strings), as produced by :pep:`563`-postponed
+    annotation evaluation of already-quoted annotations under ``from
+    __future__ import annotations``.
+
+    This test exercises a regression in which resolving such hints only once
+    yielded another string, which contextual validation then falsely
+    rejected.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from collections.abc import Iterator
+
+    # ....................{ LOCALS                         }....................
+    # Decorated synchronous generator whose return is annotated by a quoted
+    # stringified forward reference, requiring two rounds of resolution.
+    @beartype
+    def gen() -> "'Iterator[int]'":
+        yield 1
+
+    # ....................{ PASS                           }....................
+    # Assert that decorating and calling this generator behave as expected.
+    assert list(gen()) == [1]
+
+
+async def test_decor_pep342_async_generator_hint_str_quoted() -> None:
+    '''
+    Test :func:`beartype.beartype`-decorated asynchronous generators whose
+    returns are annotated by quoted stringified forward references (see the
+    synchronous variant above for details).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from asyncio import sleep
+    from beartype import beartype
+    from collections.abc import AsyncIterator
+
+    # ....................{ LOCALS                         }....................
+    # Decorated asynchronous generator whose return is annotated by a quoted
+    # stringified forward reference, requiring two rounds of resolution.
+    @beartype
+    async def agen() -> "'AsyncIterator[int]'":
+        yield 1
+
+    # Trivial await, as required by this test suite's asynchronous tests.
+    await sleep(0)
+
+    # ....................{ PASS                           }....................
+    # Assert that decorating and calling this generator behave as expected.
+    assert [item async for item in agen()] == [1]
+
+
+def test_decor_return_hint_str_overrides() -> None:
+    '''
+    Test that **string-keyed hint overrides** (i.e.,
+    :attr:`beartype.BeartypeConf.hint_overrides` keyed by strings) continue
+    to apply to stringified return annotations, which must reach
+    ``reduce_hint()`` unresolved for such overrides to match.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype, BeartypeConf, FrozenDict
+
+    # ....................{ LOCALS                         }....................
+    # Decorated callable whose stringified return hint is overridden to a
+    # different hint entirely.
+    @beartype(conf=BeartypeConf(hint_overrides=FrozenDict({'int': str})))
+    def func() -> 'int':
+        return 'This is not an integer.'
+
+    # ....................{ PASS                           }....................
+    # Assert that the override applies: the string return satisfies the
+    # overridden hint and is returned as is.
+    assert func() == 'This is not an integer.'
