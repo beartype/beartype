@@ -52,13 +52,16 @@ def find_cause_pep586_literal(cause: HintTreeError) -> HintTreeError:
     if any(
         # Literal object subscripting this hint such that...
         (
-            # This pith is of the same type as that of this literal *AND*...
+            # This pith is of the exact same type as that of this literal
+            # *AND*...
             #
             # Note that PEP 586 explicitly requires this pith to be validated
-            # to be an instance of the same type as this literal *BEFORE*
-            # validated as equal to this literal, due to subtle edge cases in
-            # equality comparison that could yield false positives.
-            isinstance(cause.pith, type(hint_child)) and
+            # to be of the same type as this literal *BEFORE* validated as
+            # equal to this literal, due to subtle edge cases in equality
+            # comparison that could yield false positives. In particular,
+            # "isinstance()" is insufficient here: "True" is an instance of
+            # "int" and equal to "1", yet "Literal[1]" must reject "True".
+            type(cause.pith) is type(hint_child) and
             # This pith is equal to this literal.
             cause.pith == hint_child
         )

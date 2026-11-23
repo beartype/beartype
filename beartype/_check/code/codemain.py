@@ -1374,6 +1374,15 @@ def make_check_expr(
                         # this data validator by embedding this code as is.
                         hint_tree.func_curr_code += CODE_PEP586_LITERAL_format(
                             pith_curr_var_name=hint_tree.hint_curr.pith_var_name,
+                            # Python expression evaluating to the exact type
+                            # of this literal object. See the
+                            # "CODE_PEP586_LITERAL" snippet for details.
+                            hint_child_type_expr=(
+                                add_hints_meta_scope_type_or_types(
+                                    hint_tree=hint_tree,
+                                    type_or_types=type(hint_child),
+                                )
+                            ),
                             # Python expression evaluating to this object.
                             hint_child_expr=add_func_scope_attr(
                                 attr=hint_child,

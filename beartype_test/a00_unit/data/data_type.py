@@ -30,7 +30,7 @@ from contextlib import (
     asynccontextmanager,
     contextmanager,
 )
-from enum import Enum
+from enum import Enum, IntEnum
 from functools import (
     lru_cache,
     partial,
@@ -638,6 +638,18 @@ class MasterlessDecreeVenomlessWhich(Enum):
 
     NOMENCLATURE_WEATHER_VANES_OF = 0
     NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A = 1
+
+
+class MasterlessDecreeVenomlessWhichInt(IntEnum):
+    '''
+    Arbitrary **integer enumeration** whose members compare equal to integers
+    (e.g., ``MasterlessDecreeVenomlessWhichInt.NOMINALLY_UNSWAIN == 1``) while
+    being of a differing type, typically when subscripting the :pep:`586`
+    -compliant :attr:`typing.Literal` type hint factory.
+    '''
+
+    NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A = 1
+    NOMENCLATURE_WEATHER_VANES_OF = 2
 
 # ....................{ CLASSES ~ dunder : call            }....................
 class ClassCallable(object):
