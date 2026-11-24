@@ -4,6 +4,412 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                               }....................
+#FIXME: [PEP 484 typevar + NON-PEP bearshape|jaxtyping] After "bearshape" hit
+#the same exact stumbling block that "jaxtyping" hit years before (namely,
+#unions transitively subscripted by one or more tensor type hints parametrized
+#by tensor-specific type variables), I *finally* put in the effort to concoct a
+#tensor-specific code generation framework. It's... not trivial, but it's not
+#exactly rocket science either. The simplest way to explain the code we want to
+#generate for tensor type hints is probably just to exhibit a minimal example.
+#
+#First, let's define the front-facing __instancecheck_memoir__() API that drives
+#this whole shebang. Consider a user-defined pure-Python type whose metaclass
+#defines an abnormal PEP-noncompliant beartype-specific
+#__instancecheck_memoir__() dunder method. That dunder method generalizes the
+#PEP 3119-compliant __instancecheck__() dunder method to accept an additional
+#mandatory "memoir" parameter currently typed as "MutableMapping[str, str]". In
+#this context, a memoir superficially appears to be a simple *FLAT* pure-Python
+#mutable builtin "dict" object mapping from the names of third-party packages,
+#modules, and attributes to arbitrary strings describing metadata associated
+#with those third-party objects: e.g.,
+#    memoir == {
+#        'bearshape.T': bearshape.TensorConstraint(shape=(3, 3)),  # <------ made up nonsense
+#        'jaxtyping.S': jaxtyping.TensorConstraint(dtype=numpy._int),  # <-- more made up nonsense
+#    }
+#
+#In actuality, a memoir will actually be an instance of a private
+#beartype-specific "dict" wrapper named, say, "_BeartypeInstancecheckMemoir",
+#which augments the standard builtin "dict" type with space- and
+#time-efficient copy-on-write (COW) functionality as follows:
+#    from collections.abc import MutableMapping
+#    from typing import NoReturn
+#
+#    MutableMappingStrToStr = MutableMapping[str, str]
+#
+#    class _BeartypeInstancecheckMemoir(MutableMappingStrToStr):
+#        __slots__ = (
+#            '_attr_name_to_value',
+#            '_is_copy_requested',
+#        )
+#
+#        if TYPE_CHECKING:
+#            attr_name_to_value: MutableMappingStrToStr
+#            is_copy_requested: bool
+#
+#        def __init__(self,
+#            # Optional parameters.
+#            attr_name_to_value: Optional[MutableMappingStrToStr] = None,
+#            is_copy_requested: bool = False,
+#        ) -> None:
+#            if attr_name_to_value is None:
+#                attr_name_to_value = {}
+#            self._attr_name_to_value = attr_name_to_value
+#            self._is_copy_requested = is_copy_requested
+#
+#        def clear(self) -> None:
+#            self._attr_name_to_value.clear()
+#            self._is_copy_requested = False
+#
+#        def copy(self) -> '_BeartypeInstancecheckMemoir':
+#            # This copy() implementation is *EXTREMELY* efficient. How? By
+#            # doing basically *NOTHING*. Sure, a new instance is created and
+#            # returned -- but no actual iteration or work is performed. Instead
+#            # of doing something, this copy() method simply records that the
+#            # caller requested that a shallow copy of this memoir be made! \o/
+#            return _BeartypeInstancecheckMemoir(
+#                attr_name_to_value=self._attr_name_to_value,
+#                is_copy_requested=True,
+#            )
+#
+#        def __delitem__(self, attr_name: str) -> NoReturn:
+#            #FIXME: Raise some sort of exception here, yo! *sigh*
+#
+#        def __getitem__(self, attr_name: str) -> str:
+#            return self._attr_name_to_value.__getitem__(attr_name)
+#
+#        def __setitem__(self, attr_name: str, attr_value: str) -> None:
+#            # Here's where we do the actual copy-on-write (COW). On the first
+#            # attempt by the caller to modify a memoir that has been previously
+#            # copied via copy(), we quietly perform that copy behind-the-scenes
+#            # in a just-in-time (JIT) manner.
+#            #
+#            # Note that this is also why we restrict memoirs to flat
+#            # dictionaries of frozen scalars (i.e., strings). A simple shallow
+#            # dict.copy() suffices to safely copy the entire memoir! moar \o/
+#            if self._is_copy_requested:
+#                self._attr_name_to_value = self._attr_name_to_value.copy()
+#                self._is_copy_requested = False
+#
+#            return self._attr_name_to_value.__setitem__(attr_name, attr_value)
+#
+#Next, let's exhibit the code generated for a conventional union subscripted by
+#*NO* tensor type hints parametrized by tensor-specific type variables:
+#    from beartype import beartype, BeartypeConf
+#    @beartype(conf=BeartypeConf(is_debug=True))
+#    def muh_func(muh_arg: str | list[int]):
+#        pass
+#
+#...which prints:
+#    def muh_func(
+#        *args,
+#        __beartype_getrandbits=__beartype_getrandbits, # is <built-in method getrandbits of Random object at 0x556e5a8f3450>
+#        __beartype_get_violation=__beartype_get_violation, # is <function get_func_pith_violation at 0x7f46e81b49e0>
+#        __beartype_conf=__beartype_conf, # is "BeartypeConf(is_debug=True)"
+#        __beartype_call_curr=__beartype_call_curr, # is <beartype._check.cls.call.calldatadecorfuncmin.BeartypeCallDecorFuncMinimalData object at 0x...>
+#        __beartype_func=__beartype_func, # is <function muh_func at 0x7f46e8350930>
+#        **kwargs
+#    ):
+#        # Generate and localize a sufficiently large pseudo-random integer for
+#        # subsequent indexation in type-checking randomly selected container items.
+#        __beartype_random_int = __beartype_getrandbits(32)
+#        # Localize the number of passed positional arguments for efficiency.
+#        __beartype_args_len = len(args)
+#
+#        # Localize this positional or keyword parameter if passed *OR* to the
+#        # sentinel "__beartype_get_violation" guaranteed to never be passed.
+#        __beartype_pith_0 = (
+#            args[0] if __beartype_args_len > 0 else
+#            kwargs.get('muh_arg', __beartype_get_violation)
+#        )
+#
+#        # If this parameter was passed...
+#        if __beartype_pith_0 is not __beartype_get_violation:
+#            # Type-check this parameter or return against this type hint.
+#            if not (
+#            # True only if this pith is of one of these types.
+#            isinstance(__beartype_pith_0, str) or
+#            (
+#                # True only if this pith is of this container type *AND*...
+#                isinstance(__beartype_pith_0, list) and
+#                # True only if either this container is empty *OR* this container
+#                # is non-empty and the selected item satisfies this hint.
+#                (not len(__beartype_pith_0) or isinstance(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], int))
+#            )
+#        ):
+#                __beartype_violation = __beartype_get_violation(
+#                    decor_func=__beartype_call_curr,
+#                    pith_name='muh_arg',
+#                    pith_value=__beartype_pith_0,
+#                    random_int=__beartype_random_int,
+#                )
+#
+#                raise __beartype_violation
+#        # Call this function with all passed parameters and return the value
+#        # returned from this call as is (without being type-checked).
+#        return __beartype_func(*args, **kwargs)
+#
+#So far, so good. Now consider generalizing the above example to a union
+#subscripted by a normal builtin type ("str") as well as a fake tensor type hint
+#simulating parametrization by a tensor-specific type variable. First, we define
+#that hint:
+#    from collections.abc import MutableMapping
+#    class _TensorTypeHintMetaclass(type):
+#        memoir_attr_name_tensor_dtype = 'muh_fake.tensor_package.TensorDtype'
+#
+#        #FIXME: Also need to define a sibling __instancecheck_memoir_str__()
+#        #dunder method -- and for similar reasons.
+#        def __instancecheck_memoir__(
+#            cls: 'TensorTypeHint',
+#            obj: object,
+#            memoir: MutableMapping[str, str],
+#        ) -> bool:
+#            #FIXME: Store an additional new "memoir_attr_name_tensor_len"
+#            #attribute as well that tests the length of this object as well.
+#
+#            # Lame simulation of what tensor type hints actually do to
+#            # type-check arbitrary objects against tensor shapes and dtypes.
+#            tensor_dtype = memoir.get(memoir_attr_name_tensor_dtype)
+#
+#            if tensor_dtype is None:
+#                tensor_dtype = memoir[memoir_attr_name_tensor_dtype] = type(obj)
+#                return True
+#
+#            return isinstance(obj, tensor_dtype)
+#
+#    class TensorTypeHint(metaclass=_TensorTypeHintMetaclass):
+#        pass
+#
+#Next, we define a similar @beartype-decorated callable as above except that the
+#union is subscripted by a normal builtin type ("str") as well as a that fake
+#tensor type hint defined above:
+#    from beartype import beartype, BeartypeConf
+#    @beartype(conf=BeartypeConf(is_debug=True))
+#    def muh_func(muh_arg: str | TensorTypeHint):
+#        pass
+#
+#Of course, @beartype doesn't support the __instancecheck_memoir__() protocol
+#yet. But if it did, the output that it would print might resemble this (with
+#the substring "### NEW STUFF YO ###" preceding each line of differing output):
+#    def muh_func(
+#        *args,
+#        __beartype_getrandbits=__beartype_getrandbits, # is <built-in method getrandbits of Random object at 0x556e5a8f3450>
+#        __beartype_get_violation=__beartype_get_violation, # is <function get_func_pith_violation at 0x7f46e81b49e0>
+#        __beartype_conf=__beartype_conf, # is "BeartypeConf(is_debug=True)"
+#        __beartype_call_curr=__beartype_call_curr, # is <beartype._check.cls.call.calldatadecorfuncmin.BeartypeCallDecorFuncMinimalData object at 0x...>
+#        __beartype_func=__beartype_func, # is <function muh_func at 0x7f46e8350930>
+#        ### NEW STUFF YO ###
+#        __beartype_memoir_type=__beartype_memoir_type, # is <class "_BeartypeInstancecheckMemoir">
+#        __beartype_object_74747BLAHBLAH=TensorTypeHint, # is <class "TensorTypeHint">
+#        **kwargs
+#    ):
+#        # Generate and localize a sufficiently large pseudo-random integer for
+#        # subsequent indexation in type-checking randomly selected container items.
+#        __beartype_random_int = __beartype_getrandbits(32)
+#        # Localize the number of passed positional arguments for efficiency.
+#        __beartype_args_len = len(args)
+#
+#        #FIXME: *INEFFICIENT*. Rather than accept this hidden
+#        #"__beartype_memoir_type" parameter and re-instantiate memoirs over and
+#        #over again, it'd be strongly preferable to instead accept a hidden
+#        #"__beartype_memoir_stack" parameter typed as:
+#        #    __beartype_memoir_stack: list[_BeartypeInstancecheckMemoir]
+#        #
+#        #Thus, "__beartype_memoir_stack" is a stack of memoirs. Makes sense.
+#        #For space efficiency, it starts out empty. Of course, that list should
+#        #*ACTUALLY* be defined as a new "_BeartypeInstancecheckMemoirStore"
+#        #class that defines a pair of new *TYPE-SAFE* acquire_memoir() and
+#        #release_memoir() methods, which would then be called below instead of
+#        #manually instantiating new memoirs. *WHATEVAH*. This is a useful
+#        #optimization, but the manual approach is good enough as a first draft:
+#        #    class _BeartypeInstancecheckMemoirStore(object):
+#        #        __slots__ = (
+#        #            '_lock',
+#        #            '_memoirs',
+#        #        )
+#        #
+#        #        if TYPE_CHECKING:
+#        #            _lock: Lock
+#        #            _memoirs: list[_BeartypeInstancecheckMemoir]
+#        #
+#        #        def __init__(self) -> None:
+#        #            self._lock = Lock()
+#        #            self._memoirs = []
+#        #
+#        #        def acquire_memoir() -> None:
+#        #            with self._lock:
+#        #                if self._memoirs:
+#        #                    memoir = self._memoirs.pop()
+#        #                    memoir.clear()
+#        #                else:
+#        #                    memoir = _BeartypeInstancecheckMemoir()
+#        #
+#        #            return memoir
+#        #
+#        #        def release_memoir(memoir: _BeartypeInstancecheckMemoir) -> None:
+#        #            with self._lock:
+#        #                self._memoirs.append(memoir)
+#        #
+#        #    beartype_memoir_store = _BeartypeInstancecheckMemoirStore()
+#
+#        ### NEW STUFF YO ###
+#        # Stack of "_BeartypeInstancecheckMemoirs" objects, initialized to
+#        # contain exactly one memoir. Since this is inefficient, we emit this
+#        # code *ONLY* when a callable is transitively annotated by one or more
+#        # memoir-empowered types (i.e., types defining the
+#        # __instancecheck_memoir__() dunder method) -- which this callable is.
+#        __beartype_memoirs = [__beartype_memoir_type(),]
+#
+#        # Localize this positional or keyword parameter if passed *OR* to the
+#        # sentinel "__beartype_get_violation" guaranteed to never be passed.
+#        __beartype_pith_0 = (
+#            args[0] if __beartype_args_len > 0 else
+#            kwargs.get('muh_arg', __beartype_get_violation)
+#        )
+#
+#        # If this parameter was passed...
+#        if __beartype_pith_0 is not __beartype_get_violation:
+#            # Type-check this parameter or return against this type hint.
+#            if not (
+#            ### NEW STUFF YO ###
+#            # *SUPER-IMPORTANT*. Basically, we need to *ALWAYS* call our
+#            # beartype_memoirs.copy() method at the start of code we generate
+#            # to type-check any union transitively subscripted by one or more
+#            # memoir-empowered types. Why? So that we can pop off this copy
+#            # when such a type's __instancecheck_memoir__() dunder method
+#            # causes its branch of this union to fail by returning false.
+#            # You'll see. Just check out the awesome code below, yo!
+#            (__beartype_memoirs.append(__beartype_memoirs[-1].copy())) and (
+#                # True only if this pith is of one of these types.
+#                isinstance(__beartype_pith_0, str) or
+#                (
+#                    (
+#                        # True only if this pith satisfies this memoir-empowered type.
+#                        __beartype_object_74747BLAHBLAH.__instancecheck_memoir__(
+#                            __beartype_pith_0, __beartype_memoirs[-1]) and
+#                        # Since this pith satisfies this memoir-empowered type,
+#                        # replace the original memoir copied from above by this
+#                        # possibly beneficially mutated memoir copy added above.
+#                        # This reduces space consumption, which is *EXTREMELY*
+#                        # important if the user calls this callable recursively.
+#                        __beartype_memoirs[-2] := __beartype_memoirs.pop()
+#                    ) or
+#                    #FIXME: Inefficient but maximally safe. In various edge
+#                    #cases (e.g., when the current hint is the last
+#                    #memoir-empowered type transitively subscripting the
+#                    #current union), we can elide this away entirely. Yo! \o/
+#                    #FIXME: Actually, this isn't quite right. Two cases arise
+#                    #here:
+#                    #* If the current hint is the last memoir-empowered type
+#                    #  transitively subscripting the current union, just do:
+#                    #      __beartype_memoirs.pop()
+#                    #* Else, do:
+#                    #      (
+#                    #          __beartype_memoirs[-1] := __beartype_memoirs[-2].copy() and
+#                    #          False
+#                    #      )
+#                    # If this pith violates this memoir-empowered type, unwind
+#                    # this now possibly polluted memoir copy added above in
+#                    # favour of a newly pristine copy. This enables any
+#                    # subsequent memoir-empowered types also subscripting this
+#                    # union to receive a pristine memoir.
+#                    (
+#                        __beartype_memoirs[-1] := __beartype_memoirs[-2].copy() and
+#                        False
+#                    )
+#                )
+#            )
+#        ):
+#                __beartype_violation = __beartype_get_violation(
+#                    decor_func=__beartype_call_curr,
+#                    pith_name='muh_arg',
+#                    pith_value=__beartype_pith_0,
+#                    random_int=__beartype_random_int,
+#                )
+#
+#                raise __beartype_violation
+#        # Call this function with all passed parameters and return the value
+#        # returned from this call as is (without being type-checked).
+#        return __beartype_func(*args, **kwargs)
+#
+#Lastly, to enable all of the above, we want to refactor the codebase like so:
+#* Add a new "is_instancecheck_memoir: bool" slotted instance variable to:
+#  * Our existing "HintSane" class.
+#  * Our existing "HintTreeCode" subclass.
+#* Refactor HintTreeCode.sanify_hint_child() as follows:
+#      def sanify_hint_child(...):
+#          ...
+#          self.is_instancecheck_memoir &= hint_child_sane.is_instancecheck_memoir
+## Actually set "hint_sane.is_instancecheck_memoir" somewhere. Since that *MUST*
+#  be done in a reducer and since the *ONLY* applicable reducer would be our
+#  existing reduce_hint_nonpep() reducer, I guess that's where it's happening.
+#  Note that:
+#  * We should *NOT* actually reduce memoir-empowered types to anything. They
+#    must be preserved as is. But we *DO* need to detect them in
+#    reduce_hint_nonpep() and set "hint_sane.is_instancecheck_memoir".
+#  * We should *NOT* attempt to detect memoir-empowered types by defining some
+#    sort of new "HintSign" and then calling get_hint_pep_sign_or_none(). Why?
+#    Conflict with generics. A type should be able to both be a generic *AND*
+#    define __instancecheck_memoir__(). No sense in making that any more
+#    complicated than it already is. *shrugs disconsolately*
+#
+#Okay. So... Admittedly, that's huge. But that's also what we've gotta do. Kinda
+#seems like a three-month jobber, honestly. That's pretty much a full winter's
+#worth of work lined up right there. Oh, well. Is it worth it? Probably not. But
+#at least it's one less thing for anyone to complain about. Jeez. What a mess!
+#FIXME: Actually, this is probably *A LOT* more important than we think. Why?
+#Well, it's certainly *NOT* tensor type hints in unions. That's edge case stuff.
+#Nope. It's good ol' PEP 484-compliant type variables. The above approach can be
+#trivially generalized (more or less, anyway) to support dynamic type-checking
+#of type variable constraints. Doing so *ABSOLUTELY* requires something
+#resembling the above memoirs approach. Since we're already implementing memoir
+#for "bearshape" and "jaxtyping", we'd might as well just reuse that same
+#non-trivial functionality to type-check far more important type variable
+#constraints. Of course, doing so will produce code that won't *QUITE* be as
+#efficient as handrolled type-checking code dynamically generated specifically
+#for type variable constraints. But... who cares? Right? Something is better
+#than nothing. The perfect is *BLAH BLAH*. It's been a decade-and-a-half and I
+#did nothing to type-check type variable constraints. Reusing this memoir
+#infrastructure to do so may not be optimally efficient, but at least it's
+#*GUARANTEED* to work. After all, that's all "bearshape" and "jaxtyping" are
+#doing. Right? Mimicing type variable constraints specific to tensors. If they
+#can do it (and they can), we certainly can as well.
+#
+#One pragmatic way for us to implement this would be to reduce each user-defined
+#type variable to an equivalent dynamically generated subclass of some sort of
+#"_Pep484TypeVarCheckerMetaclass", whose implementation is basically *IDENTICAL*
+#to the crude "_TensorTypeHintMetaclass" we defined above except for this bit:
+#    class _Pep484TypeVarCheckerMetaclass(type):
+#        #FIXME: Use this f-string when dynamically generating each subclass to
+#        #uniquify that subclass to its corresponding type variable. Obviously,
+#        #replace "{typevar_name}" with "hint.__name__" where "hint" is the
+#        #current type variable being reduced:
+#        MEMOIR_ATTR_NAME_TYPEVAR_TYPE_FORMAT = 'beartype.pep484_typevar.{typevar_name}'
+#
+#        #FIXME: Everything else is basically identical to our
+#        #"_TensorTypeHintMetaclass" example defined above. *shrug*
+#        #FIXME: Superb, but not *QUITE* complete. There's still type variable
+#        #bounds and constraints to type-check. Those should be (mostly) easy,
+#        #though, as they just reduce to a single isinstance() call inside the
+#        #__instancecheck_memoir__() for this metaclass resembling:
+#        def __instancecheck_memoir__(...):
+#            ...
+#            if typevar_type is None:
+#               typevar_type = memoir[cls.memoir_attr_name_typevar_type] = type(obj)
+#
+#               #FIXME: Something like this. Shouldn't be strenuous. *shrugs*
+#               #FIXME: Of course, we'd want to precompute this elsewhere.
+#               typevar_bounds = get_hint_pep484_typevar_bounded_constraints_or_none(
+#                   cls.typevar)
+#
+#               return (
+#                   True  # <-- common case, yo!
+#                   if typevar_bounds is None else
+#                   isinstance(obj, typevar_bounds)
+#               )
+#           ...
+#
+#Should pretty must just "work." Sounds fun. Let's do this, yo! \o/
+
 #FIXME: [PEP 484|585] Deeply type-check "TypeVar" objects in simple non-method
 #functions as a prerequisite to gradually expanding deep type-checking of
 #"TypeVar" objects to more complex typing use cases. However, even this

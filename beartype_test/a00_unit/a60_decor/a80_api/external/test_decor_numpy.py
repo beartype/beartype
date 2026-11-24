@@ -11,6 +11,14 @@ to **PEP-noncompliant NumPy type hints** (i.e., :mod:`numpy.typing`-specific
 annotations *not* compliant with annotation-centric PEPs).
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Tests defined below are excellent but *TOTAL OVERKILL.* Rather than
+#define full-blown tests, just:
+#* Refactor the NumPy type hints and corresponding piths defined inside tests
+#  defined below into proper "HintPepMetadata" objects defined inside our
+#  "_data_hintmodnumpy" submodule defined elsewhere.
+#* *REMOVE THIS ENTIRE SUBMODULE*. Seriously. Let's do this, yo!
+
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from

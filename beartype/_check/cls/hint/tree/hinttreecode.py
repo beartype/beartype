@@ -488,11 +488,11 @@ class HintTreeCode(HintTreeABC):
         Callers are expected to initialize this metadata by explicitly setting
         these instance variables on this object *before* calling this method:
 
-        * :attr:`indent_level_child`, the 1-based indentation level describing
+        * :attr:`.indent_level_child`, the 1-based indentation level describing
           the current level of indentation appropriate for this child hint.
-        * :attr:`hint_curr.pith_var_name_index`, the integer suffixing the name
+        * :attr:`.hint_curr.pith_var_name_index`, the integer suffixing the name
           of each local variable assigned the value of the current pith in a
-          assignment expression, thus uniquifying this variable in the body of
+          assignment expression, thus uniquifying that variable in the body of
           the current wrapper function.
 
         Parameters
@@ -505,9 +505,9 @@ class HintTreeCode(HintTreeABC):
             describing this child hint.
         pith_expr : str
             **Pith expression** (i.e., Python code snippet evaluating to the
-            value of) the current **pith** (i.e., possibly nested object of the
-            passed parameter or return to be type-checked against this child
-            hint).
+            value) of the current **pith** (i.e., possibly nested object of the
+            value of the currently decorated parameter or return to be
+            type-checked against this child hint).
         hint_sign : Union[Optional[HintSign], Iota], default: SENTINEL
             Either:
 
@@ -710,7 +710,7 @@ class HintTreeCode(HintTreeABC):
 
         # ..................{ METADATA                       }..................
         #FIXME: The _make_hint_data() factory is overkill, obviously. Since we
-        #only that method here, just inline that method here. Yay! \o/
+        #only call that method here, just inline that method here. Yay! \o/
         # Type hint type-checking metadata at this index.
         hint_next = self._make_hint_data(hint_index=self.index_last)
 
@@ -750,9 +750,9 @@ class HintTreeCode(HintTreeABC):
         :func:`beartype._check.code.codemain.make_check_expr` factory).
 
         For both efficiency and simplicity, this getter *always* returns
-        a valid :class:`HintDataCode` object for all valid indices. This queue thus
-        behaves similarly to the :class:`collections.defaultdict` container.
-        Specifically:
+        a valid :class:`HintDataCode` object for all valid indices. This queue
+        thus behaves similarly to the :class:`collections.defaultdict`
+        container. Specifically:
 
         * If this is the first attempt to access metadata at this index from
           this queue (i.e., the value of the item at this index is
