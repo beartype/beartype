@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+import sys
 from ast import PyCF_ONLY_AST
 from beartype.roar._roarexc import (
     _BeartypeClawImportlibIsPathHookActiveException)
@@ -511,6 +512,15 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Note that the logic below requires inefficient exception handling (as
         # well as a potentially risky monkey-patch) and is thus performed *ONLY*
         # when absolutely necessary.
+
+        # Trace before loading cached bytecode or compiling source, so failed
+        # imports are visible too. Resolve stderr at call time for redirection.
+        if conf.claw_is_trace_imports:
+            stderr = sys.stderr
+            if stderr is not None:
+                print(
+                    f'[beartype.claw] Type-checking module {fullname}.',
+                    file=stderr, flush=True)
 
         # ..................{ TYPE-CHECK                     }..................
         # Classify local attributes as instance variables for subsequent
