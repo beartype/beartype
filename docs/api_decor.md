@@ -352,6 +352,43 @@ This is their story.
 
 General-purpose configuration parameters are *always* safely passable:
 
+<div id="beartype.BeartypeConf.ignore_arg_names"></div>
+
+##### ignore_arg_names
+
+`ignore_arg_names: collections.abc.Collection[str] = ()` skips runtime checking
+of selected **declared parameter names**, without changing their annotations
+for static type-checkers. Other parameters and return values are still checked.
+
+```python
+from collections.abc import Callable
+from beartype import BeartypeConf, beartype
+
+@beartype(conf=BeartypeConf(ignore_arg_names=('callback',)))
+def apply(callback: Callable[[int], int], count: int) -> int:
+    return callback(count)
+```
+
+Use this when a third-party annotation does not describe its runtime objects.
+The ignored parameter's annotation is not processed by the parameter checker,
+so even an unsupported annotation can be opted out. Opting out does not change
+Python's argument binding: required arguments are still required.
+
+Names may select positional-only, positional-or-keyword, keyword-only, or
+variadic parameters. To skip `*items` or `**options`, pass `'items'` or `'options'`
+(without the stars); this skips that entire variadic parameter. Naming an
+arbitrary keyword captured by `**options` does not skip that keyword. Ignoring
+a fixed keyword parameter does not cause it to be checked as an excess keyword.
+
+Pass a collection of valid, unqualified Python identifiers, such as a tuple,
+list, set, or dictionary (whose keys are used). Strings, bytes, generators,
+non-string entries, and Python keywords are rejected. The configuration copies
+the names into a read-only `frozenset`; subsequent changes to your collection
+have no effect, and order and duplicates do not affect configuration caching.
+Unknown names have no effect, allowing one configuration to be reused across
+functions, classes, and `beartype.claw` import hooks. `'return'` is not a parameter
+name and is rejected. Reserved `__bear` parameter names remain invalid.
+
 <div id="beartype.BeartypeConf.is_debug"></div>
 
 ##### is_debug
