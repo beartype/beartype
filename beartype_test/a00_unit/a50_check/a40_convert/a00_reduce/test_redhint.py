@@ -31,7 +31,7 @@ def test_reduce_hint(
 
     Parameters
     ----------
-    hints_reduction_meta : 'tuple[beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC]
+    hints_reduction_meta : tuple[beartype_test.a00_unit.data.hint.cls.data_clshintreduce.HintReductionABC]
         Tuple of all PEP-agnostic type hint reduction metadata to be tested.
     '''
 
@@ -105,19 +105,19 @@ def test_reduce_hint_ignorable(hints_piths_pep_meta, hints_ignorable) -> None:
 
     # Defer test-specific imports.
     from beartype._check.cls.hint.hintsane import HINT_SANE_IGNORABLE
-    from beartype._check.convert._reduce.redmain import (
-        reduce_hint_any)
+    from beartype_test._util.hint.pythintreduce import (
+        reduce_hint_call_external)
     from beartype_test.a00_unit.data.hint.data_hint import (
         HINTS_NONPEP_UNIGNORABLE)
 
     # Assert this tester accepts ignorable type hints.
     for hint_ignorable in hints_ignorable:
-        assert reduce_hint_any(hint_ignorable) is (
+        assert reduce_hint_call_external(hint_ignorable) is (
             HINT_SANE_IGNORABLE)
 
     # Assert this tester rejects unignorable PEP-noncompliant type hints.
     for hint_unignorable in HINTS_NONPEP_UNIGNORABLE:
-        assert reduce_hint_any(hint_unignorable) is not (
+        assert reduce_hint_call_external(hint_unignorable) is not (
             HINT_SANE_IGNORABLE)
 
     # Assert this tester:
@@ -126,7 +126,7 @@ def test_reduce_hint_ignorable(hints_piths_pep_meta, hints_ignorable) -> None:
     for hint_pep_meta in hints_piths_pep_meta:
         # True only if this hint reduces to the ignorable "Any" singleton.
         is_hint_ignorable = (
-            reduce_hint_any(hint_pep_meta.hint) is
+            reduce_hint_call_external(hint_pep_meta.hint) is
             HINT_SANE_IGNORABLE
         )
 

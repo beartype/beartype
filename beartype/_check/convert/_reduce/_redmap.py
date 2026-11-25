@@ -28,6 +28,8 @@ from beartype._check.convert._reduce._pep.pep484.redpep484749ref import (
     reduce_hint_pep484749_ref)
 from beartype._check.convert._reduce._pep.pep484.redpep484604union import (
     reduce_hint_pep484604_union)
+from beartype._check.convert._reduce._pep.pep484585.redpep484585func import (
+    reduce_hint_pep484585_coroutine_return)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
     reduce_hint_pep484585_generic_subbed,
     reduce_hint_pep484585_generic_unsubbed,
@@ -209,6 +211,8 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # * To avoid conflict with more specific reducers mapped elsewhere, the
     #   following signs that would otherwise be mapped here are intentionally
     #   mapped elsewhere:
+    #   * "HintSignCoroutine", instead mapped to the more specific
+    #     reduce_hint_pep484585_coroutine_return() reducer below.
     #   * "HintSignItemsView", instead mapped to the more specific
     #     reduce_hint_pep484585_itemsview() reducer below.
     #   * "HintSignType", instead mapped to the more specific
@@ -233,7 +237,6 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     HintSignCollection: reduce_hint_pep484_deprecated,
     HintSignContainer: reduce_hint_pep484_deprecated,
     HintSignContextManager: reduce_hint_pep484_deprecated,
-    HintSignCoroutine: reduce_hint_pep484_deprecated,
     HintSignCounter: reduce_hint_pep484_deprecated,
     HintSignDefaultDict: reduce_hint_pep484_deprecated,
     HintSignDeque: reduce_hint_pep484_deprecated,
@@ -483,6 +486,11 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     HintSignTypeVar: reduce_hint_typearg,
 
     # ..................{ PEP (484|585)                      }..................
+    # If this hint is a PEP 484- or 585-compliant coroutine type hint annotating
+    # the return of a coroutine factory, reduce this hint to the return child
+    # type hint subscripting this coroutine type hint.
+    HintSignCoroutine: reduce_hint_pep484585_coroutine_return,
+
     # If this hint is a PEP 484- or 585-compliant subscripted generic:
     # * Reduce this alias to the unsubscripted generic underlying this
     #   subscripted generic.

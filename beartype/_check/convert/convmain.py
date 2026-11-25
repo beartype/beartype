@@ -23,6 +23,8 @@ from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.call.calldatadecorfunc import BeartypeCallDecorFuncData
 from beartype._check.cls.call.calldataexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
+from beartype._check.convert._reduce._pep.pep484585.redpep484585func import (
+    reduce_hint_pep484585_func_return)
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
@@ -31,8 +33,6 @@ from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import HintSignOrNoneOrSentinel
 from beartype._util.func.arg.utilfuncargiter import ArgKind
-from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
-    reduce_hint_pep484585_func_return)
 from typing import Optional
 
 # ....................{ SANIFIERS ~ root                   }....................

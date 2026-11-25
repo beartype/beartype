@@ -36,7 +36,8 @@
 #
 #    MutableMappingStrToStr = MutableMapping[str, str]
 #
-#    class _BeartypeInstancecheckMemoir(MutableMappingStrToStr):
+#    class _BeartypeInstancecheckMemoir(
+#        MutableMappingStrToStr, BeartypeSlottedABCMeta):
 #        __slots__ = (
 #            '_attr_name_to_value',
 #            '_is_copy_requested',
@@ -250,6 +251,37 @@
 #        #                self._memoirs.append(memoir)
 #        #
 #        #    beartype_memoir_store = _BeartypeInstancecheckMemoirStore()
+#        #FIXME: Actually, the "_BeartypeInstancecheckMemoirStore" class defined
+#        #above is functionally worthless. Let's ignore that, please. What
+#        #*ISN'T* worthless, however, is a significant optimization where we
+#        #define a new "BeartypeInstancecheckMemoirStack" class used below as:
+#        #    #FIXME: Ideally, we should thread-safely cache and reuse these
+#        #    #objects between calls as well by popping them off a global list
+#        #    #variable that's passed as a hidden parameter. Since list popping
+#        #    #is atomic, reuse is intrinsically thread-safe. *shrug*
+#        #    __beartype_memoirs = BeartypeInstancecheckMemoirStack()
+#        #
+#        #The core insight here is that "BeartypeInstancecheckMemoirStack"
+#        #doesn't actually have to do much work. It just has to *SIMULATE* doing
+#        #work. In particular, this stack object internally maintains a private
+#        #lower-level list of "BeartypeInstancecheckMemoir" objects. Crucially,
+#        #those objects are *NEVER* popped off that list. Instead, this stack
+#        #object maintains an internal index to the current real "end" of the
+#        #list. To "pop off" a memoir, we simply shift that index left by one.
+#        #Likewise, to "push" on a "new" memoir, we simply shift that index
+#        #right by one.
+#        #
+#        #To facilitate this, the parent
+#        #"BeartypeInstancecheckMemoirStack" will need to pass a weak reference
+#        #to itself to each BeartypeInstancecheckMemoir.__init__() method in
+#        #memoir instantiation. Additionally:
+#        #* The BeartypeInstancecheckMemoir.copy() method modifies an internal
+#        #  private data structure in the parent stack object, which records a
+#        #  mapping from the indices of all memoirs that have been copied *FROM*
+#        #  to the indices of all memoirs that have been copied *TO*.
+#        #* The BeartypeInstancecheckMemoir.__setitem__() method then checks
+#        #  that data structure in the parent stack object and, if necessary,
+#        #  "copies" itself by simply shifting indices and pointers about.
 #
 #        ### NEW STUFF YO ###
 #        # Stack of "_BeartypeInstancecheckMemoirs" objects, initialized to
@@ -371,7 +403,7 @@
 #did nothing to type-check type variable constraints. Reusing this memoir
 #infrastructure to do so may not be optimally efficient, but at least it's
 #*GUARANTEED* to work. After all, that's all "bearshape" and "jaxtyping" are
-#doing. Right? Mimicing type variable constraints specific to tensors. If they
+#doing. Right? Mimicking type variable constraints specific to tensors. If they
 #can do it (and they can), we certainly can as well.
 #
 #One pragmatic way for us to implement this would be to reduce each user-defined

@@ -27,8 +27,6 @@ from beartype._check.convert._reduce._redrecurse import (
     make_hint_sane_recursable,
 )
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
-from beartype._check.cls.call.calldataexternal import (
-    BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.cls.hint.hintsane import (
     HINT_IGNORABLE,
     HINT_SANE_IGNORABLE,
@@ -39,16 +37,16 @@ from beartype._check.cls.hint.hintsane import (
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+# from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import SENTINEL
-from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import HintSignOrNoneOrSentinel
+from beartype._data.typing.datatypingport import Hint
 from beartype._metaverse import URL_ISSUES
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._util.kind.maplike.utilmapset import remove_mapping_keys
 from typing import Optional
 
 # ....................{ REDUCERS                           }....................
@@ -289,6 +287,8 @@ def reduce_hint(
     # encapsulating this hint, also initialized to this unreduced hint.
     hint_or_sane_prev: HintOrSane = hint
 
+    # is_func_.
+
     # Delete the passed "hint" parameter for safety. Permitting this parameter
     # to exist would only promote subtle lexical issues below, where the local
     # variable "hint_curr" is strongly preferred for disambiguity.
@@ -304,83 +304,95 @@ def reduce_hint(
         # efficient.
         while True:
             # ....................{ REDUCE                 }....................
-            #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
-            # For each lower-level reducer...
-            for hint_reducer in _HINT_REDUCERS:
-                # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} by {hint_reducer}...')
-                # print(f'[reduce_hint] ...after prior reduction to {hint_or_sane_prev}...')
+            # If either...
+            if (
+                # The caller strictly requests that this reducer raise the usual
+                # "BeartypeDecorHintNonpepException" exception on attempting to
+                # reduce the first PEP-noncompliant hint *OR*...
+                not is_hint_nonpep_irreducible or
+                # The caller permissively requests that this reducer return
+                # PEP-noncompliant hints as is but this hint is PEP-compliant...
+                is_hint_pep(hint_curr)
+            ):
+                # Then attempt to reduce this hint.
 
-                # If...
-                if (
-                    # The caller permissively requests that this reducer return
-                    # PEP-noncompliant hints as is *AND*...
-                    is_hint_nonpep_irreducible and
-                    # This hint is PEP-noncompliant...
-                    not is_hint_pep(hint_curr)
-                ):
-                    # Then halt reducing immediately.
-                    break
-                # Else, the caller either:
-                # * Strictly requests that this reducer raise the usual
-                #   "BeartypeDecorHintNonpepException" exception on attempting
-                #   to reduce the first PEP-noncompliant hint.
-                # * Permissively requests that this reducer return
-                #   PEP-noncompliant hints as is but this hint is PEP-compliant.
-
-                # Either:
-                # * If this reducer reduces this hint:
-                #   * If this reduction produced supplementary metadata,
-                #     metadata encapsulating the reduction of this hint by this
-                #     reducer.
-                #   * Else, the reduced hint reduced by this reducer.
-                # * Else, this unreduced hint as is.
-                hint_or_sane_curr = hint_reducer(
-                    arg_kind=arg_kind,
-                    call_curr=call_curr,
-                    conf=conf,
-                    hint=hint_curr,
-                    hint_parent_sane=hint_parent_sane,
-                    hint_sign_seed=hint_sign_seed,
-                    pith_name=pith_name,
-                    reductions_count=reductions_count,
-                    exception_prefix=exception_prefix,
+                # Sign uniquely identifying this hint if this hint is
+                # PEP-compliant *OR* "None" otherwise (e.g., if this hint is
+                # PEP-noncompliant), defined as either...
+                hint_sign: Optional[HintSign] = (
+                    # If the caller did *NOT* explicitly pass a sign with which
+                    # to seed this reduction, the standard sign uniquely
+                    # identifying this hint;
+                    get_hint_pep_sign_or_none(hint_curr)  # type: ignore[assignment]
+                    if hint_sign_seed is SENTINEL else
+                    # Else, the caller explicitly passed a sign with which to
+                    # seed this reduction. In this case, that sign.
+                    hint_sign_seed
                 )
-                # print(f'[reduce_hint] Reduced to {hint_or_sane_curr}!')
 
-                # If this input unreduced hint differs from this output reduced
-                # hint (metadata), the above reduction reduced this hint. Cease
-                # any further such low-level reductions, enabling the outer loop
-                # to decide whether to continue reducing.
-                if hint_curr is not hint_or_sane_curr:
-                    # If this hint reduces to the ignorable
-                    # "HINT_SANE_IGNORABLE" metadata singleton, then halt
-                    # reducing immediately.
-                    #
-                    # Note that this is merely an optimization avoiding
-                    # unnecessary iteration. Without this test, hints reduced to
-                    # this ignorable singleton would require an additional loop
-                    # through the "_HINT_REDUCERS" tuple. This test elides that
-                    # iteration.
-                    if hint_or_sane_curr is HINT_SANE_IGNORABLE:
-                        # print('[reduce_hint] Ignorably reduced!')
-                        return HINT_SANE_IGNORABLE
-                    # Else, this hint is currently unignorable.
-                    # print('[reduce_hint] Incrementally reduced!\n')
+                #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
+                # For each lower-level reducer...
+                for hint_reducer in _HINT_REDUCERS:
+                    # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} by {hint_reducer}...')
+                    # print(f'[reduce_hint] ...after prior reduction to {hint_or_sane_prev}...')
 
-                    # Halt reducing immediately.
+                    # Either:
+                    # * If this reducer reduces this hint:
+                    #   * If this reduction produced supplementary metadata,
+                    #     metadata encapsulating the reduction of this hint by
+                    #     this reducer.
+                    #   * Else, the reduced hint reduced by this reducer.
+                    # * Else, this unreduced hint as is.
+                    hint_or_sane_curr = hint_reducer(
+                        arg_kind=arg_kind,
+                        call_curr=call_curr,
+                        conf=conf,
+                        hint=hint_curr,
+                        hint_parent_sane=hint_parent_sane,
+                        hint_sign=hint_sign,
+                        pith_name=pith_name,
+                        reductions_count=reductions_count,
+                        exception_prefix=exception_prefix,
+                    )
+                    # print(f'[reduce_hint] Reduced to {hint_or_sane_curr}!')
+
+                    # If this input unreduced hint differs from this output
+                    # reduced hint (metadata), the above reduction reduced this
+                    # hint. Cease any further such low-level reductions,
+                    # enabling the outer loop to decide whether to continue
+                    # reducing.
+                    if hint_curr is not hint_or_sane_curr:
+                        # If this hint reduces to the ignorable
+                        # "HINT_SANE_IGNORABLE" metadata singleton, then halt
+                        # reducing immediately.
+                        #
+                        # Note that this is merely an optimization avoiding
+                        # unnecessary iteration. Without this test, hints
+                        # reduced to this ignorable singleton would require an
+                        # additional loop through the "_HINT_REDUCERS" tuple.
+                        # This test elides that iteration.
+                        if hint_or_sane_curr is HINT_SANE_IGNORABLE:
+                            # print('[reduce_hint] Ignorably reduced!')
+                            return HINT_SANE_IGNORABLE
+                        # Else, this hint is currently unignorable.
+                        # print('[reduce_hint] Incrementally reduced!\n')
+
+                        # Halt reducing immediately.
+                        break
+                    # Else, this unreduced hint remains unmodified. Since this
+                    # reducer failed to reduce this hint, silently continue to
+                    # the next reducer.
+                # If the above iteration failed to "break", then this unreduced
+                # hint remains unmodified across all lower-level reducers. This
+                # implies this hint to now be irreducible. Halt reducing, yo!
+                else:
+                    # print('[reduce_hint] Irreducible!\n')
                     break
-                # Else, this unreduced hint remains unmodified. Since this
-                # reducer failed to reduce this hint, silently continue to the
-                # next reducer.
-            # If the above iteration failed to "break", then this unreduced hint
-            # remains unmodified across all lower-level reducers. This implies
-            # this hint to now be irreducible. Halt reducing entirely.
-            else:
-                # print('[reduce_hint] Irreducible!\n')
-                break
-            # Else, the above iteration hit a "break". This hint was reduced by
-            # a lower-level reducer above, implying that this hint *COULD* still
-            # be reducible. Silently continue reducing.
+                # Else, the above iteration hit a "break". This hint was reduced
+                # by a lower-level reducer above, implying that this hint
+                # *COULD* still be reducible. Silently continue reducing.
+            # Else, the caller permissively requests that this reducer return
+            # this PEP-noncompliant hint as is.
 
             # ....................{ RESPONSE               }....................
             # Respond to the lower-level reduction performed above.
@@ -569,96 +581,27 @@ def reduce_hint_child(**kwargs) -> HintSane:
           encapsulating this hint unmodified.
     '''
 
-    #FIXME: [SPEED] *STUPIDLY SLOW*. There has *GOT* to be a saner (and, more
-    #importantly, more efficient) means of accomplishing the same ends.
-    #FIXME: Uhh... wait. Obviously, the saner and more efficient means of doing
-    #this *IS JUST TO DELETE THESE KEYS MANUALLY.* Wow. That was dumb. *lolbro*
-
     # Remove all unsafe keyword parameters (i.e., parameters that are
     # inapplicable to child hints and thus *NOT* safely passable to the
     # subsequently called reduce_hint() function) from this dictionary.
-    remove_mapping_keys(kwargs, _REDUCE_HINT_CHILD_ARG_NAMES_UNSAFE)
+    #
+    # Note that:
+    # * We intentionally do so manually rather than calling the
+    #   remove_mapping_keys() function. Why? Speed. Both work, of course -- but
+    #   the former is substantially faster than the latter. *shrug*
+    # * The "arg_kind" parameter is applicable *ONLY* to root hints directly
+    #   annotating callable parameters.
+    # * The "pith_name" parameter is applicable *ONLY* to root hints directly
+    #   annotating callable parameters or returns.
+    kwargs.pop('arg_kind', None)
+    kwargs.pop('pith_name', None)
 
     # Return this child hint possibly reduced to a lower-level hint.
     return reduce_hint(**kwargs)
 
-
-#FIXME: *SUPER-DANGEROUS*. Shift this test-specific function outside the main
-#codebase and into the "beartype_test._util" subpackage somewhere. Seriously.
-#Bad juju here, yo.
-#FIXME: Bad function name too, honestly. Once moved elsewhere, rename this
-#function to the unambiguous reduce_hint_call_external(). *sigh*
-def reduce_hint_any(
-    # Mandatory parameters.
-    hint: Hint,
-
-    # Optional parameters.
-    call_curr: BeartypeCallDataABC = BEARTYPE_CALL_EXTERNAL_META,
-    **kwargs
-) -> HintSane:
-    '''
-    Lower-level type hint reduced (i.e., converted) relative to the external
-    caller from the passed higher-level type hint if this hint is reducible *or*
-    this hint as is otherwise (i.e., if this hint is irreducible).
-
-    This reducer is a convenience wrapper for the more general-purpose
-    :func:`.reduce_hint` reducer, principally intended to be called from unit
-    tests. Specifically, this reducer defaults the ``call_curr`` parameter
-    accepted by the :func:`.reduce_hint` reduce to the **beartype external call
-    metadata singleton** (i.e., :data:`.BEARTYPE_CALL_EXTERNAL_META`). Doing so
-    reduces :pep:`484-compliant forward reference type hints visitable from the
-    passed type hint against the first external lexical scope on the call stack
-    originating from a third-party package or module. This default is
-    appropriate only for unit tests rather than real-world use cases.
-
-    Caveats
-    -------
-    **The more fine-grained** :func:`.reduce_hint` **reducer should typically be
-    called instead.** This more coarse-grained reducer drops the mandatory
-    ``call_curr`` parameter required by the former, which is *not* necessarily a
-    good thing. That parameter should typically be passed. Failing to pass that
-    parameter drops essential metadata required to properly sanitize many kinds
-    of insane type hints.
-
-    Parameters
-    ----------
-    hint : Hint
-        Type hint to be reduced.
-    call_curr : BeartypeCallDataABC, default: BEARTYPE_CALL_EXTERNAL_META
-        **Beartype call metadata** (i.e., dataclass aggregating *all* common
-        metadata encapsulating the user-defined callable, type, or statement
-        currently being type-checked by the end user). Defaults to the beartype
-        external call metadata singleton, thus sanifying :pep:`484`-compliant
-        stringified forward reference type hints against the local and global
-        scope of the first third-party caller on the current call stack.
-
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`.reduce_hint` reducer.
-
-    Returns
-    -------
-    HintSane
-        Either:
-
-        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
-        * Else if this unignorable hint is reducible to another hint, metadata
-          encapsulating this reduction.
-        * Else, this unignorable hint is irreducible. In this case, metadata
-          encapsulating this hint unmodified.
-    '''
-
-    # Default to the beartype external call metadata singleton.
-    kwargs['call_curr'] = BEARTYPE_CALL_EXTERNAL_META
-
-    # Return this hint possibly reduced to a lower-level hint.
-    return reduce_hint(hint=hint, **kwargs)
-
 # ....................{ PRIVATE ~ reducers                 }....................
 def _reduce_hint_cached(
-    hint: Hint,
-    hint_sign_seed: HintSignOrNoneOrSentinel,
-    **kwargs
-) -> HintOrSane:
+    hint: Hint, hint_sign: Optional[HintSign], **kwargs) -> HintOrSane:
     '''
     Lower-level type hint reduced (i.e., converted) from the passed higher-level
     type hint if this hint is reducible by a **memoized reducer** (i.e.,
@@ -670,9 +613,12 @@ def _reduce_hint_cached(
     ----------
     hint : Hint
         Type hint to be possibly reduced.
-    hint_sign_seed : HintSignOrNoneOrSentinel
-        Sign with which to seed (i.e., initialize) this reduction. See also the
-        :func:`.reduce_hint` docstring for further details.
+    hint_sign : Optional[HintSign]
+        Either:
+
+        * If this hint is PEP-compliant, the sign uniquely identifying this
+          hint.
+        * Else, :data:`None`.
 
     All remaining keyword parameters are silently ignored.
 
@@ -686,56 +632,11 @@ def _reduce_hint_cached(
           memoized reducer, metadata encapsulating this reduction.
         * Else, this hint unmodified as is.
     '''
-    assert (
-        hint_sign_seed is SENTINEL or
-        isinstance(hint_sign_seed, NoneTypeOr[HintSign])
-    ), (f'{repr(hint_sign_seed)} neither hint sign, "None", nor sentinel.')
+    assert isinstance(hint_sign, NoneTypeOr[HintSign]), (
+        f'{repr(hint_sign)} neither hint sign nor "None".')
 
     # Reduced hint to be returned, defaulting to the passed unreduced hint.
     hint_or_sane: HintOrSane = hint
-
-    #FIXME: *DRY VIOLATION*. This same code is repeated by the
-    #_reduce_hint_uncached() reducer below. Instead, the parent reduce_hint()
-    #function should *ALMOST CERTAINLY* be performing this logic instead
-    #*DIRECTLY BEFORE* calling hint_reducer(). Specifically, this is what
-    #reduce_hint() should look like:
-    #    def reduce_hint(...):
-    #        ...
-    #                # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
-    #                # "None" otherwise (e.g., if this hint is PEP-noncompliant), defined as
-    #                # either...
-    #                hint_sign = (
-    #                    # If the caller did *NOT* explicitly pass a sign with which to seed this
-    #                    # reduction, the standard sign uniquely identifying this hint;
-    #                    get_hint_pep_sign_or_none(hint)
-    #                    if hint_sign_seed is SENTINEL else
-    #                    # Else, the caller explicitly passed a sign with which to seed this
-    #                    # reduction. In this case, that sign.
-    #                    hint_sign_seed
-    #                )
-    #
-    #                hint_or_sane_curr = hint_reducer(
-    #                    ...,
-    #                    hint_sign=hint_sign,
-    #                    ...
-    #                )
-    #
-    #To facilitate the above refactoring, we'll lastly need to rename the
-    #"hint_sign_seed" parameters accepted by both this and
-    #_reduce_hint_uncached() to "hint_sign". Trivial. Yay! \o/
-
-    # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
-    # "None" otherwise (e.g., if this hint is PEP-noncompliant), defined as
-    # either...
-    hint_sign = (
-        # If the caller did *NOT* explicitly pass a sign with which to seed this
-        # reduction, the standard sign uniquely identifying this hint;
-        get_hint_pep_sign_or_none(hint)
-        if hint_sign_seed is SENTINEL else
-        # Else, the caller explicitly passed a sign with which to seed this
-        # reduction. In this case, that sign.
-        hint_sign_seed
-    )
 
     # Memoized reducer reducing this hint if any *OR* "None" otherwise.
     hint_reducer_cached = HINT_SIGN_TO_REDUCE_HINT_CACHED_get(hint_sign)  # type: ignore[arg-type]
@@ -757,10 +658,7 @@ def _reduce_hint_cached(
 
 
 def _reduce_hint_uncached(
-    hint: Hint,
-    hint_sign_seed: HintSignOrNoneOrSentinel,
-    **kwargs
-) -> HintOrSane:
+    hint: Hint, hint_sign: Optional[HintSign], **kwargs) -> HintOrSane:
     '''
     Lower-level type hint reduced (i.e., converted) from the passed higher-level
     type hint if this hint is reducible by a **unmemoized reducer** (i.e.,
@@ -772,9 +670,12 @@ def _reduce_hint_uncached(
     ----------
     hint : Hint
         Type hint to be possibly reduced.
-    hint_sign_seed : HintSignOrNoneOrSentinel
-        Sign with which to seed (i.e., initialize) this reduction. See also the
-        :func:`.reduce_hint` docstring for further details.
+    hint_sign : Optional[HintSign]
+        Either:
+
+        * If this hint is PEP-compliant, the sign uniquely identifying this
+          hint.
+        * Else, :data:`None`.
 
     All remaining keyword parameters are passed as is to the underlying
     lower-level PEP-specific reducer called by this higher-level PEP-agnostic
@@ -794,26 +695,11 @@ def _reduce_hint_uncached(
           unmemoized reducer, metadata encapsulating this reduction.
         * Else, this hint unmodified as is.
     '''
-    assert (
-        hint_sign_seed is SENTINEL or
-        isinstance(hint_sign_seed, NoneTypeOr[HintSign])
-    ), (f'{repr(hint_sign_seed)} neither hint sign, "None", nor sentinel.')
+    assert isinstance(hint_sign, NoneTypeOr[HintSign]), (
+        f'{repr(hint_sign)} neither hint sign nor "None".')
 
     # Reduced hint to be returned, defaulting to the passed unreduced hint.
     hint_or_sane: HintOrSane = hint
-
-    # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
-    # "None" otherwise (e.g., if this hint is PEP-noncompliant), defined as
-    # either...
-    hint_sign = (
-        # If the caller did *NOT* explicitly pass a sign with which to seed this
-        # reduction, the standard sign uniquely identifying this hint;
-        get_hint_pep_sign_or_none(hint)
-        if hint_sign_seed is SENTINEL else
-        # Else, the caller explicitly passed a sign with which to seed this
-        # reduction. In this case, that sign.
-        hint_sign_seed
-    )
 
     # Unmemoized reducer reducing this hint if any *OR* "None" otherwise.
     hint_reducer_uncached = HINT_SIGN_TO_REDUCE_HINT_UNCACHED_get(hint_sign)  # type: ignore[arg-type]
@@ -1013,20 +899,4 @@ Maximum number of total reductions internally performed by each call of the
 This constant is a relatively arbitrary magic number selected so as to guard
 against accidental infinite recursion between lower-level PEP-specific reducers
 internally called by :func:`reduce_hint`.
-'''
-
-
-_REDUCE_HINT_CHILD_ARG_NAMES_UNSAFE = frozenset((
-    # Applicable *ONLY* to root hints directly annotating callable parameters.
-    'arg_kind',
-
-    # Applicable *ONLY* to root hints directly annotating callable parameters
-    # or returns.
-    'pith_name',
-))
-'''
-Frozen set of the names of all **unsafe child type hint reducer keyword
-parameters** (i.e., keyword parameters inapplicable to child type hints and thus
-*not* safely passable from the higher-level :func:`.reduce_hint_child` to
-lower-level :func:`.reduce_hint` reducer.
 '''
