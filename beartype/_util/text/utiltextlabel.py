@@ -110,13 +110,13 @@ def label_object_kind(obj: object) -> str:
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunctest import (
         is_func_async,
-        is_func_async_generator,
+        is_func_generator_async,
         is_func_classmethod,
         is_func_coro,
         is_func_codeobjable,
         is_func_property,
         is_func_staticmethod,
-        is_func_sync_generator,
+        is_func_generator_sync,
     )
     from beartype._util.func.arg.utilfuncargget import (
         get_func_arg_name_first_or_none)
@@ -151,7 +151,7 @@ def label_object_kind(obj: object) -> str:
                 func_prefix = 'coroutine factory '
             # If this object is an asynchronous generator factory, use an
             # appropriate prefix.
-            elif is_func_async_generator(obj):
+            elif is_func_generator_async(obj):
                 func_prefix = 'asynchronous generator factory '
             # Else, this object is an unrecognized kind of asynchronous callable
             # factory. In this case, fallback to a generic prefix.
@@ -166,7 +166,7 @@ def label_object_kind(obj: object) -> str:
         #
         # If this object is an synchronous generator factory, use an appropriate
         # prefix.
-        elif is_func_sync_generator(obj):
+        elif is_func_generator_sync(obj):
             func_prefix = 'generator factory '
         # Else, this object is a standard synchronous callable. In this case,
         # avoid prefixing this callable by a leading substring.

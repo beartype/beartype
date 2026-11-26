@@ -20,8 +20,8 @@ from beartype._cave._cavefast import (
 )
 # from beartype._data.check.code.datacodename import ARG_NAME_FUNC
 from beartype._data.func.datafunccodeobj import (
-    CODE_OBJECT_BASENAME_MODULE_OR_EVAL,
-    CODE_OBJECT_FILENAME_EVAL,
+    CODEOBJECT_BASENAME_MODULE_OR_EVAL,
+    CODEOBJECT_FILENAME_EVAL,
 )
 from beartype._data.typing.datatyping import (
     DictStrToAny,
@@ -171,10 +171,10 @@ def is_frame_eval(frame: CallableFrameType) -> bool:
         # objects underlying both pure-Python modules (as well as all eval() and
         # exec() calls) *AND*...
         get_codeobject_basename(frame_codeobj) == (
-            CODE_OBJECT_BASENAME_MODULE_OR_EVAL) and
+            CODEOBJECT_BASENAME_MODULE_OR_EVAL) and
         # The absolute filename of this code object is that of all code objects
         # underlying all eval() or exec() calls.
-        get_codeobject_filename(frame_codeobj) == CODE_OBJECT_FILENAME_EVAL
+        get_codeobject_filename(frame_codeobj) == CODEOBJECT_FILENAME_EVAL
     )
 
 
@@ -220,10 +220,10 @@ def is_frame_module(frame: CallableFrameType) -> bool:
         # objects underlying both pure-Python modules (as well as all eval() and
         # exec() calls) *AND*...
         get_codeobject_basename(frame_codeobj) == (
-            CODE_OBJECT_BASENAME_MODULE_OR_EVAL) and
+            CODEOBJECT_BASENAME_MODULE_OR_EVAL) and
         # The absolute filename of this code object is *NOT* that of all code
         # objects underlying all eval() or exec() calls.
-        get_codeobject_filename(frame_codeobj) != CODE_OBJECT_FILENAME_EVAL
+        get_codeobject_filename(frame_codeobj) != CODEOBJECT_FILENAME_EVAL
     )
 
 # ....................{ GETTERS                            }....................
@@ -636,7 +636,7 @@ def get_frame_name(
         # top-level lexical scope of a module, omit the prefixing module name
         # (which is, in any case, the meaningless magic string "<module>");
         frame_basename
-        if frame_module_name == CODE_OBJECT_BASENAME_MODULE_OR_EVAL else
+        if frame_module_name == CODEOBJECT_BASENAME_MODULE_OR_EVAL else
         # Else, that callable is actually a callable. In this case, prefix the
         # unqualified basename of that callable by the fully-qualified name of
         # the module declaring that callable.

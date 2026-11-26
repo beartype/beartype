@@ -45,6 +45,7 @@ from beartype._data.typing.datatypingport import Hint
 from beartype._metaverse import URL_ISSUES
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.func.arg.utilfuncargiter import ArgKind
+# from beartype._util.func.utilfunctest import is_func_generator
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from typing import Optional
@@ -287,8 +288,6 @@ def reduce_hint(
     # encapsulating this hint, also initialized to this unreduced hint.
     hint_or_sane_prev: HintOrSane = hint
 
-    # is_func_.
-
     # Delete the passed "hint" parameter for safety. Permitting this parameter
     # to exist would only promote subtle lexical issues below, where the local
     # variable "hint_curr" is strongly preferred for disambiguity.
@@ -310,8 +309,10 @@ def reduce_hint(
                 # "BeartypeDecorHintNonpepException" exception on attempting to
                 # reduce the first PEP-noncompliant hint *OR*...
                 not is_hint_nonpep_irreducible or
-                # The caller permissively requests that this reducer return
-                # PEP-noncompliant hints as is but this hint is PEP-compliant...
+                # Else, the caller permissively requests that this reducer
+                # return PEP-noncompliant hints as is *AND*...
+                #
+                # This hint is PEP-compliant...
                 is_hint_pep(hint_curr)
             ):
                 # Then attempt to reduce this hint.

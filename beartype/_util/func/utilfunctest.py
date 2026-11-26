@@ -22,6 +22,10 @@ from beartype._cave._cavefast import (
     MethodDecoratorStaticType,
 )
 from beartype._data.func.datafuncname import FUNC_NAME_LAMBDA
+from beartype._data.func.datafunccodeobj import (
+    CODEOBJECT_FLAGS_ASYNC,
+    CODEOBJECT_FLAGS_GENERATOR,
+)
 from beartype._data.typing.datatyping import (
     Codeobjable,
     TypeException,
@@ -781,7 +785,7 @@ def is_func_async(func: object) -> TypeIs[Callable]:
     Returns
     -------
     bool
-        :data:`True` only if this object is an asynchronous callable.
+        :data:`True` only if this object is an asynchronous callable factory.
 
     See Also
     --------
@@ -792,37 +796,30 @@ def is_func_async(func: object) -> TypeIs[Callable]:
 
     # Code object underlying this pure-Python callable if any *OR* "None".
     #
-    # Note this tester intentionally:
-    # * Inlines the tests performed by the is_func_coro() and
-    #   is_func_async_generator() testers for efficiency.
-    # * Calls the get_func_codeobject_or_none() with "is_unwrap" disabled
-    #   rather than enabled. Why? Because the asynchronicity of this possibly
-    #   higher-level wrapper has *NO* relation to that of the possibly
-    #   lower-level wrappee wrapped by this wrapper. Notably, it is both
-    #   feasible and commonplace for third-party decorators to enable:
-    #   * Synchronous callables to be called asynchronously by wrapping
-    #     synchronous callables with asynchronous closures.
-    #   * Asynchronous callables to be called synchronously by wrapping
-    #     asynchronous callables with synchronous closures. Indeed, our
-    #     top-level "conftest.py" pytest plugin does exactly this -- enabling
-    #     asynchronous tests to be safely called by pytest's currently
-    #     synchronous framework.
+    # Note this tester intentionally calls the get_func_codeobject_or_none()
+    # with "is_unwrap" disabled rather than enabled. Why? Because the
+    # asynchronicity of this possibly higher-level wrapper has *NO* relation to
+    # that of the possibly lower-level wrappee wrapped by this wrapper. Notably,
+    # it is both feasible and commonplace for third-party decorators to enable:
+    # * Synchronous callables to be called asynchronously by wrapping
+    #   synchronous callables with asynchronous closures.
+    # * Asynchronous callables to be called synchronously by wrapping
+    #   asynchronous callables with synchronous closures. Indeed, our
+    #   top-level "conftest.py" pytest plugin does exactly this -- enabling
+    #   asynchronous tests to be safely called by pytest's currently
+    #   synchronous framework.
     func_codeobj = get_func_codeobject_or_none(func)
 
-    # If this object is *NOT* a pure-Python callable, immediately return false.
-    if func_codeobj is None:
-        return False
-    # Else, this object is a pure-Python callable.
-
-    # Bit field of OR-ed binary flags describing this callable.
-    func_codeobj_flags = func_codeobj.co_flags
-
-    # Return true only if these flags imply this callable to be either...
+    # Return true only if...
+    #
+    # Note this "if" conditional inlines the tests performed by the
+    # is_func_coro() and is_func_generator_async() testers for efficiency.
     return (
-        # An asynchronous coroutine *OR*...
-        func_codeobj_flags & CO_COROUTINE != 0 or
-        # An asynchronous generator.
-        func_codeobj_flags & CO_ASYNC_GENERATOR != 0
+        # This object is a pure-Python callable *AND*...
+        func_codeobj is not None and
+        # This callable's code object implies this callable to be either a
+        # coroutine or an asynchronous generator factory.
+        func_codeobj.co_flags & CODEOBJECT_FLAGS_ASYNC != 0
     )
 
 
@@ -863,8 +860,66 @@ def is_func_coro(func: object) -> TypeIs[Callable]:
         func_codeobj.co_flags & CO_COROUTINE != 0
     )
 
+# ....................{ TESTERS ~ generator                }....................
+def is_func_generator(func: object) -> TypeIs[Callable]:
+    '''
+    :data:`True` only if the passed object is a **generator callable
+    factory** (i.e., iterable callable containing one or more ``yield``
+    expressions implicitly creating and returning a generator object).
 
-def is_func_async_generator(func: object) -> TypeIs[Callable]:
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is an generator callable factory.
+    '''
+
+    # Code object underlying this pure-Python callable if any *OR* "None".
+    #
+    # Note this tester intentionally calls the get_func_codeobject_or_none()
+    # with "is_unwrap" disabled rather than enabled. See the is_func_async()
+    # tester for further discussion on this similar logic.
+    func_codeobj = get_func_codeobject_or_none(func)
+
+    #FIXME: Preserve for debugging. *shrugs nonchalantly*
+    # print()
+    # print(func)
+    # if func_codeobj is None: return False
+    # print(func_codeobj.co_flags)
+    # print(CODEOBJECT_FLAGS_GENERATOR)
+    # print(func_codeobj.co_flags & CODEOBJECT_FLAGS_GENERATOR != 0)
+
+    # Return true only if...
+    #
+    # Note this "if" conditional inlines the tests performed by the
+    # is_func_generator_async() and is_func_generator_sync() testers for
+    # efficiency.
+    return (
+        # This object is a pure-Python callable *AND*...
+        func_codeobj is not None and
+        # This callable's code object implies this callable to be either an
+        # asynchronous or synchronous generator factory or object *AND*...
+        func_codeobj.co_flags & CODEOBJECT_FLAGS_GENERATOR != 0 and
+        # This factory or object is either...
+        #
+        # This logic enables this tester to differentiate synchronous generator
+        # *FACTORIES* from synchronous generator *OBJECTS* (i.e., the objects
+        # those factories implicitly create and return). See the
+        # is_func_generator_sync() tester for a full breakdown of this madness.
+        (
+            # A callable *OR*...
+            callable(func) or
+            # A code object (which is uncallable by definition).
+            isinstance(func, CallableCodeObjectType)
+        )
+    )
+
+
+def is_func_generator_async(func: object) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is an **asynchronous generator
     factory** (i.e., awaitable callable containing one or more ``yield``
@@ -901,8 +956,8 @@ def is_func_async_generator(func: object) -> TypeIs[Callable]:
         func_codeobj.co_flags & CO_ASYNC_GENERATOR != 0
     )
 
-# ....................{ TESTERS ~ sync                     }....................
-def is_func_sync_generator(func: object) -> TypeIs[Callable]:
+
+def is_func_generator_sync(func: object) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is an **synchronous generator
     factory** (i.e., iterable callable containing one or more ``yield``
@@ -926,30 +981,6 @@ def is_func_sync_generator(func: object) -> TypeIs[Callable]:
         Stdlib function strongly inspiring this implementation.
     '''
 
-    # If this object is neither...
-    #
-    # This logic enables this tester to differentiate synchronous generator
-    # *FACTORIES* from synchronous generator *OBJECTS* (i.e., the objects those
-    # factories implicitly create and return). Whereas neither asynchronous
-    # coroutine objects *NOR* asynchronous generator objects have code objects
-    # whose "CO_COROUTINE" and "CO_ASYNC_GENERATOR" flags are enabled,
-    # synchronous generator objects do have code objects whose "CO_GENERATOR"
-    # flag is enabled. Ergo, synchronous generator factories create and return
-    # synchronous generator objects that are themselves technically valid
-    # synchronous generator factories... which, frankly, is absurd. Explicitly
-    # prohibit this ambiguity by differentiating the two here.
-    if not (
-        # A callable *NOR*...
-        callable(func) or
-        # A code object (which is uncallable by definition).
-        isinstance(func, CallableCodeObjectType)
-    ):
-        # Then immediately return false to prevent synchronous generator objects
-        # from being ambiguously conflated with synchronous generator factories.
-        return False
-    # Else, this object is either callable *OR* a code object. In either case,
-    # this object is *NOT* a synchronous generator object.
-
     # Code object underlying this pure-Python callable if any *OR* "None".
     func_codeobj = get_func_codeobject_or_none(func)
 
@@ -958,8 +989,26 @@ def is_func_sync_generator(func: object) -> TypeIs[Callable]:
         # This object is a pure-Python callable *AND*...
         func_codeobj is not None and
         # This callable's code object implies this callable to be a
-        # synchronous generator.
-        func_codeobj.co_flags & CO_GENERATOR != 0
+        # synchronous generator *AND*...
+        func_codeobj.co_flags & CO_GENERATOR != 0 and
+        # This factory or object is either...
+        #
+        # This logic enables this tester to differentiate synchronous generator
+        # *FACTORIES* from synchronous generator *OBJECTS* (i.e., the objects
+        # those factories implicitly create and return). Whereas neither
+        # asynchronous coroutine objects *NOR* asynchronous generator objects
+        # have code objects whose "CO_COROUTINE" and "CO_ASYNC_GENERATOR" flags
+        # are enabled, synchronous generator objects do have code objects whose
+        # "CO_GENERATOR" flag is enabled. Ergo, synchronous generator factories
+        # create and return synchronous generator objects that are themselves
+        # technically valid synchronous generator factories... which is absurd.
+        # Explicitly prohibit this ambiguity by differentiating the two here.
+        (
+            # A callable *OR*...
+            callable(func) or
+            # A code object (which is uncallable by definition).
+            isinstance(func, CallableCodeObjectType)
+        )
     )
 
 # ....................{ TESTERS : nested                   }....................

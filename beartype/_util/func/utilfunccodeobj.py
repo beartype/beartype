@@ -279,7 +279,7 @@ def get_codeobject_filename(codeobj: CallableCodeObjectType) -> Optional[str]:
     Absolute filename of the pure-Python source code file physically defining
     the **lexical scope** (i.e., module, class, callable) executed by the passed
     code object if that object is executed by such a file, the string constant
-    :data:`beartype._data.func.datafunccodeobj.CODE_OBJECT_FILENAME_EVAL` if
+    :data:`beartype._data.func.datafunccodeobj.CODEOBJECT_FILENAME_EVAL` if
     that code object is executed dynamically in-memory outside such a file, *or*
     :data:`None` otherwise (e.g., if that code object fails to even define the
     ``co_filename`` instance variable, as can occur under third-party Python
@@ -319,7 +319,7 @@ def get_codeobject_basename(codeobj: CallableCodeObjectType) -> str:
     Unqualified basename of the **physical lexical scope** (i.e., module, class,
     callable) of the passed code object if that object is executed inside a
     scope that physically exists *or* the string constant
-    :data:`beartype._data.func.datafunccodeobj.CODE_OBJECT_BASENAME_MODULE_OR_EVAL`
+    :data:`beartype._data.func.datafunccodeobj.CODEOBJECT_BASENAME_MODULE_OR_EVAL`
     if that code object is executed dynamically in-memory outside such a scope.
 
     Specifically, this getter returns:
@@ -361,7 +361,7 @@ def get_codeobject_basename_last(codeobj: CallableCodeObjectType) -> str:
     **physical lexical scope** (i.e., module, class, callable) of the passed
     code object if that object is executed inside a scope that physically exists
     *or* the string constant
-    :data:`beartype._data.func.datafunccodeobj.CODE_OBJECT_BASENAME_MODULE_OR_EVAL`
+    :data:`beartype._data.func.datafunccodeobj.CODEOBJECT_BASENAME_MODULE_OR_EVAL`
     if that code object is executed dynamically in-memory outside such a scope.
 
     This getter unconditionally returns the value of the ``co_name`` attribute

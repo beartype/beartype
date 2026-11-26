@@ -842,7 +842,7 @@ def class_nested_nonclosure_factory():
     return ClassNestedNonclosure
 
 # ....................{ CONSTANTS                          }....................
-CALLABLE_CODE_OBJECT = function.__code__
+CALLABLE_CODEOBJECT = function.__code__
 '''
 Arbitrary callable code object.
 '''
@@ -933,7 +933,7 @@ Frozen set of both pure-Python *and* C-based callables exercising edge cases.
 
 #FIXME: Currently unused but preserved for posterity.
 # NON_CALLABLES = (
-#     CALLABLE_CODE_OBJECT,
+#     CALLABLE_CODEOBJECT,
 #     type.__dict__,      # Mapping Proxy Type
 #     implementation,     # Simple Namespace Type
 #     async_coroutine,

@@ -17,9 +17,17 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
+from beartype._check.cls.hint.hintsane import (
+    HINT_SANE_IGNORABLE,
+    HintSane,
+)
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.sign.datahintsigncls import HintSign
-from beartype._data.typing.datatyping import TypeException
+from beartype._data.kind.datakindiota import SENTINEL
+from beartype._data.typing.datatyping import (
+    HintSignOrNoneOrSentinel,
+    TypeException,
+)
 from beartype._data.typing.datatypingport import (
     DictStrToHint,
     Hint,
@@ -31,8 +39,9 @@ from beartype._data.hint.sign.datahintsignset import (
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.func.utilfunctest import (
     is_func_coro,
-    is_func_async_generator,
-    is_func_sync_generator,
+    is_func_generator,
+    is_func_generator_async,
+    is_func_generator_sync,
 )
 from beartype._util.hint.pep.proposal.pep484585.pep484585args import (
     get_hint_pep484585_args)
@@ -48,6 +57,12 @@ from collections.abc import (
 from typing import Optional
 
 # ....................{ REDUCERS                           }....................
+#FIXME: *INSUFFICIENT*. Additionally:
+#* Define a new reduce_hint_pep484585_awaitable_return() reducer as well. Any
+#  arbitrary "Coroutine[A, B, R]" type hint is a subtype of "Awaitable[R]".
+#  Ergo, "Awaitable[R]" is *ALSO* valid as the return hint annotating a
+#  coroutine factory callable. However, *ONLY* "Coroutine[A, B, R]" and
+#  "Awaitable[R]" are valid as that return hint. Which leads us to...
 def reduce_hint_pep484585_coroutine_return(
     call_curr: BeartypeCallDataABC,
     hint: Hint,
@@ -81,7 +96,7 @@ def reduce_hint_pep484585_coroutine_return(
       violating the core :mod:`beartype` guarantee. Moreover, explicit is better
       than the implicit. The caller did *not* request that we type-check
       arbitrary coroutines *not* explicitly decorated by the
-      :func:`beartype.beartype` decorater. Ergo, we don't.
+      :func:`beartype.beartype` decorator. Ergo, we don't.
 
     Parameters
     ----------
@@ -157,13 +172,19 @@ def reduce_hint_pep484585_coroutine_return(
 # *ONLY* during type hint reduction. For lack of a better home, we thus
 # intentionally define this function in this tangentially related submodule.
 
+#FIXME: Actually, this doesn't belong here at all anymore. Shift back to the
+#"beartype._util.hint.pep.proposal.pep484585.pep484585func" submodule. Ugh!
+#Actually... hmm. Maybe a new private sibling of "convmain", mayhap?
 #FIXME: Explicitly call in "redmain", please. *sigh*
-def check_hint_pep484585_generator_return(
+#FIXME: Refactor "convmain" to stop doing what it's doing, please. *sigh*
+#FIXME: Unit test us up, please. *sigh*
+#FIXME: Remove "HintSignAny" from both "HINT_SIGNS_RETURN_GENERATOR_ASYNC" and
+#"HINT_SIGNS_RETURN_GENERATOR_SYNC" once this works, please. *sigh*
+#FIXME: Revise docstring, please. *sigh*
+def die_if_func_return_hint_invalid(
     call_curr: BeartypeCallDataABC,
-    hint: Hint,
-    hint_sign: Optional[HintSign],
+    hint_sane: HintSane,
     pith_name: Optional[str],
-    exception_prefix: str,
 ) -> None:
     '''
     Reduce the possibly PEP-noncompliant type hint annotating the return of the
@@ -178,14 +199,9 @@ def check_hint_pep484585_generator_return(
         **Beartype call metadata** (i.e., dataclass aggregating *all* common
         metadata encapsulating the user-defined callable, type, or statement
         currently being type-checked by the end user).
-    hint : Hint
-        Coroutine type hint to be reduced.
-    hint_sign : Optional[HintSign]
-        Either:
-
-        * If this hint is PEP-compliant, the sign uniquely identifying this
-          hint.
-        * Else, :data:`None`.
+    hint_sane : HintSane
+        **Sanified type hint metadata** (i.e., :data:`.HintSane` object)
+        encapsulating the hint to be validated.
     pith_name : Optional[str]
         Either:
 
@@ -193,8 +209,6 @@ def check_hint_pep484585_generator_return(
           parameter.
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -211,142 +225,58 @@ def check_hint_pep484585_generator_return(
         * An asynchronous generator *not* annotated by a type hint identified
           by a sign in the :data:`HINT_SIGNS_RETURN_GENERATOR_ASYNC` set.
     '''
-    assert isinstance(hint_sign, NoneTypeOr[HintSign]), (
-        f'{repr(hint_sign)} neither hint sign nor "None".')
+    assert isinstance(call_curr, BeartypeCallDataABC), (
+        f'{repr(call_curr)} not beartype call metadata.')
+    assert isinstance(hint_sane, HintSane), (
+        f'{repr(hint_sane)} not sanified hint metadata.')
 
+    # ....................{ NOOP                           }....................
     # Currently decorated callable, localized for readability and as a
     # negligible microoptimization. *BARF*
     func = call_curr.decoratee
 
-    # If the decorated callable is a synchronous generator...
-    if is_func_sync_generator(func):
-        # If this hint is neither...
-        if not (
-            # A PEP-compliant type hint acceptable as the return annotation of a
-            # synchronous generator *NOR*...
-            hint_sign in HINT_SIGNS_RETURN_GENERATOR_SYNC or
-            # The "collections.abc.Generator" abstract base class (ABC) or a
-            # subclass of that ABC...
-            is_type_subclass(hint, Generator) or
-            # The ignorable "object" superclass...
-            hint is object
-        # Then this hint is semantically invalid as the return annotation of
-        # this callable. In this case, raise an exception.
-        ):
-            _die_hint_return_invalid(
-                func=func,
-                exception_suffix=(
-                    ' (i.e., expected either '
-                    'collections.abc.Generator[YieldType, SendType, ReturnType], '
-                    'collections.abc.Iterable[YieldType], '
-                    'collections.abc.Iterator[YieldType], '
-                    'typing.Generator[YieldType, SendType, ReturnType], '
-                    'typing.Iterable[YieldType], '
-                    'typing.Iterator[YieldType], or '
-                    'typing.Any type hint).'
-                ),
-            )
-        # Else, this hint is valid as the return annotation of this callable.
-    # Else, the decorated callable is *NOT* a synchronous generator.
-    #
-    # If the decorated callable is an asynchronous generator...
-    elif is_func_async_generator(func):
-        # If this hint is neither...
-        if not (
-            # A PEP-compliant type hint acceptable as the return annotation of
-            # an synchronous generator *NOR*...
-            hint_sign in HINT_SIGNS_RETURN_GENERATOR_ASYNC or
-            # The "collections.abc.AsyncGenerator" abstract base class (ABC) or
-            # a subclass of that ABC *NOR*...
-            is_type_subclass(hint, AsyncGenerator) or
-            # The ignorable "object" superclass...
-            hint is object
-        # Then this hint is semantically invalid as the return annotation of
-        # this callable. In this case, raise an exception.
-        ):
-            _die_hint_return_invalid(
-                func=func,
-                exception_suffix=(
-                    ' (i.e., expected either '
-                    'collections.abc.AsyncGenerator[YieldType, SendType], '
-                    'collections.abc.AsyncIterable[YieldType], '
-                    'collections.abc.AsyncIterator[YieldType], '
-                    'typing.AsyncGenerator[YieldType, SendType], '
-                    'typing.AsyncIterable[YieldType], '
-                    'typing.AsyncIterator[YieldType], or '
-                    'typing.Any type hint).'
-                ),
-            )
-        # Else, this hint is valid as the return annotation of this callable.
-    # Else, the decorated callable is none of the kinds detected above.
-
-
-#FIXME: Remove from "convmain" and then excise us up, please. This obsolete
-#reducer should no longer be required, yo. *sigh*
-def reduce_hint_pep484585_func_return(
-    func: Callable,
-    func_annotations: DictStrToHint,
-    exception_prefix: str,
-) -> Hint:
-    '''
-    Reduce the possibly PEP-noncompliant type hint annotating the return of the
-    passed callable if any to a simpler form generating optimally efficient
-    type-checking by the :func:`beartype.beartype` decorator.
-
-    Parameters
-    ----------
-    func : Callable
-        Callable to be type-checked.
-    func_annotations : dict[str, Hint]
-        Dictionary mapping from the name of each annotated parameter
-        semantically (but possibly *not* physically in the edge case in which
-        the passed callable to be type-checked differs from the callable
-        defining the type hints to type-check that callable with) accepted by
-        that callable to the type hint annotating that parameter.
-    exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
-
-    Returns
-    -------
-    Hint
-        Single argument subscripting this hint.
-
-    Raises
-    ------
-    BeartypeDecorHintPep484585Exception
-        If this callable is either:
-
-        * A synchronous generator *not* annotated by a type hint identified by
-          a sign in the :data:`HINT_SIGNS_RETURN_GENERATOR_SYNC` set.
-        * An asynchronous generator *not* annotated by a type hint identified
-          by a sign in the :data:`HINT_SIGNS_RETURN_GENERATOR_ASYNC` set.
-    '''
-    assert isinstance(func_annotations, dict), (
-        f'{repr(func_annotations)} not dictionary.')
+    # If it is *NOT* the case that...
+    if not (
+        # This hint is unignorable *AND*...
+        hint_sane is not HINT_SANE_IGNORABLE and
+        # This hint annotates the return of the decorated callable *AND*...
+        pith_name == ARG_NAME_RETURN and
+        # The decorated callable is either an asynchronous or synchronous
+        # generator factory *AND*...
+        #
+        # Note that this hint annotating the return of the decorated callable
+        # implies the decorated callable to exist. Ergo, we needn't test that.
+        is_func_generator(func)
+    ):
+        # Then either this hint is ignorable, this hint does *NOT* annotate the
+        # return of the decorated callable, *OR* the decorated callable is
+        # neither an asynchronous nor synchronous generator factory. In any
+        # case, this combination of hint and decorated callable is irrelevent
+        # with respect to this validator. Ergo, silently reduce to a noop.
+        return
+    # Else, this unignorable hint annotates the return of the decorated callable
+    # *AND* the decorated callable is either an asynchronous or synchronous
+    # generator factory. Ergo, this hint is a candidate for being validated as
+    # that return. Do so below, yo! \o/
 
     # ....................{ LOCALS                         }....................
-    # Type hint annotating this callable's return, which the caller has already
-    # explicitly guaranteed to exist.
-    hint = func_annotations[ARG_NAME_RETURN]
+    # Hint encapsulated by this metadata.
+    hint = hint_sane.hint
 
-    # Sign uniquely identifying this hint if any *OR* "None" otherwise (e.g.,
-    # if this hint is an isinstanceable class).
+    # Sign uniquely identifying this hint.
     hint_sign = get_hint_pep_sign_or_none(hint)
 
-    # ....................{ TYPE                           }....................
+    # ....................{ VALIDATE                       }....................
     # If the decorated callable is a synchronous generator...
-    if is_func_sync_generator(func):
+    if is_func_generator_sync(func):
         # If this hint is neither...
         if not (
             # A PEP-compliant type hint acceptable as the return annotation of a
             # synchronous generator *NOR*...
             hint_sign in HINT_SIGNS_RETURN_GENERATOR_SYNC or
-            # The "collections.abc.Generator" abstract base class (ABC) or a
-            # subclass of that ABC...
-            is_type_subclass(hint, Generator) or
-            # The ignorable "object" superclass...
-            hint is object
+            # The "collections.abc.Generator" abstract base class (ABC) or an
+            # arbitrary class satisfying that pseudo-protocol...
+            is_type_subclass(hint, Generator)
         # Then this hint is semantically invalid as the return annotation of
         # this callable. In this case, raise an exception.
         ):
@@ -367,17 +297,15 @@ def reduce_hint_pep484585_func_return(
     # Else, the decorated callable is *NOT* a synchronous generator.
     #
     # If the decorated callable is an asynchronous generator...
-    elif is_func_async_generator(func):
+    elif is_func_generator_async(func):
         # If this hint is neither...
         if not (
             # A PEP-compliant type hint acceptable as the return annotation of
             # an synchronous generator *NOR*...
             hint_sign in HINT_SIGNS_RETURN_GENERATOR_ASYNC or
             # The "collections.abc.AsyncGenerator" abstract base class (ABC) or
-            # a subclass of that ABC *NOR*...
-            is_type_subclass(hint, AsyncGenerator) or
-            # The ignorable "object" superclass...
-            hint is object
+            # an arbitrary class satisfying that pseudo-protocol...
+            is_type_subclass(hint, AsyncGenerator)
         # Then this hint is semantically invalid as the return annotation of
         # this callable. In this case, raise an exception.
         ):
@@ -396,10 +324,6 @@ def reduce_hint_pep484585_func_return(
             )
         # Else, this hint is valid as the return annotation of this callable.
     # Else, the decorated callable is none of the kinds detected above.
-
-    # ....................{ RETURN                         }....................
-    # Return this possibly reduced hint.
-    return hint
 
 # ....................{ PRIVATE ~ validators               }....................
 def _die_hint_return_invalid(

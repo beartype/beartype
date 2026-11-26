@@ -24,11 +24,11 @@ from beartype._check.cls.call.calldatadecorfunc import BeartypeCallDecorFuncData
 from beartype._check.cls.call.calldataexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585func import (
-    reduce_hint_pep484585_func_return)
+    die_if_func_return_hint_invalid)
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+# from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import HintSignOrNoneOrSentinel
@@ -163,25 +163,6 @@ def sanify_hint_root_func(
     # PEP-compliant hint, implying this hint to already be PEP-compliant.
 
     # ....................{ REDUCE                         }....................
-    # If this hint annotates the return, then (in order):
-    # * If this hint is contextually invalid for this callable (e.g., generator
-    #   whose return is not annotated as "Generator[...]"), raise an exception.
-    # * If this hint is either PEP 484- or 585-compliant *AND* requires
-    #   reduction (e.g., from "Coroutine[None, None, str]" to just "str"),
-    #   reduce this hint accordingly.
-    #
-    # Perform this reduction *BEFORE* performing subsequent tests (e.g., to
-    # accept "Coroutine[None, None, typing.NoReturn]" as expected). Note that
-    # this logic *ONLY* pertains to callables (rather than statements) and is
-    # thus *NOT* performed by the sanify_hint_root_statement() sanitizer.
-    if pith_name == ARG_NAME_RETURN:
-        hint = reduce_hint_pep484585_func_return(
-            func=decor_func.func_wrappee,
-            func_annotations=decor_func.decoratee_annotations,
-            exception_prefix=exception_prefix,
-        )
-    # Else, this hint annotates a parameter.
-
     # Sane child hint reduced from this possibly insane child hint if reducing
     # this hint did not generate supplementary metadata *OR* that metadata
     # otherwise (i.e., if reducing this hint generated supplementary metadata).
@@ -212,6 +193,24 @@ def sanify_hint_root_func(
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )
+
+    # If this sanified hint annotates the return of the decorated callable *AND*
+    # this hint is contextually invalid for that callable (e.g., generator whose
+    # return is *NOT* annotated as "Generator[...]"), raise an exception.
+    #
+    # Note that:
+    # * This validation is intentionally performed *AFTER* sanifying this hint
+    #   above to resolve any redirection originally applied by the caller to
+    #   this hint (e.g., stringification under the obsolete PEP 563-compliant
+    #   "from __future__ import annotations" pragma).
+    # * This logic *ONLY* pertains to callables (rather than statements) and is
+    #   thus *NOT* performed by the sanify_hint_root_statement() sanitizer.
+    die_if_func_return_hint_invalid(
+        call_curr=decor_func,
+        hint_sane=hint_sane,
+        pith_name=pith_name,
+    )
+    # Else, this hint annotates a parameter.
 
     # ....................{ RETURN                         }....................
     # Return this hint if this hint is unignorable *OR* "typing.Any" otherwise.

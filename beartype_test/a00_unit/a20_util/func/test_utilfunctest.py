@@ -118,16 +118,17 @@ def test_is_func_coro() -> None:
     assert is_func_coro('To hear—an old and solemn harmony;') is (
         False)
 
-
-def test_is_func_async_generator() -> None:
+# ....................{ TESTS ~ generator                  }....................
+def test_is_func_generator() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfunctest.is_func_async_generator` function.
+    :func:`beartype._util.func.utilfunctest.is_func_generator` tester.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.func.utilfunctest import is_func_async_generator
-    from beartype.roar._roarexc import _BeartypeUtilCallableException
+    from beartype._util.func.utilfunccodeobj import get_func_codeobject
+    from beartype._util.func.utilfunctest import is_func_generator
     from beartype_test.a00_unit.data.data_type import (
         async_coroutine,
         async_coroutine_factory,
@@ -138,43 +139,113 @@ def test_is_func_async_generator() -> None:
         function,
     )
 
-    # Assert this tester accepts pure-Python asynchronous generator callables.
-    assert is_func_async_generator(async_generator_factory) is True
+    # ....................{ LOCALS                         }....................
+    # Code object of an arbitrary pure-Python asynchronous and synchronous
+    # generator factories.
+    async_generator_factory_codeobj = get_func_codeobject(
+        async_generator_factory)
+    sync_generator_factory_codeobj = get_func_codeobject(
+        sync_generator_factory)
+
+    # ....................{ PASS                           }....................
+    # Assert this tester accepts both pure-Python asynchronous *AND* synchronous
+    # generator factories.
+    assert is_func_generator(async_generator_factory) is True
+    assert is_func_generator(sync_generator_factory) is True
+
+    # Assert this tester accepts the code objects of both pure-Python
+    # assynchronous *AND* synchronous generator factories.
+    assert is_func_generator(async_generator_factory_codeobj) is True
+    assert is_func_generator(sync_generator_factory_codeobj) is True
+
+    # ....................{ FAIL                           }....................
+    # Assert this tester rejects pure-Python coroutine objects.
+    assert is_func_generator(async_coroutine) is False
+
+    # Assert this tester rejects pure-Python coroutine factories.
+    assert is_func_generator(async_coroutine_factory) is False
 
     # Assert this tester rejects pure-Python asynchronous generator objects.
-    assert is_func_async_generator(async_generator) is False
-
-    # Assert this tester rejects pure-Python coroutine callables.
-    assert is_func_async_generator(async_coroutine_factory) is False
-
-    # Assert this tester rejects pure-Python coroutine objects.
-    assert is_func_async_generator(async_coroutine) is False
-
-    # Assert this tester rejects pure-Python synchronous generator callables.
-    assert is_func_async_generator(sync_generator_factory) is False
+    assert is_func_generator(async_generator) is False
 
     # Assert this tester rejects pure-Python synchronous generator objects.
-    assert is_func_async_generator(sync_generator) is False
+    assert is_func_generator(sync_generator) is False
 
     # Assert this tester rejects pure-Python non-asynchronous callables.
-    assert is_func_async_generator(function) is False
+    assert is_func_generator(function) is False
 
     # Assert this tester rejects arbitrary non-asynchronous objects.
-    assert is_func_async_generator('To hear—an old and solemn harmony;') is (
+    assert is_func_generator('O may no wintry season, bare and hoary,') is (
         False)
 
-# ....................{ TESTS ~ sync                       }....................
-def test_is_func_sync_generator() -> None:
+
+def test_is_func_generator_async() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfunctest.is_func_sync_generator` tester.
+    :func:`beartype._util.func.utilfunctest.is_func_generator_async` tester.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfunccodeobj import get_func_codeobject
-    from beartype._util.func.utilfunctest import is_func_sync_generator
+    from beartype._util.func.utilfunctest import is_func_generator_async
+    from beartype_test.a00_unit.data.data_type import (
+        async_coroutine,
+        async_coroutine_factory,
+        async_generator,
+        async_generator_factory,
+        sync_generator,
+        sync_generator_factory,
+        function,
+    )
+
+    # ....................{ LOCALS                         }....................
+    # Code object of an arbitrary pure-Python asynchronous generator factory.
+    async_generator_factory_codeobj = get_func_codeobject(
+        async_generator_factory)
+
+    # ....................{ PASS                           }....................
+    # Assert this tester accepts pure-Python asynchronous generator factories.
+    assert is_func_generator_async(async_generator_factory) is True
+
+    # Assert this tester accepts the code objects of pure-Python assynchronous
+    # generator factories.
+    assert is_func_generator_async(async_generator_factory_codeobj) is True
+
+    # ....................{ FAIL                           }....................
+    # Assert this tester rejects pure-Python coroutine objects.
+    assert is_func_generator_async(async_coroutine) is False
+
+    # Assert this tester rejects pure-Python coroutine factories.
+    assert is_func_generator_async(async_coroutine_factory) is False
+
+    # Assert this tester rejects pure-Python asynchronous generator objects.
+    assert is_func_generator_async(async_generator) is False
+
+    # Assert this tester rejects pure-Python synchronous generator objects.
+    assert is_func_generator_async(sync_generator) is False
+
+    # Assert this tester rejects pure-Python synchronous generator factories.
+    assert is_func_generator_async(sync_generator_factory) is False
+
+    # Assert this tester rejects pure-Python non-asynchronous callables.
+    assert is_func_generator_async(function) is False
+
+    # Assert this tester rejects arbitrary non-asynchronous objects.
+    assert is_func_generator_async('To hear—an old and solemn harmony;') is (
+        False)
+
+
+def test_is_func_generator_sync() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_generator_sync` tester.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.func.utilfunccodeobj import get_func_codeobject
+    from beartype._util.func.utilfunctest import is_func_generator_sync
     from beartype_test.a00_unit.data.data_type import (
         async_coroutine,
         async_coroutine_factory,
@@ -191,33 +262,33 @@ def test_is_func_sync_generator() -> None:
 
     # ....................{ PASS                           }....................
     # Assert this tester accepts pure-Python synchronous generator factories.
-    assert is_func_sync_generator(sync_generator_factory) is True
+    assert is_func_generator_sync(sync_generator_factory) is True
 
     # Assert this tester accepts the code objects of pure-Python synchronous
     # generator factories.
-    assert is_func_sync_generator(sync_generator_factory_codeobj) is True
+    assert is_func_generator_sync(sync_generator_factory_codeobj) is True
 
     # ....................{ FAIL                           }....................
-    # Assert this tester rejects pure-Python synchronous generator objects.
-    assert is_func_sync_generator(sync_generator) is False
+    # Assert this tester rejects pure-Python coroutine objects.
+    assert is_func_generator_sync(async_coroutine) is False
 
-    # Assert this tester rejects pure-Python asynchronous generator callables.
-    assert is_func_sync_generator(async_generator_factory) is False
+    # Assert this tester rejects pure-Python coroutine factories.
+    assert is_func_generator_sync(async_coroutine_factory) is False
 
     # Assert this tester rejects pure-Python asynchronous generator objects.
-    assert is_func_sync_generator(async_generator) is False
+    assert is_func_generator_sync(async_generator) is False
 
-    # Assert this tester rejects pure-Python coroutine callables.
-    assert is_func_sync_generator(async_coroutine_factory) is False
+    # Assert this tester rejects pure-Python asynchronous generator factories.
+    assert is_func_generator_sync(async_generator_factory) is False
 
-    # Assert this tester rejects pure-Python coroutine objects.
-    assert is_func_sync_generator(async_coroutine) is False
+    # Assert this tester rejects pure-Python synchronous generator objects.
+    assert is_func_generator_sync(sync_generator) is False
 
     # Assert this tester rejects pure-Python non-asynchronous callables.
-    assert is_func_sync_generator(function) is False
+    assert is_func_generator_sync(function) is False
 
     # Assert this tester rejects arbitrary non-asynchronous objects.
-    assert is_func_sync_generator('To hear—an old and solemn harmony;') is (
+    assert is_func_generator_sync('To hear—an old and solemn harmony;') is (
         False)
 
 # ....................{ TESTS ~ descriptor : classmethod   }....................

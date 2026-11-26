@@ -45,9 +45,9 @@ from beartype._util.func.utilfunccodeobj import (
     get_func_codeobject_or_none,
 )
 from beartype._util.func.utilfunctest import (
-    is_func_async_generator,
+    is_func_generator_async,
     is_func_coro,
-    is_func_sync_generator,
+    is_func_generator_sync,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 from beartype._util.hint.pep.proposal.pep749.pep649749annotate import (
@@ -536,7 +536,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
         # If the wrappee callable currently being decorated is pure-Python...
         if func_wrappee_codeobj:
             # print(f'Decorated callable {repr(func)}...')
-            # print(f'synchronous generator factory? {is_func_sync_generator(func_wrappee_codeobj)}')
+            # print(f'synchronous generator factory? {is_func_generator_sync(func_wrappee_codeobj)}')
 
             # If this wrappee is an asynchronous coroutine factory (i.e.,
             # callable declared with "async def" rather than merely "def"
@@ -584,7 +584,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
             # If this wrappee is a synchronous generator factory (i.e.,
             # callable declared with merely the "def" rather than "async def"
             # keywords and containing one or more "yield" expressions)...
-            if is_func_sync_generator(func_wrappee_codeobj):
+            if is_func_generator_sync(func_wrappee_codeobj):
                 # print(f'Decorated synchronous generator factory {repr(func)} detected!')
 
                 # Code snippet yielding from (i.e., deferring to) the
@@ -665,7 +665,7 @@ class BeartypeCallDecorFuncData(BeartypeCallDecorFuncMinimalData):
             # If this wrappee is a asynchronous generator factory (i.e.,
             # callable declared with "async def" keywords and containing one or
             # more "yield" expressions)...
-            elif is_func_async_generator(func_wrappee_codeobj):
+            elif is_func_generator_async(func_wrappee_codeobj):
                 # Code snippet prefixing the declaration of the wrapper function
                 # wrapping this coroutine factory with type-checking.
                 self.func_wrapper_code_signature_prefix = 'async '
