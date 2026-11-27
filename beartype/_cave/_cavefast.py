@@ -54,6 +54,9 @@ from beartype._util.py.utilpyversion import (
 )
 from collections import deque as _deque
 from collections.abc import (
+    AsyncIterable as _AsyncIterable,
+    AsyncIterator as _AsyncIterator,
+    AsyncGenerator as _AsyncGenerator,
     Collection as _Collection,
     Container as _Container,
     Generator as _Generator,
@@ -1875,6 +1878,25 @@ callables implemented in pure Python whose declaration is preceded by the
 
 # ....................{ TUPLES ~ container : abc           }....................
 # Tuples of types assuming the above initialization to have been performed.
+
+#FIXME: Currently unneeded but preserved for posterity. *shrug*
+# GeneratorAsyncTypes = (_AsyncGenerator, _AsyncIterable, _AsyncIterator)
+# '''
+# Tuple of all abstract base classes (ABCs) suitable for use as the return type
+# hints annotating **asynchronous generator factories** (i.e., callables whose
+# signatures were preceded by the ``async`` keyword and whose bodies contain one
+# or more ``yield`` expressions).
+# '''
+#
+#
+# GeneratorSyncTypes = (_Generator, _Iterable, _Iterator)
+# '''
+# Tuple of all abstract base classes (ABCs) suitable for use as the return type
+# hints annotating **synchronous generator factories** (i.e., callables whose
+# signatures were *not* preceded by the ``async`` keyword and whose bodies
+# contain one or more ``yield`` expressions).
+# '''
+
 
 MappingOrSequenceTypes = (MappingType, SequenceType)
 '''

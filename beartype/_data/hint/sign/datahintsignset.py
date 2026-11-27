@@ -462,9 +462,6 @@ subscriptable by zero or more child hints.
 
 # ....................{ SIGNS ~ return                     }....................
 HINT_SIGNS_RETURN_GENERATOR_SYNC: FrozenSetHintSign = frozenset((
-    # ..................{ PEP 484                            }..................
-    HintSignAny,
-
     # ..................{ PEP (484|585)                      }..................
     HintSignGenerator,
     HintSignIterable,
@@ -509,9 +506,6 @@ https://github.com/beartype/beartype/issues/65#issuecomment-954468111
 
 
 HINT_SIGNS_RETURN_GENERATOR_ASYNC: FrozenSetHintSign = frozenset((
-    # ..................{ PEP 484                            }..................
-    HintSignAny,
-
     # ..................{ PEP (484|585)                      }..................
     HintSignAsyncGenerator,
     HintSignAsyncIterable,

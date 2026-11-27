@@ -154,7 +154,7 @@ def test_is_func_generator() -> None:
     assert is_func_generator(sync_generator_factory) is True
 
     # Assert this tester accepts the code objects of both pure-Python
-    # assynchronous *AND* synchronous generator factories.
+    # asynchronous *AND* synchronous generator factories.
     assert is_func_generator(async_generator_factory_codeobj) is True
     assert is_func_generator(sync_generator_factory_codeobj) is True
 
@@ -208,7 +208,7 @@ def test_is_func_generator_async() -> None:
     # Assert this tester accepts pure-Python asynchronous generator factories.
     assert is_func_generator_async(async_generator_factory) is True
 
-    # Assert this tester accepts the code objects of pure-Python assynchronous
+    # Assert this tester accepts the code objects of pure-Python asynchronous
     # generator factories.
     assert is_func_generator_async(async_generator_factory_codeobj) is True
 

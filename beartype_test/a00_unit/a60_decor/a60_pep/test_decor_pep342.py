@@ -55,9 +55,12 @@ def test_decor_pep342_sync_generator_checked() -> None:
     # of synchronous generators covering all possible edge cases.
     HINTS_RETURN = (
         # ....................{ NON-PEP                    }....................
-        # The unsubscripted "collections.abc.Generator" ABC is a
-        # PEP-noncompliant type.
+        # These unsubscripted ABCs are PEP-noncompliant types.
         Pep585Generator,
+
+        #FIXME: Uncomment once worky, yo. *sigh*
+        # Pep585Iterable,
+        # Pep585Iterator,
 
         # ....................{ PEP 484                    }....................
         # Ignorable object preventing code generation from type-checking the
@@ -118,6 +121,7 @@ def test_decor_pep342_sync_generator_checked() -> None:
         @beartype
         def GET_OUT_OF_THE_CAR(
             FOR_THE_LOVE_OF_GOD: str, FACTOR_THE_NUMBER: str) -> str:
+
             # Return an arbitrary object (sorta) satisfying this return hint.
             yield FOR_THE_LOVE_OF_GOD + FACTOR_THE_NUMBER
 

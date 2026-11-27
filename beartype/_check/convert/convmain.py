@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-agnostic type hint sanitizers** (i.e., high-level callables
-converting type hints from one format into another, either permanently or
-temporarily and either losslessly or in a lossy manner).
+Project-wide **type hint sanitizers** (i.e., high-level callables converting
+type hints from one format into another, either permanently or temporarily and
+either losslessly or in a lossy manner).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -23,8 +23,7 @@ from beartype._check.cls.call.calldataabc import BeartypeCallDataABC
 from beartype._check.cls.call.calldatadecorfunc import BeartypeCallDecorFuncData
 from beartype._check.cls.call.calldataexternal import (
     BEARTYPE_CALL_EXTERNAL_META)
-from beartype._check.convert._reduce._pep.pep484585.redpep484585func import (
-    die_if_func_return_hint_invalid)
+from beartype._check.convert._convtest import die_if_func_return_hint_invalid
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.check.error.dataerrmagic import EXCEPTION_PLACEHOLDER
@@ -209,6 +208,7 @@ def sanify_hint_root_func(
         call_curr=decor_func,
         hint_sane=hint_sane,
         pith_name=pith_name,
+        exception_prefix=exception_prefix,
     )
     # Else, this hint annotates a parameter.
 

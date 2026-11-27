@@ -10,6 +10,11 @@ well-known types).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Shift all PEP-specific types defined below into new corresponding
+#PEP-specific submodules of the existing "beartype._data.cls.pep" submodule,
+#please. *sigh*
+
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     # The non-standard "beartype.typing.Protocol" superclass subclasses the
