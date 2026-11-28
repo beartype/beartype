@@ -472,7 +472,7 @@ Tri-state boolean governing how and whether beartype colours **type-checking vio
 - `True`, beartype *always* colours type-checking violations raised by callables configured with this configuration.
 - `None`, beartype conditionally colours type-checking violations raised by callables configured with this configuration only when standard output is attached to an interactive terminal.
 
-The [`${BEARTYPE_IS_COLOR}`](#beartype_is_color) globally overrides this parameter, enabling end users to enforce a global colour policy across their full app stack. When both that variable *and* this parameter are set to differing (and thus conflicting) values, the `BeartypeConf` class:
+The [`${BEARTYPE_IS_COLOR}`](#beartype_is_color) globally overrides this parameter, enabling end users to enforce a global colour policy across their full app stack. If it is absent, a non-empty `NO_COLOR` disables colours; otherwise, a non-empty `FORCE_COLOR` enables them. When the selected environment override and this parameter have differing (and thus conflicting) values, the `BeartypeConf` class:
 
 - Ignores this parameter in favour of that variable.
 
@@ -658,3 +658,13 @@ BEARTYPE_IS_COLOR=False python3 -m monochrome_retro_app.its_srsly_cool
 ```
 
 !!! note "Added in 0.16.0"
+
+##### Standard colour environment variables
+
+When `BEARTYPE_IS_COLOR` is absent, beartype also honours the standard [`NO_COLOR`](https://no-color.org/) and [`FORCE_COLOR`](https://force-color.org/) variables, in that order. A non-empty `NO_COLOR` forces `is_color=False`; otherwise, a non-empty `FORCE_COLOR` forces `is_color=True`, including when output is redirected. Empty strings have no effect. Any non-empty value activates the variable, including `0` or `False`.
+
+`BEARTYPE_IS_COLOR` always takes precedence, including its `None` value restoring automatic terminal detection. Invalid values still raise `BeartypeConfShellVarException` rather than falling back to another variable. The interpreter-specific `PYTHON_COLORS` variable does not configure beartype.
+
+As with `BEARTYPE_IS_COLOR`, a selected standard variable overrides an explicit conflicting `is_color` argument and emits `BeartypeConfShellVarWarning` naming that variable. Environment variables are read when a configuration is constructed; existing configuration objects and decorated functions are not changed retroactively.
+
+The default `@beartype` configuration is created when beartype is imported. Set these variables before import to affect default decorators; after changing them at runtime, pass a newly constructed `BeartypeConf()` explicitly to use the new settings.

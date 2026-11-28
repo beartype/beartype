@@ -580,8 +580,10 @@ class BeartypeConf(object):
             The ``${BEARTYPE_IS_COLOR}`` environment variable globally overrides
             *all* attempts by *all* callers to explicitly pass this parameter,
             enabling end users to enforce a global colour policy across their
-            full app stack. If ``${BEARTYPE_IS_COLOR}`` is set to a different
-            value than that of this parameter, this constructor emits a
+            full app stack. When that variable is absent, a non-empty
+            ``${NO_COLOR}`` disables colours, otherwise a non-empty
+            ``${FORCE_COLOR}`` enables them. If the selected environment
+            override differs from this parameter, this constructor emits a
             non-fatal :class:`beartype.roar.BeartypeConfShellVarWarning` warning
             informing the caller of this configuration conflict. To avoid this
             conflict, open-source libraries are recommended to *not* pass this
@@ -855,7 +857,7 @@ class BeartypeConf(object):
 
             # ..................{ CACHE                      }..................
             # Validate and possibly override the "is_color" parameter by the
-            # value of the ${BEARTYPE_IS_COLOR} environment variable (if set).
+            # highest-precedence color environment variable (if set).
             is_color = get_is_color(is_color)
 
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
