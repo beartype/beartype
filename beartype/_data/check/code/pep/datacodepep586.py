@@ -36,8 +36,14 @@ subscripted by one or more literal objects.
 
 
 CODE_PEP586_LITERAL = '''
-{{indent_curr}}        # True only if this pith is equal to this literal.
-{{indent_curr}}        {pith_curr_var_name} == {hint_child_expr} or'''
+{{indent_curr}}        # True only if this pith is of this literal's exact type
+{{indent_curr}}        # and equal to this literal. Note that the exact type is
+{{indent_curr}}        # tested rather than merely "isinstance()" here, as the
+{{indent_curr}}        # latter would conflate literals that merely compare
+{{indent_curr}}        # equal (e.g., "True == 1" and "IntEnum" members equal to
+{{indent_curr}}        # integers). Under PEP 586, two literals are equivalent
+{{indent_curr}}        # only if their types are also identical.
+{{indent_curr}}        type({pith_curr_var_name}) is {hint_child_type_expr} and {pith_curr_var_name} == {hint_child_expr} or'''
 '''
 :pep:`586`-compliant code snippet type-checking the current pith against the
 current child literal object subscripting a :pep:`586`-compliant

@@ -25,7 +25,8 @@ def hints_pep586_meta() -> 'list[HintPepMetadata]':
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
-        MasterlessDecreeVenomlessWhich)
+        MasterlessDecreeVenomlessWhich,
+        MasterlessDecreeVenomlessWhichInt)
     from beartype_test.a00_unit.data.hint.cls.pith.data_clshint import (
         HintPepMetadata)
     from beartype_test.a00_unit.data.hint.cls.pith.data_clspith import (
@@ -125,6 +126,40 @@ def hints_pep586_meta() -> 'list[HintPepMetadata]':
                         # object embeds the representation of the expected
                         # type.
                         exception_str_match_regexes=(r'\bint\b',),
+                    ),
+                ),
+            ),
+
+            # Literal arbitrary integer that a boolean and an integer
+            # enumeration member both compare equal to.
+            HintPepMetadata(
+                hint=Literal[1],
+                pep_sign=HintSignLiteral,
+                is_args=True,
+                piths_meta=(
+                    # Integer constant defined by the same syntax.
+                    PithSatisfiedMetadata(1),
+                    # Boolean constant equal to the same integer but of a
+                    # differing type.
+                    PithUnsatisfiedMetadata(
+                        pith=True,
+                        # Match that the exception message raised for this
+                        # object embeds the representation of the expected
+                        # literal.
+                        exception_str_match_regexes=(r'\bTrue\b',),
+                    ),
+                    # Integer enumeration member equal to the same integer
+                    # but of a differing type.
+                    PithUnsatisfiedMetadata(
+                        pith=(
+                            MasterlessDecreeVenomlessWhichInt.
+                            NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A
+                        ),
+                        # Match that the exception message raised for this
+                        # object embeds the representation of the expected
+                        # type.
+                        exception_str_match_regexes=(
+                            r'\bMasterlessDecreeVenomlessWhichInt\b',),
                     ),
                 ),
             ),
