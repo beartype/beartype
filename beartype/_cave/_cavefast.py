@@ -1218,16 +1218,14 @@ else:
     '''
 
 # ....................{ TYPES ~ hint : pep : 604           }....................
-#FIXME: Excise the obsolete "HintPep604Type" type *AFTER* dropping Python 3.13
-#support, please. Under Python >= 3.14, this type is a trivial alias of the
-#standard "typing.Union" type.
-#FIXME: Actually, just rename this to "HintPep484604UnionType" at that point.
-#This unambiguous name is still quite useful for clarity, as this is frankly a
-#super-confusing topic. *sigh*
+#FIXME: Rename this to "HintPep484604UnionType", please. This unambiguous name
+#is useful for clarity, as this is frankly a super-confusing topic. *sigh*
 HintPep604Type = _types.UnionType
 '''
-C-based type of all :pep:`604`-compliant **new unions** (i.e., objects created
-by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
+C-based type of both all :pep:`484`-compliant **old unions** (i.e.,
+``typing.Union[...]`` and ``typing.Optional[...]`` type hints) *and*
+:pep:`604`-compliant **new unions** (i.e., objects created by expressions of the
+form ``{type1} | {type2} | ... | {typeN}``).
 
 This type is a version-agnostic generalization of the standard
 :class:`types.UnionType` type available only under Python >= 3.10.
@@ -1662,10 +1660,14 @@ the modules defining those instances).
 '''
 
 
-#FIXME: This is probably incorrect under Python >= 3.9, where isinstance() also
-#accepts "|"-delimited unions of types (e.g., float | int | str). What are
-#those types, exactly?
-TestableTypes = (ClassType, tuple)
+TestableTypes = (
+    # PEP-noncompliant types.
+    ClassType,
+    # PEP-noncompliant tuple unions (i.e., tuples of types).
+    tuple,
+    # PEP 484- and 604-compliant union type hints.
+    HintPep604Type,
+)
 '''
 Tuple of all **testable types** (i.e., types suitable for use as the second
 parameter passed to the :func:`isinstance` and :func:`issubclass` builtins).
@@ -1900,15 +1902,20 @@ callables implemented in pure Python whose declaration is preceded by the
 
 MappingOrSequenceTypes = (MappingType, SequenceType)
 '''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`collections.abc.Mapping` *or*
-:class:`collections.abc.Sequence` APIs.
+Tuple of the types of mappings *and* sequences conforming to (but *not*
+necessarily subclassing) the canonical :class:`collections.abc.Sequence` API.
 '''
 
 
 ModuleOrSequenceTypes = (ModuleType, SequenceType)
 '''
-Tuple of the module type *and* all container base classes conforming to (but
-*not* necessarily subclassing) the canonical :class:`collections.abc.Sequence`
-API.
+Tuple of the types of all modules *and* sequences conforming to (but *not*
+necessarily subclassing) the canonical :class:`collections.abc.Sequence` API.
+'''
+
+
+TypeOrSetTypes = (ClassType, _Set)
+'''
+Tuple of the types of all classes *and* sets conforming to (but *not*
+necessarily subclassing) the canonical :class:`collections.abc.Sequence` API.
 '''

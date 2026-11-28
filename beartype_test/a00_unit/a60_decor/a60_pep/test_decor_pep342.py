@@ -8,6 +8,12 @@ Beartype decorator :pep:`342`-compliant synchronous generator unit tests.
 
 This submodule unit tests :pep:`342` support for synchronous generators
 implemented in the :func:`beartype.beartype` decorator.
+
+See Also
+--------
+:mod:`.test_decor_pep525`
+    Companion submodule unit testing :pep:`525` support for asynchronous
+    generators implemented in the :func:`beartype.beartype` decorator.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -58,10 +64,8 @@ def test_decor_pep342_sync_generator_checked() -> None:
         # PEP-noncompliant standard abstract base classes (ABCs) satisfying
         # type-checking constraints.
         Pep585Generator,
-
-        #FIXME: Uncomment once worky, yo. *sigh*
-        # Pep585Iterable,
-        # Pep585Iterator,
+        Pep585Iterable,
+        Pep585Iterator,
 
         # ....................{ PEP 484                    }....................
         # Ignorable object preventing code generation from type-checking the

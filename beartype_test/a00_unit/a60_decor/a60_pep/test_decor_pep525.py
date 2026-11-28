@@ -8,6 +8,12 @@ Beartype decorator :pep:`525`-compliant asynchronous generator unit tests.
 
 This submodule unit tests :pep:`525` support for asynchronous generators
 implemented in the :func:`beartype.beartype` decorator.
+
+See Also
+--------
+:mod:`.test_decor_pep342`
+    Companion submodule unit testing :pep:`342` support for synchronous
+    generators implemented in the :func:`beartype.beartype` decorator.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -56,20 +62,32 @@ async def test_decor_pep525_async_generator_check() -> None:
     # of asynchronous generators -- exercising all possible edge cases.
     HINTS_RETURN = (
         # ....................{ NON-PEP                    }....................
-        # The unsubscripted "collections.abc.AsyncGenerator" superclass is a
-        # PEP-noncompliant hint.
+        # PEP-noncompliant standard abstract base classes (ABCs) satisfying
+        # type-checking constraints.
         Pep585AsyncGenerator,
+        Pep585AsyncIterable,
+        Pep585AsyncIterator,
 
         # ....................{ PEP 484                    }....................
         # Ignorable object preventing code generation from type-checking the
         # asynchronous generator created and returned by that factory.
         Any,
 
+        # PEP 484-compliant type hints directly satisfying type-checking.
         Pep484AsyncGenerator[Union[str, float], None],
         Pep484AsyncIterable[Union[str, float]],
         Pep484AsyncIterator[Union[str, float]],
 
+        # PEP 484-compliant quoted forward references indirectly satisfying
+        # type-checking *AFTER* resolution to the PEP 484-compliant type hints
+        # they refer to. See also this issue exercised by this edge case:
+        #     https://github.com/beartype/beartype/issues/770
+        'Pep484AsyncGenerator[Union[str, float], None]',
+        'Pep484AsyncIterable[Union[str, float]]',
+        'Pep484AsyncIterator[Union[str, float]]',
+
         # ....................{ PEP 585                    }....................
+        # PEP 585-compliant type hints directly satisfying type-checking.
         Pep585AsyncGenerator[Union[str, float], None],
         Pep585AsyncIterable[Union[str, float]],
         Pep585AsyncIterator[Union[str, float]],

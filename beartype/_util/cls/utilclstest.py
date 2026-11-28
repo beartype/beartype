@@ -12,14 +12,20 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilTypeException
-from beartype._cave._cavefast import TestableTypes as TestableTypesTuple
+from beartype._cave._cavefast import (
+    TestableTypes,
+    TypeOrSetTypes as TypeOrSetTypesTuple,
+)
 from beartype._data.py.databuiltins import BUILTIN_TYPES
 from beartype._data.typing.datatyping import (
     TypeException,
+    TypeOrSetTypes,
     TypeOrTupleTypes,
 )
 from beartype._data.typing.datatypingport import TypeIs
 from beartype._data.py.databuiltins import BUILTINS_MODULE_NAME
+from beartype._util.cache.func.utilcachefunc import callable_cached
+from collections.abc import Set
 
 # ....................{ RAISERS                            }....................
 def die_unless_type(
@@ -277,8 +283,9 @@ def is_type_builtin_or_fake(cls: type) -> bool:
 def is_type_subclass(
     cls: object, base_classes: TypeOrTupleTypes) -> bool:
     '''
-    :data:`True` only if the passed object is an inclusive subclass of the
-    passed superclass(es).
+    :data:`True` only if the passed object is an **inclusive subclass** of the
+    passed superclass(es) (i.e., is either one of those superclasses itself *or*
+    a subclass of one or more of those superclasses).
 
     Specifically, this tester returns :data:`True` only if either:
 
@@ -304,15 +311,15 @@ def is_type_subclass(
        >>> issubclass(object(), type)
        TypeError: issubclass() arg 1 must be a class
 
-    This tester suffers no such deficits, instead safely returning ``False``
+    This tester suffers no such deficits, instead safely returning :data:`False`
     when the first passed parameter is *not* a class.
 
     Parameters
     ----------
     obj : object
         Object to be inspected.
-    base_classes : TestableTypes
-        Superclass(es) to test whether this object is a subclass of defined as
+    base_classes : TypeOrTupleTypes
+        Superclass(es) to test whether this object is a subclass of, defined as
         either:
 
         * A single class.
@@ -324,7 +331,7 @@ def is_type_subclass(
         :data:`True` only if this object is an inclusive subclass of these
         superclass(es).
     '''
-    assert isinstance(base_classes, TestableTypesTuple), (
+    assert isinstance(base_classes, TestableTypes), (
         f'{repr(base_classes)} neither class nor tuple of classes.')
 
     # Return true only if...
@@ -338,27 +345,106 @@ def is_type_subclass(
 
 
 #FIXME: Unit test us up, please.
-def is_type_subclass_proper(
-    cls: object, base_classes: TypeOrTupleTypes) -> bool:
+#FIXME: Grep the codebase for everywhere we explicitly access the "__mro__"
+#dunder attribute. Almost *ALL* of those accesses should be refactored to call
+#this higher-level tester instead for safety, efficiency, and sanity.
+@callable_cached
+def is_type_subclass_physical(
+    cls: object, base_classes: TypeOrSetTypes) -> bool:
     '''
-    :data:`True` only if the passed object is a proper subclass of the passed
-    superclass(es).
+    :data:`True` only if the passed object is a **physical inclusive subclass**
+    of the passed superclass(es) (i.e., is either one of those superclasses
+    itself *or* a physical subclass of one or more of those superclasses, where
+    "physical subclass" is defined as "the method-resolution order (MRO) of the
+    passed type explicitly contains one or more of those superclasses").
+
+    This tester intentionally accepts *only* physical subclasses and thus omits
+    **semantic subclasses** (i.e., classes whose MROs do *not* explicitly
+    contain one or more of the passed superclasses but which are nonetheless
+    semantically considered to be subclasses of one or more of those
+    superclasses, typically due to so-called "structural subtyping" provided by
+    abstract base classes (ABCs) via builtin :class:`collections.abc.ABCMeta`
+    metaclass machinery).
 
     Specifically, this tester returns :data:`True` only if either:
 
-    * If ``base_classes`` is a single superclass, the passed class is a subclass
-      of that superclass (but *not* that superclass itself).
-    * Else, ``base_classes`` is a tuple of one or more superclasses. In this
-      case, the passed class is a subclass of one of those superclasses (but
-      *not* one of those superclasses themselves).
+    * If ``base_classes`` is a single superclass, either:
+
+      * The passed class is that superclass itself *or*...
+      * The MRO of the passed class explicitly contains that superclass.
+
+    * Else, ``base_classes`` is a frozen set of one or more superclasses. In
+      this case, either:
+
+      * The passed class is one of those superclasses themselves *or*...
+      * The MRO of the passed class explicitly contains one or more of those
+        superclasses.
+
+    This tester is memoized for efficiency. Consequently, the passed set *must*
+    thus be a frozen set.
 
     Parameters
     ----------
     obj : object
         Object to be inspected.
-    base_classes : TestableTypes
-        Superclass(es) to test whether this object is a subclass of defined as
-        either:
+    base_classes : TypeOrSetTypes
+        Superclass(es) to test whether this object is a physical subclass of,
+        defined as either:
+
+        * A single class.
+        * A frozen set of one or more classes.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is an inclusive physical subclass of
+        these superclass(es).
+    '''
+    assert isinstance(base_classes, TypeOrSetTypesTuple), (
+        f'{repr(base_classes)} neither class nor set of classes.')
+
+    # If the first passed object is *NOT* a class, immediately return false.
+    if not isinstance(cls, type):
+        return False
+    # Else, this object is a class.
+    #
+    # If the second passed object is a frozen set...
+    elif isinstance(base_classes, Set):
+        # Return true only if the intersection of this frozen set and the frozen
+        # set of all types in the method resolution order (MRO) of the first
+        # passed object is non-empty.
+        return len(base_classes & frozenset(cls.__mro__)) != 0
+    # Else, the second passed object is *NOT* a frozen set. Ergo, this object is
+    # a simple type.
+
+    # Return true only if the MRO of the first passed object contains the second
+    # passed object.
+    return base_classes in cls.__mro__
+
+
+#FIXME: Unit test us up, please.
+def is_type_subclass_proper(
+    cls: object, base_classes: TypeOrTupleTypes) -> bool:
+    '''
+    :data:`True` only if the passed object is a **proper subclass** of the
+    passed superclass(es) (i.e., is a subclass of one or more of those
+    superclasses but *not* one of those superclasses itself).
+
+    Specifically, this tester returns :data:`True` only if either:
+
+    * If ``base_classes`` is a single superclass, the passed class is a subclass
+      of that superclass but *not* that superclass itself.
+    * Else, ``base_classes`` is a tuple of one or more superclasses. In this
+      case, the passed class is a subclass of one of those superclasses but
+      *not* one of those superclasses themselves.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+    base_classes : TypeOrTupleTypes
+        Superclass(es) to test whether this object is a proper subclass of
+        defined, as either:
 
         * A single class.
         * A tuple of one or more classes.
@@ -369,7 +455,7 @@ def is_type_subclass_proper(
         :data:`True` only if this object is a proper subclass of these
         superclass(es).
     '''
-    assert isinstance(base_classes, TestableTypesTuple), (
+    assert isinstance(base_classes, TestableTypes), (
         f'{repr(base_classes)} neither class nor tuple of classes.')
 
     # Return true only if...

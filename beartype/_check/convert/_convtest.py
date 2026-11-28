@@ -19,13 +19,20 @@ from beartype._check.cls.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
+from beartype._data.cls.dataclsabc import (
+    TYPES_ITERABLE_OR_ITERATOR_ASYNC,
+    TYPES_ITERABLE_OR_ITERATOR_SYNC,
+)
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatyping import TypeException
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_RETURN_GENERATOR_ASYNC,
     HINT_SIGNS_RETURN_GENERATOR_SYNC,
 )
-from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.cls.utilclstest import (
+    is_type_subclass,
+    is_type_subclass_physical,
+)
 from beartype._util.func.utilfunctest import (
     is_func_generator,
     is_func_generator_async,
@@ -179,47 +186,38 @@ def die_if_func_return_hint_invalid(
             # synchronous generator *NOR*...
             hint_sign in HINT_SIGNS_RETURN_GENERATOR_SYNC or
             # The "collections.abc.Generator" abstract base class (ABC) or an
-            # arbitrary class satisfying that pseudo-protocol...
-            is_type_subclass(hint, Generator) #  or
-            #FIXME: Additionally test that this hint is a *PHYSICAL* subclass of
-            #either "collections.abc.Iterable" *OR*" "collections.abc.Iterator"
-            #without regard for ABC-specific structural subtyping magic. Why?
-            #Strings, mostly. The "str" type is technically iterable but clearly
-            #invalid as the return for a generator. If we simply tested, say,
-            #"is_type_subclass(hint, (Iterable, Iterator))", then we'd
-            #erroneously accept "str" as well. Instead, we *ONLY* want to
-            #accept actual physical subclasses of those two ABCs. Of course, the
-            #test below *DOES* technically work -- but it's also inefficient.
-            #Instead, we want to:
-            #* Define a new is_type_subclass_physical() tester in our
-            #  "beartype._util.cls.utilclstest" submodule. This tester should
-            #  have the same signature as is_type_subclass(). Its implementation
-            #  should:
-            #  * Test for the inclusion of the first passed type in the
-            #    "__mro__" of the second passed type.
-            #  * If the first passed type is actually a FROZEN SET of types,
-            #    then instead perform the set intersection of that set against
-            #    the frozen set of the "__mro__" of the second passed type.
-            #* Call is_type_subclass() below. *shrug*
-            #* Refactor code below similarly. *mega shrug*
-            #* Lastly, explicitly note that we *DO* want to accept structural
-            #  subtyping for "collections.abc.Generator". Why? (A) Because we
-            #  currently do that and nobody complains (i.e., avoid breaking
-            #  backward compatibility). (B) Because the generator protocol is
-            #  non-trivial and thus *MUCH* more difficult to satisfy than the
-            #  trivial iterable protocol, which almost everything satisfies. In
-            #  other words, if something satisfies the generator protocol, it's
-            #  almost certainly valid as the return annotation for a generator
-            #  factory. The same *CANNOT* be said of something satisfying the
-            #  iterable protocol.
+            # arbitrary class *SEMANTICALLY* satisfying that pseudo-protocol
+            # *NOR*...
+            is_type_subclass(hint, Generator)  or
+            # The "collections.abc.Iterable" ABC, "Iterator" ABC, or an
+            # arbitrary class *PHYSICALLY* subclassing either of those ABCs...
             #
-            # (
-            #     isinstance(hint, type) and
-            #     (
-            #         Iterable in hint.__mro__ or
-            #         Iterator in hint.__mro__
-            #     )
-            # )
+            # Note the subtle intentional distinction between this and the prior
+            # test, which ensures that generator factory returns:
+            # * Accept structural subtyping *ONLY* for the
+            #   "collections.abc.Generator" abc. Why? (A) Because we currently
+            #   do that and nobody complains (i.e., avoid breaking backward
+            #   compatibility). (B) Because the generator protocol is
+            #   non-trivial and thus *MUCH* more difficult to satisfy than the
+            #   trivial iterable and iterator protocols, which almost everything
+            #   satisfies. In other words, if a type satisfies the generator
+            #   protocol, it's because that type intentionally satisfies that
+            #   protocol and is thus almost certainly valid as the return
+            #   annotation for a generator factory. The same *CANNOT* be said of
+            #   a type merely satisfying the iterable or iterator protocol.
+            # * Reject structural subtyping for the
+            #   "collections.abc.Iterable" and "Iterator" ABCs. Why? (A) Because
+            #   strings, mostly. Strings trivially define the __iter__() dunder
+            #   method and thus satisfy the iterable protocol. Clearly, however,
+            #   strings are *NOT* valid generators. This implies the next point.
+            #   (B) Because the iterable and iterator protocols are trivial and
+            #   thus significantly easier to satisfy than the non-trivial
+            #   generator protocol. In other words, if a type satisfies either
+            #   the iterable or iterator protocols but fails to explicitly
+            #   subclass either of those ABCs, that type (almost certainly) does
+            #   *NOT* satisfy the generator protocol and is thus certainly
+            #   invalid as the return annotation for a generator factory.
+            is_type_subclass_physical(hint, TYPES_ITERABLE_OR_ITERATOR_SYNC)
         # Then this hint is semantically invalid as the return annotation of
         # this callable. In this case, raise an exception.
         ):
@@ -230,9 +228,9 @@ def die_if_func_return_hint_invalid(
                 '* [RECOMMENDED] "collections.abc.Iterator[{yield_type}]".\n'
                 '* [when needed] "collections.abc.Generator[{yield_type}, {send_type}, {return_type}]".\n'
                 '* [less useful] "collections.abc.Iterable[{yield_type}]".\n'
-                '* [.....sus af] "collections.abc.Iterator" (or subclass thereof).\n'
-                '* [.....sus af] "collections.abc.Generator" (or subclass thereof).\n'
-                '* [.....sus af] "collections.abc.Iterable" (or subclass thereof).\n'
+                '* [.....sus af] "collections.abc.Iterator" or subclass thereof.\n'
+                '* [.....sus af] "collections.abc.Generator" or subclass thereof.\n'
+                '* [.....sus af] "collections.abc.Iterable" or subclass thereof.\n'
                 '* [deprecated!] "typing.Iterator[{yield_type}]".\n'
                 '* [deprecated!] "typing.Generator[{yield_type}, {send_type}, {return_type}]".\n'
                 '* [deprecated!] "typing.Iterable[{yield_type}]".\n'
@@ -249,8 +247,15 @@ def die_if_func_return_hint_invalid(
             # an synchronous generator *NOR*...
             hint_sign in HINT_SIGNS_RETURN_GENERATOR_ASYNC or
             # The "collections.abc.AsyncGenerator" abstract base class (ABC) or
-            # an arbitrary class satisfying that pseudo-protocol...
-            is_type_subclass(hint, AsyncGenerator)
+            # an arbitrary class *SEMANTICALLY* satisfying that pseudo-protocol
+            # *NOR*...
+            is_type_subclass(hint, AsyncGenerator) or
+            # The "collections.abc.AsyncIterable" ABC, "AsyncIterator" ABC, or
+            # an arbitrary class *PHYSICALLY* subclassing either of those
+            # ABCs...
+            #
+            # See also the comment above for a discussion of this distinction.
+            is_type_subclass_physical(hint, TYPES_ITERABLE_OR_ITERATOR_ASYNC)
         # Then this hint is semantically invalid as the return annotation of
         # this callable. In this case, raise an exception.
         ):
@@ -261,12 +266,12 @@ def die_if_func_return_hint_invalid(
                 '* [RECOMMENDED] "collections.abc.AsyncIterator[{yield_type}]".\n'
                 '* [when needed] "collections.abc.AsyncGenerator[{yield_type}, {send_type}, {return_type}]".\n'
                 '* [less useful] "collections.abc.AsyncIterable[{yield_type}]".\n'
-                '* [.....sus af] "collections.abc.AsyncIterable" (or subclass thereof).\n'
-                '* [.....sus af] "collections.abc.AsyncIterator" (or subclass thereof).\n'
-                '* [.....sus af] "collections.abc.AsyncGenerator" (or subclass thereof).\n'
-                '* [deprecated!] "typing.AsyncIterable[{yield_type}]".\n'
+                '* [.....sus af] "collections.abc.AsyncIterator" or subclass thereof.\n'
+                '* [.....sus af] "collections.abc.AsyncGenerator" or subclass thereof.\n'
+                '* [.....sus af] "collections.abc.AsyncIterable" or subclass thereof.\n'
                 '* [deprecated!] "typing.AsyncIterator[{yield_type}]".\n'
                 '* [deprecated!] "typing.AsyncGenerator[{yield_type}, {send_type}, {return_type}]".\n'
+                '* [deprecated!] "typing.AsyncIterable[{yield_type}]".\n'
                 '* [why bother?] "typing.Any".'
             )
         # Else, this hint is valid as the return annotation of this callable.

@@ -628,33 +628,42 @@ the :func:`isinstance` and :func:`issubclass` builtins.
 # ....................{ TYPE ~ or                          }....................
 SetOrTupleTypes = TupleTypes | AbstractSetTypes
 '''
-PEP-compliant type hint matching a set *or* tuple of zero or more types.
+:pep:`604`-compliant type hint matching a set *or* tuple of zero or more types.
 '''
 
 
 TypeOrCallable = Decoratee
 '''
-:pep:`585`-compliant type hint matching a callable *or* type.
+:pep:`604`-compliant type hint matching a callable *or* type.
 '''
 
 
-TypeOrTupleTypes = type | TupleTypes
+TypeOrSetTypes = type | AbstractSetTypes
 '''
-PEP-compliant type hint matching either a type *or* tuple of zero or more types.
+:pep:`604`-compliant type hint matching either a type *or* set of zero or more
+types.
 '''
 
 
 TypeOrSetOrTupleTypes = type | TupleTypes | AbstractSetTypes
 '''
-PEP-compliant type hint matching either a type *or* set or tuple of zero or more
+:pep:`604`-compliant type hint matching either a type *or* set or tuple of zero
+or more types.
+'''
+
+
+TypeOrTupleTypes = type | TupleTypes
+'''
+:pep:`604`-compliant type hint matching either a type *or* tuple of zero or more
 types.
 '''
 
 
+
 TypeStack = TupleTypes | None
 '''
-PEP-compliant type hint matching a **type stack** (i.e., either tuple of zero or
-more arbitrary types *or* :data:`None`).
+:pep:`604`-compliant type hint matching a **type stack** (i.e., either tuple of
+zero or more arbitrary types *or* :data:`None`).
 
 Objects matched by this hint are guaranteed to be either:
 
