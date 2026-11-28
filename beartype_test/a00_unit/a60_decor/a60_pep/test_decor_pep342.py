@@ -55,7 +55,8 @@ def test_decor_pep342_sync_generator_checked() -> None:
     # of synchronous generators covering all possible edge cases.
     HINTS_RETURN = (
         # ....................{ NON-PEP                    }....................
-        # These unsubscripted ABCs are PEP-noncompliant types.
+        # PEP-noncompliant standard abstract base classes (ABCs) satisfying
+        # type-checking constraints.
         Pep585Generator,
 
         #FIXME: Uncomment once worky, yo. *sigh*
@@ -67,11 +68,21 @@ def test_decor_pep342_sync_generator_checked() -> None:
         # asynchronous generator created and returned by that factory.
         Any,
 
+        # PEP 484-compliant type hints directly satisfying type-checking.
         Pep484Generator[Union[str, float], None, None],
         Pep484Iterable[Union[str, float]],
         Pep484Iterator[Union[str, float]],
 
+        # PEP 484-compliant quoted forward references indirectly satisfying
+        # type-checking *AFTER* resolution to the PEP 484-compliant type hints
+        # they refer to. See also this issue exercised by this edge case:
+        #     https://github.com/beartype/beartype/issues/770
+        'Pep484Generator[Union[str, float], None, None]',
+        'Pep484Iterable[Union[str, float]]',
+        'Pep484Iterator[Union[str, float]]',
+
         # ....................{ PEP 585                    }....................
+        # PEP 585-compliant type hints directly satisfying type-checking.
         Pep585Generator[Union[str, float], None, None],
         Pep585Iterable[Union[str, float]],
         Pep585Iterator[Union[str, float]],

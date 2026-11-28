@@ -202,6 +202,16 @@ def die_if_func_return_hint_invalid(
             #    the frozen set of the "__mro__" of the second passed type.
             #* Call is_type_subclass() below. *shrug*
             #* Refactor code below similarly. *mega shrug*
+            #* Lastly, explicitly note that we *DO* want to accept structural
+            #  subtyping for "collections.abc.Generator". Why? (A) Because we
+            #  currently do that and nobody complains (i.e., avoid breaking
+            #  backward compatibility). (B) Because the generator protocol is
+            #  non-trivial and thus *MUCH* more difficult to satisfy than the
+            #  trivial iterable protocol, which almost everything satisfies. In
+            #  other words, if something satisfies the generator protocol, it's
+            #  almost certainly valid as the return annotation for a generator
+            #  factory. The same *CANNOT* be said of something satisfying the
+            #  iterable protocol.
             #
             # (
             #     isinstance(hint, type) and
@@ -217,16 +227,16 @@ def die_if_func_return_hint_invalid(
                 f'{exception_prefix}'
                 f'type hint {repr(hint)} invalid as '
                 f'synchronous generator return annotation; expected either:\n'
-                '* [RECOMMENDED] "collections.abc.Iterable[{yield_type}]".\n'
                 '* [RECOMMENDED] "collections.abc.Iterator[{yield_type}]".\n'
                 '* [when needed] "collections.abc.Generator[{yield_type}, {send_type}, {return_type}]".\n'
-                '* [....sus af] "collections.abc.Iterable" (or subclass thereof).\n'
-                '* [....sus af] "collections.abc.Iterator" (or subclass thereof).\n'
-                '* [....sus af] "collections.abc.Generator" (or subclass thereof).\n'
-                '* [deprecated] "typing.Iterable[{yield_type}]".\n'
-                '* [deprecated] "typing.Iterator[{yield_type}]".\n'
-                '* [deprecated] "typing.Generator[{yield_type}, {send_type}, {return_type}]".\n'
-                '* [why bother] "typing.Any".'
+                '* [less useful] "collections.abc.Iterable[{yield_type}]".\n'
+                '* [.....sus af] "collections.abc.Iterator" (or subclass thereof).\n'
+                '* [.....sus af] "collections.abc.Generator" (or subclass thereof).\n'
+                '* [.....sus af] "collections.abc.Iterable" (or subclass thereof).\n'
+                '* [deprecated!] "typing.Iterator[{yield_type}]".\n'
+                '* [deprecated!] "typing.Generator[{yield_type}, {send_type}, {return_type}]".\n'
+                '* [deprecated!] "typing.Iterable[{yield_type}]".\n'
+                '* [why bother?] "typing.Any".'
             )
         # Else, this hint is valid as the return annotation of this callable.
     # Else, the decorated callable is *NOT* a synchronous generator.
@@ -248,16 +258,16 @@ def die_if_func_return_hint_invalid(
                 f'{exception_prefix}'
                 f'type hint {repr(hint)} invalid as '
                 f'asynchronous generator return annotation; expected either:\n'
-                '* [RECOMMENDED] "collections.abc.AsyncIterable[{yield_type}]".\n'
                 '* [RECOMMENDED] "collections.abc.AsyncIterator[{yield_type}]".\n'
-                '* [so verbose] "collections.abc.AsyncGenerator[{yield_type}, {send_type}, {return_type}]".\n'
-                '* [....sus af] "collections.abc.AsyncIterable" (or subclass thereof).\n'
-                '* [....sus af] "collections.abc.AsyncIterator" (or subclass thereof).\n'
-                '* [....sus af] "collections.abc.AsyncGenerator" (or subclass thereof).\n'
-                '* [deprecated] "typing.AsyncIterable[{yield_type}]".\n'
-                '* [deprecated] "typing.AsyncIterator[{yield_type}]".\n'
-                '* [deprecated] "typing.AsyncGenerator[{yield_type}, {send_type}, {return_type}]".\n'
-                '* [why bother] "typing.Any".'
+                '* [when needed] "collections.abc.AsyncGenerator[{yield_type}, {send_type}, {return_type}]".\n'
+                '* [less useful] "collections.abc.AsyncIterable[{yield_type}]".\n'
+                '* [.....sus af] "collections.abc.AsyncIterable" (or subclass thereof).\n'
+                '* [.....sus af] "collections.abc.AsyncIterator" (or subclass thereof).\n'
+                '* [.....sus af] "collections.abc.AsyncGenerator" (or subclass thereof).\n'
+                '* [deprecated!] "typing.AsyncIterable[{yield_type}]".\n'
+                '* [deprecated!] "typing.AsyncIterator[{yield_type}]".\n'
+                '* [deprecated!] "typing.AsyncGenerator[{yield_type}, {send_type}, {return_type}]".\n'
+                '* [why bother?] "typing.Any".'
             )
         # Else, this hint is valid as the return annotation of this callable.
     # Else, the decorated callable is none of the kinds detected above. Since
