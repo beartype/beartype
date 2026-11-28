@@ -123,3 +123,72 @@ def test_decor_pep646() -> None:
         def scatter_its_music(
             *on_the_unfeeling_storm: Unpack[list[str]]) -> str:
             return on_the_unfeeling_storm[0]
+
+
+@skip_if_python_version_less_than('3.11.0')
+def test_decor_pep646_tuple_fixed_variadic() -> None:
+    '''
+    Test that the :func:`beartype.beartype` decorator deeply type-checks a
+    pseudo-random variadic item of tuples annotated by :pep:`646`-compliant
+    fixed-variadic tuple hints *and* that violations describe that same item
+    (including when nested in other hints with an ignorable variadic child hint)
+    if the active Python interpreter targets Python >= 3.11 *or* skip otherwise.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype_test.a00_unit.data.pep.data_pep646 import (
+        tuple_variadic_strs_unpacked_prefix)
+    from pytest import raises
+    from re import search
+    from typing import Unpack
+
+    # ....................{ LOCALS                         }....................
+    # PEP 646-compliant fixed-variadic tuple hint.
+    Hint = tuple[int, tuple_variadic_strs_unpacked_prefix, bytes]
+
+    # Tuple whose variadic items (i.e., at indices 1 through 4) *ALL* satisfy
+    # this hint excluding the item at index 3.
+    with_hooded_brows = (0, 'And with', 'hooded', 0xBADBEEF, 'brows', b'and')
+
+    # ....................{ CALLABLES                      }....................
+    @beartype
+    def like_lightning(on_the_unfeeling_storm: Hint) -> None: pass
+
+    @beartype
+    def with_daedal(
+        the_steep: tuple[tuple[int, Unpack[tuple[object, ...]]], int]) -> None: pass
+
+    # ....................{ PASS                           }....................
+    # Number of calls in which a valid and the invalid variadic item were
+    # pseudo-randomly type-checked, respectively.
+    calls_passed = calls_failed = 0
+
+    # For a sufficiently large number of calls that both valid and invalid
+    # variadic items are effectively guaranteed to be type-checked...
+    for _ in range(64):
+        try:
+            like_lightning(with_hooded_brows)
+            calls_passed += 1
+        # If the invalid variadic item was type-checked, assert that this
+        # violation describes that item. If this violation were to describe a
+        # different item, @beartype would instead raise a private
+        # desynchronization exception that this test fails to catch.
+        except BeartypeCallHintParamViolation as exception:
+            assert search(r'\btuple index 3 item int\b', str(exception))
+            calls_failed += 1
+
+    # Assert that both valid and invalid variadic items were type-checked.
+    assert calls_passed
+    assert calls_failed
+
+    # ....................{ FAIL ~ nested                  }....................
+    # Assert that a callable annotated by a fixed-variadic tuple hint with an
+    # ignorable variadic child hint nested in another hint describes violations
+    # *WITHOUT* requiring a pseudo-random integer.
+    with raises(BeartypeCallHintParamViolation, match=r'\btuple index 1 item str\b'):
+        with_daedal(((1, 2), 'the steep'))
+    with raises(BeartypeCallHintParamViolation, match=r'\blength 0 < 1\b'):
+        with_daedal(((), 0))
